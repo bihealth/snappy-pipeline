@@ -12,12 +12,7 @@ import pytest
 def input_txt_fake_fs(fake_fs):
     """Return fake file system setup with files with an FAI file"""
     # Create fake bedtools intersect -wao output
-    fcontents = textwrap.dedent(
-        """
-    1\t1\t100\t1\t10\t110\t90
-    2\t1\t200\t.\t-1\t-1\t0
-    """
-    ).lstrip()
+    fcontents = "1\t1\t100\t1\t10\t110\t90\n2\t1\t200\t.\t-1\t-1\t0\n"
 
     fake_fs.fs.create_file("/work/input.txt", create_missing_dirs=True, contents=fcontents)
     return fake_fs
@@ -29,15 +24,10 @@ def test_bed_filter_jaccard_subtract(capsys, input_txt_fake_fs, mocker):
 
     bed_filter_jaccard.main(["--input-file", "/work/input.txt", "--operation", "subtract"])
 
+    expected_out = "2\t1\t200\t.\t-1\t-1\t0\n"
+
     out, err = capsys.readouterr()
-    assert (
-        out
-        == textwrap.dedent(
-            """
-    2\t1\t200\t.\t-1\t-1\t0
-    """
-        ).lstrip()
-    )
+    assert out == expected_out
     assert err == ""
 
 
@@ -47,13 +37,8 @@ def test_bed_filter_jaccard_intersect(capsys, input_txt_fake_fs, mocker):
 
     bed_filter_jaccard.main(["--input-file", "/work/input.txt", "--operation", "intersect"])
 
+    expected_out = "1\t1\t100\t1\t10\t110\t90\n"
+
     out, err = capsys.readouterr()
-    assert (
-        out
-        == textwrap.dedent(
-            """
-    1\t1\t100\t1\t10\t110\t90
-    """
-        ).lstrip()
-    )
+    assert out == expected_out
     assert err == ""

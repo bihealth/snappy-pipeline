@@ -1,0 +1,33 @@
+configfile: "config.yaml"
+
+
+rule run_bwa_mem_paired_end:
+    params:
+        args={
+            "input": {
+                "reads_left": "input/NA12878_1.fastq.gz",
+                "reads_right": "input/NA12878_1.fastq.gz",
+            },
+            "platform": "ILLUMINA",
+            "sample_name": "NA12878",
+        },
+    log:
+        log="log/log.txt",
+        log_md5="log/log.txt.md5",
+        conda_list="log/conda_list.txt",
+        conda_list_md5="log/conda_list.txt.md5",
+        conda_info="log/conda_info.txt",
+        conda_info_md5="log/conda_info.txt.md5",
+    output:
+        bam="output/out.bam",
+        bam_bai="output/out.bam.bai",
+        report_bamstats_html="output/out.bamstats.html",
+        report_bamstats_html_md5="output/out.bamstats.html.md5",
+        report_bamstats_txt="output/out.bamstats.txt",
+        report_bamstats_txt_md5="output/out.bamstats.txt.md5",
+        report_flagstats_txt="output/out.flagstats.txt",
+        report_flagstats_txt_md5="output/out.flagstats.txt.md5",
+        report_idxstats_txt="output/out.idxstats.txt",
+        report_idxstats_txt_md5="output/out.idxstats.txt.md5",
+    wrapper:
+        "snappy_wrappers/wrappers/bwa"
