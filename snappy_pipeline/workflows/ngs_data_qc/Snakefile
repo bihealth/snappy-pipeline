@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline ngs_data_qc step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.ngs_data_qc import NgsDataQcWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = NgsDataQcWorkflow(workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking the FASTQ files in and linking out the files should be done
+    # locally by the Snakemake master process
+    data_qc_link_in_run,
+    data_qc_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Link in FASTQ files ---------------------------------------------------------
+
+
+rule data_qc_link_in_run:
+    input:
+        wf.get_input_files("link_in", "run"),
+    output:
+        wf.get_output_files("link_in", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule data_qc_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Raw Data QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run FastQC ------------------------------------------------------------------
+
+
+rule data_qc_fastqc_run:
+    input:
+        wf.get_input_files("fastqc", "run"),
+    output:
+        **wf. get_output_files('fastqc','run'),
+    params:
+        args=wf.substep_dispatch("fastqc", "get_args", "run"),
+    log:
+        wf.get_log_file("fastqc", "run"),
+    wrapper:
+        wf.wrapper_path("fastqc")

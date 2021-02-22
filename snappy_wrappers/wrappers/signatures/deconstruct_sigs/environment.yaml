@@ -1,0 +1,10 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- r #==3.2.2
+- r-tidyverse
+- r-deconstructsigs
+- bioconductor-bsgenome.hsapiens.ucsc.hg19
+- openblas
+

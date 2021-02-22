@@ -1,0 +1,221 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline wgs_cnv_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = WgsCnvCallingWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    wgs_cnv_calling_link_out_run,
+    # Writing out pedigrees can be done locally
+    wgs_cnv_calling_write_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule wgs_cnv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Germline CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule wgs_cnv_calling_write_pedigree_run:
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
+
+# Run CNVetti (shallow WGS) ---------------------------------------------------
+
+
+rule wgs_cnv_calling_cnvetti_coverage:
+    input:
+        unpack(wf.get_input_files("cnvetti", "coverage")),
+    output:
+        **wf. get_output_files('cnvetti','coverage'),
+    log:
+        **wf. get_log_file('cnvetti','coverage'),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/coverage")
+
+
+rule wgs_cnv_calling_cnvetti_segment:
+    input:
+        unpack(wf.get_input_files("cnvetti", "segment")),
+    output:
+        **wf. get_output_files('cnvetti','segment'),
+    log:
+        **wf. get_log_file('cnvetti','segment'),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/segment")
+
+
+rule wgs_cnv_calling_cnvetti_merge_segments:
+    input:
+        unpack(wf.get_input_files("cnvetti", "merge_segments")),
+    output:
+        **wf. get_output_files('cnvetti','merge_segments'),
+    log:
+        **wf. get_log_file('cnvetti','merge_segments'),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/merge_segments")
+
+
+rule wgs_cnv_calling_cnvetti_genotype:
+    input:
+        unpack(wf.get_input_files("cnvetti", "genotype")),
+    output:
+        **wf. get_output_files('cnvetti','genotype'),
+    log:
+        **wf. get_log_file('cnvetti','genotype'),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/genotype")
+
+
+rule wgs_cnv_calling_cnvetti_merge_genotypes:
+    input:
+        unpack(wf.get_input_files("cnvetti", "merge_genotypes")),
+    output:
+        **wf. get_output_files('cnvetti','merge_genotypes'),
+    log:
+        **wf. get_log_file('cnvetti','merge_genotypes'),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/merge_genotypes")
+
+
+rule wgs_cnv_calling_cnvetti_reorder_vcf:
+    input:
+        unpack(wf.get_input_files("cnvetti", "reorder_vcf")),
+    output:
+        **wf. get_output_files('cnvetti','reorder_vcf'),
+    log:
+        **wf. get_log_file('cnvetti','reorder_vcf'),
+    params:
+        ped_members=wf.substep_getattr("cnvetti", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/reorder_vcf")
+
+
+# Run ERDS (standard; per-donor) ----------------------------------------------
+
+
+rule wgs_cnv_calling_erds_run:
+    input:
+        unpack(wf.get_input_files("erds", "run")),
+    output:
+        **wf. get_output_files('erds','run'),
+    log:
+        wf.get_log_file("erds", "run"),
+    wrapper:
+        wf.wrapper_path("erds")
+
+
+# Run ERDS (with SV2 genotyping) ----------------------------------------------
+
+
+rule wgs_cnv_calling_erds_sv2_call:
+    input:
+        unpack(wf.get_input_files("erds_sv2", "call")),
+    output:
+        **wf. get_output_files('erds_sv2','call'),
+    log:
+        wf.get_log_file("erds_sv2", "call"),
+    wrapper:
+        wf.wrapper_path("erds")
+
+
+rule wgs_cnv_calling_erds_sv2_merge_calls:
+    input:
+        wf.get_input_files("erds_sv2", "merge_calls"),
+    output:
+        **wf. get_output_files('erds_sv2','merge_calls'),
+    log:
+        wf.get_log_file("erds_sv2", "merge_calls"),
+    wrapper:
+        wf.wrapper_path("erds_sv2/merge_calls")
+
+
+rule wgs_cnv_calling_erds_sv2_genotype:
+    input:
+        unpack(wf.get_input_files("erds_sv2", "genotype")),
+    output:
+        **wf. get_output_files('erds_sv2','genotype'),
+    log:
+        wf.get_log_file("erds_sv2", "genotype"),
+    wrapper:
+        wf.wrapper_path("erds_sv2/genotype")
+
+
+rule wgs_cnv_calling_erds_sv2_info_to_format:
+    input:
+        unpack(wf.get_input_files("erds_sv2", "info_to_format")),
+    output:
+        **wf. get_output_files('erds_sv2','info_to_format'),
+    log:
+        wf.get_log_file("erds_sv2", "info_to_format"),
+    wrapper:
+        wf.wrapper_path("erds_sv2/info_to_format")
+
+
+rule wgs_cnv_calling_erds_sv2_merge_genotypes:
+    input:
+        wf.get_input_files("erds_sv2", "merge_genotypes"),
+    output:
+        **wf. get_output_files('erds_sv2','merge_genotypes'),
+    log:
+        wf.get_log_file("erds_sv2", "merge_genotypes"),
+    wrapper:
+        wf.wrapper_path("erds_sv2/merge_genotypes")
+
+
+rule wgs_cnv_calling_erds_sv2_reorder_vcf:
+    input:
+        unpack(wf.get_input_files("erds_sv2", "reorder_vcf")),
+    output:
+        **wf. get_output_files('erds_sv2','reorder_vcf'),
+    log:
+        wf.get_log_file("erds_sv2", "reorder_vcf"),
+    params:
+        ped_members=wf.substep_getattr("erds_sv2", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("erds_sv2/reorder_vcf")

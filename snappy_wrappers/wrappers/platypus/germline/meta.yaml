@@ -1,0 +1,4 @@
+name: platypus/germline
+description: Germline variant calling with Platypus
+authors:
+- Manuel Holtgrewe

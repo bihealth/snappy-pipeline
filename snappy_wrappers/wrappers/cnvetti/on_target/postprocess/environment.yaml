@@ -1,0 +1,20 @@
+channels:
+- conda-forge
+- bioconda
+- anaconda
+dependencies:
+- r
+- r-rcpp
+- r-dplyr
+- r-assertthat
+- r-matrixstats
+- bioconductor-copywriter
+- bioconductor-dnacopy
+- bioconductor-cghcall
+- bioconductor-rsamtools
+- bioconductor-org.hs.eg.db
+- bioconductor-txdb.hsapiens.ucsc.hg19.knowngene
+- bcftools ==1.5
+- samtools ==1.5
+- htslib ==1.5
+- openblas

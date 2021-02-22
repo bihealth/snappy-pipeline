@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_targeted_seq_cnv_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
+    SomaticTargetedSeqCnvCallingWorkflow,
+)
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticTargetedSeqCnvCallingWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_targeted_seq_cnv_calling_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_targeted_seq_cnv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Targeted Sequencing CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# cnvkit pipeline -------------------------------------------------------------
+
+
+# cnvkit requires a large number of rules, thus externalized
+include: "cnvkit.rules"
+
+
+# Run CopywriteR --------------------------------------------------------------
+
+
+rule somatic_targeted_seq_cnv_calling_copywriter_prepare:
+    output:
+        gc="work/copywriter.prepare/GC_mappability.rda",
+        blacklist="work/copywriter.prepare/blacklist.rda",
+    log:
+        wf.get_log_file("copywriter", "prepare"),
+    wrapper:
+        wf.wrapper_path("copywriter/prepare")
+
+
+rule somatic_targeted_seq_cnv_calling_copywriter_run:
+    input:
+        unpack(wf.get_input_files("copywriter", "run")),
+        gc="work/copywriter.prepare/GC_mappability.rda",
+        blacklist="work/copywriter.prepare/blacklist.rda",
+    output:
+        **wf. get_output_files('copywriter','run'),
+    log:
+        **wf. get_log_file('copywriter','run'),
+    wrapper:
+        wf.wrapper_path("copywriter/run")
+
+
+rule somatic_targeted_seq_cnv_calling_copywriter_call:
+    input:
+        unpack(wf.get_input_files("copywriter", "call")),
+    output:
+        **wf. get_output_files('copywriter','call'),
+    log:
+        **wf. get_log_file('copywriter','call'),
+    wrapper:
+        wf.wrapper_path("copywriter/call")
+
+
+# Run CNVetti (on-target) -----------------------------------------------------
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_coverage:
+    input:
+        unpack(wf.get_input_files("cnvetti_on_target", "coverage")),
+    output:
+        **wf. get_output_files('cnvetti_on_target','coverage'),
+    params:
+        method_name="cnvetti_on_target",
+    log:
+        **wf. get_log_file('cnvetti_on_target','coverage'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/coverage")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_segment:
+    input:
+        unpack(wf.get_input_files("cnvetti_on_target", "segment")),
+    output:
+        **wf. get_output_files('cnvetti_on_target','segment'),
+    params:
+        method_name="cnvetti_on_target",
+    log:
+        **wf. get_log_file('cnvetti_on_target','segment'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/segment")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_postprocess:
+    input:
+        unpack(wf.get_input_files("cnvetti_on_target", "postprocess")),
+    output:
+        **wf. get_output_files('cnvetti_on_target','postprocess'),
+    params:
+        method_name="cnvetti_on_target",
+    log:
+        **wf. get_log_file('cnvetti_on_target','postprocess'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/postprocess")
+
+
+# Run CNVetti (off-target) ----------------------------------------------------
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_coverage:
+    input:
+        unpack(wf.get_input_files("cnvetti_off_target", "coverage")),
+    output:
+        **wf. get_output_files('cnvetti_off_target','coverage'),
+    params:
+        method_name="cnvetti_off_target",
+    log:
+        **wf. get_log_file('cnvetti_off_target','coverage'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/coverage")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_segment:
+    input:
+        unpack(wf.get_input_files("cnvetti_off_target", "segment")),
+    output:
+        **wf. get_output_files('cnvetti_off_target','segment'),
+    params:
+        method_name="cnvetti_off_target",
+    log:
+        **wf. get_log_file('cnvetti_off_target','segment'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/segment")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_postprocess:
+    input:
+        unpack(wf.get_input_files("cnvetti_off_target", "postprocess")),
+    output:
+        **wf. get_output_files('cnvetti_off_target','postprocess'),
+    params:
+        method_name="cnvetti_off_target",
+    log:
+        **wf. get_log_file('cnvetti_off_target','postprocess'),
+    wrapper:
+        wf.wrapper_path("cnvetti/on_target/postprocess")

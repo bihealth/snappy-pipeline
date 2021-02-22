@@ -1,0 +1,22 @@
+
+include AUTHORS.rst
+
+include CONTRIBUTING.rst
+include HISTORY.rst
+include LICENSE
+include README.rst
+
+recursive-exclude tests *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+recursive-include snappy_pipeline *.py Snakefile *.rules *.sh *.tpl *.xml
+recursive-include snappy_wrappers *.py *.sh *.txt *.R *.yaml
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+include versioneer.py
+include snappy_pipeline/_version.py
+
+include requirements.txt requirements/*.txt
+include snappy_pipeline/apps/tpls snappy_pipeline/apps/tpls/*
+

@@ -1,0 +1,7 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- r
+- bioconductor-dupradar
+- samtools

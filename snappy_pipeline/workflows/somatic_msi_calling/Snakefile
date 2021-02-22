@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_msi_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_msi_calling import SomaticMsiCallingWorkflow
+
+__author__ = "Clemens Messerschmidt"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticMsiCallingWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_msi_calling_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_msi_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Microsatellite Instability analysis~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run MANTIS ------------------------------------------------------------------
+
+
+rule somatic_msi_calling_mantis:
+    input:
+        unpack(wf.get_input_files("mantis", "run")),
+    output:
+        **wf. get_output_files('mantis','run'),
+    log:
+        wf.get_log_file("mantis", "run"),
+    wrapper:
+        wf.wrapper_path("mantis/run")

@@ -1,0 +1,5 @@
+name: control_freec
+description: Copy-number calling from whole-genome sequencing data
+authors:
+  - Manuel Holtgrewe
+  - Clemens Messerschmidt

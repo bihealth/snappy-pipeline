@@ -1,0 +1,227 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline wgs_sv_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = WgsSvCallingWorkflow(workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    wgs_sv_calling_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule wgs_sv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Structural Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run Manta -------------------------------------------------------------------
+
+
+rule wgs_sv_calling_manta_run:
+    input:
+        wf.get_input_files("manta", "run"),
+    output:
+        **wf. get_output_files('manta','run'),
+    log:
+        wf.get_log_file("manta", "run"),
+    wrapper:
+        wf.wrapper_path("manta/germline_wgs")
+
+
+# Delly2 Steps ----------------------------------------------------------------
+
+
+rule wgs_sv_calling_delly2_call:
+    input:
+        unpack(wf.get_input_files("delly2", "call")),
+    output:
+        **wf. get_output_files('delly2','call'),
+    params:
+        library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
+    log:
+        wf.get_log_file("delly2", "call"),
+    wrapper:
+        wf.wrapper_path("delly2/germline/call")
+
+
+rule wgs_sv_calling_delly2_merge_calls:
+    input:
+        wf.get_input_files("delly2", "merge_calls"),
+    output:
+        **wf. get_output_files('delly2','merge_calls'),
+    log:
+        wf.get_log_file("delly2", "merge_calls"),
+    wrapper:
+        wf.wrapper_path("delly2/germline/merge_calls")
+
+
+rule wgs_sv_calling_delly2_genotype:
+    input:
+        unpack(wf.get_input_files("delly2", "genotype")),
+    output:
+        **wf. get_output_files('delly2','genotype'),
+    params:
+        library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
+    log:
+        wf.get_log_file("delly2", "genotype"),
+    wrapper:
+        wf.wrapper_path("delly2/germline/genotype")
+
+
+rule wgs_sv_calling_delly2_merge_genotypes:
+    input:
+        wf.get_input_files("delly2", "merge_genotypes"),
+    output:
+        **wf. get_output_files('delly2','merge_genotypes'),
+    log:
+        wf.get_log_file("delly2", "merge_genotypes"),
+    wrapper:
+        wf.wrapper_path("delly2/germline/merge_genotypes")
+
+
+rule wgs_sv_calling_delly2_reorder_vcf:
+    input:
+        unpack(wf.get_input_files("delly2", "reorder_vcf")),
+    output:
+        **wf. get_output_files('delly2','reorder_vcf'),
+    log:
+        wf.get_log_file("delly2", "reorder_vcf"),
+    params:
+        ped_members=wf.substep_getattr("delly2", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("delly2/germline/reorder_vcf")
+
+
+# SVTK Steps ------------------------------------------------------------------
+
+
+rule wgs_sv_svtk_standardize:
+    input:
+        unpack(wf.get_input_files("svtk", "standardize")),
+    output:
+        **wf. get_output_files('svtk','standardize'),
+    log:
+        wf.get_log_file("svtk", "standardize"),
+    wrapper:
+        wf.wrapper_path("svtk/standardize")
+
+
+# Run PB Honey Spots ----------------------------------------------------------
+
+
+rule wgs_sv_calling_pb_honey_spots_run:
+    input:
+        wf.get_input_files("pb_honey_spots", "run"),
+    output:
+        **wf. get_output_files('pb_honey_spots','run'),
+    log:
+        wf.get_log_file("pb_honey_spots", "run"),
+    wrapper:
+        wf.wrapper_path("pb_honey_spots/germline")
+
+
+# Run Sniffles ----------------------------------------------------------------
+
+
+rule wgs_sv_calling_sniffles_run:
+    input:
+        wf.get_input_files("sniffles", "run"),
+    output:
+        **wf. get_output_files('sniffles','run'),
+    log:
+        wf.get_log_file("sniffles", "run"),
+    wrapper:
+        wf.wrapper_path("sniffles/germline")
+
+
+# PopDel Steps ----------------------------------------------------------------
+
+
+ruleorder: wgs_sv_calling_popdel_reorder_vcf > wgs_sv_calling_popdel_concat_calls > wgs_sv_calling_popdel_call > wgs_sv_calling_popdel_profile
+
+
+rule wgs_sv_calling_popdel_profile:
+    input:
+        unpack(wf.get_input_files("popdel", "profile")),
+    output:
+        **wf. get_output_files('popdel','profile'),
+    wildcard_constraints:
+        index_ngs_library=r"[^\.]+",
+    log:
+        wf.get_log_file("popdel", "profile"),
+    wrapper:
+        wf.wrapper_path("popdel/profile")
+
+
+rule wgs_sv_calling_popdel_call:
+    input:
+        unpack(wf.get_input_files("popdel", "call")),
+    output:
+        **wf. get_output_files('popdel','call'),
+    log:
+        wf.get_log_file("popdel", "call"),
+    wrapper:
+        wf.wrapper_path("popdel/call")
+
+
+rule wgs_sv_calling_popdel_concat_calls:
+    input:
+        unpack(wf.get_input_files("popdel", "concat_calls")),
+    output:
+        **wf. get_output_files('popdel','concat_calls'),
+    log:
+        wf.get_log_file("popdel", "concat_calls"),
+    wrapper:
+        wf.wrapper_path("popdel/concat_calls")
+
+
+rule wgs_sv_calling_popdel_reorder_vcf:
+    input:
+        unpack(wf.get_input_files("popdel", "reorder_vcf")),
+    output:
+        **wf. get_output_files('popdel','reorder_vcf'),
+    wildcard_constraints:
+        index_ngs_library=r"[^\.]+",
+    params:
+        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
+    log:
+        wf.get_log_file("popdel", "reorder_vcf"),
+    wrapper:
+        wf.wrapper_path("popdel/reorder_vcf")

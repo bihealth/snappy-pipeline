@@ -1,0 +1,4 @@
+name: mutect
+description: Somatic SNV calling using muTect
+authors:
+  - Manuel Holtgrewe

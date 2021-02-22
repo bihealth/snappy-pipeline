@@ -1,0 +1,159 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_purity_ploidy_estimate step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_purity_ploidy_estimate import (
+    SomaticPurityPloidyEstimateWorkflow,
+)
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticPurityPloidyEstimateWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_purity_ploidy_estimate_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_purity_ploidy_estimate_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Purity and Ploidy Estimation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Decide if WGS or WES rules should be used:
+
+if config["step_config"]["somatic_purity_ploidy_estimate"]["tool_cnv_calling"] == "cnvetti":
+
+    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor > somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes
+    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal > somatic_purity_ploidy_estimate_ascat_cnv_normal_wes
+
+
+else:
+
+    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes > somatic_purity_ploidy_estimate_ascat_cnv_tumor
+    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal_wes > somatic_purity_ploidy_estimate_ascat_cnv_normal
+
+
+# ASCAT and Supporting Steps --------------------------------------------------
+# Get B-allele frequencies from bam - steps are the same for WES and WGS ------
+
+
+rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
+    input:
+        unpack(wf.get_input_files("ascat", "baf_tumor")),
+    output:
+        **wf. get_output_files('ascat','baf_tumor'),
+    log:
+        **wf. get_log_file('ascat','baf_tumor'),
+    wrapper:
+        wf.wrapper_path("ascat/build_baf")
+
+
+rule somatic_purity_ploidy_estimate_ascat_baf_normal:
+    input:
+        unpack(wf.get_input_files("ascat", "baf_normal")),
+    output:
+        **wf. get_output_files('ascat','baf_normal'),
+    log:
+        **wf. get_log_file('ascat','baf_normal'),
+    wrapper:
+        wf.wrapper_path("ascat/build_baf")
+
+
+# Get logR for tumor and normal in WGS ----------------------------------------
+
+
+rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
+    input:
+        unpack(wf.get_input_files("ascat", "cnv_tumor")),
+    output:
+        **wf. get_output_files('ascat','cnv_tumor'),
+    log:
+        **wf. get_log_file('ascat','cnv_tumor'),
+    wrapper:
+        wf.wrapper_path("ascat/build_cnv")
+
+
+rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
+    input:
+        unpack(wf.get_input_files("ascat", "cnv_normal")),
+    output:
+        **wf. get_output_files('ascat','cnv_normal'),
+    log:
+        **wf. get_log_file('ascat','cnv_normal'),
+    wrapper:
+        wf.wrapper_path("ascat/build_cnv")
+
+
+# get logR for tumor and normal from WES --------------------------------------
+
+
+rule somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes:
+    input:
+        unpack(wf.get_input_files("ascat", "cnv_tumor_wes")),
+    output:
+        **wf. get_output_files('ascat','cnv_tumor'),
+    log:
+        **wf. get_log_file('ascat','cnv_tumor'),
+    wrapper:
+        wf.wrapper_path("ascat/build_cnv_from_copywriter")
+
+
+rule somatic_purity_ploidy_estimate_ascat_cnv_normal_wes:
+    input:
+        unpack(wf.get_input_files("ascat", "cnv_normal_wes")),
+    output:
+        **wf. get_output_files('ascat','cnv_normal'),
+    log:
+        **wf. get_log_file('ascat','cnv_normal'),
+    wrapper:
+        wf.wrapper_path("ascat/build_cnv_from_copywriter")
+
+
+# run ASCAT R package with prepared input files -------------------------------
+
+
+rule somatic_purity_ploidy_estimate_ascat_run_ascat:
+    input:
+        unpack(wf.get_input_files("ascat", "run_ascat")),
+    output:
+        **wf. get_output_files('ascat','run_ascat'),
+    log:
+        **wf. get_log_file('ascat','run_ascat'),
+    wrapper:
+        wf.wrapper_path("ascat/run_ascat")

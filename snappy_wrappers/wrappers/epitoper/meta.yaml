@@ -1,0 +1,4 @@
+name: 'epitoper'
+description: Integrated epitope sequence and binding prediction pipeline
+authors:
+  - Manuel Holtgrewe

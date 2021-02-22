@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcfpy >=0.12  # >=0.12.2
+  - ncls
+  - pandas
+  - attr
+  - logzero
+  - htslib
+  - bcftools

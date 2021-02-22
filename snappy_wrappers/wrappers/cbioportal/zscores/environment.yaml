@@ -1,0 +1,11 @@
+channels:
+- bioconda
+- conda-forge
+- anaconda
+dependencies:
+- r >=3.6
+- r-dplyr
+- bioconductor-DESeq2 >=1.26
+- bioconductor-org.hs.eg.db
+- bioconductor-txdb.hsapiens.ucsc.hg19.knowngene
+- openblas

@@ -1,0 +1,274 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline variant_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VariantCallingWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    variant_calling_link_out_run,
+    # Writing pedigrees should be done locally as well
+    variant_calling_write_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule variant_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule variant_calling_write_pedigree_run:
+    input:
+        unpack(wf.get_input_files("write_pedigree", "run")),
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
+
+# Run bcftools ----------------------------------------------------------------
+
+
+rule variant_calling_bcftools_run:
+    input:
+        unpack(wf.get_input_files("bcftools", "run")),
+    output:
+        **wf. get_output_files('bcftools','run'),
+    log:
+        **wf. get_log_file('bcftools','run'),
+    wrapper:
+        wf.wrapper_path("bcftools_call")
+
+
+# Run Freebayes ---------------------------------------------------------------
+
+
+rule variant_calling_freebayes_run:
+    input:
+        unpack(wf.get_input_files("freebayes", "run")),
+    output:
+        **wf. get_output_files('freebayes','run'),
+    log:
+        **wf. get_log_file('freebayes','run'),
+    wrapper:
+        wf.wrapper_path("freebayes")
+
+
+# Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
+
+
+rule variant_calling_gatk_hc_run:
+    input:
+        unpack(wf.get_input_files("gatk_hc", "run")),
+    output:
+        **wf. get_output_files('gatk_hc','run'),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk_hc",
+    log:
+        **wf. get_log_file('gatk_hc','run'),
+    wrapper:
+        wf.wrapper_path("gatk_hc_par")
+
+
+# Run GATK UnifiedGenotyper ---------------------------------------------------
+
+
+rule variant_calling_gatk_ug_run:
+    input:
+        unpack(wf.get_input_files("gatk_ug", "run")),
+    output:
+        **wf. get_output_files('gatk_ug','run'),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk_ug",
+    log:
+        **wf. get_log_file('gatk_ug','run'),
+    wrapper:
+        wf.wrapper_path("gatk_ug_par")
+
+
+# Run Platypus ---------------------------------------------------------------
+
+
+rule variant_calling_platypus_run:
+    input:
+        unpack(wf.get_input_files("platypus", "run")),
+    output:
+        **wf. get_output_files('platypus','run'),
+    log:
+        **wf. get_log_file('platypus','run'),
+    wrapper:
+        wf.wrapper_path("platypus/germline")
+
+
+# Run GATK HaplotypeCaller GVCF Generation ------------------------------------
+
+
+rule variant_calling_gatk_hc_gvcf_discovery:
+    input:
+        unpack(wf.get_input_files("gatk_hc_gvcf", "discover")),
+    output:
+        **wf. get_output_files('gatk_hc_gvcf','discover'),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk_hc_gvcf",
+    log:
+        wf.get_log_file("gatk_hc_gvcf", "discover"),
+    wrapper:
+        wf.wrapper_path("gatk_hc_gvcf_par/discovery")
+
+
+# Run GATK HaplotypeCaller GVCF Pedigree Genotyping ---------------------------
+
+
+rule variant_calling_gatk_hc_gvcf_genotype_pedigree:
+    input:
+        unpack(wf.get_input_files("gatk_hc_gvcf", "genotype_pedigree")),
+    output:
+        **wf. get_output_files('gatk_hc_gvcf','genotype_pedigree'),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk_hc_gvcf",
+    log:
+        wf.get_log_file("gatk_hc_gvcf", "genotype_pedigree"),
+    wrapper:
+        wf.wrapper_path("gatk_hc_gvcf_par/genotyping")
+
+
+# Run GATK HaplotypeCaller Cohort CombineGVCFs --------------------------------
+
+# Collect cohort-wide GVCF file to circumvent problems with file handle counts
+# downstream.
+
+
+rule variant_calling_gatk_hc_gvcf_combine_gvcf:
+    input:
+        unpack(wf.get_input_files("gatk_hc_gvcf", "combine_gvcf")),
+    output:
+        **wf. get_output_files('gatk_hc_gvcf','combine_gvcf'),
+    params:
+        args=wf.substep_dispatch("gatk_hc_gvcf", "get_args", "combine_gvcf"),
+    log:
+        wf.get_log_file("gatk_hc_gvcf", "combine_gvcf"),
+    wrapper:
+        wf.wrapper_path("gatk_hc_gvcf_par/combine_gvcf")
+
+
+# Run GATK HaplotypeCaller GVCF Cohort Genotyping -----------------------------
+
+
+rule variant_calling_gatk_hc_gvcf_genotype_cohort:
+    input:
+        wf.get_input_files("gatk_hc_gvcf", "genotype_cohort"),
+    output:
+        **wf. get_output_files('gatk_hc_gvcf','genotype_cohort'),
+    log:
+        wf.get_log_file("gatk_hc_gvcf", "genotype_cohort"),
+    wrapper:
+        wf.wrapper_path("gatk_hc_gvcf_par/genotyping")
+
+
+# Run Varscan Pedigree-Wise ---------------------------------------------------
+
+
+rule variant_calling_varscan_call_pedigree:
+    input:
+        unpack(wf.get_input_files("varscan", "call_pedigree")),
+    output:
+        **wf. get_output_files('varscan','call_pedigree'),
+    params:
+        step_key="variant_calling",
+        caller_key="varscan",
+    log:
+        **wf. get_log_file('varscan','call_pedigree'),
+    wrapper:
+        wf.wrapper_path("varscan_par/call_joint")
+
+
+# Run Varscan Cohort-Wide -----------------------------------------------------
+
+
+rule variant_calling_varscan_call_cohort:
+    input:
+        wf.get_input_files("varscan", "call_cohort"),
+    output:
+        **wf. get_output_files('varscan','call_cohort'),
+    params:
+        step_key="variant_calling",
+        caller_key="varscan",
+    log:
+        **wf. get_log_file('varscan','call_cohort'),
+    wrapper:
+        wf.wrapper_path("varscan_par/call_joint")
+
+
+# QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generate BCFtools stats report ----------------------------------------------
+
+
+rule variant_calling_bcftools_stats_report:
+    input:
+        **wf. get_input_files('bcftools_stats','run'),
+    output:
+        **wf. get_output_files('bcftools_stats','run'),
+    log:
+        wf.get_log_file("bcftools_stats", "run"),
+    wrapper:
+        wf.wrapper_path("bcftools_stats/run")
+
+
+# Generate Jannovar statistics report -----------------------------------------
+
+
+rule variant_calling_jannovar_statistics_report:
+    input:
+        **wf. get_input_files('jannovar_statistics','run'),
+    output:
+        **wf. get_output_files('jannovar_statistics','run'),
+    log:
+        wf.get_log_file("jannovar_statistics", "run"),
+    wrapper:
+        wf.wrapper_path("jannovar/statistics")

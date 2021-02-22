@@ -1,0 +1,35 @@
+# Nice, round-trip enabled YAML parsing
+ruamel.yaml>=0.15.35
+
+# File-based locks
+fasteners==0.14.1
+
+# We're trying to keep the PyPi package up to date, you might have to install
+# from source, though.
+biomedsheets
+
+# Helpful for CLIs
+termcolor==1.1.0
+
+# Snakemake is used for providing the actual wrapper calling functionality
+snakemake
+# Snakemake needs manual install of PyYAML to make YAML configuration loading work
+PyYAML>=3.12
+
+# Required for plotting
+matplotlib>=2.1.2
+
+# Library for working with VCF files.
+vcfpy >=0.13.2
+# Support for vcfpy
+pysam
+pytabix
+
+# Jinja 2 template rendering
+jinja2 >=2.10
+
+# Parsing of ISA-tab.
+altamisa >=0.2.6
+
+# REST API client for VarFish Server
+varfish-cli >=0.2.0

@@ -1,0 +1,4 @@
+name: mutect_par
+description: Somatic SNV calling using MuTect 2 (CUBI parallelization flavour)
+authors:
+  - Manuel Holtgrewe

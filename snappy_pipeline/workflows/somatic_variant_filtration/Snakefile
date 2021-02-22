@@ -1,0 +1,138 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_variant_filtration step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticVariantFiltrationWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_variant_filtration_link_out_run,
+    # Writing out paths to "panel of normal" file should be done locally
+    somatic_variant_filtration_eb_filter_write_panel,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_variant_filtration_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run DKFZ Bias Filter --------------------------------------------------------
+
+
+rule somatic_variant_filtration_dkfz_bias_filter_run:
+    input:
+        **wf. get_input_files('dkfz_bias_filter','run'),
+    output:
+        **wf. get_output_files('dkfz_bias_filter','run'),
+    params:
+        **{'args': wf. get_params('dkfz_bias_filter','run')},
+    log:
+        **wf. get_log_file('dkfz_bias_filter','run'),
+    wrapper:
+        wf.wrapper_path("dkfz_bias_filter")
+
+
+# Write out "panel of normals" file for eb_filter ------------------------------
+
+
+rule somatic_variant_filtration_eb_filter_write_panel:
+    input:
+        unpack(wf.get_input_files("eb_filter", "write_panel")),
+    output:
+        **wf. get_output_files('eb_filter','write_panel'),
+    log:
+        wf.get_log_file("eb_filter", "write_panel"),
+    run:
+        wf.substep_getattr("eb_filter", "write_panel_of_normals_file")(wildcards)
+
+
+# Run eb_filter ----------------------------------------------------------------
+
+
+rule somatic_variant_filtration_eb_filter_run:
+    input:
+        unpack(wf.get_input_files("eb_filter", "run")),
+    output:
+        **wf. get_output_files('eb_filter','run'),
+    params:
+        **{'args': wf. get_params('eb_filter','run')},
+    log:
+        **wf. get_log_file('eb_filter','run'),
+    wrapper:
+        wf.wrapper_path("eb_filter_par")
+
+
+# Apply Filters ---------------------------------------------------------------
+
+
+rule variant_filtration_apply_filters_run:
+    input:
+        **( wf. get_input_files('apply_filters','run')),
+    output:
+        **wf. get_output_files('apply_filters','run'),
+    log:
+        wf.get_log_file("apply_filters", "run"),
+    params:
+        args=wf.substep_dispatch("apply_filters", "get_args", "run"),
+    wrapper:
+        wf.wrapper_path("somatic_variant_filtration/apply_filters")
+
+
+# Filter to Exons--------------------------------------------------------------
+
+
+rule variant_filtration_filter_to_exons_run:
+    input:
+        unpack(wf.get_input_files("filter_to_exons", "run")),
+    output:
+        **wf. get_output_files('filter_to_exons','run'),
+    log:
+        wf.get_log_file("filter_to_exons", "run"),
+    wrapper:
+        wf.wrapper_path("somatic_variant_filtration/filter_to_exons")
+
+
+# Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Run Jannovar statistics -----------------------------------------------------
+# TODO
+# Run bcftools stats ----------------------------------------------------------
+# TODO

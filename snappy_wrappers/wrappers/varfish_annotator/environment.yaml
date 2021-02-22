@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bcftools >=1.9
+  - htslib >=1.9
+  - varfish-annotator-cli ==0.13
+  - jq

@@ -1,0 +1,9 @@
+channels:
+- conda-forge
+- bioconda
+- r
+dependencies:
+- bwa
+- seqtk
+- kraken
+- gawk

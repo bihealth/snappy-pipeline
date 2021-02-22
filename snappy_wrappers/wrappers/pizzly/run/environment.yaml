@@ -1,0 +1,6 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- pizzly ==0.37.3
+- kallisto ==0.43.1

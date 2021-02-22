@@ -1,0 +1,5 @@
+pipeline_step:
+  name: %(step_name)s
+  version: %(step_version)d
+
+$ref: 'file://../%(config_subdir)s/config.yaml'

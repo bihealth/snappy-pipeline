@@ -1,0 +1,11 @@
+channels:
+- conda-forge
+- bioconda
+- r
+- http://cubiconda.bihealth.org/cubiconda
+dependencies:
+- gatk4
+- htslib ==1.9
+- bcftools ==1.9
+- datrie
+- snakemake ==5.18

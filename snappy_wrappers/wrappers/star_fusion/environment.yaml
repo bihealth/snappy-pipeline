@@ -1,0 +1,6 @@
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- star-fusion ==1.0
+- samtools >=1.0

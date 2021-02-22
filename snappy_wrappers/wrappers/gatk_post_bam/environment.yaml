@@ -1,0 +1,9 @@
+channels:
+- conda-forge
+- bioconda
+- r
+- http://cubiconda.bihealth.org/cubiconda
+dependencies:
+- gatk_nonfree ==3.7
+- samtools ==1.3
+- htslib ==1.3

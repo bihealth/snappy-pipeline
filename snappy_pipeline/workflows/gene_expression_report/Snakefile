@@ -1,0 +1,94 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline gene_expression_report step Snakefile"""
+
+import os
+import textwrap
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.gene_expression_report import GeneExpressionReportWorkflow
+
+__author__ = "Clemens Messerschmidt"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = GeneExpressionReportWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    gene_expression_report_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule gene_expression_report_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Fetch gene expression counts, aggregate and process them --------------------
+
+
+rule gene_expression_report_aggregate_counts:
+    input:
+        wf.get_input_files("aggregate_counts", "run"),
+    output:
+        **wf. get_output_files('aggregate_counts','run'),
+    wrapper:
+        wf.wrapper_path("cbioportal/rpkm_expression")
+
+
+# Per sample, rank gene expression + compute some stats compared to cohort
+rule gene_expression_report_compute_ranks:
+    input:
+        **wf. get_input_files('compute_ranks','run'),
+    output:
+        **wf. get_output_files('compute_ranks','run'),
+    wrapper:
+        wf.wrapper_path("cbioportal/rank_expression")
+
+
+# All samples together, compute signatures + plot
+rule gene_expression_report_compute_signatures:
+    input:
+        **wf. get_input_files('compute_ranks','run'),
+    output:
+        **wf. get_output_files('compute_signatures','run'),
+    wrapper:
+        wf.wrapper_path("cbioportal/compute_signatures")
+
+
+# All samples together, plot gene expression in cohort context
+rule gene_expression_report_plot_expression_distribution:
+    input:
+        **wf. get_input_files('compute_ranks','run'),
+    output:
+        **wf. get_output_files('plot_expression_distribution','run'),
+    wrapper:
+        wf.wrapper_path("cbioportal/plot_expression_distribution")

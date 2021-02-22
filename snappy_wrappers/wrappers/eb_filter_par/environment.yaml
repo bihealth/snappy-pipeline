@@ -1,0 +1,15 @@
+channels:
+- conda-forge
+- bioconda
+- r
+- http://cubiconda.bihealth.org/cubiconda
+dependencies:
+- ebfilter >=0.2.2
+- vcfpy
+- pysam
+- scipy
+- numpy
+- bcftools
+- htslib
+- samtools
+- snakemake ==5.18

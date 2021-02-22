@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - seqtk ==1.3
+  - samtools
+  - yara
+  - optitype

@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- parallel ==20160622
+- bcftools ==1.5
+- samtools ==1.5
+- htslib ==1.5

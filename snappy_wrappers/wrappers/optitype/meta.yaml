@@ -1,0 +1,4 @@
+name: optitype
+description: HLA-typing for HTS read data (DNA or RNA-seq)
+authors:
+  - Manuel Holtgrewe

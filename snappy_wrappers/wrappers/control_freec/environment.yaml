@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+- base
+dependencies:
+- control-freec
+- sambamba
+- bcftools

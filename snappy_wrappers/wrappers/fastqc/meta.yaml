@@ -1,0 +1,4 @@
+name: 'fastqc'
+description: Perform NGS read quality control with FastQC
+authors:
+  - Manuel Holtgrewe

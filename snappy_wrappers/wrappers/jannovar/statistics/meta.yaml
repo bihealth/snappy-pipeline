@@ -1,0 +1,4 @@
+name: jannovar/statistics
+description: Compute statistics report for variant calls using Jannovar statistics
+authors:
+- Manuel Holtgrewe

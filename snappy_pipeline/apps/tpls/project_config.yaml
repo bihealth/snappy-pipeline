@@ -1,0 +1,44 @@
+# CUBI Pipeline Project "%(project_name)s" Configuration
+#
+# created: %(created_at)s
+
+# Step Configuration ==============================================================================
+#
+# Configuration for paths with static data.  This has been preconfigured for the paths on the BIH
+# cluster.
+#
+static_data_config:
+  cosmic:
+    path: /fast/projects/cubit/current/static_data/db/COSMIC/v72/GRCh37/CosmicAll.vcf.gz
+  dbnsfp:
+    path: /fast/projects/cubit/current/static_data/db/dbNSFP/2.9/dbNSFP2.9.txt.gz
+  dbsnp:
+    path: /fast/projects/cubit/current/static_data/db/dbSNP/b147/GRCh37/All_20160408.vcf.gz
+  reference:
+    path: /fast/projects/cubit/current/static_data/reference/GRCh37/hs37d5/hs37d5.fa
+
+# Step Configuration ==============================================================================
+#
+# Configuration for the individual steps.  These can be filled by the cubi-start-step command
+# or initialized already with cubi-start-project.
+#
+step_config: {}
+
+# Data Sets =======================================================================================
+#
+# Define data sets.  The search paths and patterns are given per data set.
+#
+# Example
+# -------
+#
+# data_sets:
+#   first_batch:  # example for a germline data set
+#     file: 01_acheiropodia.tsv
+#     search_patterns:
+#     # Note that currently only "left" and "right" key known
+#     - {'left': '*_R1.fastq.gz', 'right': '*_R2.fastq.gz'}
+#     search_paths:
+#     - /fast/projects/medgen_genomes/2017-01-09_acheiropodia
+#     type: germline_variants
+#
+data_sets: {}

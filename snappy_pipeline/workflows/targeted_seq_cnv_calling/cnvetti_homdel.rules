@@ -1,0 +1,49 @@
+# CNVetti homdel needs many rules, thus they are in their own files.
+
+
+rule targeted_seq_cnv_calling_cnvetti_homdel_coverage:
+    input:
+        unpack(wf.get_input_files("cnvetti_homdel", "coverage")),
+    output:
+        **wf. get_output_files('cnvetti_homdel','coverage'),
+    params:
+        args=wf.get_params("cnvetti_homdel", "coverage"),
+    log:
+        wf.get_log_file("cnvetti_homdel", "coverage"),
+    wrapper:
+        wf.wrapper_path("cnvetti/targeted_germline_hom/coverage")
+
+
+rule targeted_seq_cnv_calling_cnvetti_homdel_merge_neighbors:
+    input:
+        unpack(wf.get_input_files("cnvetti_homdel", "merge_neighbors")),
+    output:
+        **wf. get_output_files('cnvetti_homdel','merge_neighbors'),
+    log:
+        wf.get_log_file("cnvetti_homdel", "merge_neighbors"),
+    wrapper:
+        wf.wrapper_path("cnvetti/targeted_germline_hom/merge_neighbors")
+
+
+rule targeted_seq_cnv_calling_cnvetti_homdel_merge_cohort_vcfs:
+    input:
+        wf.get_input_files("cnvetti_homdel", "merge_cohort_vcfs"),
+    output:
+        **wf. get_output_files('cnvetti_homdel','merge_cohort_vcfs'),
+    log:
+        wf.get_log_file("cnvetti_homdel", "merge_cohort_vcfs"),
+    wrapper:
+        wf.wrapper_path("cnvetti/targeted_germline_hom/merge_cohort_vcfs")
+
+
+rule targeted_seq_cnv_calling_cnvetti_homdel_extract_ped:
+    input:
+        unpack(wf.get_input_files("cnvetti_homdel", "extract_ped")),
+    output:
+        **wf. get_output_files('cnvetti_homdel','extract_ped'),
+    log:
+        wf.get_log_file("cnvetti_homdel", "extract_ped"),
+    params:
+        ped_members=wf.substep_getattr("cnvetti_homdel", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("cnvetti/targeted_germline_hom/extract_ped")

@@ -1,0 +1,39 @@
+channels:
+  - bioconda
+  - defaults
+  - conda-forge
+
+name: snappy_env
+
+dependencies:
+
+  # Fundamentals
+  - python
+  - pip
+  - git-lfs
+
+  # Snakemake is used for providing the actual wrapper calling functionality
+  - snakemake
+
+  # Additional libraries used by snappy
+  - ruamel.yaml             # Nice, round-trip enabled YAML parsing
+  - fasteners               # File-based locks
+  - termcolor               # Helpful for CLIs
+  - matplotlib              # Required for plotting
+  - jinja2                  # Jinja 2 template rendering
+
+  # Bioinformatics-related libraries used by snappy
+  - htslib                  # From previous environment.yml
+  - bcftools                # From previous environment.yml
+  - vcfpy                   # Library for working with VCF files
+  - pysam                   # Support for vcfpy
+  - pytabix                 # Support for vcfpy
+
+  # Parsing of ISA-tab
+  - altamisa
+
+  # CUBI libraries required by snappy (installed through pip)
+  - pip:
+    - varfish-cli
+    - biomedsheets
+

@@ -1,0 +1,7 @@
+channels:
+- conda-forge
+- anaconda
+- bioconda
+dependencies:
+- lohhla
+- jellyfish ==2.2.6

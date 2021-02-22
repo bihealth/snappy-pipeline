@@ -1,0 +1,4 @@
+name: gatk_hc
+description: (Germline) variant calling calling using GATK HaplotypeCaller
+authors:
+  - Manuel Holtgrewe

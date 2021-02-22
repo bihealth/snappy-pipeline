@@ -1,0 +1,35 @@
+#!/bin/bash
+
+NUM_LINES=${NUM_LINES:-100}
+
+usage()
+{
+    echo "USAGE: cubi-vcf_split PREFIX [FILE]" 1>&2
+    echo "" 1>&2
+    echo "If FILE is omitted then stdin is read" 1>&2
+}
+
+prefix=$1
+shift
+fname=$1
+
+set -e -o pipefail
+
+[[ -z "${prefix}" ]] && { usage; exit 1; }
+
+header=$(mktemp)
+
+suffix_arg=
+[[ -z "${SUFFIX}" ]] || suffix_arg="--additional-suffix=${SUFFIX}"
+
+set -x
+zcat --force $fname \
+| awk "/^#/ { print >> \"${header}\"; next } { print| \"split ${suffix_arg} --lines=${NUM_LINES} -d - ${prefix}\" }"
+
+for f in ${prefix}*${SUFFIX}; do
+    mv ${f} ${f}.tmp
+    cat ${header} ${f}.tmp > ${f}
+    rm -f ${f}.tmp
+done
+
+rm -f "${header}"

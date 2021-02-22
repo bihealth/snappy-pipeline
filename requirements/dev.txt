@@ -1,0 +1,19 @@
+-r test.txt
+
+# iPython is nice
+ipython
+
+# Prettier CLI for py.test
+pytest-sugar
+
+# PDB support for py.test
+# not available from anaconda, must be installed through pip
+# remove this requirement?
+# current version: 0.3.1
+# pytest-pdb==0.2.0
+
+# Sphinx
+sphinx
+
+# ReadTheDocs theme for Sphinx
+sphinx_rtd_theme

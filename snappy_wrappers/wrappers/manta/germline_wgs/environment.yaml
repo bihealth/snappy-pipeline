@@ -1,0 +1,6 @@
+channels:
+- conda-forge
+- bioconda
+- r
+dependencies:
+- manta ==1.2.1

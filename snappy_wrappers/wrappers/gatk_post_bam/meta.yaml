@@ -1,0 +1,4 @@
+name: gatk_post_bam
+description: GATK Postprocessing for BAM Aligned Reads
+authors:
+  - Manuel Holtgrewe

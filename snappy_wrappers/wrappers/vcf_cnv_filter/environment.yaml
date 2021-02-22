@@ -1,0 +1,10 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- python =3.6
+- vcfpy ==0.13.3
+- pytabix ==0.0.2
+
+- bcftools ==1.9
+- htslib ==1.9

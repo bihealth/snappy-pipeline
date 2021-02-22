@@ -1,0 +1,89 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_variant_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = PanelOfNormalsWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    panel_of_normals_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule panel_of_normals_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Panel of normals (Mutect2) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Select normals --------------------------------------------------------------
+
+# rule panel_of_normals_mutect2_select_panel:
+#     input: unpack(wf.get_input_files('mutect2', 'select_panel'))
+#     output: **wf.get_output_files('mutect2', 'select_panel')
+#     # log: **wf.get_log_file('mutect2', 'select_panel')
+#     wrapper: wf.wrapper_path('mutect2/select_panel')
+
+# Write out the tumor-only results for the normals ----------------------------
+
+
+rule panel_of_normals_mutect2_prepare_panel:
+    input:
+        unpack(wf.get_input_files("mutect2", "prepare_panel")),
+    output:
+        **wf. get_output_files('mutect2','prepare_panel'),
+    log:
+        **wf. get_log_file('mutect2','prepare_panel'),
+    wrapper:
+        wf.wrapper_path("mutect2_par/prepare_panel")
+
+
+# Create the panel of normals -------------------------------------------------
+
+
+rule panel_of_normals_mutect2_create_panel:
+    input:
+        unpack(wf.get_input_files("mutect2", "create_panel")),
+    output:
+        **wf. get_output_files('mutect2','create_panel'),
+    log:
+        **wf. get_log_file('mutect2','create_panel'),
+    wrapper:
+        wf.wrapper_path("mutect2/create_panel")

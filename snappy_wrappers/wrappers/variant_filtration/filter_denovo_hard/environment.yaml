@@ -1,0 +1,9 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- python >=3.6
+- htslib ==1.9
+- bcftools ==1.9
+- pysam >=0.14.0
+- vcfpy >=0.11.0

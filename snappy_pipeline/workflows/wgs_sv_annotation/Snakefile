@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline wgs_sv_annotation step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.wgs_sv_annotation import WgsSvAnnotationWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = WgsSvAnnotationWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    wgs_sv_annotation_link_out_run,
+    # Writing pedigrees should be done locally as well
+    wgs_sv_annotation_write_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule wgs_sv_annotation_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule wgs_sv_annotation_write_pedigree_run:
+    input:
+        unpack(wf.get_input_files("write_pedigree", "run")),
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
+
+# Run vcf_sv_filter -----------------------------------------------------------
+
+
+rule wgs_sv_annotation_vcf_sv_filter:
+    input:
+        unpack(wf.get_input_files("vcf_sv_filter", "run")),
+    output:
+        **wf. get_output_files('vcf_sv_filter','run'),
+    log:
+        wf.get_log_file("vcf_sv_filter", "run"),
+    wrapper:
+        wf.wrapper_path("vcf_sv_filter")

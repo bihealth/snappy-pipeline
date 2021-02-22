@@ -1,0 +1,12 @@
+channels:
+- conda-forge
+- bioconda
+- r
+dependencies:
+- bcftools >=1.9
+- htslib >=1.9
+- jannovar-cli ==0.26
+- snakemake ==5.18
+- ruamel
+- ruamel.yaml
+

@@ -1,0 +1,6 @@
+channels:
+- conda-forge
+- bioconda
+- r
+dependencies:
+- peddy ==0.3.1

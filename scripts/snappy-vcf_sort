@@ -1,0 +1,33 @@
+#!/bin/bash -ex
+
+export LC_ALL=C
+
+# Sort VCF file using FAI index using Unix sort
+#
+# When bedtools sort -faidx simply requires too much memory...
+#
+# Usage::
+#
+#    $ zcat foo.vcf.gz | vcf_sort_fai path/to/ref.fa.fai
+
+if [[ -z "$1" ]]; then
+    &>2 echo "Give FAI file as first argument"
+    exit 1
+fi
+
+awk -v fai=$1 -F $'\t' '
+    BEGIN {
+        OFS=FS;
+        offset=0;
+        i=1;
+        while ((getline line < fai) > 0) {
+            split(line, arr, FS)
+            chrToID[arr[1]] = i++;
+        }
+    }
+    /^#/ { print offset++, $0; }
+    !/#/ {
+        print offset + chrToID[$1], $0;
+    }' \
+| sort -k1,1n -k2,2V -k3,3n \
+| cut -f 2-

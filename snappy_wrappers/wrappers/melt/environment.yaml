@@ -1,0 +1,11 @@
+channels:
+- conda-forge
+- bioconda
+- r
+- http://cubiconda.bihealth.org/cubiconda
+dependencies:
+- melt_mei
+- htslib
+- perl
+- bcftools
+- bowtie2

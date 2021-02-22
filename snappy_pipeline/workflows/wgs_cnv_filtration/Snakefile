@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline wgs_cnv_filtration step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.wgs_cnv_filtration import WgsCnvFiltrationWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = WgsCnvFiltrationWorkflow(
+    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Writing the PED files should be done locally
+    wgs_cnv_filtration_write_pedigree_run,
+    # Linking files from work/ to output/ should be done locally
+    wgs_cnv_filtration_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule wgs_cnv_filtration_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# WGS SV Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule wgs_cnv_filtration_write_pedigree_run:
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
+
+# Filter for Quality ----------------------------------------------------------
+
+
+rule wgs_cnv_filtration_filter_quality_run:
+    input:
+        unpack(wf.get_input_files("filter_quality", "run")),
+    output:
+        **wf. get_output_files('filter_quality','run'),
+    log:
+        wf.get_log_file("filter_quality", "run"),
+    wrapper:
+        wf.wrapper_path("wgs_cnv_filtration/filter_quality")
+
+
+# Filter for Inheritance ------------------------------------------------------
+
+
+rule wgs_cnv_filtration_filter_inheritance_run:
+    input:
+        unpack(wf.get_input_files("filter_inheritance", "run")),
+    output:
+        **wf. get_output_files('filter_inheritance','run'),
+    log:
+        wf.get_log_file("filter_inheritance", "run"),
+    wrapper:
+        wf.wrapper_path("wgs_cnv_filtration/filter_inheritance")
+
+
+# Filter for Region -----------------------------------------------------------
+
+
+rule wgs_cnv_filtration_filter_regions_run:
+    input:
+        unpack(wf.get_input_files("filter_regions", "run")),
+    output:
+        **wf. get_output_files('filter_regions','run'),
+    log:
+        wf.get_log_file("filter_regions", "run"),
+    wrapper:
+        wf.wrapper_path("wgs_cnv_filtration/filter_regions")

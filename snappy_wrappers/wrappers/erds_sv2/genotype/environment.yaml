@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+- r
+dependencies:
+- bcftools >=1.8-2
+- htslib >=1.8-2
+- sv2 ==1.4.3.4

@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+  - samtools =1.5
+  - gnuplot ==5.0.5
+  - libpng ==1.6.28

@@ -1,0 +1,124 @@
+# XHMM needs many rules, thus they are in their own files.
+
+
+rule targeted_seq_cnv_calling_xhmm_coverage:
+    input:
+        unpack(wf.get_input_files("xhmm", "coverage")),
+    output:
+        **wf. get_output_files('xhmm','coverage'),
+    params:
+        args=wf.get_params("xhmm", "coverage"),
+    log:
+        wf.get_log_file("xhmm", "coverage"),
+    wrapper:
+        wf.wrapper_path("xhmm/gatk_cov")
+
+
+rule targeted_seq_cnv_calling_xhmm_merge_cov:
+    input:
+        wf.get_input_files("xhmm", "merge_cov"),
+    output:
+        wf.get_output_files("xhmm", "merge_cov"),
+    log:
+        wf.get_log_file("xhmm", "merge_cov"),
+    wrapper:
+        wf.wrapper_path("xhmm/merge_cov")
+
+
+rule targeted_seq_cnv_calling_xhmm_ref_stats:
+    output:
+        **wf. get_output_files('xhmm','ref_stats'),
+    log:
+        wf.get_log_file("xhmm", "ref_stats"),
+    wrapper:
+        wf.wrapper_path("xhmm/gatk_ref_stats")
+
+
+rule targeted_seq_cnv_calling_xhmm_filter_center:
+    input:
+        unpack(wf.get_input_files("xhmm", "filter_center")),
+    output:
+        **wf. get_output_files('xhmm','filter_center'),
+    log:
+        wf.get_log_file("xhmm", "filter_center"),
+    wrapper:
+        wf.wrapper_path("xhmm/filter_center")
+
+
+rule targeted_seq_cnv_calling_xhmm_pca:
+    input:
+        wf.get_input_files("xhmm", "pca"),
+    output:
+        **( wf. get_output_files('xhmm','pca')),
+    log:
+        wf.get_log_file("xhmm", "pca"),
+    wrapper:
+        wf.wrapper_path("xhmm/pca")
+
+
+rule targeted_seq_cnv_calling_xhmm_normalize:
+    input:
+        unpack(wf.get_input_files("xhmm", "normalize")),
+    output:
+        **( wf. get_output_files('xhmm','normalize')),
+    log:
+        wf.get_log_file("xhmm", "normalize"),
+    wrapper:
+        wf.wrapper_path("xhmm/normalize")
+
+
+rule targeted_seq_cnv_calling_xhmm_zscore_center:
+    input:
+        wf.get_input_files("xhmm", "zscore_center"),
+    output:
+        **( wf. get_output_files('xhmm','zscore_center')),
+    log:
+        wf.get_log_file("xhmm", "zscore_center"),
+    wrapper:
+        wf.wrapper_path("xhmm/zscore_center")
+
+
+rule targeted_seq_cnv_calling_xhmm_refilter:
+    input:
+        unpack(wf.get_input_files("xhmm", "refilter")),
+    output:
+        wf.get_output_files("xhmm", "refilter"),
+    log:
+        wf.get_log_file("xhmm", "refilter"),
+    wrapper:
+        wf.wrapper_path("xhmm/refilter")
+
+
+rule targeted_seq_cnv_calling_xhmm_discover:
+    input:
+        unpack(wf.get_input_files("xhmm", "discover")),
+    output:
+        **( wf. get_output_files('xhmm','discover')),
+    log:
+        wf.get_log_file("xhmm", "discover"),
+    wrapper:
+        wf.wrapper_path("xhmm/discover")
+
+
+rule targeted_seq_cnv_calling_xhmm_genotype:
+    input:
+        unpack(wf.get_input_files("xhmm", "genotype")),
+    output:
+        **( wf. get_output_files('xhmm','genotype')),
+    log:
+        wf.get_log_file("xhmm", "genotype"),
+    wrapper:
+        wf.wrapper_path("xhmm/genotype")
+
+
+rule targeted_seq_cnv_calling_xhmm_extract_ped:
+    input:
+        unpack(wf.get_input_files("xhmm", "extract_ped")),
+    output:
+        **( wf. get_output_files('xhmm','extract_ped')),
+    log:
+        wf.get_log_file("xhmm", "extract_ped"),
+    params:
+        ped_members=wf.substep_getattr("xhmm", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("xhmm/extract_ped")

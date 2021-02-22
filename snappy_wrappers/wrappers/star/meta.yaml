@@ -1,0 +1,4 @@
+name: star
+description: RNA-seq alignment with STAR
+authors:
+  - Manuel Holtgrewe

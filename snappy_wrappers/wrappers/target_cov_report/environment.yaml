@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bedtools
+- bedops
+- python =3
+- htslib

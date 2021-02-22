@@ -1,0 +1,6 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- dkfz-bias-filter ==1.2.3a
+- bcftools

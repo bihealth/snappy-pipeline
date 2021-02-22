@@ -1,0 +1,12 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- ebfilter >=0.2.2
+- vcfpy
+- pysam
+- scipy
+- numpy
+- samtools
+- htslib
+- bcftools

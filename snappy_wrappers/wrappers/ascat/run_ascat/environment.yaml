@@ -1,0 +1,9 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- r ==3.3.2
+- ascat ==2.5
+- bcftools ==1.5
+- samtools ==1.5
+- htslib ==1.5
