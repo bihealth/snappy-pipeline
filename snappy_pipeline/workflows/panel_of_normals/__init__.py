@@ -24,8 +24,8 @@ For each panel of normals tool, the step outputs one set of files describing the
 For example, the ``mutect2`` panel of normal generates ``{mapper}.mutect2.pon.vcf.gz``
 and associated files (md5 sums indices).
 
-The normals that have been used, as well as the individual files (for example 
-vcf files for each normal) are kept in the ``work`` directory. This enables the 
+The normals that have been used, as well as the individual files (for example
+vcf files for each normal) are kept in the ``work`` directory. This enables the
 augmentation of the panel by new files when they become available.
 
 =====================

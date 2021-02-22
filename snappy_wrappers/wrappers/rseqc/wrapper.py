@@ -60,7 +60,7 @@ then
     fi
 
     reverse=$(echo $reverse | tr '[Dde]' 'E')
-    
+
     strand=0
     if [ $(echo "$forward > {snakemake.config[step_config][gene_expression_quantification][strandedness][threshold]}" | bc -l) -gt 0 ]
     then
