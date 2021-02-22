@@ -56,8 +56,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"CUBI Pipeline"
-copyright = u"2015-2018, CUBI, Berlin Institute of Health"
+project = u"SNAPPY Pipeline"
+copyright = u"2015-2021, CUBI, Berlin Institute of Health"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -207,7 +207,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ("index", "snappy_pipeline.tex", u"CUBI Pipeline Documentation", u"Manuel Holtgrewe", "manual")
+    ("index", "snappy_pipeline.tex", u"SNAPPY Pipeline Documentation", u"Manuel Holtgrewe", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -235,7 +235,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "snappy_pipeline", u"CUBI Pipeline Documentation", [u"Manuel Holtgrewe"], 1)]
+man_pages = [("index", "snappy_pipeline", u"SNAPPY Pipeline Documentation", [u"Manuel Holtgrewe"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -250,7 +250,7 @@ texinfo_documents = [
     (
         "index",
         "snappy_pipeline",
-        u"CUBI Pipeline Documentation",
+        u"SNAPPY Pipeline Documentation",
         u"Manuel Holtgrewe",
         "snappy_pipeline",
         "One line description of project.",
