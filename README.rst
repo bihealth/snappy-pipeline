@@ -1,3 +1,7 @@
+.. image:: https://readthedocs.org/projects/snappy-pipeline/badge/?version=latest
+    :target: https://snappy-pipeline.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 ===============================================
 SNAPPY - SNAPPY Nucleic Acid Procesing Pipeline
 ===============================================
