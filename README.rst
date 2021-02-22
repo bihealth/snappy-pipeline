@@ -55,3 +55,8 @@ See `user installation <docs/quickstart.rst>`_ if you just want to use the pipel
 
 See `developer installation <docs/installation.rst>`_ for getting started with working on the pipeline code and also building the documentation.
 
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/daf95ee707874e108d4287501d0587fa
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/gh/bihealth/snappy-pipeline?utm_source=github.com&utm_medium=referral&utm_content=bihealth/snappy-pipeline&utm_campaign=Badge_Grade_Settings
