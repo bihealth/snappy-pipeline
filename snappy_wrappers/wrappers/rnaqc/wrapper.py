@@ -31,7 +31,7 @@ fi
 # ----------------------------------------------------------------------------
 # Inititalisation: paired & strandedness decisions
 # ----------------------------------------------------------------------------
-# Find out single or paired ended 
+# Find out single or paired ended
 n_pair=$(samtools view -f 0x1 {snakemake.input.bam} | head -n 1000 | wc -l || true)
 if [[ $n_pair -eq 0 ]]; then
     paired=0

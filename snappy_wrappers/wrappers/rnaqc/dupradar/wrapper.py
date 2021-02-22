@@ -31,7 +31,7 @@ fi
 # ----------------------------------------------------------------------------
 # Inititalisation: paired & strandedness decisions
 # ----------------------------------------------------------------------------
-# Find out single or paired ended 
+# Find out single or paired ended
 n_pair=$(samtools view -f 0x1 {snakemake.input.bam} | head -n 1000 | wc -l || true)
 if [[ $n_pair -eq 0 ]]; then
     paired=0
@@ -89,7 +89,7 @@ Rscript --vanilla run_dupradar.R \
     ${{strand}} \
     ${{paired_cmd}} \
     {snakemake.config[step_config][gene_expression_quantification][dupradar][num_threads]} \
-    "." 
+    "."
 popd
 
 mv ${{TMPDIR}}/dupradar/results.tsv {snakemake.output.dupradar}
