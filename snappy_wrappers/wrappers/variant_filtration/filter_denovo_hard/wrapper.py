@@ -9,7 +9,6 @@ Apply all hard-filters with the following exceptions :
 We simply keep these annotations and do a post-filtration later.
 """
 
-import collections
 import os
 import sys
 
@@ -20,7 +19,6 @@ sys.path.insert(0, base_dir)
 
 from snakemake.shell import shell
 
-import snappy_wrappers.tools.vcf_filter_denovo
 
 region_filter = ""
 if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:

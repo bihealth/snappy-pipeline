@@ -5,7 +5,6 @@ windows
 
 import os
 import sys
-import textwrap
 
 from snakemake import shell
 

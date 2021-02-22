@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 import textwrap
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 

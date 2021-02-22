@@ -98,12 +98,11 @@ import os.path
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
-from snakemake.io import expand, temp
+from snakemake.io import expand
 
 from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
 from ...utils import listify, dictify
-from ...base import snakefile_path
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

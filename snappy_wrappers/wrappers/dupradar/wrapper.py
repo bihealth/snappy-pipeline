@@ -2,7 +2,6 @@
 """Wrapper for running CopywriteR"""
 
 from snakemake import shell
-import os
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
 

@@ -2,7 +2,6 @@
 """CUBI+Snakemake wrapper code for deconstructSigs
 """
 
-import os
 from snakemake import shell
 
 __author__ = "Clemens Messerschmidt"

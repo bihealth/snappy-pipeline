@@ -11,7 +11,7 @@ import os
 import os.path
 import sys
 
-from snakemake.io import touch, expand
+from snakemake.io import touch
 
 from biomedsheets import io_tsv
 from biomedsheets.io import json_loads_ordered, SheetBuilder

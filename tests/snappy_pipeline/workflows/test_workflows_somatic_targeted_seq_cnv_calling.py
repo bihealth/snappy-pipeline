@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_targeted_seq_cnv_calling workflow module code"""
 
-from unittest.mock import Mock
 
 from itertools import chain
 import pytest
 import ruamel.yaml as yaml
-import sys
 import textwrap
 
 from snakemake.io import Wildcards
@@ -239,7 +237,6 @@ def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_cal
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     expected = "work/{mapper}.cnvkit.coverage.{library_name}/log/snakemake.log"
     # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage") == expected
-    pass
 
 
 def test_cnvkit_coverage_step_part_update_cluster_config(
@@ -276,7 +273,6 @@ def test_cnvkit_reference_step_part_get_output_files(somatic_targeted_seq_cnv_ca
 def test_cnvkit_reference_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     expected = "work/cnvkit.reference/log/snakemake.log"
     # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference") == expected
-    pass
 
 
 def test_cnvkit_reference_step_part_update_cluster_config(

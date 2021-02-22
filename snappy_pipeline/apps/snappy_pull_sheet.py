@@ -2,7 +2,6 @@
 """Pull biomedsheet sample sheet from SODAR API."""
 
 import argparse
-import json
 import re
 import sys
 

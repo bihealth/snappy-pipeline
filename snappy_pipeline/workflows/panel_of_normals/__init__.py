@@ -50,12 +50,11 @@ Currently, no reports are generated.
 """
 
 from collections import OrderedDict
-from itertools import chain
 import os
 import sys
 import random
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart

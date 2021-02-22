@@ -192,4 +192,3 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     def check_config(self):
         """Check config attributes for presence"""
-        pass

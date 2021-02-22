@@ -3,10 +3,7 @@
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out tsv meta_clinical_patient.txt
 """
 
-import biomedsheets
-from biomedsheets import shortcuts
 
-from pprint import pprint
 import csv
 
 

@@ -2,7 +2,6 @@
 """CUBI+Snakemake wrapper for filtering WGS SV results for overlap with interesting regions.
 """
 
-import os
 
 from snakemake import shell
 

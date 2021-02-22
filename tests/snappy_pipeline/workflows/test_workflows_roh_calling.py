@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests for the ``roh_calling`` workflow module code"""
 
-from unittest.mock import Mock
 
 import pytest
 import ruamel.yaml as yaml
-import sys
 import textwrap
 
 from snakemake.io import Wildcards

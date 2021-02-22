@@ -2,7 +2,6 @@
 """CUBI+Snakemake wrapper code for HTS Screen: Snakemake wrapper.py
 """
 
-import os.path
 
 from snakemake import shell
 

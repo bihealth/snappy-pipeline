@@ -3,7 +3,6 @@
 """
 
 import os
-import sys
 
 from snakemake import shell
 

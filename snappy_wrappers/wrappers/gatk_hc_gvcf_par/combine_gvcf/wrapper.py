@@ -7,7 +7,6 @@ import textwrap
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.tools.genome_windows import yield_regions
 from snappy_wrappers.wrapper_parallel import (
     in_working_dir,
     ResourceUsage,
@@ -22,7 +21,6 @@ from snappy_wrappers.wrapper_parallel import (
 # Naming clash limbo...
 snake_job = snakemake
 del snakemake
-from snakemake import shell
 from snakemake.io import Namedlist
 
 snakemake = snake_job

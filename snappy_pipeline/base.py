@@ -61,8 +61,6 @@ def _ordered_dump(data, stream=None, dumper_klass=yaml.Dumper, **kwargs):
     class OrderedDumper(dumper_klass):
         """Helper class"""
 
-        pass
-
     def _dict_representer(dumper, data):
         return dumper.represent_mapping(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items()
