@@ -1,3 +1,10 @@
+.. image:: https://github.com/bihealth/cubi-tk/workflows/CI/badge.svg
+    :target: https://github.com/bihealth/snappy-pipeline/actions
+    :alt: Continuous Integration Status
+.. image:: https://app.codacy.com/project/badge/Grade/d93e08bfbb554e4fbf45eed8862beb90
+    :target: https://www.codacy.com/gh/bihealth/snappy-pipeline/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bihealth/snappy-pipeline&amp;utm_campaign=Badge_Grade
+.. image:: https://app.codacy.com/project/badge/Coverage/d93e08bfbb554e4fbf45eed8862beb90
+    :target: https://www.codacy.com/gh/bihealth/snappy-pipeline/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bihealth/snappy-pipeline&amp;utm_campaign=Badge_Coverage
 .. image:: https://readthedocs.org/projects/snappy-pipeline/badge/?version=latest
     :target: https://snappy-pipeline.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
@@ -5,9 +12,6 @@
 ===============================================
 SNAPPY - SNAPPY Nucleic Acid Procesing Pipeline
 ===============================================
-
-- **Version**: ``v0.3.0``
-- **License**: MIT
 
 ------------
 Installation

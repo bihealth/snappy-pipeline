@@ -207,7 +207,13 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ("index", "snappy_pipeline.tex", u"SNAPPY Pipeline Documentation", u"Manuel Holtgrewe", "manual")
+    (
+        "index",
+        "snappy_pipeline.tex",
+        u"SNAPPY Pipeline Documentation",
+        u"Manuel Holtgrewe",
+        "manual",
+    )
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -235,7 +241,9 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "snappy_pipeline", u"SNAPPY Pipeline Documentation", [u"Manuel Holtgrewe"], 1)]
+man_pages = [
+    ("index", "snappy_pipeline", u"SNAPPY Pipeline Documentation", [u"Manuel Holtgrewe"], 1)
+]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
