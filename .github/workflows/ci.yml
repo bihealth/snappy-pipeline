@@ -37,6 +37,9 @@ jobs:
         run: pip install -r requirements/test.txt
       - name: Run tests
         run: pytest
+        env:
+          DIFF_MASTER: ${{ github.event_name == 'pull_request' }}
+          DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/master' }}
       - name: Create text report
         run: coverage report
       - name: Create XML report for codacy

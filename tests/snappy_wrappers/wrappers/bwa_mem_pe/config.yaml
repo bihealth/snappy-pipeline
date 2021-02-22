@@ -1,0 +1,14 @@
+step_config:
+  ngs_mapping:
+    bwa:
+      path_index: input/chr15_FBN1.fasta
+      ref_gc_stats: null
+      bwa_mode: auto
+      num_threads_align: 16
+      num_threads_trimming: 8
+      num_threads_bam_view: 4
+      num_threads_bam_sort: 4
+      memory_bam_sort: 50M  # little in CI
+      trim_adapters: false
+      mask_duplicates: true
+      split_as_secondary: true

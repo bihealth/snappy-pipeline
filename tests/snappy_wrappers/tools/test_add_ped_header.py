@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
-import pytest
 import subprocess
 import textwrap
 
@@ -42,12 +40,12 @@ def test_add_ped_header():
             $in_ped \
             $in_vcf.gz \
             $out_vcf
-        
+
         zcat $out_vcf
         """
         ).lstrip(),
-        shell=True,
-        executable="/bin/bash",
+        shell=True,  # nosec
+        executable="bash",
     )
 
     ret = ret.decode("utf-8").split("\n")
