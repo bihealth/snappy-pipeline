@@ -2,7 +2,6 @@
 """CUBI+Snakemake wrapper code for region filter for wgs_mei_filtration.
 """
 
-import os
 
 from snakemake import shell
 

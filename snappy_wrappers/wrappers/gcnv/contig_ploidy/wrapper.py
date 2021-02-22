@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 from snakemake.shell import shell
 
 paths_tsv = " ".join(snakemake.input.tsv)

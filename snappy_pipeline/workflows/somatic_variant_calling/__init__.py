@@ -81,7 +81,6 @@ from collections import OrderedDict
 from itertools import chain
 import os
 import sys
-import random
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

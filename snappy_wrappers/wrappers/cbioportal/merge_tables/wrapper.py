@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """Wrapper for merging multiple tables in R on shared columns"""
 
-from snakemake import shell
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
 
 import pandas as pd
 import re
-import sys
 
 pattern = re.compile("(.+)-[DR]NA[0-9]+-(WES|WGS|mRNA_seq)[0-9]+$")
 

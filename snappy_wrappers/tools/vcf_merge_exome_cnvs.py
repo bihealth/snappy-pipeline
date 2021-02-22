@@ -7,7 +7,6 @@ import logging
 import sys
 from statistics import mean
 import typing
-import warnings
 
 import attr
 import logzero

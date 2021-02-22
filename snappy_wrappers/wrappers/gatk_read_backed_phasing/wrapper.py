@@ -2,9 +2,7 @@
 """Wrapper for running GATK ReadBackedPhasing in parallel, genome is split into windows
 """
 
-import os
 from snakemake.shell import shell
-import sys
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

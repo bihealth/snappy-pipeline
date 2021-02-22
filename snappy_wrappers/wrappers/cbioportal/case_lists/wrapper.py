@@ -3,9 +3,6 @@
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
 
-import biomedsheets
-from biomedsheets import shortcuts
-
 
 def write_case_list_sequenced(sheets, config, outfile):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""

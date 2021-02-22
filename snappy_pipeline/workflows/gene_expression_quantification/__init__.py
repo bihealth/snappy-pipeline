@@ -48,7 +48,6 @@ Additionally, one can provide a gtf for the mapping between transcripts and gene
 """
 
 import os
-import sys
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand

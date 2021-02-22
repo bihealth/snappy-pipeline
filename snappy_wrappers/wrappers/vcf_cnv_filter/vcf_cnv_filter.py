@@ -26,7 +26,6 @@ The following fields will be added to the ``INFO`` column:
 # XXX: affecteds can have no entry!
 
 import argparse
-import copy
 import functools
 import itertools
 import logging

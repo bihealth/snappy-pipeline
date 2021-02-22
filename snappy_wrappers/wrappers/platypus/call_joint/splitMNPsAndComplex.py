@@ -9,9 +9,6 @@ calls.
 from __future__ import print_statement
 
 import sys
-import gzip
-import os
-import re
 
 ###################################################################################################
 

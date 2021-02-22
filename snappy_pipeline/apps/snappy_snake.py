@@ -246,7 +246,7 @@ def run(wrapper_args):
 def drmaa_available():
     """Return whether DRMAA execution is available"""
     try:
-        import drmaa
+        pass
     except (ImportError, RuntimeError):
         return False
     else:
