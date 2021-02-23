@@ -312,7 +312,7 @@ READ_MAPPERS_DNA = ("bwa",)
 READ_MAPPERS_RNA = ("star",)
 
 #: Available read mappers for (long/PacBio/Nanopoare) DNA-seq data
-READ_MAPPERS_DNA_LONG = ("bwa_mem_pacbio", "minialign", "ngmlr", "ngmlr_chained")
+READ_MAPPERS_DNA_LONG = ("minialign", "ngmlr", "ngmlr_chained")
 
 #: Default configuration
 DEFAULT_CONFIG = r"""
@@ -399,9 +399,6 @@ step_config:
     ngmlr:
       path_index: REQUIRED  # REQUIRED
       ref_gc_stats: null    # optional
-    # Configuration for BWA-MEM for PacBio/ONP
-    bwa_mem_pacbio:
-      num_threads: 16
     # Select postprocessing method, only for DNA alignment
     postprocessing: null # optional, {'gatk_post_bam'}
     # Configuration for GATK BAM postprocessing
