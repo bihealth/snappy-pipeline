@@ -817,8 +817,8 @@ class LinkInPathGenerator:
         for base_p in base_paths:
             dir_path = os.path.dirname(os.path.realpath(base_p))
             # Find all files
-            for _, _, files in os.walk(dir_path):
-                if sheet_file_name in files:
+            for item in os.listdir(dir_path):
+                if os.path.isfile(os.path.join(dir_path, item)) and sheet_file_name == item:
                     return os.path.join(dir_path, sheet_file_name)
         # If not found: None
         return None
