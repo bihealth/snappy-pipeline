@@ -779,10 +779,49 @@ class LinkInPathGenerator:
         out_list = []
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
-            out_list.append(getattr(info, "sheet_path"))  # expects a string
-            out_list.extend(getattr(info, "search_paths"))  # expects a list already
+
+            # Search paths - expects a list already
+            out_list.extend(getattr(info, "search_paths"))
+
+            # Sheet path
+            # Only name of file is stored in config file (relative path used),
+            # hence we need to find it in the base paths
+            sheet_file_name = getattr(info, "sheet_path")  # expects a string
+            base_paths = getattr(info, "base_paths")  # expects a list
+            sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
+            # Append if not None
+            if sheet_path:
+                out_list.append(sheet_path)
+
         # Return
         return out_list
+
+    @classmethod
+    def _find_sheet_file(cls, sheet_file_name, base_paths):
+        """Method searches for sheet file in base paths.
+
+        :param sheet_file_name: Sheet file name.
+        :type sheet_file_name: str
+
+        :param base_paths: List of strings with base paths.
+        :type base_paths: list
+
+        :return: Returns path to sheet file.
+        """
+        # Check if full path already
+        if os.path.exists(sheet_file_name):
+            return sheet_file_name
+        # Iterate over base paths
+        # Assumption: sheet file stored in the same level as config file,
+        # i.e., one of the base paths.
+        for base_p in base_paths:
+            dir_path = os.path.realpath(base_p)
+            # Find all files
+            for item in os.listdir(dir_path):
+                if sheet_file_name == item:
+                    return os.path.join(dir_path, sheet_file_name)
+        # If not found: None
+        return None
 
 
 def get_ngs_library_folder_name(sheets, library_name):
