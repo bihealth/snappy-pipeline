@@ -525,17 +525,27 @@ class BwaStepPart(ReadMappingStepPart):
         }
 
     def check_config(self):
+        """Method checks that all parameters required to execute BWA are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
         if "bwa" not in self.config["tools"]["dna"]:
             return  # BWA not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
         self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "bwa", "path_index"), "Path to BWA index is required"
+            config_keys=("step_config", "ngs_mapping", "bwa", "path_index"),
+            msg="Path to BWA index is required",
         )
+
         # Check that the path to the BWA index is valid.
         for ext in (".amb", ".ann", ".bwt", ".pac", ".sa"):
             expected_path = self.config["bwa"]["path_index"] + ext
             if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected BWA input path {} does not exist!"
-                raise InvalidConfiguration(tpl.format(expected_path))
+                tpl = "Expected BWA input path {expected_path} does not exist!".format(
+                    expected_path=expected_path
+                )
+                raise InvalidConfiguration(tpl)
 
 
 class StarStepPart(ReadMappingStepPart):
