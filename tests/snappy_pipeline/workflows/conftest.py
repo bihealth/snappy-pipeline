@@ -40,9 +40,16 @@ def work_dir():
 
 
 @pytest.fixture
-def config_lookup_paths():
-    """Return configuration lookup paths list for overall consistency in tests"""
-    return ["/decoy/config", "/work/config"]
+def config_lookup_paths(fake_fs):
+    """
+    :return: Returns configuration lookup paths list for overall consistency in tests.
+    Method also create paths in the fake file system.
+    """
+    lookup_paths = ["/decoy/config", "/work/config"]
+    for l_path in lookup_paths:
+        if not fake_fs.os.path.exists(l_path):
+            fake_fs.fs.create_dir(l_path)
+    return lookup_paths
 
 
 @pytest.fixture
@@ -151,7 +158,8 @@ def sample_cache_dict():
 def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
     """Return fake file system setup with files for the germline_sheet_tsv"""
     # Create work directory
-    fake_fs.fs.create_dir("/work")
+    if not fake_fs.os.path.exists("/work"):
+        fake_fs.fs.create_dir("/work")
     # Create FASTQ read files for the samples
     tpl = "/path/{donor}/FCXXXXXX/L001/{donor}_R{i}.fastq.gz"
     for line in germline_sheet_tsv.splitlines()[1:]:
@@ -169,7 +177,8 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
     """Return fake file system setup with files for the germline_sheet_tsv"""
     # Create work directory
-    fake_fs2.fs.create_dir("/work")
+    if not fake_fs2.os.path.exists("/work"):
+        fake_fs2.fs.create_dir("/work")
     # Create FASTQ read files for the samples
     tpl = "/path/{donor}/{flowcell}/L001/{donor}_R{i}.fastq.gz"
     for line in germline_sheet_tsv.splitlines()[1:]:
@@ -188,7 +197,8 @@ def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
 def cancer_sheet_fake_fs(fake_fs, cancer_sheet_tsv):
     """Return fake file system setup with files for the cancer_sheet_tsv"""
     # Create work directory
-    fake_fs.fs.create_dir("/work")
+    if not fake_fs.os.path.exists("/work"):
+        fake_fs.fs.create_dir("/work")
     # Create FASTQ read files for the samples
     tpl = "/path/{folder}/FCXXXXXX/L001/{folder}_R{i}.fastq.gz"
     for line in cancer_sheet_tsv.splitlines()[1:]:
