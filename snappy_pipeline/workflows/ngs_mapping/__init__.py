@@ -553,30 +553,41 @@ class StarStepPart(ReadMappingStepPart):
 
     name = "star"
 
-    def check_config(self):
-        if "star" not in self.config["tools"]["rna"]:
-            return  # STAR not run, don't check configuration  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "star", "path_index"), "Path to STAR index is required"
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference"), "No reference genome FASTA file given"
-        )
-        # checking validity of the STAR index
-        fullpath = self.config["star"]["path_index"]
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(fullpath, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR index file {} does not exist!"
-                raise InvalidConfiguration(tpl.format(expected_path))
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_star_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "40:00",
             "ntasks": 16,
         }
+
+    def check_config(self):
+        """Method checks that all parameters required to execute BWA are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        if "star" not in self.config["tools"]["rna"]:
+            return  # STAR not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
+        self.parent.ensure_w_config(
+            config_keys=("step_config", "ngs_mapping", "star", "path_index"),
+            msg="Path to STAR index is required",
+        )
+        self.parent.ensure_w_config(
+            config_keys=("static_data_config", "reference"),
+            msg="No reference genome FASTA file given",
+        )
+
+        # Check validity of the STAR index
+        full_path = self.config["star"]["path_index"]
+        # a lot of files should be in this dir, justtest these
+        for indfile in ("Genome", "SA", "SAindex"):
+            expected_path = os.path.join(full_path, indfile)
+            if not os.path.exists(expected_path):  # pragma: no cover
+                tpl = "Expected STAR index file {expected_path} does not exist!".format(
+                    expected_path=expected_path
+                )
+                raise InvalidConfiguration(tpl)
 
 
 class Minimap2StepPart(ReadMappingStepPart):

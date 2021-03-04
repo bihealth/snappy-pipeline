@@ -546,6 +546,7 @@ class BaseStep:
 
         :param e_class: Preferred exception class to be raised in case of error.
         Default: MissingConfiguration.
+        :type e_class: class
         """
         # Initialise variables
         so_far = []
