@@ -529,7 +529,8 @@ class BwaStepPart(ReadMappingStepPart):
         configuration. It further checks that the provided index has all the expected file
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
-        if "bwa" not in self.config["tools"]["dna"]:
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]:
             return  # BWA not run, don't check configuration  # pragma: no cover
 
         # Check required configuration settings present
@@ -565,7 +566,8 @@ class StarStepPart(ReadMappingStepPart):
         configuration. It further checks that the provided index has all the expected file
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
-        if "star" not in self.config["tools"]["rna"]:
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
         # Check required configuration settings present
