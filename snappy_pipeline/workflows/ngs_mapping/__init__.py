@@ -530,7 +530,7 @@ class BwaStepPart(ReadMappingStepPart):
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]:
+        if self.__class__.name not in self.config["tools"]["dna"]:
             return  # BWA not run, don't check configuration  # pragma: no cover
 
         # Check required configuration settings present
@@ -567,7 +567,7 @@ class StarStepPart(ReadMappingStepPart):
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]:
+        if self.__class__.name not in self.config["tools"]["dna"]:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
         # Check required configuration settings present
