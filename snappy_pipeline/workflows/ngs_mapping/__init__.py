@@ -610,13 +610,6 @@ class NgmlrStepPart(ReadMappingStepPart):
 
     name = "ngmlr"
 
-    def check_config(self):
-        if not (set(self.config["tools"]["dna_long"]) & {"ngmlr", "ngmlr_chained"}):
-            return  # NGLMR not run, don't check configuration  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "ngmlr", "path_index"), "Path to NGMLR index is required"
-        )
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_ngmlr_run"] = {
             "mem": int(3.7 * 1024 * 16),
@@ -624,18 +617,36 @@ class NgmlrStepPart(ReadMappingStepPart):
             "ntasks": 16,
         }
 
+    def check_config(self):
+        """Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if not (set(self.config["tools"]["dna_long"]) & {"ngmlr", "ngmlr_chained"}):
+            return  # NGLMR not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
+        self.parent.ensure_w_config(
+            config_keys=("step_config", "ngs_mapping", "ngmlr", "path_index"),
+            msg="Path to NGMLR index is required",
+        )
+
 
 class ExternalStepPart(ReadMappingStepPart):
     """Support for linking in external BAM files"""
 
     name = "external"
 
-    def check_config(self):
-        if "external" not in self.config["tools"]["dna"]:
-            return  # External not run, don't check configuration  # pragma: no cover
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_external_run"] = {"mem": 1024, "time": "04:00", "ntasks": 1}
+
+    def check_config(self):
+        """Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if "external" not in self.config["tools"]["dna"]:
+            return  # External not run, don't check configuration  # pragma: no cover
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
@@ -674,15 +685,21 @@ class GatkPostBamStepPart(BaseStepPart):
         )
 
     def check_config(self):
+        """Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
         if "gatk_post_bam" not in (self.config["postprocessing"] or []):  # pylint: disable=C0325
             return  # GATK BAM postprocessing not enabled, skip
+
+        # Check required configuration settings present
         self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "gatk_post_bam", "paths_known_sites"),
-            "Known sites list cannot be empty for GATK BAM postprocessing",
+            config_keys=("step_config", "ngs_mapping", "gatk_post_bam", "paths_known_sites"),
+            msg="Known sites list cannot be empty for GATK BAM postprocessing",
         )
         self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA required for GATK BAM postprocessing",
+            config_keys=("static_data_config", "reference", "path"),
+            msg="Path to reference FASTA required for GATK BAM postprocessing",
         )
 
     def get_input_files(self, action):
