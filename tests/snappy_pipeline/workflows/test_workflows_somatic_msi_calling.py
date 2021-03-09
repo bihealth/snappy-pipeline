@@ -24,6 +24,17 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+          ngs_mapping:
+            tools:
+                dna: ['bwa']
+            bwa:
+              path_index: /path/to/bwa/index.fasta
+          somatic_msi_calling:
+            tools: ['mantis']
+            path_ngs_mapping: ../ngs_mapping  # REQUIRED
+            loci_bed: /path/to/hg19/loci.bed  # REQUIRED
+
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -109,4 +120,8 @@ def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt",
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt.status",
     ]
-    assert set(somatic_msi_calling_workflow.get_result_files()) == set(expected)
+    observed = set(somatic_msi_calling_workflow.get_result_files())
+    expected = set(expected)
+    print(observed)
+    print(expected)
+    assert expected == observed

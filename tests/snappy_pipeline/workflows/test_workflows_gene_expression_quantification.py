@@ -26,6 +26,14 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+          ngs_mapping:
+            tools:
+                rna:
+                    - star
+            star:
+              path_index: /path/to/star/index
+
         data_sets:
           first_batch:
             file: sheet.tsv
