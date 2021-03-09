@@ -30,12 +30,14 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+                dna:
+                    - bwa
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           somatic_variant_calling:
             tools:
             - mutect

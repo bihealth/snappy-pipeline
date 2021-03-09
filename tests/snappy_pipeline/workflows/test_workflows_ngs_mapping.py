@@ -26,6 +26,9 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+                dna:
+                    - bwa
             target_coverage_report:
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
@@ -34,8 +37,6 @@ def minimal_config():
             compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta
-            star:
-              path_index: /path/to/star/index
 
         data_sets:
           first_batch:
