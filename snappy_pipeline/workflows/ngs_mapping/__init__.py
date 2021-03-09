@@ -320,12 +320,9 @@ step_config:
   ngs_mapping:
     # Aligners to use for the different NGS library types
     tools:
-      dna:
-      - bwa
-      rna:
-      - star
-      dna_long:
-      - ngmlr
+      dna: []      # Example: 'bwa'
+      rna: []      # Example: 'star'
+      dna_long: [] # Example: 'ngmlr'
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
