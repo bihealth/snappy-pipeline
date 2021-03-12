@@ -365,7 +365,7 @@ def test_file_system_crawler_se_data_pe_pattern_bad_se_pe(sample_cache_dict_se_p
     ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
-            res = list(crawler.run("/path", "P001", (pattern_set,), True))
+            list(crawler.run("/path", "P001", (pattern_set,), True))
         assert str(excinfo.value).startswith("Must have the same number of matches per pattern,")
 
 
@@ -384,5 +384,5 @@ def test_file_system_crawler_se_data_pe_pattern_bad_pe_se(sample_cache_dict_pe_s
     ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
-            res = list(crawler.run("/path", "P001", (pattern_set,), True))
+            list(crawler.run("/path", "P001", (pattern_set,), True))
         assert str(excinfo.value).startswith("Must have the same number of matches per pattern,")

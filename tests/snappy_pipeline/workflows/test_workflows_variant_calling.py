@@ -327,7 +327,6 @@ def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_wor
 
 
 def test_gatk_hc_gvcf_step_part_combine_gvcf_get_args(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = variant_calling_workflow.get_args("gatk_hc_gvcf", "combine_gvcf")
     assert len(actual) == 1
     assert set(actual["genome_regions"].keys()) == {"1", "2"}
@@ -543,13 +542,6 @@ def test_varscan_step_part_call_cohort_update_cluster_config(
 
 
 def test_bcftools_stats_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "var_caller": "platypus",
-            "index_library_name": "P001-N1-DNA1-WGS1",
-        }
-    )
     actual = variant_calling_workflow.get_input_files("bcftools_stats", "run")
     expected = {
         "vcf": "work/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"

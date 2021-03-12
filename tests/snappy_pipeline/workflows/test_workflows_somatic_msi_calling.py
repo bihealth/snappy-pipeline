@@ -118,6 +118,6 @@ def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt",
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt.status",
     ]
-    observed = set(somatic_msi_calling_workflow.get_result_files())
+    actual = set(somatic_msi_calling_workflow.get_result_files())
     expected = set(expected)
-    assert expected == observed
+    assert actual == expected

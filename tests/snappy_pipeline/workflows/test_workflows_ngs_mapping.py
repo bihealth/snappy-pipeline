@@ -220,9 +220,9 @@ def test_external_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_gatk_post_bam_step_part_get_input_files(ngs_mapping_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
     expected = "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-    assert ngs_mapping_workflow.get_input_files("gatk_post_bam", "run") == expected
+    actual = ngs_mapping_workflow.get_input_files("gatk_post_bam", "run")
+    assert actual == expected
 
 
 def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
