@@ -522,7 +522,9 @@ class BwaStepPart(ReadMappingStepPart):
         }
 
     def check_config(self):
-        """Method checks that all parameters required to execute BWA are present in the
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
         configuration. It further checks that the provided index has all the expected file
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
@@ -559,7 +561,9 @@ class StarStepPart(ReadMappingStepPart):
         }
 
     def check_config(self):
-        """Method checks that all parameters required to execute BWA are present in the
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
         configuration. It further checks that the provided index has all the expected file
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
@@ -615,7 +619,9 @@ class NgmlrStepPart(ReadMappingStepPart):
         }
 
     def check_config(self):
-        """Method checks that all parameters required to execute BWA are present in the
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
@@ -638,7 +644,9 @@ class ExternalStepPart(ReadMappingStepPart):
         cluster_config["ngs_mapping_external_run"] = {"mem": 1024, "time": "04:00", "ntasks": 1}
 
     def check_config(self):
-        """Method checks that all parameters required to execute BWA are present in the
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
@@ -682,7 +690,9 @@ class GatkPostBamStepPart(BaseStepPart):
         )
 
     def check_config(self):
-        """Method checks that all parameters required to execute BWA are present in the
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow

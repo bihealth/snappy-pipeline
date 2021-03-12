@@ -534,7 +534,9 @@ class BaseStep:
         """
 
     def ensure_w_config(self, config_keys, msg, e_class=MissingConfiguration):
-        """Method ensures required configuration setting are present in the provided configuration;
+        """Check parameters in configuration.
+
+        Method ensures required configuration setting are present in the provided configuration;
         if not, it raises exception.
 
         :param config_keys: List of strings with all keys that must be present in the configuration
