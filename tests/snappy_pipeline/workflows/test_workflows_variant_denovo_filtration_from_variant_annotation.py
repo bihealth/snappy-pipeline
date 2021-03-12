@@ -195,7 +195,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_con
     assert expected == actual
 
 
-# Tests for VariantDeNovoFiltrationWorkflow ----------------------------------------------------------------
+# Tests for VariantDeNovoFiltrationWorkflow --------------------------------------------------------
 
 
 def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):

@@ -137,7 +137,7 @@ def test_write_trio_pedigree_step_part_run(variant_phasing_workflow, fake_fs):
     )
 
 
-# Tests for PhaseByTransmissionStepPart --------------------------------------------------------------
+# Tests for PhaseByTransmissionStepPart ------------------------------------------------------------
 
 
 def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_workflow):
@@ -189,7 +189,7 @@ def test_gatk_phase_by_transmission_step_part_update_cluster_config(
     assert expected == actual
 
 
-# Tests for ReadBackedPhasingOnlyStepPart --------------------------------------------------------------
+# Tests for ReadBackedPhasingOnlyStepPart ----------------------------------------------------------
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing_workflow):
@@ -251,7 +251,7 @@ def test_gatk_read_backed_phasing_only_step_part_update_cluster_config(
     assert expected == actual
 
 
-# Tests for ReadBackedPhasingAlsoStepPart --------------------------------------------------------------
+# Tests for ReadBackedPhasingAlsoStepPart ----------------------------------------------------------
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing_workflow):
