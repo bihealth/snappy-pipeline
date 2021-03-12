@@ -27,8 +27,7 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-                dna:
-                    - bwa
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:

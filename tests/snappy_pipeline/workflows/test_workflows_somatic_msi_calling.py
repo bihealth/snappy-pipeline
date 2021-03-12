@@ -27,7 +27,7 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-                dna: ['bwa']
+              dna: ['bwa']
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_msi_calling:

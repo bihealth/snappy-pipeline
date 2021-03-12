@@ -27,8 +27,7 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-                dna:
-                    - bwa
+              dna: ['bwa']
             target_coverage_report:
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"

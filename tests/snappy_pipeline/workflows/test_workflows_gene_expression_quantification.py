@@ -29,8 +29,7 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-                rna:
-                    - star
+              rna: ['star']
             star:
               path_index: /path/to/star/index
 
