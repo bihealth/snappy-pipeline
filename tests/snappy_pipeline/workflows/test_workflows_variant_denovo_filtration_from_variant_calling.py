@@ -147,8 +147,8 @@ def test_filter_de_novo_from_variant_calling_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
     expected = (
-        "work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/log/"
-        "{mapper}.{caller}.de_novos.{index_library}.log"
+        r"work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/log/"
+        r"{mapper}.{caller}.de_novos.{index_library}.log"
     )
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
     assert actual == expected
@@ -207,8 +207,8 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_log_file(
 ):
     # Define expected
     expected = (
-        "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\.]+}/log/"
-        "{mapper}.{caller}.de_novos_hard.{index_library}.log"
+        r"work/{mapper}.{caller}.de_novos_hard.{index_library,[^\.]+}/log/"
+        r"{mapper}.{caller}.de_novos_hard.{index_library}.log"
     )
     # Get actual
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
