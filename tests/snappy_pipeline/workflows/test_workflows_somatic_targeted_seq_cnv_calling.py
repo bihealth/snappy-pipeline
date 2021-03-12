@@ -235,13 +235,16 @@ def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_cal
 
 
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
+    base_file_name = (
+        "work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}"
+    )
     expected = {
-        'log': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.log',
-        'log_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.log.md5',
-        'conda_info': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_info.txt',
-        'conda_info_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_info.txt.md5',
-        'conda_list': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_list.txt',
-        'conda_list_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_list.txt.md5',
+        "log": base_file_name + ".log",
+        "log_md5": base_file_name + ".log.md5",
+        "conda_info": base_file_name + ".conda_info.txt",
+        "conda_info_md5": base_file_name + ".conda_info.txt.md5",
+        "conda_list": base_file_name + ".conda_list.txt",
+        "conda_list_md5": base_file_name + ".conda_list.txt.md5",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage")
     assert actual == expected
