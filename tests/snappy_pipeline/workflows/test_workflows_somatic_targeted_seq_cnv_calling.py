@@ -90,7 +90,6 @@ def somatic_targeted_seq_cnv_calling_workflow(
 
 
 def test_cnvkit_access_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "access")
     assert actual is None
 
@@ -236,8 +235,16 @@ def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_cal
 
 
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/{mapper}.cnvkit.coverage.{library_name}/log/snakemake.log"
-    # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage") == expected
+    expected = {
+        'log': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.log',
+        'log_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.log.md5',
+        'conda_info': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_info.txt',
+        'conda_info_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_info.txt.md5',
+        'conda_list': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_list.txt',
+        'conda_list_md5': 'work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}.conda_list.txt.md5',
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage")
+    assert actual == expected
 
 
 def test_cnvkit_coverage_step_part_update_cluster_config(
