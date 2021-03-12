@@ -125,7 +125,7 @@ def test_canvas_somatic_step_part_get_output_files(somatic_wgs_cnv_calling_workf
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_output_files("canvas", "run")
 
-    assert  actual == expected
+    assert actual == expected
 
 
 def test_canvas_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
@@ -189,7 +189,9 @@ def test_control_freec_somatic_step_part_get_output_files(somatic_wgs_cnv_callin
 
 def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
     # Define expected
-    base_name = "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}"
+    base_name = (
+        "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}"
+    )
     expected = {
         "conda_info": base_name + ".conda_info.txt",
         "conda_info_md5": base_name + ".conda_info.txt.md5",
@@ -245,7 +247,7 @@ def test_cnvkit_somatic_wgs_step_part_get_output_files(somatic_wgs_cnv_calling_w
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_output_files("cnvkit", "run")
 
-    assert  actual == expected
+    assert actual == expected
 
 
 def test_cnvkit_somatic_wgs_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
