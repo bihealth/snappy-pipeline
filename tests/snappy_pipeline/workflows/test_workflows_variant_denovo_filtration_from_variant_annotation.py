@@ -103,47 +103,71 @@ def variant_de_novo_filtration_workflow(
 def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    # Define expected
+    ngs_mapping_name_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    variant_annotation_name_out = (
+        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+    )
+    expected = {
+        "bai": ngs_mapping_name_out + ".bam.bai",
+        "bam": ngs_mapping_name_out + ".bam",
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "tbi": variant_annotation_name_out + ".vcf.gz.tbi",
+        "tbi_md5": variant_annotation_name_out + ".vcf.gz.tbi.md5",
+        "vcf": variant_annotation_name_out + ".vcf.gz",
+        "vcf_md5": variant_annotation_name_out + ".vcf.gz.md5",
+    }
+
+    # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
-    expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "tbi": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "tbi_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "vcf": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz",
-        "vcf_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.md5",
-    }
     actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo", "run")(wildcards)
+
     assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotation_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
+    # Define expected
+    base_name = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}"
+    )
     expected = {
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz.md5",
+        "tbi": base_name + ".vcf.gz.tbi",
+        "tbi_md5": base_name + ".vcf.gz.tbi.md5",
+        "vcf": base_name + ".vcf.gz",
+        "vcf_md5": base_name + ".vcf.gz.md5",
     }
-    assert expected == variant_de_novo_filtration_workflow.get_output_files("filter_denovo", "run")
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_output_files("filter_denovo", "run")
+
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotation_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    expected = "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/log/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.log"
-    assert expected == variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
+    # Define expected
+    expected = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/"
+        r"log/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.log"
+    )
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
+
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotation_step_part_update_cluster_config(
     variant_de_novo_filtration_workflow, dummy_cluster_config
 ):
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
     expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
+    assert actual == expected
 
 
 # Tests for FilterDeNovosHardStepPart --------------------------------------------------------------
@@ -152,47 +176,64 @@ def test_filter_de_novo_from_variant_annotation_step_part_update_cluster_config(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    # Define expected
+    base_name_out = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}"
     )
-    actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo_hard", "run")
     expected = {
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz.tbi",
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.vcf.gz",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf": base_name_out + ".vcf.gz",
     }
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo_hard", "run")
+
     assert expected == actual
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
-    expected = {
-        "summary": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.summary.txt",
-        "summary_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.summary.txt.md5",
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.vcf.gz.md5",
-    }
-    assert (
-        variant_de_novo_filtration_workflow.get_output_files("filter_denovo_hard", "run")
-        == expected
+    # Define expected
+    base_name_out = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}"
     )
+    expected = {
+        "summary": base_name_out + ".summary.txt",
+        "summary_md5": base_name_out +  ".summary.txt.md5",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf": base_name_out + ".vcf.gz",
+        "vcf_md5": base_name_out + ".vcf.gz.md5",
+    }
+
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_output_files("filter_denovo_hard", "run")
+
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    expected = "work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\.]+}/log/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.log"
-    assert variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run") == expected
+    # Define expected
+    expected = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\.]+}/log/"
+        r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.log"
+    )
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
+
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_config(
     variant_de_novo_filtration_workflow, dummy_cluster_config
 ):
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_hard_run"].keys())
     expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_hard_run"].keys())
+    assert actual == expected
 
 
 # Tests for VariantDeNovoFiltrationWorkflow --------------------------------------------------------
@@ -200,8 +241,6 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_con
 
 def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = [
         "collect_msdn",
@@ -211,26 +250,34 @@ def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
         "summarize_counts",
         "write_pedigree",
     ]
-    assert expected == list(sorted(variant_de_novo_filtration_workflow.sub_steps.keys()))
+    actual = list(sorted(variant_de_novo_filtration_workflow.sub_steps.keys()))
+    assert actual == expected
+
     # Check result file construction
     expected = [
         "output/bwa.denovo_count_summary/out/bwa.denovo_count_summary.txt",
         "output/bwa.denovo_count_summary/out/bwa.denovo_count_summary.txt.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.summary.txt",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.summary.txt.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.summary.txt",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.summary.txt.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
         "output/bwa.multisite_de_novo/out/bwa.multisite_de_novo.txt",
         "output/bwa.multisite_de_novo/out/bwa.multisite_de_novo.txt.md5",
     ]
+    base_name_out = (
+        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1{ext}"
+    )
+    expected += [
+        base_name_out.format(
+            i=i, ext=ext
+        )
+        for i in (1, 4)  # only for indices
+        for ext in (
+            ".summary.txt",
+            ".summary.txt.md5",
+            ".vcf.gz",
+            ".vcf.gz.md5",
+            ".vcf.gz.tbi",
+            ".vcf.gz.tbi.md5",
+        )
+    ]
     expected = list(sorted(expected))
     actual = list(sorted(variant_de_novo_filtration_workflow.get_result_files()))
-    assert expected == actual
+    assert actual == expected
