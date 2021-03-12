@@ -201,7 +201,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     )
     expected = {
         "summary": base_name_out + ".summary.txt",
-        "summary_md5": base_name_out +  ".summary.txt.md5",
+        "summary_md5": base_name_out + ".summary.txt.md5",
         "tbi": base_name_out + ".vcf.gz.tbi",
         "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "vcf": base_name_out + ".vcf.gz",
@@ -265,9 +265,7 @@ def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
         "bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1{ext}"
     )
     expected += [
-        base_name_out.format(
-            i=i, ext=ext
-        )
+        base_name_out.format(i=i, ext=ext)
         for i in (1, 4)  # only for indices
         for ext in (
             ".summary.txt",
