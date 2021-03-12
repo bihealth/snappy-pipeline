@@ -304,7 +304,7 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
         for mapper in ("bwa",)
         for cnv_caller in ("cnvetti",)
     ]
-    tpl2 = "output/{mapper}.cnvetti_plot.P00{i}/out/" "{mapper}.cnvetti_plot.P00{i}_{chrom}.{ext}"
+    tpl2 = "output/{mapper}.cnvetti_plot.P00{i}/out/{mapper}.cnvetti_plot.P00{i}_{chrom}.{ext}"
     expected += [
         tpl2.format(mapper=mapper, i=i, ext=ext, chrom=chrom)
         for i in (1, 2)
