@@ -74,7 +74,7 @@ def somatic_msi_calling_workflow(
     )
 
 
-# Tests for FeatureCountsStepPart ----------------------------------------------------------------------
+# Tests for FeatureCountsStepPart ------------------------------------------------------------------
 
 
 def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
@@ -101,13 +101,11 @@ def test_mantis_step_part_get_log_file(somatic_msi_calling_workflow):
     assert somatic_msi_calling_workflow.get_log_file("mantis", "run") == expected
 
 
-# Tests for SomaticMsiCallingWorkflow ---------------------------------------------------------------------
+# Tests for SomaticMsiCallingWorkflow --------------------------------------------------------------
 
 
 def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["link_out", "mantis"]
     assert list(sorted(somatic_msi_calling_workflow.sub_steps.keys())) == expected
@@ -122,6 +120,4 @@ def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
     ]
     observed = set(somatic_msi_calling_workflow.get_result_files())
     expected = set(expected)
-    print(observed)
-    print(expected)
     assert expected == observed

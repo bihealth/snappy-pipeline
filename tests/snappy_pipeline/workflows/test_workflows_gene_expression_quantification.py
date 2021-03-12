@@ -73,7 +73,7 @@ def gene_expression_quantification_workflow(
     )
 
 
-# Tests for FeatureCountsStepPart ----------------------------------------------------------------------
+# Tests for FeatureCountsStepPart ------------------------------------------------------------------
 
 
 def test_featurecounts_step_part_get_input_files(gene_expression_quantification_workflow):
@@ -106,12 +106,10 @@ def test_featurecounts_step_part_get_log_file(gene_expression_quantification_wor
         "work/{mapper}.featurecounts.{library_name}/log/{mapper}.featurecounts.{library_name}.log"
     )
     actual = gene_expression_quantification_workflow.get_log_file("featurecounts", "run").get("log")
-    print(actual)
-    print(expected)
     assert actual == expected
 
 
-# Tests for GeneExpressionQuantificationWorkflow ---------------------------------------------------------------------
+# Tests for GeneExpressionQuantificationWorkflow ---------------------------------------------------
 
 
 def test_gene_expression_quantification_workflow_substeps(gene_expression_quantification_workflow):
