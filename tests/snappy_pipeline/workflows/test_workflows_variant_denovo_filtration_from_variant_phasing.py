@@ -108,9 +108,9 @@ def test_filter_de_novo_from_variant_phasing_step_part_get_input_files(
     # Define expected
     ngs_mapping_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
     variant_phasing_name_out = (
-       "VARIANT_PHASING/output/"
-       "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/"
-       "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1"
+        "VARIANT_PHASING/output/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1"
     )
     expected = {
         "bai": ngs_mapping_out + "bwa.P001-N1-DNA1-WGS1.bam.bai",
