@@ -78,6 +78,40 @@ def ngs_mapping_workflow(
     )
 
 
+def get_expected_output_files_dict(bam_base_out, report_base_out):
+    """Helper method.
+
+    :param bam_base_out: Expected name pattern of BAM associated files without extension.
+    For example if the full path would be '/path/to/step_part.bam', argument should be
+    '/path/to/step_part'.
+    :type bam_base_out: str
+
+    :param report_base_out: Expected name pattern of report associated files without extension.
+    For example if the full path would be '/path/to/step_report.bam.bamstats.html', argument should
+    be '/path/to/step_report'.
+
+    :return: Returns dictionary with expected path for BAM and report associated files based on the
+    provided input.
+    """
+    # Define expected
+    expected = {
+        "bam": bam_base_out + ".bam",
+        "bam_bai": bam_base_out + ".bam.bai",
+        "bam_bai_md5": bam_base_out + ".bam.bai.md5",
+        "bam_md5": bam_base_out + ".bam.md5",
+        "report_bamstats_html": report_base_out + ".bam.bamstats.html",
+        "report_bamstats_html_md5": report_base_out + ".bam.bamstats.html.md5",
+        "report_bamstats_txt": report_base_out + ".bam.bamstats.txt",
+        "report_bamstats_txt_md5": report_base_out + ".bam.bamstats.txt.md5",
+        "report_flagstats_txt": report_base_out + ".bam.flagstats.txt",
+        "report_flagstats_txt_md5": report_base_out + ".bam.flagstats.txt.md5",
+        "report_idxstats_txt": report_base_out + ".bam.idxstats.txt",
+        "report_idxstats_txt_md5": report_base_out + ".bam.idxstats.txt.md5",
+    }
+    # Return
+    return expected
+
+
 # Tests for BwaStepPart ---------------------------------------------------------------------------
 
 
@@ -101,21 +135,15 @@ def test_bwa_step_part_get_input_files(ngs_mapping_workflow):
 
 
 def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
-    expected = {
-        "bam": "work/bwa.{library_name}/out/bwa.{library_name}.bam",
-        "bam_bai": "work/bwa.{library_name}/out/bwa.{library_name}.bam.bai",
-        "bam_bai_md5": "work/bwa.{library_name}/out/bwa.{library_name}.bam.bai.md5",
-        "bam_md5": "work/bwa.{library_name}/out/bwa.{library_name}.bam.md5",
-        "report_bamstats_html": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.bamstats.html",
-        "report_bamstats_html_md5": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.bamstats.html.md5",
-        "report_bamstats_txt": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.bamstats.txt",
-        "report_bamstats_txt_md5": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.bamstats.txt.md5",
-        "report_flagstats_txt": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.flagstats.txt",
-        "report_flagstats_txt_md5": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.flagstats.txt.md5",
-        "report_idxstats_txt": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.idxstats.txt",
-        "report_idxstats_txt_md5": "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.idxstats.txt.md5",
-    }
-    assert ngs_mapping_workflow.get_output_files("bwa", "run") == expected
+    # Define expected
+    bam_base_out = "work/bwa.{library_name}/out/bwa.{library_name}"
+    report_base_out = "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("bwa", "run")
+
+    assert actual == expected
 
 
 def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
@@ -153,21 +181,15 @@ def test_star_step_part_get_input_files(ngs_mapping_workflow):
 
 
 def test_star_step_part_get_output_files(ngs_mapping_workflow):
-    expected = {
-        "bam": "work/star.{library_name}/out/star.{library_name}.bam",
-        "bam_bai": "work/star.{library_name}/out/star.{library_name}.bam.bai",
-        "bam_bai_md5": "work/star.{library_name}/out/star.{library_name}.bam.bai.md5",
-        "bam_md5": "work/star.{library_name}/out/star.{library_name}.bam.md5",
-        "report_bamstats_html": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.bamstats.html",
-        "report_bamstats_html_md5": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.bamstats.html.md5",
-        "report_bamstats_txt": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.bamstats.txt",
-        "report_bamstats_txt_md5": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.bamstats.txt.md5",
-        "report_flagstats_txt": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.flagstats.txt",
-        "report_flagstats_txt_md5": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.flagstats.txt.md5",
-        "report_idxstats_txt": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.idxstats.txt",
-        "report_idxstats_txt_md5": "work/star.{library_name}/report/bam_qc/star.{library_name}.bam.idxstats.txt.md5",
-    }
-    assert ngs_mapping_workflow.get_output_files("star", "run") == expected
+    # Define expected
+    bam_base_out = "work/star.{library_name}/out/star.{library_name}"
+    report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("star", "run")
+
+    assert actual == expected
 
 
 def test_star_step_part_get_log_file(ngs_mapping_workflow):
@@ -199,21 +221,14 @@ def test_external_step_part_get_input_files(ngs_mapping_workflow):
 
 
 def test_external_step_part_get_output_files(ngs_mapping_workflow):
-    expected = {
-        "bam": "work/external.{library_name}/out/external.{library_name}.bam",
-        "bam_bai": "work/external.{library_name}/out/external.{library_name}.bam.bai",
-        "bam_bai_md5": "work/external.{library_name}/out/external.{library_name}.bam.bai.md5",
-        "bam_md5": "work/external.{library_name}/out/external.{library_name}.bam.md5",
-        "report_bamstats_txt": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.bamstats.txt",
-        "report_bamstats_txt_md5": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.bamstats.txt.md5",
-        "report_bamstats_html": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.bamstats.html",
-        "report_bamstats_html_md5": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.bamstats.html.md5",
-        "report_flagstats_txt": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.flagstats.txt",
-        "report_flagstats_txt_md5": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.flagstats.txt.md5",
-        "report_idxstats_txt": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.idxstats.txt",
-        "report_idxstats_txt_md5": "work/external.{library_name}/report/bam_qc/external.{library_name}.bam.idxstats.txt.md5",
-    }
-    assert ngs_mapping_workflow.get_output_files("external", "run") == expected
+    # Define expected
+    bam_base_out = "work/external.{library_name}/out/external.{library_name}"
+    report_base_out = "work/external.{library_name}/report/bam_qc/external.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("external", "run")
+
+    assert actual == expected
 
 
 # Tests for GatkPostBamStepPart -------------------------------------------------------------------
@@ -226,17 +241,22 @@ def test_gatk_post_bam_step_part_get_input_files(ngs_mapping_workflow):
 
 
 def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
+    # Define expected
+    base_name_out = "work/{mapper}.{library_name}/out/{mapper}.{library_name}"
     expected = {
-        "bai_md5_realigned": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.bam.bai.md5",
-        "bai_md5_recalibrated": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.recalibrated.bam.bai.md5",
-        "bai_realigned": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.bam.bai",
-        "bai_recalibrated": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.recalibrated.bam.bai",
-        "bam_md5_realigned": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.bam.md5",
-        "bam_md5_recalibrated": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.recalibrated.bam.md5",
-        "bam_realigned": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.bam",
-        "bam_recalibrated": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.realigned.recalibrated.bam",
+        "bai_md5_realigned": base_name_out + ".realigned.bam.bai.md5",
+        "bai_md5_recalibrated": base_name_out + ".realigned.recalibrated.bam.bai.md5",
+        "bai_realigned": base_name_out + ".realigned.bam.bai",
+        "bai_recalibrated": base_name_out + ".realigned.recalibrated.bam.bai",
+        "bam_md5_realigned": base_name_out + ".realigned.bam.md5",
+        "bam_md5_recalibrated": base_name_out + ".realigned.recalibrated.bam.md5",
+        "bam_realigned": base_name_out + ".realigned.bam",
+        "bam_recalibrated": base_name_out + ".realigned.recalibrated.bam",
     }
-    assert ngs_mapping_workflow.get_output_files("gatk_post_bam", "run") == expected
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("gatk_post_bam", "run")
+
+    assert actual == expected
 
 
 def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
@@ -286,18 +306,19 @@ def test_link_out_bam_step_part_get_shell_cmd(ngs_mapping_workflow):
 
 
 def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workflow):
-    wildcards = Wildcards(fromdict={"mapper_lib": "bwa.library"})
+    # Define expected
     expected = {
         "bam": "work/bwa.library/out/bwa.library.bam",
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
     }
-    assert (
-        ngs_mapping_workflow.get_input_files("target_coverage_report", "run")(wildcards) == expected
-    )
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper_lib": "bwa.library"})
+    actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "run")(wildcards)
+    assert actual == expected
 
 
 def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_workflow):
-    wildcards = Wildcards(fromdict={"mapper_lib": "bwa"})
+    # Define expected
     expected = [
         "work/bwa.P001-N1-DNA1-WGS1/report/cov_qc/bwa.P001-N1-DNA1-WGS1.txt",
         "work/bwa.P002-N1-DNA1-WGS1/report/cov_qc/bwa.P002-N1-DNA1-WGS1.txt",
@@ -306,8 +327,10 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
         "work/bwa.P005-N1-DNA1-WGS1/report/cov_qc/bwa.P005-N1-DNA1-WGS1.txt",
         "work/bwa.P006-N1-DNA1-WGS1/report/cov_qc/bwa.P006-N1-DNA1-WGS1.txt",
     ]
-    print(ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards))
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper_lib": "bwa"})
     actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards)
+
     assert actual == expected
 
 
@@ -432,20 +455,20 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
             "conda_list.txt.md5",
         )
     ]
+    bam_stats_text_out = (
+        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.{stats}.{ext}"
+    )
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.{stats}.{ext}".format(
-            i=i, stats=stats, ext=ext
-        )
+        bam_stats_text_out.format(i=i, stats=stats, ext=ext)
         for ext in ("txt", "txt.md5")
         for i in range(1, 7)
         for stats in ("bamstats", "flagstats", "idxstats")
     ]
+    bam_stats_html_out = (
+        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.bamstats.{ext}"
+    )
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.bamstats.{ext}".format(
-            i=i, ext=ext
-        )
-        for ext in ("html", "html.md5")
-        for i in range(1, 7)
+        bam_stats_html_out.format(i=i, ext=ext) for ext in ("html", "html.md5") for i in range(1, 7)
     ]
     expected += [
         "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(

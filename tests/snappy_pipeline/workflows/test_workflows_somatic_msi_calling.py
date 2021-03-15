@@ -89,11 +89,16 @@ def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
 
 
 def test_mantis_step_part_get_output_files(somatic_msi_calling_workflow):
+    # Define expected
+    base_name_out = "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results"
     expected = {
-        "result": "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results.txt",
-        "status": "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results.txt.status",
+        "result": base_name_out + ".txt",
+        "status": base_name_out + ".txt.status",
     }
-    assert somatic_msi_calling_workflow.get_output_files("mantis", "run") == expected
+    # Get actual
+    actual = somatic_msi_calling_workflow.get_output_files("mantis", "run")
+
+    assert actual == expected
 
 
 def test_mantis_step_part_get_log_file(somatic_msi_calling_workflow):

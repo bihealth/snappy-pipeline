@@ -264,9 +264,16 @@ def test_link_out_step_part_get_output_files(dummy_generic_step):
 
 
 def test_link_out_step_part_get_shell_cmd(dummy_generic_step):
-    expected = "test -h output/{wildcards.path}/{wildcards.file}.{wildcards.ext} || ln -sr work/{wildcards.path}/{wildcards.file}.{wildcards.ext} output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+    # Define expected
+    expected = (
+        "test -h output/{wildcards.path}/{wildcards.file}.{wildcards.ext} || "
+        "ln -sr work/{wildcards.path}/{wildcards.file}.{wildcards.ext} "
+        "output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+    )
+    # Get actual
     wildcards = Wildcards(fromdict={"path": "path", "file": "file", "ext": "txt"})
     actual = dummy_generic_step.get_shell_cmd("link_out", "run", wildcards)
+
     assert actual == expected
 
 
