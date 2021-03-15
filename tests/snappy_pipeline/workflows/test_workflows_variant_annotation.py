@@ -90,48 +90,61 @@ def variant_annotation_workflow(
 
 
 def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_workflow):
+    # Define expected
+    base_name_out = (
+        "VAR_CALLING/output/"
+        "{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}"
+    )
+    expected_vcf = base_name_out + ".vcf.gz"
+    expected_tbi = base_name_out + ".vcf.gz.tbi"
+    expected_keys = {"ped", "vcf", "tbi"}
+
+    # Get actual
     result = variant_annotation_workflow.get_input_files("jannovar", "annotate_vcf")
-    expected = {"ped", "vcf", "tbi"}
-    assert set(result.keys()) == expected
 
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "index_library_name": "P001-N1-DNA1-WGS1",
-            "var_caller": "gatk_hc",
-        }
-    )
-
-    assert (
-        result["vcf"]
-        == "VAR_CALLING/output/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
-    )
-    assert (
-        result["tbi"]
-        == "VAR_CALLING/output/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz.tbi"
-    )
+    # Assert if all keys present
+    assert set(result.keys()) == expected_keys
+    # Assert vcf and tbi
+    assert result["vcf"] == expected_vcf
+    assert result["tbi"] == expected_tbi
 
 
 def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/"
+        "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
+    )
     expected = {
-        "tbi": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.vcf.gz.md5",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf": base_name_out + ".vcf.gz",
+        "vcf_md5": base_name_out + ".vcf.gz.md5",
     }
-    assert variant_annotation_workflow.get_output_files("jannovar", "annotate_vcf") == expected
+    # Get actual
+    actual = variant_annotation_workflow.get_output_files("jannovar", "annotate_vcf")
+
+    assert actual == expected
 
 
 def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/"
+        "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
+    )
     expected = {
-        "conda_info": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.conda_info.txt",
-        "conda_list": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.conda_list.txt",
-        "log": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.log",
-        "conda_info_md5": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.conda_list.txt.md5",
-        "log_md5": "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}.log.md5",
+        "conda_info": base_name_out + ".conda_info.txt",
+        "conda_list": base_name_out + ".conda_list.txt",
+        "log": base_name_out + ".log",
+        "conda_info_md5": base_name_out + ".conda_info.txt.md5",
+        "conda_list_md5": base_name_out + ".conda_list.txt.md5",
+        "log_md5": base_name_out + ".log.md5",
     }
-    assert variant_annotation_workflow.get_log_file("jannovar", "annotate_vcf") == expected
+    # Get actual
+    actual = variant_annotation_workflow.get_log_file("jannovar", "annotate_vcf")
+
+    assert actual == expected
 
 
 def test_jannovar_annotate_vcf_step_part_cluster_config(
@@ -147,8 +160,6 @@ def test_jannovar_annotate_vcf_step_part_cluster_config(
 
 def test_variant_annotation_workflow(variant_annotation_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["jannovar", "link_out", "write_pedigree"]
     assert list(sorted(variant_annotation_workflow.sub_steps.keys())) == expected

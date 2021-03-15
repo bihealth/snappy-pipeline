@@ -574,13 +574,6 @@ def test_bcftools_stats_step_part_update_cluster_config(
 
 
 def test_jannovar_statistics_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "var_caller": "platypus",
-            "index_library_name": "P001-N1-DNA1-WGS1",
-        }
-    )
     actual = variant_calling_workflow.get_input_files("jannovar_statistics", "run")
     expected = {
         "vcf": "work/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
