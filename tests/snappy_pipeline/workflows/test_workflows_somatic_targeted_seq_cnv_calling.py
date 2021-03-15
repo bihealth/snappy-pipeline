@@ -225,13 +225,18 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
 
 
 def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "target": "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}.targetcoverage.cnn",
-        "antitarget": "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}.antitargetcoverage.cnn",
-    }
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "coverage") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}"
     )
+    expected = {
+        "target": base_name_out + ".targetcoverage.cnn",
+        "antitarget": base_name_out + ".antitargetcoverage.cnn",
+    }
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "coverage")
+
+    assert actual == expected
 
 
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
@@ -276,14 +281,31 @@ def test_cnvkit_reference_step_part_get_input_files(somatic_targeted_seq_cnv_cal
 
 
 def test_cnvkit_reference_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/{mapper}.cnvkit.reference.{library_name}/out/{mapper}.cnvkit.reference.{library_name}.cnn"
+    expected = (
+        "work/{mapper}.cnvkit.reference.{library_name}/out/"
+        "{mapper}.cnvkit.reference.{library_name}.cnn"
+    )
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "reference")
     assert actual == expected
 
 
 def test_cnvkit_reference_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/cnvkit.reference/log/snakemake.log"
-    # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.reference.{library_name}/log/{mapper}.cnvkit.reference.{library_name}"
+    )
+    expected = {
+        "conda_info": base_name_out + ".conda_info.txt",
+        "conda_list": base_name_out + ".conda_list.txt",
+        "log": base_name_out + ".log",
+        "conda_info_md5": base_name_out + ".conda_info.txt.md5",
+        "conda_list_md5": base_name_out + ".conda_list.txt.md5",
+        "log_md5": base_name_out + ".log.md5",
+    }
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference")
+
+    assert actual == expected
 
 
 def test_cnvkit_reference_step_part_update_cluster_config(
