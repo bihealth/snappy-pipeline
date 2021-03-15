@@ -14,6 +14,7 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
 )
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -84,28 +85,6 @@ def somatic_targeted_seq_cnv_calling_workflow(
         config_paths,
         work_dir,
     )
-
-
-def get_expected_log_files_dict(base_out):
-    """
-    :param base_out: Base path structure for log files. For example, if the expected path for
-    the log is 'work/cnvkit.target/log/cnvkit.target.log', the argument should be
-    'work/cnvkit.target/log/cnvkit.target'.
-    :type base_out: str
-
-    :return: Returns dictionary with expected path for log files based on the provided input.
-    """
-    # Define expected
-    expected = {
-        "conda_info": base_out + ".conda_info.txt",
-        "conda_info_md5": base_out + ".conda_info.txt.md5",
-        "conda_list": base_out + ".conda_list.txt",
-        "conda_list_md5": base_out + ".conda_list.txt.md5",
-        "log": base_out + ".log",
-        "log_md5": base_out + ".log.md5",
-    }
-    # Return
-    return expected
 
 
 # Tests for CnvKitStepPart (access) ---------------------------------------------------------------

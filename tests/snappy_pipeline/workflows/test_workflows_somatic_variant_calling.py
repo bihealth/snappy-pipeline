@@ -10,6 +10,7 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -102,34 +103,36 @@ def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
 
 def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
     """Tests file structure associated with `mutect` run in the Somatic Variant Calling Workflow."""
+    # Define expected
+    base_name_out = "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}"
     expected = {
-        "tbi": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.vcf.gz.md5",
-        "full_tbi": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.full.vcf.gz.tbi",
-        "full_tbi_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.full.vcf.gz.tbi.md5",
-        "full": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.full.vcf.gz",
-        "full_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.full.vcf.gz.md5",
-        "txt": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.txt",
-        "txt_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.txt.md5",
-        "wig": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.wig",
-        "wig_md5": "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}.wig.md5",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf": base_name_out + ".vcf.gz",
+        "vcf_md5": base_name_out + ".vcf.gz.md5",
+        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "full": base_name_out + ".full.vcf.gz",
+        "full_md5": base_name_out + ".full.vcf.gz.md5",
+        "txt": base_name_out + ".txt",
+        "txt_md5": base_name_out + ".txt.md5",
+        "wig": base_name_out + ".wig",
+        "wig_md5": base_name_out + ".wig.md5",
     }
+    # Get actual
     actual = somatic_variant_calling_workflow.get_output_files("mutect", "run")
+
     assert actual == expected
 
 
 def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.conda_info.txt",
-        "conda_list": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.conda_list.txt",
-        "log": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.log",
-        "conda_info_md5": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.conda_list.txt.md5",
-        "log_md5": "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}.log.md5",
-    }
-    assert somatic_variant_calling_workflow.get_log_file("mutect", "run") == expected
+    # Define expected
+    base_name_out = "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = somatic_variant_calling_workflow.get_log_file("mutect", "run")
+
+    assert actual == expected
 
 
 def test_mutect_step_part_update_cluster_config(
@@ -158,31 +161,33 @@ def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
 def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
     """Tests file structure associated with `scalpel` run in the Somatic Variant Calling
     Workflow."""
+    # Define expected
+    base_name_out = "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}"
     expected = {
-        "full_tbi": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.full.vcf.gz.tbi",
-        "full_tbi_md5": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.full.vcf.gz.tbi.md5",
-        "full_vcf": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.full.vcf.gz",
-        "full_vcf_md5": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.full.vcf.gz.md5",
-        "tar": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.tar.gz",
-        "tbi": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}.vcf.gz.md5",
+        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "full_vcf": base_name_out + ".full.vcf.gz",
+        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
+        "tar": base_name_out + ".tar.gz",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf": base_name_out + ".vcf.gz",
+        "vcf_md5": base_name_out + ".vcf.gz.md5",
     }
+    # Get actual
     actual = somatic_variant_calling_workflow.get_output_files("scalpel", "run")
+
     assert actual == expected
 
 
 def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.conda_info.txt",
-        "conda_list": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.conda_list.txt",
-        "log": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.log",
-        "conda_info_md5": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.conda_list.txt.md5",
-        "log_md5": "work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}.log.md5",
-    }
-    assert somatic_variant_calling_workflow.get_log_file("scalpel", "run") == expected
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}"
+    )
+    # Get actual
+    actual = somatic_variant_calling_workflow.get_log_file("scalpel", "run")
+    assert actual == expected
 
 
 def test_scalpel_step_part_update_cluster_config(

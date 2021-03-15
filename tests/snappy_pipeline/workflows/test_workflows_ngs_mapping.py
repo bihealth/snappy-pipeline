@@ -10,6 +10,7 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -147,15 +148,14 @@ def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
-    expected = {
-        "log": "work/bwa.{library_name}/log/bwa.{library_name}.log",
-        "log_md5": "work/bwa.{library_name}/log/bwa.{library_name}.log.md5",
-        "conda_info": "work/bwa.{library_name}/log/bwa.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/bwa.{library_name}/log/bwa.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/bwa.{library_name}/log/bwa.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/bwa.{library_name}/log/bwa.{library_name}.conda_list.txt.md5",
-    }
-    assert ngs_mapping_workflow.get_log_file("bwa", "run") == expected
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/bwa.{library_name}/log/bwa.{library_name}"
+    )
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("bwa", "run")
+
+    assert actual == expected
 
 
 # Tests for StarStepPart --------------------------------------------------------------------------
@@ -193,15 +193,14 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_star_step_part_get_log_file(ngs_mapping_workflow):
-    expected = {
-        "log": "work/star.{library_name}/log/star.{library_name}.log",
-        "log_md5": "work/star.{library_name}/log/star.{library_name}.log.md5",
-        "conda_info": "work/star.{library_name}/log/star.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/star.{library_name}/log/star.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/star.{library_name}/log/star.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/star.{library_name}/log/star.{library_name}.conda_list.txt.md5",
-    }
-    assert ngs_mapping_workflow.get_log_file("star", "run") == expected
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/star.{library_name}/log/star.{library_name}"
+    )
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("star", "run")
+
+    assert actual == expected
 
 
 # Tests for ExternalStepPart ----------------------------------------------------------------------

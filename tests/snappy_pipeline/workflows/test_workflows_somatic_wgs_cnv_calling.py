@@ -11,6 +11,7 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -131,14 +132,8 @@ def test_canvas_somatic_step_part_get_output_files(somatic_wgs_cnv_calling_workf
 def test_canvas_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
     # Define expected
     base_name = "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}"
-    expected = {
-        "conda_info": base_name + ".conda_info.txt",
-        "conda_info_md5": base_name + ".conda_info.txt.md5",
-        "conda_list": base_name + ".conda_list.txt",
-        "conda_list_md5": base_name + ".conda_list.txt.md5",
-        "log": base_name + ".log",
-        "log_md5": base_name + ".log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out=base_name)
+
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_log_file("canvas", "run")
 
@@ -192,14 +187,7 @@ def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_wo
     base_name = (
         "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}"
     )
-    expected = {
-        "conda_info": base_name + ".conda_info.txt",
-        "conda_info_md5": base_name + ".conda_info.txt.md5",
-        "conda_list": base_name + ".conda_list.txt",
-        "conda_list_md5": base_name + ".conda_list.txt.md5",
-        "log": base_name + ".log",
-        "log_md5": base_name + ".log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out=base_name)
 
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_log_file("control_freec", "run")
@@ -253,15 +241,12 @@ def test_cnvkit_somatic_wgs_step_part_get_output_files(somatic_wgs_cnv_calling_w
 def test_cnvkit_somatic_wgs_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
     # Define expected
     base_name = "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}"
-    expected = {
-        "conda_info": base_name + ".conda_info.txt",
-        "conda_info_md5": base_name + ".conda_info.txt.md5",
-        "conda_list": base_name + ".conda_list.txt",
-        "conda_list_md5": base_name + ".conda_list.txt.md5",
-        "log": base_name + ".log",
-        "log_md5": base_name + ".log.md5",
-    }
-    assert somatic_wgs_cnv_calling_workflow.get_log_file("cnvkit", "run") == expected
+    expected = get_expected_log_files_dict(base_out=base_name)
+
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_log_file("cnvkit", "run")
+
+    assert actual == expected
 
 
 def test_cnvkit_somatic_wgs_step_part_update_cluster_config(

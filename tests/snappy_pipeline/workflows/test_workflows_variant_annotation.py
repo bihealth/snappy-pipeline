@@ -5,11 +5,10 @@ import pytest
 import ruamel.yaml as yaml
 import textwrap
 
-from snakemake.io import Wildcards
-
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -133,14 +132,7 @@ def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflo
         "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/"
         "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
     )
-    expected = {
-        "conda_info": base_name_out + ".conda_info.txt",
-        "conda_list": base_name_out + ".conda_list.txt",
-        "log": base_name_out + ".log",
-        "conda_info_md5": base_name_out + ".conda_info.txt.md5",
-        "conda_list_md5": base_name_out + ".conda_list.txt.md5",
-        "log_md5": base_name_out + ".log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_annotation_workflow.get_log_file("jannovar", "annotate_vcf")
 
@@ -162,7 +154,9 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
     expected = ["jannovar", "link_out", "write_pedigree"]
-    assert list(sorted(variant_annotation_workflow.sub_steps.keys())) == expected
+    actual = list(sorted(variant_annotation_workflow.sub_steps.keys()))
+    assert actual == expected
+
     # Check result file construction
     tpl = (
         "output/{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1/out/"
@@ -193,4 +187,5 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
         for mapper in ("bwa",)
         for var_caller in ("gatk_hc",)
     ]
-    assert variant_annotation_workflow.get_result_files() == expected
+    actual = variant_annotation_workflow.get_result_files()
+    assert actual == expected

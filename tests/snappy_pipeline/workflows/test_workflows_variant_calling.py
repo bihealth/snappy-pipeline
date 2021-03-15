@@ -11,6 +11,7 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -121,15 +122,15 @@ def test_bcftools_step_part_get_output_files(variant_calling_workflow):
 
 
 def test_bcftools_step_part_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.log",
-        "conda_info": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}.conda_list.txt.md5",
-    }
-    assert variant_calling_workflow.get_log_file("bcftools", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("bcftools", "run")
+
+    assert actual == expected
 
 
 def test_bcftools_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
@@ -167,15 +168,15 @@ def test_freebayes_step_part_get_output_files(variant_calling_workflow):
 
 
 def test_freebayes_step_part_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.log",
-        "conda_info": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}.conda_list.txt.md5",
-    }
-    assert variant_calling_workflow.get_log_file("freebayes", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("freebayes", "run")
+
+    assert actual == expected
 
 
 def test_freebayes_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
@@ -213,15 +214,15 @@ def test_gatk_hc_step_part_get_output_files(variant_calling_workflow):
 
 
 def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.log",
-        "conda_info": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}.conda_list.txt.md5",
-    }
-    assert variant_calling_workflow.get_log_file("gatk_hc", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("gatk_hc", "run")
+
+    assert actual == expected
 
 
 def test_gatk_hc_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
@@ -259,15 +260,15 @@ def test_gatk_ug_step_part_get_output_files(variant_calling_workflow):
 
 
 def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.log",
-        "conda_info": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}.conda_list.txt.md5",
-    }
-    assert variant_calling_workflow.get_log_file("gatk_ug", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("gatk_ug", "run")
+
+    assert actual == expected
 
 
 def test_gatk_ug_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
@@ -432,15 +433,15 @@ def test_platypus_step_part_get_output_files(variant_calling_workflow):
 
 
 def test_platypus_step_part_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.log",
-        "conda_info": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}.conda_list.txt.md5",
-    }
-    assert variant_calling_workflow.get_log_file("platypus", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("platypus", "run")
+
+    assert actual == expected
 
 
 def test_platypus_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
@@ -477,15 +478,15 @@ def test_varscan_step_part_call_pedigree_get_output_files(variant_calling_workfl
 
 
 def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.log",
-        "conda_info": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.conda_info.txt",
-        "conda_list": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.conda_list.txt",
-        "log_md5": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.log.md5",
-        "conda_info_md5": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}.conda_list.txt.md5",
-    }
-    assert expected == variant_calling_workflow.get_log_file("varscan", "call_pedigree")
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("varscan", "call_pedigree")
+
+    assert actual == expected
 
 
 def test_varscan_step_part_call_pedigree_update_cluster_config(
@@ -519,15 +520,13 @@ def test_varscan_step_part_call_cohort_get_output_files(variant_calling_workflow
 
 
 def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
-    expected = {
-        "log": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.log",
-        "conda_info": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.conda_info.txt",
-        "conda_list": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.conda_list.txt",
-        "log_md5": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.log.md5",
-        "conda_info_md5": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.conda_info.txt.md5",
-        "conda_list_md5": "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort.conda_list.txt.md5",
-    }
-    assert expected == variant_calling_workflow.get_log_file("varscan", "call_cohort")
+    # Define expected
+    base_name_out = "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("varscan", "call_cohort")
+
+    assert actual == expected
 
 
 def test_varscan_step_part_call_cohort_update_cluster_config(
