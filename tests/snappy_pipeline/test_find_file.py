@@ -153,7 +153,7 @@ def test_file_system_crawler_construct_existing_cache(sample_cache_dict):
     assert crawler.lock_timeout == 60
 
 
-def test_file_system_crawler_construct_no_existing_cache(sample_cache_dict):
+def test_file_system_crawler_construct_no_existing_cache():
     fake_fs = fake_filesystem.FakeFilesystem()
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_fs.create_dir(fake_os.path.dirname(CACHE_PATH))
@@ -165,13 +165,13 @@ def test_file_system_crawler_construct_no_existing_cache(sample_cache_dict):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         crawler.save_cache()
     assert crawler.cache_path == CACHE_PATH
-    EMPTY_CACHE = {"cache_version": 1, "root_dirs": {}}
-    assert crawler.cache == EMPTY_CACHE
+    empty_cache = {"cache_version": 1, "root_dirs": {}}
+    assert crawler.cache == empty_cache
     assert crawler.invalidation_paths == []
     assert crawler.cache_dirty
     assert crawler.lock_timeout == 60
     assert fake_os.path.exists(CACHE_PATH)
-    assert json.loads(fake_open(CACHE_PATH).read()) == EMPTY_CACHE
+    assert json.loads(fake_open(CACHE_PATH).read()) == empty_cache
 
 
 def test_file_system_crawler_crawl_existing_cache(sample_cache_dict):
