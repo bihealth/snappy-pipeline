@@ -698,5 +698,5 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     expected = list(sorted(expected))
     actual = list(sorted(somatic_targeted_seq_cnv_calling_workflow.get_result_files()))
     # HACK TODO
-    actual = [f for f in actual if not "/log/" in f]
+    actual = [f for f in actual if "/log/" not in f]
     assert expected == actual
