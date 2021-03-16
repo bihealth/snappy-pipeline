@@ -7,10 +7,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-from .conftest import patch_module_fs
-from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -140,10 +140,8 @@ def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
     bam_base_out = "work/bwa.{library_name}/out/bwa.{library_name}"
     report_base_out = "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}"
     expected = get_expected_output_files_dict(bam_base_out, report_base_out)
-
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("bwa", "run")
-
     assert actual == expected
 
 
@@ -154,7 +152,6 @@ def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
     )
     # Get actual
     actual = ngs_mapping_workflow.get_log_file("bwa", "run")
-
     assert actual == expected
 
 
@@ -185,10 +182,8 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
     bam_base_out = "work/star.{library_name}/out/star.{library_name}"
     report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
     expected = get_expected_output_files_dict(bam_base_out, report_base_out)
-
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("star", "run")
-
     assert actual == expected
 
 
@@ -199,7 +194,6 @@ def test_star_step_part_get_log_file(ngs_mapping_workflow):
     )
     # Get actual
     actual = ngs_mapping_workflow.get_log_file("star", "run")
-
     assert actual == expected
 
 
@@ -226,7 +220,6 @@ def test_external_step_part_get_output_files(ngs_mapping_workflow):
     expected = get_expected_output_files_dict(bam_base_out, report_base_out)
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("external", "run")
-
     assert actual == expected
 
 
@@ -254,7 +247,6 @@ def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
     }
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("gatk_post_bam", "run")
-
     assert actual == expected
 
 
@@ -329,7 +321,6 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
     # Get actual
     wildcards = Wildcards(fromdict={"mapper_lib": "bwa"})
     actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards)
-
     assert actual == expected
 
 
