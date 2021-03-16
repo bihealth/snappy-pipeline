@@ -8,10 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-from .conftest import patch_module_fs
-from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -112,13 +112,14 @@ def test_bcftools_step_part_get_input_files(variant_calling_workflow):
 
 
 def test_bcftools_step_part_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("bcftools", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("bcftools", "run")
+    assert actual == expected
 
 
 def test_bcftools_step_part_get_log_file(variant_calling_workflow):
@@ -129,7 +130,6 @@ def test_bcftools_step_part_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("bcftools", "run")
-
     assert actual == expected
 
 
@@ -158,13 +158,14 @@ def test_freebayes_step_part_get_input_files(variant_calling_workflow):
 
 
 def test_freebayes_step_part_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("freebayes", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("freebayes", "run")
+    assert actual == expected
 
 
 def test_freebayes_step_part_get_log_file(variant_calling_workflow):
@@ -175,7 +176,6 @@ def test_freebayes_step_part_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("freebayes", "run")
-
     assert actual == expected
 
 
@@ -204,13 +204,14 @@ def test_gatk_hc_step_part_get_input_files(variant_calling_workflow):
 
 
 def test_gatk_hc_step_part_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("gatk_hc", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("gatk_hc", "run")
+    assert actual == expected
 
 
 def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
@@ -221,7 +222,6 @@ def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("gatk_hc", "run")
-
     assert actual == expected
 
 
@@ -250,13 +250,14 @@ def test_gatk_ug_step_part_get_input_files(variant_calling_workflow):
 
 
 def test_gatk_ug_step_part_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("gatk_ug", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("gatk_ug", "run")
+    assert actual == expected
 
 
 def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
@@ -267,7 +268,6 @@ def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("gatk_ug", "run")
-
     assert actual == expected
 
 
@@ -291,13 +291,15 @@ def test_gatk_hc_gvcf_step_part_discover_get_input_files(variant_calling_workflo
 
 
 def test_gatk_hc_gvcf_step_part_discover_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/{mapper}.gatk_hc_gvcf.discover.{library_name}.g.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/{mapper}.gatk_hc_gvcf.discover.{library_name}.g.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/{mapper}.gatk_hc_gvcf.discover.{library_name}.g.vcf.gz",
-        "vcf_md5": "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/{mapper}.gatk_hc_gvcf.discover.{library_name}.g.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("gatk_hc_gvcf", "discover") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/"
+        "{mapper}.gatk_hc_gvcf.discover.{library_name}.g"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "discover")
+    assert actual == expected
 
 
 def test_gatk_hc_gvcf_step_part_discover_get_log_file(variant_calling_workflow):
@@ -314,16 +316,15 @@ def test_gatk_hc_gvcf_step_part_discover_update_cluster_config(
 
 
 def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_workflow):
+    # Define expected
+    base_out = (
+        "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
+    )
+    expected = [base_out.format(i=i) for i in ("1", "2", "3", "4", "5", "6")]
+    # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "combine_gvcf")(wildcards)
-    expected = [
-        "work/bwa.gatk_hc_gvcf.discover.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P001-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P002-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P002-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P003-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P003-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P004-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P004-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P005-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P005-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P006-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P006-N1-DNA1-WGS1.g.vcf.gz",
-    ]
     assert actual == expected
 
 
@@ -334,28 +335,30 @@ def test_gatk_hc_gvcf_step_part_combine_gvcf_get_args(variant_calling_workflow):
 
 
 def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_input_files(variant_calling_workflow):
+    # Define expected
+    base_out = (
+        "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
+    )
+    expected = [base_out.format(i=i) for i in ("1", "2", "3")]
+    # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "genotype_pedigree")(
         wildcards
     )
-    expected = [
-        "work/bwa.gatk_hc_gvcf.discover.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P001-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P002-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P002-N1-DNA1-WGS1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.discover.P003-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.discover.P003-N1-DNA1-WGS1.g.vcf.gz",
-    ]
     assert actual == expected
 
 
 def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_output_files(variant_calling_workflow):
-    expected = {
-        "vcf": "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/{mapper}.gatk_hc_gvcf.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/{mapper}.gatk_hc_gvcf.{index_library_name}.vcf.gz.md5",
-        "tbi": "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/{mapper}.gatk_hc_gvcf.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/{mapper}.gatk_hc_gvcf.{index_library_name}.vcf.gz.tbi.md5",
-    }
-    assert (
-        variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_pedigree") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/"
+        "{mapper}.gatk_hc_gvcf.{index_library_name}"
     )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_pedigree")
+    assert actual == expected
 
 
 def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_log_file(variant_calling_workflow):
@@ -382,13 +385,12 @@ def test_gatk_hc_gvcf_step_part_genotype_cohort_get_input_files(variant_calling_
 
 
 def test_gatk_hc_gvcf_step_part_whole_cohort_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort.vcf.gz",
-        "vcf_md5": "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_cohort") == expected
+    # Define expected
+    base_name_out = "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_cohort")
+    assert actual == expected
 
 
 def test_gatk_hc_gvcf_step_part_genotype_cohort_get_log_file(variant_calling_workflow):
@@ -423,13 +425,14 @@ def test_platypus_step_part_get_input_files(variant_calling_workflow):
 
 
 def test_platypus_step_part_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}.vcf.gz.md5",
-    }
-    assert variant_calling_workflow.get_output_files("platypus", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("platypus", "run")
+    assert actual == expected
 
 
 def test_platypus_step_part_get_log_file(variant_calling_workflow):
@@ -440,7 +443,6 @@ def test_platypus_step_part_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("platypus", "run")
-
     assert actual == expected
 
 
@@ -468,13 +470,14 @@ def test_varscan_step_part_call_pedigree_get_input_files(variant_calling_workflo
 
 
 def test_varscan_step_part_call_pedigree_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}.vcf.gz.md5",
-    }
-    assert expected == variant_calling_workflow.get_output_files("varscan", "call_pedigree")
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("varscan", "call_pedigree")
+    assert actual == expected
 
 
 def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
@@ -510,13 +513,12 @@ def test_varscan_step_part_call_cohort_get_input_files(variant_calling_workflow)
 
 
 def test_varscan_step_part_call_cohort_get_output_files(variant_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort.vcf.gz",
-        "vcf_md5": "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort.vcf.gz.md5",
-    }
-    assert expected == variant_calling_workflow.get_output_files("varscan", "call_cohort")
+    # Define expected
+    base_name_out = "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("varscan", "call_cohort")
+    assert actual == expected
 
 
 def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
@@ -541,24 +543,41 @@ def test_varscan_step_part_call_cohort_update_cluster_config(
 
 
 def test_bcftools_stats_step_part_get_input_files(variant_calling_workflow):
+    # Define expected
+    vcf_file = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
+        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+    )
+    expected = {"vcf": vcf_file}
+    # Get actual
     actual = variant_calling_workflow.get_input_files("bcftools_stats", "run")
-    expected = {
-        "vcf": "work/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
-    }
     assert actual == expected
 
 
 def test_bcftools_stats_step_part_get_output_files(variant_calling_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/report/bcftools_stats/"
+        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+    )
     expected = {
-        "txt": "work/{mapper}.{var_caller}.{index_ngs_library}/report/bcftools_stats/{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.txt",
-        "txt_md5": "work/{mapper}.{var_caller}.{index_ngs_library}/report/bcftools_stats/{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.txt.md5",
+        "txt": base_name_out + ".txt",
+        "txt_md5": base_name_out + ".txt.md5",
     }
-    assert expected == variant_calling_workflow.get_output_files("bcftools_stats", "run")
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("bcftools_stats", "run")
+    assert actual == expected
 
 
 def test_bcftools_stats_step_part_get_log_file(variant_calling_workflow):
-    expected = "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
-    assert expected == variant_calling_workflow.get_log_file("bcftools_stats", "run")
+    # Define expected
+    expected = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/"
+        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
+    )
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("bcftools_stats", "run")
+    assert actual == expected
 
 
 def test_bcftools_stats_step_part_update_cluster_config(
@@ -573,24 +592,41 @@ def test_bcftools_stats_step_part_update_cluster_config(
 
 
 def test_jannovar_statistics_step_part_get_input_files(variant_calling_workflow):
+    # Define expected
+    vcf_file = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
+        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+    )
+    expected = {"vcf": vcf_file}
+    # Get actual
     actual = variant_calling_workflow.get_input_files("jannovar_statistics", "run")
-    expected = {
-        "vcf": "work/{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
-    }
     assert actual == expected
 
 
 def test_jannovar_statistics_step_part_get_output_files(variant_calling_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/report/jannovar_statistics/"
+        "{mapper}.{var_caller}.{index_ngs_library}"
+    )
     expected = {
-        "report": "work/{mapper}.{var_caller}.{index_ngs_library}/report/jannovar_statistics/{mapper}.{var_caller}.{index_ngs_library}.txt",
-        "report_md5": "work/{mapper}.{var_caller}.{index_ngs_library}/report/jannovar_statistics/{mapper}.{var_caller}.{index_ngs_library}.txt.md5",
+        "report": base_name_out + ".txt",
+        "report_md5": base_name_out + ".txt.md5",
     }
-    assert expected == variant_calling_workflow.get_output_files("jannovar_statistics", "run")
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("jannovar_statistics", "run")
+    assert actual == expected
 
 
 def test_jannovar_statistics_step_part_get_log_file(variant_calling_workflow):
-    expected = "work/{mapper}.{var_caller}.{index_ngs_library}/log/jannovar_statistics/{mapper}.{var_caller}.{index_ngs_library}.log"
-    assert expected == variant_calling_workflow.get_log_file("jannovar_statistics", "run")
+    # Define expected
+    expected = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/log/"
+        "jannovar_statistics/{mapper}.{var_caller}.{index_ngs_library}.log"
+    )
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("jannovar_statistics", "run")
+    assert actual == expected
 
 
 def test_jannovar_statistics_step_part_update_cluster_config(
@@ -640,10 +676,12 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "platypus",
         )
     ]
+    base_out = (
+        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
+        "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
+    )
     expected += [
-        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}".format(
-            i=i, ext=ext, mapper=mapper, var_caller=var_caller
-        )
+        base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller)
         for i in (1, 4)  # only for indices
         for ext in (
             "log",

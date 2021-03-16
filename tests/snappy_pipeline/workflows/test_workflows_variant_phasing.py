@@ -352,7 +352,6 @@ def test_variant_phasing_workflow(variant_phasing_workflow):
         base_out.format(tool=tool, i=i)
         for tool in ("bcftools", "freebayes", "gatk_hc", "gatk_hc_gvcf", "gatk_ug", "platypus")
         for i in ("1", "4")
-
     ]
     expected = []
     for bol in base_out_list:
