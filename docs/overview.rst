@@ -195,7 +195,7 @@ The project directory is setup with the following helper tool:
 
 ::
 
-    $ cubi-start-project --directory somatic_project
+    $ snappy-start-project --directory somatic_project
     [...]
     Do not forget to fill out your README.md file!
 
@@ -231,7 +231,7 @@ Further, a project-wide ``README.md`` file is setup in which you can place docum
 Working Directories for Step Instances
 ======================================
 
-Next, we create the different step instances that we want to use using ``cubi-start-step``.
+Next, we create the different step instances that we want to use using ``snappy-start-step``.
 Note that this will extend the ``.snappy_pipeline/config.yaml`` file if there is no configuration entry for the given step.
 A different name for the instance can be given using the ``--step`` parameter.
 
@@ -244,15 +244,15 @@ For all configuration settings that have no default and are marked with a ``# re
 ::
 
     $ cd somatic_project
-    $ cubi-start-step --step ngs_mapping
+    $ snappy-start-step --step ngs_mapping
     [...]
     INFO: applying the following change:
 
     --- a/.snappy_pipeline/config.yaml	2017-02-03T12:47:32.246833
     +++ b/.snappy_pipeline/config.yaml	2017-02-03T12:49:29.811706
     @@ -22,7 +22,12 @@
-     # Configuration for the individual steps.  These can be filled by the cubi-start-step command
-     # or initialized already with cubi-start-project.
+     # Configuration for the individual steps.  These can be filled by the snappy-start-step command
+     # or initialized already with snappy-start-project.
      #
     -step_config: {}
     +step_config:
@@ -283,7 +283,7 @@ Similarly, adding ``somatic_variant_calling`` adds configuration for somatic var
 
 ::
 
-    $ cubi-start-step --step somatic_variant_calling
+    $ snappy-start-step --step somatic_variant_calling
     [...]
     INFO: applying the following change:
 
@@ -311,7 +311,7 @@ The same is true for adding ``somatic_variant_annotation``.
 
 ::
 
-    $ cubi-start-step --step somatic_variant_annotation
+    $ snappy-start-step --step somatic_variant_annotation
     [...]
     INFO: applying the following change:
 
