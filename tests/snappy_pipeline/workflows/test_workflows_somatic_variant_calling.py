@@ -7,10 +7,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
-
 from .conftest import patch_module_fs
 from .common import get_expected_log_files_dict
+from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

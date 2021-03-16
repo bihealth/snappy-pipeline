@@ -5,10 +5,10 @@ import pytest
 import ruamel.yaml as yaml
 import textwrap
 
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
-from .conftest import patch_module_fs
-from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -97,10 +97,8 @@ def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_work
     expected_vcf = base_name_out + ".vcf.gz"
     expected_tbi = base_name_out + ".vcf.gz.tbi"
     expected_keys = {"ped", "vcf", "tbi"}
-
     # Get actual
     result = variant_annotation_workflow.get_input_files("jannovar", "annotate_vcf")
-
     # Assert if all keys present
     assert set(result.keys()) == expected_keys
     # Assert vcf and tbi
@@ -114,15 +112,9 @@ def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_wor
         "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/"
         "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
     )
-    expected = {
-        "tbi": base_name_out + ".vcf.gz.tbi",
-        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-        "vcf": base_name_out + ".vcf.gz",
-        "vcf_md5": base_name_out + ".vcf.gz.md5",
-    }
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_annotation_workflow.get_output_files("jannovar", "annotate_vcf")
-
     assert actual == expected
 
 
@@ -135,7 +127,6 @@ def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflo
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_annotation_workflow.get_log_file("jannovar", "annotate_vcf")
-
     assert actual == expected
 
 

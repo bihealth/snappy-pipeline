@@ -8,10 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
-from .conftest import patch_module_fs
-from .common import get_expected_log_files_dict
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -109,23 +109,15 @@ def test_canvas_somatic_step_part_get_input_files(somatic_wgs_cnv_calling_workfl
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_wgs_cnv_calling_workflow.get_input_files("canvas", "run")(wildcards)
-
     assert actual == expected
 
 
 def test_canvas_somatic_step_part_get_output_files(somatic_wgs_cnv_calling_workflow):
     # Define expected
     base_name = "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}"
-    expected = {
-        "tbi": base_name + ".vcf.gz.tbi",
-        "tbi_md5": base_name + ".vcf.gz.tbi.md5",
-        "vcf": base_name + ".vcf.gz",
-        "vcf_md5": base_name + ".vcf.gz.md5",
-    }
-
+    expected = get_expected_output_vcf_files_dict(base_out=base_name)
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_output_files("canvas", "run")
-
     assert actual == expected
 
 
@@ -133,10 +125,8 @@ def test_canvas_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow)
     # Define expected
     base_name = "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}"
     expected = get_expected_log_files_dict(base_out=base_name)
-
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_log_file("canvas", "run")
-
     assert actual == expected
 
 
@@ -164,7 +154,6 @@ def test_control_freec_somatic_step_part_get_input_files(somatic_wgs_cnv_calling
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_wgs_cnv_calling_workflow.get_input_files("control_freec", "run")(wildcards)
-
     assert actual == expected
 
 
@@ -175,10 +164,8 @@ def test_control_freec_somatic_step_part_get_output_files(somatic_wgs_cnv_callin
         "ratio": base_name + "{mapper}.control_freec.{cancer_library}.ratio.txt",
         "ratio_md5": base_name + "{mapper}.control_freec.{cancer_library}.ratio.txt.md5",
     }
-
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_output_files("control_freec", "run")
-
     assert actual == expected
 
 
@@ -188,10 +175,8 @@ def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_wo
         "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_name)
-
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_log_file("control_freec", "run")
-
     assert actual == expected
 
 
@@ -217,7 +202,6 @@ def test_cnvkit_somatic_wgs_step_part_get_input_files(somatic_wgs_cnv_calling_wo
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_wgs_cnv_calling_workflow.get_input_files("cnvkit", "run")(wildcards)
-
     assert actual == expected
 
 
@@ -234,7 +218,6 @@ def test_cnvkit_somatic_wgs_step_part_get_output_files(somatic_wgs_cnv_calling_w
     }
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_output_files("cnvkit", "run")
-
     assert actual == expected
 
 
@@ -242,10 +225,8 @@ def test_cnvkit_somatic_wgs_step_part_get_log_file(somatic_wgs_cnv_calling_workf
     # Define expected
     base_name = "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}"
     expected = get_expected_log_files_dict(base_out=base_name)
-
     # Get actual
     actual = somatic_wgs_cnv_calling_workflow.get_log_file("cnvkit", "run")
-
     assert actual == expected
 
 
@@ -262,8 +243,6 @@ def test_cnvkit_somatic_wgs_step_part_update_cluster_config(
 
 def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["canvas", "cnvetti", "cnvkit", "control_freec", "link_out"]
     assert list(sorted(somatic_wgs_cnv_calling_workflow.sub_steps.keys())) == expected
@@ -325,4 +304,4 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
     # Perform the comparison
     expected = list(sorted(expected))
     actual = list(sorted(somatic_wgs_cnv_calling_workflow.get_result_files()))
-    assert expected == actual
+    assert actual == expected

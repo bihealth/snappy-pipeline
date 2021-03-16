@@ -150,7 +150,6 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
     ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     expected = {**vcf_dict, **ped_dict}
-
     # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
@@ -158,7 +157,6 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
     actual = variant_phasing_workflow.get_input_files("gatk_phase_by_transmission", "run")(
         wildcards
     )
-
     assert actual == expected
 
 
@@ -217,7 +215,6 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
         ],
     }
     expected = {**bam_dict, **vcf_dict}
-
     # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
@@ -225,7 +222,6 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
     actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_only", "run")(
         wildcards
     )
-
     assert actual == expected
 
 
@@ -284,7 +280,6 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
         ],
     }
     expected = {**bam_dict, **vcf_dict}
-
     # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
@@ -292,7 +287,6 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
     actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_also", "run")(
         wildcards
     )
-
     assert actual == expected
 
 
