@@ -321,10 +321,11 @@ def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_wor
         "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
         "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
     )
-    expected = [base_out.format(i=i) for i in ("1", "2", "3", "4", "5", "6")]
+    expected = [base_out.format(i=i) for i in range(1, 7)]
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "combine_gvcf")(wildcards)
+    print(expected)
     assert actual == expected
 
 
@@ -340,7 +341,7 @@ def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_input_files(variant_callin
         "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
         "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
     )
-    expected = [base_out.format(i=i) for i in ("1", "2", "3")]
+    expected = [base_out.format(i=i) for i in range(1, 4)]
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "genotype_pedigree")(
