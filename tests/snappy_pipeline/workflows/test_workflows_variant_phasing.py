@@ -101,6 +101,25 @@ def variant_phasing_workflow(
     )
 
 
+def get_expected_bam_output_file():
+    """
+    :return: Returns dictionary with expected bam and bai files for individuals P00{1-3}.
+    """
+    bam_dict = {
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
+        ],
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        ],
+    }
+    return bam_dict
+
+
 # Tests for WriteTrioPedigreeStepPart --------------------------------------------------------------
 
 
@@ -202,18 +221,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
         "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    bam_dict = {
-        "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-        ],
-        "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        ],
-    }
+    bam_dict = get_expected_bam_output_file()
     expected = {**bam_dict, **vcf_dict}
     # Get actual
     wildcards = Wildcards(
@@ -267,18 +275,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
         "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    bam_dict = {
-        "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-        ],
-        "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        ],
-    }
+    bam_dict = get_expected_bam_output_file()
     expected = {**bam_dict, **vcf_dict}
     # Get actual
     wildcards = Wildcards(
