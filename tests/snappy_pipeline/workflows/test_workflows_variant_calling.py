@@ -737,9 +737,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         )
         for ext in ("txt", "txt.md5")
     ]
-    tpl = (
-        "output/{mapper}.{var_caller}.whole_cohort/out/" "{mapper}.{var_caller}.whole_cohort.{ext}"
-    )
+    tpl = "output/{mapper}.{var_caller}.whole_cohort/out/{mapper}.{var_caller}.whole_cohort.{ext}"
     expected += [
         tpl.format(mapper=mapper, var_caller=var_caller, ext=ext)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
