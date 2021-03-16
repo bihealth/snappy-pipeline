@@ -8,9 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -141,44 +142,48 @@ def test_write_trio_pedigree_step_part_run(variant_phasing_workflow, fake_fs):
 
 
 def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_workflow):
+    # Define expected
+    base_name_out = (
+        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+    )
+    vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
+    expected = {**vcf_dict, **ped_dict}
+
+    # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = variant_phasing_workflow.get_input_files("gatk_phase_by_transmission", "run")(
         wildcards
     )
-    expected = {
-        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "vcf": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz",
-        "vcf_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "tbi": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "tbi_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-    }
-    assert expected == actual
+
+    assert actual == expected
 
 
 def test_gatk_phase_by_transmission_step_part_get_output_files(variant_phasing_workflow):
-    expected = {
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.vcf.gz.md5",
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\\.]+}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.vcf.gz.tbi.md5",
-    }
-    assert (
-        variant_phasing_workflow.get_output_files("gatk_phase_by_transmission", "run") == expected
+    # Define expected
+    base_name_out = (
+        r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}"
     )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_output_files("gatk_phase_by_transmission", "run")
+    assert actual == expected
 
 
 def test_gatk_phase_by_transmission_step_part_get_log_file(variant_phasing_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.log",
-        "log_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}.log.md5",
-    }
-    assert variant_phasing_workflow.get_log_file("gatk_phase_by_transmission", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/"
+        "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_log_file("gatk_phase_by_transmission", "run")
+    assert actual == expected
 
 
 def test_gatk_phase_by_transmission_step_part_update_cluster_config(
@@ -193,13 +198,13 @@ def test_gatk_phase_by_transmission_step_part_update_cluster_config(
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing_workflow):
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    # Define expected
+    base_name_out = (
+        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
-    actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_only", "run")(
-        wildcards
-    )
-    expected = {
+    vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    bam_dict = {
         "bai": [
             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
@@ -210,37 +215,42 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
             "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
         ],
-        "tbi": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "tbi_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "vcf": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz",
-        "vcf_md5": "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.md5",
     }
-    assert expected == actual
+    expected = {**bam_dict, **vcf_dict}
+
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    )
+    actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_only", "run")(
+        wildcards
+    )
+
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_output_files(variant_phasing_workflow):
-    expected = {
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.vcf.gz.md5",
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.vcf.gz.tbi.md5",
-    }
-    assert (
-        variant_phasing_workflow.get_output_files("gatk_read_backed_phasing_only", "run")
-        == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/"
+        "{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}"
     )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_output_files("gatk_read_backed_phasing_only", "run")
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_log_file(variant_phasing_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.log",
-        "log_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}.log.md5",
-    }
-    assert variant_phasing_workflow.get_log_file("gatk_read_backed_phasing_only", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/"
+        "{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_log_file("gatk_read_backed_phasing_only", "run")
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_only_step_part_update_cluster_config(
@@ -255,13 +265,13 @@ def test_gatk_read_backed_phasing_only_step_part_update_cluster_config(
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing_workflow):
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    # Define expected
+    base_name_out = (
+        "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1"
     )
-    actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_also", "run")(
-        wildcards
-    )
-    expected = {
+    vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    bam_dict = {
         "bai": [
             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
@@ -272,37 +282,42 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
             "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
         ],
-        "tbi": "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "tbi_md5": "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "vcf": "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1.vcf.gz",
-        "vcf_md5": "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1.vcf.gz.md5",
     }
-    assert expected == actual
+    expected = {**bam_dict, **vcf_dict}
+
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    )
+    actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_also", "run")(
+        wildcards
+    )
+
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_output_files(variant_phasing_workflow):
-    expected = {
-        "tbi": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.vcf.gz.md5",
-    }
-    assert (
-        variant_phasing_workflow.get_output_files("gatk_read_backed_phasing_also", "run")
-        == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/"
+        "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
     )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_output_files("gatk_read_backed_phasing_also", "run")
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_log_file(variant_phasing_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.log",
-        "log_md5": "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}.log.md5",
-    }
-    assert variant_phasing_workflow.get_log_file("gatk_read_backed_phasing_also", "run") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/"
+        "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = variant_phasing_workflow.get_log_file("gatk_read_backed_phasing_also", "run")
+    assert actual == expected
 
 
 def test_gatk_read_backed_phasing_also_step_part_update_cluster_config(
@@ -318,8 +333,6 @@ def test_gatk_read_backed_phasing_also_step_part_update_cluster_config(
 
 def test_variant_phasing_workflow(variant_phasing_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = [
         "gatk_phase_by_transmission",
@@ -329,57 +342,23 @@ def test_variant_phasing_workflow(variant_phasing_workflow):
         "write_trio_pedigree",
     ]
     assert expected == list(sorted(variant_phasing_workflow.sub_steps.keys()))
+
     # Check result file construction
-    expected = [
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.bcftools.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.freebayes.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_hc_gvcf.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.gatk_ug.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1/out/bwa.platypus.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
+    base_out = (
+        "output/bwa.{tool}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.{tool}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.P00{i}-N1-DNA1-WGS1"
+    )
+    base_out_list = [
+        base_out.format(tool=tool, i=i)
+        for tool in ("bcftools", "freebayes", "gatk_hc", "gatk_hc_gvcf", "gatk_ug", "platypus")
+        for i in ("1", "4")
+
     ]
+    expected = []
+    for bol in base_out_list:
+        tmp_dict = get_expected_output_vcf_files_dict(base_out=bol)
+        expected += list(tmp_dict.values())
+
     expected = list(sorted(expected))
     actual = list(sorted(variant_phasing_workflow.get_result_files()))
     assert expected == actual
