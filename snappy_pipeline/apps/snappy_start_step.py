@@ -83,7 +83,7 @@ class StartStepApp:
             self._setup_configuration(config_yaml)
 
         log(
-            "\nDo not forget to fill out the required fields in the project configuration file!\n",
+            "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
             level=LVL_IMPORTANT,
         )
         log("Step {step} created. Done!", args={"step": self.step}, level=LVL_SUCCESS)
