@@ -320,9 +320,9 @@ step_config:
   ngs_mapping:
     # Aligners to use for the different NGS library types
     tools:
-      dna: []      # Example: 'bwa'
-      rna: []      # Example: 'star'
-      dna_long: [] # Example: 'ngmlr'
+      dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
+      rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
+      dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'ngmlr'.
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
@@ -349,7 +349,7 @@ step_config:
       path_baits_interval_list: null
     # Configuration for BWA
     bwa:
-      path_index: REQUIRED    # REQUIRED
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
       ref_gc_stats: null  # optional
       bwa_mode: auto  # in ['auto', 'bwa-aln', 'bwa-mem']
       num_threads_align: 16
@@ -362,7 +362,7 @@ step_config:
       split_as_secondary: true  # -M flag
     # Configuration for STAR
     star:
-      path_index: REQUIRED      # REQUIRED
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
       ref_gc_stats: null
       num_threads_align: 16
       num_threads_trimming: 8
@@ -388,14 +388,14 @@ step_config:
       quant_mode: ''
     # Configuration for Minialign
     minialign:
-      path_index: REQUIRED  # REQUIRED
-      ref_gc_stats: null    # optional
+      path_index: REQUIRED  # Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      ref_gc_stats: null    # Optional
       mapping_threads: 16
       num_threads_bam_view: 4
     # Configuration for NGMLR
     ngmlr:
-      path_index: REQUIRED  # REQUIRED
-      ref_gc_stats: null    # optional
+      path_index: REQUIRED  # Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      ref_gc_stats: null    # Optional
     # Select postprocessing method, only for DNA alignment
     postprocessing: null # optional, {'gatk_post_bam'}
     # Configuration for GATK BAM postprocessing
