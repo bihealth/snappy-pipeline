@@ -55,7 +55,7 @@ def create_directory(path, msg_lvl=LVL_INFO, exist_ok=False):
     Switch off messaging by setting msg_lvl to ``None``
     """
     if msg_lvl:
-        log("creating directory {path}", {"path": path}, level=msg_lvl)
+        log("Creating directory {path}", {"path": path}, level=msg_lvl)
     os.makedirs(path, exist_ok=exist_ok)
 
 
@@ -69,11 +69,10 @@ def create_from_tpl(
     Disable printing by setting ``msg_lvl`` to ``None``
     """
     if msg_lvl:
-        log("creating project-wide configuration in {path}", message_args, level=msg_lvl)
+        log(message, message_args, level=msg_lvl)
     # Read in the template and fill in values
     with open(src_path, "rt") as f:
         contents = f.read()
-    print("----\n%s\n----\n%s\n----\n" % (contents, format_args))
     formatted = contents % format_args
     # Create diff output and print
     if msg_lvl:
@@ -88,7 +87,7 @@ def create_from_tpl(
                 n=diff_context,
             )
         )
-    log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
+    # log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
     with open(dest_path, "wt") as f:
         f.write(formatted)
 

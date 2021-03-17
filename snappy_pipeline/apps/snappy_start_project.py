@@ -28,13 +28,16 @@ def run(args):
     log("================================")
     log("")
 
+    # Check if directory already exists - no overwrite
     if not assume_path_nonexisting(args.project_directory):
         return 1
 
+    # Create project directory and subdirectory for configuration files
     paths = (args.project_directory, os.path.join(args.project_directory, CONFIG_SUBDIR))
     for path in paths:
         create_directory(path)
 
+    # Create config file in subdirectory based on template
     create_from_tpl(
         src_path=os.path.join(os.path.dirname(__file__), "tpls", "project_config.yaml"),
         dest_path=os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME),
@@ -42,10 +45,11 @@ def run(args):
             "created_at": datetime.datetime.now().isoformat(),
             "project_name": (args.project_name or os.path.basename(args.project_directory)),
         },
-        message="creating project-wide configuration in {path}",
+        message="Creating project-wide configuration in {path}",
         message_args={"path": os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)},
     )
 
+    # Create readme file in subdirectory based on template
     create_from_tpl(
         src_path=os.path.join(os.path.dirname(__file__), "tpls", README_FILENAME),
         dest_path=os.path.join(args.project_directory, README_FILENAME),
@@ -53,12 +57,13 @@ def run(args):
             "created_at": datetime.datetime.now().isoformat(),
             "project_name": (args.project_name or os.path.basename(args.project_directory)),
         },
-        message="creating README file in in {path}",
+        message="Creating README file in in {path}",
         message_args={"path": os.path.join(args.project_directory, README_FILENAME)},
     )
 
+    # Create additional steps if any was provided
     for step in args.steps:
-        run_start_step(step, step, args)
+        run_start_step(step=step, directory=step, args=args)
 
     log("\nDo not forget to fill out your README.md file!\n", level=LVL_IMPORTANT)
     log("all done, have a nice day!", level=LVL_SUCCESS)
