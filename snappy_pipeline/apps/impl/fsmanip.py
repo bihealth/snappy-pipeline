@@ -59,9 +59,7 @@ def create_directory(path, msg_lvl=LVL_INFO, exist_ok=False):
     os.makedirs(path, exist_ok=exist_ok)
 
 
-def create_from_tpl(
-    src_path, dest_path, format_args, message, message_args, msg_lvl=LVL_INFO, diff_context=3
-):
+def create_from_tpl(src_path, dest_path, format_args, message, message_args, msg_lvl=LVL_INFO):
     """Create file at ``dest_path`` from template at ``src_path``
 
     Put in format arguments from format_args (properly escape ``%``).
@@ -74,20 +72,6 @@ def create_from_tpl(
     with open(src_path, "rt") as f:
         contents = f.read()
     formatted = contents % format_args
-    # Create diff output and print
-    if msg_lvl:
-        diff = "".join(
-            difflib.unified_diff(
-                [],
-                formatted.splitlines(True),
-                "/dev/null",
-                dest_path,
-                file_mtime("/dev/null"),
-                datetime.datetime.now().isoformat(),
-                n=diff_context,
-            )
-        )
-    # log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
     with open(dest_path, "wt") as f:
         f.write(formatted)
 
