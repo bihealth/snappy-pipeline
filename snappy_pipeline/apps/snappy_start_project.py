@@ -67,7 +67,7 @@ def run(args):
 
     log(
         "\nDo not forget to review .snappy_pipeline/config.yaml and to fill out README.md!\n",
-        level=LVL_IMPORTANT
+        level=LVL_IMPORTANT,
     )
     log("All done, have a nice day!", level=LVL_SUCCESS)
 
