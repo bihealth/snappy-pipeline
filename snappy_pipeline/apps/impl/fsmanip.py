@@ -131,6 +131,6 @@ def update_file(path, contents, message, message_args, msg_lvl=LVL_INFO, diff_co
                 n=diff_context,
             )
         )
-    log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
+    log("Applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
     with open(path, "wt") as f:
         f.write(contents)

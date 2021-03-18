@@ -123,7 +123,7 @@ class StartStepApp:
             src_path=os.path.join(os.path.dirname(__file__), "tpls", "step_config.yaml"),
             dest_path=os.path.join(dest_dir, CONFIG_FILENAME),
             format_args={"step_name": self.step, "step_version": 1, "config_subdir": CONFIG_SUBDIR},
-            message="creating step-wide configuration in {path}",
+            message="Creating step-wide configuration in {path}",
             message_args={"path": os.path.join(dest_dir, CONFIG_FILENAME)},
         )
 
@@ -143,7 +143,7 @@ class StartStepApp:
                 "conda": self.args.conda,
                 "step_name": self.step,
             },
-            message="creating SGE job shell file in {path}",
+            message="Creating SGE job shell file in {path}",
             message_args={"path": os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH)},
         )
 
@@ -170,7 +170,7 @@ class StartStepApp:
         update_file(
             path=config_filename,
             contents=updated_contents,
-            message="updating project config with required default config for step {step}",
+            message="Updating project config with required default config for step {step}",
             message_args={"step": self.step},
         )
 

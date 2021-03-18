@@ -19,8 +19,8 @@ static_data_config:
 
 # Step Configuration ==============================================================================
 #
-# Configuration for the individual steps.  These can be filled by the cubi-start-step command
-# or initialized already with cubi-start-project.
+# Configuration for the individual steps.  These can be filled by the snappy-start-step command
+# or initialized already with snappy-start-project.
 #
 step_config: {}
 
