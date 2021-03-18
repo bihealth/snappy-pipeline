@@ -388,13 +388,15 @@ step_config:
       quant_mode: ''
     # Configuration for Minialign
     minialign:
-      path_index: REQUIRED  # Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      path_index: REQUIRED
       ref_gc_stats: null    # Optional
       mapping_threads: 16
       num_threads_bam_view: 4
     # Configuration for NGMLR
     ngmlr:
-      path_index: REQUIRED  # Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      path_index: REQUIRED
       ref_gc_stats: null    # Optional
     # Select postprocessing method, only for DNA alignment
     postprocessing: null # optional, {'gatk_post_bam'}
