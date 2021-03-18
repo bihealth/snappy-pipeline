@@ -86,7 +86,7 @@ class StartStepApp:
             "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
             level=LVL_IMPORTANT,
         )
-        log("Step {step} created. Done!", args={"step": self.step}, level=LVL_SUCCESS)
+        log("Step {step} created.", args={"step": self.step}, level=LVL_SUCCESS)
 
     def _load_config_yaml(self):
         """Load configuration."""

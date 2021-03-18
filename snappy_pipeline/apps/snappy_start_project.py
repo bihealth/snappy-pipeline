@@ -65,8 +65,11 @@ def run(args):
     for step in args.steps:
         run_start_step(step=step, directory=step, args=args)
 
-    log("\nDo not forget to fill out your README.md file!\n", level=LVL_IMPORTANT)
-    log("all done, have a nice day!", level=LVL_SUCCESS)
+    log(
+        "\nDo not forget to review .snappy_pipeline/config.yaml and to fill out README.md!\n",
+        level=LVL_IMPORTANT
+    )
+    log("All done, have a nice day!", level=LVL_SUCCESS)
 
 
 def main(argv=None):
