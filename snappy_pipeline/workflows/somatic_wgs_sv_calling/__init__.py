@@ -80,9 +80,10 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
+from snappy_pipeline.workflows.abstract import BaseStepPart, BaseStep, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.utils import listify, dictify
+
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -171,7 +172,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
 
-    def get_log_file(self, action):
+    def get_log_file(self, _action):
         return (
             "work/{{mapper}}.{var_caller}.{{cancer_library}}/log/"
             "snakemake.somatic_wgs_sv_calling.log"
@@ -332,7 +333,7 @@ class Delly2StepPart(BaseStepPart):
         tpl = os.path.join("work", infix, "out", infix + ".bcf")
         yield "bcf", tpl.format(**wildcards)
 
-    def _get_input_files_final_vcf(self, wildcards):
+    def _get_input_files_final_vcf(self, _wildcards):
         """Return input files for "final_vcf" action"""
         infix = self.dir_infixes["filter_controls"]
         yield os.path.join("work", infix, "out", infix + ".bcf")
