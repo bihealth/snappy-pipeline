@@ -109,7 +109,7 @@ step_config:
 """
 
 
-class SomaticWgsSvCallingWorkflow(BaseStepPart):
+class SomaticWgsSvCallingStepPart(BaseStepPart):
     """Base class for somatic WGS SV calling steps
 
     WGS SV calling is performed on matched cancer bio sample pairs.  That is, the primary NGS
@@ -178,7 +178,7 @@ class SomaticWgsSvCallingWorkflow(BaseStepPart):
         ).format(var_caller=self.__class__.name)
 
 
-class MantaStepPart(SomaticWgsSvCallingWorkflow):
+class MantaStepPart(SomaticWgsSvCallingStepPart):
     """Somatic WGS SV calling with Manta"""
 
     name = "manta"
