@@ -57,7 +57,11 @@ class StartStepApp:
         log("")
         log(
             'Starting step "{step}" in sub-directory "{directory}" of project dir "{project_dir}"',
-            args={"step": self.step, "directory": self.directory, "project_dir": self.directory},
+            args={
+                "step": self.step,
+                "directory": self.directory,
+                "project_dir": self.args.project_directory,
+            },
         )
 
         dest_dir = os.path.join(self.args.project_directory, self.directory)
@@ -79,10 +83,10 @@ class StartStepApp:
             self._setup_configuration(config_yaml)
 
         log(
-            "\nDo not forget to fill out the required fields in the project configuration file!\n",
+            "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
             level=LVL_IMPORTANT,
         )
-        log("all done, have a nice day!", level=LVL_SUCCESS)
+        log("Step {step} created.", args={"step": self.step}, level=LVL_SUCCESS)
 
     def _load_config_yaml(self):
         """Load configuration."""
@@ -119,7 +123,7 @@ class StartStepApp:
             src_path=os.path.join(os.path.dirname(__file__), "tpls", "step_config.yaml"),
             dest_path=os.path.join(dest_dir, CONFIG_FILENAME),
             format_args={"step_name": self.step, "step_version": 1, "config_subdir": CONFIG_SUBDIR},
-            message="creating step-wide configuration in {path}",
+            message="Creating step-wide configuration in {path}",
             message_args={"path": os.path.join(dest_dir, CONFIG_FILENAME)},
         )
 
@@ -139,7 +143,7 @@ class StartStepApp:
                 "conda": self.args.conda,
                 "step_name": self.step,
             },
-            message="creating SGE job shell file in {path}",
+            message="Creating SGE job shell file in {path}",
             message_args={"path": os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH)},
         )
 
@@ -166,13 +170,26 @@ class StartStepApp:
         update_file(
             path=config_filename,
             contents=updated_contents,
-            message="updating project config with required default config for step {step}",
+            message="Updating project config with required default config for step {step}",
             message_args={"step": self.step},
         )
 
 
 def run_start_step(step, directory, args):
-    """Run ``snappy-start-step``."""
+    """Run ``snappy-start-step``.
+
+    :param step: Name of step.
+    :type step: str
+
+    :param directory: Name of directory to store step configurations and results. Usually the same
+    name as the step.
+    :type directory: str
+
+    :param args: Arguments provided by the user.
+    :type args: argparse.Namespace
+
+    :return: Returns the return value of Start Step run call.
+    """
     return StartStepApp(step, directory, args).run()
 
 

@@ -55,13 +55,11 @@ def create_directory(path, msg_lvl=LVL_INFO, exist_ok=False):
     Switch off messaging by setting msg_lvl to ``None``
     """
     if msg_lvl:
-        log("creating directory {path}", {"path": path}, level=msg_lvl)
+        log("Creating directory {path}", {"path": path}, level=msg_lvl)
     os.makedirs(path, exist_ok=exist_ok)
 
 
-def create_from_tpl(
-    src_path, dest_path, format_args, message, message_args, msg_lvl=LVL_INFO, diff_context=3
-):
+def create_from_tpl(src_path, dest_path, format_args, message, message_args, msg_lvl=LVL_INFO):
     """Create file at ``dest_path`` from template at ``src_path``
 
     Put in format arguments from format_args (properly escape ``%``).
@@ -69,26 +67,11 @@ def create_from_tpl(
     Disable printing by setting ``msg_lvl`` to ``None``
     """
     if msg_lvl:
-        log("creating project-wide configuration in {path}", message_args, level=msg_lvl)
+        log(message, message_args, level=msg_lvl)
     # Read in the template and fill in values
     with open(src_path, "rt") as f:
         contents = f.read()
-    print("----\n%s\n----\n%s\n----\n" % (contents, format_args))
     formatted = contents % format_args
-    # Create diff output and print
-    if msg_lvl:
-        diff = "".join(
-            difflib.unified_diff(
-                [],
-                formatted.splitlines(True),
-                "/dev/null",
-                dest_path,
-                file_mtime("/dev/null"),
-                datetime.datetime.now().isoformat(),
-                n=diff_context,
-            )
-        )
-    log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
     with open(dest_path, "wt") as f:
         f.write(formatted)
 
@@ -132,6 +115,6 @@ def update_file(path, contents, message, message_args, msg_lvl=LVL_INFO, diff_co
                 n=diff_context,
             )
         )
-    log("applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
+    log("Applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
     with open(path, "wt") as f:
         f.write(contents)
