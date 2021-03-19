@@ -533,24 +533,45 @@ class BaseStep:
         :raises:MissingConfiguration: on missing configuration
         """
 
-    def ensure_w_config(self, path, msg, e_class=MissingConfiguration):
-        """Ensure configuration setting is set and raise exception
-        otherwise
+    def ensure_w_config(self, config_keys, msg, e_class=MissingConfiguration):
+        """Check parameters in configuration.
+
+        Method ensures required configuration setting are present in the provided configuration;
+        if not, it raises exception.
+
+        :param config_keys: List of strings with all keys that must be present in the configuration
+        for a given step of the analysis to be performed.
+        :type config_keys: list
+
+        :param msg: Message to be used in case of exception.
+        :type msg: str
+
+        :param e_class: Preferred exception class to be raised in case of error.
+        Default: MissingConfiguration.
+        :type e_class: class
         """
+        # Initialise variables
         so_far = []
         handle = self.w_config
-        for entry in path:
+
+        # Check if configuration is empty
+        if not handle:
+            tpl = 'Empty configuration ("{full_path}"): {msg}'.format(
+                full_path="/".join(config_keys), msg=msg
+            )
+            raise e_class(tpl)
+
+        # Iterate over required configuration keys
+        for entry in config_keys:
+            # Check if keys are present in config dictionary
             if entry not in handle:
-                tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'
-                raise e_class(
-                    tpl.format(full_path="/".join(path), so_far="/".join(so_far), msg=msg)
+                tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
+                    full_path="/".join(config_keys), so_far="/".join(so_far), msg=msg
                 )
+                raise e_class(tpl)
             else:
                 handle = handle[entry]
                 so_far.append(entry)
-        if not handle:
-            tpl = 'Empty configuration ("{full_path}"): {msg}'
-            raise e_class(tpl.format(full_path="/".join(path), msg=msg))
 
     def update_cluster_config(self):
         """Update cluster configuration for rule "__default__"

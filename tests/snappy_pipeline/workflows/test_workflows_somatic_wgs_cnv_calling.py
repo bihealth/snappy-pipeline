@@ -8,9 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -29,12 +30,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           somatic_wgs_cnv_calling:
             somatic_variant_calling_tool: mutect
             tools:
@@ -97,46 +99,44 @@ def somatic_wgs_cnv_calling_workflow(
 
 
 def test_canvas_somatic_step_part_get_input_files(somatic_wgs_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_wgs_cnv_calling_workflow.get_input_files("canvas", "run")(wildcards)
+    # Define expected
     expected = {
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        #         "somatic_tbi": "SOMATIC_VARIANT_CALLING/output/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1.vcf.gz.tbi",
-        #         "somatic_vcf": "SOMATIC_VARIANT_CALLING/output/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1.vcf.gz",
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
     }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
+    actual = somatic_wgs_cnv_calling_workflow.get_input_files("canvas", "run")(wildcards)
     assert actual == expected
 
 
 def test_canvas_somatic_step_part_get_output_files(somatic_wgs_cnv_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}.vcf.gz.md5",
-    }
-    assert somatic_wgs_cnv_calling_workflow.get_output_files("canvas", "run") == expected
+    # Define expected
+    base_name = "work/{mapper}.canvas.{cancer_library}/out/{mapper}.canvas.{cancer_library}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name)
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_output_files("canvas", "run")
+    assert actual == expected
 
 
 def test_canvas_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.log",
-        "log_md5": "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}.log.md5",
-    }
-    assert somatic_wgs_cnv_calling_workflow.get_log_file("canvas", "run") == expected
+    # Define expected
+    base_name = "work/{mapper}.canvas.{cancer_library}/log/{mapper}.canvas.{cancer_library}"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_log_file("canvas", "run")
+    assert actual == expected
 
 
 def test_canvas_somatic_step_part_update_cluster_config(
     somatic_wgs_cnv_calling_workflow, dummy_cluster_config
 ):
-    actual = set(dummy_cluster_config["somatic_wgs_cnv_calling_canvas_run"].keys())
+    # Define expected
     expected = {"mem", "time", "ntasks"}
+    # Get actual
+    actual = set(dummy_cluster_config["somatic_wgs_cnv_calling_canvas_run"].keys())
     assert actual == expected
 
 
@@ -144,35 +144,40 @@ def test_canvas_somatic_step_part_update_cluster_config(
 
 
 def test_control_freec_somatic_step_part_get_input_files(somatic_wgs_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_wgs_cnv_calling_workflow.get_input_files("control_freec", "run")(wildcards)
+    # Define expected
     expected = {
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
     }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
+    actual = somatic_wgs_cnv_calling_workflow.get_input_files("control_freec", "run")(wildcards)
     assert actual == expected
 
 
 def test_control_freec_somatic_step_part_get_output_files(somatic_wgs_cnv_calling_workflow):
+    # Define expected
+    base_name = "work/{mapper}.control_freec.{cancer_library}/out/"
     expected = {
-        "ratio": "work/{mapper}.control_freec.{cancer_library}/out/{mapper}.control_freec.{cancer_library}.ratio.txt",
-        "ratio_md5": "work/{mapper}.control_freec.{cancer_library}/out/{mapper}.control_freec.{cancer_library}.ratio.txt.md5",
+        "ratio": base_name + "{mapper}.control_freec.{cancer_library}.ratio.txt",
+        "ratio_md5": base_name + "{mapper}.control_freec.{cancer_library}.ratio.txt.md5",
     }
-    assert somatic_wgs_cnv_calling_workflow.get_output_files("control_freec", "run") == expected
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_output_files("control_freec", "run")
+    assert actual == expected
 
 
 def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.log",
-        "log_md5": "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}.log.md5",
-    }
-    assert somatic_wgs_cnv_calling_workflow.get_log_file("control_freec", "run") == expected
+    # Define expected
+    base_name = (
+        "work/{mapper}.control_freec.{cancer_library}/log/{mapper}.control_freec.{cancer_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name)
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_log_file("control_freec", "run")
+    assert actual == expected
 
 
 def test_control_freec_somatic_step_part_update_cluster_config(
@@ -187,39 +192,42 @@ def test_control_freec_somatic_step_part_update_cluster_config(
 
 
 def test_cnvkit_somatic_wgs_step_part_get_input_files(somatic_wgs_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_wgs_cnv_calling_workflow.get_input_files("cnvkit", "run")(wildcards)
+    # Define expected
     expected = {
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
     }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
+    actual = somatic_wgs_cnv_calling_workflow.get_input_files("cnvkit", "run")(wildcards)
     assert actual == expected
 
 
 def test_cnvkit_somatic_wgs_step_part_get_output_files(somatic_wgs_cnv_calling_workflow):
+    # Define expected
+    base_name = "work/{mapper}.cnvkit.{cancer_library}/out/"
     expected = {
-        "segment": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.cns",
-        "segment_md5": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.cns.md5",
-        "bins": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.cnr",
-        "bins_md5": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.cnr.md5",
-        "scatter": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.scatter.png",
-        "scatter_md5": "work/{mapper}.cnvkit.{cancer_library}/out/{mapper}.cnvkit.{cancer_library}.scatter.png.md5",
+        "segment": base_name + "{mapper}.cnvkit.{cancer_library}.cns",
+        "segment_md5": base_name + "{mapper}.cnvkit.{cancer_library}.cns.md5",
+        "bins": base_name + "{mapper}.cnvkit.{cancer_library}.cnr",
+        "bins_md5": base_name + "{mapper}.cnvkit.{cancer_library}.cnr.md5",
+        "scatter": base_name + "{mapper}.cnvkit.{cancer_library}.scatter.png",
+        "scatter_md5": base_name + "{mapper}.cnvkit.{cancer_library}.scatter.png.md5",
     }
-    assert somatic_wgs_cnv_calling_workflow.get_output_files("cnvkit", "run") == expected
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_output_files("cnvkit", "run")
+    assert actual == expected
 
 
 def test_cnvkit_somatic_wgs_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.log",
-        "log_md5": "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}.log.md5",
-    }
-    assert somatic_wgs_cnv_calling_workflow.get_log_file("cnvkit", "run") == expected
+    # Define expected
+    base_name = "work/{mapper}.cnvkit.{cancer_library}/log/{mapper}.cnvkit.{cancer_library}"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    # Get actual
+    actual = somatic_wgs_cnv_calling_workflow.get_log_file("cnvkit", "run")
+    assert actual == expected
 
 
 def test_cnvkit_somatic_wgs_step_part_update_cluster_config(
@@ -235,8 +243,6 @@ def test_cnvkit_somatic_wgs_step_part_update_cluster_config(
 
 def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["canvas", "cnvetti", "cnvkit", "control_freec", "link_out"]
     assert list(sorted(somatic_wgs_cnv_calling_workflow.sub_steps.keys())) == expected
@@ -262,7 +268,7 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
         for mapper in ("bwa",)
         for cnv_caller in ("cnvetti",)
     ]
-    tpl2 = "output/{mapper}.cnvetti_plot.P00{i}/out/" "{mapper}.cnvetti_plot.P00{i}_{chrom}.{ext}"
+    tpl2 = "output/{mapper}.cnvetti_plot.P00{i}/out/{mapper}.cnvetti_plot.P00{i}_{chrom}.{ext}"
     expected += [
         tpl2.format(mapper=mapper, i=i, ext=ext, chrom=chrom)
         for i in (1, 2)
@@ -298,4 +304,4 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
     # Perform the comparison
     expected = list(sorted(expected))
     actual = list(sorted(somatic_wgs_cnv_calling_workflow.get_result_files()))
-    assert expected == actual
+    assert actual == expected

@@ -8,9 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -29,12 +30,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           variant_calling:
             tools:
             - gatk_ug
@@ -91,25 +93,30 @@ def wgs_cnv_calling_workflow(
 
 
 def test_erds_sv2_step_part_get_input_files(wgs_cnv_calling_workflow):
+    # Define expected
+    ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    variant_calling_path = "VARIANT_CALLING/output/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/"
+    expected = {
+        "bai": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
+        "tbi": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz.tbi",
+        "vcf": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz",
+    }
+    # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "call")(wildcards)
-    expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "tbi": "VARIANT_CALLING/output/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "vcf": "VARIANT_CALLING/output/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz",
-    }
     assert actual == expected
 
 
 def test_erds_sv2_step_part_get_call_output_files(wgs_cnv_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}.vcf.gz.md5",
-    }
-    assert wgs_cnv_calling_workflow.get_output_files("erds_sv2", "call") == expected
+    # Define expected
+    base_file_name = (
+        "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
+    # Get actual
+    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "call")
+    assert actual == expected
 
 
 def test_erds_sv2_step_part_get_log_file(wgs_cnv_calling_workflow):

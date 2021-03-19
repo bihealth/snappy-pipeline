@@ -9,11 +9,12 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_log_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -32,12 +33,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           somatic_targeted_seq_cnv_calling:
             tools:
             - cnvetti_on_target
@@ -89,7 +91,6 @@ def somatic_targeted_seq_cnv_calling_workflow(
 
 
 def test_cnvkit_access_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "access")
     assert actual is None
 
@@ -102,14 +103,7 @@ def test_cnvkit_access_step_part_get_output_files(somatic_targeted_seq_cnv_calli
 
 
 def test_cnvkit_access_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/cnvkit.access/log/cnvkit.access.conda_info.txt",
-        "conda_info_md5": "work/cnvkit.access/log/cnvkit.access.conda_info.txt.md5",
-        "conda_list": "work/cnvkit.access/log/cnvkit.access.conda_list.txt",
-        "conda_list_md5": "work/cnvkit.access/log/cnvkit.access.conda_list.txt.md5",
-        "log": "work/cnvkit.access/log/cnvkit.access.log",
-        "log_md5": "work/cnvkit.access/log/cnvkit.access.log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out="work/cnvkit.access/log/cnvkit.access")
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "access")
     assert actual == expected
 
@@ -141,14 +135,7 @@ def test_cnvkit_target_step_part_get_output_files(somatic_targeted_seq_cnv_calli
 
 
 def test_cnvkit_target_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/cnvkit.target/log/cnvkit.target.conda_info.txt",
-        "conda_info_md5": "work/cnvkit.target/log/cnvkit.target.conda_info.txt.md5",
-        "conda_list": "work/cnvkit.target/log/cnvkit.target.conda_list.txt",
-        "conda_list_md5": "work/cnvkit.target/log/cnvkit.target.conda_list.txt.md5",
-        "log": "work/cnvkit.target/log/cnvkit.target.log",
-        "log_md5": "work/cnvkit.target/log/cnvkit.target.log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out="work/cnvkit.target/log/cnvkit.target")
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "target")
     assert actual == expected
 
@@ -185,14 +172,7 @@ def test_cnvkit_antitarget_step_part_get_output_files(somatic_targeted_seq_cnv_c
 
 
 def test_cnvkit_antitarget_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/cnvkit.antitarget/log/cnvkit.antitarget.conda_info.txt",
-        "conda_info_md5": "work/cnvkit.antitarget/log/cnvkit.antitarget.conda_info.txt.md5",
-        "conda_list": "work/cnvkit.antitarget/log/cnvkit.antitarget.conda_list.txt",
-        "conda_list_md5": "work/cnvkit.antitarget/log/cnvkit.antitarget.conda_list.txt.md5",
-        "log": "work/cnvkit.antitarget/log/cnvkit.antitarget.log",
-        "log_md5": "work/cnvkit.antitarget/log/cnvkit.antitarget.log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out="work/cnvkit.antitarget/log/cnvkit.antitarget")
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "antitarget")
     assert actual == expected
 
@@ -225,18 +205,27 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
 
 
 def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "target": "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}.targetcoverage.cnn",
-        "antitarget": "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}.antitargetcoverage.cnn",
-    }
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "coverage") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}"
     )
+    expected = {
+        "target": base_name_out + ".targetcoverage.cnn",
+        "antitarget": base_name_out + ".antitargetcoverage.cnn",
+    }
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "coverage")
+
+    assert actual == expected
 
 
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/{mapper}.cnvkit.coverage.{library_name}/log/snakemake.log"
-    # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage") == expected
+    base_file_name = (
+        "work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_file_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage")
+    assert actual == expected
 
 
 def test_cnvkit_coverage_step_part_update_cluster_config(
@@ -265,14 +254,24 @@ def test_cnvkit_reference_step_part_get_input_files(somatic_targeted_seq_cnv_cal
 
 
 def test_cnvkit_reference_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/{mapper}.cnvkit.reference.{library_name}/out/{mapper}.cnvkit.reference.{library_name}.cnn"
+    expected = (
+        "work/{mapper}.cnvkit.reference.{library_name}/out/"
+        "{mapper}.cnvkit.reference.{library_name}.cnn"
+    )
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "reference")
     assert actual == expected
 
 
 def test_cnvkit_reference_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/cnvkit.reference/log/snakemake.log"
-    # assert somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.reference.{library_name}/log/{mapper}.cnvkit.reference.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference")
+
+    assert actual == expected
 
 
 def test_cnvkit_reference_step_part_update_cluster_config(
@@ -287,12 +286,20 @@ def test_cnvkit_reference_step_part_update_cluster_config(
 
 
 def test_cnvkit_fix_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    coverage_base_out = (
+        "work/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1/out/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1"
+    )
+    reference_base_out = (
+        "work/bwa.cnvkit.reference.P001-T1-DNA1-WGS1/out/bwa.cnvkit.reference.P001-T1-DNA1-WGS1"
+    )
     expected = {
-        "antitarget": "work/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1/out/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1.antitargetcoverage.cnn",
-        "ref": "work/bwa.cnvkit.reference.P001-T1-DNA1-WGS1/out/bwa.cnvkit.reference.P001-T1-DNA1-WGS1.cnn",
-        "target": "work/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1/out/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1.targetcoverage.cnn",
+        "antitarget": coverage_base_out + ".antitargetcoverage.cnn",
+        "ref": reference_base_out + ".cnn",
+        "target": coverage_base_out + ".targetcoverage.cnn",
     }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "fix")(wildcards)
     assert actual == expected
 
@@ -303,15 +310,12 @@ def test_cnvkit_fix_step_part_get_output_files(somatic_targeted_seq_cnv_calling_
 
 
 def test_cnvkit_fix_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}.log.md5",
-    }
+    # Define expected
+    base_name_out = "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "fix")
+
     assert actual == expected
 
 
@@ -347,15 +351,14 @@ def test_cnvkit_segment_step_part_get_output_files(somatic_targeted_seq_cnv_call
 
 
 def test_cnvkit_segment_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}.log.md5",
-    }
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "segment")
+
     assert actual == expected
 
 
@@ -371,10 +374,13 @@ def test_cnvkit_segment_step_part_update_cluster_config(
 
 
 def test_cnvkit_call_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    segment_file = (
+        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
+    )
+    expected = {"segment": segment_file}
+    # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    expected = {
-        "segment": "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
-    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "call")(wildcards)
     assert actual == expected
 
@@ -387,14 +393,12 @@ def test_cnvkit_call_step_part_get_output_files(somatic_targeted_seq_cnv_calling
 
 
 def test_cnvkit_call_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}.log.md5",
-    }
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "call")
     assert actual == expected
 
@@ -411,37 +415,45 @@ def test_cnvkit_call_step_part_update_cluster_config(
 
 
 def test_cnvkit_plot_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    cnr_file = "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr"
+    cns_file = (
+        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
+    )
+    expected = {
+        "cnr": cnr_file,
+        "cns": cns_file,
+    }
+    # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "plot")(wildcards)
-    expected = {
-        "cnr": "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr",
-        "cns": "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns",
-    }
     assert actual == expected
 
 
 def test_cnvkit_plot_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    base_out = "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}"
     expected = {
-        "diagram": "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}.diagram.pdf",
-        "heatmap": "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}.heatmap.pdf",
-        "scatter": "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}.scatter.pdf",
+        "diagram": base_out + ".diagram.pdf",
+        "heatmap": base_out + ".heatmap.pdf",
+        "scatter": base_out + ".scatter.pdf",
     }
     for chrom in chain(range(1, 23), ("X", "Y")):
         for diagram in ("heatmap", "scatter"):
-            tpl = "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}.%s.chr%s.pdf"
+            tpl = base_out + ".%s.chr%s.pdf"
             expected["{}_chr{}".format(diagram, chrom)] = tpl % (diagram, chrom)
-    assert somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "plot") == expected
+
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "plot")
+    assert actual == expected
 
 
 def test_cnvkit_plot_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}.log.md5",
-    }
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}"
+    )
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "plot")
     assert actual == expected
 
@@ -469,25 +481,28 @@ def test_cnvkit_export_step_part_get_input_files(somatic_targeted_seq_cnv_callin
 
 
 def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}"
+    )
     expected = {
-        "bed": "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}.bed",
-        "seg": "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}.seg",
-        "tbi": "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}.vcf.gz.tbi",
-        "vcf": "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}.vcf.gz",
+        "bed": base_name_out + ".bed",
+        "seg": base_name_out + ".seg",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf": base_name_out + ".vcf.gz",
     }
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "export")
     assert actual == expected
 
 
 def test_cnvkit_export_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}.log.md5",
-    }
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "export")
     assert actual == expected
 
@@ -504,11 +519,17 @@ def test_cnvkit_export_step_part_update_cluster_config(
 
 
 def test_cnvkit_report_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    cnr_file = "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr"
+    cns_file = (
+        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
+    )
     expected = {
-        "cnr": "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr",
-        "cns": "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns",
+        "cnr": cnr_file,
+        "cns": cns_file,
     }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "report")(
         wildcards
     )
@@ -516,27 +537,29 @@ def test_cnvkit_report_step_part_get_input_files(somatic_targeted_seq_cnv_callin
 
 
 def test_cnvkit_report_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "breaks": "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}.breaks.txt",
-        "gainloss": "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}.gainloss.txt",
-        "gender": "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}.gender.txt",
-        "metrics": "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}.metrics.txt",
-        "segmetrics": "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}.segmetrics.txt",
-    }
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "report") == expected
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}"
     )
+    expected = {
+        "breaks": base_name_out + ".breaks.txt",
+        "gainloss": base_name_out + ".gainloss.txt",
+        "gender": base_name_out + ".gender.txt",
+        "metrics": base_name_out + ".metrics.txt",
+        "segmetrics": base_name_out + ".segmetrics.txt",
+    }
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "report")
+    assert actual == expected
 
 
 def test_cnvkit_report_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = {
-        "conda_info": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.conda_list.txt.md5",
-        "log": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.log",
-        "log_md5": "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}.log.md5",
-    }
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "report")
     assert actual == expected
 
@@ -675,5 +698,5 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     expected = list(sorted(expected))
     actual = list(sorted(somatic_targeted_seq_cnv_calling_workflow.get_result_files()))
     # HACK TODO
-    actual = [f for f in actual if not "/log/" in f]
+    actual = [f for f in actual if "/log/" not in f]
     assert expected == actual

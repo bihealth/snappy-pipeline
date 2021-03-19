@@ -7,9 +7,9 @@ import textwrap
 
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
-
+from .common import get_expected_output_vcf_files_dict, get_expected_output_bcf_files_dict
 from .conftest import patch_module_fs
+from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -28,12 +28,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           wgs_sv_calling:
             tools:
               dna:
@@ -97,12 +98,13 @@ def test_delly2_step_part_call_get_input_files(wgs_sv_calling_workflow):
 
 
 def test_delly2_step_part_call_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "bcf": "work/{mapper,[^\\.]+}.delly2.call.{library_name,[^\\.]+}/out/{mapper}.delly2.call.{library_name}.bcf",
-        "bcf_md5": "work/{mapper,[^\\.]+}.delly2.call.{library_name,[^\\.]+}/out/{mapper}.delly2.call.{library_name}.bcf.md5",
-        "csi": "work/{mapper,[^\\.]+}.delly2.call.{library_name,[^\\.]+}/out/{mapper}.delly2.call.{library_name}.bcf.csi",
-        "csi_md5": "work/{mapper,[^\\.]+}.delly2.call.{library_name,[^\\.]+}/out/{mapper}.delly2.call.{library_name}.bcf.csi.md5",
-    }
+    # Define expected
+    base_name_out = (
+        r"work/{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}/out/"
+        r"{mapper}.delly2.call.{library_name}"
+    )
+    expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
+    # Get actual
     actual = wgs_sv_calling_workflow.get_output_files("delly2", "call")
     assert actual == expected
 
@@ -136,12 +138,10 @@ def test_delly2_step_part_merge_calls_get_input_files(wgs_sv_calling_workflow):
 
 
 def test_delly2_step_part_merge_calls_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "bcf": "work/{mapper,[^\\.]+}.delly2.merge_calls/out/{mapper}.delly2.merge_calls.bcf",
-        "bcf_md5": "work/{mapper,[^\\.]+}.delly2.merge_calls/out/{mapper}.delly2.merge_calls.bcf.md5",
-        "csi": "work/{mapper,[^\\.]+}.delly2.merge_calls/out/{mapper}.delly2.merge_calls.bcf.csi",
-        "csi_md5": "work/{mapper,[^\\.]+}.delly2.merge_calls/out/{mapper}.delly2.merge_calls.bcf.csi.md5",
-    }
+    # Define expected
+    base_name_out = r"work/{mapper,[^\.]+}.delly2.merge_calls/out/{mapper}.delly2.merge_calls"
+    expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
+    # Get actual
     actual = wgs_sv_calling_workflow.get_output_files("delly2", "merge_calls")
     assert actual == expected
 
@@ -174,12 +174,13 @@ def test_delly2_step_part_genotype_get_input_files(wgs_sv_calling_workflow):
 
 
 def test_delly2_step_part_genotype_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "bcf": "work/{mapper,[^\\.]+}.delly2.genotype.{library_name,[^\\.]+}/out/{mapper}.delly2.genotype.{library_name}.bcf",
-        "bcf_md5": "work/{mapper,[^\\.]+}.delly2.genotype.{library_name,[^\\.]+}/out/{mapper}.delly2.genotype.{library_name}.bcf.md5",
-        "csi": "work/{mapper,[^\\.]+}.delly2.genotype.{library_name,[^\\.]+}/out/{mapper}.delly2.genotype.{library_name}.bcf.csi",
-        "csi_md5": "work/{mapper,[^\\.]+}.delly2.genotype.{library_name,[^\\.]+}/out/{mapper}.delly2.genotype.{library_name}.bcf.csi.md5",
-    }
+    # Define expected
+    base_name_out = (
+        r"work/{mapper,[^\.]+}.delly2.genotype.{library_name,[^\.]+}/out/"
+        r"{mapper}.delly2.genotype.{library_name}"
+    )
+    expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
+    # Get actual
     actual = wgs_sv_calling_workflow.get_output_files("delly2", "genotype")
     assert actual == expected
 
@@ -215,12 +216,12 @@ def test_delly2_step_part_merge_genotypes_get_input_files(wgs_sv_calling_workflo
 
 
 def test_delly2_step_part_merge_genotypes_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "bcf": "work/{mapper,[^\\.]+}.delly2.merge_genotypes/out/{mapper}.delly2.merge_genotypes.bcf",
-        "bcf_md5": "work/{mapper,[^\\.]+}.delly2.merge_genotypes/out/{mapper}.delly2.merge_genotypes.bcf.md5",
-        "csi": "work/{mapper,[^\\.]+}.delly2.merge_genotypes/out/{mapper}.delly2.merge_genotypes.bcf.csi",
-        "csi_md5": "work/{mapper,[^\\.]+}.delly2.merge_genotypes/out/{mapper}.delly2.merge_genotypes.bcf.csi.md5",
-    }
+    # Define expected
+    base_name_out = (
+        r"work/{mapper,[^\.]+}.delly2.merge_genotypes/out/{mapper}.delly2.merge_genotypes"
+    )
+    expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
+    # Get actual
     actual = wgs_sv_calling_workflow.get_output_files("delly2", "merge_genotypes")
     assert actual == expected
 
@@ -249,12 +250,13 @@ def test_delly2_step_part_reorder_vcf_get_input_files(wgs_sv_calling_workflow):
 
 
 def test_delly2_step_part_reorder_vcf_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper,[^\\.]+}.delly2.{index_ngs_library,[^\\.]+}/out/{mapper}.delly2.{index_ngs_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper,[^\\.]+}.delly2.{index_ngs_library,[^\\.]+}/out/{mapper}.delly2.{index_ngs_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper,[^\\.]+}.delly2.{index_ngs_library,[^\\.]+}/out/{mapper}.delly2.{index_ngs_library}.vcf.gz",
-        "vcf_md5": "work/{mapper,[^\\.]+}.delly2.{index_ngs_library,[^\\.]+}/out/{mapper}.delly2.{index_ngs_library}.vcf.gz.md5",
-    }
+    # Define expected
+    base_name_out = (
+        r"work/{mapper,[^\.]+}.delly2.{index_ngs_library,[^\.]+}/out/"
+        r"{mapper}.delly2.{index_ngs_library}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
     actual = wgs_sv_calling_workflow.get_output_files("delly2", "reorder_vcf")
     assert actual == expected
 
@@ -290,13 +292,12 @@ def test_manta_step_part_get_input_files(wgs_sv_calling_workflow):
 
 
 def test_manta_step_part_get_output_files(wgs_sv_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.manta.{index_ngs_library}/out/{mapper}.manta.{index_ngs_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.manta.{index_ngs_library}/out/{mapper}.manta.{index_ngs_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.manta.{index_ngs_library}/out/{mapper}.manta.{index_ngs_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.manta.{index_ngs_library}/out/{mapper}.manta.{index_ngs_library}.vcf.gz.md5",
-    }
-    assert wgs_sv_calling_workflow.get_output_files("manta", "run") == expected
+    # Define expected
+    base_name_out = "work/{mapper}.manta.{index_ngs_library}/out/{mapper}.manta.{index_ngs_library}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = wgs_sv_calling_workflow.get_output_files("manta", "run")
+    assert actual == expected
 
 
 def test_manta_step_part_get_log_file(wgs_sv_calling_workflow):

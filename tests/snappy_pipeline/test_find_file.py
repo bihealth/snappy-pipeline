@@ -153,7 +153,7 @@ def test_file_system_crawler_construct_existing_cache(sample_cache_dict):
     assert crawler.lock_timeout == 60
 
 
-def test_file_system_crawler_construct_no_existing_cache(sample_cache_dict):
+def test_file_system_crawler_construct_no_existing_cache():
     fake_fs = fake_filesystem.FakeFilesystem()
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_fs.create_dir(fake_os.path.dirname(CACHE_PATH))
@@ -165,13 +165,13 @@ def test_file_system_crawler_construct_no_existing_cache(sample_cache_dict):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         crawler.save_cache()
     assert crawler.cache_path == CACHE_PATH
-    EMPTY_CACHE = {"cache_version": 1, "root_dirs": {}}
-    assert crawler.cache == EMPTY_CACHE
+    empty_cache = {"cache_version": 1, "root_dirs": {}}
+    assert crawler.cache == empty_cache
     assert crawler.invalidation_paths == []
     assert crawler.cache_dirty
     assert crawler.lock_timeout == 60
     assert fake_os.path.exists(CACHE_PATH)
-    assert json.loads(fake_open(CACHE_PATH).read()) == EMPTY_CACHE
+    assert json.loads(fake_open(CACHE_PATH).read()) == empty_cache
 
 
 def test_file_system_crawler_crawl_existing_cache(sample_cache_dict):
@@ -365,7 +365,7 @@ def test_file_system_crawler_se_data_pe_pattern_bad_se_pe(sample_cache_dict_se_p
     ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
-            res = list(crawler.run("/path", "P001", (pattern_set,), True))
+            list(crawler.run("/path", "P001", (pattern_set,), True))
         assert str(excinfo.value).startswith("Must have the same number of matches per pattern,")
 
 
@@ -384,5 +384,5 @@ def test_file_system_crawler_se_data_pe_pattern_bad_pe_se(sample_cache_dict_pe_s
     ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
-            res = list(crawler.run("/path", "P001", (pattern_set,), True))
+            list(crawler.run("/path", "P001", (pattern_set,), True))
         assert str(excinfo.value).startswith("Must have the same number of matches per pattern,")

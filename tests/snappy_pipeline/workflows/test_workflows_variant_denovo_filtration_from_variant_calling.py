@@ -8,9 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -29,12 +30,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           variant_calling:
             tools:
             - gatk_hc
@@ -100,18 +102,22 @@ def variant_de_novo_filtration_workflow(
 def test_filter_de_novo_from_variant_calling_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    # Define expected
+    ngs_mapping_base_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    bam_ped_dict = {
+        "bai": ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam",
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+    }
+    variant_calling_base_out = (
+        "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+    )
+    vcf_dict = get_expected_output_vcf_files_dict(base_out=variant_calling_base_out)
+    expected = {**bam_ped_dict, **vcf_dict}
+    # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
-    expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "tbi": "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "tbi_md5": "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "vcf": "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1.vcf.gz",
-        "vcf_md5": "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1.vcf.gz.md5",
-    }
     actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo", "run")(wildcards)
     assert actual == expected
 
@@ -119,28 +125,35 @@ def test_filter_de_novo_from_variant_calling_step_part_get_input_files(
 def test_filter_de_novo_from_variant_calling_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
-    expected = {
-        "tbi": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz.md5",
-    }
-    assert expected == variant_de_novo_filtration_workflow.get_output_files("filter_denovo", "run")
+    # Define expected
+    base_name_out = (
+        r"work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.de_novos.{index_library}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_output_files("filter_denovo", "run")
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_calling_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    expected = "work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/log/{mapper}.{caller}.de_novos.{index_library}.log"
-    assert expected == variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
+    expected = (
+        r"work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/log/"
+        r"{mapper}.{caller}.de_novos.{index_library}.log"
+    )
+    actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_calling_step_part_update_cluster_config(
     variant_de_novo_filtration_workflow, dummy_cluster_config
 ):
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
     expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
+    assert actual == expected
 
 
 # Tests for FilterDeNovosHardStepPart --------------------------------------------------------------
@@ -149,38 +162,50 @@ def test_filter_de_novo_from_variant_calling_step_part_update_cluster_config(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+    # Define expected
+    base_name_out = (
+        r"work/{mapper}.{caller}.de_novos.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.de_novos.{index_library}"
     )
-    actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo_hard", "run")
     expected = {
-        "tbi": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz.tbi",
-        "vcf": "work/{mapper}.{caller}.de_novos.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos.{index_library}.vcf.gz",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf": base_name_out + ".vcf.gz",
     }
-    assert expected == actual
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo_hard", "run")
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
-    expected = {
-        "summary": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.summary.txt",
-        "summary_md5": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.summary.txt.md5",
-        "tbi": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\\.]+}/out/{mapper}.{caller}.de_novos_hard.{index_library}.vcf.gz.md5",
-    }
-    assert expected == variant_de_novo_filtration_workflow.get_output_files(
-        "filter_denovo_hard", "run"
+    # Define expected
+    base_out = (
+        r"work/{mapper}.{caller}.de_novos_hard.{index_library,[^\.]+}/out/"
+        r"{mapper}.{caller}.de_novos_hard.{index_library}"
     )
+    summary_dict = {
+        "summary": base_out + ".summary.txt",
+        "summary_md5": base_out + ".summary.txt.md5",
+    }
+    vcf_dict = get_expected_output_vcf_files_dict(base_out=base_out)
+    expected = {**summary_dict, **vcf_dict}
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_output_files("filter_denovo_hard", "run")
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    expected = "work/{mapper}.{caller}.de_novos_hard.{index_library,[^\.]+}/log/{mapper}.{caller}.de_novos_hard.{index_library}.log"
-    assert expected == variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
+    # Define expected
+    expected = (
+        r"work/{mapper}.{caller}.de_novos_hard.{index_library,[^\.]+}/log/"
+        r"{mapper}.{caller}.de_novos_hard.{index_library}.log"
+    )
+    # Get actual
+    actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
+    assert actual == expected
 
 
 def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_config(
@@ -191,7 +216,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_con
     assert expected == actual
 
 
-# Tests for VariantDeNovoFiltrationWorkflow ----------------------------------------------------------------
+# Tests for VariantDeNovoFiltrationWorkflow --------------------------------------------------------
 
 
 def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
@@ -207,25 +232,31 @@ def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
         "summarize_counts",
         "write_pedigree",
     ]
-    assert expected == list(sorted(variant_de_novo_filtration_workflow.sub_steps.keys()))
+    actual = list(sorted(variant_de_novo_filtration_workflow.sub_steps.keys()))
+    assert actual == expected
+
     # Check result file construction
     expected = [
         "output/bwa.denovo_count_summary/out/bwa.denovo_count_summary.txt",
         "output/bwa.denovo_count_summary/out/bwa.denovo_count_summary.txt.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.summary.txt",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.summary.txt.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.summary.txt",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.summary.txt.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.md5",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-        "output/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1/out/bwa.gatk_hc.de_novos_hard.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
         "output/bwa.multisite_de_novo/out/bwa.multisite_de_novo.txt",
         "output/bwa.multisite_de_novo/out/bwa.multisite_de_novo.txt.md5",
+    ]
+    base_name_out = (
+        "output/bwa.gatk_hc.de_novos_hard.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.de_novos_hard.P00{i}-N1-DNA1-WGS1{ext}"
+    )
+    expected += [
+        base_name_out.format(i=i, ext=ext)
+        for i in (1, 4)  # only for indices
+        for ext in (
+            ".summary.txt",
+            ".summary.txt.md5",
+            ".vcf.gz",
+            ".vcf.gz.md5",
+            ".vcf.gz.tbi",
+            ".vcf.gz.tbi.md5",
+        )
     ]
     expected = list(sorted(expected))
     actual = list(sorted(variant_de_novo_filtration_workflow.get_result_files()))

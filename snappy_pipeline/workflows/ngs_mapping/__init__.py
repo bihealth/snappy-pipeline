@@ -320,12 +320,9 @@ step_config:
   ngs_mapping:
     # Aligners to use for the different NGS library types
     tools:
-      dna:
-      - bwa
-      rna:
-      - star
-      dna_long:
-      - ngmlr
+      dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
+      rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
+      dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'ngmlr'.
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
@@ -352,7 +349,7 @@ step_config:
       path_baits_interval_list: null
     # Configuration for BWA
     bwa:
-      path_index: REQUIRED    # REQUIRED
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
       ref_gc_stats: null  # optional
       bwa_mode: auto  # in ['auto', 'bwa-aln', 'bwa-mem']
       num_threads_align: 16
@@ -365,7 +362,7 @@ step_config:
       split_as_secondary: true  # -M flag
     # Configuration for STAR
     star:
-      path_index: REQUIRED      # REQUIRED
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
       ref_gc_stats: null
       num_threads_align: 16
       num_threads_trimming: 8
@@ -391,14 +388,16 @@ step_config:
       quant_mode: ''
     # Configuration for Minialign
     minialign:
-      path_index: REQUIRED  # REQUIRED
-      ref_gc_stats: null    # optional
+      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      path_index: REQUIRED
+      ref_gc_stats: null    # Optional
       mapping_threads: 16
       num_threads_bam_view: 4
     # Configuration for NGMLR
     ngmlr:
-      path_index: REQUIRED  # REQUIRED
-      ref_gc_stats: null    # optional
+      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
+      path_index: REQUIRED
+      ref_gc_stats: null    # Optional
     # Select postprocessing method, only for DNA alignment
     postprocessing: null # optional, {'gatk_post_bam'}
     # Configuration for GATK BAM postprocessing
@@ -525,17 +524,30 @@ class BwaStepPart(ReadMappingStepPart):
         }
 
     def check_config(self):
-        if "bwa" not in self.config["tools"]["dna"]:
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]["dna"]:
             return  # BWA not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
         self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "bwa", "path_index"), "Path to BWA index is required"
+            config_keys=("step_config", "ngs_mapping", "bwa", "path_index"),
+            msg="Path to BWA index is required",
         )
+
         # Check that the path to the BWA index is valid.
         for ext in (".amb", ".ann", ".bwt", ".pac", ".sa"):
             expected_path = self.config["bwa"]["path_index"] + ext
             if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected BWA input path {} does not exist!"
-                raise InvalidConfiguration(tpl.format(expected_path))
+                tpl = "Expected BWA input path {expected_path} does not exist!".format(
+                    expected_path=expected_path
+                )
+                raise InvalidConfiguration(tpl)
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -543,30 +555,44 @@ class StarStepPart(ReadMappingStepPart):
 
     name = "star"
 
-    def check_config(self):
-        if "star" not in self.config["tools"]["rna"]:
-            return  # STAR not run, don't check configuration  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "star", "path_index"), "Path to STAR index is required"
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference"), "No reference genome FASTA file given"
-        )
-        # checking validity of the STAR index
-        fullpath = self.config["star"]["path_index"]
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(fullpath, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR index file {} does not exist!"
-                raise InvalidConfiguration(tpl.format(expected_path))
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_star_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "40:00",
             "ntasks": 16,
         }
+
+    def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]["rna"]:
+            return  # STAR not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
+        self.parent.ensure_w_config(
+            config_keys=("step_config", "ngs_mapping", "star", "path_index"),
+            msg="Path to STAR index is required",
+        )
+        self.parent.ensure_w_config(
+            config_keys=("static_data_config", "reference"),
+            msg="No reference genome FASTA file given",
+        )
+
+        # Check validity of the STAR index
+        full_path = self.config["star"]["path_index"]
+        # a lot of files should be in this dir, justtest these
+        for indfile in ("Genome", "SA", "SAindex"):
+            expected_path = os.path.join(full_path, indfile)
+            if not os.path.exists(expected_path):  # pragma: no cover
+                tpl = "Expected STAR index file {expected_path} does not exist!".format(
+                    expected_path=expected_path
+                )
+                raise InvalidConfiguration(tpl)
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -587,13 +613,6 @@ class NgmlrStepPart(ReadMappingStepPart):
 
     name = "ngmlr"
 
-    def check_config(self):
-        if not (set(self.config["tools"]["dna_long"]) & {"ngmlr", "ngmlr_chained"}):
-            return  # NGLMR not run, don't check configuration  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "ngmlr", "path_index"), "Path to NGMLR index is required"
-        )
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_ngmlr_run"] = {
             "mem": int(3.7 * 1024 * 16),
@@ -601,18 +620,40 @@ class NgmlrStepPart(ReadMappingStepPart):
             "ntasks": 16,
         }
 
+    def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if not (set(self.config["tools"]["dna_long"]) & {"ngmlr", "ngmlr_chained"}):
+            return  # NGLMR not run, don't check configuration  # pragma: no cover
+
+        # Check required configuration settings present
+        self.parent.ensure_w_config(
+            config_keys=("step_config", "ngs_mapping", "ngmlr", "path_index"),
+            msg="Path to NGMLR index is required",
+        )
+
 
 class ExternalStepPart(ReadMappingStepPart):
     """Support for linking in external BAM files"""
 
     name = "external"
 
-    def check_config(self):
-        if "external" not in self.config["tools"]["dna"]:
-            return  # External not run, don't check configuration  # pragma: no cover
-
     def update_cluster_config(self, cluster_config):
         cluster_config["ngs_mapping_external_run"] = {"mem": 1024, "time": "04:00", "ntasks": 1}
+
+    def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if "external" not in self.config["tools"]["dna"]:
+            return  # External not run, don't check configuration  # pragma: no cover
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
@@ -651,15 +692,23 @@ class GatkPostBamStepPart(BaseStepPart):
         )
 
     def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA are present in the
+        configuration. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
         if "gatk_post_bam" not in (self.config["postprocessing"] or []):  # pylint: disable=C0325
             return  # GATK BAM postprocessing not enabled, skip
+
+        # Check required configuration settings present
         self.parent.ensure_w_config(
-            ("step_config", "ngs_mapping", "gatk_post_bam", "paths_known_sites"),
-            "Known sites list cannot be empty for GATK BAM postprocessing",
+            config_keys=("step_config", "ngs_mapping", "gatk_post_bam", "paths_known_sites"),
+            msg="Known sites list cannot be empty for GATK BAM postprocessing",
         )
         self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA required for GATK BAM postprocessing",
+            config_keys=("static_data_config", "reference", "path"),
+            msg="Path to reference FASTA required for GATK BAM postprocessing",
         )
 
     def get_input_files(self, action):

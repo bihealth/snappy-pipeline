@@ -8,9 +8,10 @@ import textwrap
 
 from snakemake.io import Wildcards
 
+from .common import get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 from snappy_pipeline.workflows.wgs_mei_calling import WgsMeiCallingWorkflow
 
-from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -29,12 +30,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              dna: ['bwa']
             compute_coverage_bed: true
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-            star:
-              path_index: /path/to/star/index
+
           wgs_mei_calling:
             tools:
             - melt
@@ -141,7 +143,12 @@ def test_melt_step_part_get_output_files_indiv_analysis(wgs_mei_calling_workflow
 
 
 def test_melt_step_part_get_log_file_indiv_analysis(wgs_mei_calling_workflow):
-    expected = "work/{mapper}.melt.indiv_analysis.{me_type}/log/snakemake.wgs_mei_calling.{library_name}.log"
+    # Define expected
+    expected = (
+        "work/{mapper}.melt.indiv_analysis.{me_type}/log/"
+        "snakemake.wgs_mei_calling.{library_name}.log"
+    )
+    # Get actual
     actual = wgs_mei_calling_workflow.get_log_file("melt", "indiv_analysis")
     assert actual == expected
 
@@ -281,13 +288,13 @@ def test_melt_step_part_get_input_files_merge_vcf(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_output_files_merge_vcf(wgs_mei_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz",
-        "vcf_md5": "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.md5",
-    }
-    assert wgs_mei_calling_workflow.get_output_files("melt", "merge_vcf") == expected
+    # Define expected
+    expected = get_expected_output_vcf_files_dict(
+        base_out="work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf"
+    )
+    # Get actual
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "merge_vcf")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_merge_vcf(wgs_mei_calling_workflow):
@@ -317,13 +324,12 @@ def test_melt_step_part_get_input_files_reorder_vcf(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_output_files_reorder_vcf(wgs_mei_calling_workflow):
-    expected = {
-        "tbi": "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.vcf.gz.tbi.md5",
-        "vcf": "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.vcf.gz",
-        "vcf_md5": "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.vcf.gz.md5",
-    }
-    assert wgs_mei_calling_workflow.get_output_files("melt", "reorder_vcf") == expected
+    # Define expected
+    base_name_out = "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "reorder_vcf")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_reorder_vcf(wgs_mei_calling_workflow):

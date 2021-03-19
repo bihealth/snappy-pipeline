@@ -66,9 +66,9 @@ def hla_typing_workflow(
 
 
 def test_optitype_step_part_get_input_files(hla_typing_workflow):
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"done": "work/input_links/{library_name}/.done"}
-    assert hla_typing_workflow.get_input_files("optitype", "run") == expected
+    actual = hla_typing_workflow.get_input_files("optitype", "run")
+    assert actual == expected
 
 
 def test_optitype_step_part_get_output_files(hla_typing_workflow):

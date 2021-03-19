@@ -24,6 +24,17 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+          ngs_mapping:
+            tools:
+              dna: ['bwa']
+            bwa:
+              path_index: /path/to/bwa/index.fasta
+          somatic_msi_calling:
+            tools: ['mantis']
+            path_ngs_mapping: ../ngs_mapping  # REQUIRED
+            loci_bed: /path/to/hg19/loci.bed  # REQUIRED
+
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -63,7 +74,7 @@ def somatic_msi_calling_workflow(
     )
 
 
-# Tests for FeatureCountsStepPart ----------------------------------------------------------------------
+# Tests for FeatureCountsStepPart ------------------------------------------------------------------
 
 
 def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
@@ -78,11 +89,16 @@ def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
 
 
 def test_mantis_step_part_get_output_files(somatic_msi_calling_workflow):
+    # Define expected
+    base_name_out = "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results"
     expected = {
-        "result": "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results.txt",
-        "status": "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results.txt.status",
+        "result": base_name_out + ".txt",
+        "status": base_name_out + ".txt.status",
     }
-    assert somatic_msi_calling_workflow.get_output_files("mantis", "run") == expected
+    # Get actual
+    actual = somatic_msi_calling_workflow.get_output_files("mantis", "run")
+
+    assert actual == expected
 
 
 def test_mantis_step_part_get_log_file(somatic_msi_calling_workflow):
@@ -90,13 +106,11 @@ def test_mantis_step_part_get_log_file(somatic_msi_calling_workflow):
     assert somatic_msi_calling_workflow.get_log_file("mantis", "run") == expected
 
 
-# Tests for SomaticMsiCallingWorkflow ---------------------------------------------------------------------
+# Tests for SomaticMsiCallingWorkflow --------------------------------------------------------------
 
 
 def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["link_out", "mantis"]
     assert list(sorted(somatic_msi_calling_workflow.sub_steps.keys())) == expected
@@ -109,4 +123,6 @@ def test_somatic_msi_calling_workflow(somatic_msi_calling_workflow):
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt",
         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt.status",
     ]
-    assert set(somatic_msi_calling_workflow.get_result_files()) == set(expected)
+    actual = set(somatic_msi_calling_workflow.get_result_files())
+    expected = set(expected)
+    assert actual == expected
