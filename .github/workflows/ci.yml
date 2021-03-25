@@ -46,9 +46,7 @@ jobs:
       - name: Create XML report for codacy
         run: coverage xml
       - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        uses: AndreMiras/coveralls-python-action@develop
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@master
         with:
