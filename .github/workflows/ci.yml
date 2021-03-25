@@ -45,6 +45,11 @@ jobs:
         run: coverage report
       - name: Create XML report for codacy
         run: coverage xml
+      - name: Coveralls
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel: true
+          flag-name: Unit Test
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@master
         with:
@@ -57,3 +62,12 @@ jobs:
       - name: Check style with snakefmt
         run: snakefmt -l 100 --check --include '(\.smk$|\.rules$|^Snakefile)' .
         if: ${{ matrix.python-version < '3.9' }}
+
+coveralls_finish:
+  needs: build
+  runs-on: ubuntu-latest
+  steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true
