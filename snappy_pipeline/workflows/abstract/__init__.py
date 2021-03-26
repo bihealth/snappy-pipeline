@@ -298,6 +298,42 @@ class DataSetInfo:
         sodar_uuid,
         sodar_title,
     ):
+        """Constructor.
+
+        :param name: Name of the data set.
+        :type name: str
+
+        :param sheet_path: Path to sheet file that should be loaded.
+        :type sheet_path: str
+
+        :param base_paths:  All base paths of all configuration, too look for ``sheet_path``.
+        :type base_paths: list
+
+        :param search_paths: Search paths for the files in the sample sheet.
+
+        :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
+        right: '**/*_R2_*.fastq.gz'}".
+        :type search_patterns: dict
+
+        :param sheet_type: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
+        attempt to load from sheet.
+        :type sheet_type: str
+
+        :param is_background: Whether or not the data set info is to be used only for background.
+        :type is_background: bool
+
+        :param naming_scheme: Selected naming schema: either 'secondary_id_pk' or
+        'only_secondary_id'.
+        :type naming_scheme: str
+
+        :param mixed_se_pe: Whether or not mixing SE and PE data sets is allowed.
+
+        :param sodar_uuid: The UUID of the corresponding SODAR project.
+        :type sodar_uuid: str
+
+        :param sodar_title: The title of the project in SODAR [optional].
+        :type sodar_title: str
+        """
         #: Name of the data set
         self.name = name
         #: Path to the sheet file, for loading
