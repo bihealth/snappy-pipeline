@@ -1069,10 +1069,10 @@ class NgsMappingWorkflow(BaseStep):
         """
         token = "{mapper}.{ngs_library.name}"
         yield from self._yield_result_files(
-            join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
+            os.path.join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
         )
         yield from self._yield_result_files(
-            join("output", token, "log", "{mapper}.{ngs_library.name}.{ext}"),
+            os.path.join("output", token, "log", "{mapper}.{ngs_library.name}.{ext}"),
             ext=(
                 "log",
                 "conda_info.txt",
@@ -1083,18 +1083,18 @@ class NgsMappingWorkflow(BaseStep):
             ),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.{report}.txt"),
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.{report}.txt"),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.{report}.txt.md5"),
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.{report}.txt.md5"),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.bamstats.html")
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.bamstats.html")
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.bamstats.html.md5")
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.bamstats.html.md5")
         )
 
         for sheet in self.shortcut_sheets:
@@ -1108,7 +1108,7 @@ class NgsMappingWorkflow(BaseStep):
                     )
                     # Per-sample target coverage report.
                     yield from expand(
-                        join("output", token, "report", "cov_qc", token + ".{ext}"),
+                        os.path.join("output", token, "report", "cov_qc", token + ".{ext}"),
                         mapper=self.config["tools"][extraction_type.lower() + suffix],
                         ngs_library=[ngs_library],
                         ext=["txt", "txt.md5"],
@@ -1120,14 +1120,14 @@ class NgsMappingWorkflow(BaseStep):
             and self.config["picard_hs_metrics"]["path_baits_interval_list"]
         ):
             yield from self._yield_result_files(
-                join("output", token, "report", "picard_hs_metrics", token + ".txt")
+                os.path.join("output", token, "report", "picard_hs_metrics", token + ".txt")
             )
             yield from self._yield_result_files(
-                join("output", token, "report", "picard_hs_metrics", token + ".txt.md5")
+                os.path.join("output", token, "report", "picard_hs_metrics", token + ".txt.md5")
             )
         if self.config["compute_coverage_bed"]:
             yield from self._yield_result_files(
-                join("output", token, "report", "coverage", token + "{ext}"),
+                os.path.join("output", token, "report", "coverage", token + "{ext}"),
                 ext=(".bed.gz", ".bed.gz.tbi"),
             )
         else:
