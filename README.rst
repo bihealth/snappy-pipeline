@@ -12,16 +12,16 @@
     :alt: Documentation Status
 
 ===============================================
-SNAPPY - SNAPPY Nucleic Acid Procesing Pipeline
+SNAPPY - SNAPPY Nucleic Acid Processing Pipeline
 ===============================================
 
 ------------
 Installation
 ------------
 
-**In a nutshell**:
-
 Installation should be complete in 10 to 15 minutes.
+
+**In a nutshell**:
 
 .. code-block:: bash
 

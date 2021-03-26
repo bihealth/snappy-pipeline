@@ -280,8 +280,8 @@ import textwrap
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from ...base import InvalidConfiguration
-from ..abstract import (
+from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.workflows.abstract import (
     STDERR_TO_LOG_FILE,
     BaseStepPart,
     BaseStep,
@@ -290,7 +290,7 @@ from ..abstract import (
     LinkInPathGenerator,
     get_ngs_library_folder_name,
 )
-from ...utils import dictify, listify, DictQuery
+from snappy_pipeline.utils import dictify, listify, DictQuery
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -480,7 +480,7 @@ class ReadMappingStepPart(BaseStepPart):
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = "work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}".format(
             mapper=self.__class__.name
@@ -494,7 +494,7 @@ class ReadMappingStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def _collect_reads(self, wildcards, library_name, prefix):
+    def _collect_reads(self, wildcards, _library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
@@ -679,8 +679,9 @@ class ExternalStepPart(ReadMappingStepPart):
 class GatkPostBamStepPart(BaseStepPart):
     """Support for supporting BAM postprocessing with GATK
 
-    This uses the snappy-gatk_post_bam wrapper that performs read realignment and base recalibration.
-    Note that in particular the base recalibration step takes quite a long time for large files.
+    This uses the snappy-gatk_post_bam wrapper that performs read realignment and base
+    recalibration. Note that in particular the base recalibration step takes quite a long time
+    for large files.
     """
 
     name = "gatk_post_bam"
@@ -1066,8 +1067,6 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        from os.path import join
-
         token = "{mapper}.{ngs_library.name}"
         yield from self._yield_result_files(
             join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
