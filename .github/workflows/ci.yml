@@ -45,6 +45,8 @@ jobs:
         run: coverage report
       - name: Create XML report for codacy
         run: coverage xml
+      - name: Coveralls
+        uses: AndreMiras/coveralls-python-action@develop
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@master
         with:
