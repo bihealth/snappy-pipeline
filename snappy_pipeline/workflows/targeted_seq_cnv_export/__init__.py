@@ -56,7 +56,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
-    WritePedigreeStepPart
+    WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow

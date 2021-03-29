@@ -62,7 +62,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow
+    SomaticVariantCallingWorkflow,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
