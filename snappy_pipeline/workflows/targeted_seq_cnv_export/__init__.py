@@ -51,11 +51,16 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ...utils import DictQuery, dictify, listify
-from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
-from ..targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
+from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    WritePedigreeStepPart
+)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
+from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

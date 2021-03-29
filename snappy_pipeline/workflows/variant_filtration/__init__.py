@@ -99,16 +99,16 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ...utils import dictify, listify
-from ..abstract import (
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     InputFilesStepPartMixin,
     LinkOutStepPart,
     WritePedigreeStepPart,
 )
-from ..ngs_mapping import NgsMappingWorkflow
-from ..variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

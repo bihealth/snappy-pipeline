@@ -17,10 +17,10 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ...base import MissingConfiguration
-from ...utils import dictify, listify
-from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 # cbioportal meta data files
 META_FILES = (

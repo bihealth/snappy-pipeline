@@ -32,8 +32,7 @@ from snappy_pipeline.base import (
     snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
-from snappy_pipeline.utils import listify, dictify
-
+from snappy_pipeline.utils import dictify, listify
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""

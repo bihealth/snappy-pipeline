@@ -52,11 +52,11 @@ from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
 from snakemake.io import expand
 
-from ...utils import dictify, listify
-from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..variant_annotation import VariantAnnotationWorkflow
-from ..variant_phasing import VariantPhasingWorkflow
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
