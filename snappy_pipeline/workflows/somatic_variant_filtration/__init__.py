@@ -51,16 +51,16 @@ additionally filter variants with EBscore < x, x is configurable
 import os
 import random
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
-from collections import OrderedDict
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
-from ..somatic_variant_calling import SomaticVariantCallingWorkflow, SOMATIC_VARIANT_CALLERS_MATCHED
 from ..somatic_variant_annotation import SomaticVariantAnnotationWorkflow
-from ...utils import listify, dictify
+from ..somatic_variant_calling import SOMATIC_VARIANT_CALLERS_MATCHED, SomaticVariantCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

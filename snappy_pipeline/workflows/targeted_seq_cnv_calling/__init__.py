@@ -42,16 +42,16 @@ Available CNV Callers
 
 """
 
-from collections import OrderedDict
 import os
 import re
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import glob_wildcards, expand, touch
+from snakemake.io import expand, glob_wildcards, touch
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
+from ...utils import DictQuery, dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify, DictQuery
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

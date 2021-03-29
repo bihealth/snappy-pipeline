@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests for the ngs_mapping workflow module code"""
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
+
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

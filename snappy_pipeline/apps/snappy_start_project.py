@@ -9,11 +9,11 @@ import datetime
 import os
 import sys
 
-from .snappy_snake import STEP_TO_MODULE
-from .snappy_start_step import run_start_step, CONFIG_FILENAME, CONFIG_SUBDIR
-from .impl.logging import LVL_IMPORTANT, LVL_SUCCESS, log
-from .impl.fsmanip import assume_path_nonexisting, create_directory, create_from_tpl
 from .. import __version__
+from .impl.fsmanip import assume_path_nonexisting, create_directory, create_from_tpl
+from .impl.logging import LVL_IMPORTANT, LVL_SUCCESS, log
+from .snappy_snake import STEP_TO_MODULE
+from .snappy_start_step import CONFIG_FILENAME, CONFIG_SUBDIR, run_start_step
 
 #: Allowed steps
 STEPS = tuple(sorted(STEP_TO_MODULE))

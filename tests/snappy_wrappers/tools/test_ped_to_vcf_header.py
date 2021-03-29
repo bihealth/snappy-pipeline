@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-
-from snappy_wrappers.tools import ped_to_vcf_header
-
-import pytest
-import textwrap
 import tempfile
+import textwrap
 from collections import namedtuple
 
+import pytest
+
+from snappy_wrappers.tools import ped_to_vcf_header
 
 Donor = namedtuple("Donor", ["family", "id", "father", "mother", "sex", "disease"])
 

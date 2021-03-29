@@ -4,13 +4,13 @@
 """
 
 import argparse
-from collections import OrderedDict
 import re
 import sys
 import typing
+from collections import OrderedDict
 
-from intervaltree import IntervalTree
 import vcfpy
+from intervaltree import IntervalTree
 
 
 class CnvCall(typing.NamedTuple):

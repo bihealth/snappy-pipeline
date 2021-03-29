@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Wrapper for merging multiple tables in R on shared columns"""
 
-from snakemake import shell
 import os
+
+from snakemake import shell
 
 shell.executable("/bin/bash")
 

@@ -10,7 +10,6 @@ import sys
 
 import vcfpy
 
-
 # White-listed chromosomes.
 CHROMS = tuple(itertools.chain(map(str, range(1, 23)), ("X", "Y")))
 

@@ -9,11 +9,11 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrapper_parallel import (
-    in_working_dir,
     ResourceUsage,
     SgeResourceUsageConverter,
     gib,
     hours,
+    in_working_dir,
 )
 
 # TODO: call on overlapping windows, on merge make unique
@@ -21,8 +21,8 @@ from snappy_wrappers.wrapper_parallel import (
 # Naming clash limbo...
 snake_job = snakemake
 del snakemake
-from snakemake import snakemake as run_snakemake
 from snakemake import shell
+from snakemake import snakemake as run_snakemake
 
 snakemake = snake_job
 

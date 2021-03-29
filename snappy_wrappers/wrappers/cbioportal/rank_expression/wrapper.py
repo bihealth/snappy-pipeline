@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Wrapper for computing expression values (RPKM) from counts"""
 
-from snakemake import shell
 import os.path
+
+from snakemake import shell
 
 sample_tpl = os.path.basename(os.path.dirname(os.path.dirname(snakemake.output.tsv)))
 

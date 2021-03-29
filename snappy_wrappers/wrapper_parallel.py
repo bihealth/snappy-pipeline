@@ -5,7 +5,6 @@ Parallel running is performed in a fork/join parallelism manner.  The user can s
 a "work", and a "merge" task.
 """
 
-from collections.abc import MutableSequence, MutableMapping
 import contextlib
 import datetime
 import functools
@@ -18,6 +17,7 @@ import shutil
 import sys
 import tempfile
 import textwrap
+from collections.abc import MutableMapping, MutableSequence
 
 from snakemake import snakemake
 

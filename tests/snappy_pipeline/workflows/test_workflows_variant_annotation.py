@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_annotation workflow module code"""
 
+import textwrap
+
 import pytest
 import ruamel.yaml as yaml
-import textwrap
+
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
-
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

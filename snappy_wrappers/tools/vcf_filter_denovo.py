@@ -19,7 +19,6 @@ from vcfpy.exceptions import InvalidRecordException
 
 from snappy_wrappers import genome_regions, sweep
 
-
 # PED Parsing ======================================================================================
 
 Individual = collections.namedtuple(

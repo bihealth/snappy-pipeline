@@ -2,12 +2,12 @@
 """CUBI+Snakemake wrapper code for applying the filter list.
 """
 
-import textwrap
-from snakemake import shell
-
 import gzip
 import re
 import sys
+import textwrap
+
+from snakemake import shell
 
 config = snakemake.config["step_config"]["somatic_variant_filtration"]["filter_sets"]
 params = snakemake.params.args

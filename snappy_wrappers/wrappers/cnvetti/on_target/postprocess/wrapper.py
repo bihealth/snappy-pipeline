@@ -2,8 +2,9 @@
 """Wrapper for running postprocessing of CNVetti-based segmentation.
 """
 
-from snakemake import shell
 import os
+
+from snakemake import shell
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
 

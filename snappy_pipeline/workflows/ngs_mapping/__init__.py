@@ -281,16 +281,16 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from ...base import InvalidConfiguration
+from ...utils import DictQuery, dictify, listify
 from ..abstract import (
     STDERR_TO_LOG_FILE,
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import dictify, listify, DictQuery
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

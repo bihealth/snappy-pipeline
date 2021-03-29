@@ -5,8 +5,7 @@
 import os
 import sys
 
-from snakemake import io
-from snakemake import shell
+from snakemake import io, shell
 
 # A hack is required for being able to import snappy_wrappers modules when in development mode.
 # TODO: is there a more elegant way?
@@ -14,10 +13,10 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrapper_parallel import (
+    ParallelVariantCallingBaseWrapper,
+    ResourceUsage,
     gib,
     hours,
-    ResourceUsage,
-    ParallelVariantCallingBaseWrapper,
 )
 
 

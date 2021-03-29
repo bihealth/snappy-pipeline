@@ -11,22 +11,21 @@ The default configuration is as follows.
 
 """
 
-from itertools import chain
 import os
+from itertools import chain
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand, Namedlist, touch
+from snakemake.io import Namedlist, expand, touch
 
+from ...utils import dictify, listify
 from ..abstract import (
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import dictify, listify
-
 
 #: Default configuration for the ngs_mapping schema
 DEFAULT_CONFIG = r"""

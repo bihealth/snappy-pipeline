@@ -2,15 +2,14 @@
 """Code for crawling the file system and caching the results
 """
 
-from collections import OrderedDict
-from fnmatch import fnmatch
 import json
 import logging
 import os
 import sys
+from collections import OrderedDict
+from fnmatch import fnmatch
 
 from fasteners import InterProcessLock
-
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

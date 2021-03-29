@@ -5,15 +5,15 @@ import argparse
 import contextlib
 import logging
 import sys
-from statistics import mean
 import typing
+from statistics import mean
 
 import attr
 import logzero
-from logzero import logger
 import ncls
 import pandas as pd
 import vcfpy
+from logzero import logger
 
 #: Source program is GATK gCNV
 SOURCE_GATK_GCNV = "GCNV"

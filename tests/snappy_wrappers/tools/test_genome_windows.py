@@ -3,9 +3,9 @@
 
 import textwrap
 
-from snappy_wrappers.tools import genome_windows
-
 import pytest
+
+from snappy_wrappers.tools import genome_windows
 
 
 @pytest.fixture

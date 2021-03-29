@@ -1,41 +1,38 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
+import itertools
+import os
+import os.path
+import sys
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
-import itertools
-import os
-import os.path
-import sys
 
-from snakemake.io import touch
-
+import ruamel.yaml as yaml
 from biomedsheets import io_tsv
-from biomedsheets.io import json_loads_ordered, SheetBuilder
-from biomedsheets.ref_resolver import RefResolver
+from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
+from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
+from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
+    donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
-    donor_has_dna_ngs_library,
 )
-import ruamel.yaml as yaml
+from snakemake.io import touch
 
 from ...base import (
-    merge_dicts,
     MissingConfiguration,
+    merge_dicts,
     print_config,
     print_sample_sheets,
     snakefile_path,
 )
 from ...find_file import FileSystemCrawler, PatternSet
-from ...utils import listify, dictify
-
-from biomedsheets.naming import NAMING_SECONDARY_ID_PK, NAMING_SCHEMES, name_generator_for_scheme
-
+from ...utils import dictify, listify
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""

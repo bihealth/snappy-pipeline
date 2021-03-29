@@ -52,16 +52,16 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
+from ...utils import dictify, listify
 from ..abstract import (
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
 from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
 
 # Extensions
 EXTENSIONS = {

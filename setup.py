@@ -3,11 +3,11 @@
 """Installation driver (and development utility entry point) for snappy-pipeline
 """
 
-from itertools import chain
 import os
 import sys
+from itertools import chain
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 import versioneer
 

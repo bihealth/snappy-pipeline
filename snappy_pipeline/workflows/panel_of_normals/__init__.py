@@ -49,17 +49,17 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
-import sys
 import random
+import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
 from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from ..ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

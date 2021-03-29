@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_variant_calling workflow module code"""
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
-from .conftest import patch_module_fs
-from .common import get_expected_log_files_dict
 from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
+from .common import get_expected_log_files_dict
+from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

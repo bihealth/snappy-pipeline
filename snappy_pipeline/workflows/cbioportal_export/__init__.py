@@ -12,16 +12,15 @@ for import.
 
 import os
 import sys
-
 from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
 from ...base import MissingConfiguration
-from ..ngs_mapping import NgsMappingWorkflow
 from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from ..ngs_mapping import NgsMappingWorkflow
 
 # cbioportal meta data files
 META_FILES = (

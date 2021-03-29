@@ -8,10 +8,8 @@ import pickle
 import sys
 import tempfile
 
+from snakemake import shell, snakemake
 from snakemake.script import Snakemake
-from snakemake import snakemake
-from snakemake import shell
-
 from termcolor import colored
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"

@@ -6,22 +6,22 @@ more convenient to wrap the call to snakemake itself.
 """
 
 import argparse
-import functools
 import datetime
+import functools
 import logging
 import os
 import subprocess
 import sys
 import textwrap
 
-from snakemake import main as snakemake_main
 import ruamel.yaml as yaml
+from snakemake import main as snakemake_main
 
 from .. import __version__
 from ..workflows import (
+    cbioportal_export,
     gene_expression_quantification,
     gene_expression_report,
-    cbioportal_export,
     hla_typing,
     igv_session_generation,
     ngs_data_qc,
@@ -52,10 +52,10 @@ from ..workflows import (
     variant_calling,
     variant_checking,
     variant_combination,
-    variant_export,
     variant_denovo_filtration,
-    variant_phasing,
+    variant_export,
     variant_filtration,
+    variant_phasing,
     wgs_cnv_annotation,
     wgs_cnv_calling,
     wgs_cnv_export,

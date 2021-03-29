@@ -2,11 +2,11 @@
 """Basic utility code for snappy_pipeline
 """
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
 import os
 import sys
 import warnings
+from collections import OrderedDict
+from collections.abc import MutableMapping
 
 import ruamel.yaml as yaml
 

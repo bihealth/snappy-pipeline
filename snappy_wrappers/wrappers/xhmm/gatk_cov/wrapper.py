@@ -2,6 +2,7 @@
 # Use GATK 3 for computing depth of coverage as input for XHMM.
 
 import os
+
 from snakemake.shell import shell
 
 # A hack is required for being able to import snappy_wrappers modules when in development mode.

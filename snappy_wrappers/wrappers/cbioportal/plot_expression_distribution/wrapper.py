@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Wrapper for computing expression signatures from counts"""
 
-from snakemake import shell
 import os.path
+
+from snakemake import shell
 
 if len(snakemake.output.pdf) == 1:
     snakemake.output.pdf = snakemake.output.pdf[0]

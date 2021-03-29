@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Wrapper for computing expression values (RPKM) from counts"""
 
-from snakemake import shell
 import os.path
+
+from snakemake import shell
 
 rcode = os.path.join(os.path.dirname(__file__), "scripts.R")
 
