@@ -989,8 +989,8 @@ class InputFilesStepPartMixin:
                 yield "ped", os.path.realpath(
                     "work/write_pedigree.{index_library}/out/{index_library}.ped"
                 ).format(**wildcards)
-            token = self.prev_class.name_token.replace(r",[^\.]+", "")
-            tpl_path_out = os.path.join("work", token, "out", token)
+            name_pattern = self.prev_class.name_token.replace(r",[^\.]+", "")
+            tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
             for key, ext in zip(self.ext_names, self.ext_values):
                 yield key, tpl_path_out.format(ext=ext, **wildcards) + ext
 

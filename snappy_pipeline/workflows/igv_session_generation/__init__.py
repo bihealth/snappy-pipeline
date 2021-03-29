@@ -102,8 +102,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
 
     def _get_path_vcf(self, wildcards, real_index):
         prev_step = self.parent.sub_workflows[self.previous_step]
-        token = "{mapper}.{caller}{prev_token}.{real_index_library}"
-        input_path = ("output/" + token + "/out/" + token).format(
+        name_pattern = "{mapper}.{caller}{prev_token}.{real_index_library}"
+        input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
             **wildcards
@@ -126,8 +126,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         assert action == "run"
-        token = "{mapper}.{caller}.{index_library}"
-        tpl = os.path.join("work", token, "out", token + "%s")
+        name_pattern = "{mapper}.{caller}.{index_library}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, tpl % ext
 
@@ -230,9 +230,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the workflow."""
         # Hard-filtered results
-        token = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
+        name_pattern = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=EXT_VALUES,
