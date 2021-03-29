@@ -253,15 +253,15 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
         callers = set(self.config["tools_somatic_variant_calling"])
-        token = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "log", token + "{ext}"),
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=(
@@ -274,9 +274,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             ),
         )
         # joint calling
-        token = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{donor.name}"
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{donor.name}"
         yield from self._yield_result_files_joint(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
             ext=EXT_VALUES,

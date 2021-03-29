@@ -215,9 +215,9 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for workflow"""
         callers = set(self.config["tools_somatic_variant_calling"])
-        token = "{mapper}.{caller}.deconstruct_sigs.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.deconstruct_sigs.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + ".tsv"),
+            os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
         )

@@ -157,14 +157,14 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
                 "{mapper}.eb_filter.panel_of_normals.log"
             )
         else:
-            token = self.token
+            name_pattern = self.token
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
                 ("conda_list", ".conda_list.txt"),
             )
             for key, ext in key_ext:
-                yield key, os.path.join("work", token, "log", token + ext)
+                yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""

@@ -130,9 +130,11 @@ class NgsDataQcWorkflow(BaseStep):
         """
         from os.path import join
 
-        token = "{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         # TODO: actually link out report files
-        yield from self._yield_result_files(join("output", token, "report", "fastqc", ".done"))
+        yield from self._yield_result_files(
+            join("output", name_pattern, "report", "fastqc", ".done")
+        )
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
