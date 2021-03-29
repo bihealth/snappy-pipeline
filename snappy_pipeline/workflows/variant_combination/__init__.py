@@ -53,7 +53,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
-    WritePedigreeStepPart
+    WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 from snappy_pipeline.workflows.wgs_cnv_filtration import WgsCnvFiltrationWorkflow

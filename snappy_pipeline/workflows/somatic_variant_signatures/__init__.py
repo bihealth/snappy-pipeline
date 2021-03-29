@@ -21,7 +21,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutSt
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow
+    SomaticVariantCallingWorkflow,
 )
 
 __author__ = "Clemens Messerschmidt"
