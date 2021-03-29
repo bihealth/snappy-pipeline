@@ -8,12 +8,11 @@ Usage::
 
 from __future__ import print_function
 
-import sys
-import os
 import argparse
+import os
 import re
-from collections import OrderedDict, namedtuple, defaultdict
-
+import sys
+from collections import OrderedDict, defaultdict, namedtuple
 
 __author__ = "Oliver Stolpe <oliver.stolpe@bihealth.de>"
 

@@ -79,17 +79,17 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
+from ...base import MissingConfiguration
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
 from ..ngs_mapping import NgsMappingWorkflow
 from ..variant_calling import VariantCallingWorkflow
-from ...utils import listify, dictify
-from ...base import MissingConfiguration
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

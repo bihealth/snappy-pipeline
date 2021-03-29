@@ -43,19 +43,19 @@ Parallel Execution
 Parallel execution is not performed currently.
 """
 
-from collections import OrderedDict
 import os
 import re
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
+from ...utils import DictQuery, dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
 from ..ngs_mapping import NgsMappingWorkflow
-from ..targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 from ..targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
-from ...utils import listify, dictify, DictQuery
+from ..targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

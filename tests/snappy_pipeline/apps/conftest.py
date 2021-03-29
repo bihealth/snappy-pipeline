@@ -2,14 +2,14 @@
 """Shared fixtures for the apps unit tests"""
 
 import os.path
+import textwrap
 
 import pytest
-import textwrap
 
 import snappy_pipeline.apps
 import snappy_pipeline.workflows
 
-from ..workflows.conftest import fake_fs, germline_sheet_tsv, germline_sheet_fake_fs
+from ..workflows.conftest import fake_fs, germline_sheet_fake_fs, germline_sheet_tsv
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues

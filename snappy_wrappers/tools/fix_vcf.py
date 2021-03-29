@@ -9,10 +9,9 @@ At the moment, these issues are:
 """
 
 import argparse
-from functools import reduce
 import gzip
 import sys
-
+from functools import reduce
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

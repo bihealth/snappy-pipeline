@@ -48,11 +48,11 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
 from ..variant_filtration import VariantFiltrationWorkflow
 from ..wgs_cnv_filtration import WgsCnvFiltrationWorkflow
 from ..wgs_sv_filtration import WgsSvFiltrationWorkflow
-from ...utils import listify, dictify
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

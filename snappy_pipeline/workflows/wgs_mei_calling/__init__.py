@@ -65,16 +65,16 @@ Limitations
 Currently only works with ``hs37d5`` reference
 """
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, touch
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

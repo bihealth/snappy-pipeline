@@ -4,7 +4,6 @@
 from collections import namedtuple
 
 import pytest
-
 from pyfakefs import fake_filesystem
 
 

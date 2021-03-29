@@ -11,8 +11,8 @@ import typing
 
 import attr
 import logzero
-from logzero import logger
 import vcfpy
+from logzero import logger
 
 
 @attr.s(frozen=True, auto_attribs=True)

@@ -15,7 +15,6 @@ import argparse
 import csv
 import sys
 
-
 #: Default value for ``--operation``
 DEFAULT_OPERATION = "subtract"
 #: Default value for ``--threshold``

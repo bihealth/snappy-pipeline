@@ -19,7 +19,6 @@ sys.path.insert(0, base_dir)
 
 from snakemake.shell import shell
 
-
 region_filter = ""
 if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:
     region_filter = (

@@ -60,15 +60,15 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
+from ...utils import dictify, listify
 from ..abstract import (
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import listify, dictify
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".txt", ".txt.md5")

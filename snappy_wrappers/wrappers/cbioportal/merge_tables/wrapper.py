@@ -4,8 +4,9 @@
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
 
-import pandas as pd
 import re
+
+import pandas as pd
 
 pattern = re.compile("(.+)-[DR]NA[0-9]+-(WES|WGS|mRNA_seq)[0-9]+$")
 

@@ -41,15 +41,15 @@ import os
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
+from ...utils import dictify, listify
 from ..abstract import (
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import listify, dictify
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_sv_calling workflow module code"""
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
-from .common import get_expected_output_vcf_files_dict, get_expected_output_bcf_files_dict
-from .conftest import patch_module_fs
 from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
+
+from .common import get_expected_output_bcf_files_dict, get_expected_output_vcf_files_dict
+from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

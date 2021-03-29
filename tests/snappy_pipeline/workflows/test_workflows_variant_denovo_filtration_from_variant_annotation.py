@@ -2,15 +2,16 @@
 """Tests for the variant_denovo_filtration workflow starting off variant_annotation.
 """
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
+
+from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
 
 from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
-from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

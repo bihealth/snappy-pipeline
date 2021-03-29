@@ -43,15 +43,15 @@ Available Somatic Targeted CNV Caller
 
 """
 
-from collections import OrderedDict
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
 from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from ..ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
 

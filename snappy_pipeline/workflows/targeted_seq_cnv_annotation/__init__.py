@@ -61,10 +61,10 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
+from ...utils import DictQuery, dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
 from ..ngs_mapping import NgsMappingWorkflow
 from ..targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
-from ...utils import listify, dictify, DictQuery
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

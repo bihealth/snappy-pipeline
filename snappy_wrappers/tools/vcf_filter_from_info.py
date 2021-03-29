@@ -4,7 +4,6 @@
 import argparse
 import datetime
 import logging
-
 import sys
 
 import vcfpy

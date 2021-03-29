@@ -13,8 +13,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 import textwrap
 
 # If extensions (or modules to document with autodoc) are in another
@@ -282,10 +282,10 @@ texinfo_documents = [
 
 # Taken from https://stackoverflow.com/a/45826052/84349
 
-import snappy_pipeline.workflows
-
-import pkgutil
 import importlib
+import pkgutil
+
+import snappy_pipeline.workflows
 
 for _, name, is_pkg in pkgutil.iter_modules(snappy_pipeline.workflows.__path__):
     if is_pkg:

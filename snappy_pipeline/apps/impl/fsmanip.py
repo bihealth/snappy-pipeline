@@ -10,7 +10,7 @@ import difflib
 import os
 import shutil
 
-from .logging import log, LVL_INFO, LVL_ERROR
+from .logging import LVL_ERROR, LVL_INFO, log
 
 
 def file_mtime(path):

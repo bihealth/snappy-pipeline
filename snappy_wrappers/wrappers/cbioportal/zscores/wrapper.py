@@ -3,8 +3,8 @@
 given CNV gene calls and expression counts"""
 
 import os
+
 from snakemake import shell
-import os
 
 rcode = os.path.join(os.path.dirname(__file__), "scripts.R")
 

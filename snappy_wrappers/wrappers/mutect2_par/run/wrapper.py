@@ -14,10 +14,10 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrapper_parallel import (
+    ParallelSomaticVariantCallingBaseWrapper,
+    ResourceUsage,
     gib,
     hours,
-    ResourceUsage,
-    ParallelSomaticVariantCallingBaseWrapper,
 )
 
 

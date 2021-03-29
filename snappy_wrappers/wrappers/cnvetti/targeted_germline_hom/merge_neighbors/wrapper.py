@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 from snakemake.shell import shell
 
 # A hack is required for being able to import snappy_wrappers modules when in development mode.

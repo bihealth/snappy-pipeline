@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tests for the hla_typing workflow module code"""
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow

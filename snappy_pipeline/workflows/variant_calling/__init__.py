@@ -136,18 +136,19 @@ When the temporary directory is kept, a failed execution can be restarted by cal
 in the temporary directory with the command line written to the file ``snakemake_call.sh``.
 """
 
-from collections import OrderedDict
 import os
 import os.path
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_wrappers.tools.genome_windows import yield_regions
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
+
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart, WritePedigreeStepPart
 from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

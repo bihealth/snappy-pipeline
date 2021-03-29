@@ -280,17 +280,26 @@ import textwrap
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
+<<<<<<< HEAD
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.workflows.abstract import (
+=======
+from ...base import InvalidConfiguration
+from ...utils import DictQuery, dictify, listify
+from ..abstract import (
+>>>>>>> Applied isort to standarize imports.
     STDERR_TO_LOG_FILE,
-    BaseStepPart,
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
+<<<<<<< HEAD
 from snappy_pipeline.utils import dictify, listify, DictQuery
+=======
+>>>>>>> Applied isort to standarize imports.
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

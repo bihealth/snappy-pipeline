@@ -13,7 +13,7 @@ from snakemake import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import gib, hours, ResourceUsage, ParallelVcfOutputBaseWrapper
+from snappy_wrappers.wrapper_parallel import ParallelVcfOutputBaseWrapper, ResourceUsage, gib, hours
 
 
 class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):

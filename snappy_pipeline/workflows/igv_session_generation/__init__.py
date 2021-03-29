@@ -48,15 +48,15 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from jinja2 import FileSystemLoader, Environment
-from snakemake.io import expand
+from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
+from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
 from ..variant_annotation import VariantAnnotationWorkflow
 from ..variant_phasing import VariantPhasingWorkflow
-from ...utils import listify, dictify
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")

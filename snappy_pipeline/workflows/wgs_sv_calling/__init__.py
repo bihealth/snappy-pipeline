@@ -106,18 +106,18 @@ Currently, no reports are generated.
 # TODO: only one primary NGS library!
 # TODO: only WGS libraries!
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
-
 from snappy_wrappers.tools.genome_windows import yield_regions
+
+from ...utils import dictify, listify
+from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from ..ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

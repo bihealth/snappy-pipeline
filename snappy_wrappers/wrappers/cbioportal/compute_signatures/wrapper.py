@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Wrapper for computing expression signatures from counts"""
 
-from snakemake import shell
 import os.path
+
+from snakemake import shell
 
 # import pprint
 # pprint.pprint(snakemake.output.pdf)
