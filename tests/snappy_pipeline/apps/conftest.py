@@ -9,6 +9,8 @@ import pytest
 import snappy_pipeline.apps
 import snappy_pipeline.workflows
 
+from ..workflows.conftest import fake_fs, germline_sheet_fake_fs, germline_sheet_tsv
+
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def germline_sheet_config_yaml():
