@@ -343,7 +343,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        token = "{fusion_caller}.{ngs_library.name}"
+        name_pattern = "{fusion_caller}.{ngs_library.name}"
         for fusion_caller in self.config["tools"]:
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
@@ -352,7 +352,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
                             ngs_library = bio_sample.rna_ngs_library
                             if ngs_library is None:
                                 break
-                            token_value = token.format(
+                            name_pattern_value = name_pattern.format(
                                 fusion_caller=fusion_caller, ngs_library=ngs_library
                             )
-                            yield os.path.join("output", token_value, "out", ".done")
+                            yield os.path.join("output", name_pattern_value, "out", ".done")

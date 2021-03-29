@@ -432,7 +432,12 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                     if extraction_type.lower() == "rna":
                         if tool == "salmon":
                             fns = expand(
-                                os.path.join("output", salmon_name_pattern, "out", salmon_name_pattern + "{ext}"),
+                                os.path.join(
+                                    "output",
+                                    salmon_name_pattern,
+                                    "out",
+                                    salmon_name_pattern + "{ext}",
+                                ),
                                 ngs_library=ngs_library,
                                 ext=salmon_exts.values(),
                             )

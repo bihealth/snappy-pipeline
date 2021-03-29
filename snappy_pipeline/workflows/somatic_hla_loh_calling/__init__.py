@@ -159,14 +159,14 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        token = "{mapper}.optitype.lohhla.{tumor_library.name}"
+        name_pattern = "{mapper}.optitype.lohhla.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             ext=".done",
         )
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "log", token + "{ext}"),
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             ext=(
                 ".log",
