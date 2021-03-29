@@ -263,9 +263,9 @@ class HlaTypingWorkflow(BaseStep):
         """
         from os.path import join
 
-        token = "{prefix}{hla_typer}.{ngs_library.name}"
+        name_pattern = "{prefix}{hla_typer}.{ngs_library.name}"
         yield from self._yield_result_files(
-            join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
+            join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
 
     def _yield_result_files(self, tpl, **kwargs):

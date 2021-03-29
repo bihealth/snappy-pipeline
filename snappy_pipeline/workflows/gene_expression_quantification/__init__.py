@@ -411,10 +411,10 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        token = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
 
         # Salmon special case
-        salmon_token = "salmon.{ngs_library.name}"
+        salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
         if self.w_config["step_config"]["gene_expression_quantification"]["salmon"][
             "path_transcript_to_gene"
@@ -432,14 +432,14 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                     if extraction_type.lower() == "rna":
                         if tool == "salmon":
                             fns = expand(
-                                os.path.join("output", salmon_token, "out", salmon_token + "{ext}"),
+                                os.path.join("output", salmon_name_pattern, "out", salmon_name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
                                 ext=salmon_exts.values(),
                             )
                             all_fns.extend(fns)
                         else:
                             fns = expand(
-                                os.path.join("output", token, "out", token + "{ext}"),
+                                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
                                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
                                 # tool=set(self.config['tools']),
