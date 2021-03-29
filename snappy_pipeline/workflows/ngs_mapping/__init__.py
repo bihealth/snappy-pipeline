@@ -280,9 +280,9 @@ import textwrap
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from ...base import InvalidConfiguration
-from ...utils import DictQuery, dictify, listify
-from ..abstract import (
+from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.workflows.abstract import (
     STDERR_TO_LOG_FILE,
     BaseStep,
     BaseStepPart,

@@ -115,9 +115,9 @@ from snakemake.io import expand
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-from ...utils import dictify, listify
-from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

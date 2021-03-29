@@ -24,15 +24,15 @@ from biomedsheets.shortcuts import (
 )
 from snakemake.io import touch
 
-from ...base import (
+from snappy_pipeline.base import (
     MissingConfiguration,
     merge_dicts,
     print_config,
     print_sample_sheets,
     snakefile_path,
 )
-from ...find_file import FileSystemCrawler, PatternSet
-from ...utils import dictify, listify
+from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
+from snappy_pipeline.utils import dictify, listify
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""

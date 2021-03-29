@@ -41,8 +41,8 @@ import os
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
-from ...utils import dictify, listify
-from ..abstract import (
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,

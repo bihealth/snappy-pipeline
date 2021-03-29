@@ -66,10 +66,10 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ...utils import dictify, listify
-from ..abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
