@@ -413,9 +413,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        token = "{mapper}.{caller}.{cancer_library.name}"
+        name_pattern = "{mapper}.{caller}.{cancer_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=self.config["tools"],
             ext=EXT_VALUES,

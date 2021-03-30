@@ -346,15 +346,15 @@ class VariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files(
-            os.path.join("output", token, "log", token + "{ext}"),
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=(

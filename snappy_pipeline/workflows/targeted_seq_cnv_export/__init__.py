@@ -309,7 +309,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
         # Get list of library kits and donors to use.
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
-        token = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
         if "xhmm" in self.config["tools_targeted_seq_cnv_calling"]:
             min_kit_usages = 10
             chosen_kits = {kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages}
@@ -319,7 +319,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from self._yield_result_files(
-                os.path.join("output", token, "log", token + "{ext}"),
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
                 chosen_donors,
                 mapper=self.config["tools_ngs_mapping"],
                 caller=["xhmm"],
@@ -341,7 +341,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from self._yield_result_files(
-                os.path.join("output", token, "log", token + "{ext}"),
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
                 chosen_donors,
                 mapper=self.config["tools_ngs_mapping"],
                 caller=["gcnv"],
