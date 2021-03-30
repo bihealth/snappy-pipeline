@@ -12,7 +12,7 @@
     :alt: Documentation Status
 
 ===============================================
-SNAPPY - SNAPPY Nucleic Acid Procesing Pipeline
+SNAPPY - SNAPPY Nucleic Acid Processing Pipeline
 ===============================================
 
 ------------
