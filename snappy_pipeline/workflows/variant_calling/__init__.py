@@ -925,17 +925,17 @@ class VariantCallingWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
         for caller in self.config["tools"]:
             if self.config[caller].get("pedigree_wise", True):
                 yield from self._yield_result_files(
-                    os.path.join("output", token, "out", token + "{ext}"),
+                    os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                     mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                     caller=[caller],
                     ext=EXT_VALUES,
                 )
                 yield from self._yield_result_files(
-                    os.path.join("output", token, "log", token + ".{ext}"),
+                    os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
                     mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                     caller=[caller],
                     ext=(
@@ -950,9 +950,9 @@ class VariantCallingWorkflow(BaseStep):
         # Yield result files of whole-cohort genotyping
         for caller in COHORT_WIDE_CALLERS:
             if caller in self.config["tools"] and self.config[caller]["cohort_wide"]:
-                token = "{mapper}.%s.whole_cohort" % caller
+                name_pattern = "{mapper}.%s.whole_cohort" % caller
                 yield from expand(
-                    os.path.join("output", token, "out", token + "{ext}"),
+                    os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                     mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                     caller=[caller],
                     ext=EXT_VALUES,
@@ -986,8 +986,14 @@ class VariantCallingWorkflow(BaseStep):
                 yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
 
     def _yield_bcftools_report_files(self):
-        token = "{mapper}.{caller}.{index_library.name}"
-        tpl = "output/" + token + "/report/bcftools_stats/" + token + ".{donor_library.name}.{ext}"
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
+        tpl = (
+            "output/"
+            + name_pattern
+            + "/report/bcftools_stats/"
+            + name_pattern
+            + ".{donor_library.name}.{ext}"
+        )
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for caller in self.config["tools"]:
                 if self.config[caller].get("pedigree_wise", True):
@@ -1024,8 +1030,8 @@ class VariantCallingWorkflow(BaseStep):
                                 )
 
     def _yield_jannovar_report_files(self):
-        token = "{mapper}.{caller}.{index_library.name}"
-        tpl = "output/" + token + "/report/jannovar_statistics/" + token + ".{ext}"
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
+        tpl = "output/" + name_pattern + "/report/jannovar_statistics/" + name_pattern + ".{ext}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for caller in self.config["tools"]:
                 if self.config[caller].get("pedigree_wise", True):
@@ -1058,8 +1064,14 @@ class VariantCallingWorkflow(BaseStep):
         # Statistics for whole-cohort files
         for caller in COHORT_WIDE_CALLERS:
             if caller in self.config["tools"] and self.config[caller]["cohort_wide"]:
-                token = "{mapper}.%s.whole_cohort" % caller
-                tpl = "output/" + token + "/report/jannovar_statistics/" + token + ".{ext}"
+                name_pattern = "{mapper}.%s.whole_cohort" % caller
+                tpl = (
+                    "output/"
+                    + name_pattern
+                    + "/report/jannovar_statistics/"
+                    + name_pattern
+                    + ".{ext}"
+                )
                 yield from expand(
                     tpl,
                     mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],

@@ -189,8 +189,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @classmethod
     def update_cluster_config(cls, cluster_config):
         """Update cluster configuration with resource requirements"""
-        for token in ("annotate", "bam_qc"):
-            cluster_config["variant_export_varfish_annotator_%s" % token] = {
+        for value in ("annotate", "bam_qc"):
+            cluster_config["variant_export_varfish_annotator_%s" % value] = {
                 "mem": 7 * 1024 * 2,
                 "time": "100:00",
                 "ntasks": 2,
@@ -290,17 +290,19 @@ class VariantExportWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + ".{infix}{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             infix=INFIXES,
             ext=EXTS,
         )
         for action in ("annotate", "bam_qc"):
-            token2 = token.replace(".varfish_annotated.", ".varfish_annotated.%s." % action)
-            prefix = os.path.join("output", token, "log", token2 + "{ext}")
+            name_pattern_action = name_pattern.replace(
+                ".varfish_annotated.", ".varfish_annotated.%s." % action
+            )
+            prefix = os.path.join("output", name_pattern, "log", name_pattern_action + "{ext}")
             yield from self._yield_result_files(
                 prefix,
                 mapper=self.config["tools_ngs_mapping"],
