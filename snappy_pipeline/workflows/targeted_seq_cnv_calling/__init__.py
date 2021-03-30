@@ -598,29 +598,31 @@ class GcnvStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_call_cnvs(self, wildcards):
-        yield "interval_list_shard", "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list".format(
-            name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}"
+        path_pattern = (
+            "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
+        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
+                path_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
                 tsvs.append(
                     "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                        name_pattern=name_pattern, ext=ext
+                        name_pattern=path_pattern, ext=ext
                     )
                 )
         yield ext, tsvs
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(**wildcards)
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+        path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(**wildcards)
+        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
-        name_pattern = "gcnv_annotate_gc.{library_kit}"
+        path_pattern = "gcnv_annotate_gc.{library_kit}"
         yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext="tsv"
+            name_pattern=path_pattern, ext="tsv"
         )
 
     @dictify
