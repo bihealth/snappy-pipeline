@@ -277,7 +277,7 @@ import re
 import sys
 import textwrap
 
-from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
