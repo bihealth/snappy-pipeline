@@ -53,6 +53,9 @@ jobs:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage.xml
         if: ${{ matrix.python-version == '3.7' && (github.ref == 'refs/heads/master') }}
+      - name: Check import order with isort
+        run: isort --profile black
+        if: ${{ matrix.python-version < '3.9' }}
       - name: Check style with black
         run: black --check --line-length 100 .
         if: ${{ matrix.python-version < '3.9' }}
