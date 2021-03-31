@@ -91,11 +91,11 @@ Available Somatic Targeted CNV Caller
 
 """
 
+from collections import OrderedDict
 import itertools
 import os
 import os.path
 import sys
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand

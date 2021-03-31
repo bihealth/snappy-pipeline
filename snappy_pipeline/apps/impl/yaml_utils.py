@@ -2,8 +2,8 @@
 """Utilities for processing YAML configuration
 """
 
-import re
 from collections.abc import MutableMapping, MutableSequence
+import re
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 

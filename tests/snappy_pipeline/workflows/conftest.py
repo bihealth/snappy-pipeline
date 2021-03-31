@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Shared fixtures for the workflows unit tests"""
 
-import textwrap
 from collections import namedtuple
+import textwrap
 from unittest.mock import MagicMock
 
-import pytest
 from biomedsheets.shortcuts import GenericSampleSheet
 from pyfakefs import fake_filesystem
+import pytest
 from ruamel.yaml.comments import CommentedMap
 
 from snappy_pipeline.workflows.abstract import BaseStep

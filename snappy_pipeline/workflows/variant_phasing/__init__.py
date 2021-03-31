@@ -60,8 +60,8 @@ Currently, no reports are generated.
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand

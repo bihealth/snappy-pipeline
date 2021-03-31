@@ -43,10 +43,10 @@ Parallel Execution
 Parallel execution is not performed currently.
 """
 
+from collections import OrderedDict
 import os
 import re
 import sys
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand

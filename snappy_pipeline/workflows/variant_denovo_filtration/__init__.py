@@ -88,9 +88,9 @@ Reports
 Currently, no reports are generated.
 """
 
+from collections import OrderedDict
 import itertools
 import os
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand

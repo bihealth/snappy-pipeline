@@ -42,9 +42,9 @@ Available CNV Callers
 
 """
 
+from collections import OrderedDict
 import os
 import re
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards, touch

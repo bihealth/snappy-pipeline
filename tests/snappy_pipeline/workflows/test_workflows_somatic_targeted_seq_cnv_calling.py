@@ -2,8 +2,8 @@
 """Tests for the somatic_targeted_seq_cnv_calling workflow module code"""
 
 
-import textwrap
 from itertools import chain
+import textwrap
 
 import pytest
 import ruamel.yaml as yaml

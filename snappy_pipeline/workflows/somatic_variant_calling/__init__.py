@@ -77,10 +77,10 @@ Reports
 Currently, no reports are generated.
 """
 
-import os
-import sys
 from collections import OrderedDict
 from itertools import chain
+import os
+import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

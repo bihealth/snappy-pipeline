@@ -11,8 +11,8 @@ The default configuration is as follows.
 
 """
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch

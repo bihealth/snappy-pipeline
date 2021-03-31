@@ -3,8 +3,8 @@
 
 """
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

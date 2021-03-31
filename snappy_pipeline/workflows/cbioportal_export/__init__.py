@@ -10,9 +10,9 @@ The output is a archive (tarball) that can be uploaded to a cbioportal instance
 for import.
 """
 
+from collections import OrderedDict
 import os
 import sys
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

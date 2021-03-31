@@ -1,9 +1,9 @@
 """Support code for the snappy pipeline wrapper tests."""
 
+from itertools import chain
 import os
 import shutil
 import subprocess
-from itertools import chain
 
 import pytest
 import yaml

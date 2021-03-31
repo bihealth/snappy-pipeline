@@ -65,9 +65,9 @@ Limitations
 Currently only works with ``hs37d5`` reference
 """
 
+from collections import OrderedDict
 import os
 import sys
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, touch

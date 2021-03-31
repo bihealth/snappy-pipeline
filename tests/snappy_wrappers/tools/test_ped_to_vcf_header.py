@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from collections import namedtuple
 import os
 import tempfile
 import textwrap
-from collections import namedtuple
 
 import pytest
 
