@@ -18,18 +18,17 @@ Example (using space as the separator):
     6
 
 """
-
 import argparse
 import itertools
 import math
 import sys
 
-import matplotlib
+import matplotlib  # isort:skip
 
 # Force using Agg backend, has to go before import of pyplot
 matplotlib.use("Agg")  # noqa
-import matplotlib.patches as mp
-import matplotlib.pyplot as plt
+import matplotlib.patches as mp  # isort:skip
+import matplotlib.pyplot as plt  # isort:skip
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

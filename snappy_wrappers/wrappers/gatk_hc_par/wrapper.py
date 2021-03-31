@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running GATK HC variant caller in parallel, genome is split into windows
+
+isort:skip_file
 """
 
 import os

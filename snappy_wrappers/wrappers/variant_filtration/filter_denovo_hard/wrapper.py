@@ -7,6 +7,8 @@ Apply all hard-filters with the following exceptions :
 - don't remove the neighboring variants as done in Wong et al.
 
 We simply keep these annotations and do a post-filtration later.
+
+isort:skip_file
 """
 
 import os
