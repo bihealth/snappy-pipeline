@@ -43,8 +43,8 @@ Available Somatic Targeted CNV Caller
 
 """
 
-import sys
 from collections import OrderedDict
+import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand

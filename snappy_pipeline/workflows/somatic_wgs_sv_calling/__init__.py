@@ -73,9 +73,9 @@ Reports
 Currently, no reports are generated.
 """
 
+from collections import OrderedDict
 import os
 import sys
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

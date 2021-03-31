@@ -2,6 +2,8 @@
 """Wrapper for running VCF2MAF incl VEP variant annotation
 """
 
+import pprint
+
 from snakemake.shell import shell
 
 params = snakemake.params.args
@@ -9,7 +11,6 @@ step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 
-import pprint
 
 pprint.pprint(params)
 

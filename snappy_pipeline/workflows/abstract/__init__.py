@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-import itertools
-import os
-import os.path
-import sys
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
+import itertools
+import os
+import os.path
+import sys
 
-import ruamel.yaml as yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -22,6 +21,7 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
+import ruamel.yaml as yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
