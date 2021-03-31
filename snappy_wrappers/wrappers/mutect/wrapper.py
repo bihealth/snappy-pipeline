@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect: Snakemake wrapper.py
+
+isort:skip_file
 """
 
 from snakemake import shell

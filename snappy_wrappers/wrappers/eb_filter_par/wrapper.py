@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running EasyBayes-Filter in parallel, genome is split into windows
+
+isort:skip_file
 """
 
 import os

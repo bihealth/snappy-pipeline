@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Snakemake wrapper for running ``snappy_wrappers.tools.vcf_filter_denovo.main()``."""
+"""Snakemake wrapper for running ``snappy_wrappers.tools.vcf_filter_denovo.main()``.
+
+isort:skip_file
+"""
 
 import collections
 import os

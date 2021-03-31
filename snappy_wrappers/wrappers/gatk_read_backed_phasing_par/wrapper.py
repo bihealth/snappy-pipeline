@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper code for GATK ReadBackedPhasing
+
+isort:skip_file
 """
 
 import os

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Varscan for joint somatic/normal calling in parallel, genome is split into
 windows
+
+isort:skip_file
 """
 
 import os

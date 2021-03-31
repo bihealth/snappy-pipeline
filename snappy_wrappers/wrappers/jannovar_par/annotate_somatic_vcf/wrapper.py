@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for Jannovar somatic annotation in parallel, genome is split into windows
+
+isort:skip_file
 """
 
 import os

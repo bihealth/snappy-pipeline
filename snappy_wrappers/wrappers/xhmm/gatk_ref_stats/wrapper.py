@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-# Use GATK 3 for computing reference statistics.
+""" Wrapper for GATK 3: computing reference statistics.
+
+isort:skip_file
+"""
 
 import os
 

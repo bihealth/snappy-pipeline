@@ -1,3 +1,4 @@
+# isort:skip_file
 import json
 import os
 import sys

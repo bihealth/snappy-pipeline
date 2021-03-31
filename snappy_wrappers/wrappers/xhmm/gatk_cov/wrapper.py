@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-# Use GATK 3 for computing depth of coverage as input for XHMM.
+""" Wrapper for GATK 3: computing depth of coverage as input for XHMM.
+
+isort:skip_file
+"""
 
 import os
 
