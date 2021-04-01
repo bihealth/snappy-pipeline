@@ -27,6 +27,7 @@ import matplotlib  # isort:skip
 
 # Force using Agg backend, has to go before import of pyplot
 matplotlib.use("Agg")  # noqa
+# pylint: disable=wrong-import-position
 import matplotlib.patches as mp  # noqa # isort:skip
 import matplotlib.pyplot as plt  # noqa # isort:skip
 
