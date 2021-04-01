@@ -22,7 +22,6 @@ from snappy_wrappers.wrapper_parallel import (
 # Naming clash limbo...
 snake_job = snakemake
 del snakemake
-# pylint: disable=wrong-import-position
 from snakemake import shell  # noqa: C0411
 from snakemake import snakemake as run_snakemake  # noqa: C0411
 
