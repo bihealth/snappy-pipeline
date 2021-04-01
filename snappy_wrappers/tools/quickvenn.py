@@ -27,8 +27,8 @@ import matplotlib  # isort:skip
 
 # Force using Agg backend, has to go before import of pyplot
 matplotlib.use("Agg")  # noqa
-import matplotlib.patches as mp  # isort:skip
-import matplotlib.pyplot as plt  # isort:skip
+import matplotlib.patches as mp  # noqa isort:skip
+import matplotlib.pyplot as plt  # noqa isort:skip
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

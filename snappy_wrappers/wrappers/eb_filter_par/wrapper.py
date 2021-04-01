@@ -15,8 +15,14 @@ from snakemake import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import ParallelVcfOutputBaseWrapper, ResourceUsage, gib, hours
-
+# pylint: disable=E402
+from snappy_wrappers.wrapper_parallel import (
+    ParallelVcfOutputBaseWrapper,
+    ResourceUsage,
+    gib,
+    hours,
+)
+# pylint: enable=E402
 
 class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
     """Parallel execution of somatic variant annotation: eb_filter``."""
