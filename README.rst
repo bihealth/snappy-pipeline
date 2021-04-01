@@ -11,9 +11,9 @@
     :target: https://snappy-pipeline.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-===============================================
+================================================
 SNAPPY - SNAPPY Nucleic Acid Processing Pipeline
-===============================================
+================================================
 
 ------------
 Installation
