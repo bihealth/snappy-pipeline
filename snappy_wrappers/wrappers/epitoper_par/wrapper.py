@@ -9,15 +9,14 @@ from math import ceil
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-# pylint: disable=E402
+# pylint: disable=wrong-import-position
 from snappy_wrappers.wrapper_parallel import (
     ResourceUsage,
     SgeResourceUsageConverter,
     gib,
     hours,
     in_working_dir,
-)
-# pylint: enable=E402
+)  # noqa
 
 # TODO: call on overlapping windows, on merge make unique
 
@@ -25,7 +24,7 @@ from snappy_wrappers.wrapper_parallel import (
 snake_job = snakemake
 del snakemake
 from snakemake import shell  # noqa
-from snakemake import snakemake as run_snakemake # noqa
+from snakemake import snakemake as run_snakemake  # noqa
 
 snakemake = snake_job
 
