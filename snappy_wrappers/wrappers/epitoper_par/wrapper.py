@@ -1,5 +1,4 @@
 # isort:skip_file
-# pylint: disable=wrong-import-position
 import json
 import os
 import sys
@@ -9,7 +8,7 @@ from math import ceil
 
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
-
+# pylint: disable=wrong-import-position
 from snappy_wrappers.wrapper_parallel import (
     ResourceUsage,
     SgeResourceUsageConverter,
@@ -23,8 +22,8 @@ from snappy_wrappers.wrapper_parallel import (
 # Naming clash limbo...
 snake_job = snakemake
 del snakemake
-from snakemake import shell  # noqa
-from snakemake import snakemake as run_snakemake  # noqa
+from snakemake import shell  # noqa: C0411
+from snakemake import snakemake as run_snakemake  # noqa: C0411
 
 snakemake = snake_job
 
