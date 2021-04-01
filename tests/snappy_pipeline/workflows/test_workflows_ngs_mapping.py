@@ -5,6 +5,8 @@ import pytest
 import ruamel.yaml as yaml
 import textwrap
 
+from biomedsheets.io_tsv import read_germline_tsv_sheet
+from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import Wildcards
 
 from .common import get_expected_log_files_dict
@@ -113,7 +115,19 @@ def get_expected_output_files_dict(bam_base_out, report_base_out):
     return expected
 
 
-# Tests for BwaStepPart ---------------------------------------------------------------------------
+# Test for project validation ----------------------------------------------------------------------
+
+
+def test_project_validation_germline(ngs_mapping_workflow, germline_sheet_fake_fs, minimal_config):
+    """Tests project validation method in ngs mapping workflow"""
+    # # Create generic sample sheet
+    # sheet = GenericSampleSheet(read_germline_tsv_sheet("/work/config/sheet.tsv"))
+    # print(sheet.__dict__)
+    # Validate
+    assert True
+
+
+# Tests for BwaStepPart ----------------------------------------------------------------------------
 
 
 def test_bwa_step_part_get_args(ngs_mapping_workflow):

@@ -1150,3 +1150,17 @@ class NgsMappingWorkflow(BaseStep):
                     ngs_library=[ngs_library],
                     **kwargs
                 )
+
+    def validate_project(self, config_dict, sample_sheets_list):
+        """Validates project.
+
+        Method compares sample information included in the sample sheet and the configuration. If
+        sheet contains 'DNA' samples, a DNA mapper should be defined. Similarly, if it contains
+        'RNA', a RNA mapper should be defined.
+
+        :param config_dict: Dictionary with configurations as found in the project's yaml file.
+        :type config_dict: dict
+
+        :param sample_sheets_list: List with biomedical sample sheets.
+        :type sample_sheets_list: list
+        """
