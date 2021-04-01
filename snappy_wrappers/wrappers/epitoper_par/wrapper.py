@@ -1,4 +1,5 @@
 # isort:skip_file
+# pylint: disable=wrong-import-position
 import json
 import os
 import sys
@@ -9,7 +10,6 @@ from math import ceil
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-# pylint: disable=wrong-import-position
 from snappy_wrappers.wrapper_parallel import (
     ResourceUsage,
     SgeResourceUsageConverter,
