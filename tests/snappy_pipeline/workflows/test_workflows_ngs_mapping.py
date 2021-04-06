@@ -141,18 +141,18 @@ def test_extraction_type_check(
 
     # Evaluate if only DNA is True
     dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=dna_sheet)
-    assert dna_bool == True, "Germline extraction type are set to DNA by default."
-    assert rna_bool == False, "No RNA sample was included in the sample sheet."
+    assert dna_bool, "Germline extraction type are set to DNA by default."
+    assert not rna_bool, "No RNA sample was included in the sample sheet."
 
     # Evaluate if only RNA is True
     dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=rna_sheet)
-    assert dna_bool == False, "No DNA sample was included in the sample sheet."
-    assert rna_bool == True, "Only RNA samples were included in the sample sheet."
+    assert not dna_bool, "No DNA sample was included in the sample sheet."
+    assert rna_bool, "Only RNA samples were included in the sample sheet."
 
     # Evaluate if both DNA and RNA are True
     dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=mix_sheet)
-    assert dna_bool == True, "Sample sheet contains both DNA and RNA."
-    assert rna_bool == True, "Sample sheet contains both DNA and RNA."
+    assert dna_bool, "Sample sheet contains both DNA and RNA."
+    assert rna_bool, "Sample sheet contains both DNA and RNA."
 
 
 def test_project_validation_germline(
@@ -200,7 +200,7 @@ def test_project_validation_germline(
         config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
     )
     error_msg = (
-        "No exception expected: DNA, RNA sample sheet " "and respective tools defined in config."
+        "No exception expected: DNA, RNA sample sheet and respective tools defined in config."
     )
     assert out is None, error_msg
 
