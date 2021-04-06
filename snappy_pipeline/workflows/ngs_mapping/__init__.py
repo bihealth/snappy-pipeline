@@ -1169,7 +1169,7 @@ class NgsMappingWorkflow(BaseStep):
         rna_bool_list = []
 
         # Get tools dictionary
-        tools_dict = config_dict['tools']
+        tools_dict = config_dict["tools"]
 
         # Iterate over sheets
         for sheet in sample_sheets_list:
@@ -1183,18 +1183,18 @@ class NgsMappingWorkflow(BaseStep):
         rna_analysis = any(rna_bool_list)
 
         # Validate DNA project
-        dna_tool_list = tools_dict.get('dna', [])
+        dna_tool_list = tools_dict.get("dna", [])
         if dna_analysis and not dna_tool_list:
             raise InvalidConfiguration(
-                'Sample sheet contains DNA but configuration has no DNA '
-                'mapper defined in tool list.'
+                "Sample sheet contains DNA but configuration has no DNA "
+                "mapper defined in tool list."
             )
         # Validate RNA project
-        rna_tool_list = tools_dict.get('rna', [])
+        rna_tool_list = tools_dict.get("rna", [])
         if rna_analysis and not rna_tool_list:
             raise InvalidConfiguration(
-                'Sample sheet contains RNA but configuration has no RNA '
-                'mapper defined in tool list.'
+                "Sample sheet contains RNA but configuration has no RNA "
+                "mapper defined in tool list."
             )
 
     @staticmethod
@@ -1220,11 +1220,10 @@ class NgsMappingWorkflow(BaseStep):
             for _, bio_sample in entity.bio_samples.items():
                 for _, test_sample in bio_sample.test_samples.items():
                     extraction_type = test_sample.extra_infos.get("extractionType")
-                    if extraction_type.lower() == 'dna':
+                    if extraction_type.lower() == "dna":
                         contains_dna_extraction = True
-                    elif extraction_type.lower() == 'rna':
+                    elif extraction_type.lower() == "rna":
                         contains_rna_extraction = True
 
         # Return
         return contains_dna_extraction, contains_rna_extraction
-
