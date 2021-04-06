@@ -1164,8 +1164,38 @@ class NgsMappingWorkflow(BaseStep):
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
         """
+        # Initialise variables
+        dna_bool_list = []
+        rna_bool_list = []
 
+        # Get tools dictionary
+        tools_dict = config_dict['tools']
 
+        # Iterate over sheets
+        for sheet in sample_sheets_list:
+            dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
+            # Append to respective lists
+            dna_bool_list.append(dna_present)
+            rna_bool_list.append(rna_present)
+
+        # Evaluate type of project
+        dna_analysis = any(dna_bool_list)
+        rna_analysis = any(rna_bool_list)
+
+        # Validate DNA project
+        dna_tool_list = tools_dict.get('dna', [])
+        if dna_analysis and not dna_tool_list:
+            raise InvalidConfiguration(
+                'Sample sheet contains DNA but configuration has no DNA '
+                'mapper defined in tool list.'
+            )
+        # Validate RNA project
+        rna_tool_list = tools_dict.get('rna', [])
+        if rna_analysis and not rna_tool_list:
+            raise InvalidConfiguration(
+                'Sample sheet contains RNA but configuration has no RNA '
+                'mapper defined in tool list.'
+            )
 
     @staticmethod
     def extraction_type_check(sample_sheet):
