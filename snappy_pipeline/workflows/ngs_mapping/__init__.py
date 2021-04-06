@@ -1164,3 +1164,37 @@ class NgsMappingWorkflow(BaseStep):
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
         """
+
+
+
+    @staticmethod
+    def extraction_type_check(sample_sheet):
+        """Retrieve extraction type from biomedsheet.
+
+        Method crawls through all bio entities in the biomedsheet and checks if there are DNA
+        and/or RNA extraction types. In both cases, the test will be consider True if at least one
+        test sample contains the extraction type (i.e., DNA or RNA).
+
+        :param sample_sheet: Sample sheet.
+        :type sample_sheet: biomedsheets.models.Sheet
+
+        :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
+        present, RNA extraction type present).
+        """
+        # Initialise variables
+        contains_rna_extraction = False
+        contains_dna_extraction = False
+
+        # Crawl over bio entities until test_sample
+        for _, entity in sample_sheet.bio_entities.items():
+            for _, bio_sample in entity.bio_samples.items():
+                for _, test_sample in bio_sample.test_samples.items():
+                    extraction_type = test_sample.extra_infos.get("extractionType")
+                    if extraction_type.lower() == 'dna':
+                        contains_dna_extraction = True
+                    elif extraction_type.lower() == 'rna':
+                        contains_rna_extraction = True
+
+        # Return
+        return contains_dna_extraction, contains_rna_extraction
+

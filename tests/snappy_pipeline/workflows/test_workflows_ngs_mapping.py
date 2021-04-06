@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Tests for the ngs_mapping workflow module code"""
 
+from collections import OrderedDict
+import io
 import pytest
 import ruamel.yaml as yaml
 import textwrap
 
-from biomedsheets.io_tsv import read_germline_tsv_sheet
-from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.io_tsv import read_germline_tsv_sheet, read_generic_tsv_sheet
 from snakemake.io import Wildcards
 
 from .common import get_expected_log_files_dict
@@ -117,14 +118,55 @@ def get_expected_output_files_dict(bam_base_out, report_base_out):
 
 # Test for project validation ----------------------------------------------------------------------
 
+def test_extraction_type_check(ngs_mapping_workflow, germline_sheet_tsv, generic_rna_sheet_tsv,
+                               generic_mix_extraction_sheet_tsv):
+    """Tests extraction type check method."""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(germline_sheet_tsv)
+    dna_sheet = read_germline_tsv_sheet(germline_sheet_io)
 
-def test_project_validation_germline(ngs_mapping_workflow, germline_sheet_fake_fs, minimal_config):
+    # Create rna sample sheet
+    rna_sheet_io = io.StringIO(generic_rna_sheet_tsv)
+    rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
+
+    # Create mix data sample sheet
+    mix_sheet_io = io.StringIO(generic_mix_extraction_sheet_tsv)
+    mix_sheet = read_generic_tsv_sheet(mix_sheet_io)
+
+    # Evaluate if only DNA is True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=dna_sheet)
+    assert dna_bool == True, "Germline extraction type are set to DNA by default."
+    assert rna_bool == False, "No RNA sample was included in the sample sheet."
+
+    # Evaluate if only RNA is True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=rna_sheet)
+    assert dna_bool == False, "No DNA sample was included in the sample sheet."
+    assert rna_bool == True, "Only RNA samples were included in the sample sheet."
+
+    # Evaluate if both DNA and RNA are True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=mix_sheet)
+    assert dna_bool == True, "Sample sheet contains both DNA and RNA."
+    assert rna_bool == True, "Sample sheet contains both DNA and RNA."
+
+
+def test_project_validation_germline(ngs_mapping_workflow, germline_sheet_tsv, minimal_config):
     """Tests project validation method in ngs mapping workflow"""
-    # # Create generic sample sheet
-    # sheet = GenericSampleSheet(read_germline_tsv_sheet("/work/config/sheet.tsv"))
-    # print(sheet.__dict__)
-    # Validate
-    assert True
+    # Convert yaml to dict
+    minimal_config_dict = dict(minimal_config)
+    minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+    # Create generic sample sheet
+    germline_sheet_io = io.StringIO(germline_sheet_tsv)
+    sheet = read_germline_tsv_sheet(germline_sheet_io)
+    print(type(sheet))
+    for _, entity in sheet.bio_entities.items():
+        for _, bio_sample in entity.bio_samples.items():
+            for _, test_sample in bio_sample.test_samples.items():
+                print(test_sample.extra_infos.get("extractionType"))
+
+        break
+
+
+    assert False
 
 
 # Tests for BwaStepPart ----------------------------------------------------------------------------
