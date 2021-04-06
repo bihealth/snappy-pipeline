@@ -1029,8 +1029,7 @@ class NgsMappingWorkflow(BaseStep):
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
         # Validate project
-        self.validate_project(config_dict=self.config,sample_sheets_list=self.shortcut_sheets)
-
+        self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
 
     @dictify
     def _build_ngs_library_to_kit(self):
