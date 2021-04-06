@@ -214,16 +214,6 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 
 
 @pytest.fixture
-def generic_rna_sheet_fake_fs(fake_fs, generic_rna_sheet_tsv):
-    """Return fake file system setup with files for the generic_rna_sheet"""
-    # Create the sample TSV file
-    fake_fs.fs.create_file(
-        "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
-    )
-    return fake_fs
-
-
-@pytest.fixture
 def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
     """Return fake file system setup with files for the germline_sheet_tsv"""
     # Create work directory
