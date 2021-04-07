@@ -1070,14 +1070,12 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        from os.path import join
-
         name_pattern = "{mapper}.{ngs_library.name}"
         yield from self._yield_result_files(
-            join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
         yield from self._yield_result_files(
-            join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
+            os.path.join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
             ext=(
                 "log",
                 "conda_info.txt",
@@ -1088,20 +1086,20 @@ class NgsMappingWorkflow(BaseStep):
             ),
         )
         yield from self._yield_result_files(
-            join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"),
+            os.path.join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join(
+            os.path.join(
                 "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt.md5"
             ),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html")
+            os.path.join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html")
         )
         yield from self._yield_result_files(
-            join(
+            os.path.join(
                 "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html.md5"
             )
         )
@@ -1128,16 +1126,16 @@ class NgsMappingWorkflow(BaseStep):
             and self.config["picard_hs_metrics"]["path_baits_interval_list"]
         ):
             yield from self._yield_result_files(
-                join("output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt")
+                os.path.join("output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt")
             )
             yield from self._yield_result_files(
-                join(
+                os.path.join(
                     "output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt.md5"
                 )
             )
         if self.config["compute_coverage_bed"]:
             yield from self._yield_result_files(
-                join("output", name_pattern, "report", "coverage", name_pattern + "{ext}"),
+                os.path.join("output", name_pattern, "report", "coverage", name_pattern + "{ext}"),
                 ext=(".bed.gz", ".bed.gz.tbi"),
             )
         else:
