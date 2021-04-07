@@ -281,6 +281,7 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import (
     STDERR_TO_LOG_FILE,
     BaseStep,
@@ -290,8 +291,6 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from snappy_pipeline.utils import DictQuery, dictify, listify
-
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -1086,7 +1085,9 @@ class NgsMappingWorkflow(BaseStep):
             ),
         )
         yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"),
+            os.path.join(
+                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"
+            ),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
@@ -1096,7 +1097,9 @@ class NgsMappingWorkflow(BaseStep):
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html")
+            os.path.join(
+                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html"
+            )
         )
         yield from self._yield_result_files(
             os.path.join(
@@ -1115,6 +1118,9 @@ class NgsMappingWorkflow(BaseStep):
                     )
                     # Per-sample target coverage report.
                     yield from expand(
+                        os.path.join(
+                            "output", name_pattern, "report", "cov_qc", name_pattern + ".{ext}"
+                        ),
                         mapper=self.config["tools"][extraction_type.lower() + suffix],
                         ngs_library=[ngs_library],
                         ext=["txt", "txt.md5"],
@@ -1126,7 +1132,9 @@ class NgsMappingWorkflow(BaseStep):
             and self.config["picard_hs_metrics"]["path_baits_interval_list"]
         ):
             yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt")
+                os.path.join(
+                    "output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt"
+                )
             )
             yield from self._yield_result_files(
                 os.path.join(

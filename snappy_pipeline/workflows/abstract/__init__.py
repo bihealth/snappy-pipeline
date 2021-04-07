@@ -25,8 +25,8 @@ import ruamel.yaml as yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
-    merge_dicts,
     MissingConfiguration,
+    merge_dicts,
     print_config,
     print_sample_sheets,
     snakefile_path,
