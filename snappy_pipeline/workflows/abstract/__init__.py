@@ -24,15 +24,15 @@ from biomedsheets.shortcuts import (
 )
 import ruamel.yaml as yaml
 
-from ...base import (
+from snappy_pipeline.base import (
     merge_dicts,
     MissingConfiguration,
     print_config,
     print_sample_sheets,
     snakefile_path,
 )
-from ...find_file import FileSystemCrawler, PatternSet
-from ...utils import listify, dictify
+from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
+from snappy_pipeline.utils import listify, dictify
 
 from biomedsheets.naming import NAMING_SECONDARY_ID_PK, NAMING_SCHEMES, name_generator_for_scheme
 
@@ -298,6 +298,42 @@ class DataSetInfo:
         sodar_uuid,
         sodar_title,
     ):
+        """Constructor.
+
+        :param name: Name of the data set.
+        :type name: str
+
+        :param sheet_path: Path to sheet file that should be loaded.
+        :type sheet_path: str
+
+        :param base_paths:  All base paths of all configuration, too look for ``sheet_path``.
+        :type base_paths: list
+
+        :param search_paths: Search paths for the files in the sample sheet.
+
+        :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
+        right: '**/*_R2_*.fastq.gz'}".
+        :type search_patterns: dict
+
+        :param sheet_type: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
+        attempt to load from sheet.
+        :type sheet_type: str
+
+        :param is_background: Whether or not the data set info is to be used only for background.
+        :type is_background: bool
+
+        :param naming_scheme: Selected naming schema: either 'secondary_id_pk' or
+        'only_secondary_id'.
+        :type naming_scheme: str
+
+        :param mixed_se_pe: Whether or not mixing SE and PE data sets is allowed.
+
+        :param sodar_uuid: The UUID of the corresponding SODAR project.
+        :type sodar_uuid: str
+
+        :param sodar_title: The title of the project in SODAR [optional].
+        :type sodar_title: str
+        """
         #: Name of the data set
         self.name = name
         #: Path to the sheet file, for loading
@@ -482,8 +518,8 @@ class BaseStep:
         # don't use them
         def on_start(_):
             """Print configuration and sample sheets on start"""
-            VERBOSE = False
-            if VERBOSE:
+            verbose = False
+            if verbose:
                 # Print configuration back to the user after merging workflow step-specific
                 # configuration
                 print_config(self.config, file=sys.stderr)
@@ -564,14 +600,14 @@ class BaseStep:
         # Iterate over required configuration keys
         for entry in config_keys:
             # Check if keys are present in config dictionary
-            if entry not in handle:
+            if entry in handle:
+                handle = handle[entry]
+                so_far.append(entry)
+            else:
                 tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
                     full_path="/".join(config_keys), so_far="/".join(so_far), msg=msg
                 )
                 raise e_class(tpl)
-            else:
-                handle = handle[entry]
-                so_far.append(entry)
 
     def update_cluster_config(self):
         """Update cluster configuration for rule "__default__"
@@ -681,12 +717,12 @@ class BaseStep:
         return self.substep_getattr(step, function)(*args, **kwargs)
 
     def _get_sub_step(self, sub_step):
-        if sub_step not in self.sub_steps:
+        if sub_step in self.sub_steps:
+            return self.sub_steps[sub_step]
+        else:
             raise ValueError(
                 'Could not find sub step "{}" in workflow step "{}"'.format(sub_step, self.name)
             )  # pragma: no cover
-        else:
-            return self.sub_steps[sub_step]
 
     def _load_data_set_infos(self):
         """Load BioMed Sample Sheets as given by configuration and yield them"""
@@ -854,7 +890,7 @@ def get_ngs_library_folder_name(sheets, library_name):
     for sheet in sheets:
         try:
             ngs_library = sheet.crawl(sheet.name_generator.inverse(library_name))
-        except SecondaryIDNotFoundException as e:
+        except SecondaryIDNotFoundException:
             continue  # skip, not in this sheet
         if ngs_library:
             try:

@@ -119,6 +119,48 @@ def cancer_sheet_tsv():
 
 
 @pytest.fixture
+def generic_rna_sheet_tsv():
+    """Return contents for generic RNA TSV file"""
+    return textwrap.dedent(
+        """
+        [Metadata]
+        schema\tgeneric
+        schema_version\tv1
+        title\tExample generic RNA study
+        description\tSimple example of a generic study sample sheet.
+
+        [Data]
+        bioEntity\tbioSample\ttestSample\tngsLibrary\textractionType\tlibraryType\tfolderName
+        E001\tBS1\tTS1\tLIB1\tRNA\ttotal_RNA_seq\tE001-BS1-TS1-LIB1
+        E001\tBS2\tTS1\tLIB1\tRNA\ttotal_RNA_seq\tE001-BS2-TS1-LIB1
+        E002\tBS1\tTS1\tLIB1\tRNA\ttotal_RNA_seq\tE002-BS1-TS1-LIB1
+        E002\tBS1\tTS1\tLIB2\tRNA\ttotal_RNA_seq\tE002-BS1-TS1-LIB2
+        """
+    ).lstrip()
+
+
+@pytest.fixture
+def generic_mix_extraction_sheet_tsv():
+    """Return contents for generic DNA|RNA TSV file"""
+    return textwrap.dedent(
+        """
+        [Metadata]
+        schema\tgeneric
+        schema_version\tv1
+        title\tExample generic mix data study
+        description\tSimple example of a generic study sample sheet.
+
+        [Data]
+        bioEntity\tbioSample\ttestSample\tngsLibrary\textractionType\tlibraryType\tfolderName
+        E001\tBS1\tTS1\tLIB1\tRNA\ttotal_RNA_seq\tE001-BS1-TS1-LIB1
+        E001\tBS2\tTS1\tLIB1\tRNA\ttotal_RNA_seq\tE001-BS2-TS1-LIB1
+        E002\tBS1\tTS1\tLIB1\tDNA\tWES\tE002-BS1-TS1-LIB1
+        E002\tBS1\tTS1\tLIB2\tDNA\tWES\tE002-BS1-TS1-LIB2
+        """
+    ).lstrip()
+
+
+@pytest.fixture
 def fake_fs():
     """Return ``namedtuple`` with fake file system objects"""
     klass = namedtuple("FakeFsBundle", "fs os open inter_process_lock")

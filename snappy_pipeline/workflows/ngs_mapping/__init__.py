@@ -277,11 +277,11 @@ import re
 import sys
 import textwrap
 
-from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
-from ...base import InvalidConfiguration
-from ..abstract import (
+from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.workflows.abstract import (
     STDERR_TO_LOG_FILE,
     BaseStepPart,
     BaseStep,
@@ -290,7 +290,7 @@ from ..abstract import (
     LinkInPathGenerator,
     get_ngs_library_folder_name,
 )
-from ...utils import dictify, listify, DictQuery
+from snappy_pipeline.utils import dictify, listify, DictQuery
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -480,7 +480,7 @@ class ReadMappingStepPart(BaseStepPart):
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = "work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}".format(
             mapper=self.__class__.name
@@ -494,7 +494,7 @@ class ReadMappingStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def _collect_reads(self, wildcards, library_name, prefix):
+    def _collect_reads(self, wildcards, _library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
@@ -679,8 +679,9 @@ class ExternalStepPart(ReadMappingStepPart):
 class GatkPostBamStepPart(BaseStepPart):
     """Support for supporting BAM postprocessing with GATK
 
-    This uses the snappy-gatk_post_bam wrapper that performs read realignment and base recalibration.
-    Note that in particular the base recalibration step takes quite a long time for large files.
+    This uses the snappy-gatk_post_bam wrapper that performs read realignment and base
+    recalibration. Note that in particular the base recalibration step takes quite a long time
+    for large files.
     """
 
     name = "gatk_post_bam"
@@ -1027,6 +1028,8 @@ class NgsMappingWorkflow(BaseStep):
         self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+        # Validate project
+        self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
 
     @dictify
     def _build_ngs_library_to_kit(self):
@@ -1066,14 +1069,12 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        from os.path import join
-
         token = "{mapper}.{ngs_library.name}"
         yield from self._yield_result_files(
-            join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
+            os.path.join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
         )
         yield from self._yield_result_files(
-            join("output", token, "log", "{mapper}.{ngs_library.name}.{ext}"),
+            os.path.join("output", token, "log", "{mapper}.{ngs_library.name}.{ext}"),
             ext=(
                 "log",
                 "conda_info.txt",
@@ -1084,18 +1085,18 @@ class NgsMappingWorkflow(BaseStep):
             ),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.{report}.txt"),
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.{report}.txt"),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.{report}.txt.md5"),
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.{report}.txt.md5"),
             report=("bamstats", "flagstats", "idxstats"),
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.bamstats.html")
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.bamstats.html")
         )
         yield from self._yield_result_files(
-            join("output", token, "report", "bam_qc", token + ".bam.bamstats.html.md5")
+            os.path.join("output", token, "report", "bam_qc", token + ".bam.bamstats.html.md5")
         )
 
         for sheet in self.shortcut_sheets:
@@ -1109,7 +1110,7 @@ class NgsMappingWorkflow(BaseStep):
                     )
                     # Per-sample target coverage report.
                     yield from expand(
-                        join("output", token, "report", "cov_qc", token + ".{ext}"),
+                        os.path.join("output", token, "report", "cov_qc", token + ".{ext}"),
                         mapper=self.config["tools"][extraction_type.lower() + suffix],
                         ngs_library=[ngs_library],
                         ext=["txt", "txt.md5"],
@@ -1121,14 +1122,14 @@ class NgsMappingWorkflow(BaseStep):
             and self.config["picard_hs_metrics"]["path_baits_interval_list"]
         ):
             yield from self._yield_result_files(
-                join("output", token, "report", "picard_hs_metrics", token + ".txt")
+                os.path.join("output", token, "report", "picard_hs_metrics", token + ".txt")
             )
             yield from self._yield_result_files(
-                join("output", token, "report", "picard_hs_metrics", token + ".txt.md5")
+                os.path.join("output", token, "report", "picard_hs_metrics", token + ".txt.md5")
             )
         if self.config["compute_coverage_bed"]:
             yield from self._yield_result_files(
-                join("output", token, "report", "coverage", token + "{ext}"),
+                os.path.join("output", token, "report", "coverage", token + "{ext}"),
                 ext=(".bed.gz", ".bed.gz.tbi"),
             )
         else:
@@ -1151,3 +1152,80 @@ class NgsMappingWorkflow(BaseStep):
                     ngs_library=[ngs_library],
                     **kwargs
                 )
+
+    def validate_project(self, config_dict, sample_sheets_list):
+        """Validates project.
+
+        Method compares sample information included in the sample sheet and the configuration. If
+        sheet contains 'DNA' samples, a DNA mapper should be defined. Similarly, if it contains
+        'RNA', a RNA mapper should be defined.
+
+        :param config_dict: Dictionary with configurations as found in the project's yaml file.
+        :type config_dict: dict
+
+        :param sample_sheets_list: List with biomedical sample sheets.
+        :type sample_sheets_list: list
+        """
+        # Initialise variables
+        dna_bool_list = []
+        rna_bool_list = []
+
+        # Get tools dictionary
+        tools_dict = config_dict["tools"]
+
+        # Iterate over sheets
+        for sheet in sample_sheets_list:
+            dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
+            # Append to respective lists
+            dna_bool_list.append(dna_present)
+            rna_bool_list.append(rna_present)
+
+        # Evaluate type of project
+        dna_analysis = any(dna_bool_list)
+        rna_analysis = any(rna_bool_list)
+
+        # Validate DNA project
+        dna_tool_list = tools_dict.get("dna", [])
+        if dna_analysis and not dna_tool_list:
+            raise InvalidConfiguration(
+                "Sample sheet contains DNA but configuration has no DNA "
+                "mapper defined in tool list."
+            )
+        # Validate RNA project
+        rna_tool_list = tools_dict.get("rna", [])
+        if rna_analysis and not rna_tool_list:
+            raise InvalidConfiguration(
+                "Sample sheet contains RNA but configuration has no RNA "
+                "mapper defined in tool list."
+            )
+
+    @staticmethod
+    def extraction_type_check(sample_sheet):
+        """Retrieve extraction type from biomedsheet.
+
+        Method crawls through all bio entities in the biomedsheet and checks if there are DNA
+        and/or RNA extraction types. In both cases, the test will be consider True if at least one
+        test sample contains the extraction type (i.e., DNA or RNA).
+
+        :param sample_sheet: Sample sheet.
+        :type sample_sheet: biomedsheets.models.Sheet
+
+        :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
+        present, RNA extraction type present).
+        """
+        # Initialise variables
+        contains_rna_extraction = False
+        contains_dna_extraction = False
+
+        # Crawl over bio entities until test_sample
+        for _, entity in sample_sheet.bio_entities.items():
+            for _, bio_sample in entity.bio_samples.items():
+                for _, test_sample in bio_sample.test_samples.items():
+                    extraction_type = test_sample.extra_infos.get("extractionType")
+                    if extraction_type.lower() == "dna":
+                        contains_dna_extraction = True
+                    elif extraction_type.lower() == "rna":
+                        contains_rna_extraction = True
+
+        # Return
+        return contains_dna_extraction, contains_rna_extraction

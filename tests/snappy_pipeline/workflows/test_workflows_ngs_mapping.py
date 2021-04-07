@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the ngs_mapping workflow module code"""
 
+from collections import OrderedDict
+from copy import deepcopy
+import io
 import pytest
 import ruamel.yaml as yaml
 import textwrap
 
+from biomedsheets.io_tsv import read_germline_tsv_sheet, read_generic_tsv_sheet
 from snakemake.io import Wildcards
 
 from .common import get_expected_log_files_dict
@@ -113,7 +117,112 @@ def get_expected_output_files_dict(bam_base_out, report_base_out):
     return expected
 
 
-# Tests for BwaStepPart ---------------------------------------------------------------------------
+# Test for project validation ----------------------------------------------------------------------
+
+
+def test_extraction_type_check(
+    ngs_mapping_workflow,
+    germline_sheet_tsv,
+    generic_rna_sheet_tsv,
+    generic_mix_extraction_sheet_tsv,
+):
+    """Tests extraction type check method."""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(germline_sheet_tsv)
+    dna_sheet = read_germline_tsv_sheet(germline_sheet_io)
+
+    # Create rna sample sheet
+    rna_sheet_io = io.StringIO(generic_rna_sheet_tsv)
+    rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
+
+    # Create mix data sample sheet
+    mix_sheet_io = io.StringIO(generic_mix_extraction_sheet_tsv)
+    mix_sheet = read_generic_tsv_sheet(mix_sheet_io)
+
+    # Evaluate if only DNA is True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=dna_sheet)
+    assert dna_bool, "Germline extraction type are set to DNA by default."
+    assert not rna_bool, "No RNA sample was included in the sample sheet."
+
+    # Evaluate if only RNA is True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=rna_sheet)
+    assert not dna_bool, "No DNA sample was included in the sample sheet."
+    assert rna_bool, "Only RNA samples were included in the sample sheet."
+
+    # Evaluate if both DNA and RNA are True
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=mix_sheet)
+    assert dna_bool, "Sample sheet contains both DNA and RNA."
+    assert rna_bool, "Sample sheet contains both DNA and RNA."
+
+
+def test_project_validation_germline(
+    ngs_mapping_workflow, germline_sheet_tsv, generic_rna_sheet_tsv, minimal_config
+):
+    """Tests project validation method in ngs mapping workflow"""
+    # Convert yaml to dict
+    minimal_config_dict = deepcopy(minimal_config)
+    minimal_config_dict = dict(minimal_config_dict)
+    minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+
+    # Create germline sample sheet
+    germline_sheet_io = io.StringIO(germline_sheet_tsv)
+    germline_sheet = read_germline_tsv_sheet(germline_sheet_io)
+
+    # Create rna sample sheet
+    rna_sheet_io = io.StringIO(generic_rna_sheet_tsv)
+    rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
+
+    # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
+    out = ngs_mapping_workflow.validate_project(
+        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
+    )
+    assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
+
+    # Exception raised cause no RNA mapper defined in config
+    with pytest.raises(Exception) as exec_info:
+        ngs_mapping_workflow.validate_project(
+            config_dict=minimal_config_dict, sample_sheets_list=[rna_sheet]
+        )
+    error_msg = "RNA sample provided, but config only contains DNA mapper."
+    assert exec_info.value.args[0] is not None, error_msg
+
+    # Exception raised cause only DNA mapper defined in config
+    with pytest.raises(Exception) as exec_info:
+        ngs_mapping_workflow.validate_project(
+            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+        )
+    error_msg = "DNA and RNA sample provided, but config only contains DNA mapper."
+    assert exec_info.value.args[0] is not None, error_msg
+
+    # Update config and remove RNA exception
+    minimal_config_dict["tools"]["rna"] = ["rna_mapper"]
+    out = ngs_mapping_workflow.validate_project(
+        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+    )
+    error_msg = (
+        "No exception expected: DNA, RNA sample sheet and respective tools defined in config."
+    )
+    assert out is None, error_msg
+
+    # Update config and introduce DNA exception
+    minimal_config_dict["tools"]["dna"] = []
+    with pytest.raises(Exception) as exec_info:
+        ngs_mapping_workflow.validate_project(
+            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+        )
+    error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
+    assert exec_info.value.args[0] is not None, error_msg
+
+    # Exception raised cause no DNA mapper defined in config
+    with pytest.raises(Exception) as exec_info:
+        ngs_mapping_workflow.validate_project(
+            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
+        )
+    error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
+    assert exec_info.value.args[0] is not None, error_msg
+
+
+# Tests for BwaStepPart ----------------------------------------------------------------------------
 
 
 def test_bwa_step_part_get_args(ngs_mapping_workflow):
