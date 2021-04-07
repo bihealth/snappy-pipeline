@@ -216,7 +216,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return path to log file"""
         token = "{{mapper}}.{var_caller}.{{cancer_library}}".format(var_caller=self.__class__.name)
         prefix = "work/{token}/log/{token}".format(token=token)
