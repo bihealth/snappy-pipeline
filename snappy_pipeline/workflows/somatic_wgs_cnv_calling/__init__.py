@@ -81,6 +81,7 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
 from ..ngs_mapping import NgsMappingWorkflow
 from ...utils import listify, dictify
@@ -381,7 +382,18 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     name = "control_freec"
 
     def get_output_files(self, action):
+        # Initialise variable
+        valid_action_list = ["run", "transform", "plot"]
         result = {}
+
+        # Validate input
+        if action not in valid_action_list:
+            valid_actions_str = ", ".join(valid_action_list)
+            error_message = "Action {action} is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+
         if action == "run":
             result["ratio"] = self.base_path_out.format(var_caller=self.name, ext=".ratio.txt")
             result["ratio_md5"] = self.base_path_out.format(
@@ -411,8 +423,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     expand(self.base_path_out, var_caller=[self.name], ext=plot_ext_values),
                 )
             )
-        else:
-            raise "Unsupported action"
+
         return result
 
     def check_config(self):
