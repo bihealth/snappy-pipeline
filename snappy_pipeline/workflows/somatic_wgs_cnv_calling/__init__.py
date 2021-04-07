@@ -176,7 +176,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflows
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            var_calling = self.parent.sub_workflows["somatic_variant_calling"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = (
