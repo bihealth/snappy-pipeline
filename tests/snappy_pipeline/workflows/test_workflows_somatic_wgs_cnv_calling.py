@@ -169,6 +169,16 @@ def test_control_freec_somatic_step_part_get_output_files(somatic_wgs_cnv_callin
     assert actual == expected
 
 
+def test_control_freec_somatic_step_part_get_output_exception(somatic_wgs_cnv_calling_workflow):
+    """Tests if ControlFreecSomaticWgsStepPart::get_output_files() raises exception for invalid
+    action."""
+    # Exception raised cause no RNA mapper defined in config
+    with pytest.raises(Exception) as exec_info:
+        somatic_wgs_cnv_calling_workflow.get_output_files("control_freec", "invalid_action")
+    error_msg = "Called unsupported action, exceptions should have been raised."
+    assert exec_info.value.args[0] is not None, error_msg
+
+
 def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow):
     # Define expected
     base_name = (
