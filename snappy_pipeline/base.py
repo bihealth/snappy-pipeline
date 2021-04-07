@@ -50,8 +50,8 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
     config_files = []  # config files (not URLs) read
     for url in resolver.cache:
         if url.startswith("file://"):
-            config_files.append(os.path.abspath(url[len("file://") :]))
-            dirname = os.path.dirname(url[len("file://") :])
+            config_files.append(os.path.abspath(url[len("file://"):]))
+            dirname = os.path.dirname(url[len("file://"):])
             if not dirname:
                 dirname = "."
             if dirname not in lookup_paths:
