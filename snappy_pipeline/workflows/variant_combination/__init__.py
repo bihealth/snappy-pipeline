@@ -48,6 +48,7 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnknownFiltrationSourceException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -221,14 +222,25 @@ class CombineVariantsStepPartBase(BaseStepPart):
 
     def _get_path(self, mapper, caller, index_library, source, name_pattern):
         """Generate path to input file"""
+        # Initialise variables
+        valid_filtration_sources = ["variant_filtration", "wgs_sv_filtration", "wgs_cnv_filtration"]
+
+        # Validate filtration source
+        if source not in valid_filtration_sources:
+            valid_filtration_sources_str = ", ".join(valid_filtration_sources)
+            error_message = (
+                "User requested unknown source '{source}'. Valid sources: {valid}.".format(
+                    source=source, valid=valid_filtration_sources_str
+                )
+            )
+            raise UnknownFiltrationSourceException(error_message)
+
         if source == "variant_filtration":
             return self._get_path_variant_filtration(mapper, caller, index_library, name_pattern)
         elif source == "wgs_sv_filtration":
             return self._get_path_wgs_sv_filtration(mapper, caller, index_library, name_pattern)
         elif source == "wgs_cnv_filtration":
             return self._get_path_wgs_cnv_filtration(mapper, caller, index_library, name_pattern)
-        else:
-            assert False, "Unknown filtration source"
 
     def _get_path_variant_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["variant_filtration"]
