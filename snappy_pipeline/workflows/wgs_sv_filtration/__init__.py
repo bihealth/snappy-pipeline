@@ -193,7 +193,9 @@ class FiltersWgsSvStepPartBase(BaseStepPart):
         self.base_path_out = os.path.join(
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["wgs_sv_filtration_{}_run".format(self.name)] = {
@@ -217,7 +219,9 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsSvStepPartBase):
     """Apply the configured filters."""
 
     name = "filter_quality"
-    name_pattern = r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
+    name_pattern = (
+        r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
+    )
     prev_class = FiltersWgsSvStepPartBase
     ext_names = EXT_NAMES
     ext_values = EXT_VALUES

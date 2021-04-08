@@ -227,7 +227,9 @@ class FiltersVariantsStepPartBase(BaseStepPart):
         self.base_path_out = os.path.join(
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_filtration_{}_run".format(self.name)] = {
@@ -401,7 +403,9 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
+        name_pattern = (
+            "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
+        )
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
