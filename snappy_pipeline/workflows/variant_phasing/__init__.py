@@ -216,7 +216,9 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         super().__init__(parent)
         # Output and log paths
         name_pattern = r"{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}"
-        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", ""))
+        self.base_path_out = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "")
+        )
 
     def get_input_files(self, action):
         @dictify

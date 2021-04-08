@@ -176,7 +176,9 @@ class CombineVariantsStepPartBase(BaseStepPart):
         self.base_path_out = os.path.join(
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_combination_{}_run".format(self.name)] = {
@@ -231,19 +233,25 @@ class CombineVariantsStepPartBase(BaseStepPart):
     def _get_path_variant_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["variant_filtration"]
         tpl = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library}.{name_pattern}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern)
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
     def _get_path_wgs_sv_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["wgs_sv_filtration"]
         tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{name_pattern}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern)
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
     def _get_path_wgs_cnv_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["wgs_cnv_filtration"]
         tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{name_pattern}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern)
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
     @dictify
