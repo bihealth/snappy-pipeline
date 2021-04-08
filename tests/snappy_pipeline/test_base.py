@@ -6,8 +6,8 @@ import pytest
 from snappy_pipeline.base import (
     InvalidConfiguration,
     MissingConfiguration,
-    UnsupportedActionException,
     UnknownFiltrationSourceException,
+    UnsupportedActionException,
 )
 
 
