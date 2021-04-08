@@ -48,15 +48,15 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from jinja2 import FileSystemLoader, Environment
-from snakemake.io import expand
+from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
+from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..variant_annotation import VariantAnnotationWorkflow
-from ..variant_phasing import VariantPhasingWorkflow
-from ...utils import listify, dictify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
@@ -102,8 +102,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
 
     def _get_path_vcf(self, wildcards, real_index):
         prev_step = self.parent.sub_workflows[self.previous_step]
-        token = "{mapper}.{caller}{prev_token}.{real_index_library}"
-        input_path = ("output/" + token + "/out/" + token).format(
+        name_pattern = "{mapper}.{caller}{prev_token}.{real_index_library}"
+        input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
             **wildcards
@@ -126,8 +126,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         assert action == "run"
-        token = "{mapper}.{caller}.{index_library}"
-        tpl = os.path.join("work", token, "out", token + "%s")
+        name_pattern = "{mapper}.{caller}.{index_library}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, tpl % ext
 
@@ -230,9 +230,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the workflow."""
         # Hard-filtered results
-        token = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
+        name_pattern = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=EXT_VALUES,

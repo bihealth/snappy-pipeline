@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running MuTect 2 variant caller in parallel, genome is split into windows
+
+isort:skip_file
 """
 
 import os
@@ -14,10 +16,10 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrapper_parallel import (
+    ParallelVariantCallingBaseWrapper,
+    ResourceUsage,
     gib,
     hours,
-    ResourceUsage,
-    ParallelVariantCallingBaseWrapper,
 )
 
 

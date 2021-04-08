@@ -48,19 +48,22 @@ filterset2:
 additionally filter variants with EBscore < x, x is configurable
 """
 
+from collections import OrderedDict
 import os
 import random
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
-from collections import OrderedDict
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..somatic_variant_calling import SomaticVariantCallingWorkflow, SOMATIC_VARIANT_CALLERS_MATCHED
-from ..somatic_variant_annotation import SomaticVariantAnnotationWorkflow
-from ...utils import listify, dictify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
+from snappy_pipeline.workflows.somatic_variant_calling import (
+    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SomaticVariantCallingWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -154,14 +157,14 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
                 "{mapper}.eb_filter.panel_of_normals.log"
             )
         else:
-            token = self.token
+            name_pattern = self.token
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
                 ("conda_list", ".conda_list.txt"),
             )
             for key, ext in key_ext:
-                yield key, os.path.join("work", token, "log", token + ext)
+                yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""

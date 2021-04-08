@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-# Use GATK 3 for computing reference statistics.
+""" Wrapper for GATK 3: computing reference statistics.
+
+isort:skip_file
+"""
 
 import os
+
 from snakemake.shell import shell
 
 # A hack is required for being able to import snappy_wrappers modules when in development mode.
@@ -10,7 +14,6 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snappy_pipeline.utils import DictQuery
-
 
 # Pick the target BED file to use.  If it goes by the name "default" then we
 # simply take the one at xhmm/path_target_interval_list.  Otherwise, we

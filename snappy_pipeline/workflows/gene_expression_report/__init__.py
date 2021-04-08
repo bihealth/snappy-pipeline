@@ -3,17 +3,15 @@
 
 """
 
-import os
-
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import dictify, listify
-
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 DEFAULT_CONFIG = r"""
 step_config:
@@ -171,7 +169,7 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        token = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
@@ -183,7 +181,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                         exts = EXT_VALUES + (".pdf", ".genes.pdf")
                         print(exts)
                         yield from expand(
-                            os.path.join("output", token, "out", token + "{ext}"),
+                            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
                             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
                             tool="featurecounts",

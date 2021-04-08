@@ -47,11 +47,11 @@ import os
 import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import glob_wildcards, expand, touch
+from snakemake.io import expand, glob_wildcards, touch
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify, DictQuery
+from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -205,11 +205,11 @@ class XhmmStepPart(BaseStepPart):
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     def _get_input_files_merge_cov(self, wildcards):
-        token = "{mapper}.xhmm_coverage.{lib}"
+        name_pattern = "{mapper}.xhmm_coverage.{lib}"
         summaries = [
-            "work/{token}/out/{token}.DATA.sample_interval_summary".format(token=token).format(
-                lib=lib, **wildcards
-            )
+            "work/{name_pattern}/out/{name_pattern}.DATA.sample_interval_summary".format(
+                name_pattern=name_pattern
+            ).format(lib=lib, **wildcards)
             for lib in sorted(self.index_ngs_library_to_donor)
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit
         ]
@@ -231,49 +231,71 @@ class XhmmStepPart(BaseStepPart):
         yield "pca", self._get_output_files_pca()["pc"].format(**wildcards)
 
     def _get_input_files_zscore_center(self, wildcards):
-        token = "{mapper}.xhmm_normalize.{library_kit}".format(**wildcards)
-        return ["work/{token}/out/{token}".format(token=token)]
+        name_pattern = "{mapper}.xhmm_normalize.{library_kit}".format(**wildcards)
+        return ["work/{name_pattern}/out/{name_pattern}".format(name_pattern=name_pattern)]
 
     @dictify
     def _get_input_files_refilter(self, wildcards):
-        token = "{mapper}.xhmm_merge_cov.{library_kit}".format(**wildcards)
-        yield "original", "work/{token}/out/{token}.RD.txt".format(token=token)
+        name_pattern = "{mapper}.xhmm_merge_cov.{library_kit}".format(**wildcards)
+        yield "original", "work/{name_pattern}/out/{name_pattern}.RD.txt".format(
+            name_pattern=name_pattern
+        )
         for infix in ("filter_center", "zscore_center"):
             for kvs in (
                 ("filtered_samples", ".filtered_samples.txt"),
                 ("filtered_targets", ".filtered_targets.txt"),
             ):
-                token = "{mapper}.xhmm_{infix}.{library_kit}".format(infix=infix, **wildcards)
+                name_pattern = "{mapper}.xhmm_{infix}.{library_kit}".format(
+                    infix=infix, **wildcards
+                )
                 key = "{}_{}".format(kvs[0], infix)
-                yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=kvs[1])
+                yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                    name_pattern=name_pattern, suffix=kvs[1]
+                )
 
     @dictify
     def _get_input_files_discover(self, wildcards):
-        token = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
-        yield "center_zscore", "work/{token}/out/{token}".format(token=token)
-        token = "{mapper}.xhmm_refilter.{library_kit}".format(**wildcards)
-        yield "refilter_original", "work/{token}/out/{token}.RD.txt".format(token=token)
+        name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
+        yield "center_zscore", "work/{name_pattern}/out/{name_pattern}".format(
+            name_pattern=name_pattern
+        )
+        name_pattern = "{mapper}.xhmm_refilter.{library_kit}".format(**wildcards)
+        yield "refilter_original", "work/{name_pattern}/out/{name_pattern}.RD.txt".format(
+            name_pattern=name_pattern
+        )
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
-        token = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
-        yield "center_zscore", "work/{token}/out/{token}".format(token=token)
-        token = "{mapper}.xhmm_refilter.{library_kit}".format(**wildcards)
-        yield "refilter_original", "work/{token}/out/{token}.RD.txt".format(token=token)
-        token = "{mapper}.xhmm_discover.{library_kit}".format(**wildcards)
-        yield "discover_xcnv", "work/{token}/out/{token}.xcnv".format(token=token)
+        name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
+        yield "center_zscore", "work/{name_pattern}/out/{name_pattern}".format(
+            name_pattern=name_pattern
+        )
+        name_pattern = "{mapper}.xhmm_refilter.{library_kit}".format(**wildcards)
+        yield "refilter_original", "work/{name_pattern}/out/{name_pattern}.RD.txt".format(
+            name_pattern=name_pattern
+        )
+        name_pattern = "{mapper}.xhmm_discover.{library_kit}".format(**wildcards)
+        yield "discover_xcnv", "work/{name_pattern}/out/{name_pattern}.xcnv".format(
+            name_pattern=name_pattern
+        )
 
     @dictify
     def _get_input_files_extract_ped(self, wildcards):
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        token = "bwa.xhmm_filter_center.{library_kit}".format(library_kit=library_kit)
+        name_pattern = "bwa.xhmm_filter_center.{library_kit}".format(library_kit=library_kit)
         yield (
             "filtered_samples",
-            "work/{token}/out/{token}.filtered_samples.txt".format(token=token),
+            "work/{name_pattern}/out/{name_pattern}.filtered_samples.txt".format(
+                name_pattern=name_pattern
+            ),
         )
-        token = "{mapper}.xhmm_genotype.{library_kit}".format(library_kit=library_kit, **wildcards)
+        name_pattern = "{mapper}.xhmm_genotype.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
         for key, ext in (("vcf", ".vcf.gz"), ("tbi", ".vcf.gz.tbi")):
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     def get_ped_members(self, wildcards):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
@@ -295,64 +317,78 @@ class XhmmStepPart(BaseStepPart):
             "sample_summary",
         )
         for ext in exts:
-            token = "{mapper}.xhmm_coverage.{library_name}"
-            yield ext, "work/{token}/out/{token}.DATA.{ext}".format(token=token, ext=ext)
+            name_pattern = "{mapper}.xhmm_coverage.{library_name}"
+            yield ext, "work/{name_pattern}/out/{name_pattern}.DATA.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     def _get_output_files_merge_cov(self):
-        token = "{mapper}.xhmm_merge_cov.{library_kit}"
-        return ["work/{token}/out/{token}.RD.txt".format(token=token)]
+        name_pattern = "{mapper}.xhmm_merge_cov.{library_kit}"
+        return ["work/{name_pattern}/out/{name_pattern}.RD.txt".format(name_pattern=name_pattern)]
 
     @dictify
     def _get_output_files_ref_stats(self):
-        token = "{mapper}.xhmm_ref_stats.{library_kit}"
+        name_pattern = "{mapper}.xhmm_ref_stats.{library_kit}"
         for infix in ("extreme_gc_targets",):
-            yield infix, "work/{token}/out/{token}.{infix}.txt".format(token=token, infix=infix)
+            yield infix, "work/{name_pattern}/out/{name_pattern}.{infix}.txt".format(
+                name_pattern=name_pattern, infix=infix
+            )
 
     @dictify
     def _get_output_files_filter_center(self):
-        token = "{mapper}.xhmm_filter_center.{library_kit}"
+        name_pattern = "{mapper}.xhmm_filter_center.{library_kit}"
         for infix in ("centered", "filtered_targets", "filtered_samples"):
-            yield infix, "work/{token}/out/{token}.{infix}.txt".format(token=token, infix=infix)
+            yield infix, "work/{name_pattern}/out/{name_pattern}.{infix}.txt".format(
+                name_pattern=name_pattern, infix=infix
+            )
 
     @dictify
     def _get_output_files_pca(self):
-        token = "{mapper}.xhmm_pca.{library_kit}"
+        name_pattern = "{mapper}.xhmm_pca.{library_kit}"
         kvs = (("pc_loading", ".PC_LOADINGS.txt"), ("pc_sd", ".PC_SD.txt"), ("pc", ".PC.txt"))
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     @dictify
     def _get_output_files_normalize(self):
-        token = "{mapper}.xhmm_normalize.{library_kit}"
+        name_pattern = "{mapper}.xhmm_normalize.{library_kit}"
         kvs = (("normalized", ""), ("num_removed", ".num_removed_PC.txt"))
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     @dictify
     def _get_output_files_zscore_center(self):
-        token = "{mapper}.xhmm_zscore_center.{library_kit}"
+        name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}"
         kvs = (
             ("zscore_center", ""),
             ("filtered_samples", ".filtered_samples.txt"),
             ("filtered_targets", ".filtered_targets.txt"),
         )
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     def _get_output_files_refilter(self):
-        token = "{mapper}.xhmm_refilter.{library_kit}"
-        return ["work/{token}/out/{token}.RD.txt".format(token=token)]
+        name_pattern = "{mapper}.xhmm_refilter.{library_kit}"
+        return ["work/{name_pattern}/out/{name_pattern}.RD.txt".format(name_pattern=name_pattern)]
 
     @dictify
     def _get_output_files_discover(self):
-        token = "{mapper}.xhmm_discover.{library_kit}"
+        name_pattern = "{mapper}.xhmm_discover.{library_kit}"
         kvs = (("xcnv", ".xcnv"), ("aux_xcnv", ".aux_xcnv"))
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     @dictify
     def _get_output_files_genotype(self):
-        token = "{mapper}.xhmm_genotype.{library_kit}"
+        name_pattern = "{mapper}.xhmm_genotype.{library_kit}"
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
@@ -360,11 +396,13 @@ class XhmmStepPart(BaseStepPart):
             ("tbi_md5", ".vcf.gz.tbi.md5"),
         )
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     @dictify
     def _get_output_files_extract_ped(self):
-        token = "{mapper}.xhmm.{library_name}"
+        name_pattern = "{mapper}.xhmm.{library_name}"
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
@@ -372,7 +410,9 @@ class XhmmStepPart(BaseStepPart):
             ("tbi_md5", ".vcf.gz.tbi.md5"),
         )
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     def get_log_file(self, action):
         """Return path to log file"""
@@ -482,45 +522,63 @@ class GcnvStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_annotate_gc(self, wildcards):
-        token = "gcnv_preprocess_intervals.{wildcards.library_kit}".format(wildcards=wildcards)
+        name_pattern = "gcnv_preprocess_intervals.{wildcards.library_kit}".format(
+            wildcards=wildcards
+        )
         ext = "interval_list"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     @dictify
     def _get_input_files_filter_intervals(self, wildcards):
         yield from self._get_input_files_annotate_gc(wildcards).items()
-        token = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
+        name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
         ext = "tsv"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
         key = "covs"
         covs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                token = "{mapper}.gcnv_coverage.{library_name}".format(
+                name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
-                covs.append("work/{token}/out/{token}.{ext}".format(token=token, ext="tsv"))
+                covs.append(
+                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                        name_pattern=name_pattern, ext="tsv"
+                    )
+                )
         yield key, covs
 
     @dictify
     def _get_input_files_scatter_intervals(self, wildcards):
         ext = "interval_list"
-        token = "{mapper}.gcnv_filter_intervals.{library_kit}".format(**wildcards)
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}".format(**wildcards)
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     @dictify
     def _get_input_files_contig_ploidy(self, wildcards):
         ext = "interval_list"
-        token = "{mapper}.gcnv_filter_intervals.{library_kit}"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                token = "{mapper}.gcnv_coverage.{library_name}".format(
+                name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
-                tsvs.append("work/{token}/out/{token}.{ext}".format(token=token, ext=ext))
+                tsvs.append(
+                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                        name_pattern=name_pattern, ext=ext
+                    )
+                )
         yield ext, tsvs
 
     @dictify
@@ -528,8 +586,10 @@ class GcnvStepPart(BaseStepPart):
         # Yield .interval list file.
         ext = "interval_list"
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        token = "gcnv_preprocess_intervals.{library_kit}".format(library_kit=library_kit)
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "gcnv_preprocess_intervals.{library_kit}".format(library_kit=library_kit)
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
         # Yield input BAM and BAI file
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
@@ -538,24 +598,32 @@ class GcnvStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_call_cnvs(self, wildcards):
-        yield "interval_list_shard", "work/{token}/out/{token}/temp_{{shard}}/scattered.interval_list".format(
-            token="{mapper}.gcnv_scatter_intervals.{library_kit}"
+        path_pattern = (
+            "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
+        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                token = "{mapper}.gcnv_coverage.{library_name}".format(
+                path_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
-                tsvs.append("work/{token}/out/{token}.{ext}".format(token=token, ext=ext))
+                tsvs.append(
+                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                        name_pattern=path_pattern, ext=ext
+                    )
+                )
         yield ext, tsvs
         ext = "ploidy"
-        token = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(**wildcards)
-        yield ext, "work/{token}/out/{token}/.done".format(token=token)
+        path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(**wildcards)
+        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
-        token = "gcnv_annotate_gc.{library_kit}"
-        yield key, "work/{token}/out/{token}.{ext}".format(token=token, ext="tsv")
+        path_pattern = "gcnv_annotate_gc.{library_kit}"
+        yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=path_pattern, ext="tsv"
+        )
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
@@ -568,34 +636,42 @@ class GcnvStepPart(BaseStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        token = "{mapper}.gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
         yield "calls", [
-            "work/{token}.{shard}/out/{token}.{shard}/.done".format(token=token, shard=shard)
+            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                name_pattern=name_pattern, shard=shard
+            )
             for shard in shards
         ]
         ext = "ploidy"
-        token = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        yield ext, "work/{token}/out/{token}/.done".format(token=token)
+        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     @listify
     def _get_input_files_merge_cohort_vcfs(self, wildcards):
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                token = "{mapper}.gcnv_post_germline_calls.{library_name}".format(
+                name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
-                yield "work/{token}/out/{token}.vcf.gz".format(token=token)
+                yield "work/{name_pattern}/out/{name_pattern}.vcf.gz".format(
+                    name_pattern=name_pattern
+                )
 
     @dictify
     def _get_input_files_extract_ped(self, wildcards):
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        token = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}".format(
+        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         for key, ext in (("vcf", ".vcf.gz"), ("tbi", ".vcf.gz.tbi")):
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     def get_ped_members(self, wildcards):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
@@ -611,54 +687,74 @@ class GcnvStepPart(BaseStepPart):
     @dictify
     def _get_output_files_preprocess_intervals(self):
         ext = "interval_list"
-        token = "gcnv_preprocess_intervals.{library_kit}"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "gcnv_preprocess_intervals.{library_kit}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     @dictify
     def _get_output_files_annotate_gc(self):
         ext = "tsv"
-        token = "gcnv_annotate_gc.{library_kit}"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "gcnv_annotate_gc.{library_kit}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     @dictify
     def _get_output_files_filter_intervals(self):
         ext = "interval_list"
-        token = "{mapper}.gcnv_filter_intervals.{library_kit}"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     def _get_output_files_scatter_intervals(self):
-        return "work/{token}/out/{token}".format(
-            token="{mapper}.gcnv_scatter_intervals.{library_kit}"
+        return "work/{name_pattern}/out/{name_pattern}".format(
+            name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}"
         )
 
     @dictify
     def _get_output_files_coverage(self):
         ext = "tsv"
-        token = "{mapper}.gcnv_coverage.{library_name}"
-        yield ext, "work/{token}/out/{token}.{ext}".format(token=token, ext=ext)
+        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
     @dictify
     def _get_output_files_contig_ploidy(self):
         ext = "done"
-        token = "{mapper}.gcnv_contig_ploidy.{library_kit}"
-        yield ext, touch("work/{token}/out/{token}/.{ext}".format(token=token, ext=ext))
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        yield ext, touch(
+            "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
+        )
 
     @dictify
     def _get_output_files_call_cnvs(self):
         ext = "done"
-        token = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
-        yield ext, touch("work/{token}/out/{token}/.{ext}".format(token=token, ext=ext))
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        yield ext, touch(
+            "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
+        )
 
     @dictify
     def _get_output_files_post_germline_calls(self):
-        token = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
-            yield key, touch("work/{token}/out/{token}{ext}".format(token=token, ext=ext))
+            yield key, touch(
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                )
+            )
 
     @dictify
     def _get_output_files_merge_cohort_vcfs(self):
-        token = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
         pairs = {
             "vcf": ".vcf.gz",
             "vcf_md5": ".vcf.gz.md5",
@@ -666,11 +762,13 @@ class GcnvStepPart(BaseStepPart):
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in pairs.items():
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     @dictify
     def _get_output_files_extract_ped(self):
-        token = "{mapper}.gcnv.{library_name}"
+        name_pattern = "{mapper}.gcnv.{library_name}"
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
@@ -678,27 +776,31 @@ class GcnvStepPart(BaseStepPart):
             ("tbi_md5", ".vcf.gz.tbi.md5"),
         )
         for key, suffix in kvs:
-            yield key, "work/{token}/out/{token}{suffix}".format(token=token, suffix=suffix)
+            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                name_pattern=name_pattern, suffix=suffix
+            )
 
     def get_log_file(self, action):
         """Return path to log file"""
         if action in ("preprocess_intervals", "annotate_gc"):
-            token = "gcnv_{action}.{{library_kit}}".format(action=action)
-            return "work/{token}/log/{token}.log".format(token=token)
+            name_pattern = "gcnv_{action}.{{library_kit}}".format(action=action)
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         elif action in (
             "filter_intervals",
             "contig_ploidy",
             "scatter_intervals",
             "merge_cohort_vcfs",
         ):
-            token = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
-            return "work/{token}/log/{token}.log".format(token=token)
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         elif action == "call_cnvs":
-            token = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(action=action)
-            return "work/{token}/log/{token}.log".format(token=token)
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
+                action=action
+            )
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         else:
-            token = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
-            return "work/{token}/log/{token}.log".format(token=token)
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for gCNV CNV calling"""
@@ -769,18 +871,18 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         # Get list of library kits and donors to use.
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
-        token = "{mapper}.{caller}.{index.dna_ngs_library.name}"
+        name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
         callers = ("xhmm", "gcnv")
         vcf_tools = [t for t in self.config["tools"] if t in callers]
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             donors,
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=vcf_tools,
             ext=EXT_VALUES,
         )
         if "xhmm" in self.config["tools"]:
-            token = "{mapper}.xhmm_genotype.{library_kit}"
+            name_pattern = "{mapper}.xhmm_genotype.{library_kit}"
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
             chosen_donors = [
@@ -789,14 +891,14 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from expand(
-                os.path.join("output", token, "out", token + "{ext}"),
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller=["xhmm"],
                 library_kit=chosen_kits,
                 ext=EXT_VALUES,
             )
         if "gcnv" in self.config["tools"]:
-            token = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+            name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
             chosen_donors = [
@@ -805,7 +907,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from expand(
-                os.path.join("output", token, "out", token + "{ext}"),
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller=["gcnv"],
                 library_kit=chosen_kits,

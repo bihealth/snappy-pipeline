@@ -3,8 +3,8 @@
 See https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#clinical-data
 """
 
-import os
 import glob
+import os
 
 target_dir = "work/upload"
 source_dir = os.path.abspath(os.path.dirname(__file__))

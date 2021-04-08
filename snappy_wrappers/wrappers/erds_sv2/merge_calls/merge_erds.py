@@ -9,8 +9,9 @@ import re
 import sys
 import typing
 
-from intervaltree import IntervalTree
 import vcfpy
+
+from intervaltree import IntervalTree
 
 
 class CnvCall(typing.NamedTuple):

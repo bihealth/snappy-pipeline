@@ -81,9 +81,9 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -218,8 +218,10 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return path to log file"""
-        token = "{{mapper}}.{var_caller}.{{cancer_library}}".format(var_caller=self.__class__.name)
-        prefix = "work/{token}/log/{token}".format(token=token)
+        name_pattern = "{{mapper}}.{var_caller}.{{cancer_library}}".format(
+            var_caller=self.__class__.name
+        )
+        prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -288,17 +290,21 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         libraries = {"tumor": wildcards.library_name, "normal": self.get_normal_lib_name(wildcards)}
         for kind, library_name in libraries.items():
             key = "{}_bcf".format(kind)
-            token = "{mapper}.cnvetti_coverage.{library_name}".format(
+            name_pattern = "{mapper}.cnvetti_coverage.{library_name}".format(
                 library_name=library_name, **wildcards
             )
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=".bcf")
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=".bcf"
+            )
 
     @dictify
     def _get_input_files_segment(self, wildcards):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
-            token = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     def get_output_files(self, action):
         """Return output files that CNVetti creates for the given action        """
@@ -308,26 +314,32 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_coverage(self):
         for key, ext in self.bcf_dict.items():
-            token = "{mapper}.cnvetti_coverage.{library_name}"
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            name_pattern = "{mapper}.cnvetti_coverage.{library_name}"
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     @dictify
     def _get_output_files_tumor_normal_ratio(self):
         for key, ext in self.bcf_dict.items():
-            token = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}"
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}"
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
-            token = "{mapper}.cnvetti_segment.{library_name}"
-            yield key, "work/{token}/out/{token}{ext}".format(token=token, ext=ext)
+            name_pattern = "{mapper}.cnvetti_segment.{library_name}"
+            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     @dictify
     def get_log_file(self, action):
         """Return path to log file"""
-        token = "{{mapper}}.cnvetti_{action}.{{library_name}}".format(action=action)
-        prefix = "work/{token}/log/{token}".format(token=token)
+        name_pattern = "{{mapper}}.cnvetti_{action}.{{library_name}}".format(action=action)
+        prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -506,8 +518,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        token = "{mapper}.{caller}.{cancer_library.name}"
-        tpl = os.path.join("output", token, "out", token + "{ext}")
+        name_pattern = "{mapper}.{caller}.{cancer_library.name}"
+        tpl = os.path.join("output", name_pattern, "out", name_pattern + "{ext}")
         vcf_tools = [
             t for t in self.config["tools"] if t not in ("cnvetti", "control_freec", "cnvkit")
         ]
@@ -552,15 +564,22 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:
                     if donor.all_pairs:
-                        token = "{mapper}.cnvetti_plot.{donor}"
+                        name_pattern = "{mapper}.cnvetti_plot.{donor}"
                         for ext in (".png", ".png.md5"):
                             yield from expand(
-                                os.path.join("output", token, "out", token + "_genome" + ext),
+                                os.path.join(
+                                    "output", name_pattern, "out", name_pattern + "_genome" + ext
+                                ),
                                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                                 donor=[donor.name],
                             )
                             yield from expand(
-                                os.path.join("output", token, "out", token + "_chr{chrom}" + ext),
+                                os.path.join(
+                                    "output",
+                                    name_pattern,
+                                    "out",
+                                    name_pattern + "_chr{chrom}" + ext,
+                                ),
                                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                                 donor=[donor.name],
                                 chrom=map(str, chain(range(1, 23), ("X", "Y"))),

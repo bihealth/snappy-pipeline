@@ -10,18 +10,17 @@ The output is a archive (tarball) that can be uploaded to a cbioportal instance
 for import.
 """
 
+from collections import OrderedDict
 import os
 import sys
-
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ...base import MissingConfiguration
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import dictify, listify
+from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 # cbioportal meta data files
 META_FILES = (
@@ -215,23 +214,23 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
     def get_output_files(self, action):
         """Return maf output file"""
         assert action == "run"
-        token = (
+        name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
             "{filter_set}.{exon_list}"
         )
-        yield "maf", os.path.join("work/maf", token, "out", token + ".maf")
+        yield "maf", os.path.join("work/maf", name_pattern, "out", name_pattern + ".maf")
 
     @dictify
     def get_input_files(self, action):
         """Return input vcf for each output maf"""
         assert action == "run"
-        token = (
+        name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
             "{filter_set}.{exon_list}"
         )
-        tpl = (os.path.join("output", token, "out", token + ".vcf.gz"),)
+        tpl = (os.path.join("output", name_pattern, "out", name_pattern + ".vcf.gz"),)
         somatic_variant_filtration = self.parent.sub_workflows["somatic_variant_filtration"]
         yield "vcf", somatic_variant_filtration(tpl)
 
@@ -253,7 +252,7 @@ class cbioportalMafStepPart(cbioportalExportStepPart):
     def get_input_files(self, action):
         """Return list of all input files"""
         assert action == "run"
-        token = (
+        name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
             "{filter_set}.{exon_list}"
@@ -262,7 +261,7 @@ class cbioportalMafStepPart(cbioportalExportStepPart):
         exon_lists = ["genome_wide"]
         callers = set(self.config["tools_somatic_variant_calling"])
         yield from self._yield_result_files_matched(
-            os.path.join("work/maf", token, "out", token + "{ext}"),
+            os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}"),
             mapper="bwa",
             caller=callers,
             filter_set=filter_sets,

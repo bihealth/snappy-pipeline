@@ -4,17 +4,17 @@
 from collections import OrderedDict
 from copy import deepcopy
 import io
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
-from biomedsheets.io_tsv import read_germline_tsv_sheet, read_generic_tsv_sheet
+from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
+
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

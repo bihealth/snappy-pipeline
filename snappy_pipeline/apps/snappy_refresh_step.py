@@ -10,14 +10,10 @@ import sys
 
 import ruamel.yaml as yaml
 
-from .snappy_snake import STEP_TO_MODULE
-from .impl.logging import LVL_SUCCESS, log
-from .impl.fsmanip import (
-    assume_path_existing,
-    create_directory,
-    create_from_tpl,
-)
 from .. import __version__
+from .impl.fsmanip import assume_path_existing, create_directory, create_from_tpl
+from .impl.logging import LVL_SUCCESS, log
+from .snappy_snake import STEP_TO_MODULE
 
 #: Allowed steps
 STEPS = tuple(sorted(STEP_TO_MODULE))

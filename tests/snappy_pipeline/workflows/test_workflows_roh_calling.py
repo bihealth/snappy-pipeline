@@ -2,10 +2,10 @@
 """Tests for the ``roh_calling`` workflow module code"""
 
 
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.roh_calling import RohCallingWorkflow

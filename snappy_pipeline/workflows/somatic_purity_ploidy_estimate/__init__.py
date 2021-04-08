@@ -11,15 +11,15 @@ The default configuration is as follows.
 
 """
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import listify, dictify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -317,7 +317,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        token = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
         for tool in self.config["tools"]:
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
@@ -331,9 +331,9 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                             continue
                         for test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.dna_ngs_library
-                            token_value = token.format(
+                            name_pattern_value = name_pattern.format(
                                 mapper=self.config["tool_ngs_mapping"],
                                 tool=tool,
                                 ngs_library=ngs_library,
                             )
-                            yield os.path.join("output", token_value, "out", ".done")
+                            yield os.path.join("output", name_pattern_value, "out", ".done")

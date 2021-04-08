@@ -85,9 +85,9 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ...utils import dictify, listify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -962,15 +962,15 @@ class SomaticVariantCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        token = "{mapper}.{caller}.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "log", token + "{ext}"),
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=(
@@ -984,9 +984,9 @@ class SomaticVariantCallingWorkflow(BaseStep):
         )
         # Panel of normals
         # joint calling
-        token = "{mapper}.{caller}.{donor.name}"
+        name_pattern = "{mapper}.{caller}.{donor.name}"
         yield from self._yield_result_files_joint(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_JOINT),
             ext=EXT_VALUES,

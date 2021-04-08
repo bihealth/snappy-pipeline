@@ -7,6 +7,8 @@ Apply all hard-filters with the following exceptions :
 - don't remove the neighboring variants as done in Wong et al.
 
 We simply keep these annotations and do a post-filtration later.
+
+isort:skip_file
 """
 
 import os
@@ -18,7 +20,6 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 sys.path.insert(0, base_dir)
 
 from snakemake.shell import shell
-
 
 region_filter = ""
 if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:

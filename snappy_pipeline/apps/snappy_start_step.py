@@ -12,17 +12,17 @@ import sys
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap
 
-from .snappy_snake import STEP_TO_MODULE
-from .impl.logging import LVL_SUCCESS, LVL_ERROR, LVL_IMPORTANT, log
+from .. import __version__
 from .impl.fsmanip import (
     assume_path_nonexisting,
+    backup_file,
     create_directory,
     create_from_tpl,
-    backup_file,
     update_file,
 )
+from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
 from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
-from .. import __version__
+from .snappy_snake import STEP_TO_MODULE
 
 #: Allowed steps
 STEPS = tuple(sorted(STEP_TO_MODULE))

@@ -11,31 +11,28 @@ import os
 import os.path
 import sys
 
-from snakemake.io import touch
-
 from biomedsheets import io_tsv
-from biomedsheets.io import json_loads_ordered, SheetBuilder
-from biomedsheets.ref_resolver import RefResolver
+from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
+from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
+from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
+    donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
-    donor_has_dna_ngs_library,
 )
 import ruamel.yaml as yaml
+from snakemake.io import touch
 
 from snappy_pipeline.base import (
-    merge_dicts,
     MissingConfiguration,
+    merge_dicts,
     print_config,
     print_sample_sheets,
     snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
-from snappy_pipeline.utils import listify, dictify
-
-from biomedsheets.naming import NAMING_SECONDARY_ID_PK, NAMING_SCHEMES, name_generator_for_scheme
-
+from snappy_pipeline.utils import dictify, listify
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -992,8 +989,8 @@ class InputFilesStepPartMixin:
                 yield "ped", os.path.realpath(
                     "work/write_pedigree.{index_library}/out/{index_library}.ped"
                 ).format(**wildcards)
-            token = self.prev_class.name_token.replace(r",[^\.]+", "")
-            tpl_path_out = os.path.join("work", token, "out", token)
+            name_pattern = self.prev_class.name_token.replace(r",[^\.]+", "")
+            tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
             for key, ext in zip(self.ext_names, self.ext_values):
                 yield key, tpl_path_out.format(ext=ext, **wildcards) + ext
 

@@ -3,18 +3,18 @@
 
 
 from itertools import chain
-import pytest
-import ruamel.yaml as yaml
 import textwrap
 
+import pytest
+import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
-from .common import get_expected_log_files_dict
-from .conftest import patch_module_fs
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
 
+from .common import get_expected_log_files_dict
+from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

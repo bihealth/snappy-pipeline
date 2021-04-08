@@ -9,17 +9,20 @@ signature explains as well as a plot.
 """
 
 
+from collections import OrderedDict
 import os
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
-from collections import OrderedDict
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..somatic_variant_calling import SomaticVariantCallingWorkflow, SOMATIC_VARIANT_CALLERS_MATCHED
-from ...utils import listify, dictify
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.somatic_variant_calling import (
+    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SomaticVariantCallingWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 
@@ -212,9 +215,9 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for workflow"""
         callers = set(self.config["tools_somatic_variant_calling"])
-        token = "{mapper}.{caller}.deconstruct_sigs.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.deconstruct_sigs.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + ".tsv"),
+            os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
         )

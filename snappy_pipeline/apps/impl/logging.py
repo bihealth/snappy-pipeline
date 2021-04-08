@@ -5,7 +5,6 @@ import sys
 
 from termcolor import colored
 
-
 #: Message level: ERROR
 LVL_ERROR = "ERROR"
 

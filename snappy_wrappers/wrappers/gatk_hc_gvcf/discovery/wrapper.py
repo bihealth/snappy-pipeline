@@ -2,11 +2,12 @@
 """CUBI+Snakemake wrapper code for GATK HC GVCF Calling: Snakemake wrapper.py
 """
 
+import sys
+
 from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
-import sys
 
 print("PARAMS", snakemake.params, file=sys.stderr)
 

@@ -3,13 +3,12 @@
 
 import copy
 import json
-from unittest.mock import patch, MagicMock
-
-from snappy_pipeline.find_file import PatternSet, FileSystemCrawlerResult, FileSystemCrawler
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from pyfakefs import fake_filesystem
+import pytest
+
+from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 
 # TODO: test the invalidation_paths parameter/feature
 

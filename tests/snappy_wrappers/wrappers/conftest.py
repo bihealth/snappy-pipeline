@@ -1,12 +1,12 @@
 """Support code for the snappy pipeline wrapper tests."""
 
-import subprocess
+from itertools import chain
 import os
 import shutil
+import subprocess
+
 import pytest
 import yaml
-from itertools import chain
-
 
 FORCE_RUN = os.environ.get("FORCE_RUN", "false") == "true"
 DIFF_MASTER = os.environ.get("DIFF_MASTER", "false") == "true"

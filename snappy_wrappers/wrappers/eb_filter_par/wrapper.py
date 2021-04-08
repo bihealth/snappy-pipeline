@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running EasyBayes-Filter in parallel, genome is split into windows
+
+isort:skip_file
 """
 
 import os
@@ -13,7 +15,13 @@ from snakemake import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import gib, hours, ResourceUsage, ParallelVcfOutputBaseWrapper
+# pylint: disable=wrong-import-position
+from snappy_wrappers.wrapper_parallel import (
+    ParallelVcfOutputBaseWrapper,
+    ResourceUsage,
+    gib,
+    hours,
+)  # noqa
 
 
 class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):

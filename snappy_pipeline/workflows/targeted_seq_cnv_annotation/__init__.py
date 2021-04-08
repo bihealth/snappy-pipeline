@@ -61,10 +61,15 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from ..abstract import BaseStepPart, BaseStep, LinkOutStepPart, WritePedigreeStepPart
-from ..ngs_mapping import NgsMappingWorkflow
-from ..targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
-from ...utils import listify, dictify, DictQuery
+from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    WritePedigreeStepPart,
+)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -280,7 +285,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
         # Get list of library kits and donors to use.
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
-        token = "{mapper}.{caller}.annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
         if "xhmm" in self.config["tools_targeted_seq_cnv_calling"]:
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
@@ -290,7 +295,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from self._yield_result_files(
-                os.path.join("output", token, "log", token + "{ext}"),
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
                 chosen_donors,
                 mapper=self.config["tools_ngs_mapping"],
                 caller=["xhmm"],
@@ -312,7 +317,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
                 if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
             ]
             yield from self._yield_result_files(
-                os.path.join("output", token, "log", token + "{ext}"),
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
                 chosen_donors,
                 mapper=self.config["tools_ngs_mapping"],
                 caller=["gcnv"],

@@ -54,21 +54,21 @@ The following HLA typing tools are currently available
 
 """
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from ..abstract import (
-    BaseStepPart,
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import (
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import listify, dictify
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".txt", ".txt.md5")
@@ -263,9 +263,9 @@ class HlaTypingWorkflow(BaseStep):
         """
         from os.path import join
 
-        token = "{prefix}{hla_typer}.{ngs_library.name}"
+        name_pattern = "{prefix}{hla_typer}.{ngs_library.name}"
         yield from self._yield_result_files(
-            join("output", token, "out", token + "{ext}"), ext=EXT_VALUES
+            join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
 
     def _yield_result_files(self, tpl, **kwargs):

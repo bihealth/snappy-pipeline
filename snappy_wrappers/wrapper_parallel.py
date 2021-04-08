@@ -5,7 +5,7 @@ Parallel running is performed in a fork/join parallelism manner.  The user can s
 a "work", and a "merge" task.
 """
 
-from collections.abc import MutableSequence, MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 import contextlib
 import datetime
 import functools

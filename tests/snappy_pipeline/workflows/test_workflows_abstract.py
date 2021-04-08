@@ -4,11 +4,10 @@
 
 import textwrap
 
+from biomedsheets.shortcuts import GenericSampleSheet
 import pytest
-
 import ruamel.yaml as yaml
 from snakemake.io import Wildcards
-from biomedsheets.shortcuts import GenericSampleSheet
 
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.abstract import (

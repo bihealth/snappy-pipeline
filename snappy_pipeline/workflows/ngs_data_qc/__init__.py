@@ -15,18 +15,17 @@ from itertools import chain
 import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand, Namedlist, touch
+from snakemake.io import Namedlist, expand, touch
 
-from ..abstract import (
-    BaseStepPart,
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import (
     BaseStep,
-    LinkOutStepPart,
-    LinkInStep,
+    BaseStepPart,
     LinkInPathGenerator,
+    LinkInStep,
+    LinkOutStepPart,
     get_ngs_library_folder_name,
 )
-from ...utils import dictify, listify
-
 
 #: Default configuration for the ngs_mapping schema
 DEFAULT_CONFIG = r"""
@@ -131,9 +130,11 @@ class NgsDataQcWorkflow(BaseStep):
         """
         from os.path import join
 
-        token = "{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         # TODO: actually link out report files
-        yield from self._yield_result_files(join("output", token, "report", "fastqc", ".done"))
+        yield from self._yield_result_files(
+            join("output", name_pattern, "report", "fastqc", ".done")
+        )
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""

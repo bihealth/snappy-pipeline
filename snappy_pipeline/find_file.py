@@ -11,7 +11,6 @@ import sys
 
 from fasteners import InterProcessLock
 
-
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 

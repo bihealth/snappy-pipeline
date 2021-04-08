@@ -5,9 +5,9 @@ import os
 import tempfile
 import textwrap
 
-from snappy_wrappers.tools import quickvenn
-
 import pytest
+
+from snappy_wrappers.tools import quickvenn
 
 
 @pytest.fixture
