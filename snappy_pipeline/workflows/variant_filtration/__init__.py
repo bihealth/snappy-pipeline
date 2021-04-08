@@ -223,11 +223,11 @@ class FiltersVariantsStepPartBase(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         assert self.name_token is not None, "Set into class..."
-        token = self.name_token
+        name_pattern = self.name_token
         self.base_path_out = os.path.join(
-            "work", token, "out", token.replace(r",[^\.]+", "") + "{ext}"
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", token, "out", token.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log")
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_filtration_{}_run".format(self.name)] = {
@@ -401,9 +401,9 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=EXT_VALUES,
