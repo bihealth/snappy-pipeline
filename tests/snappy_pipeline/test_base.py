@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for find_file module code"""
+"""Tests for base module code"""
 
 import pytest
 
