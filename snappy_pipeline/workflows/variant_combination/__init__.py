@@ -242,6 +242,9 @@ class CombineVariantsStepPartBase(BaseStepPart):
         elif source == "wgs_cnv_filtration":
             return self._get_path_wgs_cnv_filtration(mapper, caller, index_library, name_pattern)
 
+        # Keep consistent return statements
+        return None
+
     def _get_path_variant_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["variant_filtration"]
         tpl = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library}.{name_pattern}"
