@@ -529,8 +529,9 @@ class GcnvStepPart(BaseStepPart):
     def _get_input_files_preprocess_intervals(_wildcards):
         return {}
 
+    @staticmethod
     @dictify
-    def _get_input_files_annotate_gc(self, wildcards):
+    def _get_input_files_annotate_gc(wildcards):
         name_pattern = "gcnv_preprocess_intervals.{wildcards.library_kit}".format(
             wildcards=wildcards
         )
@@ -561,8 +562,9 @@ class GcnvStepPart(BaseStepPart):
                 )
         yield key, covs
 
+    @staticmethod
     @dictify
-    def _get_input_files_scatter_intervals(self, wildcards):
+    def _get_input_files_scatter_intervals(wildcards):
         ext = "interval_list"
         name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}".format(**wildcards)
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
@@ -702,37 +704,42 @@ class GcnvStepPart(BaseStepPart):
             name_pattern=name_pattern, ext=ext
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_annotate_gc(self):
+    def _get_output_files_annotate_gc():
         ext = "tsv"
         name_pattern = "gcnv_annotate_gc.{library_kit}"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_filter_intervals(self):
+    def _get_output_files_filter_intervals():
         ext = "interval_list"
         name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
 
-    def _get_output_files_scatter_intervals(self):
+    @staticmethod
+    def _get_output_files_scatter_intervals():
         return "work/{name_pattern}/out/{name_pattern}".format(
             name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}"
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_coverage(self):
+    def _get_output_files_coverage():
         ext = "tsv"
         name_pattern = "{mapper}.gcnv_coverage.{library_name}"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_contig_ploidy(self):
+    def _get_output_files_contig_ploidy():
         ext = "done"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
         yield ext, touch(
@@ -741,8 +748,9 @@ class GcnvStepPart(BaseStepPart):
             )
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_call_cnvs(self):
+    def _get_output_files_call_cnvs():
         ext = "done"
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(
@@ -751,8 +759,9 @@ class GcnvStepPart(BaseStepPart):
             )
         )
 
+    @staticmethod
     @dictify
-    def _get_output_files_post_germline_calls(self):
+    def _get_output_files_post_germline_calls():
         name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
@@ -762,8 +771,9 @@ class GcnvStepPart(BaseStepPart):
                 )
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_merge_cohort_vcfs(self):
+    def _get_output_files_merge_cohort_vcfs():
         name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
         pairs = {
             "vcf": ".vcf.gz",
