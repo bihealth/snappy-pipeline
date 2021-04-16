@@ -186,10 +186,7 @@ def test_gcnv_annotate_gc_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'annotate_gc' step"""
-    expected = (
-        "work/gcnv_preprocess_intervals.{library_kit}/log/"
-        "gcnv_preprocess_intervals.{library_kit}.log"
-    )
+    expected = "work/gcnv_annotate_gc.{library_kit}/log/gcnv_annotate_gc.{library_kit}.log"
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "annotate_gc")
     assert actual == expected
 
