@@ -905,11 +905,6 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
             name_pattern = "{mapper}.xhmm_genotype.{library_kit}"
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
-            chosen_donors = [
-                donor
-                for donor in donors
-                if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
-            ]
             yield from expand(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
@@ -921,11 +916,6 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
             name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
-            chosen_donors = [
-                donor
-                for donor in donors
-                if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
-            ]
             yield from expand(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
