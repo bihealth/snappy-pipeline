@@ -49,6 +49,7 @@ import re
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards, touch
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -514,10 +515,18 @@ class GcnvStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return input function for gCNV rule"""
-        assert action in self.actions
+        # Validate request action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action {action} is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+        # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
-    def _get_input_files_preprocess_intervals(self, wildcards):
+    @staticmethod
+    def _get_input_files_preprocess_intervals(_wildcards):
         return {}
 
     @dictify
@@ -684,8 +693,9 @@ class GcnvStepPart(BaseStepPart):
         assert action in self.actions
         return getattr(self, "_get_output_files_{}".format(action))()
 
+    @staticmethod
     @dictify
-    def _get_output_files_preprocess_intervals(self):
+    def _get_output_files_preprocess_intervals():
         ext = "interval_list"
         name_pattern = "gcnv_preprocess_intervals.{library_kit}"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
