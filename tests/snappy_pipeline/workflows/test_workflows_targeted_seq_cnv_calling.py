@@ -12,7 +12,34 @@ from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCal
 
 from .conftest import patch_module_fs
 
+# List of valid actions - gCNV
+GCNV_ACTIONS = [
+        "preprocess_intervals",
+        "annotate_gc",
+        "filter_intervals",
+        "scatter_intervals",
+        "coverage",
+        "contig_ploidy",
+        "call_cnvs",
+        "post_germline_calls",
+        "merge_cohort_vcfs",
+        "extract_ped",
+    ]
 
+# List of valid actions - XHMM
+XHMM_ACTIONS = [
+"coverage",
+        "merge_cov",
+        "ref_stats",
+        "filter_center",
+        "pca",
+        "normalize",
+        "zscore_center",
+        "refilter",
+        "discover",
+        "genotype",
+        "extract_ped",
+]
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (somatic) configuration"""
@@ -102,25 +129,24 @@ def test_call_assertion(targeted_seq_cnv_calling_workflow):
 
 def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
     """Tests GcnvStepPart::update_cluster_config for all actions"""
-    # Valid actions
-    action_list = [
-        "preprocess_intervals",
-        "annotate_gc",
-        "filter_intervals",
-        "scatter_intervals",
-        "coverage",
-        "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
-        "merge_cohort_vcfs",
-        "extract_ped",
-    ]
     # Define expected
     expected = {"mem", "time", "ntasks"}
-    for action in action_list:
+    # Iterate over
+    for action in GCNV_ACTIONS:
         key = "targeted_seq_cnv_calling_gcnv_{0}".format(action)
         actual = set(dummy_cluster_config[key].keys())
         assert actual == expected
+
+
+def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_params for all actions"""
+    for action in XHMM_ACTIONS:
+        print(action)
+        if action == "coverage":
+            targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+        else:
+            with pytest.raises(AssertionError):
+                targeted_seq_cnv_calling_workflow.get_input_files("xhmm", action)
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
@@ -286,4 +312,39 @@ def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_
         "{mapper}.gcnv_scatter_intervals.{library_kit}.log"
     )
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "scatter_intervals")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (coverage) ----------------------------------------------------------------
+
+
+def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_coverage()"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    expected = {
+        "interval_list": interval_list_out,
+        'bam': bam_out + '.bam',
+        'bai':  bam_out + '.bam.bai'
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "coverage")(
+        wildcards
+    )
+    assert actual == expected
+
+def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_coverage()"""
+    # Define expected
+    tsv_out = (
+        'work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv'
+    )
+    expected = {'tsv': tsv_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "coverage")
     assert actual == expected
