@@ -93,17 +93,17 @@ def targeted_seq_cnv_calling_workflow(
         work_dir,
     )
 
+
 # Global tests -------------------------------------------------------------------------------------
+
 
 def test_call_assertion(targeted_seq_cnv_calling_workflow):
     """Tests raise UnsupportedActionException"""
     with pytest.raises(Exception):
         targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
 
-def test_gcnv_update_cluster_config(
-    targeted_seq_cnv_calling_workflow,
-    dummy_cluster_config
-):
+
+def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
     """Tests GcnvStepPart::update_cluster_config for all actions"""
     # Valid actions
     action_list = [
@@ -116,7 +116,7 @@ def test_gcnv_update_cluster_config(
         "call_cnvs",
         "post_germline_calls",
         "merge_cohort_vcfs",
-        "extract_ped"
+        "extract_ped",
     ]
     # Define expected
     expected = {"mem", "time", "ntasks"}
@@ -142,10 +142,10 @@ def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_c
     """Tests GcnvStepPart::_get_output_files_preprocess_intervals()"""
     # Define expected
     output_path = (
-        'work/gcnv_preprocess_intervals.{library_kit}/out/'
-        'gcnv_preprocess_intervals.{library_kit}.interval_list'
+        "work/gcnv_preprocess_intervals.{library_kit}/out/"
+        "gcnv_preprocess_intervals.{library_kit}.interval_list"
     )
-    expected = {'interval_list': output_path}
+    expected = {"interval_list": output_path}
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "preprocess_intervals")
     assert actual == expected
@@ -163,14 +163,15 @@ def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 # Tests for GcnvStepPart (annotate_gc) ----------------------------------------------------
 
+
 def test_gcnv_annotate_gc_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::_get_input_files_annotate_gc()"""
     # Define expected
     output_path = (
-        'work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/'
-        'gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list'
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
     )
-    expected = {'interval_list': output_path}
+    expected = {"interval_list": output_path}
     # Get actual - Note: library kit defined in conftest: germline_sheet_tsv
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "annotate_gc")(wildcards)
@@ -180,7 +181,7 @@ def test_gcnv_annotate_gc_step_part_get_input_files(targeted_seq_cnv_calling_wor
 def test_gcnv_annotate_gc_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::_get_output_files_annotate_gc()"""
     # Define expected
-    expected = {'tsv': 'work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv'}
+    expected = {"tsv": "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"}
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "annotate_gc")
     assert actual == expected
@@ -197,5 +198,3 @@ def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workfl
 
 
 # Tests for GcnvStepPart (filter_intervals) ----------------------------------------------------
-
-
