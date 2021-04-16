@@ -2,7 +2,6 @@
 """Tests for the targeted_seq_cnv_calling workflow module code"""
 
 
-from itertools import chain
 import textwrap
 
 import pytest
@@ -11,8 +10,6 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
-
-from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 
