@@ -14,32 +14,34 @@ from .conftest import patch_module_fs
 
 # List of valid actions - gCNV
 GCNV_ACTIONS = [
-        "preprocess_intervals",
-        "annotate_gc",
-        "filter_intervals",
-        "scatter_intervals",
-        "coverage",
-        "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
-        "merge_cohort_vcfs",
-        "extract_ped",
-    ]
+    "preprocess_intervals",
+    "annotate_gc",
+    "filter_intervals",
+    "scatter_intervals",
+    "coverage",
+    "contig_ploidy",
+    "call_cnvs",
+    "post_germline_calls",
+    "merge_cohort_vcfs",
+    "extract_ped",
+]
 
 # List of valid actions - XHMM
 XHMM_ACTIONS = [
-"coverage",
-        "merge_cov",
-        "ref_stats",
-        "filter_center",
-        "pca",
-        "normalize",
-        "zscore_center",
-        "refilter",
-        "discover",
-        "genotype",
-        "extract_ped",
+    "coverage",
+    "merge_cov",
+    "ref_stats",
+    "filter_center",
+    "pca",
+    "normalize",
+    "zscore_center",
+    "refilter",
+    "discover",
+    "genotype",
+    "extract_ped",
 ]
+
+
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (somatic) configuration"""
@@ -328,23 +330,22 @@ def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workfl
     bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
         "interval_list": interval_list_out,
-        'bam': bam_out + '.bam',
-        'bai':  bam_out + '.bam.bai'
+        "bam": bam_out + ".bam",
+        "bai": bam_out + ".bam.bai",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "coverage")(
-        wildcards
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "coverage")(wildcards)
     assert actual == expected
+
 
 def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::_get_output_files_coverage()"""
     # Define expected
     tsv_out = (
-        'work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv'
+        "work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv"
     )
-    expected = {'tsv': tsv_out}
+    expected = {"tsv": tsv_out}
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "coverage")
     assert actual == expected
