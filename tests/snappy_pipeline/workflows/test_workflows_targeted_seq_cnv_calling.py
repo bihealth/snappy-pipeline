@@ -56,7 +56,7 @@ def minimal_config():
             search_patterns:
             - {'left': '*/*/*_R1.fastq.gz', 'right': '*/*/*_R2.fastq.gz'}
             search_paths: ['/path']
-            type: matched_cancer
+            type: germline_variants
             naming_scheme: only_secondary_id
         """
         ).lstrip()
@@ -158,7 +158,7 @@ def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     assert actual == expected
 
 
-# Tests for GcnvStepPart (annotate_gc) ----------------------------------------------------
+# Tests for GcnvStepPart (annotate_gc) -------------------------------------------------------------
 
 
 def test_gcnv_annotate_gc_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
@@ -191,4 +191,99 @@ def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workfl
     assert actual == expected
 
 
-# Tests for GcnvStepPart (filter_intervals) ----------------------------------------------------
+# Tests for GcnvStepPart (filter_intervals) --------------------------------------------------------
+
+
+def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_filter_intervals()"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    tsv_out = (
+        "work/gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6.tsv"
+    )
+    csv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    csv_list_out = [csv_pattern.format(i=i) for i in range(1, 7)]
+    expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
+    # Get actual. Notes:
+    # - library kit defined in conftest: `germline_sheet_tsv`
+    # - mapper defined in `minimal_config`
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "filter_intervals")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_filter_intervals()"""
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    expected = {"interval_list": interval_list_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "filter_intervals")
+    assert actual == expected
+
+
+def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'filter_intervals' step"""
+    expected = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/log/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.log"
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "filter_intervals")
+    print(actual)
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (scatter_intervals) -------------------------------------------------------
+
+
+def test_gcnv_scatter_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_scatter_intervals()"""
+    # Define expected
+    output_path = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    # Get actual - Note: library kit defined in conftest: germline_sheet_tsv
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "scatter_intervals")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_gcnv_scatter_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_scatter_intervals()"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "scatter_intervals")
+    assert actual == expected
+
+
+def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'scatter_intervals' step"""
+    expected = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/log/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}.log"
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "scatter_intervals")
+    assert actual == expected
