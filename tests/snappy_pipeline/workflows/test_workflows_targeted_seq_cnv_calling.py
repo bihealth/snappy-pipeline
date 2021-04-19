@@ -130,6 +130,9 @@ def test_call_assertion(targeted_seq_cnv_calling_workflow):
         targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
 
 
+# Global GcnvStepPart Tests ------------------------------------------------------------------------
+
+
 def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
     """Tests GcnvStepPart::update_cluster_config for all actions"""
     # Define expected
@@ -149,16 +152,6 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
         else:
             with pytest.raises(Exception):
                 targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
-
-
-def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_params for all actions"""
-    for action in XHMM_ACTIONS:
-        if action == "coverage":
-            targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
-        else:
-            with pytest.raises(Exception):
-                targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
@@ -568,3 +561,17 @@ def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workfl
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "extract_ped")
     assert actual == expected
+
+
+# Global XhmmStepPart Tests ------------------------------------------------------------------------
+
+def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_params for all actions"""
+    for action in XHMM_ACTIONS:
+        if action == "coverage":
+            targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+        else:
+            with pytest.raises(Exception):
+                targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+
+
