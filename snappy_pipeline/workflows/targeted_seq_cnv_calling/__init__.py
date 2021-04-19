@@ -834,8 +834,9 @@ class GcnvStepPart(BaseStepPart):
                 name_pattern=name_pattern, ext=ext
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_extract_ped(self):
+    def _get_output_files_extract_ped():
         name_pattern = "{mapper}.gcnv.{library_name}"
         kvs = (
             ("vcf", ".vcf.gz"),
