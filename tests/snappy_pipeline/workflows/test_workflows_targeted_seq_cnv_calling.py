@@ -10,6 +10,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
+from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
 # List of valid actions - gCNV
@@ -427,3 +428,143 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
 
 
 # Tests for GcnvStepPart (call_cnvs) ---------------------------------------------------------------
+
+
+def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_call_cnvs()"""
+    # Define expected
+    interval_list_shard_out = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}/temp_{shard}/scattered.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    ploidy_out = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+    )
+    intervals_out = "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"
+    expected = {
+        "interval_list_shard": interval_list_shard_out,
+        "tsv": tsv_list_out,
+        "ploidy": ploidy_out,
+        "intervals": intervals_out,
+    }
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_call_cnvs()"""
+    # Define expected
+    done_out = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/.done"
+    )
+    expected = {"done": done_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'call_cnvs' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (merge_cohort_vcfs) -----------------------------------------------------
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_merge_cohort_vcfs()"""
+    # Define expected
+    pattern_out = (
+        "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1.vcf.gz"
+    )
+    expected = [pattern_out.format(i=i) for i in range(1, 7)]  # P001 - P006
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "merge_cohort_vcfs")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_merge_cohort_vcfs()"""
+    # Define expected
+    pattern_out = (
+        "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/out/"
+        "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "merge_cohort_vcfs")
+    assert actual == expected
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'merge_cohort_vcfs' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/log/"
+        "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "merge_cohort_vcfs")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (extract_ped) -------------------------------------------------------------
+
+
+def test_gcnv_extract_ped_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_extract_ped()"""
+    # Define expected
+    pattern_out = (
+        "work/bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6"
+    )
+    expected = {"vcf": pattern_out + ".vcf.gz", "tbi": pattern_out + ".vcf.gz.tbi"}
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "extract_ped")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_extract_ped()"""
+    # Define expected
+    pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
+    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "extract_ped")
+    assert actual == expected
+
+
+def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'extract_ped' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_extract_ped.{library_name}/log/"
+        "{mapper}.gcnv_extract_ped.{library_name}.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "extract_ped")
+    assert actual == expected
