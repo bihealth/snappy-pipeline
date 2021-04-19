@@ -143,7 +143,6 @@ def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_clu
 def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_params for all actions"""
     for action in GCNV_ACTIONS:
-        print(action)
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
         else:
@@ -154,7 +153,6 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
 def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_params for all actions"""
     for action in XHMM_ACTIONS:
-        print(action)
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
         else:
@@ -189,10 +187,12 @@ def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_c
 
 def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'preprocess_intervals' step"""
+    # Define expected
     expected = (
         "work/gcnv_preprocess_intervals.{library_kit}/log/"
         "gcnv_preprocess_intervals.{library_kit}.log"
     )
+    # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "preprocess_intervals")
     assert actual == expected
 
@@ -225,7 +225,9 @@ def test_gcnv_annotate_gc_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'annotate_gc' step"""
+    # Define expected
     expected = "work/gcnv_annotate_gc.{library_kit}/log/gcnv_annotate_gc.{library_kit}.log"
+    # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "annotate_gc")
     assert actual == expected
 
@@ -247,7 +249,7 @@ def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_callin
     csv_pattern = (
         "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
     )
-    csv_list_out = [csv_pattern.format(i=i) for i in range(1, 7)]
+    csv_list_out = [csv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
     expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
     # Get actual. Notes:
     # - library kit defined in conftest: `germline_sheet_tsv`
@@ -276,12 +278,13 @@ def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calli
 
 def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'filter_intervals' step"""
+    # Define expected
     expected = (
         "work/{mapper}.gcnv_filter_intervals.{library_kit}/log/"
         "{mapper}.gcnv_filter_intervals.{library_kit}.log"
     )
+    # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "filter_intervals")
-    print(actual)
     assert actual == expected
 
 
@@ -320,10 +323,12 @@ def test_gcnv_scatter_intervals_step_part_get_output_files(targeted_seq_cnv_call
 
 def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'scatter_intervals' step"""
+    # Define expected
     expected = (
         "work/{mapper}.gcnv_scatter_intervals.{library_kit}/log/"
         "{mapper}.gcnv_scatter_intervals.{library_kit}.log"
     )
+    # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "scatter_intervals")
     assert actual == expected
 
@@ -360,3 +365,65 @@ def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "coverage")
     assert actual == expected
+
+
+def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'coverage' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "coverage")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (contig_ploidy) -----------------------------------------------------------
+
+
+def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_contig_ploidy()"""
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    expected = {"interval_list": interval_list_out, "tsv": tsv_list_out}
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_contig_ploidy()"""
+    # Define expected
+    done_out = (
+        "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
+        "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
+    )
+    expected = {"done": done_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_log_file for 'contig_ploidy' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_contig_ploidy.{library_kit}/log/"
+        "{mapper}.gcnv_contig_ploidy.{library_kit}.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (call_cnvs) ---------------------------------------------------------------
