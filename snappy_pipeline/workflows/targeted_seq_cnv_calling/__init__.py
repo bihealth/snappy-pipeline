@@ -204,8 +204,25 @@ class XhmmStepPart(BaseStepPart):
         return result
 
     def get_input_files(self, action):
-        """Return input function for XHMM rule"""
-        assert action in self.actions
+        """Return input function for XHMM rule
+
+        :param action: Action (i.e., step) in the workflow, examples: 'coverage',
+        'filter_center', 'extract_ped'.
+        :type action: str
+
+        :return: Returns input function for gCNV rule based on inputted action.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate inputted action
+        valid_actions = [a for a in self.actions if a != "ref_stats"]
+        if action not in valid_actions:
+            valid_actions_str = ", ".join(valid_actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+        # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
@@ -554,7 +571,8 @@ class GcnvStepPart(BaseStepPart):
         return result
 
     def get_input_files(self, action):
-        """
+        """Return input function for gCNV rule
+
         :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
         'coverage', 'extract_ped'.
         :type action: str
