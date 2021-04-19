@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the targeted_seq_cnv_calling workflow module code"""
 
-from copy import deepcopy
 import textwrap
 
 import pytest
