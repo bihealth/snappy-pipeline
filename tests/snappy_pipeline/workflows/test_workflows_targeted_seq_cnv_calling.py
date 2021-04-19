@@ -148,7 +148,7 @@ def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
             targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
         else:
             with pytest.raises(AssertionError):
-                targeted_seq_cnv_calling_workflow.get_input_files("xhmm", action)
+                targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
