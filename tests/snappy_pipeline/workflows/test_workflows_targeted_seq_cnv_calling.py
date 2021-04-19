@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the targeted_seq_cnv_calling workflow module code"""
 
-
+from copy import deepcopy
 import textwrap
 
 import pytest
@@ -128,6 +128,31 @@ def test_call_assertion(targeted_seq_cnv_calling_workflow):
     """Tests raise UnsupportedActionException"""
     with pytest.raises(Exception):
         targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
+
+
+def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow):
+    """Tests TargetedSeqCnvCallingWorkflow::get_result_files()
+
+    Tests simple functionality of the workflow: checks if file structure is created according
+    to the expected results from the tools, namely: gCNV and XHMM.
+    """
+    # Define expected
+    pattern_out = "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/out/bwa.{tool}.P00{i}-N1-DNA1-WGS1.{ext}"
+    expected = [
+        pattern_out.format(i=i, tool=tool, ext=ext)
+        for i in (1, 4)  # only index: P001, P004
+        for tool in ("gcnv", "xhmm")
+        for ext in (
+            "vcf.gz",
+            "vcf.gz.md5",
+            "vcf.gz.tbi",
+            "vcf.gz.tbi.md5",
+        )
+    ]
+    expected = sorted(expected)
+    # Get actual
+    actual = sorted(targeted_seq_cnv_calling_workflow.get_result_files())
+    assert actual == expected
 
 
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
@@ -565,6 +590,7 @@ def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workfl
 
 # Global XhmmStepPart Tests ------------------------------------------------------------------------
 
+
 def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_params for all actions"""
     for action in XHMM_ACTIONS:
@@ -573,5 +599,3 @@ def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
         else:
             with pytest.raises(Exception):
                 targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
-
-

@@ -65,8 +65,6 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 #: Available WGS CNV callers
 TARGETED_SEQ_CNV_CALLERS = ("xhmm", "gcnv")
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
-
 #: Default configuration for the targeted_seq_cnv_calling step
 DEFAULT_CONFIG = r"""
 # Default configuration targeted_seq_cnv_calling
@@ -244,12 +242,14 @@ class XhmmStepPart(BaseStepPart):
         yield "centered", self._get_output_files_filter_center()["centered"].format(**wildcards)
         yield "pca", self._get_output_files_pca()["pc"].format(**wildcards)
 
-    def _get_input_files_zscore_center(self, wildcards):
+    @staticmethod
+    def _get_input_files_zscore_center(wildcards):
         name_pattern = "{mapper}.xhmm_normalize.{library_kit}".format(**wildcards)
         return ["work/{name_pattern}/out/{name_pattern}".format(name_pattern=name_pattern)]
 
+    @staticmethod
     @dictify
-    def _get_input_files_refilter(self, wildcards):
+    def _get_input_files_refilter(wildcards):
         name_pattern = "{mapper}.xhmm_merge_cov.{library_kit}".format(**wildcards)
         yield "original", "work/{name_pattern}/out/{name_pattern}.RD.txt".format(
             name_pattern=name_pattern
@@ -267,8 +267,9 @@ class XhmmStepPart(BaseStepPart):
                     name_pattern=name_pattern, suffix=kvs[1]
                 )
 
+    @staticmethod
     @dictify
-    def _get_input_files_discover(self, wildcards):
+    def _get_input_files_discover(wildcards):
         name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
         yield "center_zscore", "work/{name_pattern}/out/{name_pattern}".format(
             name_pattern=name_pattern
@@ -278,8 +279,9 @@ class XhmmStepPart(BaseStepPart):
             name_pattern=name_pattern
         )
 
+    @staticmethod
     @dictify
-    def _get_input_files_genotype(self, wildcards):
+    def _get_input_files_genotype(wildcards):
         name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}".format(**wildcards)
         yield "center_zscore", "work/{name_pattern}/out/{name_pattern}".format(
             name_pattern=name_pattern
@@ -322,8 +324,9 @@ class XhmmStepPart(BaseStepPart):
         assert action in self.actions
         return getattr(self, "_get_output_files_{}".format(action))()
 
+    @staticmethod
     @dictify
-    def _get_output_files_coverage(self):
+    def _get_output_files_coverage():
         exts = (
             "sample_interval_statistics",
             "sample_interval_summary",
@@ -336,28 +339,32 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, ext=ext
             )
 
-    def _get_output_files_merge_cov(self):
+    @staticmethod
+    def _get_output_files_merge_cov():
         name_pattern = "{mapper}.xhmm_merge_cov.{library_kit}"
         return ["work/{name_pattern}/out/{name_pattern}.RD.txt".format(name_pattern=name_pattern)]
 
+    @staticmethod
     @dictify
-    def _get_output_files_ref_stats(self):
+    def _get_output_files_ref_stats():
         name_pattern = "{mapper}.xhmm_ref_stats.{library_kit}"
         for infix in ("extreme_gc_targets",):
             yield infix, "work/{name_pattern}/out/{name_pattern}.{infix}.txt".format(
                 name_pattern=name_pattern, infix=infix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_filter_center(self):
+    def _get_output_files_filter_center():
         name_pattern = "{mapper}.xhmm_filter_center.{library_kit}"
         for infix in ("centered", "filtered_targets", "filtered_samples"):
             yield infix, "work/{name_pattern}/out/{name_pattern}.{infix}.txt".format(
                 name_pattern=name_pattern, infix=infix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_pca(self):
+    def _get_output_files_pca():
         name_pattern = "{mapper}.xhmm_pca.{library_kit}"
         kvs = (("pc_loading", ".PC_LOADINGS.txt"), ("pc_sd", ".PC_SD.txt"), ("pc", ".PC.txt"))
         for key, suffix in kvs:
@@ -365,8 +372,9 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_normalize(self):
+    def _get_output_files_normalize():
         name_pattern = "{mapper}.xhmm_normalize.{library_kit}"
         kvs = (("normalized", ""), ("num_removed", ".num_removed_PC.txt"))
         for key, suffix in kvs:
@@ -374,8 +382,9 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_zscore_center(self):
+    def _get_output_files_zscore_center():
         name_pattern = "{mapper}.xhmm_zscore_center.{library_kit}"
         kvs = (
             ("zscore_center", ""),
@@ -387,12 +396,14 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
-    def _get_output_files_refilter(self):
+    @staticmethod
+    def _get_output_files_refilter():
         name_pattern = "{mapper}.xhmm_refilter.{library_kit}"
         return ["work/{name_pattern}/out/{name_pattern}.RD.txt".format(name_pattern=name_pattern)]
 
+    @staticmethod
     @dictify
-    def _get_output_files_discover(self):
+    def _get_output_files_discover():
         name_pattern = "{mapper}.xhmm_discover.{library_kit}"
         kvs = (("xcnv", ".xcnv"), ("aux_xcnv", ".aux_xcnv"))
         for key, suffix in kvs:
@@ -400,8 +411,9 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_genotype(self):
+    def _get_output_files_genotype():
         name_pattern = "{mapper}.xhmm_genotype.{library_kit}"
         kvs = (
             ("vcf", ".vcf.gz"),
@@ -414,8 +426,9 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
+    @staticmethod
     @dictify
-    def _get_output_files_extract_ped(self):
+    def _get_output_files_extract_ped():
         name_pattern = "{mapper}.xhmm.{library_name}"
         kvs = (
             ("vcf", ".vcf.gz"),
@@ -428,7 +441,8 @@ class XhmmStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return path to log file"""
         if action == "coverage":
             return (
@@ -986,6 +1000,6 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
-            ("step_config", "targeted_seq_cnv_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for targeted seq. CNV calling",
+            config_keys=("step_config", "targeted_seq_cnv_calling", "path_ngs_mapping"),
+            msg="Path to NGS mapping not configured but required for targeted seq. CNV calling",
         )
