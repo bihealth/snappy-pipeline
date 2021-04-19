@@ -7,6 +7,7 @@ import pytest
 import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
 from .common import get_expected_output_vcf_files_dict
@@ -123,12 +124,6 @@ def targeted_seq_cnv_calling_workflow(
 # Global tests -------------------------------------------------------------------------------------
 
 
-def test_call_assertion(targeted_seq_cnv_calling_workflow):
-    """Tests raise UnsupportedActionException"""
-    with pytest.raises(Exception):
-        targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
-
-
 def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow):
     """Tests TargetedSeqCnvCallingWorkflow::get_result_files()
 
@@ -157,6 +152,12 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
 
 
+def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
+    """Tests raise UnsupportedActionException"""
+    with pytest.raises(UnsupportedActionException):
+        targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
+
+
 def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
     """Tests GcnvStepPart::update_cluster_config for all actions"""
     # Define expected
@@ -174,7 +175,7 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
         else:
-            with pytest.raises(Exception):
+            with pytest.raises(UnsupportedActionException):
                 targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
 
 
@@ -590,11 +591,187 @@ def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workfl
 # Global XhmmStepPart Tests ------------------------------------------------------------------------
 
 
+def test_xhmm_call_assertion(targeted_seq_cnv_calling_workflow):
+    """Tests raise UnsupportedActionException"""
+    with pytest.raises(UnsupportedActionException):
+        targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "_undefined_action_")
+
+
 def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_params for all actions"""
     for action in XHMM_ACTIONS:
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
         else:
-            with pytest.raises(Exception):
+            with pytest.raises(UnsupportedActionException):
                 targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+
+
+# Tests for XhmmStepPart (coverage) ----------------------------------------------------------------
+
+
+def test_xhmm_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_coverage()"""
+    # Define expected
+    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    expected = {"bam": bam_out + ".bam", "bai": bam_out + ".bam.bai"}
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "coverage")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_coverage()"""
+    # Define expected
+    pattern_out = (
+        "work/{mapper}.xhmm_coverage.{library_name}/out/{mapper}.xhmm_coverage.{library_name}.DATA"
+    )
+    expected = {
+        "sample_interval_statistics": pattern_out + ".sample_interval_statistics",
+        "sample_interval_summary": pattern_out + ".sample_interval_summary",
+        "sample_statistics": pattern_out + ".sample_statistics",
+        "sample_summary": pattern_out + ".sample_summary",
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "coverage")
+    assert actual == expected
+
+
+def test_xhmm_coverage_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'coverage' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.xhmm_coverage.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "coverage")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (merge_cov) ---------------------------------------------------------------
+
+
+def test_xhmm_merge_cov_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_merge_cov()"""
+    # Define expected
+    base_out = (
+        "work/bwa.xhmm_coverage.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.xhmm_coverage.P00{i}-N1-DNA1-WGS1.DATA.sample_interval_summary"
+    )
+    expected = [base_out.format(i=i) for i in range(1, 7)]  # P001 - P006
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "merge_cov")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_merge_cov()"""
+    # Define expected
+    name_out = (
+        "work/{mapper}.xhmm_merge_cov.{library_kit}/out/"
+        "{mapper}.xhmm_merge_cov.{library_kit}.RD.txt"
+    )
+    expected = [name_out]
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "merge_cov")
+    assert actual == expected
+
+
+def test_xhmm_merge_cov_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'merge_cov' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.xhmm_merge_cov.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "merge_cov")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (ref_stats) ---------------------------------------------------------------
+
+
+def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_ref_stats()"""
+    # Define expected
+    name_out = (
+        "work/{mapper}.xhmm_ref_stats.{library_kit}/out/"
+        "{mapper}.xhmm_ref_stats.{library_kit}.extreme_gc_targets.txt"
+    )
+    expected = {"extreme_gc_targets": name_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "ref_stats")
+    assert actual == expected
+
+
+def test_xhmm_ref_stats_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'ref_stats' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.xhmm_ref_stats.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "ref_stats")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (filter_center) -----------------------------------------------------------
+
+
+def test_xhmm_filter_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_filter_center()"""
+    # Define expected
+    base_out = (
+        "work/bwa.{step}.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.{step}.Agilent_SureSelect_Human_All_Exon_V6.{type}.txt"
+    )
+    expected = {
+        "merge_cov": base_out.format(step="xhmm_merge_cov", type="RD"),
+        "extreme_gc": base_out.format(step="xhmm_ref_stats", type="extreme_gc_targets"),
+    }
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "filter_center")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_filter_center()"""
+    # Define expected
+    pattern_out = (
+        "work/{mapper}.xhmm_filter_center.{library_kit}/out/"
+        "{mapper}.xhmm_filter_center.{library_kit}"
+    )
+    expected = {
+        "centered": pattern_out + ".centered.txt",
+        "filtered_targets": pattern_out + ".filtered_targets.txt",
+        "filtered_samples": pattern_out + ".filtered_samples.txt",
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "filter_center")
+    assert actual == expected
+
+
+def test_xhmm_filter_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'filter_center' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.xhmm_filter_center.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
+    )
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "filter_center")
+    assert actual == expected
