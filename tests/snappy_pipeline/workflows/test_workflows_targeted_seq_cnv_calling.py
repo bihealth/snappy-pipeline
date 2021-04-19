@@ -140,6 +140,17 @@ def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_clu
         assert actual == expected
 
 
+def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::get_params for all actions"""
+    for action in GCNV_ACTIONS:
+        print(action)
+        if action == "coverage":
+            targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
+        else:
+            with pytest.raises(Exception):
+                targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
+
+
 def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_params for all actions"""
     for action in XHMM_ACTIONS:
@@ -147,7 +158,7 @@ def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
         else:
-            with pytest.raises(AssertionError):
+            with pytest.raises(Exception):
                 targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
 
 
