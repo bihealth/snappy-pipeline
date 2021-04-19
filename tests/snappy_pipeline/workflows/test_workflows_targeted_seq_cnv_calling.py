@@ -43,6 +43,38 @@ XHMM_ACTIONS = [
 ]
 
 
+def get_expected_xhmm_log_file(step_name):
+    """
+    :param step_name: Step name.
+    :type step_name: str
+
+    :return: Returns expected log file path for basic steps in XHMM.
+    """
+    expected_log = (
+        "work/{mapper}.xhmm_"
+        + step_name
+        + ".{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
+    )
+    return expected_log
+
+
+def get_expected_gcnv_log_file(step_name):
+    """
+    :param step_name: Step name.
+    :type step_name: str
+
+    :return: Returns expected log file path for basic steps in gCNV.
+    """
+    expected_log = (
+        "work/{mapper}.gcnv_"
+        + step_name
+        + ".{library_kit}/log/{mapper}.gcnv_"
+        + step_name
+        + ".{library_kit}.log"
+    )
+    return expected_log
+
+
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (somatic) configuration"""
@@ -298,10 +330,7 @@ def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calli
 def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'filter_intervals' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.gcnv_filter_intervals.{library_kit}/log/"
-        "{mapper}.gcnv_filter_intervals.{library_kit}.log"
-    )
+    expected = get_expected_gcnv_log_file(step_name="filter_intervals")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "filter_intervals")
     assert actual == expected
@@ -343,10 +372,7 @@ def test_gcnv_scatter_intervals_step_part_get_output_files(targeted_seq_cnv_call
 def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'scatter_intervals' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/log/"
-        "{mapper}.gcnv_scatter_intervals.{library_kit}.log"
-    )
+    expected = get_expected_gcnv_log_file(step_name="scatter_intervals")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "scatter_intervals")
     assert actual == expected
@@ -436,10 +462,7 @@ def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_
 def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'contig_ploidy' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.gcnv_contig_ploidy.{library_kit}/log/"
-        "{mapper}.gcnv_contig_ploidy.{library_kit}.log"
-    )
+    expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "contig_ploidy")
     assert actual == expected
@@ -540,10 +563,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_call
 def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::get_log_file for 'merge_cohort_vcfs' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/log/"
-        "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}.log"
-    )
+    expected = get_expected_gcnv_log_file(step_name="merge_cohort_vcfs")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "merge_cohort_vcfs")
     assert actual == expected
@@ -688,9 +708,7 @@ def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_work
 def test_xhmm_merge_cov_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_log_file for 'merge_cov' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.xhmm_merge_cov.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
-    )
+    expected = get_expected_xhmm_log_file(step_name="merge_cov")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "merge_cov")
     assert actual == expected
@@ -715,9 +733,7 @@ def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_work
 def test_xhmm_ref_stats_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_log_file for 'ref_stats' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.xhmm_ref_stats.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
-    )
+    expected = get_expected_xhmm_log_file(step_name="ref_stats")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "ref_stats")
     assert actual == expected
@@ -769,9 +785,149 @@ def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_
 def test_xhmm_filter_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
     """Tests XhmmStepPart::get_log_file for 'filter_center' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.xhmm_filter_center.{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
-    )
+    expected = get_expected_xhmm_log_file(step_name="filter_center")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "filter_center")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (pca) ---------------------------------------------------------------------
+
+
+def test_xhmm_pca_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_pca()"""
+    # Define expected
+    base_out = (
+        "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6.centered.txt"
+    )
+    expected = [base_out]
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "pca")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_pca_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_pca()"""
+    # Define expected
+    pattern_out = "work/{mapper}.xhmm_pca.{library_kit}/out/{mapper}.xhmm_pca.{library_kit}"
+    expected = {
+        "pc_loading": pattern_out + ".PC_LOADINGS.txt",
+        "pc_sd": pattern_out + ".PC_SD.txt",
+        "pc": pattern_out + ".PC.txt",
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "pca")
+    assert actual == expected
+
+
+def test_xhmm_pca_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'pca' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="pca")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "pca")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (normalize) ---------------------------------------------------------------
+
+
+def test_xhmm_normalize_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_normalize()"""
+    # Define expected
+    centered_out = (
+        "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6.centered.txt"
+    )
+    pca_out = (
+        "work/bwa.xhmm_pca.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_pca.Agilent_SureSelect_Human_All_Exon_V6.PC.txt"
+    )
+    expected = {"centered": centered_out, "pca": pca_out}
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "normalize")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_normalize_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_normalize()"""
+    # Define expected
+    pattern_out = (
+        "work/{mapper}.xhmm_normalize.{library_kit}/out/{mapper}.xhmm_normalize.{library_kit}"
+    )
+    expected = {"normalized": pattern_out, "num_removed": pattern_out + ".num_removed_PC.txt"}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "normalize")
+    assert actual == expected
+
+
+def test_xhmm_normalize_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'normalize' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="normalize")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "normalize")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (zscore_center) -----------------------------------------------------------
+
+
+def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_zscore_center()"""
+    # Define expected
+    base_out = (
+        "work/bwa.xhmm_normalize.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_normalize.Agilent_SureSelect_Human_All_Exon_V6"
+    )
+    expected = [base_out]
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "zscore_center")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_zscore_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_zscore_center()"""
+    # Define expected
+    pattern_out = (
+        "work/{mapper}.xhmm_zscore_center.{library_kit}/out/"
+        "{mapper}.xhmm_zscore_center.{library_kit}"
+    )
+    expected = {
+        "zscore_center": pattern_out + "",
+        "filtered_samples": pattern_out + ".filtered_samples.txt",
+        "filtered_targets": pattern_out + ".filtered_targets.txt",
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "zscore_center")
+    assert actual == expected
+
+
+def test_xhmm_zscore_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'zscore_center' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="zscore_center")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "zscore_center")
     assert actual == expected
