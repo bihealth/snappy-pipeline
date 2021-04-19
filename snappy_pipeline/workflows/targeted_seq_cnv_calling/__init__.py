@@ -163,13 +163,12 @@ class XhmmStepPart(BaseStepPart):
 
     def get_params(self, action):
         """
-        :param action: Action (i.e., step) in the workflow. Currently only available action:
-        'coverage'.
+        :param action: Action (i.e., step) in the workflow. Currently only available for 'coverage'.
         :type action: str
 
         :return: Returns input function for XHMM rule based on inputted action.
 
-        :raises UnsupportedActionException: if action not not 'coverage'.
+        :raises UnsupportedActionException: if action not 'coverage'.
         """
         # Validate inputted action
         if action != "coverage":
@@ -498,13 +497,12 @@ class GcnvStepPart(BaseStepPart):
 
     def get_params(self, action):
         """
-        :param action: Action (i.e., step) in the workflow. Currently only available action:
-        'coverage'.
+        :param action: Action (i.e., step) in the workflow. Currently only available for 'coverage'.
         :type action: str
 
         :return: Returns input function for XHMM rule based on inputted action.
 
-        :raises UnsupportedActionException: if action not not 'coverage'.
+        :raises UnsupportedActionException: if action not 'coverage'.
         """
         # Validate inputted action
         if action != "coverage":
