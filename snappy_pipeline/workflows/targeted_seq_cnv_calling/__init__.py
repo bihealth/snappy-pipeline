@@ -162,7 +162,21 @@ class XhmmStepPart(BaseStepPart):
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     def get_params(self, action):
-        assert action == "coverage"
+        """
+        :param action: Action (i.e., step) in the workflow. Currently only available action:
+        'coverage'.
+        :type action: str
+
+        :return: Returns input function for XHMM rule based on inputted action.
+
+        :raises UnsupportedActionException: if action not not 'coverage'.
+        """
+        # Validate inputted action
+        if action != "coverage":
+            error_message = "Action '{action}' is not supported. Valid options: 'coverage'.".format(
+                action=action
+            )
+            raise UnsupportedActionException(error_message)
 
         def get_params(wildcards):
             return {"library_kit": self.ngs_library_to_kit[wildcards.library_name]}
@@ -483,7 +497,21 @@ class GcnvStepPart(BaseStepPart):
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     def get_params(self, action):
-        assert action == "coverage"
+        """
+        :param action: Action (i.e., step) in the workflow. Currently only available action:
+        'coverage'.
+        :type action: str
+
+        :return: Returns input function for XHMM rule based on inputted action.
+
+        :raises UnsupportedActionException: if action not not 'coverage'.
+        """
+        # Validate inputted action
+        if action != "coverage":
+            error_message = "Action '{action}' is not supported. Valid options: 'coverage'.".format(
+                action=action
+            )
+            raise UnsupportedActionException(error_message)
 
         def get_params(wildcards):
             return {"library_kit": self.ngs_library_to_kit[wildcards.library_name]}
@@ -514,11 +542,19 @@ class GcnvStepPart(BaseStepPart):
         return result
 
     def get_input_files(self, action):
-        """Return input function for gCNV rule"""
-        # Validate request action
+        """
+        :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
+        'coverage', 'extract_ped'.
+        :type action: str
+
+        :return: Returns input function for gCNV rule based on inputted action.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate inputted action
         if action not in self.actions:
             valid_actions_str = ", ".join(self.actions)
-            error_message = "Action {action} is not supported. Valid options: {options}".format(
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
                 action=action, options=valid_actions_str
             )
             raise UnsupportedActionException(error_message)
