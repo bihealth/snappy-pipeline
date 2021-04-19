@@ -931,3 +931,190 @@ def test_xhmm_zscore_center_part_get_log_file(targeted_seq_cnv_calling_workflow)
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "zscore_center")
     assert actual == expected
+
+
+# Tests for XhmmStepPart (zscore_center) -----------------------------------------------------------
+
+
+def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_refilter()"""
+    # Define expected
+    original_out = (
+        "work/bwa.xhmm_merge_cov.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_merge_cov.Agilent_SureSelect_Human_All_Exon_V6.RD.txt"
+    )
+    pattern_out = (
+        "work/bwa.xhmm_{step}_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_{step}_center.Agilent_SureSelect_Human_All_Exon_V6.filtered_{used}.txt"
+    )
+    expected = {
+        "original": original_out,
+        "filtered_samples_filter_center": pattern_out.format(step="filter", used="samples"),
+        "filtered_targets_filter_center": pattern_out.format(step="filter", used="targets"),
+        "filtered_samples_zscore_center": pattern_out.format(step="zscore", used="samples"),
+        "filtered_targets_zscore_center": pattern_out.format(step="zscore", used="targets"),
+    }
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "refilter")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_refilter_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_refilter()"""
+    # Define expected
+    base_out = (
+        "work/{mapper}.xhmm_refilter.{library_kit}/out/{mapper}.xhmm_refilter.{library_kit}.RD.txt"
+    )
+    expected = [base_out]
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "refilter")
+    assert actual == expected
+
+
+def test_xhmm_refilter_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'refilter' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="refilter")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "refilter")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (discover) ----------------------------------------------------------------
+
+
+def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_discover()"""
+    # Define expected
+    center_zscore_out = (
+        "work/bwa.xhmm_zscore_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_zscore_center.Agilent_SureSelect_Human_All_Exon_V6"
+    )
+    refilter_original_out = (
+        "work/bwa.xhmm_refilter.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_refilter.Agilent_SureSelect_Human_All_Exon_V6.RD.txt"
+    )
+    expected = {"center_zscore": center_zscore_out, "refilter_original": refilter_original_out}
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "discover")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_discover_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_discover()"""
+    # Define expected
+    base_out = "work/{mapper}.xhmm_discover.{library_kit}/out/{mapper}.xhmm_discover.{library_kit}"
+    expected = {"xcnv": base_out + ".xcnv", "aux_xcnv": base_out + ".aux_xcnv"}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "discover")
+    assert actual == expected
+
+
+def test_xhmm_discover_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'discover' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="discover")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "discover")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (genotype) ----------------------------------------------------------------
+
+
+def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_genotype()"""
+    # Define expected
+    pattern_out = (
+        "work/bwa.xhmm_{action}.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_{action}.Agilent_SureSelect_Human_All_Exon_V6{ext}"
+    )
+    expected = {
+        "center_zscore": pattern_out.format(action="zscore_center", ext=""),
+        "refilter_original": pattern_out.format(action="refilter", ext=".RD.txt"),
+        "discover_xcnv": pattern_out.format(action="discover", ext=".xcnv"),
+    }
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "genotype")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_genotype_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_genotype()"""
+    # Define expected
+    base_out = "work/{mapper}.xhmm_genotype.{library_kit}/out/{mapper}.xhmm_genotype.{library_kit}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "genotype")
+    assert actual == expected
+
+
+def test_xhmm_genotype_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'genotype' step"""
+    # Define expected
+    expected = get_expected_xhmm_log_file(step_name="genotype")
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "genotype")
+    assert actual == expected
+
+
+# Tests for XhmmStepPart (extract_ped) -------------------------------------------------------------
+
+
+def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_input_files_extract_ped()"""
+    # Define expected
+    filtered_samples_out = (
+        "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6.filtered_samples.txt"
+    )
+    vcf_pattern_out = (
+        "work/bwa.xhmm_genotype.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.xhmm_genotype.Agilent_SureSelect_Human_All_Exon_V6.vcf.gz"
+    )
+    expected = {
+        "filtered_samples": filtered_samples_out,
+        "vcf": vcf_pattern_out,
+        "tbi": vcf_pattern_out + ".tbi",
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "extract_ped")(wildcards)
+    assert actual == expected
+
+
+def test_xhmm_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::_get_output_files_genotype()"""
+    # Define expected
+    base_out = "work/{mapper}.xhmm.{library_name}/out/{mapper}.xhmm.{library_name}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "extract_ped")
+    assert actual == expected
+
+
+def test_xhmm_extract_ped_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart::get_log_file for 'genotype' step"""
+    # Define expected
+    expected = "work/{mapper}.xhmm.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "extract_ped")
+    assert actual == expected
