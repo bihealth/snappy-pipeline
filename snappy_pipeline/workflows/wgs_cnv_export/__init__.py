@@ -213,16 +213,16 @@ class WgsCnvExportWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
+        name_patternn = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + ".{infix}{ext}"),
+            os.path.join("output", name_patternn, "out", name_patternn + ".{infix}{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_cnv_calling"],
             infix=INFIXES,
             ext=EXTS,
         )
         yield from self._yield_result_files(
-            os.path.join("output", token, "log", token + "{ext}"),
+            os.path.join("output", name_patternn, "log", name_patternn + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_cnv_calling"],
             ext=(

@@ -48,6 +48,7 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnknownFiltrationSourceException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -163,20 +164,22 @@ class CombineVariantsStepPartBase(BaseStepPart):
     #: Name of the step (e.g., for rule names)
     name = None
     #: Token to use in file name
-    name_token = None
+    name_pattern = None
 
     def __init__(self, parent):
         super().__init__(parent)
-        assert self.name_token is not None, "Set into class..."
-        token = self.name_token
+        assert self.name_pattern is not None, "Set into class..."
+        name_pattern = self.name_pattern
         # Note that the call to ``replace`` here removes the wildcard constraint that is needed
         # in the patern.  The constraint *could* also be moved with the ``wildcard_constraints``
         # keyword recently introduced at some later point at the cost of longer Snakefiles
         # and another set of additional functions.
         self.base_path_out = os.path.join(
-            "work", token, "out", token.replace(r",[^\.]+", "") + "{ext}"
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", token, "out", token.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_combination_{}_run".format(self.name)] = {
@@ -195,14 +198,14 @@ class CombineVariantsStepPartBase(BaseStepPart):
             )
             info = self.parent.combinations[self.name][wildcards.combination]
             for side in ("left", "right"):
-                source, token = info[side].split(":", 1)
+                source, name_pattern = info[side].split(":", 1)
                 for name, ext in zip(EXT_NAMES, EXT_VALUES):
                     yield "{}_{}".format(side, name), self._get_path(
                         wildcards.mapper,
                         wildcards["{}_caller".format(side)],
                         wildcards.index_library,
                         source,
-                        token,
+                        name_pattern,
                     ) + ext
 
         return input_function
@@ -217,33 +220,53 @@ class CombineVariantsStepPartBase(BaseStepPart):
 
         return args_function
 
-    def _get_path(self, mapper, caller, index_library, source, token):
+    def _get_path(self, mapper, caller, index_library, source, name_pattern):
         """Generate path to input file"""
+        # Initialise variables
+        valid_filtration_sources = ["variant_filtration", "wgs_sv_filtration", "wgs_cnv_filtration"]
+
+        # Validate filtration source
+        if source not in valid_filtration_sources:
+            valid_filtration_sources_str = ", ".join(valid_filtration_sources)
+            error_message = (
+                "User requested unknown source '{source}'. Valid sources: {valid}.".format(
+                    source=source, valid=valid_filtration_sources_str
+                )
+            )
+            raise UnknownFiltrationSourceException(error_message)
+
         if source == "variant_filtration":
-            return self._get_path_variant_filtration(mapper, caller, index_library, token)
+            return self._get_path_variant_filtration(mapper, caller, index_library, name_pattern)
         elif source == "wgs_sv_filtration":
-            return self._get_path_wgs_sv_filtration(mapper, caller, index_library, token)
+            return self._get_path_wgs_sv_filtration(mapper, caller, index_library, name_pattern)
         elif source == "wgs_cnv_filtration":
-            return self._get_path_wgs_cnv_filtration(mapper, caller, index_library, token)
-        else:
-            assert False, "Unknown filtration source"
+            return self._get_path_wgs_cnv_filtration(mapper, caller, index_library, name_pattern)
 
-    def _get_path_variant_filtration(self, mapper, caller, index_library, token):
+        # Keep consistent return statements
+        return None
+
+    def _get_path_variant_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["variant_filtration"]
-        tpl = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library}.{token}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, token=token)
+        tpl = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library}.{name_pattern}"
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
-    def _get_path_wgs_sv_filtration(self, mapper, caller, index_library, token):
+    def _get_path_wgs_sv_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["wgs_sv_filtration"]
-        tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{token}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, token=token)
+        tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{name_pattern}"
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
-    def _get_path_wgs_cnv_filtration(self, mapper, caller, index_library, token):
+    def _get_path_wgs_cnv_filtration(self, mapper, caller, index_library, name_pattern):
         workflow = self.parent.sub_workflows["wgs_cnv_filtration"]
-        tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{token}"
-        chunk = tpl.format(mapper=mapper, caller=caller, index_library=index_library, token=token)
+        tpl = "{mapper}.{caller}.annotated.filtered.{index_library}.{name_pattern}"
+        chunk = tpl.format(
+            mapper=mapper, caller=caller, index_library=index_library, name_pattern=name_pattern
+        )
         return workflow(os.path.join("output", chunk, "out", chunk))
 
     @dictify
@@ -259,7 +282,7 @@ class CombineVariantsStepPartBase(BaseStepPart):
 
 class VarsIntersectStepPart(CombineVariantsStepPartBase):
     name = "vars_intersect"
-    name_token = (
+    name_pattern = (
         "{mapper}.combined_variants.vars_intersect.{index_library}.{combination}."
         "{left_caller}.{right_caller}"
     )
@@ -267,7 +290,7 @@ class VarsIntersectStepPart(CombineVariantsStepPartBase):
 
 class VarsShareIntervalStepPart(CombineVariantsStepPartBase):
     name = "vars_share_interval"
-    name_token = (
+    name_pattern = (
         "{mapper}.combined_variants.vars_share_interval.{index_library}."
         "{combination}.{left_caller}.{right_caller}"
     )
@@ -330,12 +353,12 @@ class VariantCombinationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        token_tpl = (
+        name_pattern_tpl = (
             "{mapper}.combined_variants.{combinator}.{index_library.name}."
             "{combination}.{left_caller}.{right_caller}"
         )
         for combinator in COMBINATORS:
-            token = token_tpl.replace("{combinator}", combinator)
+            name_pattern = name_pattern_tpl.replace("{combinator}", combinator)
             for combination in self.combinations[combinator].values():
                 left = combination["left"].split(":", 1)
                 assert left[0] in ("wgs_sv_filtration", "variant_filtration", "wgs_cnv_filtration")
@@ -356,7 +379,7 @@ class VariantCombinationWorkflow(BaseStep):
                     right_callers = self.config["tools_variant_calling"]
 
                 yield from self._yield_result_files(
-                    os.path.join("output", token, "out", token + "{ext}"),
+                    os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                     mapper=self.config["tools_ngs_mapping"],
                     combination=[combination["name"]],
                     left_caller=left_callers,
