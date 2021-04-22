@@ -116,11 +116,11 @@ class VcfSvFilterStepPart(BaseStepPart):
         @dictify
         def input_function(wildcards):
             if wildcards.caller == "popdel":
-                token = "internal.concat_calls"
-                KEY_EXT = {"bcf": ".vcf.gz", "csi": ".vcf.gz.tbi"}
+                name_pattern = "internal.concat_calls"
+                key_ext = {"bcf": ".vcf.gz", "csi": ".vcf.gz.tbi"}
             else:  # delly2
-                token = "merge_genotypes"
-                KEY_EXT = {"bcf": ".bcf", "csi": ".bcf.csi"}
+                name_pattern = "merge_genotypes"
+                key_ext = {"bcf": ".bcf", "csi": ".bcf.csi"}
 
             tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
             yield "ped", tpl.format(**wildcards)
@@ -131,18 +131,15 @@ class VcfSvFilterStepPart(BaseStepPart):
             )
             # SVs
             wgs_sv_calling = self.parent.sub_workflows["wgs_sv_calling"]
-            for key, ext in KEY_EXT.items():
+            for key, ext in key_ext.items():
                 yield "sv_" + key, wgs_sv_calling(
-                    tpl.replace("{index_ngs_library}", token) + ext
+                    tpl.replace("{index_ngs_library}", name_pattern) + ext
                 ).format(**wildcards)
 
             # Small variants
-            KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+            key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
             variant_calling = self.parent.sub_workflows["variant_calling"]
-            for key, ext in KEY_EXT.items():
-                path = tpl.replace(
-                    "{mapper}", self.parent.config["tool_ngs_mapping_variant_calling"]
-                )
+            for key, ext in key_ext.items():
                 path = tpl.replace("{caller}", self.parent.config["tool_variant_calling"])
                 yield "var_" + key, variant_calling(path + ext).format(**wildcards)
 
@@ -156,13 +153,13 @@ class VcfSvFilterStepPart(BaseStepPart):
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     def get_log_file(self, action):
@@ -226,9 +223,9 @@ class WgsSvAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_sv_calling"],
             ext=EXT_VALUES,

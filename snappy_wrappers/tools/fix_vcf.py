@@ -22,8 +22,8 @@ STATE_SEEN_LINE = 1
 #: Header has been read
 STATE_HEADER_DONE = 2
 
-TOKEN_CONTIG = "##contig="
-TOKEN_CHROM = "#CHROM"
+PATTERN_CONTIG = "##contig="
+PATTERN_CHROM = "#CHROM"
 
 
 class VcfFileFixer:
@@ -73,16 +73,16 @@ class VcfFileFixer:
     def _run_initial(self, line):
         """Handle line processing in state `STATE_INITIAL```."""
         self.state = STATE_SEEN_LINE
-        if line.startswith(TOKEN_CONTIG):
+        if line.startswith(PATTERN_CONTIG):
             self.seen_contig_line = True
-        elif line.startswith(TOKEN_CHROM):
+        elif line.startswith(PATTERN_CHROM):
             self._handle_last_line()  # insert contig lines if necessary
         print(line, end="", file=self.output_vcf)
 
     def _run_seen_line(self, line):
-        if line.startswith(TOKEN_CONTIG):
+        if line.startswith(PATTERN_CONTIG):
             self.seen_contig_line = True
-        elif line.startswith(TOKEN_CHROM):
+        elif line.startswith(PATTERN_CHROM):
             self._handle_last_line()  # insert contig lines if necessary
         print(line, end="", file=self.output_vcf)
 

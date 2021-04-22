@@ -169,7 +169,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
 class VariantPhasingBaseStep(BaseStepPart):
     """Base step for variant phasing."""
 
-    token = None
+    name_pattern = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -201,7 +201,7 @@ class VariantPhasingBaseStep(BaseStepPart):
             ("conda_list", ".conda_list.txt"),
         )
         for key, ext in key_ext:
-            yield key, (prefix % {"name": self.token}) + ext
+            yield key, (prefix % {"name": self.name_pattern}) + ext
 
 
 class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
@@ -210,13 +210,15 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
     #: The file name token.
-    token = "gatk_pbt"
+    name_pattern = "gatk_pbt"
 
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        token = r"{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}"
-        self.base_path_out = os.path.join("work", token, "out", token.replace(r",[^\.]+", ""))
+        name_pattern = r"{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}"
+        self.base_path_out = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "")
+        )
 
     def get_input_files(self, action):
         @dictify
@@ -294,12 +296,12 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
     #: Name of the step in the pipeline.
     name = "gatk_read_backed_phasing_only"
     #: The file name token.
-    token = "gatk_rbp"
+    name_pattern = "gatk_rbp"
 
     def __init__(self, parent):
         super().__init__(parent)
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}"
-        self.base_path_out = os.path.join("work", token, "out", token)
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}"
+        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern)
 
     def get_input_files(self, action):
         @dictify
@@ -327,12 +329,12 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
     #: Name of the step in the pipeline.
     name = "gatk_read_backed_phasing_also"
     #: The file name token.
-    token = "gatk_pbt.gatk_rbp"
+    name_pattern = "gatk_pbt.gatk_rbp"
 
     def __init__(self, parent):
         super().__init__(parent)
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
-        self.base_path_out = os.path.join("work", token, "out", token)
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
+        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern)
 
     def get_input_files(self, action):
         @dictify
@@ -340,9 +342,9 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
             # BAM files from ngs_mapping step.
             yield from self._yield_bams(wildcards)
             # Result of PhaseByTransmission step
-            token = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}"
+            name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}"
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                input_path = "work/" + token + "/out/" + token
+                input_path = "work/" + name_pattern + "/out/" + name_pattern
                 yield key, input_path.format(**wildcards) + ext
 
         assert action == "run", "Unsupported actions"
@@ -399,12 +401,12 @@ class VariantPhasingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.{phasing}.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.{phasing}.{index_library.name}"
         phasings = [
             token for name, token in CONFIG_TO_TOKEN.items() if name in self.config["phasings"]
         ]
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             phasing=phasings,
