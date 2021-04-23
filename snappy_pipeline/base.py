@@ -32,6 +32,10 @@ class UnsupportedActionException(Exception):
     """Raised when user try to call action that isn't supported."""
 
 
+class UnknownFiltrationSourceException(Exception):
+    """Raised when user try to request an unknown filtration source."""
+
+
 def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict):
     """Expand "$ref" in JSON-like data ``dict_data``
 

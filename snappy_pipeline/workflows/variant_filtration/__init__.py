@@ -218,16 +218,18 @@ class FiltersVariantsStepPartBase(BaseStepPart):
     #: Name of the step (e.g., for rule names)
     name = None
     #: Token to use in file name
-    name_token = None
+    name_pattern = None
 
     def __init__(self, parent):
         super().__init__(parent)
-        assert self.name_token is not None, "Set into class..."
-        token = self.name_token
+        assert self.name_pattern is not None, "Set into class..."
+        name_pattern = self.name_pattern
         self.base_path_out = os.path.join(
-            "work", token, "out", token.replace(r",[^\.]+", "") + "{ext}"
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", token, "out", token.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_filtration_{}_run".format(self.name)] = {
@@ -251,7 +253,7 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
     """Apply the configured filters."""
 
     name = "filter_quality"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}"
     )
@@ -281,7 +283,7 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPart
     """Apply the configured filters."""
 
     name = "filter_inheritance"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
@@ -295,7 +297,7 @@ class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBa
     """Apply the configured filters."""
 
     name = "filter_frequency"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
     )
@@ -309,7 +311,7 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
     """Apply the configured filters."""
 
     name = "filter_regions"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
     )
@@ -323,7 +325,7 @@ class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase)
     """Apply the configured filters."""
 
     name = "filter_scores"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}"
@@ -338,7 +340,7 @@ class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
     """Apply the configured filters."""
 
     name = "filter_het_comp"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}.{het_comp,[^\.]+}"
@@ -401,9 +403,11 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        token = "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
+        name_pattern = (
+            "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
+        )
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=EXT_VALUES,
