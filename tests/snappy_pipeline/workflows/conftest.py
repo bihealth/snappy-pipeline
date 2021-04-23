@@ -2,7 +2,6 @@
 """Shared fixtures for the workflows unit tests"""
 
 from collections import namedtuple
-import random
 import textwrap
 from unittest.mock import MagicMock
 
@@ -77,100 +76,6 @@ def dummy_generic_step(
     return DummyBaseStep(
         dummy_workflow, dummy_config, dummy_cluster_config, config_lookup_paths, work_dir
     )
-
-
-def random_gender():
-    """Random gender.
-    :return: Returns either 'F' or 'M' by change.
-    """
-    genders = ["F", "M"]
-    # pseudo-random generator is unsafe for crypto use, but OK here
-    return random.choice(genders)  # nosec
-
-
-def random_affected_status():
-    """Random affected status.
-    :return: Returns either 'Y' or 'N' by change.
-    """
-    affected = ["Y", "N"]
-    # pseudo-random generator is unsafe for crypto use, but OK here
-    return random.choice(affected)  # nosec
-
-
-@pytest.fixture
-def large_cohort_text():
-    """Defines arbitrary large cohort entries for sample sheet"""
-    # Initialise variables
-    n_patients_cohorts = 501
-    full_cohort_text = ""
-    sampleid_pattern = "P{i}"
-    entry_pattern = (
-        "{sampleid}\t{father_sampleid}\t{mother_sampleid}\t{gender}\t{affected}"
-        "\tWGS\tAgilent SureSelect Human All Exon V6\t{sampleid}\t.\n"
-    )
-
-    # Create cohort
-    index_i = 1
-    while index_i < n_patients_cohorts:
-        # Set sample ids for trio
-        index_sampleid = sampleid_pattern.format(i=str(index_i).zfill(3))
-        father_i = index_i + 1
-        father_sampleid = sampleid_pattern.format(i=str(father_i).zfill(3))
-        mother_i = index_i + 2
-        mother_sampleid = sampleid_pattern.format(i=str(mother_i).zfill(3))
-
-        # Set entries for trio
-        index_gender = random_gender()
-        index_entry = entry_pattern.format(
-            sampleid=index_sampleid,
-            father_sampleid=father_sampleid,
-            mother_sampleid=mother_sampleid,
-            gender=index_gender,
-            affected="Y",
-        )
-        father_affected = random_affected_status()
-        father_entry = entry_pattern.format(
-            sampleid=father_sampleid,
-            father_sampleid=".",
-            mother_sampleid=".",
-            gender="M",
-            affected=father_affected,
-        )
-        mother_affected = random_affected_status()
-        mother_entry = entry_pattern.format(
-            sampleid=mother_sampleid,
-            father_sampleid=".",
-            mother_sampleid=".",
-            gender="F",
-            affected=mother_affected,
-        )
-
-        # Append
-        full_cohort_text = full_cohort_text + index_entry + father_entry + mother_entry
-
-        # Update index counter
-        index_i += 3
-
-    # Return
-    # Remove last newline so biomedsheet doesn't interpret it as an empty entry
-    return full_cohort_text.rstrip("\n")
-
-
-@pytest.fixture
-def large_cohort_germline_sheet_tsv(large_cohort_text):
-    """Return contents for large cohort germline TSV file"""
-    sheet_text = textwrap.dedent(
-        """
-        [Custom Fields]
-        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
-        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
-
-        [Data]
-        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
-        {entries}
-        """
-    ).lstrip()
-    return sheet_text.format(entries=large_cohort_text)
 
 
 @pytest.fixture
