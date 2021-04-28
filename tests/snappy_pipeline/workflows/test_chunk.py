@@ -11,10 +11,7 @@ from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GermlineCaseSheet
 import pytest
 
-from snappy_pipeline.workflows.targeted_seq_cnv_calling.chunk import (
-    BatchInsufficientSpaceException,
-    Chunk,
-)
+from snappy_pipeline.chunk import BatchInsufficientSpaceException, Chunk
 
 
 def build_pedigree_size_dictionary(all_pedigrees):
