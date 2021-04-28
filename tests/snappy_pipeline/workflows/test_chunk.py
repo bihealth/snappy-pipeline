@@ -8,7 +8,7 @@ import random
 import textwrap
 
 from biomedsheets.io_tsv import read_germline_tsv_sheet
-from biomedsheets.shortcuts import GermlineCaseSheet
+from biomedsheets.shortcuts import GermlineCaseSheet, is_background, is_not_background
 import pytest
 
 from snappy_pipeline.chunk import BatchInsufficientSpaceException, Chunk
@@ -176,6 +176,24 @@ def large_cohort_diverse_text():
 
 
 @pytest.fixture
+def medium_cohort_solo_only_text():
+    """Defines arbitrary medium cohort entries for sample sheet - solo case only"""
+    # Initialise variables
+    full_cohort_text = ""
+    index_i = 900
+    # Create cohort solo - 99
+    for _ in range(99):
+        new_solo = get_entry_for_sample_sheet(index_i=index_i, entry_type="solo")
+        # Append
+        full_cohort_text = full_cohort_text + new_solo
+        # Update index counter
+        index_i += 1
+    # Return
+    # Remove last newline so biomedsheet doesn't interpret it as an empty entry
+    return full_cohort_text.rstrip("\n")
+
+
+@pytest.fixture
 def germline_sheet_header():
     """Returns germline TSV file header with wildcard {entries}"""
     return textwrap.dedent(
@@ -189,6 +207,12 @@ def germline_sheet_header():
         {entries}
         """
     ).lstrip()
+
+
+@pytest.fixture
+def medium_cohort_solo_only_tsv(germline_sheet_header, medium_cohort_solo_only_text):
+    """Returns contents for medium cohort germline TSV file - solo cases only"""
+    return germline_sheet_header.format(entries=medium_cohort_solo_only_text)
 
 
 @pytest.fixture
@@ -232,6 +256,17 @@ def germline_sample_sheet_object_large_cohort_diverse_cases(
 
 
 @pytest.fixture
+def germline_sample_sheet_object_medium_cohort_solo_cases_background(medium_cohort_solo_only_tsv):
+    """Returns GermlineCaseSheet object with medium background cohort - solo cases only."""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(medium_cohort_solo_only_tsv)
+    sheet = GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
+    sheet.sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
+    sheet.sheet.extra_infos["is_background"] = True
+    return sheet
+
+
+@pytest.fixture
 def chunk_object_single_run(germline_sample_sheet_object):
     """Returns Chunk object for single run."""
     # Get germline sheet
@@ -240,17 +275,25 @@ def chunk_object_single_run(germline_sample_sheet_object):
     return Chunk(method="single", sheet_list=[sheet])
 
 
+def test_background_sheet_fixture(germline_sample_sheet_object_medium_cohort_solo_cases_background):
+    """Tests fixture germline_sample_sheet_object_medium_cohort_solo_cases_background()"""
+    sheet = germline_sample_sheet_object_medium_cohort_solo_cases_background
+    assert len(list(filter(is_background, [sheet]))) == 1
+    assert len(list(filter(is_not_background, [sheet]))) == 0
+
+
 def test_chunk_constructor(germline_sample_sheet_object):
     """Tests Chunk::__init__()"""
     # Initialise variables
     valid_methods = ["single", "evenly", "incremental"]
+    arbitrary_max_size = 100
     silly_sheet_list = [1, 2, 3]
     silly_dict = {1: "one"}
     sheet = germline_sample_sheet_object
 
     # Test only valid methods
     for method in valid_methods:
-        c = Chunk(method=method, sheet_list=silly_sheet_list)
+        c = Chunk(method=method, sheet_list=silly_sheet_list, maximal_chunk_size=arbitrary_max_size)
         assert isinstance(c, Chunk), "Expected instance of class `Chunk`."
 
     with pytest.raises(ValueError):
@@ -264,7 +307,7 @@ def test_chunk_constructor(germline_sample_sheet_object):
         Chunk(method="single", sheet_list=[])  # Expects list with at least one entry
 
     # Tests maximum chunk size - used in 'evenly' and 'incremental'
-    # Expects value greater or equal to zero
+    # Expects value greater or equal to zero, cannot be None
     with pytest.raises(ValueError):
         Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=-2)
 
@@ -274,14 +317,166 @@ def test_chunk_constructor(germline_sample_sheet_object):
     with pytest.raises(ValueError):
         Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size="_zero_")
 
+    with pytest.raises(Exception):
+        # For 'evenly' max size must be set
+        Chunk(method="evenly", sheet_list=[sheet])
+
     with pytest.raises(ValueError):
         Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=-2)
 
     with pytest.raises(ValueError):
         Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=0)
 
+    with pytest.raises(Exception):
+        # For 'incremental' max size must be set
+        Chunk(method="incremental", sheet_list=[sheet])
 
-def test_call_insufficient_space_exception(chunk_object_single_run):
+
+def test_get_random_cohort_sample(
+    chunk_object_single_run,
+    germline_sample_sheet_object,
+    germline_sample_sheet_object_medium_cohort_solo_cases_background,
+):
+    """Tests Chunk::get_random_cohort_sample()"""
+    # Initialise variables
+    expected_donor_type = "<class 'biomedsheets.shortcuts.germline.GermlineDonor'>"
+    assertion_type_msg = "Should return '{0}' objects".format(expected_donor_type)
+
+    # ----------------- #
+    # Test small cohort #
+    # ----------------- #
+    s_sheet = germline_sample_sheet_object
+    s_all_donors = s_sheet.cohort.pedigrees
+    # Expects Value error for request larger than amount of donors
+    with pytest.raises(ValueError):
+        chunk_object_single_run.get_random_cohort_sample(all_donors=s_all_donors, n_selections=7)
+    # Expects output equal input
+    actual = chunk_object_single_run.get_random_cohort_sample(
+        all_donors=s_all_donors, n_selections=6
+    )
+    assert set(actual) == {d.index for d in s_all_donors}, "Should return same input."
+    assert all([str(type(donor)) == expected_donor_type for donor in actual])
+    # Expects output equal input
+    actual = chunk_object_single_run.get_random_cohort_sample(
+        all_donors=s_all_donors, n_selections=3
+    )
+    assert len(set(actual)) == 1, "Should return one index, i.e., three donors."
+    assert all([str(type(donor)) == expected_donor_type for donor in actual]), assertion_type_msg
+    # Expects output equal input
+    actual = chunk_object_single_run.get_random_cohort_sample(
+        all_donors=s_all_donors, n_selections=5
+    )
+    assert_msg = "Should return one index - i.e., three donors - as it won't break the pedigrees."
+    assert len(set(actual)) == 1, assert_msg
+    assert all([str(type(donor)) == expected_donor_type for donor in actual]), assertion_type_msg
+
+    # ---------------------- #
+    # Test background cohort #
+    # ---------------------- #
+    b_sheet = germline_sample_sheet_object_medium_cohort_solo_cases_background
+    b_all_donors = b_sheet.cohort.pedigrees
+    # Expects ValueError for request larger than amount of donors
+    with pytest.raises(ValueError):
+        chunk_object_single_run.get_random_cohort_sample(all_donors=b_all_donors, n_selections=200)
+    # Expects output equal input
+    actual = chunk_object_single_run.get_random_cohort_sample(
+        all_donors=b_all_donors, n_selections=99
+    )
+    assert len(set(actual)) == 99, "Should return 99 indexes, i.e., all solo donors."
+    assert all([str(type(donor)) == expected_donor_type for donor in actual]), assertion_type_msg
+    # Expects output equal input
+    actual = chunk_object_single_run.get_random_cohort_sample(
+        all_donors=b_all_donors, n_selections=50
+    )
+    assert len(set(actual)) == 50, "Should return 50 unique donors."
+    assert all([str(type(donor)) == expected_donor_type for donor in actual]), assertion_type_msg
+
+
+def test_get_cohort_size_from_sheet(
+    chunk_object_single_run,
+    germline_sample_sheet_object,
+    germline_sample_sheet_object_large_cohort_trios_only,
+    germline_sample_sheet_object_large_cohort_diverse_cases,
+):
+    """Tests Chunk::get_cohort_size_from_sheet()"""
+    # Define expected
+    expected_small_cohort = 6
+    expected_large_cohort_trio_only = 501
+    expected_large_cohort_diverse = 200
+    # Get actual - small cohort
+    actual = chunk_object_single_run.get_cohort_size_from_sheet(sheet=germline_sample_sheet_object)
+    assert actual == expected_small_cohort
+    # Get actual - large cohort, trio cases only
+    actual = chunk_object_single_run.get_cohort_size_from_sheet(
+        sheet=germline_sample_sheet_object_large_cohort_trios_only
+    )
+    assert actual == expected_large_cohort_trio_only
+    # Get actual - large cohort, diverse cases
+    actual = chunk_object_single_run.get_cohort_size_from_sheet(
+        sheet=germline_sample_sheet_object_large_cohort_diverse_cases
+    )
+    assert actual == expected_large_cohort_diverse
+
+
+def test_get_cohort_size_from_donors_list(
+    chunk_object_single_run,
+    germline_sample_sheet_object,
+    germline_sample_sheet_object_large_cohort_trios_only,
+    germline_sample_sheet_object_large_cohort_diverse_cases,
+):
+    """Tests Chunk::get_cohort_size_from_donors_list()"""
+    # Test empty list
+    expected_empty_list = 0
+    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=[])
+    assert actual == expected_empty_list
+    # Test small cohort
+    expected_small_cohort = 6
+    s_sheet = germline_sample_sheet_object
+    s_all_donors = s_sheet.cohort.pedigrees
+    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=s_all_donors)
+    assert actual == expected_small_cohort
+    # Test large cohort, trio cases only
+    expected_large_cohort_trio_only = 501
+    lt_sheet = germline_sample_sheet_object_large_cohort_trios_only
+    lt_all_donors = lt_sheet.cohort.pedigrees
+    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=lt_all_donors)
+    assert actual == expected_large_cohort_trio_only
+    # Test large cohort, diverse cases
+    expected_large_cohort_diverse = 200
+    ld_sheet = germline_sample_sheet_object_large_cohort_diverse_cases
+    ld_all_donors = ld_sheet.cohort.pedigrees
+    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=ld_all_donors)
+    assert actual == expected_large_cohort_diverse
+
+
+def test_build_pedigree_count_per_index_dict(
+    chunk_object_single_run,
+    germline_sample_sheet_object,
+    germline_sample_sheet_object_large_cohort_trios_only,
+):
+    """Tests Chunk::build_pedigree_count_per_index_dict()"""
+    # Initialise variables
+    small_sheet = germline_sample_sheet_object
+    trio_only_sheet = germline_sample_sheet_object_large_cohort_trios_only
+
+    # Test small cohort
+    size, out_dict = chunk_object_single_run.build_pedigree_count_per_index_dict(
+        all_pedigrees=small_sheet.cohort.pedigrees
+    )
+    assert size == 6, "Should return 6; individuals: P001 - P006."
+    assert all([k == 3 for k in out_dict.keys()]), "Only trio cases in cohort."
+    assert all([len(v) == 2 for v in out_dict.values()]), "Two indexes: P001, P004."
+
+    # Test large cohort
+    size, out_dict = chunk_object_single_run.build_pedigree_count_per_index_dict(
+        all_pedigrees=trio_only_sheet.cohort.pedigrees
+    )
+    assert size == 501, "Should return 501; individuals: P001 - P501."
+    assert all([k == 3 for k in out_dict.keys()]), "Only trio cases in cohort."
+    assert all([len(v) == 167 for v in out_dict.values()]), "Contains 167 indexes."
+
+
+def test_get_insufficient_space_exception(chunk_object_single_run):
     """Tests Chunk::call_insufficient_space_exception"""
     # Initialise variables
     batch_counter_dict = {0: 29, 1: 29, 2: 28}
@@ -295,9 +490,10 @@ def test_call_insufficient_space_exception(chunk_object_single_run):
     )
     # Get actual
     with pytest.raises(BatchInsufficientSpaceException) as e:
-        chunk_object_single_run.call_insufficient_space_exception(
+        exception = chunk_object_single_run.get_insufficient_space_exception(
             max_batch_size=30, i_size=3, counter_dict=batch_counter_dict
         )
+        raise exception
     actual_msg = e.value.args[0]
     assert actual_msg == expected_msg
 
@@ -325,7 +521,9 @@ def test_split_cohort_into_balanced_chunks(
     balanced_sheet = germline_sample_sheet_object_large_cohort_trios_only
     balanced_pedigree_list = balanced_sheet.cohort.pedigrees
     # Create dict with size of each pedigree
-    pedigree_size_dict = build_pedigree_size_dictionary(all_pedigrees=balanced_sheet.cohort.pedigrees)
+    pedigree_size_dict = build_pedigree_size_dictionary(
+        all_pedigrees=balanced_sheet.cohort.pedigrees
+    )
     # Get actual
     actual = chunk_object_single_run.split_cohort_into_balanced_chunks(
         all_pedigrees=balanced_pedigree_list, max_batch_size=max_batch_size
@@ -391,8 +589,8 @@ def test_split_cohort_into_chunks(chunk_object_single_run):
         all_donors_list=full_list, max_batch_size=25
     )
     # Should return a list
-    actual_type = str(type(actual))
-    assert isinstance(actual, list), "Expected 'list', instead got {t}".format(t=actual_type)
+    actual_type_str = str(type(actual))
+    assert isinstance(actual, list), "Expected 'list', instead got {t}".format(t=actual_type_str)
     # Expects four lists: 100 / 25
     assert len(actual) == 4
     # All lists should have the same size
@@ -407,8 +605,8 @@ def test_split_cohort_into_chunks(chunk_object_single_run):
         all_donors_list=full_list, max_batch_size=25
     )
     # Should return a list
-    actual_type = str(type(actual))
-    assert isinstance(actual, list), "Expected 'list', instead got {t}".format(t=actual_type)
+    actual_type_str = str(type(actual))
+    assert isinstance(actual, list), "Expected 'list', instead got {t}".format(t=actual_type_str)
     # Expects three lists: ceiling( 60 / 25 )
     assert len(actual) == 3
     # All lists should have the same size
@@ -423,7 +621,7 @@ def test_method_single_chunk(germline_sample_sheet_object):
     # Get germline sheet
     sheet = germline_sample_sheet_object
 
-    # Run single
+    # Run method
     single_chunk_run_out = Chunk(method="single", sheet_list=[sheet]).run()
 
     # Expects a single key
@@ -443,7 +641,7 @@ def test_method_single_chunk_large_cohort(germline_sample_sheet_object_large_coh
     # Get germline sheet
     sheet = germline_sample_sheet_object_large_cohort_trios_only
 
-    # Run single
+    # Run method
     single_chunk_run_out = Chunk(method="single", sheet_list=[sheet]).run()
 
     # Expects a single key
@@ -453,6 +651,7 @@ def test_method_single_chunk_large_cohort(germline_sample_sheet_object_large_coh
         assert len(donors_list) == 167
         for donor in donors_list:
             assert donor.wrapped.secondary_id in expected_donors
+
 
 def test_method_evenly_chunk(germline_sample_sheet_object):
     """Tests Chunk::_evenly_chunk() for small cohort"""
@@ -477,7 +676,7 @@ def test_method_evenly_chunk(germline_sample_sheet_object):
 def test_method_evenly_chunk_large_cohort_trio_only(
     germline_sample_sheet_object_large_cohort_trios_only,
 ):
-    """Tests Chunk::_evenly_chunk() for large cohort"""
+    """Tests Chunk::_evenly_chunk() for large cohort - trio cases only"""
     # Initialise variable
     max_chunk = 200
     # Expected donors: P001, P004, ... P496, P499
@@ -493,7 +692,7 @@ def test_method_evenly_chunk_large_cohort_trio_only(
     # Create dict with size of each pedigree
     pedigree_size_dict = build_pedigree_size_dictionary(all_pedigrees=sheet.cohort.pedigrees)
 
-    # Run single
+    # Run method
     evenly_chunk_run_out = Chunk(
         method="evenly", sheet_list=[sheet], maximal_chunk_size=max_chunk
     ).run()
@@ -535,12 +734,12 @@ def test_method_evenly_chunk_large_cohort_diverse_cases(
     # Create dict with size of each pedigree
     pedigree_size_dict = build_pedigree_size_dictionary(all_pedigrees=sheet.cohort.pedigrees)
 
-    # Run single
+    # Run method
     evenly_chunk_run_out = Chunk(
         method="evenly", sheet_list=[sheet], maximal_chunk_size=max_chunk
     ).run()
 
-    # Expects three keys/batches: 200 / 50
+    # Expects four keys/batches: 200 / 50
     assert len(evenly_chunk_run_out) == 4
     for donors_list in evenly_chunk_run_out.values():
         size_pedigrees_list = []
@@ -574,3 +773,172 @@ def test_method_incremental_chunk(germline_sample_sheet_object):
         assert len(donors_list) == 2
         for donor in donors_list:
             assert donor.wrapped.secondary_id in expected_donors
+
+
+def test_method_incremental_chunk_large_cohort_trio_only(
+    germline_sample_sheet_object_large_cohort_trios_only,
+):
+    """Tests Chunk::_incremental_chunk() for large cohort - trio cases only"""
+    # Initialise variable
+    batch_to_donors_id_dict = defaultdict(list)
+    max_chunk = 200
+    # Expected donors: P001, P004, ... P496, P499
+    expected_donors_all = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 501, 3)]
+    # Donor seen count dictionary
+    expected_donors_seen_count_dict = {}
+    for donor in expected_donors_all:
+        expected_donors_seen_count_dict[donor] = 0
+
+    # Get germline sheet
+    sheet = germline_sample_sheet_object_large_cohort_trios_only
+
+    # Create dict with size of each pedigree
+    pedigree_size_dict = build_pedigree_size_dictionary(all_pedigrees=sheet.cohort.pedigrees)
+
+    # Call method
+    chunk_obj = Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=max_chunk)
+    evenly_chunk_run_out = chunk_obj.run()
+
+    # Expects three keys/batches: ceiling( 501 / 200 )
+    assert len(evenly_chunk_run_out) == 3
+    for i_batch in evenly_chunk_run_out.keys():
+        donors_list = evenly_chunk_run_out.get(i_batch)
+        size_pedigrees_list = []
+        for donor in donors_list:
+            id_ = donor.wrapped.secondary_id
+            expected_donors_seen_count_dict[id_] = expected_donors_seen_count_dict.get(id_) + 1
+            size_pedigrees_list.append(pedigree_size_dict.get(id_))
+            batch_to_donors_id_dict[i_batch].append(int(id_.replace("P", "")))
+            # Expects all indexes names to be valid
+            assert id_ in expected_donors_all
+        # Expects no batch larger than max
+        assert sum(size_pedigrees_list) <= max_chunk
+    # Expects that donors only seen once
+    assert all([count == 1 for count in expected_donors_seen_count_dict.values()])
+
+    # Expects that all secondary ids in first batches smaller than the subsequent ones
+    last_batch = len(batch_to_donors_id_dict)  # 1-based index
+    for i_batch in sorted(batch_to_donors_id_dict.keys()):
+        # Nothing to compare last batch to
+        if i_batch == last_batch:
+            break
+        curr_max_id = max(batch_to_donors_id_dict.get(i_batch))
+        next_batch = i_batch + 1
+        next_min_id = min(batch_to_donors_id_dict.get(next_batch))
+        assert curr_max_id < next_min_id
+
+
+def test_method_incremental_chunk_large_cohort_diverse_cases(
+    germline_sample_sheet_object_large_cohort_diverse_cases,
+):
+    """Tests Chunk::_incremental_chunk() for large cohort - diverse cases"""
+    # Initialise variable
+    max_chunk = 90
+
+    # Get germline sheet
+    sheet = germline_sample_sheet_object_large_cohort_diverse_cases
+
+    # Expected donors: P001, P004, ... P199, P200
+    batch_1 = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 91, 3)]  # trios (90 samples)
+    batch_2 = ["P{i}".format(i=str(i).zfill(3)) for i in range(91, 151, 2)]  # duos (60 samples)
+    batch_2 += ["P{i}".format(i=str(i).zfill(3)) for i in range(151, 181, 1)]  # solos (30 samples)
+    batch_3 = ["P{i}".format(i=str(i).zfill(3)) for i in range(181, 201, 1)]  # solos (20 samples)
+    expected_donors_id_dict = {
+        1: batch_1,
+        2: batch_2,
+        3: batch_3,
+    }
+
+    # Create dict with size of each pedigree
+    pedigree_size_dict = build_pedigree_size_dictionary(all_pedigrees=sheet.cohort.pedigrees)
+
+    # Call method
+    chunk_obj = Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=max_chunk)
+    incremental_chunk_run_out = chunk_obj.run()
+
+    # Expects three keys/batches: ceiling( 200 / 90 )
+    assert len(incremental_chunk_run_out) == 3
+
+    # Iterate over batches
+    for i_batch in sorted(incremental_chunk_run_out.keys()):
+        donors_list = incremental_chunk_run_out.get(i_batch)
+        size_pedigrees_list = []
+        for donor in donors_list:
+            id_ = donor.wrapped.secondary_id
+            size = pedigree_size_dict.get(id_)
+            # Expects that:
+            #   batch 1 -> size 3 (trios only)
+            #   batch 2 -> size 1 or 2 (duo and solo)
+            #   batch 3 -> size 1 (solo only)
+            if i_batch == 1:
+                assert size == 3, "Expects that batch 1 only contains trio cases."
+            elif i_batch == 2:
+                assert size in (1, 2), "Expects that batch 2 contains duo and solo cases."
+            elif i_batch == 3:
+                assert size == 1, "Expects that batch 3 contains only solo cases."
+            size_pedigrees_list.append(size)
+            # Expects all indexes names to be valid
+            i_batch_donors_list = expected_donors_id_dict.get(i_batch)
+            assert id_ in i_batch_donors_list
+        # Expects no batch larger than max
+        assert sum(size_pedigrees_list) <= max_chunk
+
+
+def test_method_incremental_chunk_background_and_foreground_cohorts(
+    germline_sample_sheet_object_large_cohort_diverse_cases,
+    germline_sample_sheet_object_medium_cohort_solo_cases_background,
+):
+    """Tests Chunk::_incremental_chunk() for large cohort - diverse cases"""
+    # Initialise variable
+    max_chunk = 90
+
+    # Get germline sheets
+    f_sheet = germline_sample_sheet_object_large_cohort_diverse_cases
+    b_sheet = germline_sample_sheet_object_medium_cohort_solo_cases_background
+
+    # Expected donors: P001, P004, ... P199, P200
+    f_batch_1 = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 91, 3)]  # trios (90 samples)
+    f_batch_2 = ["P{i}".format(i=str(i).zfill(3)) for i in range(91, 151, 2)]  # duos (60 samples)
+    f_batch_2 += ["P{i}".format(i=str(i).zfill(3)) for i in range(151, 181, 1)]  # solos(30 samples)
+    f_batch_3 = ["P{i}".format(i=str(i).zfill(3)) for i in range(181, 201, 1)]  # solos (20 samples)
+    b_batch = ["P{i}".format(i=str(i).zfill(3)) for i in range(900, 1000, 1)]  # solos (99 samples)
+
+    # Create dict with size of each pedigree
+    pedigree_size_dict = {
+        **build_pedigree_size_dictionary(all_pedigrees=f_sheet.cohort.pedigrees),
+        **build_pedigree_size_dictionary(all_pedigrees=b_sheet.cohort.pedigrees),
+    }
+
+    # Call method
+    chunk_obj = Chunk(
+        method="incremental", sheet_list=[f_sheet, b_sheet], maximal_chunk_size=max_chunk
+    )
+    incremental_chunk_run_out = chunk_obj.run()
+
+    # Expects three keys/batches: ceiling( 200 / 90 )
+    assert len(incremental_chunk_run_out) == 3
+
+    # Iterate over batches
+    for i_batch in sorted(incremental_chunk_run_out.keys()):
+        donors_list = incremental_chunk_run_out.get(i_batch)
+        batch_size = 0
+        for donor in donors_list:
+            id_ = donor.wrapped.secondary_id
+            batch_size += pedigree_size_dict.get(id_)
+            # Expects that:
+            #   batch 1 -> size 3 (trios only - foreground)
+            #   batch 2 -> size 1 or 2 (duo and solo - foreground)
+            #   batch 3 -> size 1 (solo only - foreground and background)
+            if i_batch == 1:
+                assert_msg = "Expects that batch 1 only contains trio cases, foreground only."
+                assert id_ in f_batch_1, assert_msg
+            elif i_batch == 2:
+                assert_msg = "Expects that batch 2 contains duo and solo cases, foreground only."
+                assert id_ in f_batch_2, assert_msg
+            elif i_batch == 3:
+                assert_msg = (
+                    "Expects that batch 3 contains only solo cases, both foreground and background."
+                )
+                assert id_ in f_batch_3 or id_ in b_batch, assert_msg
+        # Expects each batch exactly same value as max_chunk - used background samples
+        assert batch_size == max_chunk
