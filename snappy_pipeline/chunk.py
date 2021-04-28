@@ -12,7 +12,7 @@ from collections import defaultdict
 from math import ceil
 import warnings
 
-from biomedsheets.shortcuts import is_not_background
+from biomedsheets.shortcuts import is_background, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
 
@@ -37,13 +37,10 @@ class Chunk:
     #: List of Sample sheets
     sheet_list = None
 
-    #: Maximum number of chunks - used in 'evenly' method
-    maximal_number_of_chunks = None
-
     #: Maximum chunk size - used in 'evenly' method
     maximal_chunk_size = None
 
-    def __init__(self, sheet_list, method, maximal_number_of_chunks=None, maximal_chunk_size=None):
+    def __init__(self, sheet_list, method, maximal_chunk_size=None):
         """Constructor
 
         :param sheet_list: List of Sample Sheets.
@@ -51,10 +48,6 @@ class Chunk:
 
         :param method: Chunk method. Available implementations: 'single', 'evenly', 'incremental'.
         :type method: str
-
-        :param maximal_number_of_chunks: Maximum number of chunks. Used in 'evenly' method to
-        define how to split the cohort.
-        :type maximal_number_of_chunks: int, optional
 
         :param maximal_chunk_size: Maximum chunk size - used in 'evenly' method.
         :type maximal_chunk_size: int, optional
@@ -78,10 +71,18 @@ class Chunk:
             )
         self.sheet_list = sheet_list
 
-        # Set number of chunks
-        self.maximal_number_of_chunks = maximal_number_of_chunks
-
-        # Set chunk size
+        # Validate max chunk size
+        if maximal_chunk_size is not None:
+            err_msg = (
+                "Max number of samples per chunk must be an integer greater than zero. "
+                "Invalid input: '{0}'.".format(maximal_chunk_size)
+            )
+            try:
+                int(maximal_chunk_size)
+                if maximal_chunk_size <= 0:
+                    raise ValueError(err_msg)
+            except ValueError as e:
+                raise type(e)(str(e) + err_msg)
         self.maximal_chunk_size = maximal_chunk_size
 
     def run(self):
@@ -92,16 +93,19 @@ class Chunk:
         # Evenly Chunk
         if self.selected_method == "evenly":
             return self._evenly_chunk(sheet_list=self.sheet_list, max_chunk=self.maximal_chunk_size)
-
+        # Incremental Chunk
+        if self.selected_method == "incremental":
+            return self._evenly_chunk(sheet_list=self.sheet_list, max_chunk=self.maximal_chunk_size)
         return None
 
-    def _evenly_chunk(self, sheet_list, max_chunk):
-        """Define a evenly divided chunks based on sample sheets list.
+    def _incremental_chunk(self, sheet_list, max_chunk):
+        """Define a evenly divided increamental chunk
 
         :param sheet_list: List of Sample Sheets.
         :type sheet_list: list
 
-        :param max_chunk: Maximum number of samples per chunk.
+        :param max_chunk: Number of samples per chunk, if not enough samples it will complement
+        with background samples (when available).
         :type max_chunk: int
 
         :return: Returns dictionary with several chunks indices (keys) associated with the list of
@@ -110,13 +114,43 @@ class Chunk:
         # Initialise variables
         donors_list = []
 
-        # Validate max_chunk
-        if (not isinstance(max_chunk, int)) or max_chunk <= 0:
-            err_msg = (
-                "Max number of samples per chunk must be an integer greater than zero. "
-                "Invalid input: '{0}'.".format(max_chunk)
-            )
-            raise ValueError(err_msg)
+        # Iterate over sheets
+        sheets = list(filter(is_not_background, sheet_list))
+        backgroud_sheets = list(filter(is_background, sheet_list))
+        # Iterate over sheets
+        sheets = list(filter(is_not_background, sheet_list))
+        for sheet in sheets:
+            if len(sheet.cohort.pedigrees) < MIN_CHUNK_SIZE:
+                warn_msg = (
+                    "Cohort in sample sheet contains only {count_} (<{min_}) "
+                    "and won't be split into batches.".format(
+                        count_=str(len(sheet.cohort.pedigrees)), min_=MIN_CHUNK_SIZE
+                    )
+                )
+                warnings.warn(warn_msg)
+                single_run_dict = self._single_chunk(sheet_list=[sheet])
+                balanced_chunks_list = list(single_run_dict.values())
+
+            # TODO: call incremental split
+
+        # Return dictionary
+        return self.batchlist_to_dictionary(batch_lists=donors_list)
+
+    def _evenly_chunk(self, sheet_list, max_chunk):
+        """Define a incremental divided chunks based on sample sheets list.
+
+        :param sheet_list: List of Sample Sheets.
+        :type sheet_list: list
+
+        :param max_chunk: Maximum number of samples per chunk.
+        :type max_chunk: int
+
+        :return: Returns dictionary with several chunks indices (keys) associated with the list of
+        index donors from the cohorts (and background samples if necessary) defined in the sample
+        sheets (values).
+        """
+        # Initialise variables
+        donors_list = []
 
         # Iterate over sheets
         sheets = list(filter(is_not_background, sheet_list))

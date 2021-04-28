@@ -240,12 +240,13 @@ def chunk_object_single_run(germline_sample_sheet_object):
     return Chunk(method="single", sheet_list=[sheet])
 
 
-def test_chunk_constructor():
+def test_chunk_constructor(germline_sample_sheet_object):
     """Tests Chunk::__init__()"""
     # Initialise variables
     valid_methods = ["single", "evenly", "incremental"]
     silly_sheet_list = [1, 2, 3]
     silly_dict = {1: "one"}
+    sheet = germline_sample_sheet_object
 
     # Test only valid methods
     for method in valid_methods:
@@ -261,6 +262,23 @@ def test_chunk_constructor():
 
     with pytest.raises(ValueError):
         Chunk(method="single", sheet_list=[])  # Expects list with at least one entry
+
+    # Tests maximum chunk size - used in 'evenly' and 'incremental'
+    # Expects value greater or equal to zero
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=-2)
+
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=0)
+
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size="_zero_")
+
+    with pytest.raises(ValueError):
+        Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=-2)
+
+    with pytest.raises(ValueError):
+        Chunk(method="incremental", sheet_list=[sheet], maximal_chunk_size=0)
 
 
 def test_call_insufficient_space_exception(chunk_object_single_run):
@@ -436,21 +454,8 @@ def test_method_single_chunk_large_cohort(germline_sample_sheet_object_large_coh
         for donor in donors_list:
             assert donor.wrapped.secondary_id in expected_donors
 
-
-def test_method_evenly_chunk_exception(germline_sample_sheet_object):
-    """Tests Chunk::evenly_chunk() exceptions"""
-    # Get germline sheet
-    sheet = germline_sample_sheet_object
-    # Maximum chunk cannot be negative
-    with pytest.raises(ValueError):
-        Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=-2).run()
-    # Maximum chunk cannot be zero
-    with pytest.raises(ValueError):
-        Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=0).run()
-
-
 def test_method_evenly_chunk(germline_sample_sheet_object):
-    """Tests Chunk::evenly_chunk() for small cohort"""
+    """Tests Chunk::_evenly_chunk() for small cohort"""
     # Expected donors
     expected_donors = ["P001", "P004"]
 
@@ -472,7 +477,7 @@ def test_method_evenly_chunk(germline_sample_sheet_object):
 def test_method_evenly_chunk_large_cohort_trio_only(
     germline_sample_sheet_object_large_cohort_trios_only,
 ):
-    """Tests Chunk::evenly_chunk() for large cohort"""
+    """Tests Chunk::_evenly_chunk() for large cohort"""
     # Initialise variable
     max_chunk = 200
     # Expected donors: P001, P004, ... P496, P499
@@ -516,9 +521,9 @@ def test_method_evenly_chunk_large_cohort_diverse_cases(
     # Initialise variable
     max_chunk = 50
     # Expected donors: P001, P004, ... P199, P200
-    expected_donors = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 91, 3)]
-    expected_donors += ["P{i}".format(i=str(i).zfill(3)) for i in range(91, 151, 2)]
-    expected_donors += ["P{i}".format(i=str(i).zfill(3)) for i in range(151, 201, 1)]
+    expected_donors = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 91, 3)]  # trios
+    expected_donors += ["P{i}".format(i=str(i).zfill(3)) for i in range(91, 151, 2)]  # duos
+    expected_donors += ["P{i}".format(i=str(i).zfill(3)) for i in range(151, 201, 1)]  # solos
     # Donor seen count dictionary
     expected_donors_seen_count_dict = {}
     for donor in expected_donors:
@@ -549,3 +554,23 @@ def test_method_evenly_chunk_large_cohort_diverse_cases(
         assert sum(size_pedigrees_list) <= max_chunk
     # Expects that donors only seen once
     assert all([count == 1 for count in expected_donors_seen_count_dict.values()])
+
+
+def test_method_incremental_chunk(germline_sample_sheet_object):
+    """Tests Chunk::_incremental_chunk() for small cohort"""
+    # Expected donors
+    expected_donors = ["P001", "P004"]
+
+    # Get germline sheet
+    sheet = germline_sample_sheet_object
+    with pytest.warns(UserWarning):
+        evenly_chunk_run_out = Chunk(
+            method="incremental", sheet_list=[sheet], maximal_chunk_size=5
+        ).run()
+    # Expects a dictionary with a single entry
+    assert len(evenly_chunk_run_out) == 1
+    for donors_list in evenly_chunk_run_out.values():
+        # Expects: P001, P004
+        assert len(donors_list) == 2
+        for donor in donors_list:
+            assert donor.wrapped.secondary_id in expected_donors
