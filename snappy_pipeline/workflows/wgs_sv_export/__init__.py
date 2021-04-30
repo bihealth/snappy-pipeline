@@ -106,9 +106,9 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         wgs_sv_annotation = self.parent.sub_workflows["wgs_sv_annotation"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, wgs_sv_annotation(tpl + ext)
 
     @dictify

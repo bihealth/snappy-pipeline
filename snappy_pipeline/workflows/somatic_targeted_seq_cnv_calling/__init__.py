@@ -258,7 +258,9 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_output_files_coverage(self):
-        """The "coverage" action creates a BCF file (CSI+MD5 files) with an entry for each target."""
+        """The "coverage" action creates a BCF file (CSI+MD5 files) with an
+        entry for each target.
+        """
         name_pattern = self.name_pattern.format(action="coverage")
         for key, ext in BCF_KEY_EXTS:
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
@@ -449,31 +451,32 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     def _get_input_files_segment(self, wildcards):
-        input_files = {
-            "cnr": "work/{mapper}.cnvkit.fix.{library_name}/out/{mapper}.cnvkit.fix.{library_name}.cnr".format(
-                **wildcards
-            )
-        }
+        cnr_pattern = (
+            "work/{mapper}.cnvkit.fix.{library_name}/out/{mapper}.cnvkit.fix.{library_name}.cnr"
+        )
+        input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_call(self, wildcards):
-        input_files = {
-            "segment": "work/{mapper}.cnvkit.segment.{library_name}/out/{mapper}.cnvkit.segment.{library_name}.cns".format(
-                **wildcards
-            )
-        }
+        segment_pattern = (
+            "work/{mapper}.cnvkit.segment.{library_name}/out/"
+            "{mapper}.cnvkit.segment.{library_name}.cns"
+        )
+        input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_export(self, wildcards):
-        input_files = {
-            "cns": "work/{mapper}.cnvkit.call.{library_name}/out/{mapper}.cnvkit.call.{library_name}.cns".format(
-                **wildcards
-            )
-        }
+        cns_pattern = (
+            "work/{mapper}.cnvkit.call.{library_name}/out/{mapper}.cnvkit.call.{library_name}.cns"
+        )
+        input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_plot(self, wildcards):
-        tpl = "work/{mapper}.cnvkit.{substep}.{library_name}/out/{mapper}.cnvkit.{substep}.{library_name}.{ext}"
+        tpl = (
+            "work/{mapper}.cnvkit.{substep}.{library_name}/out/"
+            "{mapper}.cnvkit.{substep}.{library_name}.{ext}"
+        )
         input_files = {
             "cnr": tpl.format(substep="fix", ext="cnr", **wildcards),
             "cns": tpl.format(substep="segment", ext="cns", **wildcards),
@@ -603,7 +606,10 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "plot",
             "report",
         ):
-            prefix = "work/{{mapper}}.cnvkit.{action}.{{library_name}}/log/{{mapper}}.cnvkit.{action}.{{library_name}}"
+            prefix = (
+                "work/{{mapper}}.cnvkit.{action}.{{library_name}}/log/"
+                "{{mapper}}.cnvkit.{action}.{{library_name}}"
+            )
         else:
             raise ValueError("Unknown action {}".format(action))
         prefix = prefix.format(action=action)
@@ -852,8 +858,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         self.ensure_w_config(
             ("step_config", "somatic_targeted_seq_cnv_calling", "path_ngs_mapping"),
             (
-                "Path to somatic variant calling not configured but required for targeted sequencing "
-                "CNV calling"
+                "Path to somatic variant calling not configured but required for "
+                "targeted sequencing CNV calling"
             ),
         )
         self.ensure_w_config(

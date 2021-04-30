@@ -242,7 +242,7 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library,[^\.]+}" % (
+        self.name_pattern = r"{mapper}.{caller}.%sde_novos_hard.{index_library,[^\.]+}" % (
             self.prev_token,
         )
         self.base_path_out = os.path.join(

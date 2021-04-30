@@ -284,7 +284,9 @@ class CnvettiStepPart(BaseStepPart):
         modifiers = (("segments_", ".segments"), ("windows_", ".windows"))
         for kmod, emod in modifiers:
             for key, ext in BCF_KEY_EXTS.items():
-                yield kmod + key, os.path.join("work", name_pattern, "out", name_pattern + emod + ext)
+                yield kmod + key, os.path.join(
+                    "work", name_pattern, "out", name_pattern + emod + ext
+                )
 
     @dictify
     def _get_output_files_merge_segments(self):
@@ -358,7 +360,7 @@ class ErdsStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.erds.{{library_name}}/out/" "{{mapper}}.erds.{{library_name}}{ext}"
+            "work/{{mapper}}.erds.{{library_name}}/out/{{mapper}}.erds.{{library_name}}{ext}"
         )
         # Build shortcut from index library name to donor
         self.index_ngs_library_to_donor = OrderedDict()

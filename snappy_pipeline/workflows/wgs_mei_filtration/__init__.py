@@ -165,7 +165,9 @@ class FiltersWgsMeiStepPartBase(BaseStepPart):
         self.base_path_out = os.path.join(
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["wgs_mei_filtration_{}_run".format(self.name)] = {
@@ -322,5 +324,5 @@ class WgsMeiFiltrationWorkflow(BaseStep):
         """Check that the path to the WGS MEI annotation step is present"""
         self.ensure_w_config(
             ("step_config", "wgs_mei_filtration", "path_wgs_mei_annotation"),
-            ("Path to wgs_mei_annotation not configured but must be for " "wgs_mei_filtration"),
+            "Path to wgs_mei_annotation not configured but must be for wgs_mei_filtration",
         )
