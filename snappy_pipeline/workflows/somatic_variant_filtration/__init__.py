@@ -360,12 +360,12 @@ class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        token = (
+        name_pattern = (
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
         )
-        self.base_path_out = os.path.join("work", token, "out", token + "{ext}")
-        self.path_log = os.path.join("work", token, "log", token + ".log")
+        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern + "{ext}")
+        self.path_log = os.path.join("work", name_pattern, "log", name_pattern + ".log")
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_filtration_{}_run".format(self.name)] = {
@@ -506,7 +506,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
         callers = set(self.config["tools_somatic_variant_calling"])
-        token = (
+        name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library.name}."
             "{filter_set}.{exon_list}"
@@ -516,7 +516,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         exon_lists = ["genome_wide"]
         exon_lists += list(self.config["exon_lists"].keys())
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             filter_set=filter_sets,

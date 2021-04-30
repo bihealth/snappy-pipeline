@@ -199,9 +199,9 @@ class WgsMeiAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_mei_calling"],
             ext=EXT_VALUES,

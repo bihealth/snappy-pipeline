@@ -195,8 +195,8 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Per-action token to use in paths
-        self.token = "{{mapper}}.%(name)s_{action}.{{library_name}}" % {"name": self.name}
+        # Per-action name pattern to use in paths
+        self.name_pattern = "{{mapper}}.%(name)s_{action}.{{library_name}}" % {"name": self.name}
 
     def get_input_files(self, action):
         """Return input function for the given action.
@@ -259,20 +259,22 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
     @dictify
     def _get_output_files_coverage(self):
         """The "coverage" action creates a BCF file (CSI+MD5 files) with an entry for each target."""
-        token = self.token.format(action="coverage")
+        name_pattern = self.name_pattern.format(action="coverage")
         for key, ext in BCF_KEY_EXTS:
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_segment(self):
         """The "segment" action creates a BCF file (CSI+MD5 files) with an entry for each target
         (infix ``.targets``) and also for each segment (infix ``.segments``).
         """
-        token = self.token.format(action="segment")
+        name_pattern = self.name_pattern.format(action="segment")
         for infix in ("targets", "segments"):
             for key, ext in BCF_KEY_EXTS:
                 name = "{}_{}".format(infix, key)
-                yield name, os.path.join("work", token, "out", token + "." + infix + ext)
+                yield name, os.path.join(
+                    "work", name_pattern, "out", name_pattern + "." + infix + ext
+                )
 
     @dictify
     def _get_output_files_postprocess(self):
@@ -288,11 +290,13 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         ``gene_log2``
             Per-gene log-fold change information.
         """
-        token = self.token.format(action="postprocess")
+        name_pattern = self.name_pattern.format(action="postprocess")
         for infix in ("targets", "targets_segmented", "segments", "gene_call", "gene_log2"):
             for key, ext in (("txt", ".txt"), ("md5", ".txt.md5")):
                 name = "{}_{}".format(infix, key)
-                yield name, os.path.join("work", token, "out", token + "_" + infix + ext)
+                yield name, os.path.join(
+                    "work", name_pattern, "out", name_pattern + "_" + infix + ext
+                )
 
     def check_config(self):
         """Check configuration"""
@@ -307,14 +311,14 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
         assert action in self.actions, "Invalid action"
-        token = self.token.format(action=action)
+        name_pattern = self.name_pattern.format(action=action)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
         for key, ext in key_ext:
-            yield key, os.path.join("work", token, "log", token + ext)
+            yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
 
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration with resource usage limits for
@@ -507,32 +511,32 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return "work/cnvkit.antitarget/out/antitarget.bed"
 
     def _get_output_files_coverage(self):
-        token = "{mapper}.cnvkit.coverage.{library_name}"
+        name_pattern = "{mapper}.cnvkit.coverage.{library_name}"
         output_files = {}
         for target in ("target", "antitarget"):
             output_files[target] = os.path.join(
-                "work", token, "out", token + ".{}coverage.cnn".format(target)
+                "work", name_pattern, "out", name_pattern + ".{}coverage.cnn".format(target)
             )
         return output_files
 
     def _get_output_files_reference(self):
-        token = "{mapper}.cnvkit.reference.{library_name}"
-        tpl = os.path.join("work", token, "out", token + ".cnn")
+        name_pattern = "{mapper}.cnvkit.reference.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnn")
         return tpl
 
     def _get_output_files_fix(self):
-        token = "{mapper}.cnvkit.fix.{library_name}"
-        tpl = os.path.join("work", token, "out", token + ".cnr")
+        name_pattern = "{mapper}.cnvkit.fix.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
         return tpl
 
     def _get_output_files_segment(self):
-        token = "{mapper}.cnvkit.segment.{library_name}"
-        tpl = os.path.join("work", token, "out", token + ".cns")
+        name_pattern = "{mapper}.cnvkit.segment.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
         return tpl
 
     def _get_output_files_call(self):
-        token = "{mapper}.cnvkit.call.{library_name}"
-        tpl = os.path.join("work", token, "out", token + ".cns")
+        name_pattern = "{mapper}.cnvkit.call.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
         return tpl
 
     @dictify
@@ -565,8 +569,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_output_files_export(self):
         keys = ("bed", "seg", "vcf", "tbi")
         exts = ("bed", "seg", "vcf.gz", "vcf.gz.tbi")
-        token = "{mapper}.cnvkit.export.{library_name}"
-        tpl = os.path.join("work", token, "out", token + ".{ext}")
+        name_pattern = "{mapper}.cnvkit.export.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".{ext}")
         output_files = {}
         for key, ext in zip(keys, exts):
             output_files[key] = tpl.format(ext=ext, **format_id("mapper", "library_name"))
