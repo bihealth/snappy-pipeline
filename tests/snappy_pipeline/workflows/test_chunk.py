@@ -52,6 +52,27 @@ def random_affected_status():
     return random.choice(affected)  # nosec
 
 
+def set_trio_ids(index_i):
+    """Define trio identifiers.
+
+    :param index_i: Index id. Example if '1', final id will be 'P001'
+    :type index_i: int
+
+    :return: Returns tuple with trio identifiers (index, mother, father).
+    Example: ('P001', 'P002', 'P003').
+    """
+    # Initialise variable
+    sampleid_pattern = "P{i}"
+    # Set sample ids for trio
+    index_sampleid = sampleid_pattern.format(i=str(index_i).zfill(3))
+    mother_i = index_i + 1
+    mother_sampleid = sampleid_pattern.format(i=str(mother_i).zfill(3))
+    father_i = index_i + 2
+    father_sampleid = sampleid_pattern.format(i=str(father_i).zfill(3))
+    # Return
+    return index_sampleid, mother_sampleid, father_sampleid
+
+
 def get_entry_for_sample_sheet(index_i, entry_type="trio"):
     """Sample sheet entry text.
 
@@ -64,7 +85,6 @@ def get_entry_for_sample_sheet(index_i, entry_type="trio"):
     :return: Returns text used to define a trio case in sample sheet.
     """
     # Initialise variables
-    sampleid_pattern = "P{i}"
     entry_pattern = (
         "{sampleid}\t{father_sampleid}\t{mother_sampleid}\t{gender}\t{affected}"
         "\tWGS\tAgilent SureSelect Human All Exon V6\t{sampleid}\t.\n"
@@ -80,11 +100,7 @@ def get_entry_for_sample_sheet(index_i, entry_type="trio"):
         raise ValueError(err_msg)
 
     # Set sample ids for trio
-    index_sampleid = sampleid_pattern.format(i=str(index_i).zfill(3))
-    mother_i = index_i + 1
-    mother_sampleid = sampleid_pattern.format(i=str(mother_i).zfill(3))
-    father_i = index_i + 2
-    father_sampleid = sampleid_pattern.format(i=str(father_i).zfill(3))
+    index_sampleid, mother_sampleid, father_sampleid = set_trio_ids(index_i=index_i)
 
     # Set entries for trio
     index_gender = random_gender()
@@ -110,6 +126,85 @@ def get_entry_for_sample_sheet(index_i, entry_type="trio"):
         mother_sampleid=".",
         gender="M",
         affected=father_affected,
+    )
+
+    # Return accordingly
+    if entry_type == "solo":
+        index_entry = index_entry.replace(mother_sampleid, ".").replace(father_sampleid, ".")
+        return index_entry
+    elif entry_type == "duo":
+        index_entry = index_entry.replace(father_sampleid, ".")
+        return index_entry + mother_entry
+    elif entry_type == "trio":
+        return index_entry + mother_entry + father_entry
+    return None
+
+
+def get_entry_for_sample_sheet_with_custom_fields(index_i, batch_number, entry_type="trio"):
+    """Sample sheet entry text with custom fields
+
+    :param index_i: Index id. Example if '1', final id will be 'P001'
+    :type index_i: int
+
+    :param batch_number: Batch number.
+    :type batch_number: int
+
+    :param entry_type: Type of entry: 'solo', 'duo', 'trio'. Default: 'trio'.
+    :type entry_type: str, optional
+
+    :return: Returns text used to define a trio case in sample sheet.
+    """
+    # Initialise variables
+    entry_pattern = (
+        "{familyid}\t{sampleid}\t{father_sampleid}\t{mother_sampleid}\t{gender}\t{affected}"
+        "\t{batch}\tWGS\tAgilent SureSelect Human All Exon V6\t{sampleid}\t.\n"
+    )
+
+    # Validate entry option
+    valid_options = ["solo", "duo", "trio"]
+    if entry_type not in valid_options:
+        valid_options_str = ", ".join(valid_options)
+        err_msg = "Options '{in_}' is not valid. Valid entry types options: {valid}".format(
+            in_=entry_type, valid=valid_options_str
+        )
+        raise ValueError(err_msg)
+
+    # Set sample ids for trio
+    index_sampleid, mother_sampleid, father_sampleid = set_trio_ids(index_i=index_i)
+
+    # Set family id
+    familyid = "FAM_" + index_sampleid
+
+    # Set entries for trio
+    index_gender = random_gender()
+    index_entry = entry_pattern.format(
+        familyid=familyid,
+        sampleid=index_sampleid,
+        father_sampleid=father_sampleid,
+        mother_sampleid=mother_sampleid,
+        gender=index_gender,
+        affected="Y",
+        batch=batch_number,
+    )
+    mother_affected = random_affected_status()
+    mother_entry = entry_pattern.format(
+        familyid=familyid,
+        sampleid=mother_sampleid,
+        father_sampleid=".",
+        mother_sampleid=".",
+        gender="F",
+        affected=mother_affected,
+        batch=batch_number,
+    )
+    father_affected = random_affected_status()
+    father_entry = entry_pattern.format(
+        familyid=familyid,
+        sampleid=father_sampleid,
+        father_sampleid=".",
+        mother_sampleid=".",
+        gender="M",
+        affected=father_affected,
+        batch=batch_number,
     )
 
     # Return accordingly
@@ -204,6 +299,24 @@ def germline_sheet_header():
 
         [Data]
         patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        {entries}
+        """
+    ).lstrip()
+
+
+@pytest.fixture
+def germline_sheet_header_with_custom_fields():
+    """Returns germline TSV file header with custom fields and with wildcard {entries}"""
+    return textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        batchNo\tbioEntity\tBatch No.\tinteger\t.\t.\t.\t.\t.
+        familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\tbatchNo\tlibraryType\tlibraryKit\tfolderName\thpoTerms
         {entries}
         """
     ).lstrip()

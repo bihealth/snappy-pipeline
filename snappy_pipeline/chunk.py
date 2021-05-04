@@ -90,10 +90,13 @@ class Chunk:
     #: List of Sample sheets
     sheet_list = None
 
-    #: Maximum chunk size - used in 'evenly' method
+    #: Maximum chunk size - used in 'evenly' and 'incremental' methods
     maximal_chunk_size = None
 
-    def __init__(self, sheet_list, method, maximal_chunk_size=None):
+    #: List of custom fields in sample sheet - used in 'incremental' to order samples.
+    order_by_custom_field = None
+
+    def __init__(self, sheet_list, method, maximal_chunk_size=None, order_by_custom_field=None):
         """Constructor
 
         :param sheet_list: List of Sample Sheets.
@@ -104,6 +107,10 @@ class Chunk:
 
         :param maximal_chunk_size: Maximum chunk size - used in 'evenly' method.
         :type maximal_chunk_size: int, optional
+
+        :param order_by_custom_field: List of sample sheets custom fields to be used to order the
+        samples in the 'incremental' method.
+        :type order_by_custom_field: list, optional
         """
         # Validate selected method
         if method not in ACTIVE_METHODS:
@@ -145,6 +152,9 @@ class Chunk:
                 "must be defined."
             )
             raise Exception(err_msg)
+
+        # Set order custom field
+        self.order_by_custom_field = order_by_custom_field
 
     def run(self):
         """Runs split in chunks selected method."""
@@ -592,3 +602,16 @@ class Chunk:
                     attempts = 0
         # Return
         return random_donors
+
+    @staticmethod
+    def order_donors_by_field(all_donors, fields):
+        """Order donors by fields.
+
+        :param all_donors: List with all donors in cohort.
+        :type all_donors: list
+
+        :param fields: List of custom fields to be used to order the donors.
+        :type fields: list
+
+        :return: Returns the donors lists ordered by the fields.
+        """
