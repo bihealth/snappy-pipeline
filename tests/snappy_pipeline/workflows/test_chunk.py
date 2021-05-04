@@ -476,8 +476,8 @@ def test_build_pedigree_count_per_index_dict(
     assert all([len(v) == 167 for v in out_dict.values()]), "Contains 167 indexes."
 
 
-def test_get_insufficient_space_exception(chunk_object_single_run):
-    """Tests Chunk::call_insufficient_space_exception"""
+def test_insufficient_space_exception():
+    """Tests BatchInsufficientSpaceException"""
     # Initialise variables
     batch_counter_dict = {0: 29, 1: 29, 2: 28}
     # Define expected
@@ -490,10 +490,9 @@ def test_get_insufficient_space_exception(chunk_object_single_run):
     )
     # Get actual
     with pytest.raises(BatchInsufficientSpaceException) as e:
-        exception = chunk_object_single_run.get_insufficient_space_exception(
-            max_batch_size=30, i_size=3, counter_dict=batch_counter_dict
+        raise BatchInsufficientSpaceException(
+            max_batch_size=30, size_key=3, counter_dict=batch_counter_dict
         )
-        raise exception
     actual_msg = e.value.args[0]
     assert actual_msg == expected_msg
 

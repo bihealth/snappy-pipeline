@@ -28,6 +28,58 @@ MIN_CHUNK_SIZE = 50
 class BatchInsufficientSpaceException(Exception):
     """Raised when none of the batches has enough space to accommodate pedigree"""
 
+    def __init__(self, max_batch_size, size_key, counter_dict):
+        """Constructor.
+
+        :param max_batch_size: Maximum batch size
+        :type max_batch_size: int
+
+        :param size_key: Current pedigree size, i.e., number of samples.
+        :type size_key:  int
+
+        :param counter_dict: Dictionary with number of counters. Key: batch index; Value: number of
+        samples in batch (int).
+        :type counter_dict: dict
+        """
+        # Define custom message
+        message = self.custom_message(
+            max_batch_size=max_batch_size,
+            size_key=size_key,
+            counter_dict=counter_dict,
+        )
+        super().__init__(message)
+
+    @staticmethod
+    def custom_message(max_batch_size, size_key, counter_dict):
+        """Creates custom error message.
+
+        :param max_batch_size: Maximum batch size
+        :type max_batch_size: int
+
+        :param size_key: Current pedigree size, i.e., number of samples.
+        :type size_key:  int
+
+        :param counter_dict: Dictionary with number of counters. Key: batch index; Value: number of
+        samples in batch (int).
+        :type counter_dict: dict
+
+        :return: Returns custom error messaged based on provided input.
+        """
+        # Initialise message
+        message = (
+            "Iterated over all batches and none has enough space. "
+            "Max batch size: {m}; current count: {c}.\n"
+            "Batch structure:\n{s}"
+        )
+        # Dictionary structure to string
+        dict_structure_str = ""
+        for k, v in counter_dict.items():
+            tmp_str = "batch {k} count: {v}\n".format(k=k, v=v)
+            dict_structure_str += tmp_str
+        message = message.format(m=max_batch_size, c=size_key, s=dict_structure_str)
+        # Return
+        return message
+
 
 class Chunk:
     """Class contains methods to split cohort into chunks."""
@@ -364,12 +416,11 @@ class Chunk:
                 while not appropriate_batch_found:
                     # Raise exception if maxed out
                     if attempts > number_of_batches:
-                        exception = self.get_insufficient_space_exception(
+                        raise BatchInsufficientSpaceException(
                             max_batch_size=max_batch_size,
-                            i_size=size_key,
+                            size_key=size_key,
                             counter_dict=batch_counter_dict,
                         )
-                        raise exception
 
                     # Check if iterate all batches once
                     if i_batch not in batch_donors_dict:
@@ -453,36 +504,6 @@ class Chunk:
             "and won't be split into batches.".format(count_=str(cohort_size), min_=MIN_CHUNK_SIZE)
         )
         warnings.warn(warn_msg)
-
-    @staticmethod
-    def get_insufficient_space_exception(max_batch_size, i_size, counter_dict):
-        """Creates error and raises batch insufficient space exception.
-
-        :param max_batch_size: Maximum batch size
-        :type max_batch_size: int
-
-        :param i_size: Current pedigree size, i.e., number of samples.
-        :type i_size:  int
-
-        :param counter_dict: Dictionary with number of counters. Key: batch index; Value: number of
-        samples in batch (int).
-        :type counter_dict: dict
-
-        TODO: Move method to BatchInsufficientSpaceException
-        """
-        # Initialise variable
-        err_msg = (
-            "Iterated over all batches and none has enough space. "
-            "Max batch size: {m}; current count: {c}.\n"
-            "Batch structure:\n{s}"
-        )
-        # Dictionary structure to string
-        dict_structure_str = ""
-        for k, v in counter_dict.items():
-            tmp_str = "batch {k} count: {v}\n".format(k=k, v=v)
-            dict_structure_str += tmp_str
-        err_msg = err_msg.format(m=max_batch_size, c=i_size, s=dict_structure_str)
-        return BatchInsufficientSpaceException(err_msg)
 
     @staticmethod
     def get_cohort_size_from_sheet(sheet):
