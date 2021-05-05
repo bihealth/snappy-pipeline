@@ -289,6 +289,42 @@ def medium_cohort_solo_only_text():
 
 
 @pytest.fixture
+def medium_cohort_diverse_with_custom_fields_text():
+    """Defines arbitrary medium cohort entries for sample sheet with custom fields -
+    diverse cases"""
+    # Initialise variables
+    full_cohort_text = ""
+
+    # Create index list
+    indexes_list = list(range(1, 31, 3))  # 10 trio cases, 30 samples
+    indexes_list += list(range(31, 51, 2))  # 10 duo cases, 20 samples
+    indexes_list += list(range(51, 101, 1))  # 50 solo cases, 50 samples
+
+    # Create case type list - reflects `indexes_list` structure
+    case_list = 10 * ["trio"]
+    case_list += 10 * ["duo"]
+    case_list += 50 * ["solo"]
+
+    # Create batch list
+    batch_list = []
+    for i in range(1, 8, 1):  # 7 batches, 10 cases in each
+        batch_list.extend(10 * [i])
+    batch_list = batch_list[::-1]  # reverse order -> [start:stop:step]
+
+    # Create cohort
+    for index, batch, case in zip(indexes_list, batch_list, case_list):
+        case = get_entry_for_sample_sheet_with_custom_fields(
+            index_i=index, batch_number=batch, entry_type=case
+        )
+        # Append
+        full_cohort_text = full_cohort_text + case
+
+    # Return
+    # Remove last newline so biomedsheet doesn't interpret it as an empty entry
+    return full_cohort_text.rstrip("\n")
+
+
+@pytest.fixture
 def germline_sheet_header():
     """Returns germline TSV file header with wildcard {entries}"""
     return textwrap.dedent(
@@ -326,6 +362,16 @@ def germline_sheet_header_with_custom_fields():
 def medium_cohort_solo_only_tsv(germline_sheet_header, medium_cohort_solo_only_text):
     """Returns contents for medium cohort germline TSV file - solo cases only"""
     return germline_sheet_header.format(entries=medium_cohort_solo_only_text)
+
+
+@pytest.fixture
+def medium_cohort_diverse_with_custom_features_tsv(
+    germline_sheet_header_with_custom_fields, medium_cohort_diverse_with_custom_fields_text
+):
+    """Returns contents for medium cohort germline with custom fields TSV file - diverse cases"""
+    return germline_sheet_header_with_custom_fields.format(
+        entries=medium_cohort_diverse_with_custom_fields_text
+    )
 
 
 @pytest.fixture
@@ -377,6 +423,16 @@ def germline_sample_sheet_object_medium_cohort_solo_cases_background(medium_coho
     sheet.sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
     sheet.sheet.extra_infos["is_background"] = True
     return sheet
+
+
+@pytest.fixture
+def germline_sample_sheet_object_medium_cohort_diverse_with_custom_features(
+    medium_cohort_diverse_with_custom_features_tsv,
+):
+    """Returns GermlineCaseSheet object with medium cohort with custom features - diverse cases."""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(medium_cohort_diverse_with_custom_features_tsv)
+    return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture
@@ -443,6 +499,57 @@ def test_chunk_constructor(germline_sample_sheet_object):
     with pytest.raises(Exception):
         # For 'incremental' max size must be set
         Chunk(method="incremental", sheet_list=[sheet])
+
+
+def test_order_donors_by_field(
+    chunk_object_single_run,
+    germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
+):
+    """Tests Chunk::order_donors_by_field()"""
+    # Define expected
+    # sampleid: P001; familyid: FAM_P001; batch: 7 - first index of batch number 7
+    first_familyid = "FAM_P001"
+    first_batch = 7
+    # sampleid: P100; familyid: FAM_P100; batch: 1 - first index of batch number 1
+    last_familyid = "FAM_P100"
+    last_batch = 1
+
+    # Get sheet
+    sheet = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+    all_pedigrees = sheet.cohort.pedigrees
+
+    # Call method - batch number
+    reordered_pedigrees = chunk_object_single_run.order_donors_by_field(
+        all_pedigrees=all_pedigrees, fields=["batchNo"]
+    )
+    # Get actual
+    actual_first_batch = reordered_pedigrees[0].index.extra_infos.get("batchNo")
+    actual_last_batch = reordered_pedigrees[-1].index.extra_infos.get("batchNo")
+    # Possible point of confusion: the batches were assigned in reversed order
+    assert actual_first_batch == last_batch
+    assert actual_last_batch == first_batch
+    # Expects increase in batch number
+    batch_no = None
+    first_iteration = True
+    for pedigree in reordered_pedigrees:
+        if first_iteration:
+            batch_no = pedigree.index.extra_infos.get("batchNo")
+            first_iteration = False
+            continue
+        else:
+            assert_msg = "Previous batch number should be smaller or equal to current batch number."
+            assert batch_no <= pedigree.index.extra_infos.get("batchNo"), assert_msg
+            batch_no = pedigree.index.extra_infos.get("batchNo")
+
+    # Call method - family id
+    reordered_pedigrees = chunk_object_single_run.order_donors_by_field(
+        all_pedigrees=all_pedigrees, fields=["familyId"]
+    )
+    # Get actual
+    actual_first_familyid = reordered_pedigrees[0].index.extra_infos.get("familyId")
+    actual_last_familyid = reordered_pedigrees[-1].index.extra_infos.get("familyId")
+    assert actual_first_familyid == first_familyid
+    assert actual_last_familyid == last_familyid
 
 
 def test_get_random_cohort_sample(
@@ -1000,7 +1107,7 @@ def test_method_incremental_chunk_background_and_foreground_cohorts(
     germline_sample_sheet_object_large_cohort_diverse_cases,
     germline_sample_sheet_object_medium_cohort_solo_cases_background,
 ):
-    """Tests Chunk::_incremental_chunk() for large cohort - diverse cases"""
+    """Tests Chunk::_incremental_chunk() for foreground and background samples"""
     # Initialise variable
     max_chunk = 90
 
@@ -1054,3 +1161,25 @@ def test_method_incremental_chunk_background_and_foreground_cohorts(
                 assert id_ in f_batch_3 or id_ in b_batch, assert_msg
         # Expects each batch exactly same value as max_chunk - used background samples
         assert batch_size == max_chunk
+
+
+def test_method_incremental_chunk_sort_by_custom_field(
+    germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
+):
+    """Tests Chunk::_incremental_chunk() for sample sheet with custom field"""
+    # Initialise variable
+    max_chunk = 50
+
+    # Get germline sheet
+    sheet = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+
+    # Call method
+    chunk_obj = Chunk(
+        method="incremental",
+        sheet_list=[sheet],
+        maximal_chunk_size=max_chunk,
+        order_by_custom_field=["familyId"],
+    )
+    incremental_chunk_run_out = chunk_obj.run()
+    # TODO: Complete test
+    assert incremental_chunk_run_out

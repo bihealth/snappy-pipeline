@@ -10,6 +10,7 @@ The cohort being analyzed will be splitted into chunks depending on the selected
 """
 from collections import defaultdict
 from math import ceil
+from operator import attrgetter
 import random
 import warnings
 
@@ -167,11 +168,13 @@ class Chunk:
         # Incremental Chunk
         if self.selected_method == "incremental":
             return self._incremental_chunk(
-                sheet_list=self.sheet_list, max_chunk=self.maximal_chunk_size
+                sheet_list=self.sheet_list,
+                max_chunk=self.maximal_chunk_size,
+                fields=self.order_by_custom_field,
             )
         return None
 
-    def _incremental_chunk(self, sheet_list, max_chunk):
+    def _incremental_chunk(self, sheet_list, max_chunk, fields=None):
         """Define an evenly divided incremental chunk based on sample sheet lists.
 
         :param sheet_list: List of Sample Sheets.
@@ -180,6 +183,9 @@ class Chunk:
         :param max_chunk: Number of samples per chunk, if not enough samples it will complement
         with background samples (when available).
         :type max_chunk: int
+
+        :param fields: List of custom fields from donor to be used to order the pedigrees.
+        :type fields: list, optional
 
         :return: Returns dictionary with several chunks indices (keys) associated with the list of
         index donors from the cohorts (and background samples if necessary) defined in the sample
@@ -208,6 +214,7 @@ class Chunk:
                     all_pedigrees=sheet.cohort.pedigrees,
                     all_background_pedigrees=all_background_pedigrees,
                     max_batch_size=max_chunk,
+                    fields=fields,
                 )
             for batch in balanced_chunks_list:
                 donors_list.append(batch)
@@ -299,7 +306,7 @@ class Chunk:
             yield all_donors_list[i : i + max_batch_size]  # noqa: E203
 
     def split_cohort_into_incremental_chunks(
-        self, all_pedigrees, all_background_pedigrees, max_batch_size
+        self, all_pedigrees, all_background_pedigrees, max_batch_size, fields=None
     ):
         """Splits cohorts into incremental chunks taking pedigree order and structure into account.
 
@@ -311,6 +318,9 @@ class Chunk:
 
         :param max_batch_size: Maximum batch size
         :type max_batch_size: int
+
+        :param fields: List of custom fields from donor to be used to order the pedigrees.
+        :type fields: list, optional
 
         :return: Returns subset of donors (i.e., chunks) with maximum number of individuals and
         background samples if applicable.
@@ -331,7 +341,8 @@ class Chunk:
 
         # Iterate over pedigrees sizes and populate batch-donor dict
         # -> use order of pedigrees list
-        # TODO: expand this to use any field to order donors
+        if fields is not None:
+            all_pedigrees = self.order_donors_by_field(all_pedigrees=all_pedigrees, fields=fields)
         i_batch = 0
         for pedigree in all_pedigrees:
             # Get donor info
@@ -604,14 +615,49 @@ class Chunk:
         return random_donors
 
     @staticmethod
-    def order_donors_by_field(all_donors, fields):
+    def order_donors_by_field(all_pedigrees, fields):
         """Order donors by fields.
 
-        :param all_donors: List with all donors in cohort.
-        :type all_donors: list
+        :param all_pedigrees: List with all pedigrees in cohort.
+        :type all_pedigrees: list
 
-        :param fields: List of custom fields to be used to order the donors.
+        :param fields: List of custom fields from donor to be used to order the pedigrees.
         :type fields: list
 
-        :return: Returns the donors lists ordered by the fields.
+        :return: Returns the pedigree list ordered by the fields.
+
+        :raises: AttributeError: when Pedigree in provided list doesn't have nested attributes
+        'index.extra_infos'.
+        :raises: ValueError: when custom field selected for ordering pedigrees is None.
+
+        TODO: Include sample name in sort procedure by default?
+        TODO: Include reversed flag argument?
         """
+        # Initialise exception messages
+        attribute_error_msg = (
+            "\nExpects that Pedigree object has nested attributes 'index.extra_infos'."
+        )
+        value_error_msg = "Values used for ordering cannot be None. Field '{f}'; pedigree: {p}"
+
+        # Validate input
+        if len(fields) == 0:
+            raise ValueError("Argument 'fields' cannot be empty. Please review input.")
+        try:
+            # Test on single case, first one in the list
+            first_pedigree = all_pedigrees[0]
+            for f in fields:
+                if attrgetter("index.extra_infos")(first_pedigree).get(f) is None:
+                    value_error_msg = value_error_msg.format(f=f, p=first_pedigree)
+                    raise ValueError(value_error_msg)
+        except AttributeError as ae:
+            raise type(ae)(ae.message + attribute_error_msg)
+        except ValueError:
+            raise
+
+        # Return ordered pedigree list
+        return sorted(
+            all_pedigrees,
+            key=lambda pedigree: tuple(
+                attrgetter("index.extra_infos")(pedigree).get(field) for field in fields
+            ),
+        )
