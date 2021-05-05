@@ -41,6 +41,7 @@ def test_data_set_info_load_germline_tsv(germline_sheet_fake_fs, config_lookup_p
         False,
         None,
         None,
+        None,
     )
     # Check results
     assert info.name == "first_batch"

@@ -100,6 +100,29 @@ def germline_sheet_tsv():
 
 
 @pytest.fixture
+def germline_trio_plus_sheet_tsv():
+    """Return contents for germline trio plus TSV file"""
+    return textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        family1\tP001\tP002\tP003\tF\tY\tWGS\tAgilent SureSelect Human All Exon V6\tP011\t.
+        family1\tP002\t.\t.\tM\tN\tWGS\tAgilent SureSelect Human All Exon V6\tP002\t.
+        family1\tP003\t.\t.\tF\tN\tWGS\tAgilent SureSelect Human All Exon V6\tP003\t.
+        family2\tP004\tP005\tP006\tM\tY\tWGS\tAgilent SureSelect Human All Exon V6\tP004\t.
+        family2\tP005\t.\t.\tM\tN\tWGS\tAgilent SureSelect Human All Exon V6\tP005\t.
+        family2\tP006\t.\t.\tF\tY\tWGS\tAgilent SureSelect Human All Exon V6\tP006\t.
+        family2\tP007\t.\t.\tF\tY\tWGS\tAgilent SureSelect Human All Exon V6\tP007\t.
+        """
+    ).lstrip()
+
+
+@pytest.fixture
 def cancer_sheet_tsv():
     """Return contents for cancer TSV file"""
     return textwrap.dedent(
@@ -229,6 +252,20 @@ def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
         "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
     )
     return fake_fs2
+
+
+@pytest.fixture
+def germline_trio_plus_sheet_fake_fs(fake_fs, germline_trio_plus_sheet_tsv):
+    """Return fake file system setup with files for the germline_trio_plus_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet_trio_plus.tsv",
+        contents=germline_trio_plus_sheet_tsv,
+        create_missing_dirs=True,
+    )
+    return fake_fs
 
 
 @pytest.fixture
