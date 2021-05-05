@@ -27,6 +27,7 @@ from snakemake.io import touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     merge_dicts,
+    merge_kwargs,
     print_config,
     print_sample_sheets,
     snakefile_path,
@@ -294,6 +295,7 @@ class DataSetInfo:
         mixed_se_pe,
         sodar_uuid,
         sodar_title,
+        pedigree_field=None,
     ):
         """Constructor.
 
@@ -330,6 +332,11 @@ class DataSetInfo:
 
         :param sodar_title: The title of the project in SODAR [optional].
         :type sodar_title: str
+
+        :param pedigree_field: Custom field from sample sheet used to define pedigree, e.g.,
+        'familyId'. If none defined, it will set pedigree based on sample sheet 'row'.
+        Default: None.
+        :type pedigree_field: str
         """
         #: Name of the data set
         self.name = name
@@ -358,6 +365,10 @@ class DataSetInfo:
         self.sodar_uuid = sodar_uuid
         #: The (optional) title of the project in SODAR.
         self.sodar_title = sodar_title
+        #: The (optional) custom field used to define pedigree
+        self.pedigree_field_kwargs = None
+        if pedigree_field:
+            self.pedigree_field_kwargs = {"join_by_field": pedigree_field}
 
     def _load_sheet(self):
         for base in self.base_paths:
@@ -495,14 +506,19 @@ class BaseStep:
         self._check_config()
         #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
+        #: Shortcut BioMed SampleSheet keyword arguments
+        sheet_kwargs_list = [
+            merge_kwargs(
+                first_kwargs=self.sheet_shortcut_kwargs, second_kwargs=info.pedigree_field_kwargs
+            )
+            for info in self.data_set_infos
+        ]
         #: Shortcut sheets
         self.shortcut_sheets = [  # pylint: disable=E1102
             self.__class__.sheet_shortcut_class(
-                sheet,
-                *(self.__class__.sheet_shortcut_args or []),
-                **(self.__class__.sheet_shortcut_kwargs or {})
+                sheet, *(self.__class__.sheet_shortcut_args or []), **(kwargs or {})
             )
-            for sheet in self.sheets
+            for sheet, kwargs in zip(self.sheets, sheet_kwargs_list)
         ]
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
@@ -736,6 +752,7 @@ class BaseStep:
                 data_set.get("mixed_se_pe", False),
                 data_set.get("sodar_uuid", None),
                 data_set.get("sodar_title", None),
+                data_set.get("pedigree_field", None),
             )
 
     @classmethod
