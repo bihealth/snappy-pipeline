@@ -50,6 +50,7 @@ def minimal_config():
             search_paths: ['/path']
             type: germline_variants
             naming_scheme: only_secondary_id
+            pedigree_field: pedigree_field
         """
         ).lstrip()
     )
