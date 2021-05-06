@@ -175,12 +175,14 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.token = "{mapper}.{caller}.%sde_novos.{index_library,[^\.]+}" % (self.prev_token,)
+        self.name_pattern = "{mapper}.{caller}.%sde_novos.{index_library,[^\.]+}" % (
+            self.prev_token,
+        )
         self.base_path_out = os.path.join(
-            "work", self.token, "out", self.token.replace(r",[^\.]+", "")
+            "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
         )
         self.path_log = os.path.join(
-            "work", self.token, "log", self.token.replace(r",[^\.]+", "") + ".log"
+            "work", self.name_pattern, "log", self.name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
     def get_input_files(self, action):
@@ -203,10 +205,10 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             # Input file comes from previous step.
             prev_step = self.parent.sub_workflows[self.previous_step]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                token = self.token.replace(r",[^\.]+", "").replace("de_novos.", "")
+                name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
                 if self.previous_step != "variant_phasing":
-                    token = token.replace("{index_library}", "{real_index}")
-                input_path = ("output/" + token + "/out/" + token).format(
+                    name_pattern = name_pattern.replace("{index_library}", "{real_index}")
+                input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
                     real_index=real_index.dna_ngs_library.name, **wildcards
                 )
                 yield key, prev_step(input_path) + ext
@@ -240,13 +242,15 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.token = "{mapper}.{caller}.%sde_novos_hard.{index_library,[^\.]+}" % (self.prev_token,)
+        self.name_pattern = r"{mapper}.{caller}.%sde_novos_hard.{index_library,[^\.]+}" % (
+            self.prev_token,
+        )
         self.base_path_out = os.path.join(
-            "work", self.token, "out", self.token.replace(r",[^\.]+", "")
+            "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
         )
         self.base_path_in = self.base_path_out.replace("de_novos_hard", "de_novos")
         self.path_log = os.path.join(
-            "work", self.token, "log", self.token.replace(r",[^\.]+", "") + ".log"
+            "work", self.name_pattern, "log", self.name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
     @dictify
@@ -286,13 +290,15 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.token = "{mapper}.{caller}.summarize_counts"
-        self.base_path_out = os.path.join("work", self.token, "out", self.token)
-        self.path_log = os.path.join("work", self.token, "log", self.token + ".log")
+        self.name_pattern = "{mapper}.{caller}.summarize_counts"
+        self.base_path_out = os.path.join("work", self.name_pattern, "out", self.name_pattern)
+        self.path_log = os.path.join("work", self.name_pattern, "log", self.name_pattern + ".log")
 
     @listify
     def get_input_files(self, action):
-        token = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (self.prev_token,)
+        name_pattern = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (
+            self.prev_token,
+        )
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 for donor in pedigree.donors:
@@ -304,7 +310,7 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
                         continue
                     else:
                         yield from expand(
-                            os.path.join("work", token, "out", token + "{ext}"),
+                            os.path.join("work", name_pattern, "out", name_pattern + "{ext}"),
                             index_library=[donor.dna_ngs_library],
                             ext=(".summary.txt",),
                         )
@@ -327,8 +333,8 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
 
     def get_input_files(self, action):
         result = {"gatk_hc": [], "gatk_ug": []}
-        token = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
-        tpl = "work/" + token + "/out/" + token + ".summary.txt"
+        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
+        tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 for donor in pedigree.donors:
@@ -367,8 +373,8 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
 
     @listify
     def get_input_files(self, action):
-        token = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
-        tpl = "work/" + token + "/out/" + token + ".summary.txt"
+        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
+        tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 for donor in pedigree.donors:
@@ -462,10 +468,10 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant de novo filtration workflow."""
         # Hard-filtered results
-        token = "{mapper}.{caller}.%sde_novos_hard.{index_library.name}" % (self.prev_token,)
+        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library.name}" % (self.prev_token,)
         ext_values = list(itertools.chain(EXT_VALUES, (".summary.txt", ".summary.txt.md5")))
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_variant_calling"],
             ext=ext_values,

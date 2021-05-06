@@ -155,17 +155,19 @@ class FiltersWgsMeiStepPartBase(BaseStepPart):
 
     #: Name of the step (e.g., for rule names)
     name = None
-    #: Token to use in file name
-    name_token = None
+    #: Pattern used in file name
+    name_pattern = None
 
     def __init__(self, parent):
         super().__init__(parent)
-        assert self.name_token is not None, "Set into class..."
-        token = self.name_token
+        assert self.name_pattern is not None, "Set into class..."
+        name_pattern = self.name_pattern
         self.base_path_out = os.path.join(
-            "work", token, "out", token.replace(r",[^\.]+", "") + "{ext}"
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
         )
-        self.path_log = os.path.join("work", token, "out", token.replace(r",[^\.]+", "") + ".log")
+        self.path_log = os.path.join(
+            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
+        )
 
     def update_cluster_config(self, cluster_config):
         cluster_config["wgs_mei_filtration_{}_run".format(self.name)] = {
@@ -189,7 +191,9 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
     """Apply the configured filters."""
 
     name = "filter_quality"
-    name_token = r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
+    name_pattern = (
+        r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
+    )
     prev_class = FiltersWgsMeiStepPartBase
     ext_names = EXT_NAMES
     ext_values = EXT_VALUES
@@ -216,7 +220,7 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBa
     """Apply the configured filters."""
 
     name = "filter_inheritance"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
@@ -230,7 +234,7 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
     """Apply the configured filters."""
 
     name = "filter_regions"
-    name_token = (
+    name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{regions,[^\.]+}"
     )
@@ -289,9 +293,9 @@ class WgsMeiFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        token = "{mapper}.{caller}.annotated.filtered.{index_library.name}.{filters}"
+        name_pattern = "{mapper}.{caller}.annotated.filtered.{index_library.name}.{filters}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_mei_calling"],
             ext=EXT_VALUES,
@@ -320,5 +324,5 @@ class WgsMeiFiltrationWorkflow(BaseStep):
         """Check that the path to the WGS MEI annotation step is present"""
         self.ensure_w_config(
             ("step_config", "wgs_mei_filtration", "path_wgs_mei_annotation"),
-            ("Path to wgs_mei_annotation not configured but must be for " "wgs_mei_filtration"),
+            "Path to wgs_mei_annotation not configured but must be for wgs_mei_filtration",
         )

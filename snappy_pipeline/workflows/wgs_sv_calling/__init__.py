@@ -783,10 +783,10 @@ class WgsSvCallingWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
         # Illumina DNA WGS SV calling
         yield from self._yield_result_files_dna_short(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=self.config["tools"]["dna"],
             ext=EXT_VALUES,
@@ -794,14 +794,14 @@ class WgsSvCallingWorkflow(BaseStep):
         # Long Read DNA WGS SV calling
         bed_tools = set(["pb_honey_spots"])
         yield from self._yield_result_files_dna_long(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna_long"],
             caller=set(self.config["tools"]["dna_long"]) - bed_tools,
             ext=EXT_VALUES,
         )
         # Long Read WGS SV Calling (BED output)
         yield from self._yield_result_files_dna_long(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna_long"],
             caller=set(self.config["tools"]["dna_long"]) & bed_tools,
             ext=(".bed", ".bed.md5"),

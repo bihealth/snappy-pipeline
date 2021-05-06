@@ -132,8 +132,8 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.log_path = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.{tumor_library,[^\.]+}/log/snakemake.dkfz_bias_filter.log"
+            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"dkfz_bias_filter.{tumor_library,[^\.]+}/log/snakemake.dkfz_bias_filter.log"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -171,7 +171,7 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.name
 
-    def get_params(self, action):
+    def get_params(self, _action):
         """Return arguments to pass down."""
 
         def params_function(wildcards):
@@ -208,15 +208,15 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
             "output/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_annotation(tpl + ext)
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-        KEY_EXT = {"bam": ".bam", "bai": ".bam.bai"}
+        key_ext = {"bam": ".bam", "bai": ".bam.bai"}
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
 
     @dictify
@@ -224,17 +224,17 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return output files for the filtration"""
         assert action == "run"
         prefix = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
-            "jannovar_annotate_somatic_vcf.dkfz_bias_filter.{tumor_library}"
+            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
+            r"jannovar_annotate_somatic_vcf.dkfz_bias_filter.{tumor_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     @classmethod
@@ -273,14 +273,14 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             "jannovar_annotate_somatic_vcf.dkfz_bias_filter."
             "{tumor_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        for key, ext in KEY_EXT.items():
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        for key, ext in key_ext.items():
             yield key, tpl.format(**wildcards) + ext
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-        KEY_EXT = {"bam": ".bam", "bai": ".bam.bai"}
+        key_ext = {"bam": ".bam", "bai": ".bam.bai"}
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
         yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
@@ -297,18 +297,18 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
     @dictify
     def _get_output_files_run(self):
         prefix = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/out/"
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.eb_filter.{tumor_library}"
+            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/out/"
+            r"{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"dkfz_bias_filter.eb_filter.{tumor_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     @dictify
@@ -360,12 +360,12 @@ class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        token = (
+        name_pattern = (
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
         )
-        self.base_path_out = os.path.join("work", token, "out", token + "{ext}")
-        self.path_log = os.path.join("work", token, "log", token + ".log")
+        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern + "{ext}")
+        self.path_log = os.path.join("work", name_pattern, "log", name_pattern + ".log")
 
     def update_cluster_config(self, cluster_config):
         cluster_config["variant_filtration_{}_run".format(self.name)] = {
@@ -400,8 +400,8 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
             "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
             "{tumor_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        for key, ext in KEY_EXT.items():
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        for key, ext in key_ext.items():
             yield key, tpl + ext
 
     @dictify
@@ -506,7 +506,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
         callers = set(self.config["tools_somatic_variant_calling"])
-        token = (
+        name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library.name}."
             "{filter_set}.{exon_list}"
@@ -516,7 +516,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         exon_lists = ["genome_wide"]
         exon_lists += list(self.config["exon_lists"].keys())
         yield from self._yield_result_files_matched(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             filter_set=filter_sets,
@@ -551,5 +551,5 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "somatic_variant_filtration", "path_somatic_variant_annotation"),
-            ("Path to variant calling not configured but required for somatic variant annotation"),
+            "Path to variant calling not configured but required for somatic variant annotation",
         )
