@@ -19,6 +19,10 @@ shell(
     r"""
 set -x
 
+# Export env variables
+export LC_ALL=C
+export LANG=C
+
 # TODO: remove this again, is for fail early
 # Additional logging for transparency & reproducibility
 # Logging: Save a copy this wrapper (with the pickle details in the header)
