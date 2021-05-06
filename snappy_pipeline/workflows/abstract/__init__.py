@@ -514,12 +514,14 @@ class BaseStep:
             for info in self.data_set_infos
         ]
         #: Shortcut sheets
-        self.shortcut_sheets = [  # pylint: disable=E1102
-            self.__class__.sheet_shortcut_class(
-                sheet, *(self.__class__.sheet_shortcut_args or []), **(kwargs or {})
+        self.shortcut_sheets = []
+        klass = self.__class__.sheet_shortcut_class
+        for sheet, kwargs in zip(self.sheets, sheet_kwargs_list):
+            kwargs = kwargs or {}
+            kwargs = {k: v for k, v in kwargs.items() if k in klass.supported_kwargs}
+            self.shortcut_sheets.append(
+                klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
             )
-            for sheet, kwargs in zip(self.sheets, sheet_kwargs_list)
-        ]
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
         #: Functions from sub workflows, can be used to generate output paths into these workflows
