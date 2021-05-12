@@ -2,7 +2,7 @@ channels:
 - conda-forge
 - bioconda
 - r
-- http://cubiconda.bihealth.org/cubiconda
+- http://cubi-conda.bihealth.org/cubiconda
 dependencies:
 - gatk4
 - htslib ==1.9
