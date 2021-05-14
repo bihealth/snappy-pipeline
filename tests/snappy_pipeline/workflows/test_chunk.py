@@ -476,8 +476,19 @@ def test_chunk_constructor(germline_sample_sheet_object):
     with pytest.raises(ValueError):
         Chunk(method="single", sheet_list=[])  # Expects list with at least one entry
 
+    # Tests minimum chunk size - depends on the tool being used
+    # Expects value greater than zero, cannot be None
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], minimum_chunk_size=-2)
+
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], minimum_chunk_size=0)
+
+    with pytest.raises(ValueError):
+        Chunk(method="evenly", sheet_list=[sheet], minimum_chunk_size="number")
+
     # Tests maximum chunk size - used in 'evenly' and 'incremental'
-    # Expects value greater or equal to zero, cannot be None
+    # Expects value greater than zero, cannot be None
     with pytest.raises(ValueError):
         Chunk(method="evenly", sheet_list=[sheet], maximal_chunk_size=-2)
 

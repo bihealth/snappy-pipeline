@@ -18,10 +18,6 @@ from biomedsheets.shortcuts import is_background, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
 
-# TODO: Figure out a good value for MIN_CHUNK_SIZE. Should it be a class variable and changeable?
-# Minimum allowed chunk
-MIN_CHUNK_SIZE = 50
-
 
 class BatchInsufficientSpaceException(Exception):
     """Raised when none of the batches has enough space to accommodate pedigree"""
@@ -97,7 +93,17 @@ class Chunk:
     #: List of custom fields in sample sheet - used in 'incremental' to order samples.
     order_by_custom_field = None
 
-    def __init__(self, sheet_list, method, maximal_chunk_size=None, order_by_custom_field=None):
+    #: Minimum allowed chunk - different for each tool.
+    minimum_chunk_size = None
+
+    def __init__(
+        self,
+        sheet_list,
+        method,
+        maximal_chunk_size=None,
+        order_by_custom_field=None,
+        minimum_chunk_size=50,
+    ):
         """Constructor
 
         :param sheet_list: List of Sample Sheets.
@@ -112,6 +118,9 @@ class Chunk:
         :param order_by_custom_field: List of sample sheets custom fields to be used to order the
         samples in the 'incremental' method.
         :type order_by_custom_field: list, optional
+
+        :param minimum_chunk_size: Minimum allowed chunk - different for each tool. Default: 50.
+        :type minimum_chunk_size: int, optional
         """
         # Validate selected method
         if method not in self.active_methods:
@@ -132,18 +141,31 @@ class Chunk:
             )
         self.sheet_list = sheet_list
 
+        # Validate min chunk size
+        min_err_msg = (
+            "Min number of samples per chunk must be an integer greater than zero. "
+            "Invalid input: '{0}'.".format(minimum_chunk_size)
+        )
+        try:
+            int(minimum_chunk_size)
+            if minimum_chunk_size <= 1:
+                raise ValueError(min_err_msg)
+        except ValueError as e:
+            raise type(e)(str(e) + min_err_msg)
+        self.minimum_chunk_size = minimum_chunk_size
+
         # Validate max chunk size
         if maximal_chunk_size is not None:
-            err_msg = (
+            max_err_msg = (
                 "Max number of samples per chunk must be an integer greater than zero. "
                 "Invalid input: '{0}'.".format(maximal_chunk_size)
             )
             try:
                 int(maximal_chunk_size)
-                if maximal_chunk_size <= 0:
-                    raise ValueError(err_msg)
+                if maximal_chunk_size <= 1:
+                    raise ValueError(max_err_msg)
             except ValueError as e:
-                raise type(e)(str(e) + err_msg)
+                raise type(e)(str(e) + max_err_msg)
         self.maximal_chunk_size = maximal_chunk_size
 
         # Max chunk must be defined for these methods
@@ -205,8 +227,10 @@ class Chunk:
         for sheet in sheets:
             # Check if makes sense to split cohort
             cohort_size = self.get_cohort_size_from_sheet(sheet)
-            if cohort_size < MIN_CHUNK_SIZE:
-                self.warn_user_cohort_smaller_than_min(cohort_size=cohort_size)
+            if cohort_size < self.minimum_chunk_size:
+                self.warn_user_cohort_smaller_than_min(
+                    cohort_size=cohort_size, min_chunk=self.minimum_chunk_size
+                )
                 single_chunk_out = self._single_chunk(sheet_list=[sheet])
                 balanced_chunks_list = list(single_chunk_out.values())
             else:
@@ -241,8 +265,10 @@ class Chunk:
         for sheet in sheets:
             # Check if makes sense to split cohort
             cohort_size = self.get_cohort_size_from_sheet(sheet)
-            if cohort_size < MIN_CHUNK_SIZE:
-                self.warn_user_cohort_smaller_than_min(cohort_size=cohort_size)
+            if cohort_size < self.minimum_chunk_size:
+                self.warn_user_cohort_smaller_than_min(
+                    cohort_size=cohort_size, min_chunk=self.minimum_chunk_size
+                )
                 single_chunk_out = self._single_chunk(sheet_list=[sheet])
                 balanced_chunks_list = list(single_chunk_out.values())
             else:
@@ -514,15 +540,18 @@ class Chunk:
             return True
 
     @staticmethod
-    def warn_user_cohort_smaller_than_min(cohort_size):
+    def warn_user_cohort_smaller_than_min(cohort_size, min_chunk):
         """Warns user that cohort is smaller than minimum and it won't be split.
 
         :param cohort_size: Number of samples in cohort.
         :type cohort_size: int
+
+        :param min_chunk: Minimum allowed chunk.
+        :type min_chunk: int
         """
         warn_msg = (
             "Cohort in sample sheet contains only {count_} (<{min_}) "
-            "and won't be split into batches.".format(count_=str(cohort_size), min_=MIN_CHUNK_SIZE)
+            "and won't be split into batches.".format(count_=str(cohort_size), min_=min_chunk)
         )
         warnings.warn(warn_msg)
 
