@@ -493,21 +493,22 @@ class Chunk:
         # Return list of batches (list of lists)
         return list(batch_donors_dict.values())
 
-    @staticmethod
-    def build_pedigree_count_per_index_dict(all_pedigrees):
+    def build_pedigree_count_per_index_dict(self, all_pedigrees):
         """Build dictionary with pedigree count per index donor.
 
         :param all_pedigrees: List with all donors in cohort.
         :type all_pedigrees: list
 
-        :return: Returns tuple: number of samples in cohort; dictionary with  pedigree count per
-        index donor (key: size of family; value: donors list).
+        :return: Returns tuple: number of samples in cohort; dictionary with pedigree count per
+        index donor (key: size of family; value: donors list ordered by secondary id).
         """
         # Initialise variables
         cohort_size = 0
         pedigree_count_per_index_dict = defaultdict(list)  # key: size of family; value: donors list
+        # Order pedigrees by secondary id
+        ordered_pedigrees = self.order_donors_by_sampleid(all_pedigrees=all_pedigrees)
         # Iterate over donors to populate size-by-donor dict
-        for pedigree in all_pedigrees:
+        for pedigree in ordered_pedigrees:
             size = len(pedigree.donors)
             index = pedigree.index
             pedigree_count_per_index_dict[size].append(index)
@@ -645,7 +646,7 @@ class Chunk:
 
     @staticmethod
     def order_donors_by_field(all_pedigrees, fields):
-        """Order donors by fields.
+        """Order donors by fields in index.
 
         :param all_pedigrees: List with all pedigrees in cohort.
         :type all_pedigrees: list
@@ -653,14 +654,12 @@ class Chunk:
         :param fields: List of custom fields from donor to be used to order the pedigrees.
         :type fields: list
 
-        :return: Returns the pedigree list ordered by the fields.
+        :return: Returns the pedigree list ordered by the fields. Ties are solved using the
+        secondary_id (sample id).
 
         :raises: AttributeError: when Pedigree in provided list doesn't have nested attributes
         'index.extra_infos'.
         :raises: ValueError: when custom field selected for ordering pedigrees is None.
-
-        TODO: Include sample name in sort procedure by default?
-        TODO: Include reversed flag argument?
         """
         # Initialise exception messages
         attribute_error_msg = (
@@ -686,5 +685,18 @@ class Chunk:
             all_pedigrees,
             key=lambda pedigree: tuple(
                 attrgetter("index.extra_infos")(pedigree).get(field) for field in fields
-            ),
+            )
+            + (pedigree.index.wrapped.secondary_id,),
         )
+
+    @staticmethod
+    def order_donors_by_sampleid(all_pedigrees):
+        """Order donors by sample id of index (secondary_id).
+
+        :param all_pedigrees: List with all pedigrees in cohort.
+        :type all_pedigrees: list
+
+        :return: Returns the pedigree list ordered by sample identifier, i.e., `secondary_id` field
+        from the `BioEntity` object.
+        """
+        return sorted(all_pedigrees, key=lambda pedigree: pedigree.index.wrapped.secondary_id)

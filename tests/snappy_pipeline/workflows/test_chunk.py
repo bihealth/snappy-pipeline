@@ -513,16 +513,39 @@ def test_chunk_constructor(germline_sample_sheet_object):
         Chunk(method="incremental", sheet_list=[sheet])
 
 
+def test_order_donors_by_sampleid(chunk_object_single_run, germline_sample_sheet_object):
+    """Tests Chunk::order_donors_by_sampleid()"""
+    # Get sheet
+    sheet = germline_sample_sheet_object
+    all_pedigrees = sheet.cohort.pedigrees
+
+    # Reverse order and sanity check
+    all_pedigrees_reversed = all_pedigrees[::-1]
+    assert not all(map(lambda x, y: x == y, all_pedigrees, all_pedigrees_reversed))
+
+    # Call method
+    restored_order = chunk_object_single_run.order_donors_by_sampleid(all_pedigrees_reversed)
+
+    # Expects that output in the same order as originally set in sample sheet
+    assert all(map(lambda x, y: x == y, all_pedigrees, restored_order))
+    assert not all(map(lambda x, y: x == y, all_pedigrees, all_pedigrees_reversed))
+
+
 def test_order_donors_by_field(
     chunk_object_single_run,
     germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
 ):
     """Tests Chunk::order_donors_by_field()"""
     # Define expected
-    # Possible point of confusion: the batches were assigned in the reversed order of family ids
+    # Possible point of confusion: the batches were assigned in the reversed order
+    # of family ids for the purpose of testing.
     # sampleid: P001; familyid: FAM_P001; batch: 7 - first index of batch number 7
     first_familyid = "FAM_P001"
     first_batch = 7
+    # sampleid: P028; familyid: FAM_P028; batch: 7 - last index of batch number 7
+    last_fam_of_first_batch = "FAM_P028"
+    # sampleid: P091; familyid: FAM_P091; batch: 1 - first index of batch number 1
+    first_fam_of_last_batch = "FAM_P091"
     # sampleid: P100; familyid: FAM_P100; batch: 1 - last index of batch number 1
     last_familyid = "FAM_P100"
     last_batch = 1
@@ -537,9 +560,13 @@ def test_order_donors_by_field(
     )
     # Get actual
     actual_first_batch = reordered_pedigrees[0].index.extra_infos.get("batchNo")
+    actual_first_familyid = reordered_pedigrees[0].index.extra_infos.get("familyId")
     actual_last_batch = reordered_pedigrees[-1].index.extra_infos.get("batchNo")
+    actual_last_familyid = reordered_pedigrees[-1].index.extra_infos.get("familyId")
     assert actual_first_batch == last_batch
+    assert actual_first_familyid == first_fam_of_last_batch
     assert actual_last_batch == first_batch
+    assert actual_last_familyid == last_fam_of_first_batch
     # Expects increase in batch number
     batch_no = None
     first_iteration = True
