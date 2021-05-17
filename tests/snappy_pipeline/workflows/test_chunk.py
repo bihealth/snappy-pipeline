@@ -816,25 +816,29 @@ def test_get_cohort_size_from_donors_list(
     """Tests Chunk::get_cohort_size_from_donors_list()"""
     # Test empty list
     expected_empty_list = 0
-    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=[])
+    actual = chunk_object_single_run.get_cohort_size_from_pedigrees_list(all_pedigrees=[])
     assert actual == expected_empty_list
     # Test small cohort
     expected_small_cohort = 6
     s_sheet = germline_sample_sheet_object
     s_all_donors = s_sheet.cohort.pedigrees
-    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=s_all_donors)
+    actual = chunk_object_single_run.get_cohort_size_from_pedigrees_list(all_pedigrees=s_all_donors)
     assert actual == expected_small_cohort
     # Test large cohort, trio cases only
     expected_large_cohort_trio_only = 501
     lt_sheet = germline_sample_sheet_object_large_cohort_trios_only
     lt_all_donors = lt_sheet.cohort.pedigrees
-    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=lt_all_donors)
+    actual = chunk_object_single_run.get_cohort_size_from_pedigrees_list(
+        all_pedigrees=lt_all_donors
+    )
     assert actual == expected_large_cohort_trio_only
     # Test large cohort, diverse cases
     expected_large_cohort_diverse = 200
     ld_sheet = germline_sample_sheet_object_large_cohort_diverse_cases
     ld_all_donors = ld_sheet.cohort.pedigrees
-    actual = chunk_object_single_run.get_cohort_size_from_donors_list(donors_list=ld_all_donors)
+    actual = chunk_object_single_run.get_cohort_size_from_pedigrees_list(
+        all_pedigrees=ld_all_donors
+    )
     assert actual == expected_large_cohort_diverse
 
 
@@ -897,6 +901,21 @@ def test_batchlist_to_dictionary(chunk_object_single_run):
     # Get actual
     actual = chunk_object_single_run.batchlist_to_dictionary(input_)
     assert actual == expected
+
+
+def test_pedigree_to_index_list(chunk_object_single_run, germline_sample_sheet_object):
+    """Tests Chunk::pedigree_to_index_list()"""
+    # Expected donors
+    expected_donors_id_list = ["P001", "P004"]
+    # Get germline sheet
+    all_pedigrees = germline_sample_sheet_object.cohort.pedigrees
+    # Run method
+    index_list = chunk_object_single_run.pedigree_to_index_list(all_pedigrees=all_pedigrees)
+    # Expects list with two indexes
+    assert isinstance(index_list, list)
+    assert len(index_list) == 2
+    for donor in index_list:
+        assert donor.wrapped.secondary_id in expected_donors_id_list
 
 
 def test_split_cohort_into_balanced_chunks(
@@ -1392,3 +1411,81 @@ def test_method_incremental_chunk_sort_by_custom_field(
             elif i_batch == 2:
                 assert_msg = "Expects that batch 2 contains duo and trio cases."
                 assert id_ in trio_cases_list or id_ in duo_cases_list, assert_msg
+
+
+def test_method_incremental_chunk_mixed_sequencing_kits(
+    germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits,
+    germline_sample_sheet_object_large_cohort_trios_only,
+):
+    """Tests Chunk::_incremental_chunk() for mix of sequencing kits in sample sheets"""
+    # Initialise variables
+    expected_kit_list = ["Agilent SureSelect Human All Exon V6", "Illumina TruSeq PCR-free"]
+    max_chunk = 50
+
+    # Get sheets
+    l_sheet = germline_sample_sheet_object_large_cohort_trios_only
+    m_sheet = germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits
+
+    # Run method
+    incremental_run_out = Chunk(
+        method="incremental", sheet_list=[l_sheet, m_sheet], maximal_chunk_size=max_chunk
+    ).run()
+
+    # Expects 12 chunks with ~50 Agilent samples each, and 1 chunk with 50 TruSeq
+    # Agilent batches: (16 trios), (16 trios), ..., (16 trios), (10 trios, 20 solos), (30 solos)
+    # TruSeq batch: (50 solos)
+    assert len(incremental_run_out) == 13
+    # Iterate over batches
+    for i_batch in sorted(incremental_run_out.keys()):
+        donors = incremental_run_out.get(i_batch)
+        first_entry = True
+        subset_library_kit_name = None
+        for donor in donors:
+            if first_entry:
+                # Get first kit name
+                subset_library_kit_name = donor.dna_ngs_library.ngs_library.extra_infos.get(
+                    "libraryKit"
+                )
+                continue
+            # Expects that library kits in lists are the same across for all subset
+            i_lib = donor.dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+            assert i_lib == subset_library_kit_name
+            # Expects that library name in expected list (XOR)
+            assert i_lib in expected_kit_list
+
+
+def test_method_incremental_chunk_mixed_sequencing_kits_and_background(
+    germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits,
+    germline_sample_sheet_object_large_cohort_trios_only,
+    germline_sample_sheet_object_medium_cohort_solo_cases_background,
+):
+    """Tests Chunk::_incremental_chunk() for mix of sequencing kits in sample sheets"""
+    # Initialise variables
+    max_chunk = 50
+
+    # Get sheets
+    l_sheet = germline_sample_sheet_object_large_cohort_trios_only
+    m_sheet = germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits
+    b_sheet = germline_sample_sheet_object_medium_cohort_solo_cases_background
+
+    # Create dict with size of each pedigree
+    pedigree_size_dict = {
+        **build_pedigree_size_dictionary(all_pedigrees=l_sheet.cohort.pedigrees),
+        **build_pedigree_size_dictionary(all_pedigrees=m_sheet.cohort.pedigrees),
+        **build_pedigree_size_dictionary(all_pedigrees=b_sheet.cohort.pedigrees),
+    }
+
+    # Run method
+    incremental_run_out = Chunk(
+        method="incremental", sheet_list=[l_sheet, m_sheet, b_sheet], maximal_chunk_size=max_chunk
+    ).run()
+
+    # Iterate over batches
+    for i_batch in sorted(incremental_run_out.keys()):
+        donors = incremental_run_out.get(i_batch)
+        batch_size = 0
+        for donor in donors:
+            id_ = donor.wrapped.secondary_id
+            batch_size += pedigree_size_dict.get(id_)
+        # Expects all chunks with max given that background samples were provided
+        assert batch_size == max_chunk

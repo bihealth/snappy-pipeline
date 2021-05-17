@@ -215,27 +215,36 @@ class Chunk:
         """
         # Initialise variables
         donors_list = []
+        all_foreground_pedigrees = []
+        all_background_pedigrees = []
+
+        # Define foreground samples
+        sheets = list(filter(is_not_background, sheet_list))
+        for f_sheet in sheets:
+            all_foreground_pedigrees.extend(f_sheet.cohort.pedigrees)
 
         # Define background samples
-        sheets = list(filter(is_not_background, sheet_list))
         background_sheets = list(filter(is_background, sheet_list))
-        all_background_pedigrees = []
         for b_sheet in background_sheets:
             all_background_pedigrees.extend(b_sheet.cohort.pedigrees)
 
+        # Subset pedigrees by sequencing kit
+        pedigrees_by_kit_lists = self.split_pedigrees_by_sequencing_kit(
+            all_pedigrees=all_foreground_pedigrees
+        )
+
         # Iterate over sheets
-        for sheet in sheets:
+        for i_pedigrees in pedigrees_by_kit_lists:
             # Check if makes sense to split cohort
-            cohort_size = self.get_cohort_size_from_sheet(sheet)
+            cohort_size = self.get_cohort_size_from_pedigrees_list(all_pedigrees=i_pedigrees)
             if cohort_size < self.minimum_chunk_size:
                 self.warn_user_cohort_smaller_than_min(
                     cohort_size=cohort_size, min_chunk=self.minimum_chunk_size
                 )
-                single_chunk_out = self._single_chunk(sheet_list=[sheet])
-                balanced_chunks_list = list(single_chunk_out.values())
+                balanced_chunks_list = [self.pedigree_to_index_list(all_pedigrees=i_pedigrees)]
             else:
                 balanced_chunks_list = self.split_cohort_into_incremental_chunks(
-                    all_pedigrees=sheet.cohort.pedigrees,
+                    all_pedigrees=i_pedigrees,
                     all_background_pedigrees=all_background_pedigrees,
                     max_batch_size=max_chunk,
                     fields=fields,
@@ -259,21 +268,32 @@ class Chunk:
         """
         # Initialise variables
         donors_list = []
+        all_foreground_pedigrees = []
+
+        # Define foreground samples
+        sheets = list(filter(is_not_background, sheet_list))
+        for f_sheet in sheets:
+            all_foreground_pedigrees.extend(f_sheet.cohort.pedigrees)
+
+        # Subset pedigrees by sequencing kit
+        pedigrees_by_kit_lists = self.split_pedigrees_by_sequencing_kit(
+            all_pedigrees=all_foreground_pedigrees
+        )
 
         # Iterate over sheets
-        sheets = list(filter(is_not_background, sheet_list))
-        for sheet in sheets:
+        for i_pedigrees in pedigrees_by_kit_lists:
             # Check if makes sense to split cohort
-            cohort_size = self.get_cohort_size_from_sheet(sheet)
+            cohort_size = self.get_cohort_size_from_pedigrees_list(all_pedigrees=i_pedigrees)
+            print(cohort_size)
             if cohort_size < self.minimum_chunk_size:
                 self.warn_user_cohort_smaller_than_min(
                     cohort_size=cohort_size, min_chunk=self.minimum_chunk_size
                 )
-                single_chunk_out = self._single_chunk(sheet_list=[sheet])
-                balanced_chunks_list = list(single_chunk_out.values())
+                balanced_chunks_list = [self.pedigree_to_index_list(all_pedigrees=i_pedigrees)]
+                print(balanced_chunks_list)
             else:
                 balanced_chunks_list = self.split_cohort_into_balanced_chunks(
-                    all_pedigrees=sheet.cohort.pedigrees, max_batch_size=max_chunk
+                    all_pedigrees=i_pedigrees, max_batch_size=max_chunk
                 )
             for batch in balanced_chunks_list:
                 donors_list.append(batch)
@@ -300,6 +320,19 @@ class Chunk:
                 donors_list.append(index_donor)
         # Return simple dictionary
         return self.batchlist_to_dictionary(batch_lists=[donors_list])
+
+    @staticmethod
+    @listify
+    def pedigree_to_index_list(all_pedigrees):
+        """Create list of indexes from pedigrees.
+
+        :param all_pedigrees: List of all Pedigrees in cohort.
+        :type all_pedigrees: list
+
+        :return: Returns list of indexes from the inputted pedigrees.
+        """
+        for pedigree in all_pedigrees:
+            yield pedigree.index
 
     @staticmethod
     @dictify
@@ -351,8 +384,9 @@ class Chunk:
         :return: Returns subset of donors (i.e., chunks) with maximum number of individuals and
         background samples if applicable.
 
-        :raises: Exception: when final observed number of batches is different than expected
-        (logical error). Expected: ceiling(cohort_size / max_batch_size).
+        :raises: Exception: when final observed number of batches is smaller than expected.
+        Expected: ceiling(cohort_size / max_batch_size). It can be larger as it expected that it
+        won't always be possible to split the cohort evenly.
         """
         # Initialise variables
         cohort_size = 0
@@ -361,8 +395,8 @@ class Chunk:
 
         # Check if background samples available
         use_background = len(all_background_pedigrees) > 0
-        n_background_samples = self.get_cohort_size_from_donors_list(
-            donors_list=all_background_pedigrees
+        n_background_samples = self.get_cohort_size_from_pedigrees_list(
+            all_pedigrees=all_background_pedigrees
         )
 
         # Iterate over pedigrees sizes and populate batch-donor dict
@@ -409,12 +443,14 @@ class Chunk:
                     batch_donors_dict[i_batch].extend(random_background_sample)
 
         # Sanity Check
+        # It won't necessarily be possible to split the cohort exactly, hence
+        # it should return at least the number of expected batches.
         expected_number_of_batches = ceil(cohort_size / max_batch_size)
         observed_number_of_batches = len(batch_donors_dict.keys())
-        if observed_number_of_batches != expected_number_of_batches:
+        if expected_number_of_batches > observed_number_of_batches:
             err_msg = (
-                "Observed number of batches ({onb}) is different than expected ({enb}). Logic: "
-                "ceiling( {size} / {max_} )".format(
+                "Observed number of batches ({onb}) is smaller than expected ({enb}). Expected "
+                "logic: ceiling( {size} / {max_} )".format(
                     onb=observed_number_of_batches,
                     enb=expected_number_of_batches,
                     size=cohort_size,
@@ -576,18 +612,18 @@ class Chunk:
         return cohort_size
 
     @staticmethod
-    def get_cohort_size_from_donors_list(donors_list):
-        """Get cohort size from donors list.
+    def get_cohort_size_from_pedigrees_list(all_pedigrees):
+        """Get cohort size from pedigrees list.
 
-        :param donors_list: Donors list.
-        :type donors_list: list
+        :param all_pedigrees: List of all pedigrees.
+        :type all_pedigrees: list
 
-        :return: Returns number of samples in cohort represented by donors list.
+        :return: Returns number of samples in pedigree list.
         """
         # Initialise variable
         cohort_size = 0
         # Iterate over pedigrees
-        for d in donors_list:
+        for d in all_pedigrees:
             cohort_size += len(d.donors)
         # Return
         return cohort_size
@@ -613,7 +649,7 @@ class Chunk:
         # Initialise variable
         random_donors = []
         # Validate input
-        length_all_donors_list = self.get_cohort_size_from_donors_list(donors_list=all_donors)
+        length_all_donors_list = self.get_cohort_size_from_pedigrees_list(all_pedigrees=all_donors)
         if n_selections > length_all_donors_list:
             err_msg = (
                 "Cannot provide sample larger than there are donors. "
