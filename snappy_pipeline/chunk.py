@@ -646,8 +646,7 @@ class Chunk:
         # Return
         return random_donors
 
-    @staticmethod
-    def order_pedigrees_by_field(all_pedigrees, fields):
+    def order_pedigrees_by_field(self, all_pedigrees, fields):
         """Order pedigrees by fields in index.
 
         :param all_pedigrees: List with all pedigrees in cohort.
@@ -663,33 +662,46 @@ class Chunk:
         'index.extra_infos'.
         :raises: ValueError: when custom field selected for ordering pedigrees is None.
         """
-        # Initialise exception messages
-        attribute_error_msg = (
-            "\nExpects that Pedigree object has nested attributes 'index.extra_infos'."
-        )
-        value_error_msg = "Values used for ordering cannot be None. Field '{f}'; pedigree: {p}"
-
         # Validate input
         if len(fields) == 0:
             raise ValueError("Argument 'fields' cannot be empty. Please review input.")
-        try:
-            # Test on single case, first one in the list
-            first_pedigree = all_pedigrees[0]
-            for f in fields:
-                if attrgetter("index.extra_infos")(first_pedigree).get(f) is None:
-                    value_error_msg = value_error_msg.format(f=f, p=first_pedigree)
-                    raise ValueError(value_error_msg)
-        except AttributeError as ae:
-            raise type(ae)(ae.message + attribute_error_msg)
-
         # Return ordered pedigree list
         return sorted(
             all_pedigrees,
             key=lambda pedigree: tuple(
-                attrgetter("index.extra_infos")(pedigree).get(field) for field in fields
+                self.get_max_field_value_from_donors(pedigree, field) for field in fields
             )
             + (pedigree.index.wrapped.secondary_id,),
         )
+
+    @staticmethod
+    def get_max_field_value_from_donors(pedigree, field):
+        """
+        :param pedigree: Pedigree object.
+        :type pedigree: biomedsheets.shortcuts.germline.Pedigree
+
+        :param field: Custom fields from donor.
+        :type field: str
+
+        :return: Max value of a field for a set of donors in a pedigree.
+        """
+        # Initialise variables
+        values_list = []
+        # Initialise exception messages
+        attribute_error_msg = "\nExpects that Donor object have attribute 'extra_infos'."
+        value_error_msg = "Values used for ordering cannot be None. Field '{f}'; donor: {p}"
+        # Collect all values
+        for donor in pedigree.donors:
+            try:
+                field_value = attrgetter("extra_infos")(donor).get(field)
+                values_list.append(field_value)
+                if field_value is None:
+                    value_error_msg = value_error_msg.format(f=field, p=donor)
+                    raise ValueError(value_error_msg)
+            except AttributeError as ae:
+                raise type(ae)(ae.message + attribute_error_msg)
+        # Return max value
+        return max(values_list)
 
     @staticmethod
     def order_pedigrees_by_sampleid(all_pedigrees):

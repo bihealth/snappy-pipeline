@@ -221,7 +221,41 @@ def get_entry_for_sample_sheet_with_custom_fields(index_i, batch_number, entry_t
 
 
 @pytest.fixture
-def large_cohort_trios_only_text():
+def header_germline_sheet():
+    """Returns germline TSV file header with wildcard '{entries}'"""
+    return textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        {entries}
+        """
+    ).lstrip()
+
+
+@pytest.fixture
+def header_germline_sheet_with_custom_fields():
+    """Returns germline TSV file header with custom fields and with wildcard '{entries}'"""
+    return textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        batchNo\tbioEntity\tBatch No.\tinteger\t.\t.\t.\t.\t.
+        familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\tbatchNo\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        {entries}
+        """
+    ).lstrip()
+
+
+@pytest.fixture
+def text_large_cohort_trios_only():
     """Defines arbitrary large cohort entries for sample sheet - trio cases only"""
     # Initialise variables
     n_patients_cohorts = 501  # 167 indexes
@@ -240,7 +274,7 @@ def large_cohort_trios_only_text():
 
 
 @pytest.fixture
-def large_cohort_diverse_text():
+def text_large_cohort_diverse():
     """Defines arbitrary large cohort entries for sample sheet - diverse cases"""
     # Initialise variables
     full_cohort_text = ""
@@ -272,7 +306,7 @@ def large_cohort_diverse_text():
 
 
 @pytest.fixture
-def medium_cohort_solo_only_text():
+def text_medium_cohort_solo_only():
     """Defines arbitrary medium cohort entries for sample sheet - solo case only"""
     # Initialise variables
     full_cohort_text = ""
@@ -290,7 +324,7 @@ def medium_cohort_solo_only_text():
 
 
 @pytest.fixture
-def medium_cohort_diverse_with_custom_fields_text():
+def text_medium_cohort_diverse_with_custom_fields():
     """Defines arbitrary medium cohort entries for sample sheet with custom fields -
     diverse cases"""
     # Initialise variables
@@ -326,82 +360,77 @@ def medium_cohort_diverse_with_custom_fields_text():
 
 
 @pytest.fixture
-def germline_sheet_header():
-    """Returns germline TSV file header with wildcard '{entries}'"""
-    return textwrap.dedent(
+def text_small_cohort_trio_with_custom_fields():
+    """Defines small cohort entries for sample sheet with custom fields - two trio cases"""
+    return (
+        textwrap.dedent(
+            """
+        FAM_P001\tP001\tP002\tP003\tF\tY\t1\tWGS\tAgilent SureSelect Human All Exon V6\tP001\t.
+        FAM_P001\tP002\t.\t.\tM\tN\t1\tWGS\tAgilent SureSelect Human All Exon V6\tP002\t.
+        FAM_P001\tP003\t.\t.\tF\tN\t3\tWGS\tAgilent SureSelect Human All Exon V6\tP003\t.
+        FAM_P004\tP004\tP005\tP006\tM\tY\t2\tWGS\tAgilent SureSelect Human All Exon V6\tP004\t.
+        FAM_P004\tP005\t.\t.\tM\tN\t2\tWGS\tAgilent SureSelect Human All Exon V6\tP005\t.
+        FAM_P004\tP006\t.\t.\tF\tY\t2\tWGS\tAgilent SureSelect Human All Exon V6\tP006\t.
         """
-        [Custom Fields]
-        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
-        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
-
-        [Data]
-        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
-        {entries}
-        """
-    ).lstrip()
+        )
+        .lstrip()
+        .strip()
+    )
 
 
 @pytest.fixture
-def germline_sheet_header_with_custom_fields():
-    """Returns germline TSV file header with custom fields and with wildcard '{entries}'"""
-    return textwrap.dedent(
-        """
-        [Custom Fields]
-        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
-        batchNo\tbioEntity\tBatch No.\tinteger\t.\t.\t.\t.\t.
-        familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.
-        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
-
-        [Data]
-        familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\tbatchNo\tlibraryType\tlibraryKit\tfolderName\thpoTerms
-        {entries}
-        """
-    ).lstrip()
+def tsv_large_cohort_trios_only_germline_sheet(header_germline_sheet, text_large_cohort_trios_only):
+    """Returns contents for large cohort germline TSV file - trio cases only"""
+    return header_germline_sheet.format(entries=text_large_cohort_trios_only)
 
 
 @pytest.fixture
-def medium_cohort_solo_only_tsv(germline_sheet_header, medium_cohort_solo_only_text):
+def tsv_large_cohort_diverse_cases_germline_sheet(header_germline_sheet, text_large_cohort_diverse):
+    """Returns contents for large cohort germline TSV file - diverse cases"""
+    return header_germline_sheet.format(entries=text_large_cohort_diverse)
+
+
+@pytest.fixture
+def tsv_medium_cohort_solo_only(header_germline_sheet, text_medium_cohort_solo_only):
     """Returns contents for medium cohort germline TSV file - solo cases only"""
-    return germline_sheet_header.format(entries=medium_cohort_solo_only_text)
+    return header_germline_sheet.format(entries=text_medium_cohort_solo_only)
 
 
 @pytest.fixture
-def medium_cohort_diverse_ngs_kit_solo_only_tsv(
-    germline_sheet_header, medium_cohort_solo_only_text
+def tsv_medium_cohort_diverse_ngs_kit_solo_only(
+    header_germline_sheet, text_medium_cohort_solo_only
 ):
     """Returns contents for medium cohort germline TSV file - solo cases only with two different
     NGS sequencing kits.
     """
     # Change sequencing kit for 1/2 the entries
-    entries_list = medium_cohort_solo_only_text.splitlines()
+    entries_list = text_medium_cohort_solo_only.splitlines()
     for i in range(50):
         entries_list[i] = entries_list[i].replace(
             "Agilent SureSelect Human All Exon V6", "Illumina TruSeq PCR-free"
         )
     new_entries_test = "\n".join(entries_list)
-    return germline_sheet_header.format(entries=new_entries_test)
+    return header_germline_sheet.format(entries=new_entries_test)
 
 
 @pytest.fixture
-def medium_cohort_diverse_with_custom_features_tsv(
-    germline_sheet_header_with_custom_fields, medium_cohort_diverse_with_custom_fields_text
+def tsv_medium_cohort_diverse_with_custom_features(
+    header_germline_sheet_with_custom_fields, text_medium_cohort_diverse_with_custom_fields
 ):
     """Returns contents for medium cohort germline with custom fields TSV file - diverse cases"""
-    return germline_sheet_header_with_custom_fields.format(
-        entries=medium_cohort_diverse_with_custom_fields_text
+    return header_germline_sheet_with_custom_fields.format(
+        entries=text_medium_cohort_diverse_with_custom_fields
     )
 
 
 @pytest.fixture
-def large_cohort_trios_only_germline_sheet_tsv(germline_sheet_header, large_cohort_trios_only_text):
-    """Returns contents for large cohort germline TSV file - trio cases only"""
-    return germline_sheet_header.format(entries=large_cohort_trios_only_text)
-
-
-@pytest.fixture
-def large_cohort_diverse_cases_germline_sheet_tsv(germline_sheet_header, large_cohort_diverse_text):
-    """Returns contents for large cohort germline TSV file - diverse cases"""
-    return germline_sheet_header.format(entries=large_cohort_diverse_text)
+def tsv_small_cohort_with_custom_features(
+    header_germline_sheet_with_custom_fields, text_small_cohort_trio_with_custom_fields
+):
+    """Returns contents for small cohort germline with custom fields TSV file - two trio cases"""
+    return header_germline_sheet_with_custom_fields.format(
+        entries=text_small_cohort_trio_with_custom_fields
+    )
 
 
 @pytest.fixture
@@ -414,29 +443,29 @@ def germline_sample_sheet_object(germline_sheet_tsv):
 
 @pytest.fixture
 def germline_sample_sheet_object_large_cohort_trios_only(
-    large_cohort_trios_only_germline_sheet_tsv,
+    tsv_large_cohort_trios_only_germline_sheet,
 ):
     """Returns GermlineCaseSheet object with large cohort - trio cases only"""
     # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(large_cohort_trios_only_germline_sheet_tsv)
+    germline_sheet_io = io.StringIO(tsv_large_cohort_trios_only_germline_sheet)
     return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture
 def germline_sample_sheet_object_large_cohort_diverse_cases(
-    large_cohort_diverse_cases_germline_sheet_tsv,
+    tsv_large_cohort_diverse_cases_germline_sheet,
 ):
     """Returns GermlineCaseSheet object with large cohort - trio cases onl."""
     # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(large_cohort_diverse_cases_germline_sheet_tsv)
+    germline_sheet_io = io.StringIO(tsv_large_cohort_diverse_cases_germline_sheet)
     return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture
-def germline_sample_sheet_object_medium_cohort_solo_cases_background(medium_cohort_solo_only_tsv):
+def germline_sample_sheet_object_medium_cohort_solo_cases_background(tsv_medium_cohort_solo_only):
     """Returns GermlineCaseSheet object with medium background cohort - solo cases only"""
     # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(medium_cohort_solo_only_tsv)
+    germline_sheet_io = io.StringIO(tsv_medium_cohort_solo_only)
     sheet = GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
     sheet.sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
     sheet.sheet.extra_infos["is_background"] = True
@@ -445,23 +474,33 @@ def germline_sample_sheet_object_medium_cohort_solo_cases_background(medium_coho
 
 @pytest.fixture
 def germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits(
-    medium_cohort_diverse_ngs_kit_solo_only_tsv,
+    tsv_medium_cohort_diverse_ngs_kit_solo_only,
 ):
     """Returns GermlineCaseSheet object with medium cohort with two different sequencing kits -
     only solo cases
     """
     # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(medium_cohort_diverse_ngs_kit_solo_only_tsv)
+    germline_sheet_io = io.StringIO(tsv_medium_cohort_diverse_ngs_kit_solo_only)
     return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture
 def germline_sample_sheet_object_medium_cohort_diverse_with_custom_features(
-    medium_cohort_diverse_with_custom_features_tsv,
+    tsv_medium_cohort_diverse_with_custom_features,
 ):
     """Returns GermlineCaseSheet object with medium cohort with custom features - diverse cases"""
     # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(medium_cohort_diverse_with_custom_features_tsv)
+    germline_sheet_io = io.StringIO(tsv_medium_cohort_diverse_with_custom_features)
+    return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
+
+
+@pytest.fixture
+def germline_sample_sheet_object_small_cohort_with_custom_features(
+    tsv_small_cohort_with_custom_features,
+):
+    """Returns GermlineCaseSheet object with medium cohort with custom features - diverse cases"""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(tsv_small_cohort_with_custom_features)
     return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
@@ -599,6 +638,26 @@ def test_order_pedigrees_by_sampleid(chunk_object_single_run, germline_sample_sh
     # Expects that output in the same order as originally set in sample sheet
     assert all(map(lambda x, y: x == y, all_pedigrees, restored_order))
     assert not all(map(lambda x, y: x == y, all_pedigrees, all_pedigrees_reversed))
+
+
+def test_get_max_field_value_from_donors(
+    chunk_object_single_run, germline_sample_sheet_object_small_cohort_with_custom_features
+):
+    """Tests Chunk::get_max_field_value_from_donors()"""
+    # Initialise variables
+    field = "batchNo"
+    # Define expected
+    expected_dict = {"P001": 3, "P004": 2}
+    # Get sheet and iterate over pedigrees
+    sheet = germline_sample_sheet_object_small_cohort_with_custom_features
+    all_pedigrees = sheet.cohort.pedigrees
+    for pedigree in all_pedigrees:
+        # Get actual
+        sampleid = pedigree.index.wrapped.secondary_id
+        max_value = chunk_object_single_run.get_max_field_value_from_donors(
+            pedigree=pedigree, field=field
+        )
+        assert expected_dict.get(sampleid) == max_value
 
 
 def test_order_pedigrees_by_field(
