@@ -366,6 +366,23 @@ def medium_cohort_solo_only_tsv(germline_sheet_header, medium_cohort_solo_only_t
 
 
 @pytest.fixture
+def medium_cohort_diverse_ngs_kit_solo_only_tsv(
+    germline_sheet_header, medium_cohort_solo_only_text
+):
+    """Returns contents for medium cohort germline TSV file - solo cases only with two different
+    NGS sequencing kits.
+    """
+    # Change sequencing kit for 1/2 the entries
+    entries_list = medium_cohort_solo_only_text.splitlines()
+    for i in range(50):
+        entries_list[i] = entries_list[i].replace(
+            "Agilent SureSelect Human All Exon V6", "Illumina TruSeq PCR-free"
+        )
+    new_entries_test = "\n".join(entries_list)
+    return germline_sheet_header.format(entries=new_entries_test)
+
+
+@pytest.fixture
 def medium_cohort_diverse_with_custom_features_tsv(
     germline_sheet_header_with_custom_fields, medium_cohort_diverse_with_custom_fields_text
 ):
@@ -424,6 +441,18 @@ def germline_sample_sheet_object_medium_cohort_solo_cases_background(medium_coho
     sheet.sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
     sheet.sheet.extra_infos["is_background"] = True
     return sheet
+
+
+@pytest.fixture
+def germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits(
+    medium_cohort_diverse_ngs_kit_solo_only_tsv,
+):
+    """Returns GermlineCaseSheet object with medium cohort with two different sequencing kits -
+    only solo cases
+    """
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(medium_cohort_diverse_ngs_kit_solo_only_tsv)
+    return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture
@@ -513,8 +542,49 @@ def test_chunk_constructor(germline_sample_sheet_object):
         Chunk(method="incremental", sheet_list=[sheet])
 
 
-def test_order_donors_by_sampleid(chunk_object_single_run, germline_sample_sheet_object):
-    """Tests Chunk::order_donors_by_sampleid()"""
+def test_split_pedigress_by_sequencing_kit(
+    chunk_object_single_run, germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits
+):
+    """TestsChunk::split_pedigrees_by_sequencing_kit()"""
+    # Define expected
+    expected_kit_list = ["Agilent SureSelect Human All Exon V6", "Illumina TruSeq PCR-free"]
+    expected_n_pedigrees_split_list = [49, 50]
+
+    # Get sheet
+    sheet = germline_sample_sheet_object_medium_cohort_solo_only_diverse_kits
+    all_pedigrees = sheet.cohort.pedigrees
+
+    # Call method
+    split_pedigrees_list = chunk_object_single_run.split_pedigrees_by_sequencing_kit(
+        all_pedigrees=all_pedigrees
+    )
+
+    # Expects two lists with number of elements in [49, 50]
+    assert len(split_pedigrees_list) == 2
+    assert len(split_pedigrees_list[0]) != len(split_pedigrees_list[1])
+    assert len(split_pedigrees_list[0]) in expected_n_pedigrees_split_list
+    assert len(split_pedigrees_list[1]) in expected_n_pedigrees_split_list
+
+    # Iterate over subsets of pedigrees
+    for pedigrees in split_pedigrees_list:
+        first_entry = True
+        subset_library_kit_name = None
+        for pedigree in pedigrees:
+            if first_entry:
+                # Get first kit name
+                subset_library_kit_name = (
+                    pedigree.index.dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+                )
+                continue
+            # Expects that library kits in lists are the same across the subset
+            i_lib_name = pedigree.index.dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+            assert i_lib_name == subset_library_kit_name
+            # Expects that library name in expected list (XOR)
+            assert (i_lib_name == expected_kit_list[0]) != (i_lib_name == expected_kit_list[1])
+
+
+def test_order_pedigrees_by_sampleid(chunk_object_single_run, germline_sample_sheet_object):
+    """Tests Chunk::order_pedigrees_by_sampleid()"""
     # Get sheet
     sheet = germline_sample_sheet_object
     all_pedigrees = sheet.cohort.pedigrees
@@ -524,18 +594,18 @@ def test_order_donors_by_sampleid(chunk_object_single_run, germline_sample_sheet
     assert not all(map(lambda x, y: x == y, all_pedigrees, all_pedigrees_reversed))
 
     # Call method
-    restored_order = chunk_object_single_run.order_donors_by_sampleid(all_pedigrees_reversed)
+    restored_order = chunk_object_single_run.order_pedigrees_by_sampleid(all_pedigrees_reversed)
 
     # Expects that output in the same order as originally set in sample sheet
     assert all(map(lambda x, y: x == y, all_pedigrees, restored_order))
     assert not all(map(lambda x, y: x == y, all_pedigrees, all_pedigrees_reversed))
 
 
-def test_order_donors_by_field(
+def test_order_pedigrees_by_field(
     chunk_object_single_run,
     germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
 ):
-    """Tests Chunk::order_donors_by_field()"""
+    """Tests Chunk::order_pedigrees_by_field()"""
     # Define expected
     # Possible point of confusion: the batches were assigned in the reversed order
     # of family ids for the purpose of testing.
@@ -555,7 +625,7 @@ def test_order_donors_by_field(
     all_pedigrees = sheet.cohort.pedigrees
 
     # Call method - batch number
-    reordered_pedigrees = chunk_object_single_run.order_donors_by_field(
+    reordered_pedigrees = chunk_object_single_run.order_pedigrees_by_field(
         all_pedigrees=all_pedigrees, fields=["batchNo"]
     )
     # Get actual
@@ -582,7 +652,7 @@ def test_order_donors_by_field(
         batch_no = pedigree.index.extra_infos.get("batchNo")
 
     # Call method - family id
-    reordered_pedigrees = chunk_object_single_run.order_donors_by_field(
+    reordered_pedigrees = chunk_object_single_run.order_pedigrees_by_field(
         all_pedigrees=all_pedigrees, fields=["familyId"]
     )
     # Get actual

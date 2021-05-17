@@ -368,7 +368,9 @@ class Chunk:
         # Iterate over pedigrees sizes and populate batch-donor dict
         # -> use order of pedigrees list
         if fields is not None:
-            all_pedigrees = self.order_donors_by_field(all_pedigrees=all_pedigrees, fields=fields)
+            all_pedigrees = self.order_pedigrees_by_field(
+                all_pedigrees=all_pedigrees, fields=fields
+            )
         i_batch = 0
         for pedigree in all_pedigrees:
             # Get donor info
@@ -506,7 +508,7 @@ class Chunk:
         cohort_size = 0
         pedigree_count_per_index_dict = defaultdict(list)  # key: size of family; value: donors list
         # Order pedigrees by secondary id
-        ordered_pedigrees = self.order_donors_by_sampleid(all_pedigrees=all_pedigrees)
+        ordered_pedigrees = self.order_pedigrees_by_sampleid(all_pedigrees=all_pedigrees)
         # Iterate over donors to populate size-by-donor dict
         for pedigree in ordered_pedigrees:
             size = len(pedigree.donors)
@@ -645,8 +647,8 @@ class Chunk:
         return random_donors
 
     @staticmethod
-    def order_donors_by_field(all_pedigrees, fields):
-        """Order donors by fields in index.
+    def order_pedigrees_by_field(all_pedigrees, fields):
+        """Order pedigrees by fields in index.
 
         :param all_pedigrees: List with all pedigrees in cohort.
         :type all_pedigrees: list
@@ -690,8 +692,8 @@ class Chunk:
         )
 
     @staticmethod
-    def order_donors_by_sampleid(all_pedigrees):
-        """Order donors by sample id of index (secondary_id).
+    def order_pedigrees_by_sampleid(all_pedigrees):
+        """Order pedigrees by sample id of index (secondary_id).
 
         :param all_pedigrees: List with all pedigrees in cohort.
         :type all_pedigrees: list
@@ -700,3 +702,22 @@ class Chunk:
         from the `BioEntity` object.
         """
         return sorted(all_pedigrees, key=lambda pedigree: pedigree.index.wrapped.secondary_id)
+
+    @staticmethod
+    def split_pedigrees_by_sequencing_kit(all_pedigrees):
+        """Split pedigrees based on index sequencing kit (dna_ngs_library).
+
+        :param all_pedigrees: List with all pedigrees in cohort.
+        :type all_pedigrees: list
+
+        :return: Returns list of list of pedigrees segregated based on sequencing kit name. It
+        assumes that all donors in a pedigree were sequenced with the same kit as the index.
+        """
+        # Initialise variable
+        kit_pedigree_dict = defaultdict(list)  # key: sequencing kit name; value: list of pedigrees
+        # Iterate over pedigrees
+        for pedigree in all_pedigrees:
+            library_kit = pedigree.index.dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+            kit_pedigree_dict[library_kit].append(pedigree)
+        # Return list of lists
+        return list(kit_pedigree_dict.values())
