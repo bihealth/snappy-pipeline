@@ -1446,11 +1446,12 @@ def test_method_incremental_chunk_mixed_sequencing_kits(
                 subset_library_kit_name = donor.dna_ngs_library.ngs_library.extra_infos.get(
                     "libraryKit"
                 )
+                first_entry = False
                 continue
             # Expects that library kits in lists are the same across for all subset
             i_lib = donor.dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
             assert i_lib == subset_library_kit_name
-            # Expects that library name in expected list (XOR)
+            # Expects that library name in expected list
             assert i_lib in expected_kit_list
 
 
