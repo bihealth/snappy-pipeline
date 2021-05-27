@@ -98,8 +98,6 @@ MELT_ACTIONS = (
     "reorder_vcf",
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
-
 #: Default configuration for the wgs_mei_calling step
 DEFAULT_CONFIG = r"""
 step_config:
