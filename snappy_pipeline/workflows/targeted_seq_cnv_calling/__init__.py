@@ -531,6 +531,21 @@ class GcnvStepPart(BaseStepPart):
         )
 
     @dictify
+    def _get_input_files_coverage(self, wildcards):
+        # Yield .interval list file.
+        ext = "interval_list"
+        library_kit = self.ngs_library_to_kit[wildcards.library_name]
+        name_pattern = "gcnv_preprocess_intervals.{library_kit}".format(library_kit=library_kit)
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
+        # Yield input BAM and BAI file
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
+            yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
+
+     @dictify
     def _get_input_files_filter_intervals(self, wildcards):
         yield from self._get_input_files_annotate_gc(wildcards).items()
         name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
@@ -581,20 +596,6 @@ class GcnvStepPart(BaseStepPart):
                 )
         yield ext, tsvs
 
-    @dictify
-    def _get_input_files_coverage(self, wildcards):
-        # Yield .interval list file.
-        ext = "interval_list"
-        library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        name_pattern = "gcnv_preprocess_intervals.{library_kit}".format(library_kit=library_kit)
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext=ext
-        )
-        # Yield input BAM and BAI file
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
-            yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
     def _get_input_files_call_cnvs(self, wildcards):
@@ -701,6 +702,14 @@ class GcnvStepPart(BaseStepPart):
         )
 
     @dictify
+    def _get_output_files_coverage(self):
+        ext = "tsv"
+        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
+
+    @dictify
     def _get_output_files_filter_intervals(self):
         ext = "interval_list"
         name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
@@ -711,14 +720,6 @@ class GcnvStepPart(BaseStepPart):
     def _get_output_files_scatter_intervals(self):
         return "work/{name_pattern}/out/{name_pattern}".format(
             name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}"
-        )
-
-    @dictify
-    def _get_output_files_coverage(self):
-        ext = "tsv"
-        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext=ext
         )
 
     @dictify
@@ -822,13 +823,14 @@ class GcnvStepPart(BaseStepPart):
 class TargetedSeqCnvCallingWorkflow(BaseStep):
     """Perform germline targeted sequencing CNV calling"""
 
+    #: Workflow name
     name = "targeted_seq_cnv_calling"
+
+    #: Sample sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    #: Sample chunks dictionary
+    sample_chunks_dict = None
 
     def __init__(
         self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
@@ -848,6 +850,11 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit.
         self.ngs_library_to_kit = self.sub_steps["xhmm"].ngs_library_to_kit
+
+    @classmethod
+    def default_config_yaml(cls):
+        """Return default config YAML, to be overwritten by project-specific one"""
+        return DEFAULT_CONFIG
 
     @listify
     def _all_donors(self, include_background=True):
