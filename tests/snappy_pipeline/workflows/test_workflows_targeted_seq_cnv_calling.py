@@ -283,6 +283,29 @@ def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workfl
     assert actual == expected
 
 
+# Tests for GcnvStepPart (chunking) ----------------------------------------------------------------
+
+
+def test_gcnv_chunking_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_input_files_chunking()"""
+    # Define expected
+    expected = {}
+    # Get actual.
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "chunking")
+    assert actual == expected
+
+
+def test_gcnv_chunking_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart::_get_output_files_chunking()"""
+    # Define expected
+    expected = ["work/gcnv_chunks/out/1.Agilent_SureSelect_Human_All_Exon_V6"]
+    # Get actual.
+    # - library kit defined in conftest: `germline_sheet_tsv`
+    wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "chunking")(wildcards)
+    assert actual == expected
+
+
 # Tests for GcnvStepPart (filter_intervals) --------------------------------------------------------
 
 

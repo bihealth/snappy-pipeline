@@ -48,8 +48,8 @@ def temporary_output_all(wildcards):
     return (
         # "work/bwa.gcnv_scatter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
         # "bwa.gcnv_scatter_intervals.Agilent_SureSelect_Human_All_Exon_V6"
-        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
-        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.1/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.1.interval_list"
     )
 
 
@@ -121,9 +121,8 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
 
 
 rule targeted_seq_cnv_calling_gcnv_chunking:
-    input:
-        "Thunder, Thunder, Thundercats, ho!!!!"
-
+    output:
+        wf.get_output_files("gcnv","chunking"),
 
 
 rule targeted_seq_cnv_calling_gcnv_filter_intervals:

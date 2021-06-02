@@ -50,6 +50,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards, touch
 
 from snappy_pipeline.base import UnsupportedActionException
+from snappy_pipeline.chunk import Chunk
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -494,20 +495,30 @@ class XhmmStepPart(BaseStepPart):
 class GcnvStepPart(BaseStepPart):
     """Targeted seq. CNV calling with GATK4 gCNV"""
 
+    #: Subworkflow name.
     name = "gcnv"
 
+    # TODO: discuss a reasonable value, for now it is arbitrary.
+    #: Minimum required number of samples - specific for gCNV caller.
+    minimum_chunk_size = 12
+
+    #: Tuple with supported actions - correspond to rules in Snakemake file.
     actions = (
         "preprocess_intervals",
         "annotate_gc",
+        "coverage",
+        "chunking",
         "filter_intervals",
         "scatter_intervals",
-        "coverage",
         "contig_ploidy",
         "call_cnvs",
         "post_germline_calls",
         "merge_cohort_vcfs",
         "extract_ped",
     )
+
+    #: Dictionary with libraries chunks. Key: chunk identifier; Value: list of indexes.
+    library_to_chunks_dict = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -525,13 +536,22 @@ class GcnvStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+        # Build chunk dictionary
+        chunk_method = self.w_config["step_config"]["targeted_seq_cnv_calling"]["chunk_mode"]
+        max_chunk = self.w_config["step_config"]["targeted_seq_cnv_calling"]["chunk_max_size"]
+        self.library_to_chunks_dict = Chunk(
+            method=chunk_method,
+            sheet_list=self.parent.shortcut_sheets,
+            maximal_chunk_size=max_chunk,
+            minimum_chunk_size=self.minimum_chunk_size,
+        ).run()
 
     def get_params(self, action):
         """
         :param action: Action (i.e., step) in the workflow. Currently only available for 'coverage'.
         :type action: str
 
-        :return: Returns input function for XHMM rule based on inputted action.
+        :return: Returns input function for gCNV rule based on inputted action.
 
         :raises UnsupportedActionException: if action not 'coverage'.
         """
@@ -621,8 +641,14 @@ class GcnvStepPart(BaseStepPart):
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
+    @listify
+    def _get_input_files_chunking(self, wildcards):
+        """Yields chunking input files."""
+        yield from self._get_input_files_annotate_gc(wildcards).items()
+
     @dictify
     def _get_input_files_filter_intervals(self, wildcards):
+        yield from self._get_output_files_chunking().items()
         yield from self._get_input_files_annotate_gc(wildcards).items()
         name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
         ext = "tsv"
@@ -672,7 +698,6 @@ class GcnvStepPart(BaseStepPart):
                     )
                 )
         yield ext, tsvs
-
 
     @dictify
     def _get_input_files_call_cnvs(self, wildcards):
@@ -782,9 +807,18 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
+    def _get_output_files_chunking():
+        """Yields chunking output files."""
+        key = "chunk"
+        name_pattern = "work/gcnv_chunks/out/{chunk}.{library_kit}"
+        yield key, name_pattern
+
+
+    @staticmethod
+    @dictify
     def _get_output_files_filter_intervals():
         ext = "interval_list"
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}.{chunk}"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
@@ -879,7 +913,7 @@ class GcnvStepPart(BaseStepPart):
             "scatter_intervals",
             "merge_cohort_vcfs",
         ):
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{chunk}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         elif action == "call_cnvs":
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
@@ -915,9 +949,6 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
 
     #: Sample sheet class
     sheet_shortcut_class = GermlineCaseSheet
-
-    #: Sample chunks dictionary
-    sample_chunks_dict = None
 
     def __init__(
         self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
