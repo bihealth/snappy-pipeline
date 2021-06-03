@@ -2,10 +2,12 @@
 """Shared fixtures for the workflows unit tests"""
 
 from collections import namedtuple
+import io
 import textwrap
 from unittest.mock import MagicMock
 
-from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.io_tsv import read_germline_tsv_sheet
+from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from pyfakefs import fake_filesystem
 import pytest
 from ruamel.yaml.comments import CommentedMap
@@ -180,6 +182,14 @@ def generic_mix_extraction_sheet_tsv():
         E002\tBS1\tTS1\tLIB2\tDNA\tWES\tE002-BS1-TS1-LIB2
         """
     ).lstrip()
+
+
+@pytest.fixture
+def germline_sample_sheet_object(germline_sheet_tsv):
+    """Returns GermlineCaseSheet object with small cohort"""
+    # Create dna sample sheet based on germline sheet
+    germline_sheet_io = io.StringIO(germline_sheet_tsv)
+    return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
 
 
 @pytest.fixture

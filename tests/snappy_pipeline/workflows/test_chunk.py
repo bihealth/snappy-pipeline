@@ -440,14 +440,6 @@ def tsv_small_cohort_with_custom_features(
 
 
 @pytest.fixture
-def germline_sample_sheet_object(germline_sheet_tsv):
-    """Returns GermlineCaseSheet object with small cohort"""
-    # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(germline_sheet_tsv)
-    return GermlineCaseSheet(sheet=read_germline_tsv_sheet(germline_sheet_io))
-
-
-@pytest.fixture
 def germline_sample_sheet_object_large_cohort_trios_only(
     tsv_large_cohort_trios_only_germline_sheet,
 ):
