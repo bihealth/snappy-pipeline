@@ -24,113 +24,38 @@ wf = TargetedSeqCnvCallingWorkflow(
     workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
 )
 
-# Get input ===================================================================
-
-
-dict_A = {1: ["output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz",
-              "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.md5",
-              "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-              "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-              "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz",
-              "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.md5",
-              "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi",
-              "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",]
-          }
-
-all_input = []
-for sample_list in dict_A.values():
-    all_input.append(sample_list)
-
-
-
-def temporary_output_all(wildcards):
-    # Define expected
-    return (
-        # "work/bwa.gcnv_scatter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
-        # "bwa.gcnv_scatter_intervals.Agilent_SureSelect_Human_All_Exon_V6"
-        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.1/out/"
-        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.1.interval_list"
-    )
-
 
 # Rules =======================================================================
 
-# localrules:
-#     # Linking files from work/ to output/ should be done locally
-#     targeteq_seq_cnv_calling_link_out_run,
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    targeteq_seq_cnv_calling_link_out_run,  # global rule
+    targeted_seq_cnv_calling_gcnv_symlink_extracted_ped,  # gCNV rule
 
 
 rule main:
     input:
-        temporary_output_all
+        wf.get_result_files(),
+
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Generic linking out ---------------------------------------------------------
 
-#
-# rule targeteq_seq_cnv_calling_link_out_run:
-#     input:
-#         wf.get_input_files("link_out", "run"),
-#     output:
-#         wf.get_output_files("link_out", "run"),
-#     run:
-#         shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+rule targeteq_seq_cnv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
 # Germline CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # GATK-gCNV -------------------------------------------------------------------
 
-# include: "gcnv.rules"
 
-rule targeted_seq_cnv_calling_gcnv_preprocess_intervals:
-    input:
-        unpack(wf.get_input_files("gcnv","preprocess_intervals")),
-    output:
-        **wf.get_output_files("gcnv","preprocess_intervals"),
-    log:
-        wf.get_log_file("gcnv","preprocess_intervals"),
-    wrapper:
-        wf.wrapper_path("gcnv/preprocess_intervals")
-
-
-rule targeted_seq_cnv_calling_gcnv_annotate_gc:
-    input:
-        unpack(wf.get_input_files("gcnv","annotate_gc")),
-    output:
-        **wf.get_output_files("gcnv","annotate_gc"),
-    log:
-        wf.get_log_file("gcnv","annotate_gc"),
-    wrapper:
-        wf.wrapper_path("gcnv/annotate_gc")
-
-
-
-rule targeted_seq_cnv_calling_gcnv_coverage:
-    input:
-        unpack(wf.get_input_files("gcnv", "coverage")),
-    output:
-        **wf.get_output_files("gcnv","coverage"),
-    params:
-        args=wf.get_params("gcnv", "coverage"),
-    log:
-        wf.get_log_file("gcnv", "coverage"),
-    wrapper:
-        wf.wrapper_path("gcnv/coverage")
-
-
-rule targeted_seq_cnv_calling_gcnv_chunking:
-    output:
-        wf.get_output_files("gcnv","chunking"),
-
-
-rule targeted_seq_cnv_calling_gcnv_filter_intervals:
-    input:
-        unpack(wf.get_input_files("gcnv","filter_intervals")),
-    output:
-        **wf.get_output_files("gcnv","filter_intervals"),
-    log:
-        wf.get_log_file("gcnv","filter_intervals"),
-    wrapper:
-        wf.wrapper_path("gcnv/filter_intervals")
+include: "gcnv.rules"

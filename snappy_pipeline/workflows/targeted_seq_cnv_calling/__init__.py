@@ -498,10 +498,6 @@ class GcnvStepPart(BaseStepPart):
     #: Subworkflow name.
     name = "gcnv"
 
-    # TODO: discuss a reasonable value, for now it is arbitrary.
-    #: Minimum required number of samples - specific for gCNV caller.
-    minimum_chunk_size = 12
-
     #: Tuple with supported actions - correspond to rules in Snakemake file.
     actions = (
         "preprocess_intervals",
@@ -515,10 +511,21 @@ class GcnvStepPart(BaseStepPart):
         "post_germline_calls",
         "merge_cohort_vcfs",
         "extract_ped",
+        "list_extracted_ped",
+        "symlink_extracted_ped",
     )
 
-    #: Dictionary with libraries chunks. Key: chunk identifier; Value: list of indexes.
+    # TODO: discuss a reasonable value, for now it is arbitrary.
+    #: Minimum required number of samples - specific for gCNV caller.
+    minimum_chunk_size = 12
+
+    #: Dictionary with libraries chunks. Key: chunk identifier; value: list of indexes.
     library_to_chunks_dict = None
+
+    #: Dictionary with sequencing kit per chunks. The assumption is that all libraries in a chunk
+    #: were sequenced using the same kit. Key: chunk identifier; value: sequencing kit name
+    #: (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
+    kit_to_chunks_dict = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -641,16 +648,11 @@ class GcnvStepPart(BaseStepPart):
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
-    @listify
+    @dictify
     def _get_input_files_chunking(self, wildcards):
         """Yields chunking input files."""
         yield from self._get_input_files_annotate_gc(wildcards).items()
-
-    @dictify
-    def _get_input_files_filter_intervals(self, wildcards):
-        yield from self._get_output_files_chunking().items()
-        yield from self._get_input_files_annotate_gc(wildcards).items()
-        name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
+        name_pattern = "gcnv_annotate_gc.{library_kit}".format(**wildcards)
         ext = "tsv"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
@@ -669,58 +671,41 @@ class GcnvStepPart(BaseStepPart):
                 )
         yield key, covs
 
+    @dictify
+    def _get_input_files_filter_intervals(self, wildcards):
+        yield from self._get_input_files_annotate_gc(wildcards).items()
+        yield from self._get_output_files_chunking().items()
+
+        name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
+        ext = "tsv"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
+
     @staticmethod
     @dictify
     def _get_input_files_scatter_intervals(wildcards):
         ext = "interval_list"
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}".format(**wildcards)
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}.{chunk}".format(**wildcards)
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
 
     @dictify
-    def _get_input_files_contig_ploidy(self, wildcards):
-        ext = "interval_list"
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext=ext
-        )
-        ext = "tsv"
-        tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                tsvs.append(
-                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                        name_pattern=name_pattern, ext=ext
-                    )
-                )
-        yield ext, tsvs
+    def _get_input_files_contig_ploidy(self, _wildcards):
+        yield from self._get_output_files_chunking().items()
+        yield from self._get_output_files_filter_intervals().items()
 
     @dictify
     def _get_input_files_call_cnvs(self, wildcards):
+        yield from self._get_output_files_chunking().items()
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
-        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}.{chunk}"
         yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
-        ext = "tsv"
-        tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                path_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                tsvs.append(
-                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                        name_pattern=path_pattern, ext=ext
-                    )
-                )
-        yield ext, tsvs
         ext = "ploidy"
-        path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(**wildcards)
+        path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}.{chunk}".format(**wildcards)
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.{library_kit}"
@@ -739,7 +724,7 @@ class GcnvStepPart(BaseStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{chunk}".format(
             library_kit=library_kit, **wildcards
         )
         yield "calls", [
@@ -749,32 +734,67 @@ class GcnvStepPart(BaseStepPart):
             for shard in shards
         ]
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}.{chunk}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     @listify
     def _get_input_files_merge_cohort_vcfs(self, wildcards):
-        for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                yield "work/{name_pattern}/out/{name_pattern}.vcf.gz".format(
-                    name_pattern=name_pattern
-                )
+        # Initialise variables
+        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}.{chunk}"
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            # Iterate over libraries
+            for index in self.library_to_chunks_dict.get(chunk_id):
+                index_library_name = index.dna_ngs_library.name
+                pedigree = self.index_ngs_library_to_pedigree[index_library_name]
+                for donor in pedigree.donors:
+                    library_name = donor.dna_ngs_library.name
+                    in_pattern = name_pattern.format(
+                        mapper=wildcards.mapper, library_name=library_name, chunk=chunk_id
+                    )
+                    yield "work/{name_pattern}/out/{name_pattern}.vcf.gz".format(
+                        name_pattern=in_pattern
+                    )
 
     @dictify
     def _get_input_files_extract_ped(self, wildcards):
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}".format(
+        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}.{chunk}".format(
             library_kit=library_kit, **wildcards
         )
         for key, ext in (("vcf", ".vcf.gz"), ("tbi", ".vcf.gz.tbi")):
             yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
                 name_pattern=name_pattern, ext=ext
             )
+
+    @dictify
+    def _get_input_files_list_extracted_ped(self, wildcards):
+        # Initialise variables
+        name_pattern = "{mapper}.gcnv.{library_name}.{chunk}"
+        extensions = [".vcf.gz", ".vcf.gz.md5", ".vcf.gz.tbi", ".vcf.gz.tbi.md5"]
+
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            # Iterate over libraries
+            expected_files_list = []
+            for index in self.library_to_chunks_dict.get(chunk_id):
+                library_name = index.dna_ngs_library.name
+                for ext in extensions:
+                    in_pattern = name_pattern.format(
+                        mapper=wildcards.mapper, library_name=library_name, chunk=chunk_id
+                    )
+                    expected_files_list.append(
+                        "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                            name_pattern=in_pattern, ext=ext
+                        )
+                    )
+            yield str(chunk_id), expected_files_list
+
+    @dictify
+    def _get_input_files_symlink_extracted_ped(self, _wildcards):
+        yield from self._get_output_files_list_extracted_ped().items()
 
     def get_ped_members(self, wildcards):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
@@ -807,12 +827,24 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
-    def _get_output_files_chunking():
-        """Yields chunking output files."""
-        key = "chunk"
-        name_pattern = "work/gcnv_chunks/out/{chunk}.{library_kit}"
-        yield key, name_pattern
+    def _get_output_files_coverage():
+        ext = "tsv"
+        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+            name_pattern=name_pattern, ext=ext
+        )
 
+    @dictify
+    def _get_output_files_chunking(self):
+        """Yields chunking output files."""
+        # Initialise variables
+        output_list = []
+        key = "chunk"
+        name_pattern = "work/gcnv_chunks/out/{{mapper}}.{{library_kit}}.{chunk}"
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            output_list.append(name_pattern.format(chunk=chunk_id))
+        yield key, output_list
 
     @staticmethod
     @dictify
@@ -826,23 +858,14 @@ class GcnvStepPart(BaseStepPart):
     @staticmethod
     def _get_output_files_scatter_intervals():
         return "work/{name_pattern}/out/{name_pattern}".format(
-            name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}"
-        )
-
-    @staticmethod
-    @dictify
-    def _get_output_files_coverage():
-        ext = "tsv"
-        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext=ext
+            name_pattern="{mapper}.gcnv_scatter_intervals.{library_kit}.{chunk}"
         )
 
     @staticmethod
     @dictify
     def _get_output_files_contig_ploidy():
         ext = "done"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}.{chunk}"
         yield ext, touch(
             "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
                 name_pattern=name_pattern, ext=ext
@@ -853,17 +876,16 @@ class GcnvStepPart(BaseStepPart):
     @dictify
     def _get_output_files_call_cnvs():
         ext = "done"
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{chunk}.{shard}"
         yield ext, touch(
             "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
                 name_pattern=name_pattern, ext=ext
             )
         )
 
-    @staticmethod
     @dictify
-    def _get_output_files_post_germline_calls():
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+    def _get_output_files_post_germline_calls(self):
+        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}.{chunk}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
             yield key, touch(
@@ -872,10 +894,9 @@ class GcnvStepPart(BaseStepPart):
                 )
             )
 
-    @staticmethod
     @dictify
-    def _get_output_files_merge_cohort_vcfs():
-        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+    def _get_output_files_merge_cohort_vcfs(self):
+        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}.{chunk}"
         pairs = {
             "vcf": ".vcf.gz",
             "vcf_md5": ".vcf.gz.md5",
@@ -887,10 +908,10 @@ class GcnvStepPart(BaseStepPart):
                 name_pattern=name_pattern, ext=ext
             )
 
-    @staticmethod
     @dictify
-    def _get_output_files_extract_ped():
-        name_pattern = "{mapper}.gcnv.{library_name}"
+    def _get_output_files_extract_ped(self):
+        # Initialise variables
+        name_pattern = "{mapper}.gcnv.{library_name}.{chunk}"
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
@@ -902,24 +923,93 @@ class GcnvStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
-    def get_log_file(self, action):
-        """Return path to log file"""
+    @dictify
+    def _get_output_files_list_extracted_ped(self):
+        # Initialise variables
+        name_pattern = "work/gcnv_chunks/out/{{mapper}}.{chunk}.gcnv_files_per_chunk.list"
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            yield str(chunk_id), name_pattern.format(chunk=chunk_id)
+
+    @dictify
+    def _get_output_files_symlink_extracted_ped(self):
+        # Initialise variables
+        name_pattern = "{{mapper}}.gcnv.{library_name}"
+        vcf_list = []
+        vcf_md5_list = []
+        tbi_list = []
+        tbi_md5_list = []
+
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            # Iterate over libraries
+            for index in self.library_to_chunks_dict.get(chunk_id):
+                library_name = index.dna_ngs_library.name
+                in_name_pattern = name_pattern.format(library_name=library_name)
+                vcf_list.append(
+                    "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                        name_pattern=in_name_pattern, suffix=".vcf.gz"
+                    )
+                )
+                vcf_md5_list.append(
+                    "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                        name_pattern=in_name_pattern, suffix=".vcf.gz.md5"
+                    )
+                )
+                tbi_list.append(
+                    "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                        name_pattern=in_name_pattern, suffix=".vcf.gz.tbi"
+                    )
+                )
+                tbi_md5_list.append(
+                    "work/{name_pattern}/out/{name_pattern}{suffix}".format(
+                        name_pattern=in_name_pattern, suffix=".vcf.gz.tbi.md5"
+                    )
+                )
+
+        yield "vcf", vcf_list
+        yield "vcf_md5", vcf_md5_list
+        yield "tbi", tbi_list
+        yield "tbi_md5", tbi_md5_list
+
+    @staticmethod
+    def get_log_file(action):
+        """Get log file path.
+
+        :param action: Name of action being executed, examples: 'preprocess_intervals',
+        'filter_intervals', 'extract_ped'.
+        :type action: str
+
+        :return: Return path to log file based on inputted action.
+        """
         if action in ("preprocess_intervals", "annotate_gc"):
             name_pattern = "gcnv_{action}.{{library_kit}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action in (
-            "filter_intervals",
-            "contig_ploidy",
-            "scatter_intervals",
-            "merge_cohort_vcfs",
-        ):
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{chunk}}".format(action=action)
-            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action == "call_cnvs":
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
+
+        elif action in ("merge_cohort_vcfs",):
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{chunk}}".format(
                 action=action
             )
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+        elif action in ("filter_intervals", "scatter_intervals", "contig_ploidy"):
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{chunk}}".format(
+                action=action
+            )
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+        elif action == "call_cnvs":
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{chunk}}.{{shard}}".format(
+                action=action
+            )
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+        elif action in ("post_germline_calls", "extract_ped"):
+            name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}.{{chunk}}".format(
+                action=action
+            )
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
         else:
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
@@ -939,6 +1029,132 @@ class GcnvStepPart(BaseStepPart):
                     "time": "04:00",
                     "ntasks": 1,
                 }
+
+    def list_extracted_pedigree_files(self, wildcards):
+        """Create file with 'extracted_ped' rule output as content.
+
+        :param wildcards:
+        """
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            chunk_id_str = str(chunk_id)
+            # Extract input files, corresponding symlink paths, and output file
+            input_list = wildcards.input.get(chunk_id_str)
+            symlink_list = self.remove_chunk_wildcard_from_extracted_pedigree_files(
+                extracted_ped_list=input_list, chunk=chunk_id_str
+            )
+            output_file = wildcards.output.get(chunk_id_str)
+            with open(output_file, "w") as out_f:
+                for in_, sym in zip(input_list, symlink_list):
+                    out_f.write(in_ + "\t" + sym + "\n")
+
+    @staticmethod
+    def remove_chunk_wildcard_from_extracted_pedigree_files(extracted_ped_list, chunk):
+        """Remove chunk identifier (wildcard) from extracted pedigree files list.
+
+        :param extracted_ped_list: Output files list from `extracted_ped` rule.
+        :type extracted_ped_list: list
+
+        :param chunk: Chunk identifier/wildcard.
+        :type chunk: str
+
+        :return: Returns list of files with path modified to exclude chunk identifier/wildcard.
+        New list is expected to be used to create symbolic links.
+        """
+        # Remove chunk from path
+        pattern_1 = "." + chunk + "/"
+        pattern_2 = "." + chunk + "."
+        out_list = [
+            path.replace(pattern_1, "/").replace(pattern_2, ".") for path in extracted_ped_list
+        ]
+        # Return
+        return out_list
+
+    @staticmethod
+    def symlink_extracted_pedigree_files(wildcards):
+        """Create symbolic link between recently generated files and consensus location of file.
+
+        :param wildcards:
+        """
+        # Iterate over input files
+        for file_ in wildcards.input.values():
+            # Load file content
+            with open(file_, "r") as f:
+                content_file = [line.strip() for line in f.readlines()]
+            # Create directory if necessary
+            for line in content_file:
+                source, destiny = line.split("\t")
+                # Create directory if necessary
+                os.makedirs(os.path.dirname(destiny), exist_ok=True)
+                # Create symlink after unlinking preexisting ones
+                if os.path.islink(destiny):
+                    os.unlink(destiny)
+                os.symlink(source, destiny)
+
+    def generate_output_files_chunking(self, wildcards):
+        """Generate chunking coverage out file.
+
+        :param wildcards: Snakemake wildcards.
+        """
+        # Initialise variable
+        name_pattern = "work/gcnv_chunks/out/{mapper}.{library_kit}.{chunk}"
+
+        # Iterate over chunks
+        for chunk_id in self.library_to_chunks_dict.keys():
+            # Get library kit for first index.
+            # Assumption: same library kit for all indexes in chunk.
+            library_name_0 = self.library_to_chunks_dict.get(chunk_id)[0].dna_ngs_library.name
+            library_kit = self.ngs_library_to_kit.get(library_name_0)
+            # Define path to output file
+            outfile_path = name_pattern.format(
+                mapper=wildcards.mapper, library_kit=library_kit, chunk=chunk_id
+            )
+            # Iterate over libraries to create coverage files paths (created in `coverage` step)
+            coverage_tsv_files_list = []
+            for index in self.library_to_chunks_dict.get(chunk_id):
+                index_library_name = index.dna_ngs_library.name
+                pedigree = self.index_ngs_library_to_pedigree[index_library_name]
+                for donor in pedigree.donors:
+                    library_name = donor.dna_ngs_library.name
+                    name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
+                        mapper=wildcards.mapper, library_name=library_name
+                    )
+                    coverage_tsv_files_list.append(
+                        "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                            name_pattern=name_pattern, ext="tsv"
+                        )
+                    )
+
+            # Write to output file if content change
+            if not self.is_chunk_file_content_same(
+                file_path=outfile_path, content_list=coverage_tsv_files_list
+            ):
+                with open(outfile_path, "w") as out_f:
+                    for cov in coverage_tsv_files_list:
+                        out_f.write(cov + "\n")
+
+    @staticmethod
+    def is_chunk_file_content_same(file_path, content_list):
+        """Compare file content with a list.
+
+        :param file_path: Path to file.
+        :type file_path: str
+
+        :param content_list: List of strings.
+        :type content_list: list
+
+        :return: Returns True if file content is the same as the list; otherwise, False.
+        """
+        # Check if file even exist
+        if not os.path.isfile(file_path):
+            return False
+        # Check content
+        with open(file_path) as f:
+            content_file = f.readlines()
+        content_file = [x.strip() for x in content_file]
+        n_intersection = len(set(content_file).intersection(content_list))
+        # Return boolean
+        return len(content_list) == n_intersection
 
 
 class TargetedSeqCnvCallingWorkflow(BaseStep):

@@ -1,7 +1,59 @@
 # gCNV needs many rules, thus they are in their own file.
 
 
+rule targeted_seq_cnv_calling_gcnv_preprocess_intervals:
+    input:
+        unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
+    output:
+        **wf. get_output_files("gcnv","preprocess_intervals"),
+    log:
+        wf.get_log_file("gcnv", "preprocess_intervals"),
+    wrapper:
+        wf.wrapper_path("gcnv/preprocess_intervals")
 
+
+rule targeted_seq_cnv_calling_gcnv_annotate_gc:
+    input:
+        unpack(wf.get_input_files("gcnv", "annotate_gc")),
+    output:
+        **wf. get_output_files("gcnv","annotate_gc"),
+    log:
+        wf.get_log_file("gcnv", "annotate_gc"),
+    wrapper:
+        wf.wrapper_path("gcnv/annotate_gc")
+
+
+rule targeted_seq_cnv_calling_gcnv_coverage:
+    input:
+        unpack(wf.get_input_files("gcnv", "coverage")),
+    output:
+        **wf. get_output_files("gcnv","coverage"),
+    params:
+        args=wf.get_params("gcnv", "coverage"),
+    log:
+        wf.get_log_file("gcnv", "coverage"),
+    wrapper:
+        wf.wrapper_path("gcnv/coverage")
+
+
+rule targeted_seq_cnv_calling_gcnv_chunking:
+    input:
+        unpack(wf.get_input_files("gcnv", "chunking")),
+    output:
+        **wf. get_output_files("gcnv","chunking"),
+    run:
+        wf.substep_getattr("gcnv", "generate_output_files_chunking")(wildcards)
+
+
+rule targeted_seq_cnv_calling_gcnv_filter_intervals:
+    input:
+        unpack(wf.get_input_files("gcnv", "filter_intervals")),
+    output:
+        **wf. get_output_files("gcnv","filter_intervals"),
+    log:
+        wf.get_log_file("gcnv", "filter_intervals"),
+    wrapper:
+        wf.wrapper_path("gcnv/filter_intervals")
 
 
 checkpoint targeted_seq_cnv_calling_gcnv_scatter_intervals:
@@ -15,15 +67,11 @@ checkpoint targeted_seq_cnv_calling_gcnv_scatter_intervals:
         wf.wrapper_path("gcnv/scatter_intervals")
 
 
-
-
-
 rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
-    # TODO: output should be created/linked per-sample
     input:
         unpack(wf.get_input_files("gcnv", "contig_ploidy")),
     output:
-        **wf.get_output_files("gcnv","contig_ploidy"),
+        **wf. get_output_files("gcnv","contig_ploidy"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     wrapper:
@@ -34,7 +82,7 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs:
     input:
         unpack(wf.get_input_files("gcnv", "call_cnvs")),
     output:
-        **wf.get_output_files("gcnv","call_cnvs"),
+        **wf. get_output_files("gcnv","call_cnvs"),
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
     wrapper:
@@ -50,7 +98,7 @@ rule targeted_seq_cnv_calling_gcnv_post_germline_calls:
     input:
         unpack(targeted_seq_cnv_calling_gcnv_post_germline_calls_input),
     output:
-        **wf.get_output_files("gcnv","post_germline_calls"),
+        **wf. get_output_files("gcnv","post_germline_calls"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     wrapper:
@@ -61,7 +109,7 @@ rule targeted_seq_cnv_calling_gcnv_merge_cohort_vcfs:
     input:
         wf.get_input_files("gcnv", "merge_cohort_vcfs"),
     output:
-        **wf.get_output_files("gcnv","merge_cohort_vcfs"),
+        **wf. get_output_files("gcnv","merge_cohort_vcfs"),
     log:
         wf.get_log_file("gcnv", "merge_cohort_vcfs"),
     wrapper:
@@ -72,10 +120,28 @@ rule targeted_seq_cnv_calling_gcnv_extract_ped:
     input:
         unpack(wf.get_input_files("gcnv", "extract_ped")),
     output:
-        **(wf.get_output_files("gcnv","extract_ped")),
+        **( wf. get_output_files("gcnv","extract_ped")),
     log:
         wf.get_log_file("gcnv", "extract_ped"),
     params:
         ped_members=wf.substep_getattr("gcnv", "get_ped_members"),
     wrapper:
         wf.wrapper_path("gcnv/extract_ped")
+
+
+rule targeted_seq_cnv_calling_gcnv_list_extracted_ped:
+    input:
+        unpack(wf.get_input_files("gcnv", "list_extracted_ped")),
+    output:
+        **( wf. get_output_files("gcnv","list_extracted_ped")),
+    run:
+        wf.substep_getattr("gcnv", "list_extracted_pedigree_files")(wildcards)
+
+
+rule targeted_seq_cnv_calling_gcnv_symlink_extracted_ped:
+    input:
+        unpack(wf.get_input_files("gcnv", "symlink_extracted_ped")),
+    output:
+        **( wf. get_output_files("gcnv","symlink_extracted_ped")),
+    run:
+        wf.substep_getattr("gcnv", "symlink_extracted_pedigree_files")(wildcards)

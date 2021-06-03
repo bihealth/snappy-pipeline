@@ -29,7 +29,6 @@ map_bed = DictQuery(snakemake.config).get(
     "step_config/targeted_seq_cnv_calling/gcnv/path_uniquely_mapable_bed"
 )
 
-paths_cov = " ".join(snakemake.input.covs)
 
 shell(
     r"""
@@ -39,7 +38,7 @@ gatk FilterIntervals \
     -L {snakemake.input.interval_list} \
     --annotated-intervals {snakemake.input.tsv} \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for tsv in {paths_cov}; do echo -I $tsv; done) \
+    $(while read tsv; do echo -I $tsv; done < {snakemake.input.chunk}) \
     --minimum-gc-content 0.1 \
     --maximum-gc-content 0.9 \
     --minimum-mappability 0.9 \

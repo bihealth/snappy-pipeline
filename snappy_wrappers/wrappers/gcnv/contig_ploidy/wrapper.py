@@ -2,8 +2,6 @@
 
 from snakemake.shell import shell
 
-paths_tsv = " ".join(snakemake.input.tsv)
-
 shell(
     r"""
 export TMPDIR=$(mktemp -d)
@@ -25,7 +23,7 @@ set -x
 gatk DetermineGermlineContigPloidy \
     -L {snakemake.input.interval_list} \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
+    $(while read tsv; do echo -I $tsv; done < {snakemake.input.chunk}) \
     --contig-ploidy-priors $PRIORS \
     --output $(dirname {snakemake.output}) \
     --output-prefix ploidy
