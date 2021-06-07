@@ -1,5 +1,5 @@
 # Nice, round-trip enabled YAML parsing
-ruamel.yaml>=0.15.35
+ruamel.yaml==0.16.12
 
 # File-based locks
 fasteners==0.14.1
