@@ -1030,20 +1030,23 @@ class GcnvStepPart(BaseStepPart):
                     "ntasks": 1,
                 }
 
-    def list_extracted_pedigree_files(self, wildcards):
+    def list_extracted_pedigree_files(self, _wildcards, sm_input, sm_output):
         """Create file with 'extracted_ped' rule output as content.
 
-        :param wildcards:
+        :param _wildcards:
+        :param sm_input:
+        :param sm_output:
+        :return:
         """
         # Iterate over chunks
         for chunk_id in self.library_to_chunks_dict.keys():
             chunk_id_str = str(chunk_id)
             # Extract input files, corresponding symlink paths, and output file
-            input_list = wildcards.input.get(chunk_id_str)
+            input_list = sm_input.get(chunk_id_str)
             symlink_list = self.remove_chunk_wildcard_from_extracted_pedigree_files(
                 extracted_ped_list=input_list, chunk=chunk_id_str
             )
-            output_file = wildcards.output.get(chunk_id_str)
+            output_file = sm_output.get(chunk_id_str)
             with open(output_file, "w") as out_f:
                 for in_, sym in zip(input_list, symlink_list):
                     out_f.write(in_ + "\t" + sym + "\n")
@@ -1071,13 +1074,14 @@ class GcnvStepPart(BaseStepPart):
         return out_list
 
     @staticmethod
-    def symlink_extracted_pedigree_files(wildcards):
+    def symlink_extracted_pedigree_files(_wildcards, sm_input):
         """Create symbolic link between recently generated files and consensus location of file.
 
-        :param wildcards:
+        :param _wildcards:
+        :param sm_input:
         """
         # Iterate over input files
-        for file_ in wildcards.input.values():
+        for _, file_ in sm_input.items():
             # Load file content
             with open(file_, "r") as f:
                 content_file = [line.strip() for line in f.readlines()]

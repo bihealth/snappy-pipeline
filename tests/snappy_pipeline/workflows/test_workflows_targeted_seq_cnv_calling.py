@@ -848,7 +848,7 @@ def test_remove_chunk_wildcard_from_extracted_pedigree_files(targeted_seq_cnv_ca
     assert actual == expected
 
 
-def test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
+def _test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::list_extracted_pedigree_files()"""
     # Define expected
     expected_file_content_list = define_expected_file_content_list_extracted_ped_out()
@@ -914,7 +914,7 @@ def test_gcnv_symlink_extracted_ped_step_part_get_output_files(targeted_seq_cnv_
     assert actual == expected
 
 
-def test_symlink_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
+def _test_symlink_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::symlink_extracted_pedigree_files()"""
     # Define input
     list_extracted_ped_content = define_expected_file_content_list_extracted_ped_out()

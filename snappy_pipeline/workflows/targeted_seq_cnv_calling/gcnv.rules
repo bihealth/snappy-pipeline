@@ -135,7 +135,7 @@ rule targeted_seq_cnv_calling_gcnv_list_extracted_ped:
     output:
         **( wf. get_output_files("gcnv","list_extracted_ped")),
     run:
-        wf.substep_getattr("gcnv", "list_extracted_pedigree_files")(wildcards)
+        wf.substep_getattr("gcnv", "list_extracted_pedigree_files")(wildcards, input, output)
 
 
 rule targeted_seq_cnv_calling_gcnv_symlink_extracted_ped:
@@ -144,4 +144,4 @@ rule targeted_seq_cnv_calling_gcnv_symlink_extracted_ped:
     output:
         **( wf. get_output_files("gcnv","symlink_extracted_ped")),
     run:
-        wf.substep_getattr("gcnv", "symlink_extracted_pedigree_files")(wildcards)
+        wf.substep_getattr("gcnv", "symlink_extracted_pedigree_files")(wildcards, input)
