@@ -1033,10 +1033,14 @@ class GcnvStepPart(BaseStepPart):
     def list_extracted_pedigree_files(self, _wildcards, sm_input, sm_output):
         """Create file with 'extracted_ped' rule output as content.
 
-        :param _wildcards:
-        :param sm_input:
-        :param sm_output:
-        :return:
+        :param _wildcards: Snakemake wildcards associated with rule (unused).
+        :type _wildcards: snakemake.io.Wildcards
+
+        :param sm_input: Snakemake input associated with rule.
+        :type sm_input: snakemake.io.Namedlist
+
+        :param sm_output: Snakemake output associated with rule.
+        :type sm_output: snakemake.io.Namedlist
         """
         # Iterate over chunks
         for chunk_id in self.library_to_chunks_dict.keys():
@@ -1079,8 +1083,11 @@ class GcnvStepPart(BaseStepPart):
     def symlink_extracted_pedigree_files(_wildcards, sm_input):
         """Create symbolic link between recently generated files and consensus location of file.
 
-        :param _wildcards:
-        :param sm_input:
+        :param _wildcards: Snakemake wildcards associated with rule (unused).
+        :type _wildcards: snakemake.io.Wildcards
+
+        :param sm_input: Snakemake input associated with rule.
+        :type sm_input: snakemake.io.Namedlist
         """
         # Iterate over input files
         for _, file_ in sm_input.items():
@@ -1101,6 +1108,7 @@ class GcnvStepPart(BaseStepPart):
         """Generate chunking coverage out file.
 
         :param wildcards: Snakemake wildcards.
+        :type wildcards: snakemake.io.Wildcards
         """
         # Initialise variable
         name_pattern = "work/gcnv_chunks/out/{mapper}.{library_kit}.{chunk}"

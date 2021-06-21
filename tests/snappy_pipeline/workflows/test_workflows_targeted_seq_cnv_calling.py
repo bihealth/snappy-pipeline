@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import ruamel.yaml as yaml
-from snakemake.io import Wildcards
+from snakemake.io import Wildcards, Namedlist
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import (
@@ -848,7 +848,7 @@ def test_remove_chunk_wildcard_from_extracted_pedigree_files(targeted_seq_cnv_ca
     assert actual == expected
 
 
-def _test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
+def test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::list_extracted_pedigree_files()"""
     # Define expected
     expected_file_content_list = define_expected_file_content_list_extracted_ped_out()
@@ -859,7 +859,9 @@ def _test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workfl
     w_input["1"] = [in_.format(**method_wildcards) for in_ in w_input.get("1")]
     w_output = define_expected_output_list_extracted_ped()
     w_output["1"] = w_output.get("1").format(**method_wildcards)
-    wildcards = Wildcards(fromdict={"input": w_input, "output": w_output})
+    wildcards = None  # not used
+    sm_input = Namedlist(fromdict=w_input)
+    sm_output = Namedlist(fromdict=w_output)
 
     # Create out directory in fake system
     fake_fs.fs.makedirs("/work/gcnv_chunks/out", exist_ok=True)
@@ -868,7 +870,7 @@ def _test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workfl
         "snappy_pipeline.workflows.targeted_seq_cnv_calling.open", fake_fs.open, create=True
     ):
         targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "list_extracted_pedigree_files")(
-            wildcards
+            wildcards, sm_input, sm_output
         )
         expected_file_path = w_output.get("1")
         msg = "File '{0}' should exist in fake file system".format(expected_file_path)
@@ -876,6 +878,8 @@ def _test_list_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workfl
         with fake_fs.open(expected_file_path) as f:
             content_file = f.readlines()
         content_file = [x.strip() for x in content_file]
+        # Remove symlink relative path adjustment
+        content_file = [x.replace("../../../", "") for x in content_file]
         n_intersection = len(set(content_file).intersection(expected_file_content_list))
         msg = "File content should be: \n{0}".format(expected_file_content_list)
         assert len(expected_file_content_list) == n_intersection, msg
@@ -914,14 +918,15 @@ def test_gcnv_symlink_extracted_ped_step_part_get_output_files(targeted_seq_cnv_
     assert actual == expected
 
 
-def _test_symlink_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
+def test_symlink_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart::symlink_extracted_pedigree_files()"""
     # Define input
     list_extracted_ped_content = define_expected_file_content_list_extracted_ped_out()
     list_extracted_ped_content_str = "\n".join(list_extracted_ped_content)
     list_extracted_ped_output = define_expected_output_list_extracted_ped()
     list_extracted_ped_path = list_extracted_ped_output.get("1").format(mapper="bwa")
-    wildcards = Wildcards(fromdict={"input": {"1": list_extracted_ped_path}})
+    wildcards = None  # not used in method
+    sm_input = Namedlist(fromdict={"1": list_extracted_ped_path})
 
     # Create necessary files in fake system
     fake_fs.fs.makedirs("/work/gcnv_chunks/out", exist_ok=True)
@@ -939,7 +944,7 @@ def _test_symlink_extracted_pedigree_files(fake_fs, targeted_seq_cnv_calling_wor
         # Call method
         targeted_seq_cnv_calling_workflow.substep_getattr(
             "gcnv", "symlink_extracted_pedigree_files"
-        )(wildcards)
+        )(wildcards, sm_input)
         # Assert method result
         file_msg = "Sanity check: fake file system should contain file '{0}' (created for testing)."
         symlink_msg = "Fake file system should contain symbolic link '{0}'."
