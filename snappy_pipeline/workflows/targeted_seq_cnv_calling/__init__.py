@@ -1047,6 +1047,8 @@ class GcnvStepPart(BaseStepPart):
                 extracted_ped_list=input_list, chunk=chunk_id_str
             )
             output_file = sm_output.get(chunk_id_str)
+            # Adjust path level
+            input_list = ["../../../" + in_path for in_path in input_list]
             with open(output_file, "w") as out_f:
                 for in_, sym in zip(input_list, symlink_list):
                     out_f.write(in_ + "\t" + sym + "\n")
