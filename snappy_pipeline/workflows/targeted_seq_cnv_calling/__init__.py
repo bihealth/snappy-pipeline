@@ -1247,17 +1247,17 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 library_kit=chosen_kits,
                 ext=EXT_VALUES,
             )
-        if "gcnv" in self.config["tools"]:
-            name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-            min_kit_usages = 10
-            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
-            yield from expand(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                caller=["gcnv"],
-                library_kit=chosen_kits,
-                ext=EXT_VALUES,
-            )
+        # if "gcnv" in self.config["tools"]:
+        #     name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+        #     min_kit_usages = 10
+        #     chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
+        #     yield from expand(
+        #         os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+        #         mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+        #         caller=["gcnv"],
+        #         library_kit=chosen_kits,
+        #         ext=EXT_VALUES,
+        #     )
 
     def _pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
