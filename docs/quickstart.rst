@@ -92,13 +92,15 @@ Replace the `X.Y.Z` in the definition of ``VERSION`` below with the version you 
     $ VERSION=vX.Y.Z
     $ pip install git+ssh://git@gitlab.bihealth.org/cubi/snappy_pipeline.git@v${VERSION}#egg=snappy_pipeline
 
-Execute ``cubi-snake --cubi-pipeline-self-test`` to see the current setup.
+Or see ``README.rst`` for a more detailed intallation guide and the environment setup step.
+
+Execute ``snappy-snake --snappy-pipeline-self-test`` to see the current setup.
 Make sure that the configuration shows that DRMAA is enabled.
 
 .. code-block:: shell
     :emphasize-lines: 10
 
-    $ cubi-snake --cubi-pipeline-self-test
+    $ snappy-snake --snappy-pipeline-self-test
     CUBI Pipeline
     =============
 
