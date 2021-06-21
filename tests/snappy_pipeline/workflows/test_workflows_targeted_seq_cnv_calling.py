@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import ruamel.yaml as yaml
-from snakemake.io import Wildcards, Namedlist
+from snakemake.io import Namedlist, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import (
