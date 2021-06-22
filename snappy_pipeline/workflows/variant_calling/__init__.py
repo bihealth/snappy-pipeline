@@ -188,7 +188,8 @@ step_config:
       path_ser: REQUIRED  # REQUIRED
     platypus:
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -199,7 +200,8 @@ step_config:
       max_indel_depth: 4000
       window_length: 10000000
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -209,7 +211,8 @@ step_config:
       use_standard_filters: true
       window_length: 10000000
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -231,7 +234,8 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -270,7 +274,8 @@ step_config:
       restart_times: 10         # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -309,7 +314,8 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
       - chrEBV     # Eppstein-Barr Virus
@@ -358,7 +364,8 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
+      # patterns of chromosome names to ignore
+      ignore_chroms:
       - nc_007605  # herpes virus
       - hs37d5     # grch37 decoy
       - chrebv     # eppstein-barr virus

@@ -214,7 +214,8 @@ step_config:
     job_mult_time: 1          # running time multiplier
     merge_mult_memory: 1      # memory multiplier for merging
     merge_mult_time: 1        # running time multiplier for merging
-    ignore_chroms:            # patterns of chromosome names to ignore
+    # patterns of chromosome names to ignore
+    ignore_chroms:
     - NC_007605  # herpes virus
     - hs37d5     # GRCh37 decoy
     - chrEBV     # Eppstein-Barr Virus

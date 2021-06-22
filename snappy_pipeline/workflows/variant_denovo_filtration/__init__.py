@@ -127,7 +127,8 @@ step_config:
     tools_variant_calling: null      # defaults to variant_annotation tool
     info_key_reliable_regions: []    # optional INFO keys with reliable regions
     info_key_unreliable_regions: []  # optional INFO keys with unreliable regions
-    params_besenbacher:              # parameters for Besenbacher quality filter
+    # parameters for Besenbacher quality filter
+    params_besenbacher:
       min_gq: 50
       min_dp: 10
       max_dp: 120

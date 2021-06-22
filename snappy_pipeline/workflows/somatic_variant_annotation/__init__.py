@@ -85,7 +85,8 @@ step_config:
     restart_times: 5          # number of times to re-launch jobs in case of failure
     max_jobs_per_second: 10   # throttling of job creation
     max_status_checks_per_second: 10   # throttling of status checks
-    ignore_chroms:            # patterns of chromosome names to ignore
+    # patterns of chromosome names to ignore
+    ignore_chroms:
     - NC_007605  # herpes virus
     - hs37d5     # GRCh37 decoy
     - chrEBV     # Eppstein-Barr Virus
