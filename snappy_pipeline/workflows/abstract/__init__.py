@@ -276,7 +276,8 @@ def _cached_read_generic_tsv_sheet(path_abs, path_rel, naming_scheme):
 @lru_cache()
 def _cached_yaml_round_trip_load_str(str_value):
     """Cached reading of YAML ``str`` objects."""
-    return yaml.round_trip_load(StringIO(str_value))
+    yaml_ = yaml.YAML()
+    return yaml_.load(str_value)
 
 
 class DataSetInfo:

@@ -17,9 +17,8 @@ __author__ = "Clemens Messerschmidt"
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for configuration"""
-    return yaml.round_trip_load(
-        textwrap.dedent(
-            r"""
+    config_str = textwrap.dedent(
+        r"""
         static_data_config:
           reference:
             path: /path/to/ref.fa
@@ -44,8 +43,9 @@ def minimal_config():
             type: matched_cancer
             naming_scheme: only_secondary_id
         """
-        ).lstrip()
-    )
+    ).lstrip()
+    yaml_ = yaml.YAML()
+    return yaml_.load(config_str)
 
 
 @pytest.fixture

@@ -22,9 +22,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (germline) configuration"""
-    return yaml.round_trip_load(
-        textwrap.dedent(
-            r"""
+    config_str = textwrap.dedent(
+        r"""
         static_data_config:
           reference:
             path: /path/to/ref.fa
@@ -52,8 +51,9 @@ def minimal_config():
             naming_scheme: only_secondary_id
             pedigree_field: pedigree_field
         """
-        ).lstrip()
-    )
+    ).lstrip()
+    yaml_ = yaml.YAML()
+    return yaml_.load(config_str)
 
 
 @pytest.fixture

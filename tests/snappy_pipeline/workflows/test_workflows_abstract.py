@@ -127,9 +127,8 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
 @pytest.fixture
 def dummy_config():
     """Return dummy configuration OrderedDicts"""
-    return yaml.round_trip_load(
-        textwrap.dedent(
-            r"""
+    config_str = textwrap.dedent(
+        r"""
         step_config: {}
         static_data_config: {}
         data_sets:
@@ -142,8 +141,9 @@ def dummy_config():
             type: germline_variants
             naming_scheme: only_secondary_id
         """
-        ).lstrip()
-    )
+    ).lstrip()
+    yaml_ = yaml.YAML()
+    return yaml_.load(config_str)
 
 
 @pytest.fixture
