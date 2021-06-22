@@ -4,7 +4,7 @@
 Usage
 =====
 
-As a user, you will mostly interface with the CUBI pipeline system using the ``cubi-snake`` program.
+As a user, you will mostly interface with the CUBI pipeline system using the ``snappy-snake`` program.
 
 This program is a wrapper around `Snakemake <https://snakemake.bitbucket.org>`_ and provides the following features:
 
@@ -18,10 +18,10 @@ Here is how to get command line help:
 
 .. code-block:: shell
 
-    $ cubi-snake --help
+    $ snappy-snake --help
 
 Here is how to print the version and enabled features:
 
 .. code-block:: shell
 
-    $ cubi-snake --cubi-pipeline-self-test
+    $ snappy-snake --snappy-pipeline-self-test
