@@ -1247,17 +1247,48 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 library_kit=chosen_kits,
                 ext=EXT_VALUES,
             )
-        # if "gcnv" in self.config["tools"]:
-        #     name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-        #     min_kit_usages = 10
-        #     chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
-        #     yield from expand(
-        #         os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-        #         mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-        #         caller=["gcnv"],
-        #         library_kit=chosen_kits,
-        #         ext=EXT_VALUES,
-        #     )
+        if "gcnv" in self.config["tools"]:
+            yield from self._get_result_files_gcnv_merged_cohort_vcf()
+
+    @listify
+    def _get_result_files_gcnv_merged_cohort_vcf(self, min_kit_usages=12):
+        """
+
+        :param min_kit_usages:
+        """
+        # Initialise variables
+        name_pattern = "{{mapper}}.gcnv_merge_cohort_vcfs.{library_kit}.{chunk}"
+        name_pattern_list = []
+        library_kit_list = []
+        chunk_list = []
+        mapper_list = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+
+        # Get substep attributes
+        library_to_chunks_dict = self.substep_getattr("gcnv", "library_to_chunks_dict")
+        ngs_library_to_kit_dict = self.substep_getattr("gcnv", "ngs_library_to_kit")
+
+        # Iterate over chunks to extract library kit and chunk number
+        for chunk, samples in library_to_chunks_dict.items():
+            if len(samples) > min_kit_usages:
+                chunk_list.append(chunk)
+                library_name_0 = samples[0].dna_ngs_library.name
+                library_kit_list.append(ngs_library_to_kit_dict.get(library_name_0))
+
+        # Populate name pattern list
+        for chunk, library_kit in zip(chunk_list, library_kit_list):
+            tmp_pattern = name_pattern.format(library_kit=library_kit, chunk=chunk)
+            full_pattern = os.path.join("output", tmp_pattern, "out", tmp_pattern + "{ext}")
+            name_pattern_list.extend(
+                [
+                    full_pattern.format(mapper=mapper, ext=ext)
+                    for mapper in mapper_list
+                    for ext in EXT_VALUES
+                ]
+            )
+
+        # Yield file path
+        for file_out in name_pattern_list:
+            yield file_out
 
     def _pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
