@@ -79,12 +79,11 @@ def get_expected_gcnv_log_file(step_name):
     return expected_log
 
 
-@pytest.fixture(scope="module")  # otherwise: performance issues
-def minimal_config():
-    """Return YAML parsing result for (somatic) configuration"""
-    return yaml.round_trip_load(
-        textwrap.dedent(
-            r"""
+@pytest.fixture(scope="module")
+def minimal_config_text():
+    """Return configuration file string."""
+    return textwrap.dedent(
+        r"""
         static_data_config:
           reference:
             path: /path/to/ref.fa
@@ -102,8 +101,8 @@ def minimal_config():
 
           targeted_seq_cnv_calling:
             tools:
-              - xhmm
               - gcnv
+              - xhmm
             xhmm:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
@@ -125,8 +124,23 @@ def minimal_config():
             type: germline_variants
             naming_scheme: only_secondary_id
         """
-        ).lstrip()
+    ).lstrip()
+
+
+@pytest.fixture(scope="module")  # otherwise: performance issues
+def minimal_config(minimal_config_text):
+    """Return YAML parsing result for (somatic) configuration"""
+    return yaml.round_trip_load(minimal_config_text)
+
+
+@pytest.fixture(scope="module")  # otherwise: performance issues
+def minimal_config_gcn_only_large_cohort(minimal_config_text):
+    """Return YAML parsing result for (somatic) configuration - gCNV only and large cohort"""
+    minimal_config_text_gcnv = minimal_config_text.replace("- xhmm", "")
+    minimal_config_text_gcnv = minimal_config_text_gcnv.replace(
+        "sheet.tsv", "sheet_large_cohort_trio_only.tsv"
     )
+    return yaml.round_trip_load(minimal_config_text_gcnv)
 
 
 @pytest.fixture
@@ -150,6 +164,36 @@ def targeted_seq_cnv_calling_workflow(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_gcnv_large_cohort(
+    dummy_workflow,
+    minimal_config_gcn_only_large_cohort,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_large_cohort_trio_only_sheet_fake_fs,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_large_cohort_trio_only_sheet_fake_fs, mocker
+    )
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_gcn_only_large_cohort,
         dummy_cluster_config,
         config_lookup_paths,
         config_paths,
@@ -182,6 +226,43 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
     expected = sorted(expected)
     # Get actual
     actual = sorted(targeted_seq_cnv_calling_workflow.get_result_files())
+    assert actual == expected
+
+
+def test_target_seq_cnv_calling_workflow_files_large_cohort(
+    targeted_seq_cnv_calling_workflow_gcnv_large_cohort,
+):
+    """Tests TargetedSeqCnvCallingWorkflow::get_result_files()
+
+    Tests simple functionality of the workflow: checks if file structure is created according
+    to the expected results from gCNV, using a large cohort: 167 trio cases, 501 individuals.
+    """
+    # Initialise variables
+    extension_list = [
+        "vcf.gz",
+        "vcf.gz.md5",
+        "vcf.gz.tbi",
+        "vcf.gz.tbi.md5",
+    ]
+
+    # Define expected
+    pattern_out = "output/bwa.gcnv.{p}-N1-DNA1-WGS1/out/bwa.gcnv.{p}-N1-DNA1-WGS1.{ext}"
+    pattern_out_merged_vcf = (
+        "output/bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6.1/out/"
+        "bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6.1.{ext}"
+    )
+    expected = [
+        pattern_out.format(p=p, ext=ext)
+        # expected donors: P001, P004, ... P496, P499
+        for p in ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 501, 3)]
+        for ext in extension_list
+    ]
+    # Expects a single chunk cause default config: `chunk_mode: single`
+    expected += [pattern_out_merged_vcf.format(ext=ext) for ext in extension_list]
+    expected = sorted(expected)
+
+    # Get actual
+    actual = sorted(targeted_seq_cnv_calling_workflow_gcnv_large_cohort.get_result_files())
     assert actual == expected
 
 
