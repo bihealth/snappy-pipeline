@@ -1,0 +1,20 @@
+{
+    "AR": {
+        "normal_range_start": 9,
+        "normal_range_end": 35,
+        "expansion_range_start": 38,
+        "expansion_range_end": 62
+    },
+    "FMR1": {
+        "normal_range_start": 6,
+        "normal_range_end": 54,
+        "expansion_range_start": 200,
+        "expansion_range_end": 1000
+    },
+    "RFC1": {
+        "normal_range_start": 10,
+        "normal_range_end": 25,
+        "expansion_range_start": 400,
+        "expansion_range_end": 2000
+    }
+}
