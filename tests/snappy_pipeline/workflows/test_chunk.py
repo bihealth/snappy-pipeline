@@ -4,6 +4,7 @@
 
 from collections import defaultdict
 import io
+from operator import attrgetter
 import random
 import textwrap
 
@@ -11,7 +12,7 @@ from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GermlineCaseSheet, is_background, is_not_background
 import pytest
 
-from snappy_pipeline.chunk import BatchInsufficientSpaceException, Chunk
+from snappy_pipeline.chunk import BatchInsufficientSpaceException, Chunk, ChunkHistory
 
 
 def build_pedigree_size_dictionary(all_pedigrees):
@@ -1490,3 +1491,150 @@ def test_method_incremental_chunk_mixed_sequencing_kits_and_background(
             batch_size += pedigree_size_dict.get(id_)
         # Expects all chunks with max given that background samples were provided
         assert batch_size == max_chunk
+
+
+# Test ChunkHistory ================================================================================
+
+
+def test_summarize_sample_sheet(
+    germline_sample_sheet_object,
+    germline_sample_sheet_object_small_cohort_with_custom_features,
+    germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
+):
+    """Tests ChunkHistory::summarize_sample_sheet()"""
+    # Initialise variables
+    c_hist = ChunkHistory(sheet_list=[], method=None)
+
+    # Rename fixtures
+    sheet_exception = germline_sample_sheet_object
+    sheet_small = germline_sample_sheet_object_small_cohort_with_custom_features
+    sheet_medium = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+
+    # Define expected
+    expected_small_cohort = {1: 2, 3: 1, 2: 3}
+    expected_medium_cohort = {1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 20, 7: 30}
+
+    # Test exception - sheet must contain field 'batchNo'
+    with pytest.raises(ValueError):
+        c_hist.summarize_sample_sheet(sheet=sheet_exception)
+
+    # Test small cohort
+    actual = c_hist.summarize_sample_sheet(sheet=sheet_small)
+    assert actual == expected_small_cohort
+
+    # Test medium cohort
+    actual = c_hist.summarize_sample_sheet(sheet=sheet_medium)
+    assert actual == expected_medium_cohort
+
+
+def test_cumulative_batch_count():
+    """Tests ChunkHistory::cumulative_batch_count()"""
+    # Initialise variables
+    c_hist = ChunkHistory(sheet_list=[], method=None)
+
+    # Define input
+    in_dict_ones = defaultdict(lambda: 0, {1: 1, 2: 1, 3: 1, 4: 1})
+    in_dict_twos = defaultdict(lambda: 0, {1: 2, 2: 2, 3: 2, 4: 2})
+
+    # Define expected
+    expected_one = {1: 1, 2: 2, 3: 3, 4: 4}
+    expected_two = {1: 2, 2: 4, 3: 6, 4: 8}
+
+    # All 1s
+    actual = c_hist.cumulative_batch_count(batch_counter_dict=in_dict_ones)
+    assert actual == expected_one
+
+    # All 2s
+    actual = c_hist.cumulative_batch_count(batch_counter_dict=in_dict_twos)
+    assert actual == expected_two
+
+
+def test_filter_sample_sheet(
+    germline_sample_sheet_object_small_cohort_with_custom_features,
+    germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
+):
+    """Tests ChunkHistory::filter_sample_sheet()"""
+    # Initialise variables
+    c_hist = ChunkHistory(sheet_list=[], method=None)
+
+    # Rename fixture
+    sheet_small = germline_sample_sheet_object_small_cohort_with_custom_features
+    sheet_medium = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+
+    # Batch smaller than two - small cohort
+    max_batch_no = 2
+    out_sheet = c_hist.filter_sample_sheet(sheet=sheet_small, max_batch_no=max_batch_no)
+    for pedigree in out_sheet.cohort.pedigrees:
+        for donor in pedigree.donors:
+            batch_value = attrgetter("extra_infos")(donor).get("batchNo")
+            assert batch_value <= max_batch_no
+
+    # Batch smaller than four - medium cohort
+    max_batch_no = 4
+    out_sheet = c_hist.filter_sample_sheet(sheet=sheet_medium, max_batch_no=max_batch_no)
+    for pedigree in out_sheet.cohort.pedigrees:
+        for donor in pedigree.donors:
+            batch_value = attrgetter("extra_infos")(donor).get("batchNo")
+            assert batch_value <= max_batch_no
+
+    # Batch smaller than two and not in list - medium cohort
+    filter_donors = ["P{i}".format(i=str(i).zfill(3)) for i in range(91, 101)]  # remove 10 solos
+    max_batch_no = 2
+    out_sheet = c_hist.filter_sample_sheet(
+        sheet=sheet_medium, max_batch_no=max_batch_no, secondary_ids=filter_donors
+    )
+    for pedigree in out_sheet.cohort.pedigrees:
+        for donor in pedigree.donors:
+            print(donor)
+            batch_value = attrgetter("extra_infos")(donor).get("batchNo")
+            assert batch_value <= max_batch_no
+            assert donor.wrapped.secondary_id not in filter_donors
+
+
+def test_chunk_count(germline_sample_sheet_object):
+    """Tests ChunkHistory::chunk_count()"""
+    # Rename fixture
+    sheet = germline_sample_sheet_object
+    # Initialise variable
+    c_hist = ChunkHistory(sheet_list=[sheet], method=None)
+    # Run method - simple way to get results as they should look
+    single_chunk = Chunk(method="single", sheet_list=[sheet]).run()
+    # Define expected
+    expected = 6  # number of samples in small germline sheet; indexes: P001, P004
+    # Get actual
+    actual = c_hist.chunk_count(chunk=list(single_chunk.values())[0])
+    assert actual == expected
+
+
+def test_identify_closed_chunks(
+    germline_sample_sheet_object_small_cohort_with_custom_features,
+    germline_sample_sheet_object_medium_cohort_diverse_with_custom_features,
+):
+    """Tests ChunkHistory::identify_closed_chunks()"""
+    # Rename fixture
+    sheet_small = germline_sample_sheet_object_small_cohort_with_custom_features
+    sheet_medium = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+
+    # Initialise history object
+    c_hist = ChunkHistory(sheet_list=[sheet_small, sheet_medium], method=None)
+
+    # Run incremental method - simple way to get results as they should look
+    incremental_small = Chunk(
+        method="incremental", sheet_list=[sheet_small], maximal_chunk_size=40
+    ).run()
+    actual = c_hist.identify_closed_chunks(chunks=list(incremental_small.values()))
+    # Given that there will be only one chunk for the small sheet,
+    # it will return that none is closed.
+    assert len(actual) == 0
+
+    # Run incremental method - simple way to get results as they should look
+    incremental_medium = Chunk(
+        method="incremental", sheet_list=[sheet_medium], maximal_chunk_size=40
+    ).run()
+    actual = c_hist.identify_closed_chunks(chunks=list(incremental_medium.values()))
+    # Given the medium sheet composition, it should return 2 closed chunks with max chunk size = 40.
+    # Composition:
+    #   - 10 trio cases, 30 samples
+    #   - 10 duo cases, 20 samples
+    #   - 50 solo cases, 50 samples
+    assert len(actual) == 2

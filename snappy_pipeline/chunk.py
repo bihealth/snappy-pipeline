@@ -8,13 +8,15 @@ The cohort being analyzed will be splitted into chunks depending on the selected
                    size has been reached; should be combined with background data
                    to guarantee a minimal number of samples.
 """
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
+from copy import deepcopy
 from math import ceil
 from operator import attrgetter
 import random
 import warnings
 
 from biomedsheets.shortcuts import is_background, is_not_background
+from biomedsheets.shortcuts.germline import Pedigree
 
 from snappy_pipeline.utils import dictify, listify
 
@@ -104,7 +106,7 @@ class Chunk:
         order_by_custom_field=None,
         minimum_chunk_size=50,
     ):
-        """Constructor
+        """Constructor.
 
         :param sheet_list: List of Sample Sheets.
         :type sheet_list: list
@@ -769,3 +771,195 @@ class Chunk:
             kit_pedigree_dict[library_kit].append(pedigree)
         # Return list of lists
         return list(kit_pedigree_dict.values())
+
+
+class ChunkHistory:
+    """Class contains methods to recreate chunk history as batches are added to the sample sheet"""
+
+    def __init__(
+        self,
+        sheet_list,
+        method,
+        maximal_chunk_size=None,
+        order_by_custom_field=None,
+        minimum_chunk_size=None,
+    ):
+        """Constructor.
+
+        :param sheet_list: List of Sample Sheets.
+        :type sheet_list: list
+
+        :param method: Chunking method.
+        :type method: str
+
+        :param maximal_chunk_size: Maximum chunk size - used in 'evenly' method.
+        :type maximal_chunk_size: int
+
+        :param order_by_custom_field: List of sample sheets custom fields to be used to order the
+        samples in the 'incremental' method.
+        :type order_by_custom_field: list
+
+        :param minimum_chunk_size: Minimum allowed chunk - different for each tool.
+        :type minimum_chunk_size: int
+        """
+        # Initialise class variables
+        self.method = method
+        self.maximal_chunk_size = maximal_chunk_size
+        self.minimum_chunk_size = minimum_chunk_size
+        self.order_by_custom_field = order_by_custom_field
+        # Build shortcut from index library name to pedigree
+        self.index_ngs_library_to_pedigree = OrderedDict()
+        for sheet in sheet_list:
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+
+    def filter_sample_sheet(
+        self, sheet, max_batch_no=None, batch_field="batchNo", secondary_ids=None
+    ):
+        """Filter sample sheet.
+
+        :param sheet: Sample sheet.
+        :type sheet: biomedsheets.shortcuts.GermlineCaseSheet
+
+        :param max_batch_no: Max batch number - samples in larger batches will be excluded.
+        :type max_batch_no: int
+
+        :param batch_field: Name of batch field. Default: 'batchNo'.
+        :type batch_field: str
+
+        :param secondary_ids: List of secondary identifiers (samples) to be excluded.
+
+        :return: Returns subset of inputted sample sheet after filtering for batch number and
+        blocked samples.
+        """
+        # Initialise variables
+        new_pedigrees = []
+        local_sheet = deepcopy(sheet)
+        if not secondary_ids:
+            secondary_ids = []
+
+        # Parse batches from donors
+        for pedigree in sheet.cohort.pedigrees:
+            new_donors = []  # stores donors from smaller batches
+            # Filter donors based on batch number and secondary id list
+            for donor in pedigree.donors:
+                id_ = donor.wrapped.secondary_id
+                batch_value = self._get_batch_value(donor, batch_field)
+                if batch_value <= max_batch_no and id_ not in secondary_ids:
+                    new_donors.append(donor)
+            # Check if should create new pedigree
+            if len(new_donors) > 0:
+                new_pedigree = Pedigree(donors=new_donors, index=pedigree.index)
+                new_pedigrees.append(new_pedigree)
+
+        # Update and return sample sheet
+        local_sheet.cohort.pedigrees = new_pedigrees
+        return local_sheet
+
+    @staticmethod
+    def _get_batch_value(donor, batch_field="batchNo"):
+        """Get batch value from donor.
+
+        :param donor: Donor.
+        :type donor: biomedsheets.shortcuts.germline.GermlineDonor
+
+        :param batch_field: Name of batch field. Default: 'batchNo'.
+        :type batch_field: str
+
+        :return: Returns batch number from donor.
+
+        :raises: ValueError: when donor's 'extra_infos' attribute doesn't contain batch
+        information.
+        """
+        # Initialise exception messages
+        attribute_error_msg = "\nExpects that Donor object have attribute 'extra_infos'."
+        value_error_msg = "Batch number cannot be None. Field '{f}'; donor: {p}"
+
+        # Get batch number
+        try:
+            batch_value = attrgetter("extra_infos")(donor).get(batch_field)
+            if batch_value is None:
+                value_error_msg = value_error_msg.format(f=batch_field, p=donor)
+                raise ValueError(value_error_msg)
+            return batch_value
+        except AttributeError as ae:
+            raise type(ae)(ae.message + attribute_error_msg)
+
+    def summarize_sample_sheet(self, sheet, batch_field="batchNo"):
+        """Summarize information in sample sheet.
+
+        :param sheet: Sample sheet.
+        :type sheet: biomedsheets.shortcuts.GermlineCaseSheet
+
+        :param batch_field: Name of batch field. Default: 'batchNo'.
+        :type batch_field: str
+
+        :return: Returns dictionary with sample sheet information. Key: batch number; Value: sample
+        count.
+        """
+        # Initialise variable
+        batch_counter_dict = defaultdict(lambda: 0)  # key: batch index; value: number of samples
+
+        # Parse batches from donors
+        for pedigree in sheet.cohort.pedigrees:
+            for donor in pedigree.donors:
+                batch_value = self._get_batch_value(donor, batch_field)
+                batch_counter_dict[batch_value] += 1
+
+        # Return defaultdict
+        return batch_counter_dict
+
+    @staticmethod
+    def cumulative_batch_count(batch_counter_dict):
+        """Cumulative batch count.
+
+        :param batch_counter_dict: Dictionary with sample count per batch. Key: batch number;
+        Value: sample count.
+        :type batch_counter_dict: defaultdict
+
+        :return: Returns with cumulative number of samples per batch. Key: batch index;
+        Value: cumulative number of samples.
+        """
+        # Initialise variables
+        sample_count = 0
+        # Key: batch index; Value: cumulative number of samples
+        batch_cumulative_dict = defaultdict(lambda: 0)
+
+        # Iterate over dict
+        for i_batch in sorted(batch_counter_dict.keys()):
+            i_count = batch_counter_dict.get(i_batch)
+            sample_count += i_count
+            batch_cumulative_dict[i_batch] = sample_count
+
+        # Return defaultdict
+        return batch_cumulative_dict
+
+    def chunk_count(self, chunk):
+        """Count number of samples in chunk.
+
+        :param chunk: Chunk - list of indexes.
+        :type chunk: list
+
+        :return: Returns number of samples in chunk.
+        """
+        size = 0
+        for index in chunk:
+            pedigree = self.index_ngs_library_to_pedigree.get(index.dna_ngs_library.name)
+            size += len(pedigree.donors)
+        # Return int
+        return size
+
+    def identify_closed_chunks(self, chunks):
+        """Identify closed chunks.
+
+        Method takes list of chunks and identifies the ones that can be considered 'closed', i.e.,
+        already have the maximum number of samples in them. It takes a shortcut by assuming that
+        the chunks outputted by the method `split_cohort_into_incremental_chunks` are all maxed out,
+        except perhaps for the smallest one.
+
+        :param chunks: List of chunks - each chunk is a list of indexes.
+        :type chunks: list
+
+        :return: Returns list of chunks minus the smallest chunk (presumed to still be open).
+        """
+        ordered_chunks = sorted(chunks, key=self.chunk_count)
+        return ordered_chunks[:-1]
