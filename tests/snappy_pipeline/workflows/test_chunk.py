@@ -12,7 +12,12 @@ from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GermlineCaseSheet, is_background, is_not_background
 import pytest
 
-from snappy_pipeline.chunk import BatchInsufficientSpaceException, Chunk, ChunkHistory
+from snappy_pipeline.chunk import (
+    BatchInsufficientSpaceException,
+    Chunk,
+    ChunkAuxiliary,
+    ChunkHistory,
+)
 
 
 def build_pedigree_size_dictionary(all_pedigrees):
@@ -519,6 +524,9 @@ def test_background_sheet_fixture(germline_sample_sheet_object_medium_cohort_sol
     sheet = germline_sample_sheet_object_medium_cohort_solo_cases_background
     assert len(list(filter(is_background, [sheet]))) == 1
     assert len(list(filter(is_not_background, [sheet]))) == 0
+
+
+# Test Chunk =======================================================================================
 
 
 def test_chunk_constructor(germline_sample_sheet_object):
@@ -1503,7 +1511,7 @@ def test_summarize_sample_sheet(
 ):
     """Tests ChunkHistory::summarize_sample_sheet()"""
     # Initialise variables
-    c_hist = ChunkHistory(sheet_list=[], method=None)
+    c_hist = ChunkHistory(sheet_list=[])
 
     # Rename fixtures
     sheet_exception = germline_sample_sheet_object
@@ -1530,7 +1538,7 @@ def test_summarize_sample_sheet(
 def test_cumulative_batch_count():
     """Tests ChunkHistory::cumulative_batch_count()"""
     # Initialise variables
-    c_hist = ChunkHistory(sheet_list=[], method=None)
+    c_hist = ChunkHistory(sheet_list=[])
 
     # Define input
     in_dict_ones = defaultdict(lambda: 0, {1: 1, 2: 1, 3: 1, 4: 1})
@@ -1555,7 +1563,7 @@ def test_filter_sample_sheet(
 ):
     """Tests ChunkHistory::filter_sample_sheet()"""
     # Initialise variables
-    c_hist = ChunkHistory(sheet_list=[], method=None)
+    c_hist = ChunkHistory(sheet_list=[])
 
     # Rename fixture
     sheet_small = germline_sample_sheet_object_small_cohort_with_custom_features
@@ -1585,7 +1593,6 @@ def test_filter_sample_sheet(
     )
     for pedigree in out_sheet.cohort.pedigrees:
         for donor in pedigree.donors:
-            print(donor)
             batch_value = attrgetter("extra_infos")(donor).get("batchNo")
             assert batch_value <= max_batch_no
             assert donor.wrapped.secondary_id not in filter_donors
@@ -1596,7 +1603,7 @@ def test_chunk_count(germline_sample_sheet_object):
     # Rename fixture
     sheet = germline_sample_sheet_object
     # Initialise variable
-    c_hist = ChunkHistory(sheet_list=[sheet], method=None)
+    c_hist = ChunkHistory(sheet_list=[sheet])
     # Run method - simple way to get results as they should look
     single_chunk = Chunk(method="single", sheet_list=[sheet]).run()
     # Define expected
@@ -1604,6 +1611,22 @@ def test_chunk_count(germline_sample_sheet_object):
     # Get actual
     actual = c_hist.chunk_count(chunk=list(single_chunk.values())[0])
     assert actual == expected
+
+
+def test_neg_max_batch(germline_sample_sheet_object_small_cohort_with_custom_features):
+    """Tests ChunkHistory::neg_max_batch()"""
+    # Rename fixture
+    sheet = germline_sample_sheet_object_small_cohort_with_custom_features
+    # Initialise variable
+    c_hist = ChunkHistory(sheet_list=[sheet])
+    # Run method - simple way to get results as they should look
+    single_chunk = Chunk(method="single", sheet_list=[sheet]).run()
+    # Define expected
+    expected = -2
+    # Get actual
+    actual = c_hist.neg_max_batch(chunk=list(single_chunk.values())[0])
+    msg = "Max batch in cohort is '2', hence method should return '-2'."
+    assert actual == expected, msg
 
 
 def test_identify_closed_chunks(
@@ -1616,7 +1639,7 @@ def test_identify_closed_chunks(
     sheet_medium = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
 
     # Initialise history object
-    c_hist = ChunkHistory(sheet_list=[sheet_small, sheet_medium], method=None)
+    c_hist = ChunkHistory(sheet_list=[sheet_small, sheet_medium])
 
     # Run incremental method - simple way to get results as they should look
     incremental_small = Chunk(
@@ -1638,3 +1661,35 @@ def test_identify_closed_chunks(
     #   - 10 duo cases, 20 samples
     #   - 50 solo cases, 50 samples
     assert len(actual) == 2
+
+
+def test_history(germline_sample_sheet_object_medium_cohort_diverse_with_custom_features):
+    """Tests ChunkHistory::history()"""
+    # Initialise variables
+    trio_cases_list = ["P{i}".format(i=str(i).zfill(3)) for i in range(1, 31, 3)]  # 10 trio cases
+    duo_cases_list = ["P{i}".format(i=str(i).zfill(3)) for i in range(31, 51, 2)]  # 10 duo cases
+    solo_cases_list = ["P{i}".format(i=str(i).zfill(3)) for i in range(51, 101, 1)]  # 50 solo cases
+    index_count_dict = {}
+    for index in trio_cases_list + duo_cases_list + solo_cases_list:
+        index_count_dict[index] = 0
+
+    # Rename fixture
+    sheet = germline_sample_sheet_object_medium_cohort_diverse_with_custom_features
+
+    # Initialise history object
+    c_hist = ChunkHistory(
+        sheet_list=[sheet],
+        order_by_custom_field=["batchNo", "familyId"],
+        maximal_chunk_size=30,
+    )
+
+    # Get history
+    actual = c_hist.history()
+    counter = 0
+    for chunk in actual:
+        counter += 1
+        for index in chunk:
+            index_count_dict[index.wrapped.secondary_id] += 1
+
+    # Expected that all samples are present exactly once
+    assert all([count == 1 for count in index_count_dict.values()])

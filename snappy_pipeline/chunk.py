@@ -77,7 +77,25 @@ class BatchInsufficientSpaceException(Exception):
         return message
 
 
-class Chunk:
+class ChunkAuxiliary:
+    """Class contains auxiliary methods used for chunking."""
+
+    @staticmethod
+    @dictify
+    def batchlist_to_dictionary(batch_lists):
+        """Turns a batch list of donors into a dictionary.
+
+        :param batch_lists: List of lists with donors associated with each batch.
+        :type batch_lists: list
+
+        :return: Returns a dictionary with batch number/index (key) and list of donors (value).
+        Used to uninform the output of the different methods.
+        """
+        for i, donors in enumerate(batch_lists, 1):  # 1-based index
+            yield i, donors
+
+
+class Chunk(ChunkAuxiliary):
     """Class contains methods to split cohort into chunks."""
 
     #: List of implemented methods.
@@ -104,7 +122,7 @@ class Chunk:
         method,
         maximal_chunk_size=None,
         order_by_custom_field=None,
-        minimum_chunk_size=50,
+        minimum_chunk_size=20,
     ):
         """Constructor.
 
@@ -121,7 +139,7 @@ class Chunk:
         samples in the 'incremental' method.
         :type order_by_custom_field: list, optional
 
-        :param minimum_chunk_size: Minimum allowed chunk - different for each tool. Default: 50.
+        :param minimum_chunk_size: Minimum allowed chunk - different for each tool. Default: 20.
         :type minimum_chunk_size: int, optional
         """
         # Validate selected method
@@ -286,13 +304,11 @@ class Chunk:
         for i_pedigrees in pedigrees_by_kit_lists:
             # Check if makes sense to split cohort
             cohort_size = self.get_cohort_size_from_pedigrees_list(all_pedigrees=i_pedigrees)
-            print(cohort_size)
             if cohort_size < self.minimum_chunk_size:
                 self.warn_user_cohort_smaller_than_min(
                     cohort_size=cohort_size, min_chunk=self.minimum_chunk_size
                 )
                 balanced_chunks_list = [self.pedigree_to_index_list(all_pedigrees=i_pedigrees)]
-                print(balanced_chunks_list)
             else:
                 balanced_chunks_list = self.split_cohort_into_balanced_chunks(
                     all_pedigrees=i_pedigrees, max_batch_size=max_chunk
@@ -335,20 +351,6 @@ class Chunk:
         """
         for pedigree in all_pedigrees:
             yield pedigree.index
-
-    @staticmethod
-    @dictify
-    def batchlist_to_dictionary(batch_lists):
-        """Turns a batch list of donors into a dictionary.
-
-        :param batch_lists: List of lists with donors associated with each batch.
-        :type batch_lists: list
-
-        :return: Returns a dictionary with batch number/index (key) and list of donors (value).
-        Used to uninform the output of the different methods.
-        """
-        for i, donors in enumerate(batch_lists, 1):  # 1-based index
-            yield i, donors
 
     @staticmethod
     @listify
@@ -591,7 +593,7 @@ class Chunk:
         :type min_chunk: int
         """
         warn_msg = (
-            "Cohort in sample sheet contains only {count_} (<{min_}) "
+            "Cohort in sample sheet contains only {count_} samples (<{min_}) "
             "and won't be split into batches.".format(count_=str(cohort_size), min_=min_chunk)
         )
         warnings.warn(warn_msg)
@@ -773,24 +775,23 @@ class Chunk:
         return list(kit_pedigree_dict.values())
 
 
-class ChunkHistory:
+class ChunkHistory(ChunkAuxiliary):
     """Class contains methods to recreate chunk history as batches are added to the sample sheet"""
+
+    #: Chunking method - for history context only 'incremental' makes sense.
+    chunking_method = "incremental"
 
     def __init__(
         self,
         sheet_list,
-        method,
         maximal_chunk_size=None,
         order_by_custom_field=None,
-        minimum_chunk_size=None,
+        minimum_chunk_size=20,
     ):
         """Constructor.
 
         :param sheet_list: List of Sample Sheets.
         :type sheet_list: list
-
-        :param method: Chunking method.
-        :type method: str
 
         :param maximal_chunk_size: Maximum chunk size - used in 'evenly' method.
         :type maximal_chunk_size: int
@@ -799,11 +800,11 @@ class ChunkHistory:
         samples in the 'incremental' method.
         :type order_by_custom_field: list
 
-        :param minimum_chunk_size: Minimum allowed chunk - different for each tool.
+        :param minimum_chunk_size: Minimum allowed chunk - different for each tool. Default: 20.
         :type minimum_chunk_size: int
         """
         # Initialise class variables
-        self.method = method
+        self.sheets = sheet_list
         self.maximal_chunk_size = maximal_chunk_size
         self.minimum_chunk_size = minimum_chunk_size
         self.order_by_custom_field = order_by_custom_field
@@ -811,6 +812,96 @@ class ChunkHistory:
         self.index_ngs_library_to_pedigree = OrderedDict()
         for sheet in sheet_list:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+
+    def run(self):
+        """Runs routine to extract chunk history based on sample sheets."""
+        chunk_list = self.history()
+        return self.batchlist_to_dictionary(batch_lists=chunk_list)
+
+    def history(self):
+        """Create chunk history.
+
+        :return: Returns list of chunks as they would have been created with the continuing
+        addition of new batches.
+        """
+        # Initialise variables
+        all_batches = []
+        closed_chunks = []
+        filter_secondary_ids = []
+
+        # Get all batch numbers
+        for sheet in self.sheets:
+            tmp_summary = self.summarize_sample_sheet(sheet=sheet)
+            all_batches.extend(list(tmp_summary.keys()))
+        all_batches = set(all_batches)
+
+        # Iterate over batches to reconstruct history
+        library_to_chunks_dict = None
+        for batch in all_batches:
+            i_all_pedigrees = []
+            i_sheets = []
+            for sheet in self.sheets:
+                i_sheet = deepcopy(sheet)
+                filtered_sheet = self.filter_sample_sheet(
+                    sheet=i_sheet, max_batch_no=batch, secondary_ids=filter_secondary_ids
+                )
+                i_sheets.append(filtered_sheet)
+
+            # Create chunks
+            library_to_chunks_dict = Chunk(
+                method=self.chunking_method,
+                sheet_list=i_sheets,
+                maximal_chunk_size=self.maximal_chunk_size,
+                minimum_chunk_size=self.minimum_chunk_size,
+            ).run()
+
+            # Check if any chunk already closed - get fully analyzed pedigrees
+            for f_sheet in i_sheets:
+                i_all_pedigrees.extend(f_sheet.cohort.pedigrees)
+            i_closed_chunks = self.identify_closed_chunks(library_to_chunks_dict.values())
+            closed_chunks.extend(i_closed_chunks)
+            i_filtered_donors = self._get_complete_pedigrees_from_chunks(
+                chunks=i_closed_chunks, pedigrees=i_all_pedigrees
+            )
+            filter_secondary_ids.extend(i_filtered_donors)
+
+        # Return list of all chunks
+        open_chunks = self.get_open_chunk(library_to_chunks_dict.values())
+        all_chunks = closed_chunks + [open_chunks]
+        return all_chunks
+
+    def _get_complete_pedigrees_from_chunks(self, chunks, pedigrees):
+        """Get all complete pedigrees in chunks.
+
+        :param chunks: List of closed chunks.
+        :type chunks: list
+
+        :param pedigrees: List of pedigrees.
+        :type pedigrees: list
+
+        :return: Returns list of all donors library names of all samples in closed chunks.
+        """
+        # Initialise variables
+        completed_donors_libraries = []
+        index_to_pedigree_size_dict = defaultdict(lambda: 0)
+
+        # Populate index to pedigree size dictionary
+        for pedigree in pedigrees:
+            index_to_pedigree_size_dict[pedigree.index.dna_ngs_library.name] = len(pedigree.donors)
+
+        # Iterate over chunks
+        for chunk in chunks:
+            for index in chunk:
+                index_library_name = index.dna_ngs_library.name
+                full_pedigree = self.index_ngs_library_to_pedigree.get(index_library_name)
+                in_pedigree = index_to_pedigree_size_dict.get(index_library_name)
+                if len(full_pedigree.donors) == in_pedigree:
+                    completed_donors_libraries.extend(
+                        [donor.wrapped.secondary_id for donor in full_pedigree.donors]
+                    )
+
+        # Return list of donors' libraries
+        return completed_donors_libraries
 
     def filter_sample_sheet(
         self, sheet, max_batch_no=None, batch_field="batchNo", secondary_ids=None
@@ -948,18 +1039,77 @@ class ChunkHistory:
         # Return int
         return size
 
+    def neg_max_batch(self, chunk):
+        """Find max batch number in chunk.
+
+        :param chunk: Chunk - list of indexes.
+        :type chunk: list
+
+        :return: Returns negative max batch number found in chunk. Example: if max batch found in
+        chunk is '23', method will returns '-23'.
+        """
+        batches = []
+        for index in chunk:
+            i_batch = self._get_batch_value(index)
+            batches.append(i_batch)
+        return -(max(batches))
+
     def identify_closed_chunks(self, chunks):
         """Identify closed chunks.
 
         Method takes list of chunks and identifies the ones that can be considered 'closed', i.e.,
         already have the maximum number of samples in them. It takes a shortcut by assuming that
         the chunks outputted by the method `split_cohort_into_incremental_chunks` are all maxed out,
-        except perhaps for the smallest one.
+        except perhaps for the smallest one with the highest batch number.
 
         :param chunks: List of chunks - each chunk is a list of indexes.
         :type chunks: list
 
-        :return: Returns list of chunks minus the smallest chunk (presumed to still be open).
+        :return: Returns list of chunks minus the smallest chunk (presumed to still be open) per
+        library kit.
         """
-        ordered_chunks = sorted(chunks, key=self.chunk_count)
-        return ordered_chunks[:-1]
+        # Initialise variable
+        library_kit_dict = defaultdict(list)  # key: sequencing kit name; value: chunks
+        closed_chunks = []
+        # Iterate over chunks - split by library kit
+        for chunk in chunks:
+            # Assumption: all indexes have the same library kit
+            library_kit = chunk[0].dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+            library_kit_dict[library_kit].append(chunk)
+        # Iterate over chunks - filter for closed chunks
+        for i_chunks in library_kit_dict.values():
+            ordered_chunks = sorted(
+                i_chunks, key=lambda i: (self.neg_max_batch(i), self.chunk_count(i))
+            )
+            closed_chunks.extend(ordered_chunks[:-1])
+        return closed_chunks
+
+    def get_open_chunk(self, chunks):
+        """Identify open chunks.
+
+        Method takes list of chunks and identifies the ones that can be considered 'open', i.e.,
+        could hold more samples. It takes a shortcut by assuming that the chunks outputted by the
+        method `split_cohort_into_incremental_chunks` are all maxed out, except perhaps for the
+        smallest one with the highest batch number.
+
+        :param chunks: List of chunks - each chunk is a list of indexes.
+        :type chunks: list
+
+        :return: Returns list of chunks with smallest chunks per library kit (presumed to
+        still be open).
+        """
+        # Initialise variable
+        library_kit_dict = defaultdict(list)  # key: sequencing kit name; value: chunks
+        open_chunks = []
+        # Iterate over chunks - split by library kit
+        for chunk in chunks:
+            # Assumption: all indexes have the same library kit
+            library_kit = chunk[0].dna_ngs_library.ngs_library.extra_infos.get("libraryKit")
+            library_kit_dict[library_kit].append(chunk)
+        # Iterate over chunks - filter for closed chunks
+        for i_chunks in library_kit_dict.values():
+            ordered_chunks = sorted(
+                i_chunks, key=lambda i: (self.neg_max_batch(i), self.chunk_count(i))
+            )
+            open_chunks.extend(ordered_chunks[-1])
+        return open_chunks
