@@ -8,6 +8,9 @@ from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
+    AnnotateExpansionHunter,
+)
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".json", ".json.md5")
@@ -17,8 +20,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration repeat_expansion
 step_config:
   repeat_expansion:
-    # ExpansionHunter binary file
-    expansionhunter_bin: REQUIRED
     # Repeat expansions definitions - used in ExpansionHunter call
     repeat_catalog: REQUIRED
     # Repeat expansions annotations, e.g., normality range - custom file
@@ -149,6 +150,28 @@ class ExpansionHunterStepPart(BaseStepPart):
         """
         name_pattern = "{mapper}.expansionhunter.{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+    def annotate_results(self, _wildcards, sm_input, sm_output):
+        """Annotate/Explain ExpansionHunter results.
+
+        :param _wildcards: Snakemake wildcards associated with rule (unused).
+        :type _wildcards: snakemake.io.Wildcards
+
+        :param sm_input: Snakemake input associated with rule.
+        :type sm_input: snakemake.io.Namedlist
+
+        :param sm_output: Snakemake output associated with rule.
+        :type sm_output: snakemake.io.Namedlist
+        """
+        # Absolute path from input and output
+        input_path = os.path.join(os.getcwd(), str(sm_input))
+        output_path = os.path.join(os.getcwd(), sm_output.json)
+        # Annotate
+        AnnotateExpansionHunter(
+            eh_json=input_path,
+            annotation_json=self.config["repeat_annotation"],
+            output_path=output_path,
+        ).run()
 
 
 class RepeatExpansionWorkflow(BaseStep):

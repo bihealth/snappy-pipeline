@@ -52,8 +52,7 @@ class AnnotateExpansionHunter:
         # Load EH result
         eh_dict = self.load_json(path=self.eh_json)
         simplified_out_dict = eh_dict.get("LocusResults")
-        sample_parameters_dict = simplified_out_dict["SampleParameters"]
-        del simplified_out_dict["SampleParameters"]
+        sample_parameters_dict = eh_dict.get("SampleParameters")
         # Load annotation file
         annotation_dict = self.load_json(path=self.annotation_json)
 
@@ -101,13 +100,13 @@ class AnnotateExpansionHunter:
 
             # Iterate over variants
             # Example: repeat 'ATXN7' has two variants, 'ATXN7' and 'ATXN7_GCC'
-            for variant in output_dict[repeat]["Variants"]:
-                genotype = output_dict[repeat]["Variants"][variant].get("Genotype", None)
+            for repeat_variant in output_dict[repeat]["Variants"]:
+                genotype = output_dict[repeat]["Variants"][repeat_variant].get("Genotype", None)
                 # Update repeat name to accommodate for variants
-                if variant != repeat:
-                    repeat = "{rep} ({var})".format(rep=repeat, var=variant)
+                if repeat_variant != repeat:
+                    repeat_variant = "{rep} ({var})".format(rep=repeat, var=repeat_variant)
                 sentence = self.explain_result(
-                    repeat=repeat,
+                    repeat=repeat_variant,
                     genotype=genotype,
                     normal_start=normal_start,
                     normal_end=normal_end,

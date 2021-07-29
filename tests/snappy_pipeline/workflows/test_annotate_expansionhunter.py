@@ -133,7 +133,7 @@ def test_load_json(annotate_obj, expansionhunter_json, annotation_json):
     """Tests AnnotateExpansionHunter::load_json() """
     # Define expected
     expected_annotation_keys = ["AR", "FMR1", "RFC1"]
-    expected_output_keys = ["LocusResults"]
+    expected_output_keys = ["LocusResults", "SampleParameters"]
 
     # Test output json
     actual = annotate_obj.load_json(path=expansionhunter_json)
@@ -180,7 +180,6 @@ def test_annotate_normal(
     with open(expansionhunter_json) as json_file:
         output_dict = json.load(json_file)
         simplified_out_dict = output_dict.get("LocusResults")
-        del simplified_out_dict["SampleParameters"]
     with open(annotation_json) as json_file:
         annotation_dict = json.load(json_file)
     # Run and assert
@@ -197,7 +196,6 @@ def test_annotate_unclear(
     with open(expansionhunter_unclear_json) as json_file:
         output_dict = json.load(json_file)
         simplified_out_dict = output_dict.get("LocusResults")
-        del simplified_out_dict["SampleParameters"]
     with open(annotation_json) as json_file:
         annotation_dict = json.load(json_file)
     # Run and assert
@@ -214,7 +212,6 @@ def test_annotate_expanded(
     with open(expansionhunter_expanded_json) as json_file:
         output_dict = json.load(json_file)
         simplified_out_dict = output_dict.get("LocusResults")
-        del simplified_out_dict["SampleParameters"]
     with open(annotation_json) as json_file:
         annotation_dict = json.load(json_file)
     # Run and assert

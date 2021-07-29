@@ -81,10 +81,11 @@
               "VariantType": "Repeat"
             }
           }
-        },
-        "SampleParameters": {
-            "SampleId": "bwa.P001-N1-DNA1-WES1",
-            "Sex": "Female"
         }
+    },
+    "SampleParameters": {
+        "SampleId": "bwa.P001-N1-DNA1-WES1",
+        "Sex": "Female"
     }
 }
+

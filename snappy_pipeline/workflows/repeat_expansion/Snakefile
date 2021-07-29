@@ -57,7 +57,7 @@ rule repeat_expansion_run_expansionhunter:
     log:
         wf.get_log_file("expansionhunter", "run"),
     wrapper:
-        wf.wrapper_path("expansionhunter/run")
+        wf.wrapper_path("expansionhunter")
 
 
 rule repeat_expansion_annotate_expansionhunter:
@@ -66,4 +66,4 @@ rule repeat_expansion_annotate_expansionhunter:
     output:
         **wf. get_output_files("expansionhunter","annotate"),
     run:
-        wf.substep_getattr("expansionhunter", "annotate_results")(wildcards)
+        wf.substep_getattr("expansionhunter", "annotate_results")(wildcards, input, output)
