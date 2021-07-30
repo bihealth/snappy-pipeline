@@ -3,6 +3,7 @@
 
 import json
 import os
+from shutil import copyfile
 import tempfile
 
 import pytest
@@ -222,7 +223,7 @@ def test_annotate_expanded(
 
 def test_run_annotation(annotate_obj):
     """Tests AnnotateExpansionHunter::run() - full run"""
-    # Define expected
+    # Define expected/
     expected_keys = ["annotation", "results", "raw", "sample_parameters"]
     # Temporary file path
     temporary_output = os.path.join(tempfile.gettempdir(), "output.json")
@@ -232,3 +233,26 @@ def test_run_annotation(annotate_obj):
         output_dict = json.load(json_file)
     assert len(output_dict) == len(expected_keys)
     assert all([key in expected_keys for key in output_dict])
+
+
+def test_write_md5(annotate_obj):
+    """Tests AnnotateExpansionHunter::write_md5() """
+
+    # Define input
+    destiny = os.path.join(tempfile.gettempdir(), "empty.json")
+    source = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        os.path.join("data", "empty.json"),
+    )
+    copyfile(source, destiny)
+
+    # Define expected
+    expected_hash = "d41d8cd98f00b204e9800998ecf8427e"  # empty file
+    expected_file = destiny + ".md5"
+
+    # Call and assert
+    annotate_obj.write_md5(path=destiny)
+    msg_exists = "Method should create file: {0}".format(expected_file)
+    assert os.path.exists(expected_file), msg_exists
+    msg_hash = "Should return hash for empty file: {0}".format(expected_hash)
+    assert open(expected_file).read() == expected_hash, msg_hash

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+import hashlib
 import json
 import os
 
@@ -69,6 +70,9 @@ class AnnotateExpansionHunter:
 
         # Write to file
         self.write_json(path=self.output_path, data=output)
+
+        # Write MD5 file
+        self.write_md5(path=self.output_path)
 
     def annotate(self, output_dict, annotation_dict):
         """Annotate ExpansionHunter output.
@@ -229,3 +233,24 @@ class AnnotateExpansionHunter:
         """
         with open(path, "w") as json_file:
             json.dump(data, json_file)
+
+    @staticmethod
+    def write_md5(path):
+        """Write MD5 file.
+
+        :param path: Path to input file - file to generate MD5 checksum.
+        :type path: str
+        """
+        # Set output file
+        md5_file = path + ".md5"
+
+        # Generate MD5 checksum
+        md5_hash = hashlib.md5()
+        in_file = open(path, "rb")
+        content = in_file.read()
+        md5_hash.update(content)
+        digest = md5_hash.hexdigest()
+
+        # Write to file
+        with open(md5_file, "w") as out_file:
+            out_file.write(digest)
