@@ -133,12 +133,11 @@ def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflo
     }
     # Get actual
     actual = repeat_expansion_workflow.get_output_files("expansionhunter", "run")
-    print(actual)
     assert actual == expected
 
 
 def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow::_get_log_files_run"""
+    """Tests RepeatExpansionWorkflow::_get_log_files_run()"""
     # Define expected
     expected = (
         "work/{mapper}.expansionhunter.{library_name}/log/"
@@ -147,6 +146,20 @@ def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
     # Get actual
     actual = repeat_expansion_workflow.get_log_file("expansionhunter", "run")
     assert actual == expected
+
+
+def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
+    """Tests RepeatExpansionWorkflow::get_params()"""
+    # P001
+    expected = "female"
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a female patient."
+    # P002
+    expected = "male"
+    wildcards = Wildcards(fromdict={"library_name": "P002-N1-DNA1-WGS1"})
+    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a male patient."
 
 
 # Tests for ExpansionHunterStepPart (annotate) -----------------------------------------------------

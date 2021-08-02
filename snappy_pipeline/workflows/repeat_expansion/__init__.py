@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*
+from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import KEY_SEX, GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
@@ -38,6 +39,30 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     #: Valid actions.
     actions = ("run", "annotate")
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super().__init__(*args, **kwargs)
+        #: Build shortcut from library name to sex
+        self.library_name_to_sex = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.library_name_to_sex.update(self._library_name_to_sex(sheet))
+
+    @staticmethod
+    def _library_name_to_sex(sheet):
+        """Library name to sex.
+
+        :param sheet: Sample sheet.
+        :type sheet: biomedsheets.shortcuts.GermlineCaseSheet
+
+        :return: Yields (library name, sex).
+        """
+        for donor in sheet.donors:
+            sex = donor.extra_infos.get(KEY_SEX)
+            for bio_sample in donor.bio_samples.values():
+                for test_sample in bio_sample.test_samples.values():
+                    for ngs_library in test_sample.ngs_libraries.values():
+                        yield ngs_library.name, sex
 
     def get_input_files(self, action):
         """Return input function for ExpansionHunter rules.
@@ -154,6 +179,27 @@ class ExpansionHunterStepPart(BaseStepPart):
         """
         name_pattern = "{mapper}.expansionhunter.{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+    def get_params(self, action):
+        """Get parameters.
+
+        :param action: Action, i.e., step being performed.
+        :type action: str
+
+        :return: Returns method to get donor's sex.
+        """
+        assert action == "run", "Parameters is only available for action 'run'."
+        return self._get_donor_sex
+
+    def _get_donor_sex(self, wildcards):
+        """Get donor's sex.
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns donor's sex as found in sample sheet: 'female', 'male' or 'unknown'.
+        """
+        return {"sex": self.library_name_to_sex[wildcards.library_name]}
 
     def annotate_results(self, _wildcards, sm_input, sm_output):
         """Annotate/Explain ExpansionHunter results.

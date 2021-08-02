@@ -54,6 +54,8 @@ rule repeat_expansion_run_expansionhunter:
         wf.get_input_files("expansionhunter", "run"),
     output:
         **wf. get_output_files("expansionhunter","run"),
+    params:
+        **{"args": wf. get_params('expansionhunter','run')},
     log:
         wf.get_log_file("expansionhunter", "run"),
     wrapper:

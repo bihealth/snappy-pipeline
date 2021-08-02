@@ -14,6 +14,12 @@ prefix = snakemake.output.json
 prefix = prefix.replace(".json", "")
 prefix = os.path.join(os.getcwd(), prefix)
 
+# Define argument sex if any (otherwise: female [default])
+sex_argument = ""
+valid_sex_list = ["female", "male"]
+if snakemake.params.args["sex"] in valid_sex_list:
+    sex_argument = "--sex " + snakemake.params.args["sex"]
+
 
 shell(
     r"""
@@ -38,19 +44,18 @@ fi
 # Create out dir
 mkdir -p $(dirname {snakemake.output.json})
 
+# Call tool
 ExpansionHunter --reads {snakemake.input} \
         --reference {snakemake.config[static_data_config][reference][path]} \
         --variant-catalog {snakemake.config[step_config][repeat_expansion][repeat_catalog]} \
-        --output-prefix {prefix}
-
-
+        --output-prefix {prefix} {sex_argument}
 """
 )
 
 # Compute MD5 sums of log and vcf.
 shell(
     r"""
-md5sum {snakemake.log} >{snakemake.log}.md5
-md5sum {snakemake.output.vcf} >{snakemake.output.vcf_md5}
+md5sum {snakemake.log} > {snakemake.log}.md5
+md5sum {snakemake.output.vcf} > {snakemake.output.vcf_md5}
 """
 )
