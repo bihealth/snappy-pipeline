@@ -232,7 +232,7 @@ class AnnotateExpansionHunter:
         :type data: dict
         """
         with open(path, "w") as json_file:
-            json.dump(data, json_file)
+            json.dump(data, json_file, indent=4, sort_keys=False)
 
     @staticmethod
     def write_md5(path):
