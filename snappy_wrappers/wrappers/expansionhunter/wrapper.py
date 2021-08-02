@@ -47,9 +47,10 @@ ExpansionHunter --reads {snakemake.input} \
 """
 )
 
-# Compute MD5 sums of logs.
+# Compute MD5 sums of log and vcf.
 shell(
     r"""
 md5sum {snakemake.log} >{snakemake.log}.md5
+md5sum {snakemake.output.vcf} >{snakemake.output.vcf_md5}
 """
 )

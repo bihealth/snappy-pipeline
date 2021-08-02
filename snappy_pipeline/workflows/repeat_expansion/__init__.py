@@ -12,10 +12,11 @@ from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import 
     AnnotateExpansionHunter,
 )
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".json", ".json.md5")
-
-#: Default configuration for the repeat_expansion step
+#: Extensions of files to create as main payload - JSON.
+EXT_JSON = (".json", ".json.md5")
+#: Extensions of files to create as main payload - VCF.
+EXT_VCF = (".vcf", ".vcf.md5")
+#: Default configuration for the repeat_expansion step.
 DEFAULT_CONFIG = r"""
 # Default configuration repeat_expansion
 step_config:
@@ -124,11 +125,14 @@ class ExpansionHunterStepPart(BaseStepPart):
     @dictify
     def _get_output_files_run():
         """Yield output files' patterns for rule `run` - ExpansionHunter call."""
-        ext = "json"
+        # Initialise variables
         name_pattern = "{mapper}.expansionhunter.{library_name}"
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext=ext
-        )
+        ext_dict = {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}
+        # Yield
+        for key, ext in ext_dict.items():
+            yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            )
 
     @staticmethod
     @dictify
@@ -218,14 +222,23 @@ class RepeatExpansionWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the germline repeat expansion analysis workflow."""
-        # Actually yield the result files.
-        name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
+        # Initialise variable
         tools = ("expansionhunter",)
+        # Yield the JSON annotated results files
+        name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             tool=tools,
-            ext=EXT_VALUES,
+            ext=EXT_JSON,
+        )
+        # Yield the VCF results files
+        name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
+        yield from self._yield_result_files(
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            tool=tools,
+            ext=EXT_VCF,
         )
 
     def _yield_result_files(self, tpl, **kwargs):
