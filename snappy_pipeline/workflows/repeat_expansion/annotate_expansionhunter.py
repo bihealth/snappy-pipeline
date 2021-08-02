@@ -118,7 +118,7 @@ class AnnotateExpansionHunter:
                     expansion_end=expansion_end,
                 )
                 # Update out dict
-                explanation_dict[repeat] = sentence
+                explanation_dict[repeat_variant] = sentence
 
         # Return explanation dict
         return explanation_dict
