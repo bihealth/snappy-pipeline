@@ -116,10 +116,10 @@ class VcfMeiFilterStepPart(BaseStepPart):
             "work/{mapper}.{caller}.{index_ngs_library}/out/"
             "{mapper}.{caller}.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         # SVs
         wgs_mei_calling = self.parent.sub_workflows["wgs_mei_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, wgs_mei_calling(tpl.replace("{index_ngs_library}", "merge_vcf") + ext)
 
     @dictify
@@ -130,13 +130,13 @@ class VcfMeiFilterStepPart(BaseStepPart):
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     def get_log_file(self, action):
@@ -199,9 +199,9 @@ class WgsMeiAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_mei_calling"],
             ext=EXT_VALUES,
@@ -232,9 +232,9 @@ class WgsMeiAnnotationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_mei_annotation", "tools_ngs_mapping"),
-            ("NGS mapping tools not configured but required for WGS SV annotation"),
+            "NGS mapping tools not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_mei_annotation", "tools_wgs_mei_calling"),
-            ("WGS SV calling tools not configured but required for WGS SV annotation"),
+            "WGS SV calling tools not configured but required for WGS SV annotation",
         )

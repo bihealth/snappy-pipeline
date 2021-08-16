@@ -98,8 +98,6 @@ MELT_ACTIONS = (
     "reorder_vcf",
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
-
 #: Default configuration for the wgs_mei_calling step
 DEFAULT_CONFIG = r"""
 step_config:
@@ -267,8 +265,8 @@ class MeltStepPart(BaseStepPart):
     @dictify
     def _get_output_files_reorder_vcf(self):
         tpl = "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.%s%s"
-        KEY_EXT = {"vcf": "vcf.gz", "tbi": "vcf.gz.tbi"}
-        for key, ext in KEY_EXT.items():
+        key_ext = {"vcf": "vcf.gz", "tbi": "vcf.gz.tbi"}
+        for key, ext in key_ext.items():
             yield key, tpl % (ext, "")
             yield key + "_md5", tpl % (ext, ".md5")
 
@@ -339,9 +337,9 @@ class WgsMeiCallingWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=self.config["tools"],
             ext=EXT_VALUES,

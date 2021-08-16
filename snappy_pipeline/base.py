@@ -4,6 +4,7 @@
 
 from collections import OrderedDict
 from collections.abc import MutableMapping
+from copy import deepcopy
 import os
 import sys
 import warnings
@@ -29,6 +30,10 @@ class MissingConfiguration(InvalidConfiguration):
 
 class UnsupportedActionException(Exception):
     """Raised when user try to call action that isn't supported."""
+
+
+class UnknownFiltrationSourceException(Exception):
+    """Raised when user try to request an unknown filtration source."""
 
 
 def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict):
@@ -87,6 +92,33 @@ def print_sample_sheets(step, file=sys.stderr):
         print("\nSample Sheet {}".format(info.sheet_path), file=file)
         print("-------------" + "-" * len(info.sheet_path) + "\n", file=file)
         _ordered_dump(info.sheet.json_data, stream=file, default_flow_style=False)
+
+
+def merge_kwargs(first_kwargs, second_kwargs):
+    """Merge two keyword arguments.
+
+    :param first_kwargs: First keyword arguments dictionary.
+    :type first_kwargs: dict
+
+    :param second_kwargs: Second keyword arguments dictionary.
+    :type second_kwargs: dict
+
+    :return: Returns merged dictionary with inputted keyword arguments.
+    """
+    # Global if no individual dict
+    if first_kwargs and (not second_kwargs):
+        return first_kwargs
+    # Individual if no global dict
+    elif (not first_kwargs) and second_kwargs:
+        return second_kwargs
+    # Merge dicts if both defined
+    elif first_kwargs and second_kwargs:
+        global_copy_kwargs = deepcopy(first_kwargs)
+        global_copy_kwargs.update(second_kwargs)
+        return global_copy_kwargs
+    # None if both None
+    else:
+        return None
 
 
 def merge_dicts(dict1, dict2, dict_class=OrderedDict):

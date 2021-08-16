@@ -1,12 +1,12 @@
 # Nice, round-trip enabled YAML parsing
-ruamel.yaml>=0.15.35
+ruamel.yaml==0.16.12
 
 # File-based locks
 fasteners==0.14.1
 
 # We're trying to keep the PyPi package up to date, you might have to install
 # from source, though.
-biomedsheets
+biomedsheets >=0.11.1
 
 # Helpful for CLIs
 termcolor==1.1.0

@@ -117,16 +117,16 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 "{mapper}.{caller}.{index_ngs_library}"
             )
             if wildcards.caller.startswith("erds"):
-                KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+                key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
             else:
-                KEY_EXT = {"vcf": ".bcf", "tbi": ".bcf.csi"}
+                key_ext = {"vcf": ".bcf", "tbi": ".bcf.csi"}
             # SVs
             wgs_cnv_calling = self.parent.sub_workflows["wgs_cnv_calling"]
             if wildcards.caller == "erds_sv2":
                 tpl = tpl.replace(".{index_ngs_library}", ".merge_genotypes")
             elif not wildcards.caller.startswith("erds"):
                 tpl = tpl.replace(".{index_ngs_library}", ".merge_genotypes")
-            for key, ext in KEY_EXT.items():
+            for key, ext in key_ext.items():
                 yield key, wgs_cnv_calling(tpl + ext).format(**wildcards)
             return
 
@@ -141,13 +141,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     def get_log_file(self, action):
@@ -210,9 +210,9 @@ class WgsCnvAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        token = "{mapper}.{caller}.annotated.{index_library.name}"
+        name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=self.config["tools_wgs_cnv_calling"],
             ext=EXT_VALUES,

@@ -24,15 +24,17 @@ wf = TargetedSeqCnvCallingWorkflow(
     workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
 )
 
+
 # Rules =======================================================================
 
 
 localrules:
     # Linking files from work/ to output/ should be done locally
-    targeteq_seq_cnv_calling_link_out_run,
+    targeteq_seq_cnv_calling_link_out_run,  # global rule
+    targeted_seq_cnv_calling_gcnv_symlink_extracted_ped,  # gCNV rule
 
 
-rule all:
+rule main:
     input:
         wf.get_result_files(),
 
@@ -52,12 +54,6 @@ rule targeteq_seq_cnv_calling_link_out_run:
 
 
 # Germline CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# XHMM ------------------------------------------------------------------------
-
-
-include: "xhmm.rules"
-
 
 # GATK-gCNV -------------------------------------------------------------------
 

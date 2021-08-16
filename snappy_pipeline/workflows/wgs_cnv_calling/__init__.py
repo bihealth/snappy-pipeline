@@ -208,9 +208,9 @@ class CnvettiStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_segment(self, wildcards):
-        token = "{mapper}.cnvetti_coverage.{ngs_library}".format(**wildcards)
+        name_pattern = "{mapper}.cnvetti_coverage.{ngs_library}".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     def _get_input_files_merge_segments(self, wildcards):
         result = {}
@@ -222,25 +222,25 @@ class CnvettiStepPart(BaseStepPart):
                 if donor.dna_ngs_library
             ]
             for ngs_library in ngs_libraries:
-                token = "{mapper}.cnvetti_segment.{ngs_library}".format(
+                name_pattern = "{mapper}.cnvetti_segment.{ngs_library}".format(
                     ngs_library=ngs_library.name, **wildcards
                 )
                 for key, ext in BCF_KEY_EXTS.items():
                     result.setdefault(key, []).append(
-                        os.path.join("work", token, "out", token + ".segments" + ext)
+                        os.path.join("work", name_pattern, "out", name_pattern + ".segments" + ext)
                     )
         return result
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
         # The sites list BCF file.
-        token = "{mapper}.cnvetti_merge_segments".format(**wildcards)
+        name_pattern = "{mapper}.cnvetti_merge_segments".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
-            yield "sites_" + key, os.path.join("work", token, "out", token + ext)
+            yield "sites_" + key, os.path.join("work", name_pattern, "out", name_pattern + ext)
         # The original coverage BCF file.
-        token = "{mapper}.cnvetti_coverage.{ngs_library}".format(**wildcards)
+        name_pattern = "{mapper}.cnvetti_coverage.{ngs_library}".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
-            yield "coverage_" + key, os.path.join("work", token, "out", token + ext)
+            yield "coverage_" + key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     def _get_input_files_merge_genotypes(self, wildcards):
         result = {}
@@ -252,20 +252,20 @@ class CnvettiStepPart(BaseStepPart):
                 if donor.dna_ngs_library
             ]
             for ngs_library in ngs_libraries:
-                token = "{mapper}.cnvetti_genotype.{ngs_library}".format(
+                name_pattern = "{mapper}.cnvetti_genotype.{ngs_library}".format(
                     ngs_library=ngs_library.name, **wildcards
                 )
                 for key, ext in BCF_KEY_EXTS.items():
                     result.setdefault(key, []).append(
-                        os.path.join("work", token, "out", token + ext)
+                        os.path.join("work", name_pattern, "out", name_pattern + ext)
                     )
         return result
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
-        token = "{mapper}.cnvetti_merge_genotypes".format(**wildcards)
+        name_pattern = "{mapper}.cnvetti_merge_genotypes".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     def get_output_files(self, action):
         """Return output files that CNVetti creates for the given action."""
@@ -274,41 +274,43 @@ class CnvettiStepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_coverage(self):
-        token = "{mapper}.cnvetti_coverage.{ngs_library}"
+        name_pattern = "{mapper}.cnvetti_coverage.{ngs_library}"
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_segment(self):
-        token = "{mapper}.cnvetti_segment.{ngs_library}"
+        name_pattern = "{mapper}.cnvetti_segment.{ngs_library}"
         modifiers = (("segments_", ".segments"), ("windows_", ".windows"))
         for kmod, emod in modifiers:
             for key, ext in BCF_KEY_EXTS.items():
-                yield kmod + key, os.path.join("work", token, "out", token + emod + ext)
+                yield kmod + key, os.path.join(
+                    "work", name_pattern, "out", name_pattern + emod + ext
+                )
 
     @dictify
     def _get_output_files_merge_segments(self):
-        token = "{mapper}.cnvetti_merge_segments"
+        name_pattern = "{mapper}.cnvetti_merge_segments"
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_genotype(self):
-        token = "{mapper}.cnvetti_genotype.{ngs_library}"
+        name_pattern = "{mapper}.cnvetti_genotype.{ngs_library}"
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_merge_genotypes(self):
-        token = "{mapper}.cnvetti_merge_genotypes"
+        name_pattern = "{mapper}.cnvetti_merge_genotypes"
         for key, ext in BCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_reorder_vcf(self):
-        token = "{mapper}.cnvetti.{ngs_library}"
+        name_pattern = "{mapper}.cnvetti.{ngs_library}"
         for key, ext in VCF_KEY_EXTS.items():
-            yield key, os.path.join("work", token, "out", token + ext)
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def get_log_file(self, action):
@@ -318,11 +320,11 @@ class CnvettiStepPart(BaseStepPart):
                 action=action
             )
         else:
-            token = (
+            name_pattern = (
                 "work/{{mapper}}.cnvetti_{action}.{{ngs_library}}/log/"
                 "{{mapper}}.cnvetti_{action}.{{ngs_library}}"
             )
-            prefix = token.format(action=action)
+            prefix = name_pattern.format(action=action)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -358,7 +360,7 @@ class ErdsStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.erds.{{library_name}}/out/" "{{mapper}}.erds.{{library_name}}{ext}"
+            "work/{{mapper}}.erds.{{library_name}}/out/{{mapper}}.erds.{{library_name}}{ext}"
         )
         # Build shortcut from index library name to donor
         self.index_ngs_library_to_donor = OrderedDict()
@@ -638,9 +640,9 @@ class WgsCnvCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the germline WGS CNV calling workflow"""
-        token = "{mapper}.{caller}.{index.dna_ngs_library.name}"
+        name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
         yield from self._yield_result_files(
-            os.path.join("output", token, "out", token + "{ext}"),
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             index_only=True,
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=[t for t in self.config["tools"] if t != "erds"],
@@ -648,7 +650,7 @@ class WgsCnvCallingWorkflow(BaseStep):
         )
         if "erds" in self.config["tools"]:
             yield from self._yield_result_files(
-                os.path.join("output", token, "out", token + "{ext}"),
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 index_only=False,
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller=["erds"],

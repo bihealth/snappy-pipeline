@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_calling workflow module code"""
 
-
+from copy import deepcopy
 import textwrap
 
 import pytest
@@ -758,3 +758,97 @@ def test_variant_calling_workflow(variant_calling_workflow):
     expected = list(sorted(expected))
     actual = list(sorted(variant_calling_workflow.get_result_files()))
     assert actual == expected
+
+
+def test_variant_calling_custom_pedigree_field(
+    dummy_workflow,
+    minimal_config,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_trio_plus_sheet_fake_fs,
+    mocker,
+):
+    """Tests VariantCallingWorkflow object pre-configured with germline trio plus sheet
+    and custom pedigree field"""
+    # Initialise variables
+    index_standard_pedigree_list = ["P001-N1-DNA1-WGS1", "P004-N1-DNA1-WGS1", "P007-N1-DNA1-WGS1"]
+    index_custom_field_pedigree_list = ["P001-N1-DNA1-WGS1", "P004-N1-DNA1-WGS1"]
+
+    # Create alternative configuration file
+    local_minimal_config = deepcopy(minimal_config)
+    local_minimal_config["data_sets"]["first_batch"]["file"] = "sheet_trio_plus.tsv"
+
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    germline_trio_plus_sheet_fake_fs.fs.create_file(
+        file_path="/path/to/ref.fa.fai",
+        contents="1\t249250621\t52\t60\t61\n2\t243199373\t253404903\t60\t61\n",
+        create_missing_dirs=True,
+    )
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_trio_plus_sheet_fake_fs, mocker)
+    patch_module_fs(
+        "snappy_pipeline.workflows.variant_calling", germline_trio_plus_sheet_fake_fs, mocker
+    )
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
+    # Construct the workflow object - should work, standard pedigree join
+    vcw = VariantCallingWorkflow(
+        dummy_workflow,
+        local_minimal_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+    # Expects a single shortcut sheet
+    assert len(vcw.shortcut_sheets) == 1
+    sheet = vcw.shortcut_sheets[0]
+
+    # P007 will be considered as a different index as the not defining pedigree based on `familyId`
+    assert len(sheet.index_ngs_library_to_pedigree) == 3
+    # Index name as expected
+    assert all(
+        [
+            index in index_standard_pedigree_list
+            for index in sheet.index_ngs_library_to_pedigree.keys()
+        ]
+    )
+
+    # Construct the workflow object - should work, custom pedigree join
+    local_minimal_config["data_sets"]["first_batch"]["pedigree_field"] = "familyId"
+    vcw = VariantCallingWorkflow(
+        dummy_workflow,
+        local_minimal_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+    # Expects a single shortcut sheet
+    assert len(vcw.shortcut_sheets) == 1
+    sheet = vcw.shortcut_sheets[0]
+
+    # P007 will be included in the same pedigree as P00{4,5,6}, i.e., all labelled 'family2'
+    assert len(sheet.index_ngs_library_to_pedigree) == 2
+    # Index name as expected
+    assert all(
+        [
+            index in index_custom_field_pedigree_list
+            for index in sheet.index_ngs_library_to_pedigree.keys()
+        ]
+    )
+
+    # Construct the workflow object - should fail, custom pedigree field not defined
+    with pytest.raises(Exception):
+        local_minimal_config["data_sets"]["first_batch"]["pedigree_field"] = "_field_not_defined_"
+        VariantCallingWorkflow(
+            dummy_workflow,
+            local_minimal_config,
+            dummy_cluster_config,
+            config_lookup_paths,
+            config_paths,
+            work_dir,
+        )
