@@ -161,6 +161,7 @@ class AnnotateExpansionHunter:
         if expansion_end:
             expansion_end_str = range_template.format(s=expansion_start, e=expansion_end)
         else:
+            expansion_end = float("inf")
             expansion_end_str = "{s}+".format(s=expansion_start)
 
         # Get max genotype

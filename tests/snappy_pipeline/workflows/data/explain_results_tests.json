@@ -3,5 +3,6 @@
     "2": ["E", 21, 5, 15, 20, 25, "Expanded - repeat E observed: 21. Normal range: 5 - 15. Expansion range: 20 - 25."],
     "3": ["U", 17, 5, 15, 20, 25, "Unclear - repeat U observed outside defined ranges (17). Normal range: 5 - 15. Expansion range: 20 - 25."],
     "4": ["NA", 17, null, null, null, null, "Undefined - no annotation found for repeat NA. Observed genotype: 17."],
-    "5": ["ND", null, 5, 15, 20, 25, "Undefined - genotype not defined in ExpansionHunter for repeat ND."]
+    "5": ["ND", null, 5, 15, 20, 25, "Undefined - genotype not defined in ExpansionHunter for repeat ND."],
+    "6": ["N", 10, 5, 15, 20, null, "Normal - repeat N observed: 10. Normal range: 5 - 15. Expansion range: 20+."]
 }
