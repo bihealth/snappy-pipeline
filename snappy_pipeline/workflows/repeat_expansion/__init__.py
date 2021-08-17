@@ -290,7 +290,7 @@ class RepeatExpansionWorkflow(BaseStep):
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list."""
         for donor in self._all_donors(include_background=False):
-            if donor.dna_ngs_library:
+            if donor.dna_ngs_library:  # ignores samples without DNA library
                 yield from expand(tpl, donor=[donor], **kwargs)
 
     def check_config(self):
