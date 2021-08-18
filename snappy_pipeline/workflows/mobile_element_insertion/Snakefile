@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline mobile_element_insertion step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.mobile_element_insertion import MEIWorkflow
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = MEIWorkflow(workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    mobile_element_insertion_link_out_run,
+
+
+rule main:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule mobile_element_insertion_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+rule mobile_element_insertion_scramble_cluster:
+    input:
+        wf.get_input_files("scramble", "cluster"),
+    output:
+        **wf. get_output_files("scramble","cluster"),
+    log:
+        wf.get_log_file("scramble", "cluster"),
+    wrapper:
+        wf.wrapper_path("scramble")
+
+
+rule mobile_element_insertion_scramble_analysis:
+    input:
+        wf.get_input_files("scramble", "analysis"),
+    output:
+        **wf. get_output_files("scramble","analysis"),
+    log:
+        wf.get_log_file("scramble", "analysis"),
+    wrapper:
+        wf.wrapper_path("scramble")
+
+
+rule mobile_element_insertion_scramble_annotate:
+    input:
+        wf.get_input_files("scramble", "annotate"),
+    output:
+        **wf. get_output_files("scramble","annotate"),
+    run:
+        wf.substep_getattr("scramble", "annotate_results")(wildcards, input, output)
