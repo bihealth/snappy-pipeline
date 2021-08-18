@@ -108,7 +108,7 @@ def test_scramble_cluster_step_part_get_output_files(mei_workflow):
     """Tests ScrambleStepPart::_get_output_files_cluster()"""
     # Define expected
     pattern_out = "work/{mapper}.scramble.{library_name}/out/{mapper}.scramble.{library_name}"
-    expected = {"txt": pattern_out + ".txt"}
+    expected = {"txt": pattern_out + "_cluster.txt"}
     # Get actual
     actual = mei_workflow.get_output_files("scramble", "cluster")
     assert actual == expected
@@ -156,6 +156,14 @@ def test_scramble_analysis_step_part_get_log_file(mei_workflow):
     )
     # Get actual
     actual = mei_workflow.get_log_file("scramble", "analysis")
+    assert actual == expected
+
+
+def test_scramble_analysis_step_part_get_parameters(mei_workflow):
+    """Tests ScrambleStepPart::_get_analysis_parameters()"""
+    expected = {"rscript": "REQUIRED/SCRAMble.R", "mei_refs": "resources/MEI_consensus_seqs.fa"}
+    # Get actual
+    actual = mei_workflow.get_params("scramble", "analysis")(None)
     assert actual == expected
 
 

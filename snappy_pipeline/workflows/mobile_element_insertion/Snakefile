@@ -55,7 +55,7 @@ rule mobile_element_insertion_scramble_cluster:
     log:
         wf.get_log_file("scramble", "cluster"),
     wrapper:
-        wf.wrapper_path("scramble")
+        wf.wrapper_path("scramble/cluster")
 
 
 rule mobile_element_insertion_scramble_analysis:
@@ -63,10 +63,12 @@ rule mobile_element_insertion_scramble_analysis:
         wf.get_input_files("scramble", "analysis"),
     output:
         **wf. get_output_files("scramble","analysis"),
+    params:
+        **{"args": wf. get_params('scramble','analysis')},
     log:
         wf.get_log_file("scramble", "analysis"),
     wrapper:
-        wf.wrapper_path("scramble")
+        wf.wrapper_path("scramble/analysis")
 
 
 rule mobile_element_insertion_scramble_annotate:

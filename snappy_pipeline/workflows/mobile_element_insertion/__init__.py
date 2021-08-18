@@ -120,7 +120,7 @@ class ScrambleStepPart(BaseStepPart):
         name_pattern = "{mapper}.scramble.{library_name}"
         ext = "txt"
         # Yield
-        yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+        yield ext, "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
 
@@ -178,6 +178,34 @@ class ScrambleStepPart(BaseStepPart):
         return "work/{name_pattern}/log/{name_pattern}_{action}.log".format(
             name_pattern=name_pattern, action=action
         )
+
+    def get_params(self, action):
+        """Get parameters.
+
+        :param action: Action, i.e., step being performed.
+        :type action: str
+
+        :return: Returns method to get files required to run analysis part of scramble.
+        """
+        assert action == "analysis", "Parameters are only available for action 'analysis'."
+        return self._get_analysis_parameters
+
+    def _get_analysis_parameters(self, _wildcards):
+        """Get parameters.
+
+        :param _wildcards: Snakemake rule wildcards (unused).
+        :type _wildcards: snakemake.io.Wildcards
+
+        :return: Returns parameters required to run analysis part of scramble.
+        """
+        # Define required paths
+        base_path = self.config["scramble_install_dir"]
+        rscript_path = os.path.join(base_path, "SCRAMble.R")
+        mei_refs_path = os.path.join(
+            os.path.join(os.path.dirname(base_path), "resources"), "MEI_consensus_seqs.fa"
+        )
+        # Return dict with parameters
+        return {"rscript": rscript_path, "mei_refs": mei_refs_path}
 
 
 class MEIWorkflow(BaseStep):
