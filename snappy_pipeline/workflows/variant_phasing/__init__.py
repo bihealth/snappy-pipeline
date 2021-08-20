@@ -142,7 +142,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
         assert action == "run"
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-    def run(self, wildcards, _output):
+    def run(self, wildcards, output):
         """Write out the pedigree information"""
         fname = self.get_output_files("run").format(**wildcards)
         donor = self.ngs_library_to_donor[wildcards.index_ngs_library]

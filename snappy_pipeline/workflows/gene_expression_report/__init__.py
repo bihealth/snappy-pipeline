@@ -80,8 +80,9 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                     exp_file = gene_expression(exp_tpl)
                                     yield exp_file
 
+    @staticmethod
     @dictify
-    def get_output_files(self, action):
+    def get_output_files(action):
         assert action == "run"
         yield "tsv", "work/gene_exp.tsv"
 

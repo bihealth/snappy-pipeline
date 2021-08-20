@@ -272,7 +272,7 @@ class MeltStepPart(BaseStepPart):
 
     @staticmethod
     def get_log_file(action):
-        assert action in MELT_ACTIONS
+        assert action in MELT_ACTIONS, "Invalid action."
         if action == "preprocess":
             return "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
         elif action in ("indiv_analysis", "genotype"):
@@ -291,8 +291,7 @@ class MeltStepPart(BaseStepPart):
                 "work/{mapper}.melt.reorder_vcf.{index_library_name}/log/"
                 "snakemake.wgs_mei_calling.log"
             )
-        else:
-            assert False, "Invalid action"
+        return None
 
     @staticmethod
     def update_cluster_config(cluster_config):

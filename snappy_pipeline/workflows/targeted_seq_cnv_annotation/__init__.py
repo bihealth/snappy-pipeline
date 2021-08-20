@@ -182,8 +182,9 @@ class VcfCnvFilterStepPart(BaseStepPart):
         for key, ext in key_ext.items():
             yield key, prefix + ext
 
+    @staticmethod
     @dictify
-    def get_log_file(self, _action):
+    def get_log_file(_action):
         """Return dict of log files."""
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/log/"
