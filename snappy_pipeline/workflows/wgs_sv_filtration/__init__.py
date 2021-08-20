@@ -354,7 +354,7 @@ class WgsSvFiltrationWorkflow(BaseStep):
         """Check that the path to the WGS SV annotation step is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_filtration", "path_wgs_sv_annotation"),
-            ("Path to wgs_sv_annotation not configured but must be for " "wgs_sv_filtration"),
+            "Path to wgs_sv_annotation not configured but must be for " "wgs_sv_filtration",
         )
 
     def set_default_config(self):

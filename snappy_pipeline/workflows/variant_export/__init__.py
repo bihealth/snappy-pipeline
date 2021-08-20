@@ -115,9 +115,9 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext).format(
                 mapper=wildcards.mapper,
                 var_caller=wildcards.var_caller,
@@ -342,5 +342,5 @@ class VariantExportWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "variant_export", "path_variant_calling"),
-            ("Path to variant calling not configured but required for variant annotation"),
+            "Path to variant calling not configured but required for variant annotation",
         )

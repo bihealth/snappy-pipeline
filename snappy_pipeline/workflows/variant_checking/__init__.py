@@ -103,9 +103,9 @@ class PeddyStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
     @dictify
@@ -116,7 +116,7 @@ class PeddyStepPart(BaseStepPart):
             "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.peddy.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "background_pca": ".background_pca.json",
             "het_check": ".het_check.csv",
             "html": ".html",
@@ -124,7 +124,7 @@ class PeddyStepPart(BaseStepPart):
             "ped": ".peddy.ped",
             "sex_check": ".sex_check.csv",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     def get_log_file(self, action):

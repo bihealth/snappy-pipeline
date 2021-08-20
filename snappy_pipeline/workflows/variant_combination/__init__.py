@@ -405,13 +405,13 @@ class VariantCombinationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "variant_combination", "path_variant_filtration"),
-            ("Path to variant_annotation not configured but required for variant_combination"),
+            "Path to variant_annotation not configured but required for variant_combination",
         )
         self.ensure_w_config(
             ("step_config", "variant_combination", "path_wgs_sv_filtration"),
-            ("Path to wgs_sv_filtration not configured but required for variant_combination"),
+            "Path to wgs_sv_filtration not configured but required for variant_combination",
         )
         self.ensure_w_config(
             ("step_config", "variant_combination", "path_wgs_cnv_filtration"),
-            ("Path to wgs_cnv_filtration not configured but required for variant_combination"),
+            "Path to wgs_cnv_filtration not configured but required for variant_combination",
         )

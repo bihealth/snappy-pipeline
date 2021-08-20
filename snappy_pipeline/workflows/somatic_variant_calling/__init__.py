@@ -168,11 +168,6 @@ SOMATIC_VARIANT_CALLERS_JOINT = (
     "varscan_joint",
 )
 
-#: Available somatic variant callers
-SOMATIC_VARIANT_CALLERS = tuple(
-    chain(SOMATIC_VARIANT_CALLERS_MATCHED, SOMATIC_VARIANT_CALLERS_JOINT)
-)
-
 #: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = r"""
 # Default configuration somatic_variant_calling
@@ -445,7 +440,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = (
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
@@ -589,6 +584,7 @@ class Mutect2StepPart(MutectBaseStepPart):
 
     def get_output_files(self, action):
         assert action in self.actions
+        exts = {}
         if action == "run":
             exts = {
                 "raw": ".raw.vcf.gz",
@@ -703,7 +699,8 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         )
         return result
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["somatic_variant_calling_scalpel_run"] = {
             "mem": 5 * 1024 * 16,
             "time": "48:00",
@@ -741,7 +738,8 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["somatic_variant_calling_strelka2_run"] = {
             "h_vmem": "4g",
             "h_rt": "24:00:00",
@@ -799,7 +797,7 @@ class JointCallingStepPart(BaseStepPart):
         return dict(zip(EXT_NAMES, expand(self.base_path_out, name=[self.name], ext=EXT_VALUES)))
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = (
             "work/{{mapper}}.{var_caller}.{{donor_name}}/log/"
@@ -813,7 +811,7 @@ class JointCallingStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_args(self, action):
+    def get_args(self, _action):
         def arg_function(wildcards):
             donor = self.donor_by_name[wildcards.donor_name]
             result = {}
@@ -853,7 +851,8 @@ class VarscanJointStepPart(JointCallingStepPart):
 
     name = "varscan_joint"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["somatic_variant_calling_varscan_joint_run"] = {
             "mem": 1024,
             "time": "48:00",

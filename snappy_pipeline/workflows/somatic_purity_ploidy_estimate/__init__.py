@@ -190,7 +190,8 @@ class AscatStepPart(BaseStepPart):
         assert action in self.actions
         return getattr(self, "_get_output_files_{}".format(action))()
 
-    def _get_output_files_baf_tumor(self):
+    @staticmethod
+    def _get_output_files_baf_tumor():
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
@@ -199,7 +200,8 @@ class AscatStepPart(BaseStepPart):
             )
         }
 
-    def _get_output_files_baf_normal(self):
+    @staticmethod
+    def _get_output_files_baf_normal():
         """Return output files for generating BAF file for the normal."""
         return {
             "txt": (
@@ -208,7 +210,8 @@ class AscatStepPart(BaseStepPart):
             )
         }
 
-    def _get_output_files_cnv_tumor(self):
+    @staticmethod
+    def _get_output_files_cnv_tumor():
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
@@ -217,7 +220,8 @@ class AscatStepPart(BaseStepPart):
             )
         }
 
-    def _get_output_files_cnv_normal(self):
+    @staticmethod
+    def _get_output_files_cnv_normal():
         """Return output files for generating CNV file for the normal."""
         return {
             "txt": (
@@ -230,8 +234,8 @@ class AscatStepPart(BaseStepPart):
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
         yield "done", touch("work/{mapper}.ascat.{tumor_library_name}/out/.done")
-        INFIXES = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
-        for infix in INFIXES:
+        infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
+        for infix in infixes:
             path = (
                 "work/{mapper}.ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt"
             ) % infix
@@ -329,7 +333,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                     for bio_sample in donor.bio_samples.values():
                         if not bio_sample.is_tumor:
                             continue
-                        for test_sample in bio_sample.test_samples.values():
+                        for _ in bio_sample.test_samples.values():
                             ngs_library = bio_sample.dna_ngs_library
                             name_pattern_value = name_pattern.format(
                                 mapper=self.config["tool_ngs_mapping"],

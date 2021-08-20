@@ -146,7 +146,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 "output/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
             )
-            KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+            key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
             # SVs
             targeted_seq_cnv_calling = self.parent.sub_workflows["targeted_seq_cnv_calling"]
             if wildcards.caller == "xhmm":
@@ -158,7 +158,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
             elif wildcards.caller == "cnvetti_hom":
                 library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
                 tpl = tpl.replace(".{index_ngs_library}", "_merge_cohort_vcfs.%s" % library_kit)
-            for key, ext in KEY_EXT.items():
+            for key, ext in key_ext.items():
                 yield key, targeted_seq_cnv_calling(tpl + ext).format(**wildcards)
             return
 
@@ -173,17 +173,17 @@ class VcfCnvFilterStepPart(BaseStepPart):
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "vcf": ".vcf.gz",
             "tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
             "tbi_md5": ".vcf.gz.tbi.md5",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     @dictify
-    def get_log_file(self, action):
+    def get_log_file(self, _action):
         """Return dict of log files."""
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/log/"

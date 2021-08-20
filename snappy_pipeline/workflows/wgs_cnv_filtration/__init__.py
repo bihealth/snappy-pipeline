@@ -352,7 +352,7 @@ class WgsCnvFiltrationWorkflow(BaseStep):
         """Check that the path to the WGS CNV annotation step is present"""
         self.ensure_w_config(
             ("step_config", "wgs_cnv_filtration", "path_wgs_cnv_annotation"),
-            ("Path to wgs_cnv_annotation not configured but must be for " "wgs_cnv_filtration"),
+            "Path to wgs_cnv_annotation not configured but must be for " "wgs_cnv_filtration",
         )
 
     def set_default_config(self):

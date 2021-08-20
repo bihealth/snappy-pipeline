@@ -65,7 +65,8 @@ class FastQcReportStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_input_files(self, action):
+    @staticmethod
+    def get_input_files(action):
         def input_function(wildcards):
             """Helper wrapper function"""
             return "work/input_links/{library_name}/.done".format(**wildcards)
@@ -79,10 +80,11 @@ class FastQcReportStepPart(BaseStepPart):
         assert action == "run"
         yield "fastqc_done", touch("work/{library_name}/report/fastqc/.done")
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         return "work/{library_name}/log/snakemake.fastqc.log"
 
-    def _collect_reads(self, wildcards, library_name, prefix):
+    def _collect_reads(self, wildcards, _library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
@@ -92,7 +94,8 @@ class FastQcReportStepPart(BaseStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["data_qc_fastqc_run"] = {
             "mem": int(3.75 * 1024 * 2),
             "time": "12:00",

@@ -137,11 +137,12 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
                     if donor.dna_ngs_library:
                         self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
 
-    def get_output_files(self, action):
+    @staticmethod
+    def get_output_files(action):
         assert action == "run"
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-    def run(self, wildcards, output):
+    def run(self, wildcards, _output):
         """Write out the pedigree information"""
         fname = self.get_output_files("run").format(**wildcards)
         donor = self.ngs_library_to_donor[wildcards.index_ngs_library]
@@ -435,5 +436,5 @@ class VariantPhasingWorkflow(BaseStep):
         """Check that the path to the variant annotation step is present"""
         self.ensure_w_config(
             ("step_config", "variant_phasing", "path_variant_annotation"),
-            ("Path to variant calling not configured but required for somatic variant annotation"),
+            "Path to variant calling not configured but required for somatic variant annotation",
         )

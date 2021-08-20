@@ -105,7 +105,7 @@ class LohhlaStepPart(BaseStepPart):
         return {"done": expand(self.base_path_out, ext=".done")}
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = (
             "work/{mapper}.{hla_caller}.lohhla.{tumor_library}/log/"

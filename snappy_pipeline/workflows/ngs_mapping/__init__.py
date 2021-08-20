@@ -447,7 +447,8 @@ class ReadMappingStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_input_files(self, action):
+    @staticmethod
+    def get_input_files(action):
         def input_function(wildcards):
             """Helper wrapper function"""
             return "work/input_links/{library_name}/.done".format(**wildcards)
@@ -555,7 +556,8 @@ class StarStepPart(ReadMappingStepPart):
 
     name = "star"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_star_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "40:00",
@@ -600,7 +602,8 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     name = "minimap2"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_minimap2_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "96:00",
@@ -613,7 +616,8 @@ class NgmlrStepPart(ReadMappingStepPart):
 
     name = "ngmlr"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_ngmlr_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "96:00",
@@ -642,7 +646,8 @@ class ExternalStepPart(ReadMappingStepPart):
 
     name = "external"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_external_run"] = {"mem": 1024, "time": "04:00", "ntasks": 1}
 
     def check_config(self):
@@ -669,7 +674,7 @@ class ExternalStepPart(ReadMappingStepPart):
         return args_function
 
     @listify
-    def _collect_bams(self, wildcards, library_name):
+    def _collect_bams(self, wildcards, _library_name):
         """Yield the path to bam files"""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
@@ -733,10 +738,12 @@ class GatkPostBamStepPart(BaseStepPart):
                     infix=recalibrated_infix, ext=ext
                 )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         return "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_gatk_post_bam_run"] = {
             "mem": int(3.7 * 1024 * 16),
             "time": "40:00",
@@ -833,7 +840,8 @@ class PicardHsMetricsStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
+    @staticmethod
+    def get_input_files(action):
         """Return required input files"""
         assert action == "run", "Unsupported action"
         return {
@@ -848,10 +856,12 @@ class PicardHsMetricsStepPart(BaseStepPart):
         yield "txt", "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt"
         yield "txt_md5", "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt.md5"
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         return "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_picard_hs_metrics_run"] = {
             "mem": int(19 * 1024 * 2),
             "time": "04:00",
@@ -879,7 +889,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
         yield "bai", "work/{mapper_lib}/out/{mapper_lib}.bam.bai".format(**wildcards)
 
     @listify
-    def _get_input_files_collect(self, wildcards):
+    def _get_input_files_collect(self, _wildcards):
         for mapper in self.config["tools"]["dna"]:
             for sheet in self.parent.shortcut_sheets:
                 for library in sheet.all_ngs_libraries:
@@ -902,7 +912,8 @@ class TargetCoverageReportStepPart(BaseStepPart):
         yield "txt", "work/target_cov_report/out/target_cov_report.txt"
         yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         if action == "run":
             return "work/{mapper_lib}/log/snakemake.target_coverage.log"
         else:
@@ -925,7 +936,8 @@ class GenomeCoverageReportStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
+    @staticmethod
+    def get_input_files(action):
         """Return required input files"""
         assert action == "run", "Unsupported action"
         return {
@@ -933,7 +945,8 @@ class GenomeCoverageReportStepPart(BaseStepPart):
             "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
         }
 
-    def get_output_files(self, action):
+    @staticmethod
+    def get_output_files(action):
         """Return output files"""
         assert action == "run", "Unsupported action"
         return {
@@ -941,11 +954,13 @@ class GenomeCoverageReportStepPart(BaseStepPart):
             "tbi": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz.tbi",
         }
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         return "work/{mapper_lib}/log/snakemake.genome_coverage.log"
 
     # TODO(holtgrewe): can this be removed?
-    def get_shell_cmd(self, action, wildcards):
+    @staticmethod
+    def get_shell_cmd(action, _wildcards):
         """Return bash script to execute"""
         assert action == "run", "Unsupported action"
         return (
@@ -982,7 +997,8 @@ class GenomeCoverageReportStepPart(BaseStepPart):
             ).lstrip()
         )
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["ngs_mapping_genome_coverage_report_run"] = {
             "mem": int(3.7 * 1024),
             "time": "04:00",

@@ -211,7 +211,7 @@ class SalmonStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def _collect_reads(self, wildcards, library_name, prefix):
+    def _collect_reads(self, wildcards, _library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
@@ -245,7 +245,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            base_path = ("output/{mapper}.{library_name}/out/" "{mapper}.{library_name}").format(
+            base_path = "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}".format(
                 **wildcards
             )
             return {
@@ -310,7 +310,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
             "ntasks": 2,
         }
 
-    def get_strandedness_file(self, action):
+    def get_strandedness_file(self, _action):
         return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
 
 
@@ -402,7 +402,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
-    def get_strandedness_file(self, action):
+    def get_strandedness_file(self, _action):
         return self.sub_steps["strandedness"].get_strandedness_file("run")
 
     @listify

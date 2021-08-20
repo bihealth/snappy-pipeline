@@ -440,7 +440,7 @@ class VariantCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, action):
+    def _get_log_file(self, _action):
         """Return dict of log files."""
         prefix = (
             "work/{{mapper}}.{caller}.{{index_library_name}}/log/"
@@ -460,7 +460,8 @@ class BcftoolsStepPart(VariantCallingStepPart):
 
     name = "bcftools"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["variant_calling_bcftools_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "48:00",
@@ -473,7 +474,8 @@ class FreebayesStepPart(VariantCallingStepPart):
 
     name = "freebayes"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["variant_calling_freebayes_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "48:00",
@@ -517,7 +519,8 @@ class PlatypusStepPart(VariantCallingStepPart):
 
     name = "platypus"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["variant_calling_platypus_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "20:00",
@@ -803,18 +806,20 @@ class BcftoolsStatsStepPart(BaseStepPart):
         TBI file)
         """
         assert action == "run"
-        EXT_NAMES = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        for key, ext in EXT_NAMES.items():
+        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
+        for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action == "run"
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/"
             "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
         )
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["variant_calling_bcftools_stats_report"] = {
             "mem": 1024,
             "time": "02:00",
@@ -857,18 +862,20 @@ class JannovarStatisticsStepPart(BaseStepPart):
         TBI file)
         """
         assert action == "run"
-        EXT_NAMES = {"report": ".txt", "report_md5": ".txt.md5"}
-        for key, ext in EXT_NAMES.items():
+        ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
+        for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action == "run"
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/jannovar_statistics/"
             "{mapper}.{var_caller}.{index_ngs_library}.log"
         )
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["variant_calling_jannovar_statistics_report"] = {
             "mem": int(3.75 * 1024 * 2),
             "time": "04:00",

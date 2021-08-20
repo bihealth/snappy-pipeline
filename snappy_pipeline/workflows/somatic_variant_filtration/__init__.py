@@ -344,7 +344,8 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration with resource requirements"""
         cluster_config["somatic_variant_filtration_eb_filter_run"] = {
             "mem": 8 * 1024,

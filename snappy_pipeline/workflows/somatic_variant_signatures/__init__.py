@@ -69,9 +69,9 @@ class TabulateVariantsStepPart(SignaturesStepPart):
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
     @dictify
@@ -87,7 +87,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         assert action == "run"
         return self.log_path
 
-    def get_params(self, action):
+    def get_params(self, _action):
         """Return arguments to pass down."""
 
         def params_function(wildcards):
@@ -150,7 +150,8 @@ class DeconstructSigsStepPart(SignaturesStepPart):
             "{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}.pdf"
         )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action == "run"
         return (
             "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/"
@@ -248,5 +249,5 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "somatic_variant_signatures", "path_somatic_variant_calling"),
-            ("Path to variant calling not configured but required for somatic variant signatures"),
+            "Path to variant calling not configured but required for somatic variant signatures",
         )

@@ -270,7 +270,8 @@ class MeltStepPart(BaseStepPart):
             yield key, tpl % (ext, "")
             yield key + "_md5", tpl % (ext, ".md5")
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action in MELT_ACTIONS
         if action == "preprocess":
             return "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
@@ -293,7 +294,8 @@ class MeltStepPart(BaseStepPart):
         else:
             assert False, "Invalid action"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for running Melt"""
         for action in MELT_ACTIONS:
             cluster_config["wgs_mei_calling_melt_{}".format(action)] = {

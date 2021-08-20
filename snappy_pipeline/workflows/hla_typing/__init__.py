@@ -101,7 +101,8 @@ class OptiTypeStepPart(BaseStepPart):
     name = "optitype"
     supported_extraction_types = ["dna", "rna"]
 
-    def get_output_prefix(self):
+    @staticmethod
+    def get_output_prefix():
         return ""
 
     def __init__(self, parent):
@@ -131,7 +132,8 @@ class OptiTypeStepPart(BaseStepPart):
         for name, ext in {"tsv": "_result.tsv", "cov_pdf": "_coverage_plot.pdf"}.items():
             yield name, self.base_path_out.format(ext=ext)
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         """Return path to log file"""
         return "work/optitype.{library_name}/log/snakemake.hla_typing.log"
 
@@ -157,7 +159,7 @@ class OptiTypeStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def _collect_reads(self, wildcards, library_name, prefix):
+    def _collect_reads(self, wildcards, _library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
@@ -172,7 +174,8 @@ class OptiTypeStepPart(BaseStepPart):
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
         return library.test_sample.extra_infos["extractionType"].lower()
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for OptiType"""
         cluster_config["hla_typing_optitype_run"] = {"mem": 6 * 7500, "time": "40:00", "ntasks": 6}
 
@@ -215,11 +218,13 @@ class ArcasHlaStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config["arcashla"]["mapper"])
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         """Return path to log file"""
         return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for ArcasHla"""
         cluster_config["hla_typing_arcashla_run"] = {"mem": 4 * 3750, "time": "60:00", "ntasks": 4}
 

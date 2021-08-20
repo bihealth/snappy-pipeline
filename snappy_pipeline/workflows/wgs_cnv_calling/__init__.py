@@ -407,11 +407,13 @@ class ErdsStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext)
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(_action):
         """Return path to log file"""
         return "work/{mapper}.erds.{library_name}/log/snakemake.wgs_cnv_calling.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for ERDS WGS CNV calling"""
         cluster_config["wgs_cnv_calling_erds_run"] = {
             "mem": 32 * 1024,

@@ -183,7 +183,8 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
 
     name = "manta"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["somatic_wgs_sv_calling_manta_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "40:00",
@@ -380,7 +381,6 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
     name = "somatic_wgs_sv_calling"
     sheet_shortcut_class = CancerCaseSheet
-    sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -445,9 +445,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
             ("step_config", "somatic_wgs_sv_calling", "path_ngs_mapping"),
-            ("Path to NGS mapping not configured but required for somatic WGS SV calling"),
+            "Path to NGS mapping not configured but required for somatic WGS SV calling",
         )
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
-            ("Path to reference FASTA file required by not available"),
+            "Path to reference FASTA file required by not available",
         )
