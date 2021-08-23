@@ -37,3 +37,11 @@ Rscript --vanilla {snakemake.params.args[rscript]}  --out-name {prefix} \
     --eval-meis
 """
 )
+
+# Compute MD5 sums of log and MEI txt.
+shell(
+    r"""
+md5sum {snakemake.log} > {snakemake.log}.md5
+md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+"""
+)

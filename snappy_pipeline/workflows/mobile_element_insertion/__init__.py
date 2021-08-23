@@ -10,7 +10,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutSt
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 #: Extensions of files to create as main payload.
-EXT = (".json", ".json.md5")
+EXT = ("_MEIs.txt", "_MEIs.txt.md5")
 
 
 #: Default configuration for the mobile_element_insertion step.
@@ -32,7 +32,7 @@ class ScrambleStepPart(BaseStepPart):
     name = "scramble"
 
     #: Valid actions.
-    actions = ("cluster", "analysis", "annotate")
+    actions = ("cluster", "analysis")
 
     def get_input_files(self, action):
         """Return input function for scramble rules.
@@ -93,22 +93,8 @@ class ScrambleStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         name_pattern = "{mapper}.scramble.{library_name}"
-        base_name_out = "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+        base_name_out = "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
-        )
-        yield base_name_out.format(**wildcards)
-
-    @staticmethod
-    @listify
-    def _get_input_files_annotate(wildcards):
-        """Yield input files' pattern for rule `annotate` - based on scramble results.
-
-        :param wildcards: Snakemake rule wildcards.
-        :type wildcards: snakemake.io.Wildcards
-        """
-        name_pattern = "{mapper}.scramble.{library_name}"
-        base_name_out = "work/{name_pattern}/out/{name_pattern}{ext}".format(
-            name_pattern=name_pattern, ext="_MEIs.txt"
         )
         yield base_name_out.format(**wildcards)
 
@@ -130,23 +116,10 @@ class ScrambleStepPart(BaseStepPart):
         """Yield output files' patterns for scramble call."""
         # Initialise variables
         name_pattern = "{mapper}.scramble.{library_name}"
-        ext_dict = {"txt": "_MEIs.txt"}
+        ext_dict = {"txt": "_MEIs.txt", "txt_md5": "_MEIs.txt.md5"}
         # Yield
         for key, ext in ext_dict.items():
             yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            )
-
-    @staticmethod
-    @dictify
-    def _get_output_files_annotate():
-        """Yield output files' patterns for rule `annotate`."""
-        # Initialise variables
-        name_pattern = "{mapper}.scramble_annotated.{library_name}"
-        ext_dict = {"json": "json", "json_md5": "json.md5"}
-        # Yield
-        for key, ext in ext_dict.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
                 name_pattern=name_pattern, ext=ext
             )
 
@@ -258,7 +231,7 @@ class MEIWorkflow(BaseStep):
         """
         # Initialise variable
         tools = ("scramble",)
-        name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
+        name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],

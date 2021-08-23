@@ -75,15 +75,14 @@ def test_mei_workflow_files(mei_workflow):
     """
     # Define expected
     pattern_out = (
-        "output/bwa.scramble_annotated.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.scramble_annotated.P00{i}-N1-DNA1-WGS1.{ext}"
+        "output/bwa.scramble.P00{i}-N1-DNA1-WGS1/out/" "bwa.scramble.P00{i}-N1-DNA1-WGS1_MEIs.{ext}"
     )
     expected = [
         pattern_out.format(i=i, ext=ext)
         for i in range(1, 7)  # all donors: P001 - P006
         for ext in (
-            "json",
-            "json.md5",
+            "txt",
+            "txt.md5",
         )
     ]
     # Get actual
@@ -142,7 +141,7 @@ def test_scramble_analysis_step_part_get_output_files(mei_workflow):
     """Tests ScrambleStepPart::_get_output_files_analysis()"""
     # Define expected
     pattern_out = "work/{mapper}.scramble.{library_name}/out/{mapper}.scramble.{library_name}"
-    expected = {"txt": pattern_out + "_MEIs.txt"}
+    expected = {"txt": pattern_out + "_MEIs.txt", "txt_md5": pattern_out + "_MEIs.txt.md5"}
     # Get actual
     actual = mei_workflow.get_output_files("scramble", "analysis")
     assert actual == expected
@@ -164,42 +163,4 @@ def test_scramble_analysis_step_part_get_parameters(mei_workflow):
     expected = {"rscript": "REQUIRED/SCRAMble.R", "mei_refs": "resources/MEI_consensus_seqs.fa"}
     # Get actual
     actual = mei_workflow.get_params("scramble", "analysis")(None)
-    assert actual == expected
-
-
-# Tests for ScrambleStepPart (annotate) ------------------------------------------------------------
-
-
-def test_scramble_annotate_step_part_get_input_files(mei_workflow):
-    """Tests ScrambleStepPart::_get_input_files_annotate()"""
-    # Define expected
-    expected = ["work/bwa.scramble.P001-N1-DNA1-WGS1/out/bwa.scramble.P001-N1-DNA1-WGS1_MEIs.txt"]
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = mei_workflow.get_input_files("scramble", "annotate")(wildcards)
-    assert actual == expected
-
-
-def test_scramble_annotate_step_part_get_output_files(mei_workflow):
-    """Tests ScrambleStepPart::_get_output_files_annotate()"""
-    # Define expected
-    pattern_out = (
-        "work/{mapper}.scramble_annotated.{library_name}/out/"
-        "{mapper}.scramble_annotated.{library_name}"
-    )
-    expected = {"json": pattern_out + ".json", "json_md5": pattern_out + ".json.md5"}
-    # Get actual
-    actual = mei_workflow.get_output_files("scramble", "annotate")
-    assert actual == expected
-
-
-def test_scramble_annotate_step_part_get_log_file(mei_workflow):
-    """Tests ScrambleStepPart::_get_log_files_annotate()"""
-    # Define expected
-    expected = (
-        "work/{mapper}.scramble_annotated.{library_name}/log/"
-        "{mapper}.scramble_annotated.{library_name}.log"
-    )
-    # Get actual
-    actual = mei_workflow.get_log_file("scramble", "annotate")
     assert actual == expected
