@@ -20,6 +20,12 @@ step_config:
   mobile_element_insertion:
     # Path to Scramble installation directory
     scramble_install_dir: REQUIRED
+    # Minimum cluster size (set with Scramble default)
+    n_cluster: 5
+    # Minimum MEI alignment score (set with Scramble default)
+    mei_score: 50
+    # Minimum INDEL alignment score (set with Scramble default)
+    indel_score: 80
     # Path to the ngs_mapping step
     path_ngs_mapping: ../ngs_mapping
 """
@@ -177,8 +183,16 @@ class ScrambleStepPart(BaseStepPart):
         mei_refs_path = os.path.join(
             os.path.join(os.path.dirname(base_path), "resources"), "MEI_consensus_seqs.fa"
         )
+        # Define dict with parameters
+        params = {
+            "rscript": rscript_path,
+            "mei_refs": mei_refs_path,
+            "n_cluster": self.config["n_cluster"],
+            "mei_score": self.config["mei_score"],
+            "indel_score": self.config["indel_score"],
+        }
         # Return dict with parameters
-        return {"rscript": rscript_path, "mei_refs": mei_refs_path}
+        return params
 
 
 class MEIWorkflow(BaseStep):

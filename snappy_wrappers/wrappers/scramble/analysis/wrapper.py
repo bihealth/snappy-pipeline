@@ -9,7 +9,7 @@ shell.executable("/bin/bash")
 input_full_path = os.path.join(os.getcwd(), str(snakemake.input))
 
 # Define prefix based on input
-prefix = input_full_path.replace(".txt", "")
+prefix = input_full_path.replace("_cluster.txt", "")
 
 shell(
     r"""
@@ -34,6 +34,9 @@ Rscript --vanilla {snakemake.params.args[rscript]}  --out-name {prefix} \
     --cluster-file {input_full_path} \
     --install-dir {snakemake.config[step_config][mobile_element_insertion][scramble_install_dir]} \
     --mei-refs {snakemake.params.args[mei_refs]} \
+    --nCluster {snakemake.params.args[n_cluster]} \
+    --mei-score {snakemake.params.args[mei_score]} \
+    --indel-score {snakemake.params.args[indel_score]} \
     --eval-meis
 """
 )

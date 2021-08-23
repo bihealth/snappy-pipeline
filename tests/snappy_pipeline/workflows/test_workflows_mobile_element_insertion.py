@@ -130,7 +130,9 @@ def test_scramble_cluster_step_part_get_log_file(mei_workflow):
 def test_scramble_analysis_step_part_get_input_files(mei_workflow):
     """Tests ScrambleStepPart::_get_input_files_analysis()"""
     # Define expected
-    expected = ["work/bwa.scramble.P001-N1-DNA1-WGS1/out/bwa.scramble.P001-N1-DNA1-WGS1.txt"]
+    expected = [
+        "work/bwa.scramble.P001-N1-DNA1-WGS1/out/bwa.scramble.P001-N1-DNA1-WGS1_cluster.txt"
+    ]
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = mei_workflow.get_input_files("scramble", "analysis")(wildcards)
@@ -160,7 +162,14 @@ def test_scramble_analysis_step_part_get_log_file(mei_workflow):
 
 def test_scramble_analysis_step_part_get_parameters(mei_workflow):
     """Tests ScrambleStepPart::_get_analysis_parameters()"""
-    expected = {"rscript": "REQUIRED/SCRAMble.R", "mei_refs": "resources/MEI_consensus_seqs.fa"}
+    # Define expected
+    expected = {
+        "rscript": "REQUIRED/SCRAMble.R",
+        "mei_refs": "resources/MEI_consensus_seqs.fa",
+        "n_cluster": 5,
+        "mei_score": 50,
+        "indel_score": 80,
+    }
     # Get actual
     actual = mei_workflow.get_params("scramble", "analysis")(None)
     assert actual == expected
