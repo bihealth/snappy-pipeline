@@ -75,7 +75,7 @@ def test_mei_workflow_files(mei_workflow):
     """
     # Define expected
     pattern_out = (
-        "output/bwa.scramble.P00{i}-N1-DNA1-WGS1/out/" "bwa.scramble.P00{i}-N1-DNA1-WGS1_MEIs.{ext}"
+        "output/bwa.scramble.P00{i}-N1-DNA1-WGS1/out/bwa.scramble.P00{i}-N1-DNA1-WGS1_MEIs.{ext}"
     )
     expected = [
         pattern_out.format(i=i, ext=ext)
