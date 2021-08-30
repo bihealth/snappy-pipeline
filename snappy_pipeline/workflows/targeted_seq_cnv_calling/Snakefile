@@ -56,10 +56,17 @@ rule targeteq_seq_cnv_calling_link_out_run:
 # XHMM ------------------------------------------------------------------------
 
 
-include: "xhmm.rules"
+# include: "xhmm.rules"
 
 
 # GATK-gCNV -------------------------------------------------------------------
 
 
-include: "gcnv.rules"
+if config["step_config"]["targeted_seq_cnv_calling"]["model_max_size"] is None:
+
+    include: "gcnv_cohort_mode.rules"
+
+
+else:
+
+    include: "gcnv_case_mode.rules"

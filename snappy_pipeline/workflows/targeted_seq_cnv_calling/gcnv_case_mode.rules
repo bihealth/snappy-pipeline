@@ -1,0 +1,6 @@
+# CASE mode
+# gCNV needs many rules, thus they are in their own file.
+
+
+# Include common rule
+include: "gcnv_common.rules"

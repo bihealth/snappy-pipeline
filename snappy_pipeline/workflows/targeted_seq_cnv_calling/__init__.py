@@ -65,33 +65,17 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 #: Available WGS CNV callers
 TARGETED_SEQ_CNV_CALLERS = ("xhmm", "gcnv")
 
+#: Minimum number of samples using kit - criteria to be analyzed
+MIN_KIT_SAMPLES = 10
+
 #: Default configuration for the targeted_seq_cnv_calling step
 DEFAULT_CONFIG = r"""
 # Default configuration targeted_seq_cnv_calling
 step_config:
   targeted_seq_cnv_calling:
-    # You can select select between the following modes of creating chunks.
-    # The CNV calling will be performed on each chunk individually, all
-    # individuals of a family will go into one chunk.
-    #
-    # single -- create one large chunk for all
-    # evenly -- create evenly sized chunks of maximal size chunk_max_size
-    # incremental -- iterate samples and create a new chunk after the maximal
-    #       size has been reached; should be combined with background data
-    #       to guarantee a minimal number of samples.
-    chunk_mode: single
-    # Maximal chunk size; background samples are not counted.
-    chunk_max_size: 200
-    # Sort samples by these attributes for chunk_mode=incremental to create
-    # chunks.
-    #
-    # family_id -- the family ID from the sample sheet
-    # index_name -- the name of the pedigree's index
-    # batch_no -- the batch number from the sample sheet
-    chunk_sort:
-      - batch_no
-      - family_id
-      - index_name
+    # Set the max number of samples used in the CNV calling model.
+    # If None is set, it will use all samples in the model. Recommended value: XXX
+    model_max_size: null
 
     # Path to the ngs_mapping step.
     path_ngs_mapping: ../ngs_mapping
@@ -113,7 +97,7 @@ step_config:
       # The following allows to define one or more set of target intervals.
       path_target_interval_list_mapping: []
       # The following will match both the stock IDT library kit and the ones
-      # with spike-ins seen fromr Yale genomics.  The path above would be
+      # with spike-ins seen from Yale genomics.  The path above would be
       # mapped to the name "default".
       # - name: IDT_xGen_V1_0
       #   pattern: "xGen Exome Research Panel V1\\.0*"
@@ -126,8 +110,10 @@ step_config:
 class XhmmStepPart(BaseStepPart):
     """Targeted seq. CNV calling with XHMM"""
 
+    #: Step name
     name = "xhmm"
 
+    #: Available actions
     actions = (
         "coverage",
         "merge_cov",
@@ -494,8 +480,10 @@ class XhmmStepPart(BaseStepPart):
 class GcnvStepPart(BaseStepPart):
     """Targeted seq. CNV calling with GATK4 gCNV"""
 
+    #: Step name
     name = "gcnv"
 
+    #: Available actions
     actions = (
         "preprocess_intervals",
         "annotate_gc",
@@ -889,6 +877,45 @@ class GcnvStepPart(BaseStepPart):
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
+    def get_cnv_model_result_files(self, _unused):
+        """Get gCNV model results.
+
+        :return: Returns list of result files for the gCNV build model sub-workflow.
+        """
+        # Initialise variables
+        name_pattern = (
+            "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
+            "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
+        )
+        # Get list of library kits and donors to use.
+        library_kits, _, kit_counts = self.parent.pick_kits_and_donors()
+        if "gcnv" in self.config["tools"]:
+            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
+            yield from expand(
+                name_pattern,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller=["gcnv"],
+                library_kit=chosen_kits,
+            )
+
+    def get_run_mode(self, wildcards):
+        """Get run mode
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns either CASE mode if number of samples associated with library kit is
+        larger than config threshold; or COHORT if number is smaller or equal to threshold. It also
+        returns COHORT if threshold is set to NULL.
+        """
+        if self.config["model_max_size"]:
+            library_count = self.parent.get_library_count(wildcards.library_kit)
+            if library_count > self.config["model_max_size"]:
+                return "CASE"
+            else:
+                return "COHORT"
+        else:
+            return "COHORT"
+
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for gCNV CNV calling"""
         for action in self.actions:
@@ -935,6 +962,18 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit.
         self.ngs_library_to_kit = self.sub_steps["xhmm"].ngs_library_to_kit
+        # Build dictionary with sample count per library kit
+        _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+
+    def get_library_count(self, library_kit):
+        """
+        :param library_kit: Library kit name.
+        :type library_kit: str
+
+        :return: Returns number of samples with inputted library kit. If library name not defined,
+        it returns zero.
+        """
+        return self.library_kit_counts_dict.get(library_kit, 0)
 
     @listify
     def _all_donors(self, include_background=True):
@@ -956,7 +995,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         donors.
         """
         # Get list of library kits and donors to use.
-        library_kits, donors, kit_counts = self._pick_kits_and_donors()
+        library_kits, donors, kit_counts = self.pick_kits_and_donors()
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
         callers = ("xhmm", "gcnv")
@@ -970,8 +1009,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         )
         if "xhmm" in self.config["tools"]:
             name_pattern = "{mapper}.xhmm_genotype.{library_kit}"
-            min_kit_usages = 10
-            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
+            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
             yield from expand(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
@@ -981,8 +1019,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
             )
         if "gcnv" in self.config["tools"]:
             name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-            min_kit_usages = 10
-            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
+            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
             yield from expand(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
@@ -991,7 +1028,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 ext=EXT_VALUES,
             )
 
-    def _pick_kits_and_donors(self):
+    def pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
         matching donor.
         """

@@ -2,6 +2,7 @@
 """Shared fixtures for the workflows unit tests"""
 
 from collections import namedtuple
+import random
 import textwrap
 from unittest.mock import MagicMock
 
@@ -11,6 +12,122 @@ import pytest
 from ruamel.yaml.comments import CommentedMap
 
 from snappy_pipeline.workflows.abstract import BaseStep
+
+
+def random_gender():
+    """Random gender.
+    :return: Returns either 'F' or 'M' by change.
+    """
+    genders = ["F", "M"]
+    # pseudo-random generator is unsafe for crypto use, but OK here
+    return random.choice(genders)  # nosec
+
+
+def random_affected_status():
+    """Random affected status.
+    :return: Returns either 'Y' or 'N' by change.
+    """
+    affected = ["Y", "N"]
+    # pseudo-random generator is unsafe for crypto use, but OK here
+    return random.choice(affected)  # nosec
+
+
+def set_trio_ids(index_i):
+    """Define trio identifiers.
+    :param index_i: Index identifier. Example if '1', final identifier will be 'P001'.
+    :type index_i: int
+    :return: Returns tuple with trio identifiers (index, mother, father).
+    Example: ('P001', 'P002', 'P003').
+    """
+    # Initialise variable
+    sampleid_pattern = "P{i}"
+    # Set sample ids for trio
+    index_sampleid = sampleid_pattern.format(i=str(index_i).zfill(3))
+    mother_i = index_i + 1
+    mother_sampleid = sampleid_pattern.format(i=str(mother_i).zfill(3))
+    father_i = index_i + 2
+    father_sampleid = sampleid_pattern.format(i=str(father_i).zfill(3))
+    # Return
+    return index_sampleid, mother_sampleid, father_sampleid
+
+
+def get_entry_for_sample_sheet(index_i, entry_type="trio"):
+    """Sample sheet entry text.
+    :param index_i: Index id. Example if '1', final id will be 'P001'
+    :type index_i: int
+    :param entry_type: Type of entry: 'solo', 'duo', 'trio'. Default: 'trio'.
+    :type entry_type: str, optional
+    :return: Returns text used to define a trio case in sample sheet.
+    """
+    # Initialise variables
+    entry_pattern = (
+        "{sampleid}\t{father_sampleid}\t{mother_sampleid}\t{gender}\t{affected}"
+        "\tWGS\tAgilent SureSelect Human All Exon V6\t{sampleid}\t.\n"
+    )
+
+    # Validate entry option
+    valid_options = ["solo", "duo", "trio"]
+    if entry_type not in valid_options:
+        valid_options_str = ", ".join(valid_options)
+        err_msg = "Options '{in_}' is not valid. Valid entry types options: {valid}".format(
+            in_=entry_type, valid=valid_options_str
+        )
+        raise ValueError(err_msg)
+
+    # Set sample ids for trio
+    index_sampleid, mother_sampleid, father_sampleid = set_trio_ids(index_i=index_i)
+
+    # Set entries for trio
+    index_gender = random_gender()
+    index_entry = entry_pattern.format(
+        sampleid=index_sampleid,
+        father_sampleid=father_sampleid,
+        mother_sampleid=mother_sampleid,
+        gender=index_gender,
+        affected="Y",
+    )
+    mother_affected = random_affected_status()
+    mother_entry = entry_pattern.format(
+        sampleid=mother_sampleid,
+        father_sampleid=".",
+        mother_sampleid=".",
+        gender="F",
+        affected=mother_affected,
+    )
+    father_affected = random_affected_status()
+    father_entry = entry_pattern.format(
+        sampleid=father_sampleid,
+        father_sampleid=".",
+        mother_sampleid=".",
+        gender="M",
+        affected=father_affected,
+    )
+
+    # Return accordingly
+    if entry_type == "solo":
+        index_entry = index_entry.replace(mother_sampleid, ".").replace(father_sampleid, ".")
+        return index_entry
+    elif entry_type == "duo":
+        index_entry = index_entry.replace(father_sampleid, ".")
+        return index_entry + mother_entry
+    elif entry_type == "trio":
+        return index_entry + mother_entry + father_entry
+    return None
+
+
+@pytest.fixture
+def header_germline_sheet():
+    """Returns germline TSV file header with wildcard '{entries}'"""
+    return textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        {entries}
+        """
+    ).lstrip()
 
 
 @pytest.fixture
@@ -79,6 +196,25 @@ def dummy_generic_step(
 
 
 @pytest.fixture
+def text_large_cohort_trios_only():
+    """Defines arbitrary large cohort entries for sample sheet - trio cases only"""
+    # Initialise variables
+    n_patients_cohorts = 501  # 167 indexes
+    full_cohort_text = ""
+    # Create cohort
+    index_i = 1
+    while index_i < n_patients_cohorts:
+        new_trio = get_entry_for_sample_sheet(index_i=index_i)
+        # Append
+        full_cohort_text = full_cohort_text + new_trio
+        # Update index counter
+        index_i += 3
+    # Return
+    # Remove last newline so biomedsheet doesn't interpret it as an empty entry
+    return full_cohort_text.rstrip("\n")
+
+
+@pytest.fixture
 def germline_sheet_tsv():
     """Return contents for germline TSV file"""
     return textwrap.dedent(
@@ -120,6 +256,12 @@ def germline_trio_plus_sheet_tsv():
         family2\tP007\t.\t.\tF\tY\tWGS\tAgilent SureSelect Human All Exon V6\tP007\t.
         """
     ).lstrip()
+
+
+@pytest.fixture
+def tsv_large_cohort_trios_only_germline_sheet(header_germline_sheet, text_large_cohort_trios_only):
+    """Returns contents for large cohort germline TSV file - trio cases only"""
+    return header_germline_sheet.format(entries=text_large_cohort_trios_only)
 
 
 @pytest.fixture
@@ -236,7 +378,9 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 
 
 @pytest.fixture
-def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
+def germline_sheet_fake_fs2(
+    fake_fs2, germline_sheet_tsv, tsv_large_cohort_trios_only_germline_sheet
+):
     """Return fake file system setup with files for the germline_sheet_tsv"""
     # Create work directory
     fake_fs2.fs.makedirs("/work", exist_ok=True)
@@ -247,9 +391,15 @@ def germline_sheet_fake_fs2(fake_fs2, germline_sheet_tsv):
             donor = line.split("\t")[0]
             fake_fs2.fs.create_file(tpl.format(donor=donor, flowcell=fc, i=1))
             fake_fs2.fs.create_file(tpl.format(donor=donor, flowcell=fc, i=2))
-    # Create the sample TSV file
+    # Create the sample TSV file - Small cohort
     fake_fs2.fs.create_file(
         "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
+    )
+    # Create the sample TSV file - Large cohort trio cases only
+    fake_fs2.fs.create_file(
+        "/work/config/sheet_large_cohort_trio.tsv",
+        contents=tsv_large_cohort_trios_only_germline_sheet,
+        create_missing_dirs=True,
     )
     return fake_fs2
 

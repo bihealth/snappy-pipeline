@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the targeted_seq_cnv_calling workflow module code"""
 
+import copy
 import textwrap
 
 import pytest
@@ -126,6 +127,15 @@ def minimal_config():
 
 
 @pytest.fixture
+def minimal_config_large_cohort(minimal_config):
+    """Returns minimum configuration file for large trio cohort."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config)
+    minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_large_cohort_trio.tsv"
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["model_max_size"] = 100
+    return minimal_config_adjusted
+
+
+@pytest.fixture
 def targeted_seq_cnv_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -146,6 +156,34 @@ def targeted_seq_cnv_calling_workflow(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_large_cohort(
+    dummy_workflow,
+    minimal_config_large_cohort,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_large_cohort,
         dummy_cluster_config,
         config_lookup_paths,
         config_paths,
@@ -181,7 +219,91 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
     assert actual == expected
 
 
+def test_target_seq_cnv_calling_workflow_get_library_count(targeted_seq_cnv_calling_workflow):
+    """Tests TargetedSeqCnvCallingWorkflow::get_library_count()"""
+    # Test undefined library kit
+    expected = 0
+    actual = targeted_seq_cnv_calling_workflow.get_library_count("_not_a_library_kit_name_")
+    assert actual == expected, "It should had returned zero as the library kit name is not defined."
+    # Test undefined library kit
+    expected = 6
+    actual = targeted_seq_cnv_calling_workflow.get_library_count(
+        "Agilent_SureSelect_Human_All_Exon_V6"
+    )
+    assert actual == expected
+
+
+def test_pick_kits_and_donors(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests TargetedSeqCnvCallingWorkflow::pick_kits_and_donors()"""
+
+    # Test small cohort - 6 individuals
+    expected_library_kits = ["Agilent_SureSelect_Human_All_Exon_V6"]
+    expected_kit_counts = {"Agilent_SureSelect_Human_All_Exon_V6": 6}
+    library_kits, _, kit_counts = targeted_seq_cnv_calling_workflow.pick_kits_and_donors()
+    assert library_kits == expected_library_kits
+    assert expected_kit_counts == kit_counts
+
+    # Test large trio cohort - 501 individuals
+    expected_library_kits = ["Agilent_SureSelect_Human_All_Exon_V6"]
+    expected_kit_counts = {"Agilent_SureSelect_Human_All_Exon_V6": 501}
+    (
+        library_kits,
+        _,
+        kit_counts,
+    ) = targeted_seq_cnv_calling_workflow_large_cohort.pick_kits_and_donors()
+    assert library_kits == expected_library_kits
+    assert expected_kit_counts == kit_counts
+
+
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
+
+
+def test_gcnv_get_run_mode(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests GcnvStepPart::get_run_mode()"""
+    # Initialise variables
+    wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
+
+    # Test small cohort - 6 individuals
+    expected = "COHORT"
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "get_run_mode")(wildcards)
+    assert actual == expected
+
+    # Test large trio cohort - 501 individuals
+    expected = "CASE"
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr("gcnv", "get_run_mode")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_gcnv_get_cnv_model_result_files(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests GcnvStepPart::get_cnv_model_result_files()"""
+
+    # Test small cohort - 6 individuals, not enough to build a model (<10)
+    expected = []
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "get_cnv_model_result_files"
+    )(None)
+    actual = sorted(actual)
+    assert actual == expected
+
+    # Test large trio cohort - 501 individuals, all Agilent v6, enough for a model (>10)
+    file_path = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+    )
+    expected = [file_path]
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
+        "gcnv", "get_cnv_model_result_files"
+    )(None)
+    actual = sorted(actual)
+    assert actual == expected
 
 
 def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
