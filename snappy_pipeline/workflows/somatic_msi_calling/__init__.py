@@ -124,8 +124,9 @@ class MantisStepPart(BaseStepPart):
             ).format(sfx=ext)
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
         """Return path to log file for the given action"""
+        _ = action
         return "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
 
     @staticmethod

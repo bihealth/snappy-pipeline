@@ -87,9 +87,9 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         assert action == "run"
         return self.log_path
 
-    def get_params(self, _action):
+    def get_params(self, action):
         """Return arguments to pass down."""
-
+        _ = action
         def params_function(wildcards):
             if wildcards.tumor_library not in self.donors:
                 return {

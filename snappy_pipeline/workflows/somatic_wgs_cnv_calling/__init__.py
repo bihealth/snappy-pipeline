@@ -216,8 +216,9 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return path to log file"""
+        _ = action
         name_pattern = "{{mapper}}.{var_caller}.{{cancer_library}}".format(
             var_caller=self.__class__.name
         )

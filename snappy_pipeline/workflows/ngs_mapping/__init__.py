@@ -481,8 +481,9 @@ class ReadMappingStepPart(BaseStepPart):
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = "work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}".format(
             mapper=self.__class__.name
         )
@@ -495,11 +496,12 @@ class ReadMappingStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def _collect_reads(self, wildcards, _library_name, prefix):
+    def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         seen = []
@@ -674,8 +676,9 @@ class ExternalStepPart(ReadMappingStepPart):
         return args_function
 
     @listify
-    def _collect_bams(self, wildcards, _library_name):
+    def _collect_bams(self, wildcards, library_name):
         """Yield the path to bam files"""
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
@@ -739,7 +742,8 @@ class GatkPostBamStepPart(BaseStepPart):
                 )
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
+        _ = action
         return "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
 
     @staticmethod
@@ -857,7 +861,8 @@ class PicardHsMetricsStepPart(BaseStepPart):
         yield "txt_md5", "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt.md5"
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
+        _ = action
         return "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
 
     @staticmethod
@@ -889,7 +894,8 @@ class TargetCoverageReportStepPart(BaseStepPart):
         yield "bai", "work/{mapper_lib}/out/{mapper_lib}.bam.bai".format(**wildcards)
 
     @listify
-    def _get_input_files_collect(self, _wildcards):
+    def _get_input_files_collect(self, wildcards):
+        _ = wildcards
         for mapper in self.config["tools"]["dna"]:
             for sheet in self.parent.shortcut_sheets:
                 for library in sheet.all_ngs_libraries:
@@ -955,13 +961,15 @@ class GenomeCoverageReportStepPart(BaseStepPart):
         }
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
+        _ = action
         return "work/{mapper_lib}/log/snakemake.genome_coverage.log"
 
     # TODO(holtgrewe): can this be removed?
     @staticmethod
-    def get_shell_cmd(action, _wildcards):
+    def get_shell_cmd(action, wildcards):
         """Return bash script to execute"""
+        _ = wildcards
         assert action == "run", "Unsupported action"
         return (
             STDERR_TO_LOG_FILE

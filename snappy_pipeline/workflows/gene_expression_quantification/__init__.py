@@ -211,11 +211,12 @@ class SalmonStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def _collect_reads(self, wildcards, _library_name, prefix):
+    def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -310,7 +311,8 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
             "ntasks": 2,
         }
 
-    def get_strandedness_file(self, _action):
+    def get_strandedness_file(self, action):
+        _ = action
         return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
 
 
@@ -402,7 +404,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
-    def get_strandedness_file(self, _action):
+    def get_strandedness_file(self, action):
+        _ = action
         return self.sub_steps["strandedness"].get_strandedness_file("run")
 
     @listify

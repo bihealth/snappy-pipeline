@@ -175,8 +175,9 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_params(self, _action):
+    def get_params(self, action):
         """Return arguments to pass down."""
+        _ = action
 
         def params_function(wildcards):
             if wildcards.tumor_library not in self.donors:

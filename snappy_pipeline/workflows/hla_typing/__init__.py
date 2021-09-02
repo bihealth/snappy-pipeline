@@ -133,8 +133,9 @@ class OptiTypeStepPart(BaseStepPart):
             yield name, self.base_path_out.format(ext=ext)
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
         """Return path to log file"""
+        _ = action
         return "work/optitype.{library_name}/log/snakemake.hla_typing.log"
 
     def get_args(self, action):
@@ -159,11 +160,12 @@ class OptiTypeStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def _collect_reads(self, wildcards, _library_name, prefix):
+    def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -219,8 +221,9 @@ class ArcasHlaStepPart(BaseStepPart):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config["arcashla"]["mapper"])
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
         """Return path to log file"""
+        _ = action
         return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
 
     @staticmethod

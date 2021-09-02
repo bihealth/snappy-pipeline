@@ -440,8 +440,9 @@ class VariantCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{{mapper}}.{caller}.{{index_library_name}}/log/"
             "{{mapper}}.{caller}.{{index_library_name}}"

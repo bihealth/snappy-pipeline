@@ -171,9 +171,9 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.name
 
-    def get_params(self, _action):
+    def get_params(self, action):
         """Return arguments to pass down."""
-
+        _ = action
         def params_function(wildcards):
             if wildcards.tumor_library not in self.donors:
                 return {

@@ -592,7 +592,8 @@ class GcnvStepPart(BaseStepPart):
         return getattr(self, "_get_input_files_{}".format(action))
 
     @staticmethod
-    def _get_input_files_preprocess_intervals(_wildcards):
+    def _get_input_files_preprocess_intervals(wildcards):
+        _ = wildcards
         return {}
 
     @staticmethod

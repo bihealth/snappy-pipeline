@@ -254,7 +254,8 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
         )
 
     @dictify
-    def get_input_files(self, _action):
+    def get_input_files(self, action):
+        _ = action
         yield "vcf", self.base_path_in + ".vcf.gz"
         yield "tbi", self.base_path_in + ".vcf.gz.tbi"
 
@@ -295,7 +296,8 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
         self.path_log = os.path.join("work", self.name_pattern, "log", self.name_pattern + ".log")
 
     @listify
-    def get_input_files(self, _action):
+    def get_input_files(self, action):
+        _ = action
         name_pattern = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (
             self.prev_token,
         )
@@ -331,7 +333,8 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
 
     name = "collect_msdn"
 
-    def get_input_files(self, _action):
+    def get_input_files(self, action):
+        _ = action
         result = {"gatk_hc": [], "gatk_ug": []}
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
@@ -373,7 +376,8 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
     name = "summarize_counts"
 
     @listify
-    def get_input_files(self, _action):
+    def get_input_files(self, action):
+        _ = action
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):

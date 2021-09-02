@@ -171,7 +171,8 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
 
-    def get_log_file(self, _action):
+    def get_log_file(self, action):
+        _ = action
         return (
             "work/{{mapper}}.{var_caller}.{{cancer_library}}/log/"
             "snakemake.somatic_wgs_sv_calling.log"
@@ -333,8 +334,9 @@ class Delly2StepPart(BaseStepPart):
         tpl = os.path.join("work", infix, "out", infix + ".bcf")
         yield "bcf", tpl.format(**wildcards)
 
-    def _get_input_files_final_vcf(self, _wildcards):
+    def _get_input_files_final_vcf(self, wildcards):
         """Return input files for "final_vcf" action"""
+        _ = wildcards
         infix = self.dir_infixes["filter_controls"]
         yield os.path.join("work", infix, "out", infix + ".bcf")
 

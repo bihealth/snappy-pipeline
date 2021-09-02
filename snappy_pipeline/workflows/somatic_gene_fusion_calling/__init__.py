@@ -111,11 +111,12 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
             name=self.name
         )
 
-    def _collect_reads(self, wildcards, _library_name, prefix):
+    def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -354,7 +355,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
                     for bio_sample in donor.bio_samples.values():
-                        for _ in bio_sample.test_samples.values():
+                        for _test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.rna_ngs_library
                             if ngs_library is None:
                                 break

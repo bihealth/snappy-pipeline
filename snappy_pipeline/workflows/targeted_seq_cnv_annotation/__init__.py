@@ -184,8 +184,9 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
-    def get_log_file(_action):
+    def get_log_file(action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/log/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"

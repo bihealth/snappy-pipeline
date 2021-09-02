@@ -177,8 +177,9 @@ class BcftoolsRohStepPart(BaseStepPart):
         yield "txt", path.format(**wildcards)
 
     @staticmethod
-    def _get_input_files_link_bed(_wildcards):
+    def _get_input_files_link_bed(wildcards):
         """Return path to .done file for BED file generation"""
+        _ = wildcards
         return "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
 
     def get_output_files(self, action):

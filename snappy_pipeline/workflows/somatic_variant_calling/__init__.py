@@ -440,8 +440,9 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
             "{{mapper}}.{var_caller}.{{tumor_library}}"
@@ -797,8 +798,9 @@ class JointCallingStepPart(BaseStepPart):
         return dict(zip(EXT_NAMES, expand(self.base_path_out, name=[self.name], ext=EXT_VALUES)))
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{{mapper}}.{var_caller}.{{donor_name}}/log/"
             "{{mapper}}.{var_caller}.{{donor_name}}"
@@ -811,7 +813,8 @@ class JointCallingStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_args(self, _action):
+    def get_args(self, action):
+        _ = action
         def arg_function(wildcards):
             donor = self.donor_by_name[wildcards.donor_name]
             result = {}

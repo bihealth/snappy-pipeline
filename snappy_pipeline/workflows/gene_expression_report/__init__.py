@@ -42,7 +42,8 @@ class GeneExpressionReportStepPart(BaseStepPart):
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
 
-    def get_log_file(self, _action):
+    def get_log_file(self, action):
+        _ = action
         return (
             "work/{{mapper}}.{tool}.{{ngs_library}}/log/"
             "snakemake.gene_expression_quantification.log"
@@ -174,7 +175,7 @@ class GeneExpressionReportWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
-                    for _ in bio_sample.test_samples.values():
+                    for _test_sample in bio_sample.test_samples.values():
                         ngs_library = bio_sample.rna_ngs_library
                         if ngs_library is None:
                             break

@@ -408,8 +408,9 @@ class ErdsStepPart(BaseStepPart):
             yield name, self.base_path_out.format(ext=ext)
 
     @staticmethod
-    def get_log_file(_action):
+    def get_log_file(action):
         """Return path to log file"""
+        _ = action
         return "work/{mapper}.erds.{library_name}/log/snakemake.wgs_cnv_calling.log"
 
     @staticmethod

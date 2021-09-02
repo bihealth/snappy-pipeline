@@ -94,7 +94,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
                 for donor in pedigree.donors:
                     self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
-    def _get_path_bam(self, wildcards, _donor):
+    def _get_path_bam(self, wildcards, donor):
+        _ = donor
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         return ngs_mapping(
             "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)

@@ -333,7 +333,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                     for bio_sample in donor.bio_samples.values():
                         if not bio_sample.is_tumor:
                             continue
-                        for _ in bio_sample.test_samples.values():
+                        for _test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.dna_ngs_library
                             name_pattern_value = name_pattern.format(
                                 mapper=self.config["tool_ngs_mapping"],
