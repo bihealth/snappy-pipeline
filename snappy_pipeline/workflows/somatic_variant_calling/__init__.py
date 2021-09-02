@@ -815,6 +815,7 @@ class JointCallingStepPart(BaseStepPart):
 
     def get_args(self, action):
         _ = action
+
         def arg_function(wildcards):
             donor = self.donor_by_name[wildcards.donor_name]
             result = {}
