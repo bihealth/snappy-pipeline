@@ -117,6 +117,8 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
     expected = [
         ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz"),
         ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz"),
+        ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz.md5"),
+        ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz.md5"),
     ]
     assert list(generator.run("P001")) == expected
 
@@ -216,6 +218,8 @@ def test_link_in_step_part_get_shell_cmd(
         r"""
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         """
     ).strip()
     assert actual == expected

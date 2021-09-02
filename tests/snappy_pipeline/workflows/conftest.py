@@ -226,8 +226,14 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
     tpl = "/path/{donor}/FCXXXXXX/L001/{donor}_R{i}.fastq.gz"
     for line in germline_sheet_tsv.splitlines()[1:]:
         donor = line.split("\t")[0]
+        # Create fastq files
         fake_fs.fs.create_file(tpl.format(donor=donor, i=1))
         fake_fs.fs.create_file(tpl.format(donor=donor, i=2))
+        # Create md5 files
+        md5_r1 = tpl.format(donor=donor, i=1) + ".md5"
+        fake_fs.fs.create_file(md5_r1)
+        md5_r2 = tpl.format(donor=donor, i=2) + ".md5"
+        fake_fs.fs.create_file(md5_r2)
     # Create the sample TSV file
     fake_fs.fs.create_file(
         "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
