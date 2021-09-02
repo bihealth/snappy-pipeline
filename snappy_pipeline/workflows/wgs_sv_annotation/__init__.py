@@ -256,7 +256,7 @@ class WgsSvAnnotationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "path_variant_calling"),
-            (" not configured but required for WGS SV annotation"),
+            " not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tool_ngs_mapping_variant_calling"),
@@ -274,9 +274,9 @@ class WgsSvAnnotationWorkflow(BaseStep):
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tools_ngs_mapping"),
-            ("NGS mapping tools not configured but required for WGS SV annotation"),
+            "NGS mapping tools not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tools_wgs_sv_calling"),
-            ("WGS SV calling tools not configured but required for WGS SV annotation"),
+            "WGS SV calling tools not configured but required for WGS SV annotation",
         )

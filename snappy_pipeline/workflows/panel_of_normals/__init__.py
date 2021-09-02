@@ -132,7 +132,7 @@ class PanelOfNormalsStepPart(BaseStepPart):
     def get_input_files(self, action):
         def input_function(wildcards):
             """Helper wrapper function"""
-            print("DEBUG- input function [Part] wildcards = {}".format(wilcards), file=sys.stderr)
+            print("DEBUG- input function [Part] wildcards = {}".format(wildcards), file=sys.stderr)
             # Get shorcut to Snakemake sub workflow
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
@@ -230,7 +230,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         )
 
     def get_input_files(self, action):
-        "Return input files for mutect2 variant calling"
+        """Return input files for mutect2 variant calling"""
         assert action in self.actions
         mapping = {
             "prepare_panel": self._get_input_files_prepare_panel,
@@ -241,7 +241,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_prepare_panel(self, wildcards):
         print("DEBUG- wildcards for prepare_panel = {}".format(wildcards), file=sys.stderr)
-        normals = self._get_panel_of_normals(wildcards)
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
@@ -271,9 +270,10 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_output_files_select_panel(self):
-        yield "normal_list", ("work/{mapper}.mutect2.select_panel.txt")
+        yield "normal_list", "work/{mapper}.mutect2.select_panel.txt"
 
-    def _get_output_files_prepare_panel(self):
+    @staticmethod
+    def _get_output_files_prepare_panel():
         return {
             "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
             "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
@@ -281,12 +281,14 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
         }
 
-    def _get_output_files_create_panel(self):
+    @staticmethod
+    def _get_output_files_create_panel():
+        base_name = "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals"
         return {
-            "vcf": "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals.vcf.gz",
-            "vcf_md5": "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals.vcf.gz.md5",
-            "tbi": "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals.vcf.gz.tbi",
-            "tbi_md5": "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals.vcf.gz.tbi.md5",
+            "vcf": base_name + ".vcf.gz",
+            "vcf_md5": base_name + ".vcf.gz.md5",
+            "tbi": base_name + ".vcf.gz.tbi",
+            "tbi_md5": base_name + ".vcf.gz.tbi.md5",
         }
 
     def get_log_file(self, action):
@@ -389,11 +391,6 @@ class PanelOfNormalsWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         # Panel of normals
-        files = expand(
-            os.path.join("work", "{mapper}.{caller}.select_panel" + ".txt"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=set(self.config["tools"]) & set(TOOLS),
-        )
         files = []
 
         # yield from expand(

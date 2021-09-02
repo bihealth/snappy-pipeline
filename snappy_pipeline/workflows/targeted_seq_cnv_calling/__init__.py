@@ -592,7 +592,8 @@ class GcnvStepPart(BaseStepPart):
         return getattr(self, "_get_input_files_{}".format(action))
 
     @staticmethod
-    def _get_input_files_preprocess_intervals(_wildcards):
+    def _get_input_files_preprocess_intervals(wildcards):
+        _ = wildcards
         return {}
 
     @staticmethod
@@ -867,7 +868,8 @@ class GcnvStepPart(BaseStepPart):
                 name_pattern=name_pattern, suffix=suffix
             )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return path to log file"""
         if action in ("preprocess_intervals", "annotate_gc"):
             name_pattern = "gcnv_{action}.{{library_kit}}".format(action=action)

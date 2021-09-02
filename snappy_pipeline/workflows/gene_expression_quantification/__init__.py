@@ -216,6 +216,7 @@ class SalmonStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -245,7 +246,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            base_path = ("output/{mapper}.{library_name}/out/" "{mapper}.{library_name}").format(
+            base_path = "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}".format(
                 **wildcards
             )
             return {
@@ -311,6 +312,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
         }
 
     def get_strandedness_file(self, action):
+        _ = action
         return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
 
 
@@ -403,6 +405,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
     def get_strandedness_file(self, action):
+        _ = action
         return self.sub_steps["strandedness"].get_strandedness_file("run")
 
     @listify

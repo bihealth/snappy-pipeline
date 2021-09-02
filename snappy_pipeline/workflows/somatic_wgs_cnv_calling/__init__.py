@@ -216,8 +216,9 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return path to log file"""
+        _ = action
         name_pattern = "{{mapper}}.{var_caller}.{{cancer_library}}".format(
             var_caller=self.__class__.name
         )
@@ -253,7 +254,8 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "Path to Canvas genome folder not configured",
         )
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for Canvas Somatic WGS CNV calling"""
         cluster_config["somatic_wgs_cnv_calling_canvas_run"] = {
             "mem": int(3.75 * 1024 * 16),
@@ -378,7 +380,8 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "scatter_md5": self.base_path_out.format(var_caller=self.name, ext=".scatter.png.md5"),
         }
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for cnvkit WGS CNV calling"""
         cluster_config["somatic_wgs_cnv_calling_cnvkit_run"] = {
             "mem": 10 * 1024 * 4,
@@ -450,7 +453,8 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "Path to ControlFreec mappability file not configured",
         )
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for ControlFreec Somatic WGS CNV calling"""
         actions = ("run", "transform_output", "plot")
         for action in actions:
@@ -619,7 +623,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_ngs_mapping"),
-            ("Path to NGS mapping not configured but required for somatic variant calling"),
+            "Path to NGS mapping not configured but required for somatic variant calling",
         )
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
@@ -630,5 +634,5 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         )
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
-            ("Somatic (small) variant calling tool not configured for somatic WGS CNV calling"),
+            "Somatic (small) variant calling tool not configured for somatic WGS CNV calling",
         )

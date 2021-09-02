@@ -171,7 +171,8 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
 
-    def get_log_file(self, _action):
+    def get_log_file(self, action):
+        _ = action
         return (
             "work/{{mapper}}.{var_caller}.{{cancer_library}}/log/"
             "snakemake.somatic_wgs_sv_calling.log"
@@ -183,7 +184,8 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
 
     name = "manta"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["somatic_wgs_sv_calling_manta_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "40:00",
@@ -332,8 +334,9 @@ class Delly2StepPart(BaseStepPart):
         tpl = os.path.join("work", infix, "out", infix + ".bcf")
         yield "bcf", tpl.format(**wildcards)
 
-    def _get_input_files_final_vcf(self, _wildcards):
+    def _get_input_files_final_vcf(self, wildcards):
         """Return input files for "final_vcf" action"""
+        _ = wildcards
         infix = self.dir_infixes["filter_controls"]
         yield os.path.join("work", infix, "out", infix + ".bcf")
 
@@ -379,7 +382,6 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
     """Perform somatic variant calling"""
 
     name = "somatic_wgs_sv_calling"
-    sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
@@ -445,9 +447,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
             ("step_config", "somatic_wgs_sv_calling", "path_ngs_mapping"),
-            ("Path to NGS mapping not configured but required for somatic WGS SV calling"),
+            "Path to NGS mapping not configured but required for somatic WGS SV calling",
         )
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
-            ("Path to reference FASTA file required by not available"),
+            "Path to reference FASTA file required by not available",
         )

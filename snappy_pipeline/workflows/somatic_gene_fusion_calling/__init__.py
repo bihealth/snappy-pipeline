@@ -116,6 +116,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -147,7 +148,8 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for Fusioncatcher"""
         cluster_config["somatic_gene_fusion_calling_fusioncatcher_run"] = {
             "mem": 7500 * 4,
@@ -176,7 +178,8 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for JAFFA"""
         cluster_config["somatic_gene_fusion_calling_jaffa_run"] = {
             "mem": 40 * 1024 * 4,
@@ -205,7 +208,8 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for Kallisto+Pizzly"""
         cluster_config["somatic_gene_fusion_calling_pizzly_run"] = {
             "mem": 20 * 1024 * 4,
@@ -234,7 +238,8 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for STAR-Fusion"""
         cluster_config["somatic_gene_fusion_calling_star_fusion_run"] = {
             "mem": 30 * 1024 * 4,
@@ -263,7 +268,8 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for Defuse"""
         cluster_config["somatic_gene_fusion_calling_defuse_run"] = {
             "mem": 10 * 1024 * 8,
@@ -292,7 +298,8 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for Hera"""
         cluster_config["somatic_gene_fusion_calling_hera_run"] = {
             "mem": 20 * 1024 * 8,
@@ -348,7 +355,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
                     for bio_sample in donor.bio_samples.values():
-                        for test_sample in bio_sample.test_samples.values():
+                        for _test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.rna_ngs_library
                             if ngs_library is None:
                                 break

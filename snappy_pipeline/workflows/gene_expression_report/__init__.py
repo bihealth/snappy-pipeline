@@ -43,6 +43,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
             )
 
     def get_log_file(self, action):
+        _ = action
         return (
             "work/{{mapper}}.{tool}.{{ngs_library}}/log/"
             "snakemake.gene_expression_quantification.log"
@@ -80,8 +81,9 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                     exp_file = gene_expression(exp_tpl)
                                     yield exp_file
 
+    @staticmethod
     @dictify
-    def get_output_files(self, action):
+    def get_output_files(action):
         assert action == "run"
         yield "tsv", "work/gene_exp.tsv"
 
@@ -173,7 +175,7 @@ class GeneExpressionReportWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
+                    for _test_sample in bio_sample.test_samples.values():
                         ngs_library = bio_sample.rna_ngs_library
                         if ngs_library is None:
                             break

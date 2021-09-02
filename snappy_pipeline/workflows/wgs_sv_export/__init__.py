@@ -260,5 +260,5 @@ class WgsSvExportWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_export", "path_wgs_sv_annotation"),
-            ("Path to WGS SV annotation not configured but required for WGS SV export"),
+            "Path to WGS SV annotation not configured but required for WGS SV export",
         )

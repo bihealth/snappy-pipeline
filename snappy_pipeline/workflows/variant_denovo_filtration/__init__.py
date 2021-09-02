@@ -255,6 +255,7 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
 
     @dictify
     def get_input_files(self, action):
+        _ = action
         yield "vcf", self.base_path_in + ".vcf.gz"
         yield "tbi", self.base_path_in + ".vcf.gz.tbi"
 
@@ -296,6 +297,7 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
 
     @listify
     def get_input_files(self, action):
+        _ = action
         name_pattern = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (
             self.prev_token,
         )
@@ -332,6 +334,7 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
     name = "collect_msdn"
 
     def get_input_files(self, action):
+        _ = action
         result = {"gatk_hc": [], "gatk_ug": []}
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
@@ -361,7 +364,8 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
         yield "txt", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt"
         yield "txt_md5", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt.md5"
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action == "run"
         return "work/{mapper}.multisite_de_novo/log/{mapper}.multisite_de_novo.log"
 
@@ -373,6 +377,7 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
 
     @listify
     def get_input_files(self, action):
+        _ = action
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
@@ -400,7 +405,8 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
             "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"
         )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         assert action == "run"
         return "work/{mapper}.denovo_count_summary/log/{mapper}.denovo_count_summary.log"
 
@@ -521,5 +527,5 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Check that the path to the variant annotation step is present."""
         self.ensure_w_config(
             ("step_config", "variant_denovo_filtration", "path_ngs_mapping"),
-            ("Path to ngs_mapping not configured but required for variant_denovo_filtration"),
+            "Path to ngs_mapping not configured but required for variant_denovo_filtration",
         )

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Implementation of the ``targeted_seq_cnv_export`` step.
 
-The ``targeted_seq_cnv_export`` step takes as the input the results of the ``targeted_seq_cnv_annotation`` step and
-uses ``varfish-annotator-cli annotate`` commmand to create files fit for import into VarFish
-Server.
+The ``targeted_seq_cnv_export`` step takes as the input the results of the
+``targeted_seq_cnv_annotation`` step and uses ``varfish-annotator-cli annotate`` commmand to
+create files fit for import into VarFish Server.
 
 ==========
 Stability
@@ -148,9 +148,9 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.annotated.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         targeted_seq_cnv_annotation = self.parent.sub_workflows["targeted_seq_cnv_annotation"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, targeted_seq_cnv_annotation(tpl + ext)
 
     @dictify
@@ -378,5 +378,5 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "targeted_seq_cnv_export", "path_targeted_seq_cnv_annotation"),
-            ("Path to WGS SV annotation not configured but required for WGS SV export"),
+            "Path to WGS SV annotation not configured but required for WGS SV export",
         )

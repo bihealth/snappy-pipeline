@@ -162,9 +162,9 @@ class BcftoolsRohStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl.format(**wildcards) + ext)
 
     @dictify
@@ -176,8 +176,10 @@ class BcftoolsRohStepPart(BaseStepPart):
         )
         yield "txt", path.format(**wildcards)
 
-    def _get_input_files_link_bed(self, wildcards):
+    @staticmethod
+    def _get_input_files_link_bed(wildcards):
         """Return path to .done file for BED file generation"""
+        _ = wildcards
         return "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
 
     def get_output_files(self, action):
@@ -195,7 +197,8 @@ class BcftoolsRohStepPart(BaseStepPart):
         yield "txt", path
         yield "txt_md5", path + ".md5"
 
-    def _get_output_files_make_bed(self):
+    @staticmethod
+    def _get_output_files_make_bed():
         """Return output files for the BED creation"""
         path = "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
         return touch(path)

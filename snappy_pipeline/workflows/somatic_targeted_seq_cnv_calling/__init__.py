@@ -404,11 +404,13 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         assert action in method_mapping, "Unknown action"
         return method_mapping[action]
 
-    def _get_input_files_target(self, _):
+    @staticmethod
+    def _get_input_files_target(_):
         input_files = {"access": "work/cnvkit.access/out/access.bed"}
         return input_files
 
-    def _get_input_files_antitarget(self, _):
+    @staticmethod
+    def _get_input_files_antitarget(_):
         input_files = {
             "access": "work/cnvkit.access/out/access.bed",
             "target": "work/cnvkit.target/out/target.bed",
@@ -441,7 +443,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         input_files["bai"] = ngs_mapping(base_path + ".bam.bai")
         return input_files
 
-    def _get_input_files_fix(self, wildcards):
+    @staticmethod
+    def _get_input_files_fix(wildcards):
         tpl_base = "{mapper}.cnvkit.{substep}.{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".cnn"
         input_files = {"ref": tpl.format(substep="reference", **wildcards)}
@@ -450,14 +453,16 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             input_files[target] = tpl.format(target=target, substep="coverage", **wildcards)
         return input_files
 
-    def _get_input_files_segment(self, wildcards):
+    @staticmethod
+    def _get_input_files_segment(wildcards):
         cnr_pattern = (
             "work/{mapper}.cnvkit.fix.{library_name}/out/{mapper}.cnvkit.fix.{library_name}.cnr"
         )
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
-    def _get_input_files_call(self, wildcards):
+    @staticmethod
+    def _get_input_files_call(wildcards):
         segment_pattern = (
             "work/{mapper}.cnvkit.segment.{library_name}/out/"
             "{mapper}.cnvkit.segment.{library_name}.cns"
@@ -465,14 +470,16 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
-    def _get_input_files_export(self, wildcards):
+    @staticmethod
+    def _get_input_files_export(wildcards):
         cns_pattern = (
             "work/{mapper}.cnvkit.call.{library_name}/out/{mapper}.cnvkit.call.{library_name}.cns"
         )
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
-    def _get_input_files_plot(self, wildcards):
+    @staticmethod
+    def _get_input_files_plot(wildcards):
         tpl = (
             "work/{mapper}.cnvkit.{substep}.{library_name}/out/"
             "{mapper}.cnvkit.{substep}.{library_name}.{ext}"
@@ -504,16 +511,20 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         assert action in method_mapping, "Unknown action"
         return method_mapping[action]()
 
-    def _get_output_files_access(self):
+    @staticmethod
+    def _get_output_files_access():
         return "work/cnvkit.access/out/access.bed"
 
-    def _get_output_files_target(self):
+    @staticmethod
+    def _get_output_files_target():
         return "work/cnvkit.target/out/target.bed"
 
-    def _get_output_files_antitarget(self):
+    @staticmethod
+    def _get_output_files_antitarget():
         return "work/cnvkit.antitarget/out/antitarget.bed"
 
-    def _get_output_files_coverage(self):
+    @staticmethod
+    def _get_output_files_coverage():
         name_pattern = "{mapper}.cnvkit.coverage.{library_name}"
         output_files = {}
         for target in ("target", "antitarget"):
@@ -522,22 +533,26 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             )
         return output_files
 
-    def _get_output_files_reference(self):
+    @staticmethod
+    def _get_output_files_reference():
         name_pattern = "{mapper}.cnvkit.reference.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnn")
         return tpl
 
-    def _get_output_files_fix(self):
+    @staticmethod
+    def _get_output_files_fix():
         name_pattern = "{mapper}.cnvkit.fix.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
         return tpl
 
-    def _get_output_files_segment(self):
+    @staticmethod
+    def _get_output_files_segment():
         name_pattern = "{mapper}.cnvkit.segment.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
         return tpl
 
-    def _get_output_files_call(self):
+    @staticmethod
+    def _get_output_files_call():
         name_pattern = "{mapper}.cnvkit.call.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
         return tpl
@@ -569,7 +584,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             for chrom in chroms
         )
 
-    def _get_output_files_export(self):
+    @staticmethod
+    def _get_output_files_export():
         keys = ("bed", "seg", "vcf", "tbi")
         exts = ("bed", "seg", "vcf.gz", "vcf.gz.tbi")
         name_pattern = "{mapper}.cnvkit.export.{library_name}"
@@ -591,9 +607,9 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             for report in reports
         )
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return path to log file for the given action"""
-        prefix = None
         if action in ("access", "target", "antitarget"):
             prefix = "work/cnvkit.{action}/log/cnvkit.{action}"
         elif action in (
@@ -624,7 +640,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration with resource usage limits for
         scheduling
         """
@@ -753,7 +770,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ("conda_list", ".conda_list.txt"),
         )
 
-        if action in ("prepare"):
+        if action == "prepare":
             tpl = "work/copywriter.{action}/log/snakemake.log"
             return tpl.format(action=action)
         elif action in ("call", "run"):
@@ -766,7 +783,8 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
         else:
             raise ValueError("Unknown action {}".format(action))
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration with resource usage limits for
         scheduling
         """

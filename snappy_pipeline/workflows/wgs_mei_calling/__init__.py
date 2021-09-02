@@ -270,8 +270,9 @@ class MeltStepPart(BaseStepPart):
             yield key, tpl % (ext, "")
             yield key + "_md5", tpl % (ext, ".md5")
 
-    def get_log_file(self, action):
-        assert action in MELT_ACTIONS
+    @staticmethod
+    def get_log_file(action):
+        assert action in MELT_ACTIONS, "Invalid action."
         if action == "preprocess":
             return "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
         elif action in ("indiv_analysis", "genotype"):
@@ -290,10 +291,10 @@ class MeltStepPart(BaseStepPart):
                 "work/{mapper}.melt.reorder_vcf.{index_library_name}/log/"
                 "snakemake.wgs_mei_calling.log"
             )
-        else:
-            assert False, "Invalid action"
+        return None
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration for running Melt"""
         for action in MELT_ACTIONS:
             cluster_config["wgs_mei_calling_melt_{}".format(action)] = {

@@ -436,5 +436,5 @@ class VariantFiltrationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "variant_filtration", "path_variant_annotation"),
-            ("Path to variant_annotation not configured but required for variant_filtration"),
+            "Path to variant_annotation not configured but required for variant_filtration",
         )

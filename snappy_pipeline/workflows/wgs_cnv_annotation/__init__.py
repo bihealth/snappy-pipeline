@@ -243,9 +243,9 @@ class WgsCnvAnnotationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_cnv_annotation", "tools_ngs_mapping"),
-            ("NGS mapping tools not configured but required for WGS SV annotation"),
+            "NGS mapping tools not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_cnv_annotation", "tools_wgs_cnv_calling"),
-            ("WGS SV calling tools not configured but required for WGS SV annotation"),
+            "WGS SV calling tools not configured but required for WGS SV annotation",
         )

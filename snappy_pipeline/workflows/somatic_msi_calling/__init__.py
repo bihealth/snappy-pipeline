@@ -123,11 +123,14 @@ class MantisStepPart(BaseStepPart):
                 "mantis.{{mapper}}.{{library_name}}_{sfx}"
             ).format(sfx=ext)
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return path to log file for the given action"""
+        _ = action
         return "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         """Update cluster configuration with resource usage limits for
         scheduling
         """

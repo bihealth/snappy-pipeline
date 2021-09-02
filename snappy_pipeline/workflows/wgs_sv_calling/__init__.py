@@ -375,12 +375,14 @@ class MantaStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, "work/" + infix + "/out/" + infix + ext
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return log file path for the given action; includes wildcards"""
         assert action == "run"
         return "work/{mapper}.manta.{index_ngs_library}/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["wgs_sv_calling_manta_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "40:00",
@@ -427,7 +429,6 @@ class SvTkStepPart(BaseStepPart):
     @dictify
     def _get_input_files_standardize(self, wildcards):
         """Return input files for "standardize" action"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = (
             "output/{mapper}.{caller_infix}.{library_name}/out/"
             "{mapper}.{caller_infix}.{library_name}{ext}"
@@ -551,7 +552,6 @@ class PopDelStepPart(BaseStepPart):
     def _get_input_files_concat_calls(self, wildcards):
         window_size = self.config["popdel"]["window_size"]
         padding = self.config["popdel"]["max_sv_size"]
-        window_size
         """Return input files for "concat_calls" action"""
         tpl = os.path.join(
             "work", self.dir_infixes["call"], "out", self.dir_infixes["call"] + ".vcf.gz"
@@ -668,12 +668,14 @@ class PbHoneySpotsStepPart(BaseStepPart):
         yield "bed", "work/" + infix + "/out/" + infix + ".bed"
         yield "bed_md5", "work/" + infix + "/out/" + infix + ".bed.md5"
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return log file path for the given action; includes wildcards"""
         assert action == "run"
         return "work/{mapper}.pb_honey_spots.{index_ngs_library}/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["wgs_sv_calling_pb_honey_spots_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "40:00",
@@ -726,12 +728,14 @@ class SnifflesStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, "work/" + infix + "/out/" + infix + ext
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return log file path for the given action; includes wildcards"""
         assert action == "run"
         return "work/{mapper}.sniffles.{index_ngs_library}/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
+    @staticmethod
+    def update_cluster_config(cluster_config):
         cluster_config["wgs_sv_calling_sniffles_run"] = {
             "mem": int(3.75 * 1024 * 16),
             "time": "40:00",
@@ -792,7 +796,7 @@ class WgsSvCallingWorkflow(BaseStep):
             ext=EXT_VALUES,
         )
         # Long Read DNA WGS SV calling
-        bed_tools = set(["pb_honey_spots"])
+        bed_tools = {"pb_honey_spots"}
         yield from self._yield_result_files_dna_long(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna_long"],
@@ -859,11 +863,11 @@ class WgsSvCallingWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_calling", "path_ngs_mapping"),
-            ("Path to NGS mapping not configured but required for variant calling"),
+            "Path to NGS mapping not configured but required for variant calling",
         )
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
-            ("Path to reference FASTA not configured but required for variant calling"),
+            "Path to reference FASTA not configured but required for variant calling",
         )
         # Check that only valid tools are selected
         selected = set(self.w_config["step_config"]["wgs_sv_calling"]["tools"]["dna"])

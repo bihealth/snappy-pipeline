@@ -95,6 +95,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
                     self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
     def _get_path_bam(self, wildcards, donor):
+        _ = donor
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         return ngs_mapping(
             "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)
@@ -257,5 +258,5 @@ class IgvSessionGenerationWorkflow(BaseStep):
         """Check that the path to the variant annotation step is present."""
         self.ensure_w_config(
             ("step_config", "igv_session_generation", "path_ngs_mapping"),
-            ("Path to ngs_mapping not configured but required for igv_session_generation"),
+            "Path to ngs_mapping not configured but required for igv_session_generation",
         )
