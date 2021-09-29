@@ -169,6 +169,7 @@ def test_scramble_analysis_step_part_get_parameters(mei_workflow):
         "n_cluster": 5,
         "mei_score": 50,
         "indel_score": 80,
+        "mei_polya_frac": 0.75,
     }
     # Get actual
     actual = mei_workflow.get_params("scramble", "analysis")(None)

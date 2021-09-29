@@ -37,6 +37,7 @@ Rscript --vanilla {snakemake.params.args[rscript]}  --out-name {prefix} \
     --nCluster {snakemake.params.args[n_cluster]} \
     --mei-score {snakemake.params.args[mei_score]} \
     --indel-score {snakemake.params.args[indel_score]} \
+    --poly-a-frac {snakemake.params.args[mei_polya_frac]} \
     --eval-meis
 """
 )

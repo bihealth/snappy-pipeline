@@ -20,12 +20,14 @@ step_config:
   mobile_element_insertion:
     # Path to Scramble installation directory
     scramble_install_dir: REQUIRED
-    # Minimum cluster size (set with Scramble default)
+    # Minimum cluster size, depth of soft-clipped reads (set to Scramble default)
     n_cluster: 5
-    # Minimum MEI alignment score (set with Scramble default)
+    # Minimum MEI alignment score (set to Scramble default)
     mei_score: 50
-    # Minimum INDEL alignment score (set with Scramble default)
+    # Minimum INDEL alignment score (set to Scramble default)
     indel_score: 80
+    # Minimum fraction of clipped length for calling polyA tail in MEIs (set to Scramble default)
+    mei_polya_frac: 0.75
     # Path to the ngs_mapping step
     path_ngs_mapping: ../ngs_mapping
 """
@@ -190,6 +192,7 @@ class ScrambleStepPart(BaseStepPart):
             "n_cluster": self.config["n_cluster"],
             "mei_score": self.config["mei_score"],
             "indel_score": self.config["indel_score"],
+            "mei_polya_frac": self.config["mei_polya_frac"],
         }
         # Return dict with parameters
         return params
