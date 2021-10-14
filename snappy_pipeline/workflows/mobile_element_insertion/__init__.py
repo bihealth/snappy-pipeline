@@ -1,4 +1,83 @@
 # -*- coding: utf-8 -*
+"""Implementation of the ``mobile_element_insertion`` step
+
+The ``mobile_element_insertion`` step takes as the input the results of the ``ngs_mapping`` step
+(aligned reads in BAM format) and performs germline mobile element insertion identification (MEI).
+The result are tabular files with mobile insertion characteristics (txt files).
+
+==========
+Stability
+==========
+
+This step is considered experimental, use it at your own discretion.
+
+==========
+Step Input
+==========
+
+MEI identification step uses Snakemake sub workflows for using the
+result of the ``ngs_mapping`` step.
+
+===========
+Step Output
+===========
+
+For all samples, MEI identification will be performed on the primary DNA NGS libraries separately
+for each configured read mapper and mobile element identification tool. The name of the primary DNA
+NGS library will be used as an identification token in the output file.
+
+For each read mapper, MEI tool, and sample, the following files will be generated:
+
+- ``{mapper}.{mei_tool}.{lib_name}_MEIs.txt``
+- ``{mapper}.{mei_tool}.{lib_name}_MEIs.txt.md5``
+
+For example, it might look as follows for the example from above:
+
+::
+
+    output/
+    +-- bwa.scramble.P001-N1-DNA1-WES1
+    |   `-- out
+    |       |-- bwa.scramble.P001-N1-DNA1-WES1_MEIs.txt
+    |       |-- bwa.scramble.P001-N1-DNA1-WES1_MEIs.txt.md5
+    [...]
+
+
+====================
+Global Configuration
+====================
+
+Not applicable.
+
+=====================
+Default Configuration
+=====================
+
+The default configuration is as follows.
+
+.. include:: DEFAULT_CONFIG_mobile_element_insertion.rst
+
+==================================
+Available MEI Identification Tools
+==================================
+
+The following germline MEI identification tool is currently available:
+
+- ``"Scramble"``
+
+=======
+Reports
+=======
+
+Not applicable.
+
+==================
+Parallel Execution
+==================
+
+Not available.
+
+"""
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background

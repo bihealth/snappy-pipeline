@@ -48,6 +48,7 @@ Project Info
     step_generic
     step/hla_typing
     step/igv_session_generation
+    step/mobile_element_insertion
     step/ngs_data_qc
     step/ngs_mapping
     step/ngs_sanity_checking
