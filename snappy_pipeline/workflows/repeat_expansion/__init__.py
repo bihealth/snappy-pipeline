@@ -1,4 +1,82 @@
 # -*- coding: utf-8 -*
+"""Implementation of the ``repeat_analysis`` step
+
+The ``repeat_analysis`` step takes as the input the results of the ``ngs_mapping`` step
+(aligned reads in BAM format) and performs repeat expansion analysis.  The result are variant files
+(VCF) with the repeat expansions definitions, and associated annotations (JSON).
+
+==========
+Stability
+==========
+
+This step is considered experimental, use it at your own discretion.
+
+==========
+Step Input
+==========
+
+The repeat analysis step uses Snakemake sub workflows for using the result of the ``ngs_mapping``
+step.
+
+===========
+Step Output
+===========
+
+For all samples, repeat analysis will be performed on the primary DNA NGS libraries separately for
+each configured read mapper and repeat analysis tool. The name of the primary DNA NGS library will
+be used as an identification token in the output file.
+
+For each read mapper, repeat analysis tool, and sample, the following files will be generated:
+
+- ``{mapper}.{repeat_tool}.{lib_name}.vcf``
+- ``{mapper}.{repeat_tool}.{lib_name}.vcf.md5``
+- ``{mapper}.{repeat_tool}_annotated.{lib_name}.json``
+- ``{mapper}.{repeat_tool}_annotated.{lib_name}.json.md5``
+
+For example, it might look as follows for the example from above:
+
+::
+
+    output/
+    +-- bwa.expansionhunter.P001-N1-DNA1-WES1
+    |   `-- out
+    |       |-- bwa.expansionhunter.P001-N1-DNA1-WES1.vcf
+    |       |-- bwa.expansionhunter.P001-N1-DNA1-WES1.vcf.md5
+    +-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1
+    |   `-- out
+    |       |-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1.json
+    |       |-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1.json.md5
+    [...]
+
+====================
+Global Configuration
+====================
+
+Not applicable.
+
+=====================
+Default Configuration
+=====================
+
+The default configuration is as follows:
+
+.. include:: DEFAULT_CONFIG_repeat_expansion.rst
+
+===============================
+Available Repeat Analysis Tools
+===============================
+
+The following germline repeat analysis tool is currently available:
+
+- ``"ExpansionHunter"``
+
+
+==================
+Parallel Execution
+==================
+
+Not available.
+"""
 from collections import OrderedDict
 import os
 

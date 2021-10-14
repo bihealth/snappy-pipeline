@@ -1,7 +1,7 @@
 .. _step_roh_calling:
 
 ====================
-Germlien RoH Calling
+Germline RoH Calling
 ====================
 
 .. automodule:: snappy_pipeline.workflows.roh_calling
