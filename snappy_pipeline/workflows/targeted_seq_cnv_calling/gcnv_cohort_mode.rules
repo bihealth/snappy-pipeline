@@ -2,10 +2,6 @@
 # gCNV needs many rules, thus they are in their own file.
 
 
-# Include common rule
-include: "gcnv_common.rules"
-
-
 rule targeted_seq_cnv_calling_gcnv_call_cnvs:
     input:
         unpack(wf.get_input_files("gcnv", "call_cnvs")),
@@ -20,6 +16,21 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs:
 def targeted_seq_cnv_calling_gcnv_post_germline_calls_input(wildcards):
     # Poor mans currying.
     return wf.get_input_files("gcnv", "post_germline_calls")(wildcards, checkpoints)
+
+
+def get_gcnv_scatter_intervals_input():
+    return wf.substep_getattr("gcnv", "get_cnv_model_result_files")(None)
+
+
+checkpoint targeted_seq_cnv_calling_gcnv_scatter_intervals:
+    input:
+        gcnv_model_wf(get_gcnv_scatter_intervals_input()),
+    output:
+        directory(wf.get_output_files("gcnv", "scatter_intervals")),
+    log:
+        wf.get_log_file("gcnv", "scatter_intervals"),
+    wrapper:
+        wf.wrapper_path("gcnv/scatter_intervals")
 
 
 rule targeted_seq_cnv_calling_gcnv_post_germline_calls:

@@ -294,11 +294,15 @@ def test_gcnv_get_cnv_model_result_files(
     assert actual == expected
 
     # Test large trio cohort - 501 individuals, all Agilent v6, enough for a model (>10)
-    file_path = (
+    interval_file = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    ploidy_file = (
         "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
         "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
     )
-    expected = [file_path]
+    expected = sorted([interval_file, ploidy_file])
     actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
         "gcnv", "get_cnv_model_result_files"
     )(None)

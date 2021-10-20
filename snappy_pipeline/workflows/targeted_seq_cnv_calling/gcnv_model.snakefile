@@ -76,17 +76,6 @@ rule targeted_seq_cnv_calling_gcnv_filter_intervals:
         wf.wrapper_path("gcnv/filter_intervals")
 
 
-checkpoint targeted_seq_cnv_calling_gcnv_scatter_intervals:
-    input:
-        unpack(wf.get_input_files("gcnv", "scatter_intervals")),
-    output:
-        directory(wf.get_output_files("gcnv", "scatter_intervals")),
-    log:
-        wf.get_log_file("gcnv", "scatter_intervals"),
-    wrapper:
-        wf.wrapper_path("gcnv/scatter_intervals")
-
-
 rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
     # TODO: output should be created/linked per-sample
     input:

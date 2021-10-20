@@ -806,10 +806,10 @@ class GcnvStepPart(BaseStepPart):
     @dictify
     def _get_output_files_call_cnvs():
         ext = "done"
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        name_pattern_calls = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(
             "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
-                name_pattern=name_pattern, ext=ext
+                name_pattern=name_pattern_calls, ext=ext
             )
         )
 
@@ -883,24 +883,34 @@ class GcnvStepPart(BaseStepPart):
         :return: Returns list of result files for the gCNV build model sub-workflow.
         """
         # Initialise variables
-        name_pattern = (
+        name_pattern_contig_ploidy = (
             "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
             "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
         )
+        name_pattern_filter_intervals = (
+            "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+            "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+        )
+
         # Get list of library kits and donors to use.
         library_kits, _, kit_counts = self.parent.pick_kits_and_donors()
+
         if "gcnv" in self.config["tools"]:
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
             yield from expand(
-                name_pattern,
+                name_pattern_contig_ploidy,
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                caller=["gcnv"],
+                library_kit=chosen_kits,
+            )
+            yield from expand(
+                name_pattern_filter_intervals,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 library_kit=chosen_kits,
             )
 
     def get_run_mode(self, wildcards):
         """Get run mode
-        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :param wildcards: Snakemake wildcards associated with rule.
         :type wildcards: snakemake.io.Wildcards
 
         :return: Returns either CASE mode if number of samples associated with library kit is
