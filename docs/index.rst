@@ -52,7 +52,6 @@ Project Info
     step/ngs_mapping
     step/ngs_sanity_checking
     step/roh_calling
-    step/repeat_analysis
     step/somatic_gene_fusion_calling
     step/somatic_neoepitope_prediction
     step/somatic_ngs_sanity_checking
@@ -66,6 +65,7 @@ Project Info
     step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
     step/targeted_seq_cnv_calling
+    step/targeted_seq_repeat_analysis
     step/tcell_crg_report
     step/variant_annotation
     step/variant_calling
