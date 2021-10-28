@@ -71,7 +71,7 @@ def repeat_expansion_workflow(
 
 
 def test_repeat_expansion_workflow_files(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow::get_result_files()
+    """Tests RepeatExpansionWorkflow.get_result_files()
 
     Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results for ExpansionHunter.
@@ -110,7 +110,7 @@ def test_repeat_expansion_workflow_files(repeat_expansion_workflow):
 
 
 def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow):
-    """Tests ExpansionHunterStepPart::_get_input_files_run()"""
+    """Tests ExpansionHunterStepPart._get_input_files_run()"""
     # Define expected
     expected = ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
     # Get actual
@@ -120,7 +120,7 @@ def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow
 
 
 def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflow):
-    """Tests ExpansionHunterStepPart::_get_output_files_run()"""
+    """Tests ExpansionHunterStepPart._get_output_files_run()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.expansionhunter.{library_name}/out/"
@@ -137,7 +137,7 @@ def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflo
 
 
 def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow::_get_log_files_run()"""
+    """Tests RepeatExpansionWorkflow._get_log_files_run()"""
     # Define expected
     expected = (
         "work/{mapper}.expansionhunter.{library_name}/log/"
@@ -149,7 +149,7 @@ def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
 
 
 def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow::get_params()"""
+    """Tests RepeatExpansionWorkflow.get_params()"""
     # P001
     expected = "female"
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
@@ -166,7 +166,7 @@ def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
 
 
 def test_expansionhunter_annotate_step_part_get_input_files(repeat_expansion_workflow):
-    """Tests ExpansionHunterStepPart::_get_input_files_annotate()"""
+    """Tests ExpansionHunterStepPart._get_input_files_annotate()"""
     # Define expected
     json_out = (
         "work/{mapper}.expansionhunter.{library_name}/out/"
@@ -181,7 +181,7 @@ def test_expansionhunter_annotate_step_part_get_input_files(repeat_expansion_wor
 
 
 def test_expansionhunter_annotate_step_part_get_output_files(repeat_expansion_workflow):
-    """Tests ExpansionHunterStepPart::_get_output_files_annotate()"""
+    """Tests ExpansionHunterStepPart._get_output_files_annotate()"""
     # Define expected
     json_out = (
         "work/{mapper}.expansionhunter_annotated.{library_name}/out/"
