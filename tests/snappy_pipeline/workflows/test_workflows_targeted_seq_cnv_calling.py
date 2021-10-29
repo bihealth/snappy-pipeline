@@ -22,7 +22,8 @@ GCNV_ACTIONS = [
     "scatter_intervals",
     "coverage",
     "contig_ploidy",
-    "call_cnvs",
+    "call_cnvs_cohort_mode",
+    "call_cnvs_case_mode",
     "post_germline_calls",
     "merge_cohort_vcfs",
     "extract_ped",
@@ -594,11 +595,11 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
     assert actual == expected
 
 
-# Tests for GcnvStepPart (call_cnvs) ---------------------------------------------------------------
+# Tests for GcnvStepPart (call_cnvs_cohort_mode) ---------------------------------------------------
 
 
-def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_call_cnvs()"""
+def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart._get_input_files_call_cnvs_cohort_mode()"""
     # Define expected
     interval_list_shard_out = (
         "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
@@ -623,12 +624,14 @@ def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workf
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs_cohort_mode")(
+        wildcards
+    )
     assert actual == expected
 
 
-def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_call_cnvs()"""
+def test_gcnv_call_cnvs__cohort_modestep_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart._get_output_files_call_cnvs_cohort_mode()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
@@ -636,19 +639,19 @@ def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = {"done": done_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs")
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs_cohort_mode")
     assert actual == expected
 
 
-def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'call_cnvs' step"""
+def test_gcnv_call_cnvs_cohort_mode_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart.get_log_file for 'call_cnvs_cohort_mode' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
         "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
     )
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs")
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs_cohort_mode")
     assert actual == expected
 
 

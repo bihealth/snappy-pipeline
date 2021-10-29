@@ -4,13 +4,13 @@
 
 rule targeted_seq_cnv_calling_gcnv_call_cnvs:
     input:
-        unpack(wf.get_input_files("gcnv", "call_cnvs")),
+        unpack(wf.get_input_files("gcnv", "call_cnvs_cohort_mode")),
     output:
-        **wf. get_output_files("gcnv","call_cnvs"),
+        **wf. get_output_files("gcnv","call_cnvs_cohort_mode"),
     log:
-        wf.get_log_file("gcnv", "call_cnvs"),
+        wf.get_log_file("gcnv", "call_cnvs_cohort_mode"),
     wrapper:
-        wf.wrapper_path("gcnv/call_cnvs")
+        wf.wrapper_path("gcnv/call_cnvs_cohort_mode")
 
 
 def targeted_seq_cnv_calling_gcnv_post_germline_calls_input(wildcards):

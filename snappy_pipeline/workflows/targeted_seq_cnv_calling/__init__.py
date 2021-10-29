@@ -491,7 +491,8 @@ class GcnvStepPart(BaseStepPart):
         "scatter_intervals",
         "coverage",
         "contig_ploidy",
-        "call_cnvs",
+        "call_cnvs_cohort_mode",
+        "call_cnvs_case_mode",
         "post_germline_calls",
         "merge_cohort_vcfs",
         "extract_ped",
@@ -662,7 +663,7 @@ class GcnvStepPart(BaseStepPart):
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
-    def _get_input_files_call_cnvs(self, wildcards):
+    def _get_input_files_call_cnvs_cohort_mode(self, wildcards):
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
@@ -804,7 +805,7 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
-    def _get_output_files_call_cnvs():
+    def _get_output_files_call_cnvs_cohort_mode():
         ext = "done"
         name_pattern_calls = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(
@@ -868,8 +869,8 @@ class GcnvStepPart(BaseStepPart):
         ):
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action == "call_cnvs":
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
+        elif action == "call_cnvs_cohort_mode":
+            name_pattern = "{{mapper}}.gcnv_call_cnvs.{{library_kit}}.{{shard}}".format(
                 action=action
             )
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
