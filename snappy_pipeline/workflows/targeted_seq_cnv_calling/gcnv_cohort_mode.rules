@@ -15,7 +15,7 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs:
 
 def targeted_seq_cnv_calling_gcnv_post_germline_calls_input(wildcards):
     # Poor mans currying.
-    return wf.get_input_files("gcnv", "post_germline_calls")(wildcards, checkpoints)
+    return wf.get_input_files("gcnv", "post_germline_calls_cohort_mode")(wildcards, checkpoints)
 
 
 def get_gcnv_scatter_intervals_input():

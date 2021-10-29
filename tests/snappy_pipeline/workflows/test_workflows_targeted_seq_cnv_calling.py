@@ -24,7 +24,8 @@ GCNV_ACTIONS = [
     "contig_ploidy",
     "call_cnvs_cohort_mode",
     "call_cnvs_case_mode",
-    "post_germline_calls",
+    "post_germline_calls_cohort_mode",
+    "post_germline_calls_case_mode",
     "merge_cohort_vcfs",
     "extract_ped",
 ]
@@ -137,6 +138,28 @@ def minimal_config_large_cohort(minimal_config):
 
 
 @pytest.fixture
+def minimal_config_large_cohort_with_offset(minimal_config):
+    """Returns minimum configuration with `model_max_size_offset` set to 50."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config)
+    minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_large_cohort_trio.tsv"
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["model_max_size"] = 100
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["model_max_size_offset"] = 50
+    return minimal_config_adjusted
+
+
+@pytest.fixture
+def minimal_config_failure(minimal_config):
+    """Returns minimum configuration with invalid argument for `model_max_size_offset`."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config)
+    minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_large_cohort_trio.tsv"
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["model_max_size"] = 100
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"][
+        "model_max_size_offset"
+    ] = "fifty"  # should cause a failure in config check
+    return minimal_config_adjusted
+
+
+@pytest.fixture
 def targeted_seq_cnv_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -192,6 +215,34 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
     )
 
 
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_large_cohort_with_offset(
+    dummy_workflow,
+    minimal_config_large_cohort_with_offset,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_large_cohort_with_offset,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
 # Global tests -------------------------------------------------------------------------------------
 
 
@@ -207,12 +258,7 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
         pattern_out.format(i=i, tool=tool, ext=ext)
         for i in (1, 4)  # only index: P001, P004
         for tool in ("gcnv", "xhmm")
-        for ext in (
-            "vcf.gz",
-            "vcf.gz.md5",
-            "vcf.gz.tbi",
-            "vcf.gz.tbi.md5",
-        )
+        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
     ]
     expected = sorted(expected)
     # Get actual
@@ -256,6 +302,34 @@ def test_pick_kits_and_donors(
     ) = targeted_seq_cnv_calling_workflow_large_cohort.pick_kits_and_donors()
     assert library_kits == expected_library_kits
     assert expected_kit_counts == kit_counts
+
+
+def test_configure_checks(
+    dummy_workflow,
+    minimal_config_failure,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """Tests TargetedSeqCnvCallingWorkflow.check_config() for invalid `model_max_size_offset`"""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object - should fail
+    with pytest.raises(ValueError):
+        TargetedSeqCnvCallingWorkflow(
+            dummy_workflow,
+            minimal_config_failure,
+            dummy_cluster_config,
+            config_lookup_paths,
+            config_paths,
+            work_dir,
+        )
 
 
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
@@ -308,6 +382,73 @@ def test_gcnv_get_cnv_model_result_files(
         "gcnv", "get_cnv_model_result_files"
     )(None)
     actual = sorted(actual)
+    assert actual == expected
+
+
+def test_gcnv_get_cnv_model_result_files_case_mode(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests GcnvStepPart.get_cnv_model_result_files_case_mode()"""
+    # Initialise variable
+    wildcards = Wildcards(
+        fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6", "mapper": "bwa"}
+    )
+
+    # Test small cohort - 6 individuals, not enough to build a model (<10)
+    expected = {}
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "get_cnv_model_result_files_case_mode"
+    )(wildcards, None)
+    print(actual)
+    assert actual == expected
+
+    # Test large trio cohort - 501 individuals, all Agilent v6, enough for a model (>10)
+    interval_file = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    ploidy_file = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+    )
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
+        "gcnv", "get_cnv_model_result_files_case_mode"
+    )(wildcards, None)
+    print(actual)
+    assert interval_file in actual.get("model")
+    assert ploidy_file in actual.get("model")
+    assert_message = "Expected that all 501 samples from large cohort had an associated tsv file."
+    assert (
+        len([file for file in actual.get("coverage") if str(file).endswith(".tsv")]) == 501
+    ), assert_message
+
+
+def test_gcnv_get_adjusted_max_samples_in_model(
+    targeted_seq_cnv_calling_workflow,
+    targeted_seq_cnv_calling_workflow_large_cohort,
+    targeted_seq_cnv_calling_workflow_large_cohort_with_offset,
+):
+    """Tests GcnvStepPart.get_adjusted_max_samples_in_model()"""
+
+    # Test small cohort (6 samples) max_sample value is set to null
+    expected = None
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "get_adjusted_max_samples_in_model"
+    )()
+    assert actual == expected
+
+    # Test large trio cohort (501 samples), max_sample value is set to 100
+    expected = 100
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
+        "gcnv", "get_adjusted_max_samples_in_model"
+    )()
+    assert actual == expected
+
+    # Test large trio cohort (501 samples), max_sample value is 100, and offset is 50
+    expected = 500
+    actual = targeted_seq_cnv_calling_workflow_large_cohort_with_offset.substep_getattr(
+        "gcnv", "get_adjusted_max_samples_in_model"
+    )()
     assert actual == expected
 
 
@@ -413,8 +554,21 @@ def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workfl
 # Tests for GcnvStepPart (filter_intervals) --------------------------------------------------------
 
 
-def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_filter_intervals_step_part_get_input_files(
+    targeted_seq_cnv_calling_workflow,
+    targeted_seq_cnv_calling_workflow_large_cohort,
+    targeted_seq_cnv_calling_workflow_large_cohort_with_offset,
+):
     """Tests GcnvStepPart._get_input_files_filter_intervals()"""
+    # Initialise variables
+    # Notes:
+    # - library kit defined in conftest: `germline_sheet_tsv`
+    # - mapper defined in `minimal_config`
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+
+    # Test small cohort - 6 samples
     # Define expected
     interval_list_out = (
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -429,16 +583,34 @@ def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_callin
     )
     csv_list_out = [csv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
     expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
-    # Get actual. Notes:
-    # - library kit defined in conftest: `germline_sheet_tsv`
-    # - mapper defined in `minimal_config`
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
-    )
+    # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "filter_intervals")(
         wildcards
     )
     assert actual == expected
+
+    # Test larger cohort - 501 samples, max cohort size is 100
+    # Define expected
+    expected = 100
+    # Call and get actual
+    output = targeted_seq_cnv_calling_workflow_large_cohort.get_input_files(
+        "gcnv", "filter_intervals"
+    )(wildcards)
+    actual = len(output.get("covs"))
+    print(actual)
+    assert actual == expected, "Should return 100 coverage paths - max number of samples in model."
+
+    # Test larger cohort - 501 samples, max cohort size is 100, and offset is 50
+    # Define expected
+    expected = 500
+    # Call and get actual
+    output = targeted_seq_cnv_calling_workflow_large_cohort_with_offset.get_input_files(
+        "gcnv", "filter_intervals"
+    )(wildcards)
+    actual = len(output.get("covs"))
+    print(actual)
+    message = "Should return 500 coverage paths - max number of samples in model ajusted by offset."
+    assert actual == expected, message
 
 
 def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
@@ -1027,10 +1199,7 @@ def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_w
     expected = [base_out]
     # Get actual
     wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
-        }
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
     actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "zscore_center")(wildcards)
     assert actual == expected
@@ -1085,10 +1254,7 @@ def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workfl
     }
     # Get actual
     wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
-        }
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
     actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "refilter")(wildcards)
     assert actual == expected
@@ -1132,10 +1298,7 @@ def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workfl
     expected = {"center_zscore": center_zscore_out, "refilter_original": refilter_original_out}
     # Get actual
     wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
-        }
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
     actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "discover")(wildcards)
     assert actual == expected
@@ -1177,10 +1340,7 @@ def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workfl
     }
     # Get actual
     wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
-        }
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
     actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "genotype")(wildcards)
     assert actual == expected

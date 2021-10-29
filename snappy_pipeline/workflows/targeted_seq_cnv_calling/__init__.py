@@ -41,8 +41,7 @@ Available CNV Callers
 - ``xhmm``
 
 """
-
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import os
 import re
 
@@ -76,6 +75,10 @@ step_config:
     # Set the max number of samples used in the CNV calling model.
     # If None is set, it will use all samples in the model. Recommended value: XXX
     model_max_size: null
+    # Set the offset for max number of samples used in the CNV calling model.
+    # Example: if max is 100 and offset is 50, as the number of samples available grow the max in
+    # the models will be: 100, 150, 200, 250, ...
+    model_max_size_offset: null
 
     # Path to the ngs_mapping step.
     path_ngs_mapping: ../ngs_mapping
@@ -494,6 +497,8 @@ class GcnvStepPart(BaseStepPart):
         "call_cnvs_cohort_mode",
         "call_cnvs_case_mode",
         "post_germline_calls",
+        "post_germline_calls_cohort_mode",
+        "post_germline_calls_case_mode",
         "merge_cohort_vcfs",
         "extract_ped",
     )
@@ -597,16 +602,40 @@ class GcnvStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_filter_intervals(self, wildcards):
+        """Yield input files for rule ``targeted_seq_cnv_calling_gcnv_filter_intervals``.
+
+        Coverage files need to be generated for all samples for both CASE and COHORT mode.
+        Nevertheless, if the max number of samples per model is set, the number of coverage files
+        will be capped per library kit.
+
+        :param wildcards: Snakemake wildcards associated with rule.
+        :type wildcards: snakemake.io.Wildcards
+        """
+        # Initialise variables
+        library_counter_dict = defaultdict(lambda: 0)
+        max_model_size = self.get_adjusted_max_samples_in_model()
+
+        # Yield annotate gc files - from rule `targeted_seq_cnv_calling_gcnv_annotate_gc`
         yield from self._get_input_files_annotate_gc(wildcards).items()
         name_pattern = "gcnv_annotate_gc.{wildcards.library_kit}".format(wildcards=wildcards)
         ext = "tsv"
         yield ext, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
+        # Yield coverage files - from rule `targeted_seq_cnv_calling_gcnv_coverage`
         key = "covs"
         covs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
+
+                # Update counter
+                library_counter_dict[wildcards.library_kit] += 1
+
+                # Evaluate if max required
+                if max_model_size and library_counter_dict[wildcards.library_kit] > max_model_size:
+                    continue
+
+                # Prepare and append name patterns
                 name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
                     mapper=wildcards.mapper, library_name=lib
                 )
@@ -664,6 +693,11 @@ class GcnvStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_call_cnvs_cohort_mode(self, wildcards):
+        """Yield input files for rule `targeted_seq_cnv_calling_gcnv_call_cnvs` in COHORT mode
+
+        :param wildcards: Snakemake wildcards associated with rule.
+        :type wildcards: snakemake.io.Wildcards
+        """
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
@@ -692,7 +726,38 @@ class GcnvStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
+    def _get_input_files_call_cnvs_case_mode(self, wildcards):
+        """Yield input files for rule `targeted_seq_cnv_calling_gcnv_call_cnvs` in CASE mode
+
+        :param wildcards: Snakemake wildcards associated with rule.
+        :type wildcards: snakemake.io.Wildcards
+        """
+        # Initialise variables
+        tsv_ext = "tsv"
+        tsv_path_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        ploidy_ext = "ploidy"
+        ploidy_path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+
+        # Yield coverage tsv files for all library associated with kit
+        coverage_files = []
+        for lib in sorted(self.index_ngs_library_to_donor):
+            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
+                path_pattern = tsv_path_pattern.format(mapper=wildcards.mapper, library_name=lib)
+                coverage_files.append(
+                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                        name_pattern=path_pattern, ext=tsv_ext
+                    )
+                )
+        yield tsv_ext, coverage_files
+
+        # Yield ploidy files
+        path_pattern = ploidy_path_pattern.format(**wildcards)
+        yield ploidy_ext, "work/{name_pattern}/out/{name_pattern}/.done".format(
+            name_pattern=path_pattern
+        )
+
+    @dictify
+    def _get_input_files_post_germline_calls_cohort_mode(self, wildcards, checkpoints):
         checkpoint = checkpoints.targeted_seq_cnv_calling_gcnv_scatter_intervals
         library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
         scatter_out = checkpoint.get(library_kit=library_kit, **wildcards).output[0]
@@ -711,6 +776,24 @@ class GcnvStepPart(BaseStepPart):
             )
             for shard in shards
         ]
+        ext = "ploidy"
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
+        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+
+    @dictify
+    def _get_input_files_post_germline_calls_case_mode(self, wildcards):
+
+        library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
+
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
+        yield "calls", "work/{name_pattern}/out/{name_pattern}/.done".format(
+            name_pattern=name_pattern, library_name=wildcards.library_name
+        )
+
         ext = "ploidy"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
@@ -816,6 +899,17 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
+    def _get_output_files_call_cnvs_case_mode():
+        ext = "done"
+        name_pattern_calls = "{mapper}.gcnv_call_cnvs.{library_kit}"
+        yield ext, touch(
+            "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
+                name_pattern=name_pattern_calls, ext=ext
+            )
+        )
+
+    @staticmethod
+    @dictify
     def _get_output_files_post_germline_calls():
         name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
@@ -870,15 +964,16 @@ class GcnvStepPart(BaseStepPart):
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         elif action == "call_cnvs_cohort_mode":
-            name_pattern = "{{mapper}}.gcnv_call_cnvs.{{library_kit}}.{{shard}}".format(
-                action=action
-            )
+            name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+        elif action == "call_cnvs_case_mode":
+            name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}"
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
         else:
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
-    def get_cnv_model_result_files(self, _unused):
+    def get_cnv_model_result_files(self, _unused=None):
         """Get gCNV model results.
 
         :return: Returns list of result files for the gCNV build model sub-workflow.
@@ -909,8 +1004,50 @@ class GcnvStepPart(BaseStepPart):
                 library_kit=chosen_kits,
             )
 
+    @dictify
+    def get_cnv_model_result_files_case_mode(self, wildcards, _checkpoints=None):
+        """Get gCNV model results for CASE mode.
+
+        :param wildcards: Snakemake wildcards associated with rule.
+        :type wildcards: snakemake.io.Wildcards
+
+        :param _checkpoints: Snakemake checkpoint [unused].
+        :param _checkpoints: snakemake.checkpoints.Checkpoints
+
+        :return: Returns list of result files for the gCNV build model sub-workflow, plus the list
+        of coverage files that are generated during model built.
+        """
+        # Initialise variable
+        coverage_list = []
+
+        # checkpoint = checkpoints.targeted_seq_cnv_calling_gcnv_create_model
+        # del checkpoint
+
+        # Ignore coverage file if no model file
+        model_files = sorted(self.get_cnv_model_result_files(None))
+        if len(model_files) == 0:
+            return {}
+
+        # Yield gCNV model results
+        yield "model", model_files
+
+        # Yield coverage files
+        for lib in sorted(self.index_ngs_library_to_donor):
+            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
+                for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
+                    name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
+                        mapper=mapper, library_name=lib
+                    )
+                    coverage_list.append(
+                        "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                            name_pattern=name_pattern, ext="tsv"
+                        )
+                    )
+        yield "coverage", coverage_list
+
     def get_run_mode(self, wildcards):
         """Get run mode
+
         :param wildcards: Snakemake wildcards associated with rule.
         :type wildcards: snakemake.io.Wildcards
 
@@ -926,6 +1063,40 @@ class GcnvStepPart(BaseStepPart):
                 return "COHORT"
         else:
             return "COHORT"
+
+    def get_adjusted_max_samples_in_model(self):
+        """Get adjusted max samples in model
+
+        Scenarios:
+        * If model_max_size is integer and offset is null: Model will at most have size
+        equal to model_max_size.
+        * If model_max_size is integer and offset is integer: Model will be rebuilt whenever
+        amount of samples in cohort is equal to (model_max_size + n_adjust * offset),
+        where n is an integer and it must be greater than zero:
+            n_adjust = floor( (total samples - model_max_size) / offset )
+
+        :return: Returns max number of samples used to build gCNV model adjusted by the offset.
+        """
+        # Initialise variables
+        n_adjust = 0
+        max_size = self.config["model_max_size"]
+        offset = self.config["model_max_size_offset"]
+        offset = offset if offset else 0
+        _, _, kit_counts = self.parent.pick_kits_and_donors()  # get list of library kits counts
+        max_kit_count = max(kit_counts.values())
+
+        # Return null if not defined
+        if not max_size:
+            return None
+
+        # Define adjust factor
+        if offset:
+            n_adjust = (int(max_kit_count) - int(max_size)) // int(offset)
+
+        # Calculate adjusted max
+        max_size_adjusted = int(max_size) + (n_adjust * int(offset))
+
+        return max_size_adjusted
 
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for gCNV CNV calling"""
@@ -1066,7 +1237,29 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
+        # Initialise variable
+        message = "Argument for {par} must be an integer, received: '{value}'."
+
+        # Check if path to BAM files is available
         self.ensure_w_config(
             config_keys=("step_config", "targeted_seq_cnv_calling", "path_ngs_mapping"),
             msg="Path to NGS mapping not configured but required for targeted seq. CNV calling",
         )
+
+        # Check max model values
+        model_max_size = self.w_config["step_config"]["targeted_seq_cnv_calling"]["model_max_size"]
+        if model_max_size:
+            try:
+                int(model_max_size)
+            except ValueError:
+                message = message.format(par="model max size", value=model_max_size)
+                raise ValueError(message)
+
+        # Check max model values offset
+        m_offset = self.w_config["step_config"]["targeted_seq_cnv_calling"]["model_max_size_offset"]
+        if m_offset:
+            try:
+                int(m_offset)
+            except ValueError:
+                message = message.format(par="model max size offset", value=m_offset)
+                raise ValueError(message)
