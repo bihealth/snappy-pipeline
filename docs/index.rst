@@ -48,7 +48,6 @@ Project Info
     step_generic
     step/hla_typing
     step/igv_session_generation
-    step/mobile_element_insertion
     step/ngs_data_qc
     step/ngs_mapping
     step/ngs_sanity_checking
@@ -66,6 +65,7 @@ Project Info
     step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
     step/targeted_seq_cnv_calling
+    step/targeted_seq_mei_calling
     step/tcell_crg_report
     step/variant_annotation
     step/variant_calling
