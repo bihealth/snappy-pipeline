@@ -7,7 +7,7 @@ import pytest
 import ruamel.yaml as yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.mobile_element_insertion import MEIWorkflow
+from snappy_pipeline.workflows.targeted_seq_mei_calling import MEIWorkflow
 
 from .conftest import patch_module_fs
 
