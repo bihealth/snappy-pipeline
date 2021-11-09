@@ -13,8 +13,8 @@ prefix = input_full_path.replace("_cluster.txt", "")
 
 # Include user provided MEI Ref if any
 mei_ref_argument = ""
-if snakemake.params.args.mei_refs:
-    mei_ref_argument = "--mei-refs " + str(snakemake.params.args.mei_refs)
+if snakemake.params.args["mei_refs"]:
+    mei_ref_argument = "--mei-refs " + str(snakemake.params.args["mei_refs"])
 
 shell(
     r"""
