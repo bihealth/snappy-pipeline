@@ -11,6 +11,11 @@ input_full_path = os.path.join(os.getcwd(), str(snakemake.input))
 # Define prefix based on input
 prefix = input_full_path.replace("_cluster.txt", "")
 
+# Include user provided MEI Ref if any
+mei_ref_argument = ""
+if snakemake.params.args.mei_refs:
+    mei_ref_argument = "--mei-refs " + str(snakemake.params.args.mei_refs)
+
 shell(
     r"""
 set -x
@@ -30,15 +35,15 @@ fi
 mkdir -p $(dirname {snakemake.output.txt})
 
 # Call tool
-Rscript --vanilla {snakemake.params.args[rscript]}  --out-name {prefix} \
-    --cluster-file {input_full_path} \
-    --install-dir {snakemake.config[step_config][mobile_element_insertion][scramble_install_dir]} \
-    --mei-refs {snakemake.params.args[mei_refs]} \
-    --nCluster {snakemake.params.args[n_cluster]} \
-    --mei-score {snakemake.params.args[mei_score]} \
-    --indel-score {snakemake.params.args[indel_score]} \
-    --poly-a-frac {snakemake.params.args[mei_polya_frac]} \
-    --eval-meis
+scramble.sh  {mei_ref_argument} \
+  --ref {snakemake.params.args[reference_genome]} \
+  --out-name {prefix} \
+  --cluster-file {input_full_path} \
+  --nCluster {snakemake.params.args[n_cluster]} \
+  --mei-score {snakemake.params.args[mei_score]} \
+  --indel-score {snakemake.params.args[indel_score]} \
+  --poly-a-frac {snakemake.params.args[mei_polya_frac]} \
+  --eval-meis
 """
 )
 

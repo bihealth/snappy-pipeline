@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
-"""Implementation of the ``mobile_element_insertion`` step
+"""Implementation of the ``targeted_seq_mei_calling`` step
 
-The ``mobile_element_insertion`` step takes as the input the results of the ``ngs_mapping`` step
+The ``targeted_seq_mei_calling`` step takes as the input the results of the ``ngs_mapping`` step
 (aligned reads in BAM format) and performs germline mobile element insertion identification (MEI).
 The result are tabular files with mobile insertion characteristics (txt files).
 
@@ -55,7 +55,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_mobile_element_insertion.rst
+.. include:: DEFAULT_CONFIG_targeted_seq_mei_calling.rst
 
 ==================================
 Available MEI Identification Tools
@@ -92,13 +92,14 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 EXT = ("_MEIs.txt", "_MEIs.txt.md5")
 
 
-#: Default configuration for the mobile_element_insertion step.
+#: Default configuration for the targeted_seq_mei_calling step.
 DEFAULT_CONFIG = r"""
-# Default configuration mobile_element_insertion
+# Default configuration
 step_config:
-  mobile_element_insertion:
-    # Path to Scramble installation directory
-    scramble_install_dir: REQUIRED
+  targeted_seq_mei_calling:
+    # Full path to MEI reference file (fasta format)
+    # if none is provided, it will use scramble's default
+    mei_refs: null
     # Minimum cluster size, depth of soft-clipped reads (set to Scramble default)
     n_cluster: 5
     # Minimum MEI alignment score (set to Scramble default)
@@ -160,6 +161,46 @@ class ScrambleStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
         return getattr(self, "_get_output_files_{}".format(action))()
 
+    def get_log_file(self, action):
+        """Return log function for scramble rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns log function for scramble rule based on inputted action.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variable
+        name_pattern = "{mapper}.scramble.{library_name}"
+
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+        if action == "annotate":
+            name_pattern_annotated = "{mapper}.scramble_annotated.{library_name}"
+            return "work/{name_pattern}/log/{name_pattern}.log".format(
+                name_pattern=name_pattern_annotated
+            )
+        return "work/{name_pattern}/log/{name_pattern}_{action}.log".format(
+            name_pattern=name_pattern, action=action
+        )
+
+    def get_params(self, action):
+        """Get parameters.
+
+        :param action: Action, i.e., step being performed.
+        :type action: str
+
+        :return: Returns method to get files required to run analysis part of scramble.
+        """
+        assert action == "analysis", "Parameters are only available for action 'analysis'."
+        return self._get_analysis_parameters
+
     @listify
     def _get_input_files_cluster(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
@@ -210,46 +251,6 @@ class ScrambleStepPart(BaseStepPart):
                 name_pattern=name_pattern, ext=ext
             )
 
-    def get_log_file(self, action):
-        """Return log function for scramble rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns log function for scramble rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Initialise variable
-        name_pattern = "{mapper}.scramble.{library_name}"
-
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
-        if action == "annotate":
-            name_pattern_annotated = "{mapper}.scramble_annotated.{library_name}"
-            return "work/{name_pattern}/log/{name_pattern}.log".format(
-                name_pattern=name_pattern_annotated
-            )
-        return "work/{name_pattern}/log/{name_pattern}_{action}.log".format(
-            name_pattern=name_pattern, action=action
-        )
-
-    def get_params(self, action):
-        """Get parameters.
-
-        :param action: Action, i.e., step being performed.
-        :type action: str
-
-        :return: Returns method to get files required to run analysis part of scramble.
-        """
-        assert action == "analysis", "Parameters are only available for action 'analysis'."
-        return self._get_analysis_parameters
-
     def _get_analysis_parameters(self, _wildcards):
         """Get parameters.
 
@@ -258,16 +259,10 @@ class ScrambleStepPart(BaseStepPart):
 
         :return: Returns parameters required to run analysis part of scramble.
         """
-        # Define required paths
-        base_path = self.config["scramble_install_dir"]
-        rscript_path = os.path.join(base_path, "SCRAMble.R")
-        mei_refs_path = os.path.join(
-            os.path.join(os.path.dirname(base_path), "resources"), "MEI_consensus_seqs.fa"
-        )
         # Define dict with parameters
         params = {
-            "rscript": rscript_path,
-            "mei_refs": mei_refs_path,
+            "reference_genome": self.w_config["static_data_config"]["reference"]["path"],
+            "mei_refs": self.config["mei_refs"],
             "n_cluster": self.config["n_cluster"],
             "mei_score": self.config["mei_score"],
             "indel_score": self.config["indel_score"],
@@ -281,7 +276,7 @@ class MEIWorkflow(BaseStep):
     """Perform germline mobile element insertion detection."""
 
     #: Workflow name
-    name = "mobile_element_insertion"
+    name = "targeted_seq_mei_calling"
 
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet
@@ -345,16 +340,14 @@ class MEIWorkflow(BaseStep):
         """Check that the necessary configuration is available for the step"""
         # Requires path to ngs_mapping output, i.e., the BAM files
         self.ensure_w_config(
-            config_keys=("step_config", "mobile_element_insertion", "path_ngs_mapping"),
+            config_keys=("step_config", "targeted_seq_mei_calling", "path_ngs_mapping"),
             msg=(
                 "Path to NGS mapping not configured but required for mobile "
                 "element insertion detection."
             ),
         )
-        # Requires path to ngs_mapping output, i.e., the BAM files
+        # Requires reference FASTA to generate VCF files
         self.ensure_w_config(
-            config_keys=("step_config", "mobile_element_insertion", "scramble_install_dir"),
-            msg=(
-                "Path to scramble installation directory not configured but required for detection."
-            ),
+            ("static_data_config", "reference", "path"),
+            "Path to reference FASTA not configured but required for variant calling",
         )

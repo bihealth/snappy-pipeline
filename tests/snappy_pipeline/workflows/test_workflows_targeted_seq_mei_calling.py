@@ -164,8 +164,8 @@ def test_scramble_analysis_step_part_get_parameters(mei_workflow):
     """Tests ScrambleStepPart::_get_analysis_parameters()"""
     # Define expected
     expected = {
-        "rscript": "REQUIRED/SCRAMble.R",
-        "mei_refs": "resources/MEI_consensus_seqs.fa",
+        "reference_genome": "/path/to/ref.fa",
+        "mei_refs": None,
         "n_cluster": 5,
         "mei_score": 50,
         "indel_score": 80,
