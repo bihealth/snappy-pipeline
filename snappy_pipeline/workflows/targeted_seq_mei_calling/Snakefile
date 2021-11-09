@@ -4,7 +4,7 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.mobile_element_insertion import MEIWorkflow
+from snappy_pipeline.workflows.targeted_seq_mei_calling import MEIWorkflow
 
 
 # Configuration ===============================================================
