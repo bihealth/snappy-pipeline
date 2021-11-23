@@ -209,12 +209,6 @@ step_config:
       use_standard_filters: true
       window_length: 10000000
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
     gatk_hc:
       # Parallelization configuration
       drmaa_snippet: ''         # value to pass in as additional DRMAA arguments

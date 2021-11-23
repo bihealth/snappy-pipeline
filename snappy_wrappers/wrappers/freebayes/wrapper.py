@@ -8,23 +8,38 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 shell.executable("/bin/bash")
 
-ignore_chroms = snakemake.config["step_config"]["variant_calling"]["freebayes"].get(
-    "ignore_chroms", ""
-)
-if ignore_chroms:
-    arg_ignore_chroms = "--ignore-chroms " + " ".join(map(repr, ignore_chroms))
-else:
-    arg_ignore_chroms = ""
+# Build standard filters argument
+arg_std_filters = ""
+if snakemake.config["step_config"]["variant_calling"]["freebayes"]["use_standard_filters"]:
+    arg_std_filters = "--standard-filters"
+
+# Get windows length parameter
+window_length = snakemake.config["step_config"]["variant_calling"]["freebayes"]["window_length"]
+
+# Get number of threads parameter
+num_threads = snakemake.config["step_config"]["variant_calling"]["freebayes"]["num_threads"]
+
+# Define which freebayes mode to use
+freebayes = "freebayes"
+if num_threads > 1:
+    freebayes_parallel_tpl = (
+        "freebayes-parallel <(fasta_generate_regions.py {ref} {window_length}) {threads} "
+    )
+    freebayes = freebayes_parallel_tpl.format(
+        ref=snakemake.config["static_data_config"]["reference"]["path"],
+        window_length=window_length,
+        threads=num_threads,
+    )
 
 shell(
     r"""
 set -x
 
 # Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+conda list > {snakemake.log.conda_list}
+conda info > {snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then
@@ -37,55 +52,23 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+# Export library
+export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
+
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # Create shortcut to reference
 export REF={snakemake.config[static_data_config][reference][path]}
 
-# Define function for mpileup, to be used through GNU  parallel
-# TODO: Snakemake wrappers use "bash -c" instead of temporary script files, thus we have to generate a script here
-cat <<"EOF" >$TMPDIR/freebayes.sh
-#!/bin/bash
-set -euo pipefail
-IFS=$'\n\t'
-set -x
-
-if [[ "{snakemake.config[step_config][variant_calling][freebayes][use_standard_filters]}" == "True" ]]; then
-    arg_std_filters=--standard-filters
-else
-    arg_std_filters=
-fi
-
-freebayes \
-    --fasta-reference $1 \
+# Call Freebayes
+{freebayes} \
+    --fasta-reference $REF \
     --genotype-qualities \
     --min-repeat-entropy 1 \
     --haplotype-length 0 \
-    --region $(echo $2 | sed -e 's/,//g') \
-    $arg_std_filters \
     $(echo {snakemake.input} | tr ' ' '\n' | grep '\.bam$') \
-| {{ vt normalize -r $1 /dev/stdin || true; }}
-EOF
-chmod u+x $TMPDIR/freebayes.sh
-
-# Hack: get back bin directory of base/root environment.
-export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
-
-# the variant calling is performed in parallel using GNU parallel
-snappy-genome_windows \
-    --fai-file $REF.fai \
-    --window-size {snakemake.config[step_config][variant_calling][freebayes][window_length]} \
-    {arg_ignore_chroms} \
-| parallel \
-    --keep-order \
-    --verbose \
-    --max-procs {snakemake.config[step_config][variant_calling][freebayes][num_threads]} \
-    "$TMPDIR/freebayes.sh $REF {{}}" \
-| snappy-vcf_first_header \
-| bcftools norm \
-    --fasta-ref $REF \
-    --multiallelics -any \
+| bcftools norm --fasta-ref $REF \
 | snappy-vcf_sort $REF.fai \
 | bgzip -c \
 > {snakemake.output.vcf}
@@ -94,14 +77,14 @@ snappy-genome_windows \
 tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
-    md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi}).md5
+    md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf}).md5 && \
+    md5sum $(basename {snakemake.output.tbi}) > $(basename {snakemake.output.tbi}).md5
 """
 )
 
 # Compute MD5 sums of logs.
 shell(
     r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+md5sum {snakemake.log.log} > {snakemake.log.log_md5}
 """
 )
