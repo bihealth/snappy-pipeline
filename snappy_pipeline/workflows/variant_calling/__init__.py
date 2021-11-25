@@ -144,6 +144,7 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -209,6 +210,10 @@ step_config:
       use_standard_filters: true
       window_length: 10000000
       num_threads: 16
+      min_alternate_count: 0.05  # FreeBayes default
+      min_mapping_quality: 1     # FreeBayes default
+      min_repeat_entropy: 1      # FreeBayes default
+      haplotype_length: 3        # FreeBayes default
     gatk_hc:
       # Parallelization configuration
       drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
@@ -476,6 +481,39 @@ class FreebayesStepPart(VariantCallingStepPart):
             "time": "48:00",
             "ntasks": 16,
         }
+
+    def get_params(self, action):
+        """
+        :param action: Action (i.e., step) in the workflow. Currently only available for 'run'.
+        :type action: str
+
+        :return: Returns get parameters function.
+
+        :raises UnsupportedActionException: if action not 'run'.
+        """
+        # Validate inputted action
+        if action != "run":
+            error_message = "Action '{action}' is not supported. Valid option: 'run'.".format(
+                action=action
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Return requested function
+        return getattr(self, "_get_params_{}".format(action))
+
+    def _get_params_run(self):
+        """Get FreeBayes parameters
+
+        :returns: Returns FreeBayes parameters dictionary.
+        """
+        parameters_key_list = [
+            "window_length",
+            "min_alternate_count",
+            "min_mapping_quality",
+            "min_repeat_entropy",
+            "haplotype_length",
+        ]
+        return {key: self.config["freebayes"][key] for key in parameters_key_list}
 
 
 class GatkCallerStepPartBase(VariantCallingStepPart):

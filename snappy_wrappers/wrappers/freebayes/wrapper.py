@@ -13,9 +13,6 @@ arg_std_filters = ""
 if snakemake.config["step_config"]["variant_calling"]["freebayes"]["use_standard_filters"]:
     arg_std_filters = "--standard-filters"
 
-# Get windows length parameter
-window_length = snakemake.config["step_config"]["variant_calling"]["freebayes"]["window_length"]
-
 # Get number of threads parameter
 num_threads = snakemake.config["step_config"]["variant_calling"]["freebayes"]["num_threads"]
 
@@ -27,7 +24,7 @@ if num_threads > 1:
     )
     freebayes = freebayes_parallel_tpl.format(
         ref=snakemake.config["static_data_config"]["reference"]["path"],
-        window_length=window_length,
+        window_length=snakemake.params.window_length,
         threads=num_threads,
     )
 
@@ -65,8 +62,10 @@ export REF={snakemake.config[static_data_config][reference][path]}
 {freebayes} \
     --fasta-reference $REF \
     --genotype-qualities \
-    --min-repeat-entropy 1 \
-    --haplotype-length 0 \
+    --min-repeat-entropy {snakemake.params.min_repeat_entropy} \
+    --haplotype-length {snakemake.params.haplotype_length} \
+    --min-alternate-count {snakemake.params.min_alternate_count} \
+    --min-mapping-quality {snakemake.params.min_mapping_quality} \
     $(echo {snakemake.input} | tr ' ' '\n' | grep '\.bam$') \
 | bcftools norm --fasta-ref $REF \
 | snappy-vcf_sort $REF.fai \

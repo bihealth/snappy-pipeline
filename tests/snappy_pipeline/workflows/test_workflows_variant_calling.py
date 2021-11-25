@@ -180,8 +180,24 @@ def test_freebayes_step_part_get_log_file(variant_calling_workflow):
 
 
 def test_freebayes_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
+    """Tests FreebayesStepPart.update_cluster_config()"""
     actual = set(dummy_cluster_config["variant_calling_freebayes_run"].keys())
     expected = {"mem", "time", "ntasks"}
+    assert actual == expected
+
+
+def test_freebayes_step_part_get_params(variant_calling_workflow):
+    """Tests FreebayesStepPart._get_params_run()"""
+    # Define expected
+    expected = {
+        "window_length": 10000000,
+        "min_alternate_count": 0.05,
+        "min_mapping_quality": 1,
+        "min_repeat_entropy": 1,
+        "haplotype_length": 3,
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_params("freebayes", "run")()
     assert actual == expected
 
 
