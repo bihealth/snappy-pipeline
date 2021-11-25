@@ -191,7 +191,7 @@ def test_freebayes_step_part_get_params(variant_calling_workflow):
     # Define expected
     expected = {
         "window_length": 10000000,
-        "min_alternate_count": 0.05,
+        "min_alternate_fraction": 0.05,
         "min_mapping_quality": 1,
         "min_repeat_entropy": 1,
         "haplotype_length": 3,

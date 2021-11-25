@@ -64,7 +64,7 @@ export REF={snakemake.config[static_data_config][reference][path]}
     --genotype-qualities \
     --min-repeat-entropy {snakemake.params.min_repeat_entropy} \
     --haplotype-length {snakemake.params.haplotype_length} \
-    --min-alternate-count {snakemake.params.min_alternate_count} \
+    --min-alternate-fraction {snakemake.params.min_alternate_fraction} \
     --min-mapping-quality {snakemake.params.min_mapping_quality} \
     $(echo {snakemake.input} | tr ' ' '\n' | grep '\.bam$') \
 | bcftools norm --fasta-ref $REF \

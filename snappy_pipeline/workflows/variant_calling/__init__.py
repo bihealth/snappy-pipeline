@@ -210,10 +210,10 @@ step_config:
       use_standard_filters: true
       window_length: 10000000
       num_threads: 16
-      min_alternate_count: 0.05  # FreeBayes default
-      min_mapping_quality: 1     # FreeBayes default
-      min_repeat_entropy: 1      # FreeBayes default
-      haplotype_length: 3        # FreeBayes default
+      min_alternate_fraction: 0.05  # FreeBayes default
+      min_mapping_quality: 1        # FreeBayes default
+      min_repeat_entropy: 1         # FreeBayes default
+      haplotype_length: 3           # FreeBayes default
     gatk_hc:
       # Parallelization configuration
       drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
@@ -508,7 +508,7 @@ class FreebayesStepPart(VariantCallingStepPart):
         """
         parameters_key_list = [
             "window_length",
-            "min_alternate_count",
+            "min_alternate_fraction",
             "min_mapping_quality",
             "min_repeat_entropy",
             "haplotype_length",

@@ -81,7 +81,7 @@ rule variant_calling_bcftools_run:
         wf.wrapper_path("bcftools_call")
 
 
-# Run Freebayes ---------------------------------------------------------------
+# Run FreeBayes ---------------------------------------------------------------
 
 
 rule variant_calling_freebayes_run:
