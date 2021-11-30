@@ -13,6 +13,15 @@ arg_std_filters = ""
 if snakemake.config["step_config"]["variant_calling"]["freebayes"]["use_standard_filters"]:
     arg_std_filters = "--standard-filters"
 
+# Build ignore regions argument
+ignore_chroms = snakemake.config["step_config"]["variant_calling"]["freebayes"].get(
+    "ignore_chroms", ""
+)
+if ignore_chroms:
+    arg_ignore_chroms = "--ignore-chroms " + " ".join(map(repr, ignore_chroms))
+else:
+    arg_ignore_chroms = ""
+
 # Get number of threads parameter
 num_threads = snakemake.config["step_config"]["variant_calling"]["freebayes"]["num_threads"]
 
@@ -69,8 +78,21 @@ export REF={snakemake.config[static_data_config][reference][path]}
     $(echo {snakemake.input} | tr ' ' '\n' | grep '\.bam$') \
 | bcftools norm --fasta-ref $REF \
 | snappy-vcf_sort $REF.fai \
-| bgzip -c \
-> {snakemake.output.vcf}
+> $TMPDIR/tmp.vcf
+
+# Filter VCF if requested
+if [[ -n "{arg_ignore_chroms}" ]]; then
+    # Create include regions bed file
+    snappy-genome_windows --fai-file $REF.fai {arg_ignore_chroms} \
+        | sed "s/,//g" | sed "s/[:-]/\t/g" \
+        > $TMPDIR/tmp.bed
+    # Intersect VCF file
+    bedtools intersect -a  $TMPDIR/tmp.vcf -b $TMPDIR/tmp.bed -wa -header \
+        | bgzip -c \
+        > {snakemake.output.vcf}
+else
+    bgzip -c $TMPDIR/tmp.vcf > {snakemake.output.vcf}
+fi
 
 # compute tabix index of the resulting VCF file
 tabix -f {snakemake.output.vcf}

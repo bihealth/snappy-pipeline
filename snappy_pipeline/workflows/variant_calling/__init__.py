@@ -214,6 +214,12 @@ step_config:
       min_mapping_quality: 1        # FreeBayes default
       min_repeat_entropy: 1         # FreeBayes default
       haplotype_length: 3           # FreeBayes default
+      ignore_chroms:            # patterns of chromosome names to ignore
+      - NC_007605  # herpes virus
+      - hs37d5     # GRCh37 decoy
+      - chrEBV     # Eppstein-Barr Virus
+      - '*_decoy'  # decoy contig
+      - 'HLA-*'    # HLA genes
     gatk_hc:
       # Parallelization configuration
       drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
