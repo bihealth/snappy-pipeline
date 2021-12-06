@@ -157,7 +157,7 @@ def targeted_seq_cnv_calling_workflow(
 
 
 def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow):
-    """Tests TargetedSeqCnvCallingWorkflow::get_result_files()
+    """Tests TargetedSeqCnvCallingWorkflow.get_result_files()
 
     Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results from the tools, namely: gCNV and XHMM.
@@ -191,7 +191,7 @@ def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
-    """Tests GcnvStepPart::update_cluster_config for all actions"""
+    """Tests GcnvStepPart.update_cluster_config for all actions"""
     # Define expected
     expected = {"mem", "time", "ntasks"}
     # Iterate over
@@ -202,7 +202,7 @@ def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_clu
 
 
 def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_params for all actions"""
+    """Tests GcnvStepPart.get_params for all actions"""
     for action in GCNV_ACTIONS:
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
@@ -215,7 +215,7 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_preprocess_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_preprocess_intervals()"""
+    """Tests GcnvStepPart._get_input_files_preprocess_intervals()"""
     # Define expected - empty dictionary for all
     expected = {}
     # Get actual
@@ -224,7 +224,7 @@ def test_gcnv_preprocess_intervals_step_part_get_input_files(targeted_seq_cnv_ca
 
 
 def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_preprocess_intervals()"""
+    """Tests GcnvStepPart._get_output_files_preprocess_intervals()"""
     # Define expected
     output_path = (
         "work/gcnv_preprocess_intervals.{library_kit}/out/"
@@ -237,7 +237,7 @@ def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_c
 
 
 def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'preprocess_intervals' step"""
+    """Tests GcnvStepPart.get_log_file for 'preprocess_intervals' step"""
     # Define expected
     expected = (
         "work/gcnv_preprocess_intervals.{library_kit}/log/"
@@ -252,7 +252,7 @@ def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_annotate_gc_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_annotate_gc()"""
+    """Tests GcnvStepPart._get_input_files_annotate_gc()"""
     # Define expected
     output_path = (
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -266,7 +266,7 @@ def test_gcnv_annotate_gc_step_part_get_input_files(targeted_seq_cnv_calling_wor
 
 
 def test_gcnv_annotate_gc_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_annotate_gc()"""
+    """Tests GcnvStepPart._get_output_files_annotate_gc()"""
     # Define expected
     expected = {"tsv": "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"}
     # Get actual
@@ -275,7 +275,7 @@ def test_gcnv_annotate_gc_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 
 def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'annotate_gc' step"""
+    """Tests GcnvStepPart.get_log_file for 'annotate_gc' step"""
     # Define expected
     expected = "work/gcnv_annotate_gc.{library_kit}/log/gcnv_annotate_gc.{library_kit}.log"
     # Get actual
@@ -287,7 +287,7 @@ def test_gcnv_annotate_gc_step_part_get_log_file(targeted_seq_cnv_calling_workfl
 
 
 def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_filter_intervals()"""
+    """Tests GcnvStepPart._get_input_files_filter_intervals()"""
     # Define expected
     interval_list_out = (
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -315,7 +315,7 @@ def test_gcnv_filter_intervals_step_part_get_input_files(targeted_seq_cnv_callin
 
 
 def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_filter_intervals()"""
+    """Tests GcnvStepPart._get_output_files_filter_intervals()"""
     # Define expected
     interval_list_out = (
         "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
@@ -328,7 +328,7 @@ def test_gcnv_filter_intervals_step_part_get_output_files(targeted_seq_cnv_calli
 
 
 def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'filter_intervals' step"""
+    """Tests GcnvStepPart.get_log_file for 'filter_intervals' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="filter_intervals")
     # Get actual
@@ -340,7 +340,7 @@ def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_w
 
 
 def test_gcnv_scatter_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_scatter_intervals()"""
+    """Tests GcnvStepPart._get_input_files_scatter_intervals()"""
     # Define expected
     output_path = (
         "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -358,7 +358,7 @@ def test_gcnv_scatter_intervals_step_part_get_input_files(targeted_seq_cnv_calli
 
 
 def test_gcnv_scatter_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_scatter_intervals()"""
+    """Tests GcnvStepPart._get_output_files_scatter_intervals()"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
@@ -370,7 +370,7 @@ def test_gcnv_scatter_intervals_step_part_get_output_files(targeted_seq_cnv_call
 
 
 def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'scatter_intervals' step"""
+    """Tests GcnvStepPart.get_log_file for 'scatter_intervals' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="scatter_intervals")
     # Get actual
@@ -382,7 +382,7 @@ def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_
 
 
 def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_coverage()"""
+    """Tests GcnvStepPart._get_input_files_coverage()"""
     # Define expected
     interval_list_out = (
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -401,7 +401,7 @@ def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_coverage()"""
+    """Tests GcnvStepPart._get_output_files_coverage()"""
     # Define expected
     tsv_out = (
         "work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv"
@@ -413,7 +413,7 @@ def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'coverage' step"""
+    """Tests GcnvStepPart.get_log_file for 'coverage' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
@@ -427,7 +427,7 @@ def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow)
 
 
 def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_contig_ploidy()"""
+    """Tests GcnvStepPart._get_input_files_contig_ploidy()"""
     # Define expected
     interval_list_out = (
         "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
@@ -447,7 +447,7 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_w
 
 
 def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_contig_ploidy()"""
+    """Tests GcnvStepPart._get_output_files_contig_ploidy()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
@@ -460,7 +460,7 @@ def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_
 
 
 def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'contig_ploidy' step"""
+    """Tests GcnvStepPart.get_log_file for 'contig_ploidy' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
     # Get actual
@@ -472,7 +472,7 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
 
 
 def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_call_cnvs()"""
+    """Tests GcnvStepPart._get_input_files_call_cnvs()"""
     # Define expected
     interval_list_shard_out = (
         "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
@@ -502,7 +502,7 @@ def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workf
 
 
 def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_call_cnvs()"""
+    """Tests GcnvStepPart._get_output_files_call_cnvs()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
@@ -515,7 +515,7 @@ def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_work
 
 
 def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'call_cnvs' step"""
+    """Tests GcnvStepPart.get_log_file for 'call_cnvs' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
@@ -530,7 +530,7 @@ def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_merge_cohort_vcfs()"""
+    """Tests GcnvStepPart._get_input_files_merge_cohort_vcfs()"""
     # Define expected
     pattern_out = (
         "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
@@ -548,7 +548,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(targeted_seq_cnv_calli
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_merge_cohort_vcfs()"""
+    """Tests GcnvStepPart._get_output_files_merge_cohort_vcfs()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/out/"
@@ -561,7 +561,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_call
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'merge_cohort_vcfs' step"""
+    """Tests GcnvStepPart.get_log_file for 'merge_cohort_vcfs' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="merge_cohort_vcfs")
     # Get actual
@@ -573,7 +573,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_
 
 
 def test_gcnv_extract_ped_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_input_files_extract_ped()"""
+    """Tests GcnvStepPart._get_input_files_extract_ped()"""
     # Define expected
     pattern_out = (
         "work/bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -587,7 +587,7 @@ def test_gcnv_extract_ped_vcfs_step_part_get_input_files(targeted_seq_cnv_callin
 
 
 def test_gcnv_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::_get_output_files_extract_ped()"""
+    """Tests GcnvStepPart._get_output_files_extract_ped()"""
     # Define expected
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
@@ -597,7 +597,7 @@ def test_gcnv_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 
 def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart::get_log_file for 'extract_ped' step"""
+    """Tests GcnvStepPart.get_log_file for 'extract_ped' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_extract_ped.{library_name}/log/"
@@ -618,7 +618,7 @@ def test_xhmm_call_assertion(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_params for all actions"""
+    """Tests XhmmStepPart.get_params for all actions"""
     for action in XHMM_ACTIONS:
         if action == "coverage":
             targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
@@ -631,7 +631,7 @@ def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_coverage()"""
+    """Tests XhmmStepPart._get_input_files_coverage()"""
     # Define expected
     bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {"bam": bam_out + ".bam", "bai": bam_out + ".bam.bai"}
@@ -642,7 +642,7 @@ def test_xhmm_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_xhmm_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_coverage()"""
+    """Tests XhmmStepPart._get_output_files_coverage()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.xhmm_coverage.{library_name}/out/{mapper}.xhmm_coverage.{library_name}.DATA"
@@ -659,7 +659,7 @@ def test_xhmm_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_coverage_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'coverage' step"""
+    """Tests XhmmStepPart.get_log_file for 'coverage' step"""
     # Define expected
     expected = (
         "work/{mapper}.xhmm_coverage.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
@@ -673,7 +673,7 @@ def test_xhmm_coverage_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_merge_cov_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_merge_cov()"""
+    """Tests XhmmStepPart._get_input_files_merge_cov()"""
     # Define expected
     base_out = (
         "work/bwa.xhmm_coverage.P00{i}-N1-DNA1-WGS1/out/"
@@ -693,7 +693,7 @@ def test_xhmm_merge_cov_step_part_get_input_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_merge_cov()"""
+    """Tests XhmmStepPart._get_output_files_merge_cov()"""
     # Define expected
     name_out = (
         "work/{mapper}.xhmm_merge_cov.{library_kit}/out/"
@@ -706,7 +706,7 @@ def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_work
 
 
 def test_xhmm_merge_cov_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'merge_cov' step"""
+    """Tests XhmmStepPart.get_log_file for 'merge_cov' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="merge_cov")
     # Get actual
@@ -718,7 +718,7 @@ def test_xhmm_merge_cov_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_ref_stats()"""
+    """Tests XhmmStepPart._get_output_files_ref_stats()"""
     # Define expected
     name_out = (
         "work/{mapper}.xhmm_ref_stats.{library_kit}/out/"
@@ -731,7 +731,7 @@ def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_work
 
 
 def test_xhmm_ref_stats_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'ref_stats' step"""
+    """Tests XhmmStepPart.get_log_file for 'ref_stats' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="ref_stats")
     # Get actual
@@ -743,7 +743,7 @@ def test_xhmm_ref_stats_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_filter_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_filter_center()"""
+    """Tests XhmmStepPart._get_input_files_filter_center()"""
     # Define expected
     base_out = (
         "work/bwa.{step}.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -766,7 +766,7 @@ def test_xhmm_filter_center_step_part_get_input_files(targeted_seq_cnv_calling_w
 
 
 def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_filter_center()"""
+    """Tests XhmmStepPart._get_output_files_filter_center()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.xhmm_filter_center.{library_kit}/out/"
@@ -783,7 +783,7 @@ def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_
 
 
 def test_xhmm_filter_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'filter_center' step"""
+    """Tests XhmmStepPart.get_log_file for 'filter_center' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="filter_center")
     # Get actual
@@ -795,7 +795,7 @@ def test_xhmm_filter_center_part_get_log_file(targeted_seq_cnv_calling_workflow)
 
 
 def test_xhmm_pca_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_pca()"""
+    """Tests XhmmStepPart._get_input_files_pca()"""
     # Define expected
     base_out = (
         "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -815,7 +815,7 @@ def test_xhmm_pca_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_pca_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_pca()"""
+    """Tests XhmmStepPart._get_output_files_pca()"""
     # Define expected
     pattern_out = "work/{mapper}.xhmm_pca.{library_kit}/out/{mapper}.xhmm_pca.{library_kit}"
     expected = {
@@ -829,7 +829,7 @@ def test_xhmm_pca_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_pca_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'pca' step"""
+    """Tests XhmmStepPart.get_log_file for 'pca' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="pca")
     # Get actual
@@ -841,7 +841,7 @@ def test_xhmm_pca_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_normalize_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_normalize()"""
+    """Tests XhmmStepPart._get_input_files_normalize()"""
     # Define expected
     centered_out = (
         "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -865,7 +865,7 @@ def test_xhmm_normalize_step_part_get_input_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_normalize_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_normalize()"""
+    """Tests XhmmStepPart._get_output_files_normalize()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.xhmm_normalize.{library_kit}/out/{mapper}.xhmm_normalize.{library_kit}"
@@ -877,7 +877,7 @@ def test_xhmm_normalize_step_part_get_output_files(targeted_seq_cnv_calling_work
 
 
 def test_xhmm_normalize_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'normalize' step"""
+    """Tests XhmmStepPart.get_log_file for 'normalize' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="normalize")
     # Get actual
@@ -889,7 +889,7 @@ def test_xhmm_normalize_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_zscore_center()"""
+    """Tests XhmmStepPart._get_input_files_zscore_center()"""
     # Define expected
     base_out = (
         "work/bwa.xhmm_normalize.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -908,7 +908,7 @@ def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_w
 
 
 def test_xhmm_zscore_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_zscore_center()"""
+    """Tests XhmmStepPart._get_output_files_zscore_center()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.xhmm_zscore_center.{library_kit}/out/"
@@ -925,7 +925,7 @@ def test_xhmm_zscore_center_step_part_get_output_files(targeted_seq_cnv_calling_
 
 
 def test_xhmm_zscore_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'zscore_center' step"""
+    """Tests XhmmStepPart.get_log_file for 'zscore_center' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="zscore_center")
     # Get actual
@@ -937,7 +937,7 @@ def test_xhmm_zscore_center_part_get_log_file(targeted_seq_cnv_calling_workflow)
 
 
 def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_refilter()"""
+    """Tests XhmmStepPart._get_input_files_refilter()"""
     # Define expected
     original_out = (
         "work/bwa.xhmm_merge_cov.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -966,7 +966,7 @@ def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_xhmm_refilter_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_refilter()"""
+    """Tests XhmmStepPart._get_output_files_refilter()"""
     # Define expected
     base_out = (
         "work/{mapper}.xhmm_refilter.{library_kit}/out/{mapper}.xhmm_refilter.{library_kit}.RD.txt"
@@ -978,7 +978,7 @@ def test_xhmm_refilter_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_refilter_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'refilter' step"""
+    """Tests XhmmStepPart.get_log_file for 'refilter' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="refilter")
     # Get actual
@@ -990,7 +990,7 @@ def test_xhmm_refilter_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_discover()"""
+    """Tests XhmmStepPart._get_input_files_discover()"""
     # Define expected
     center_zscore_out = (
         "work/bwa.xhmm_zscore_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -1013,7 +1013,7 @@ def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_xhmm_discover_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_discover()"""
+    """Tests XhmmStepPart._get_output_files_discover()"""
     # Define expected
     base_out = "work/{mapper}.xhmm_discover.{library_kit}/out/{mapper}.xhmm_discover.{library_kit}"
     expected = {"xcnv": base_out + ".xcnv", "aux_xcnv": base_out + ".aux_xcnv"}
@@ -1023,7 +1023,7 @@ def test_xhmm_discover_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_discover_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'discover' step"""
+    """Tests XhmmStepPart.get_log_file for 'discover' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="discover")
     # Get actual
@@ -1035,7 +1035,7 @@ def test_xhmm_discover_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_genotype()"""
+    """Tests XhmmStepPart._get_input_files_genotype()"""
     # Define expected
     pattern_out = (
         "work/bwa.xhmm_{action}.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -1058,7 +1058,7 @@ def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_xhmm_genotype_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_genotype()"""
+    """Tests XhmmStepPart._get_output_files_genotype()"""
     # Define expected
     base_out = "work/{mapper}.xhmm_genotype.{library_kit}/out/{mapper}.xhmm_genotype.{library_kit}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -1068,7 +1068,7 @@ def test_xhmm_genotype_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_xhmm_genotype_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'genotype' step"""
+    """Tests XhmmStepPart.get_log_file for 'genotype' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="genotype")
     # Get actual
@@ -1080,7 +1080,7 @@ def test_xhmm_genotype_part_get_log_file(targeted_seq_cnv_calling_workflow):
 
 
 def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_input_files_extract_ped()"""
+    """Tests XhmmStepPart._get_input_files_extract_ped()"""
     # Define expected
     filtered_samples_out = (
         "work/bwa.xhmm_filter_center.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -1102,7 +1102,7 @@ def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_wor
 
 
 def test_xhmm_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::_get_output_files_genotype()"""
+    """Tests XhmmStepPart._get_output_files_genotype()"""
     # Define expected
     base_out = "work/{mapper}.xhmm.{library_name}/out/{mapper}.xhmm.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -1112,7 +1112,7 @@ def test_xhmm_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 
 def test_xhmm_extract_ped_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests XhmmStepPart::get_log_file for 'genotype' step"""
+    """Tests XhmmStepPart.get_log_file for 'genotype' step"""
     # Define expected
     expected = "work/{mapper}.xhmm.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
     # Get actual
