@@ -181,6 +181,21 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
     assert actual == expected
 
 
+def test_target_seq_cnv_calling_workflow_all_donors(targeted_seq_cnv_calling_workflow):
+    """Tests TargetedSeqCnvCallingWorkflow.all_donors()"""
+    # Define expected
+    expected = ["P00{i}-N1-DNA1-WGS1".format(i=i) for i in range(1, 7)]
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow.all_donors()
+    assert len(actual) == 6, "Small sample sheet should contain six donors."
+    assert_message_tpl = "Value {{donor_name}} not in expected list: {expected}".format(
+        expected=", ".join(expected)
+    )
+    for donor in actual:
+        msg = assert_message_tpl.format(donor_name=donor.dna_ngs_library.name)
+        assert donor.dna_ngs_library.name in expected, msg
+
+
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
 
 

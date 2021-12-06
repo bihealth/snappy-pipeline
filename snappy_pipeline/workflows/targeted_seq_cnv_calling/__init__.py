@@ -185,7 +185,7 @@ class XhmmStepPart(BaseStepPart):
         xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
         if not xhmm_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
-            for donor in self.parent._all_donors():
+            for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
 
@@ -195,7 +195,7 @@ class XhmmStepPart(BaseStepPart):
             for item in xhmm_config["path_target_interval_list_mapping"]
         }
         result = {}
-        for donor in self.parent._all_donors():
+        for donor in self.parent.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
                 library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
                 for pattern, name in regexes.items():
@@ -552,7 +552,7 @@ class GcnvStepPart(BaseStepPart):
         gcnv_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
         if not gcnv_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
-            for donor in self.parent._all_donors():
+            for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
 
@@ -562,7 +562,7 @@ class GcnvStepPart(BaseStepPart):
             for item in gcnv_config["path_target_interval_list_mapping"]
         }
         result = {}
-        for donor in self.parent._all_donors():
+        for donor in self.parent.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
                 library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
                 for pattern, name in regexes.items():
@@ -939,8 +939,14 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         self.ngs_library_to_kit = self.sub_steps["xhmm"].ngs_library_to_kit
 
     @listify
-    def _all_donors(self, include_background=True):
-        """Return list of all donors in sample sheet."""
+    def all_donors(self, include_background=True):
+        """Get all donors.
+
+        :param include_background: Boolean flag to defined if background should be included or not.
+        Default: True, i.e., background will be included.
+
+        :return: Returns list of all donors in sample sheet.
+        """
         sheets = self.shortcut_sheets
         if not include_background:
             sheets = list(filter(is_not_background, sheets))
@@ -1002,7 +1008,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
             kit_counts[name] += 1
         donors = [
             donor
-            for donor in self._all_donors()
+            for donor in self.all_donors()
             if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
         ]
         return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts
