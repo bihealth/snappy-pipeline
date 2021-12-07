@@ -42,15 +42,15 @@ Available CNV Callers
 
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 import os
 import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background, is_background
+from biomedsheets.shortcuts import GermlineCaseSheet, is_background, is_not_background
 from snakemake.io import expand, glob_wildcards, touch
 
-from snappy_pipeline.base import UnsupportedActionException
+from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -71,36 +71,20 @@ DEFAULT_CONFIG = r"""
 # Default configuration targeted_seq_cnv_calling
 step_config:
   targeted_seq_cnv_calling:
-    # You can select select between the following modes of creating chunks.
-    # The CNV calling will be performed on each chunk individually, all
-    # individuals of a family will go into one chunk.
-    #
-    # single -- create one large chunk for all
-    # evenly -- create evenly sized chunks of maximal size chunk_max_size
-    # incremental -- iterate samples and create a new chunk after the maximal
-    #       size has been reached; should be combined with background data
-    #       to guarantee a minimal number of samples.
-    chunk_mode: single
-    # Maximal chunk size; background samples are not counted.
-    chunk_max_size: 200
-    # Sort samples by these attributes for chunk_mode=incremental to create
-    # chunks.
-    #
-    # family_id -- the family ID from the sample sheet
-    # index_name -- the name of the pedigree's index
-    # batch_no -- the batch number from the sample sheet
-    chunk_sort:
-      - batch_no
-      - family_id
-      - index_name
-
     # Path to the ngs_mapping step.
     path_ngs_mapping: ../ngs_mapping
-    path_variant_calling: ../variant_calling
+
+    # Minimum number of samples required to build a model.
+    min_samples_in_model: 100
+
+    # List of used tools, by default it only uses XHMM.
     tools:
     - xhmm
+
+    # Tool specific configurations
     xhmm:
       path_target_interval_list: REQUIRED_OR_MAPPING # REQUIRED
+
       # The following allows to define one or more set of target intervals.
       path_target_interval_list_mapping: []
       # The following will match both the stock IDT library kit and the ones
@@ -109,8 +93,21 @@ step_config:
       # - name: IDT_xGen_V1_0
       #   pattern: "xGen Exome Research Panel V1\\.0*"
       #   path: "path/to/targets.bed"
+
     gcnv:
       path_target_interval_list: REQUIRED_OR_MAPPING # REQUIRED
+
+      # Path to gCNV model - will execute analysis in CASE MODE.
+      #
+      # Example of precomputed model:
+      # - library: "Agilent SureSelect Human All Exon V6"
+      #   path: /path/to/model
+      #
+      # Example where model will be built based on background samples:
+      # - library: "Agilent SureSelect Human All Exon V6"
+      #   path: "__build__"
+      precomputed_model_paths: []
+
       # The following allows to define one or more set of target intervals.
       path_target_interval_list_mapping: []
       # The following will match both the stock IDT library kit and the ones
@@ -119,6 +116,7 @@ step_config:
       # - name: IDT_xGen_V1_0
       #   pattern: "xGen Exome Research Panel V1\\.0*"
       #   path: "path/to/targets.bed"
+
       # Path to BED file with uniquely mappable regions.
       path_uniquely_mapable_bed: REQUIRED
 """
@@ -526,6 +524,146 @@ class GcnvStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+        # Get type of run: 'cohort_mode', 'case_mode_with_model', or 'case_mode_build'
+        self.analysis_type = self.validate_request()
+
+    def validate_request(self):
+        """Validate request.
+
+        Checks if the request can be performed given the provided information and parameters.
+        Three scenarios are evaluated:
+        1) If no model was provided in the config (``precomputed_model_paths``), no check is
+        required. Analysis will run in COHORT MODE and build a new model with all foreground
+        samples available for each library kit.
+
+        2) If a path to a model was provided in the config (``precomputed_model_paths``), it will
+        check that the path were provided for each available library kit and that the paths
+        contain the necessary files for analysis, namely: ...
+        Analysis will run in CASE MODE for each sample.
+
+        3) If a model was described in the config (``precomputed_model_paths``) with the reserve
+        word '__build__', it will check if there are enough background samples to build models for
+        each library kit. The minimum amount of samples is defined in the config
+        (``min_samples_in_model``). Analysis will run in CASE MODE for each sample.
+
+        :return: Returns type of analysis: 'cohort_mode', 'case_mode_with_model', or
+        'case_mode_build'.
+
+        :raises InvalidConfiguration: if information provided in configuration isn't enough to run
+        the analysis.
+        """
+        # Build model reserved
+        reserved_w = "__build__"
+
+        # Get configurations
+        path_to_models = self.config["gcnv"]["precomputed_model_paths"]
+
+        # Case 1: no model provided -> analysis in COHORT MODE
+        if len(path_to_models) == 0:
+            return "cohort_mode"
+        else:
+            # Case 2: path to model provided -> analysis in CASE MODE using precomputed model
+            if not all([model.get("path") == reserved_w for model in path_to_models]):
+                for model in path_to_models:
+                    path = model.get("path")
+                    # Validate directory
+                    if not self.validate_model_directory(path=path):
+                        msg_tpl = (
+                            "Provided path either not a directory or "
+                            "does not contain all required model files: {0}"
+                        )
+                        raise InvalidConfiguration(msg_tpl.format(str(model)))
+                # All checked out - return
+                return "case_mode_with_model"
+            # Case 3: path to model not provided -> analysis in CASE MODE, build model
+            elif all([model.get("path") == reserved_w for model in path_to_models]):
+                background_library_count_dict = self._get_background_library_count()
+                for model in path_to_models:
+                    library_kit = model.get("library")
+                    flag, count, threshold = self.validate_model_requirements(
+                        library_kit, background_library_count_dict
+                    )
+                    if not flag:
+                        msg_tpl = (
+                            "Not enough background samples for {library} "
+                            "(count: {count}; threshold defined in config: {threshold})."
+                        )
+                        raise InvalidConfiguration(
+                            msg_tpl.format(
+                                library_kit=library_kit, count=count, threshold=threshold
+                            )
+                        )
+                # All checked out - return
+                return "case_mode_build"
+        return None
+
+    def validate_model_requirements(self, library_kit, library_count_dict):
+        """Validate build model requirements.
+
+        Method checks that the number of available background samples is larger than the minimum
+        required.
+
+        :param library_kit: Library kit, example: 'Agilent SureSelect Human All Exon V6'.
+        :type library_kit: str
+
+        :param library_count_dict: Dictionary with background samples library kit count.
+        Key: library kit name; Value: number of samples.
+        :type library_count_dict: dict
+
+        :return: Returns tuple(flag, library kit count, minimum count threshold). Flag is True if
+        enough background samples with library kit are available; otherwise, False.
+        """
+        # Get settings
+        min_count_threshold = self.config["min_samples_in_model"]
+
+        # Validate and return
+        library_kit_count = library_count_dict.get(library_kit, 0)
+        if library_kit_count >= min_count_threshold:
+            return True, library_kit_count, min_count_threshold
+        else:
+            return False, library_kit_count, min_count_threshold
+
+    @staticmethod
+    def validate_model_directory(path):
+        """Validate gCNV model directory.
+
+        :param path: Path to gCNV model directory.
+        :return: Returns True if path is a directory and contains all required files; otherwise,
+        False.
+        """
+        # Model required files
+        model_files = [
+            "contig_ploidy_prior.tsv",
+            "gcnvkernel_version.json",
+            "interval_list.tsv",
+            "mu_mean_bias_j_lowerbound__.tsv",
+            "mu_psi_j_log__.tsv",
+            "ploidy_config.json",
+            "std_mean_bias_j_lowerbound__.tsv",
+            "std_psi_j_log__.tsv",
+        ]
+        # Check if path is a directory
+        if not os.path.isdir(path):
+            return False
+        # Check if directory contains required model files
+        if not all([os.path.isfile(os.path.join(path, m_file)) for m_file in model_files]):
+            return False
+        return True
+
+    def _get_background_library_count(self):
+        """Get background samples library count dictionary.
+
+        :return: Returns dictionary with number of background samples per library kit. Key: library
+        kit name; Value: number of samples.
+        """
+        # Initialise variables
+        out_dict = defaultdict(lambda: 0)
+        # Iterate over donors
+        for donor in self.parent.all_background_donors():
+            if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
+                library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
+                out_dict[library_kit] += 1
+        return dict(out_dict)
 
     def get_params(self, action):
         """
@@ -938,6 +1076,19 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit.
         self.ngs_library_to_kit = self.sub_steps["xhmm"].ngs_library_to_kit
+        # Build dictionary with sample count per library kit
+        _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+
+    def get_library_count(self, library_kit):
+        """Get library count.
+
+        :param library_kit: Library kit name.
+        :type library_kit: str
+
+        :return: Returns number of samples with inputted library kit. If library name not defined,
+        it returns zero.
+        """
+        return self.library_kit_counts_dict.get(library_kit, 0)
 
     @listify
     def all_donors(self, include_background=True):
@@ -977,7 +1128,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         donors.
         """
         # Get list of library kits and donors to use.
-        library_kits, donors, kit_counts = self._pick_kits_and_donors()
+        library_kits, donors, kit_counts = self.pick_kits_and_donors()
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
         callers = ("xhmm", "gcnv")
@@ -1012,7 +1163,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 ext=EXT_VALUES,
             )
 
-    def _pick_kits_and_donors(self):
+    def pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
         matching donor.
         """

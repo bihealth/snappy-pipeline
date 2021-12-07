@@ -138,8 +138,56 @@ def minimal_config_large_cohort(minimal_config):
 def minimal_config_large_cohort_background(minimal_config_large_cohort):
     """Returns minimum configuration file for large trio cohort."""
     minimal_config_adjusted = copy.deepcopy(minimal_config_large_cohort)
+    # Set sample sheet as background
     minimal_config_adjusted["data_sets"]["first_batch"]["is_background"] = True
+    # Define model path - create gCNV model based on background samples
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["gcnv"][
+        "precomputed_model_paths"
+    ] = [
+        {
+            "library": "Agilent SureSelect Human All Exon V6",
+            "path": "__build__",
+        }
+    ]
     return minimal_config_adjusted
+
+
+@pytest.fixture
+def minimal_config_large_cohort_with_gcnv_model(minimal_config_large_cohort):
+    """Returns minimum configuration file for large trio cohort."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config_large_cohort)
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["gcnv"][
+        "precomputed_model_paths"
+    ] = [
+        {
+            "library": "Agilent SureSelect Human All Exon V6",
+            "path": "/data",  # path defined in germline_sheet_fake_fs2_gcnv_model
+        }
+    ]
+    return minimal_config_adjusted
+
+
+@pytest.fixture
+def germline_sheet_fake_fs2_gcnv_model(germline_sheet_fake_fs2):
+    """Return fake file system setup with files for the germline_sheet_tsv and gCNV files."""
+    # Model required files
+    model_files = [
+        "contig_ploidy_prior.tsv",
+        "gcnvkernel_version.json",
+        "interval_list.tsv",
+        "mu_mean_bias_j_lowerbound__.tsv",
+        "mu_psi_j_log__.tsv",
+        "ploidy_config.json",
+        "std_mean_bias_j_lowerbound__.tsv",
+        "std_psi_j_log__.tsv",
+    ]
+    # Create data directories
+    germline_sheet_fake_fs2.fs.makedirs("/data", exist_ok=True)
+    # Create required files
+    tpl = "/data/{file_}"
+    for file_ in model_files:
+        germline_sheet_fake_fs2.fs.create_file(tpl.format(file_=file_))
+    return germline_sheet_fake_fs2
 
 
 @pytest.fixture
@@ -227,6 +275,42 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
     )
 
 
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_with_gcnv_model(
+    dummy_workflow,
+    minimal_config_large_cohort_with_gcnv_model,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2_gcnv_model,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    large trio cohort as background."""
+    # Patch out file-system
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
+    )
+    patch_module_fs(
+        "snappy_pipeline.workflows.targeted_seq_cnv_calling",
+        germline_sheet_fake_fs2_gcnv_model,
+        mocker,
+    )
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_large_cohort_with_gcnv_model,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
 # Global tests -------------------------------------------------------------------------------------
 
 
@@ -301,6 +385,44 @@ def test_target_seq_cnv_calling_workflow_all_background_donors(
     assert len(actual) == 501, "Large sample sheet should contain 501 background donors."
 
 
+def test_target_seq_cnv_calling_workflow_get_library_count(targeted_seq_cnv_calling_workflow):
+    """Tests TargetedSeqCnvCallingWorkflow.get_library_count()"""
+    # Test undefined library kit
+    expected = 0
+    actual = targeted_seq_cnv_calling_workflow.get_library_count("_not_a_library_kit_name_")
+    assert actual == expected, "It should return zero as the library kit name is not defined."
+    # Test defined library kit - foreground
+    expected = 6
+    actual = targeted_seq_cnv_calling_workflow.get_library_count(
+        "Agilent_SureSelect_Human_All_Exon_V6"
+    )
+    assert actual == expected
+
+
+def test_pick_kits_and_donors(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests TargetedSeqCnvCallingWorkflow.pick_kits_and_donors()"""
+
+    # Test small cohort - 6 individuals
+    expected_library_kits = ["Agilent_SureSelect_Human_All_Exon_V6"]
+    expected_kit_counts = {"Agilent_SureSelect_Human_All_Exon_V6": 6}
+    library_kits, _, kit_counts = targeted_seq_cnv_calling_workflow.pick_kits_and_donors()
+    assert library_kits == expected_library_kits
+    assert expected_kit_counts == kit_counts
+
+    # Test large trio cohort - 501 individuals
+    expected_library_kits = ["Agilent_SureSelect_Human_All_Exon_V6"]
+    expected_kit_counts = {"Agilent_SureSelect_Human_All_Exon_V6": 501}
+    (
+        library_kits,
+        _,
+        kit_counts,
+    ) = targeted_seq_cnv_calling_workflow_large_cohort.pick_kits_and_donors()
+    assert library_kits == expected_library_kits
+    assert expected_kit_counts == kit_counts
+
+
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
 
 
@@ -329,6 +451,89 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
         else:
             with pytest.raises(UnsupportedActionException):
                 targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
+
+
+def test_gcnv_validate_request(
+    targeted_seq_cnv_calling_workflow,
+    targeted_seq_cnv_calling_workflow_with_gcnv_model,
+    targeted_seq_cnv_calling_workflow_large_cohort_background,
+):
+    """Tests GcnvStepPart.validate_request()"""
+    # Test small cohort - COHORT MODE
+    expected = "cohort_mode"
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "validate_request")()
+    assert actual == expected
+
+    # Test large background cohort - CASE MODE, gCNV model provided
+    expected = "case_mode_with_model"
+    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.substep_getattr(
+        "gcnv", "validate_request"
+    )()
+    assert actual == expected
+
+    # Test large background cohort - CASE MODE, build gCNV model
+    expected = "case_mode_build"
+    actual = targeted_seq_cnv_calling_workflow_large_cohort_background.substep_getattr(
+        "gcnv", "validate_request"
+    )()
+    assert actual == expected
+
+
+def test_gcnv_validate_model_requirements(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort_background
+):
+    """Tests GcnvStepPart.validate_model_requirements()"""
+    # Test small cohort
+    expected = (False, 0, 100)
+    library_count_dict = {"Agilent SureSelect Human All Exon V6": 0}
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "validate_model_requirements"
+    )(library_kit="Agilent SureSelect Human All Exon V6", library_count_dict=library_count_dict)
+    assert actual == expected
+    # Test large background cohort
+    expected = (True, 501, 100)
+    library_count_dict = {"Agilent SureSelect Human All Exon V6": 501}
+    actual = targeted_seq_cnv_calling_workflow_large_cohort_background.substep_getattr(
+        "gcnv", "validate_model_requirements"
+    )(library_kit="Agilent SureSelect Human All Exon V6", library_count_dict=library_count_dict)
+    assert actual == expected
+
+
+def test_gcnv_validate_model_directory(fake_fs, mocker, targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart.validate_model_directory()"""
+    # Model required files
+    model_files = [
+        "contig_ploidy_prior.tsv",
+        "gcnvkernel_version.json",
+        "interval_list.tsv",
+        "mu_mean_bias_j_lowerbound__.tsv",
+        "mu_psi_j_log__.tsv",
+        "ploidy_config.json",
+        "std_mean_bias_j_lowerbound__.tsv",
+        "std_psi_j_log__.tsv",
+    ]
+    # Create data directories
+    fake_fs.fs.makedirs("/data", exist_ok=True)
+    fake_fs.fs.makedirs("/empty", exist_ok=True)
+    # Create required files
+    tpl = "/data/{file_}"
+    for file_ in model_files:
+        fake_fs.fs.create_file(tpl.format(file_=file_))
+    # Patch out file-system
+    patch_module_fs("snappy_pipeline.workflows.targeted_seq_cnv_calling", fake_fs, mocker)
+
+    # Should return True as it is a directory and it contains the expected files
+    assert targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "validate_model_directory")(
+        "/data"
+    )
+    # Should return False as empty directory
+    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "validate_model_directory"
+    )("/empty")
+    # Should return False not a directory
+    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "validate_model_directory"
+    )("__build__")
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
