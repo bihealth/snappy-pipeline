@@ -43,10 +43,11 @@ Available CNV Callers
 """
 
 from collections import OrderedDict
+from copy import deepcopy
 import os
 import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background, is_background
 from snakemake.io import expand, glob_wildcards, touch
 
 from snappy_pipeline.base import UnsupportedActionException
@@ -950,6 +951,18 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         sheets = self.shortcut_sheets
         if not include_background:
             sheets = list(filter(is_not_background, sheets))
+        for sheet in sheets:
+            for pedigree in sheet.cohort.pedigrees:
+                yield from pedigree.donors
+
+    @listify
+    def all_background_donors(self):
+        """Get all background donors.
+
+        :return: Returns list of all background donors in sample sheets.
+        """
+        sheets = deepcopy(self.shortcut_sheets)
+        sheets = list(filter(is_background, sheets))
         for sheet in sheets:
             for pedigree in sheet.cohort.pedigrees:
                 yield from pedigree.donors

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the targeted_seq_cnv_calling workflow module code"""
 
+import copy
 import textwrap
 
 import pytest
@@ -126,6 +127,22 @@ def minimal_config():
 
 
 @pytest.fixture
+def minimal_config_large_cohort(minimal_config):
+    """Returns minimum configuration file for large trio cohort."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config)
+    minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_large_cohort_trio.tsv"
+    return minimal_config_adjusted
+
+
+@pytest.fixture
+def minimal_config_large_cohort_background(minimal_config_large_cohort):
+    """Returns minimum configuration file for large trio cohort."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config_large_cohort)
+    minimal_config_adjusted["data_sets"]["first_batch"]["is_background"] = True
+    return minimal_config_adjusted
+
+
+@pytest.fixture
 def targeted_seq_cnv_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -136,7 +153,7 @@ def targeted_seq_cnv_calling_workflow(
     germline_sheet_fake_fs,
     mocker,
 ):
-    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - small cohort"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
@@ -146,6 +163,63 @@ def targeted_seq_cnv_calling_workflow(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_large_cohort(
+    dummy_workflow,
+    minimal_config_large_cohort,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - large trio cohort."""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_large_cohort,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
+def targeted_seq_cnv_calling_workflow_large_cohort_background(
+    dummy_workflow,
+    minimal_config_large_cohort_background,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    large trio cohort as background."""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_large_cohort_background,
         dummy_cluster_config,
         config_lookup_paths,
         config_paths,
@@ -181,19 +255,50 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
     assert actual == expected
 
 
-def test_target_seq_cnv_calling_workflow_all_donors(targeted_seq_cnv_calling_workflow):
+def test_target_seq_cnv_calling_workflow_all_donors(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
     """Tests TargetedSeqCnvCallingWorkflow.all_donors()"""
+    # ----------------------- #
+    # Test small sample sheet #
+    # ----------------------- #
     # Define expected
     expected = ["P00{i}-N1-DNA1-WGS1".format(i=i) for i in range(1, 7)]
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.all_donors()
-    assert len(actual) == 6, "Small sample sheet should contain six donors."
+    assert len(actual) == 6, "Small sample sheet should contain only 6 donors."
     assert_message_tpl = "Value {{donor_name}} not in expected list: {expected}".format(
         expected=", ".join(expected)
     )
     for donor in actual:
         msg = assert_message_tpl.format(donor_name=donor.dna_ngs_library.name)
         assert donor.dna_ngs_library.name in expected, msg
+    # ----------------------- #
+    # Test large sample sheet #
+    # ----------------------- #
+    # Define expected
+    expected = ["P{i}-N1-DNA1-WGS1".format(i=str(i).zfill(3)) for i in range(1, 502)]
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.all_donors()
+    assert len(actual) == 501, "Large sample sheet should contain 501 donors."
+    assert_message_tpl = (
+        "Value {donor_name} not in expected list: P001-N1-DNA1-WGS1 up to P501-N1-DNA1-WGS1."
+    )
+    for donor in actual:
+        msg = assert_message_tpl.format(donor_name=donor.dna_ngs_library.name)
+        assert donor.dna_ngs_library.name in expected, msg
+
+
+def test_target_seq_cnv_calling_workflow_all_background_donors(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort_background
+):
+    """Tests TargetedSeqCnvCallingWorkflow.all_background_donors()"""
+    # Test small foreground sample sheet
+    actual = targeted_seq_cnv_calling_workflow.all_background_donors()
+    assert len(actual) == 0, "Small sample sheet should contain zero background donors."
+    # Test large background sample sheet
+    actual = targeted_seq_cnv_calling_workflow_large_cohort_background.all_background_donors()
+    assert len(actual) == 501, "Large sample sheet should contain 501 background donors."
 
 
 # Global GcnvStepPart Tests ------------------------------------------------------------------------
