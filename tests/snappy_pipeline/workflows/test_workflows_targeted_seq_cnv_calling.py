@@ -22,8 +22,8 @@ GCNV_ACTIONS = [
     "scatter_intervals",
     "coverage",
     "contig_ploidy",
-    "call_cnvs",
-    "post_germline_calls",
+    "call_cnvs_cohort_mode",
+    "post_germline_calls_cohort_mode",
     "merge_cohort_vcfs",
     "extract_ped",
 ]
@@ -484,6 +484,32 @@ def test_gcnv_validate_request(
     assert actual == expected
 
 
+def test_gcnv_get_analysis_type(
+    targeted_seq_cnv_calling_workflow,
+    targeted_seq_cnv_calling_workflow_with_gcnv_model,
+    targeted_seq_cnv_calling_workflow_large_cohort_background,
+):
+    """Tests GcnvStepPart.get_analysis_type()"""
+    # Test small cohort - COHORT MODE
+    expected = "cohort_mode"
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "get_analysis_type")()
+    assert actual == expected
+
+    # Test large background cohort - CASE MODE, gCNV model provided
+    expected = "case_mode_with_model"
+    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.substep_getattr(
+        "gcnv", "get_analysis_type"
+    )()
+    assert actual == expected
+
+    # Test large background cohort - CASE MODE, build gCNV model
+    expected = "case_mode_build"
+    actual = targeted_seq_cnv_calling_workflow_large_cohort_background.substep_getattr(
+        "gcnv", "get_analysis_type"
+    )()
+    assert actual == expected
+
+
 def test_gcnv_validate_model_requirements(
     targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort_background
 ):
@@ -539,6 +565,36 @@ def test_gcnv_validate_model_directory(fake_fs, mocker, targeted_seq_cnv_calling
     assert not targeted_seq_cnv_calling_workflow.substep_getattr(
         "gcnv", "validate_model_directory"
     )("__build__")
+
+
+def test_gcnv_get_cnv_model_result_files(
+    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+):
+    """Tests GcnvStepPart.get_cnv_model_result_files()"""
+
+    # Test small cohort - 6 individuals, not enough to build a model (<10)
+    expected = []
+    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
+        "gcnv", "get_cnv_model_result_files"
+    )(None)
+    actual = sorted(actual)
+    assert actual == expected
+
+    # Test large trio cohort - 501 individuals, all Agilent v6, enough for a model (>10)
+    interval_file = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    ploidy_file = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+    )
+    expected = sorted([interval_file, ploidy_file])
+    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
+        "gcnv", "get_cnv_model_result_files"
+    )(None)
+    actual = sorted(actual)
+    assert actual == expected
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
@@ -801,8 +857,8 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
 # Tests for GcnvStepPart (call_cnvs) ---------------------------------------------------------------
 
 
-def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_call_cnvs()"""
+def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart._get_input_files_call_cnvs_cohort_mode()"""
     # Define expected
     interval_list_shard_out = (
         "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
@@ -827,12 +883,14 @@ def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workf
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
+    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs_cohort_mode")(
+        wildcards
+    )
     assert actual == expected
 
 
-def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_call_cnvs()"""
+def test_gcnv_call_cnvs_cohort_mode_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart._get_output_files_call_cnvs_cohort_mode()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
@@ -840,19 +898,19 @@ def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = {"done": done_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs")
+    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs_cohort_mode")
     assert actual == expected
 
 
 def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'call_cnvs' step"""
+    """Tests GcnvStepPart.get_log_file for 'call_cnvs_cohort_mode' step"""
     # Define expected
     expected = (
-        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
-        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
+        "work/{mapper}.gcnv_call_cnvs_cohort_mode.{library_kit}.{shard}/log/"
+        "{mapper}.gcnv_call_cnvs_cohort_mode.{library_kit}.{shard}.log"
     )
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs")
+    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs_cohort_mode")
     assert actual == expected
 
 

@@ -66,6 +66,9 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 #: Available WGS CNV callers
 TARGETED_SEQ_CNV_CALLERS = ("xhmm", "gcnv")
 
+#: Minimum number of samples using kit - criteria to be analyzed
+MIN_KIT_SAMPLES = 10
+
 #: Default configuration for the targeted_seq_cnv_calling step
 DEFAULT_CONFIG = r"""
 # Default configuration targeted_seq_cnv_calling
@@ -502,8 +505,8 @@ class GcnvStepPart(BaseStepPart):
         "scatter_intervals",
         "coverage",
         "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
+        "call_cnvs_cohort_mode",
+        "post_germline_calls_cohort_mode",
         "merge_cohort_vcfs",
         "extract_ped",
     )
@@ -814,7 +817,11 @@ class GcnvStepPart(BaseStepPart):
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
-    def _get_input_files_call_cnvs(self, wildcards):
+    def _get_input_files_call_cnvs_cohort_mode(self, wildcards):
+        """Yield input files for rule `targeted_seq_cnv_calling_gcnv_call_cnvs` in COHORT mode
+        :param wildcards: Snakemake wildcards associated with rule.
+        :type wildcards: snakemake.io.Wildcards
+        """
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
@@ -843,7 +850,7 @@ class GcnvStepPart(BaseStepPart):
         )
 
     @dictify
-    def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
+    def _get_input_files_post_germline_calls_cohort_mode(self, wildcards, checkpoints):
         checkpoint = checkpoints.targeted_seq_cnv_calling_gcnv_scatter_intervals
         library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
         scatter_out = checkpoint.get(library_kit=library_kit, **wildcards).output[0]
@@ -956,7 +963,7 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
-    def _get_output_files_call_cnvs():
+    def _get_output_files_call_cnvs_cohort_mode():
         ext = "done"
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(
@@ -967,7 +974,7 @@ class GcnvStepPart(BaseStepPart):
 
     @staticmethod
     @dictify
-    def _get_output_files_post_germline_calls():
+    def _get_output_files_post_germline_calls_cohort_mode():
         name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
@@ -1021,7 +1028,7 @@ class GcnvStepPart(BaseStepPart):
         ):
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action == "call_cnvs":
+        elif action == "call_cnvs_cohort_mode":
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
                 action=action
             )
@@ -1029,6 +1036,44 @@ class GcnvStepPart(BaseStepPart):
         else:
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+
+    def get_cnv_model_result_files(self, _unused=None):
+        """Get gCNV model results.
+        :return: Returns list of result files for the gCNV build model sub-workflow.
+        """
+        # Initialise variables
+        name_pattern_contig_ploidy = (
+            "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
+            "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
+        )
+        name_pattern_filter_intervals = (
+            "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+            "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+        )
+
+        # Get list of library kits and donors to use.
+        library_kits, _, kit_counts = self.parent.pick_kits_and_donors()
+
+        if "gcnv" in self.config["tools"]:
+            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
+            yield from expand(
+                name_pattern_contig_ploidy,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                library_kit=chosen_kits,
+            )
+            yield from expand(
+                name_pattern_filter_intervals,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                library_kit=chosen_kits,
+            )
+
+    def get_analysis_type(self):
+        """Get analysis type
+
+        :return: Returns analysis type based on information provided on configuration file and
+        sample sheets, one of: 'cohort_mode', 'case_mode_with_model', or 'case_mode_build'.
+        """
+        return self.analysis_type
 
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for gCNV CNV calling"""
