@@ -201,7 +201,9 @@ def targeted_seq_cnv_calling_workflow(
     germline_sheet_fake_fs,
     mocker,
 ):
-    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - small cohort"""
+    """
+    Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - small cohort
+    """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
@@ -229,7 +231,10 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
     germline_sheet_fake_fs2,
     mocker,
 ):
-    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - large trio cohort."""
+    """
+    Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    large trio cohort.
+    """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
