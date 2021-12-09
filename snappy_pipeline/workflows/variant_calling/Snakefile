@@ -81,7 +81,7 @@ rule variant_calling_bcftools_run:
         wf.wrapper_path("bcftools_call")
 
 
-# Run Freebayes ---------------------------------------------------------------
+# Run FreeBayes ---------------------------------------------------------------
 
 
 rule variant_calling_freebayes_run:
@@ -89,6 +89,8 @@ rule variant_calling_freebayes_run:
         unpack(wf.get_input_files("freebayes", "run")),
     output:
         **wf. get_output_files('freebayes','run'),
+    params:
+        **wf. get_params("freebayes","run")(),
     log:
         **wf. get_log_file('freebayes','run'),
     wrapper:
