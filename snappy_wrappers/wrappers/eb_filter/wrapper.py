@@ -2,9 +2,12 @@
 """CUBI+Snakemake wrapper code for EBFilter flagging.
 """
 
+import os
 from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+snappy_vcf_sort = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../scripts/snappy-vcf_sort")
 
 if snakemake.params["args"]["interval"]:
     cmd_fetch = "tabix --print-header {} {}".format(
@@ -40,7 +43,7 @@ fi
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
 if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
-    filter='FILTER == "germline" || FILTER == "weak_evidence" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
+    filter='FILTER ~ "germline" || FILTER ~ "weak_evidence" || FILTER ~ "OffExome" || ANN ~ "stream_gene_variant"'
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \
@@ -83,7 +86,7 @@ export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
 bcftools concat \
     $TMPDIR/after_eb_filter.vcf \
     $TMPDIR/not_for_eb_filter.vcf.gz \
-| snappy-vcf_sort $REF.fai \
+| {snappy_vcf_sort} $REF.fai \
 | bgzip -c \
 > {snakemake.output.vcf}
 

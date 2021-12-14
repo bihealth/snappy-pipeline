@@ -81,22 +81,40 @@ for conf in anno_config["annotation_tracks_vcf"]:
 annotation_snippet = " \\\n    ".join(annotation_args)
 
 # Build intervals argument
-arg_intervals = " ".join(
-    ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
-)
+if "intervals" in snakemake.params["args"]:
+    arg_intervals = " ".join(
+        ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+    )
+else:
+    arg_intervals = ""
+
+this_file = __file__
 
 shell(
     r"""
 set -x
 
+# TODO: remove this again, is for fail early
+# Additional logging for transparency & reproducibility
+# Logging: Save a copy this wrapper (with the pickle details in the header)
+wrapper=$(dirname {snakemake.log.log})/wrapper.py
+cp {this_file} $wrapper
+md5sum $wrapper > $wrapper.md5
+
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+
 # Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec 2> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
@@ -123,5 +141,15 @@ tabix -f {snakemake.output.vcf}
 pushd $(dirname {snakemake.output.vcf}) && \
     md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf}).md5 && \
     md5sum $(basename {snakemake.output.tbi}) > $(basename {snakemake.output.tbi}).md5
+popd
 """
 )
+
+
+# Compute MD5 sums of logs.
+if arg_intervals == "":
+    shell(
+        r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+        """
+    )
