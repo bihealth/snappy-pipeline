@@ -1,5 +1,4 @@
-# COHORT mode
-# gCNV needs many rules, thus they are in their own file.
+# gCNV with COHORT MODE - build model.
 
 
 rule targeted_seq_cnv_calling_gcnv_call_cnvs:
@@ -14,7 +13,6 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs:
 
 
 def targeted_seq_cnv_calling_gcnv_post_germline_calls_input(wildcards):
-    # Poor mans currying.
     return wf.get_input_files("gcnv", "post_germline_calls_cohort_mode")(wildcards, checkpoints)
 
 
@@ -37,11 +35,11 @@ rule targeted_seq_cnv_calling_gcnv_post_germline_calls:
     input:
         unpack(targeted_seq_cnv_calling_gcnv_post_germline_calls_input),
     output:
-        **wf. get_output_files("gcnv","post_germline_calls_cohort_mode"),
+        **wf. get_output_files("gcnv","post_germline_calls"),
     log:
-        wf.get_log_file("gcnv", "post_germline_calls_cohort_mode"),
+        wf.get_log_file("gcnv", "post_germline_calls"),
     wrapper:
-        wf.wrapper_path("gcnv/post_germline_calls_cohort_mode")
+        wf.wrapper_path("gcnv/post_germline_calls")
 
 
 rule targeted_seq_cnv_calling_gcnv_merge_cohort_vcfs:

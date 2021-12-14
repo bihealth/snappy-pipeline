@@ -75,3 +75,8 @@ analsys_type = wf.substep_getattr("gcnv", "get_analysis_type")()
 if analsys_type == "cohort_mode":
 
     include: "gcnv_cohort_mode.rules"
+
+
+elif analsys_type == "case_mode":
+
+    include: "gcnv_case_mode.rules"

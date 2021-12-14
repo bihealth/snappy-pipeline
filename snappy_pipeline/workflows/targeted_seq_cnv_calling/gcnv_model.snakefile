@@ -57,8 +57,6 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
         unpack(wf.get_input_files("gcnv", "coverage")),
     output:
         **wf. get_output_files("gcnv","coverage"),
-    params:
-        args=wf.get_params("gcnv", "coverage"),
     log:
         wf.get_log_file("gcnv", "coverage"),
     wrapper:
