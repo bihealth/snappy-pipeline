@@ -125,10 +125,19 @@ step_config:
           segmentation: HaarSeg
           normalization: MedianGcBinned
     control_freec:
-      path_chrlenfile: REQUIRED  #REQUIRED
       path_mappability: REQUIRED  #REQUIRED
-      path_mappability_enabled: False
-      window_size: -1 #set to a value >=0 you want a specific fixed window size
+      breakPointThreshold: 0.8
+      coefficientOfVariation: 0.05
+      contamination: 0.4
+      minCNAlength: 1
+      minMappabilityPerWindow: 0.85
+      minExpectedGC: 0.35
+      maxExpectedGC: 0.55
+      minimalSubclonePresence: 0.2
+      readCountThreshold: 10
+      telocentromeric: 50000
+      window: ~
+      ignore_chrom: []
       convert:
         org_obj: org.Hs.eg.db::org.Hs.eg.db
         tx_obj: TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
@@ -414,29 +423,27 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 var_caller=self.name, ext=".ratio.txt.md5"
             )
         elif action == "transform":
-            transform_ext_names = ("log2", "call", "segments", "cns", "cnr")
-            transform_ext_values = (
-                "_gene_log2.txt",
-                "_gene_call.txt",
-                "_segments.txt",
-                ".cns",
-                ".cnr",
-            )
-            result = dict(
-                zip(
-                    transform_ext_names,
-                    expand(self.base_path_out, var_caller=[self.name], ext=transform_ext_values),
-                )
-            )
+            transform = {
+                "log2": ".gene_log2.txt",
+                "call": ".gene_call.txt",
+                "segments": ".segments.txt",
+                "cns": ".cns.txt",
+                "cnr": ".cnr.txt"
+            }
+            results = {}
+            for (name, value) in transform.items():
+                result[name] = self.base_path_out.format(var_caller=self.name, ext=value)
+                result[name + "_md5"] = result[name] + ".md5"
         elif action == "plot":
-            plot_ext_names = ("heatmap", "scatter", "diagram")
-            plot_ext_values = (".heatmap.png", ".scatter.png", ".diagram.pdf")
-            result = dict(
-                zip(
-                    plot_ext_names,
-                    expand(self.base_path_out, var_caller=[self.name], ext=plot_ext_values),
-                )
-            )
+            plot = {
+                "heatmap": ".heatmap.png",
+                "scatter": ".scatter.png",
+                "diagram": ".diagram.pdf"
+            }
+            results = {}
+            for (name, value) in plot.items():
+                result[name] = self.base_path_out.format(var_caller=self.name, ext=value)
+                result[name + "_md5"] = result[name] + ".md5"
 
         return result
 
@@ -444,10 +451,6 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Check configuration for ControlFreec Somatic WGS CNV calling"""
         if "control_freec" not in (self.config["tools"] or []):  # pylint: disable=C0325
             return  # ControlFreec not enabled, skip  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "control_freec", "path_chrlenfile"),
-            "Path to ControlFreec ChrLenFile not configured",
-        )
         self.parent.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "control_freec", "path_mappability"),
             "Path to ControlFreec mappability file not configured",
@@ -460,14 +463,14 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         for action in actions:
             key = "somatic_wgs_cnv_calling_control_freec_{}".format(action)
             if action == "plot":
-                memory = 30  # copied from cnvkit details in somatic_targeted_seq_cnv_calling
+                memory = 32  # copied from cnvkit details in somatic_targeted_seq_cnv_calling
                 ntasks = 1
             elif action == "transform_output":
                 memory = 8  # not sure how much we need, but definitely >4G
                 ntasks = 1
             else:  # action == "run"
                 memory = 3.75
-                ntasks = 4 * 2
+                ntasks = 16
             cluster_config[key] = {
                 "mem": int(2 * memory * 1024 * ntasks),
                 "time": "40:00",
@@ -559,11 +562,17 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     ".ratio.txt",
                     ".ratio.txt.md5",
                     ".gene_log2.txt",
+                    ".gene_log2.txt.md5",
                     ".gene_call.txt",
+                    ".gene_call.txt.md5",
                     ".segments.txt",
+                    ".segments.txt.md5",
                     ".scatter.png",
+                    ".scatter.png.md5",
                     ".heatmap.png",
+                    ".heatmap.png.md5",
                     ".diagram.pdf",
+                    ".diagram.pdf.md5",
                 ],
             )
         # Plots for cnvetti

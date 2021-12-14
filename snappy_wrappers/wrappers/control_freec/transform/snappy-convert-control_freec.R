@@ -266,10 +266,10 @@ freec_to_calls_log2_segments <- function(ratios, ploidity=2, small_value=0.00000
 #'
 #' @examples
 control_freec_write_files <- function(sample_name,
-                                      ratios_fn=paste("freec.", sample_name, ".ratio.txt", sep=""),
-                                      log2_fn=paste("freec.", sample_name, ".log2.txt", sep=""),
-                                      call_fn=paste("freec.", sample_name, ".call.txt", sep=""),
-                                      segments_fn=paste("freec.", sample_name, ".segments.txt", sep=""),
+                                      ratios_fn=paste("freec.", sample_name, "_ratio.txt", sep=""),
+                                      log2_fn=paste("freec.", sample_name, "_gene_log2.txt", sep=""),
+                                      call_fn=paste("freec.", sample_name, "_gene_call.txt", sep=""),
+                                      segments_fn=paste("freec.", sample_name, "_segments.txt", sep=""),
                                       cns_fn=paste("freec.", sample_name, ".cns", sep=""),
                                       cnr_fn=paste("freec.", sample_name, ".cnr", sep=""),
                                       org_obj=org.Hs.eg.db::org.Hs.eg.db,

@@ -66,14 +66,14 @@ postProcess <- function(destination.folder="./work/donor",
     assertthat::assert_that( length( unique( segData$ID ) )==1 )
     write.table( segData %>% dplyr::mutate( ID=donorID ) %>% dplyr::select( -startRow, -endRow ),
                  file.path( destination.folder, "out",
-                            paste( mapper, ".copywriter.", fullID, "_segments.txt", sep="" ) ),
+                            paste( mapper, ".copywriter.", fullID, ".segments.txt", sep="" ) ),
                  sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE )
 
     binData <- getBinData( segment.CNA.object, binSize=inputStructure$bin.size, allowedChrom=inputStructure$chromosomes )
     assertthat::assert_that( ncol( binData )==6 )
     write.table( binData %>% dplyr::select( -iBin ),
                  file.path( destination.folder, "out",
-                            paste( mapper, ".copywriter.", fullID, "_bins.txt", sep="" ) ),
+                            paste( mapper, ".copywriter.", fullID, ".bins.txt", sep="" ) ),
                  sep="\t", row.names=FALSE, quote=FALSE,
                  col.names=c( "chrom", "maploc", donorID, "loc.start", "loc.end" ) )
 
@@ -109,14 +109,14 @@ postProcess <- function(destination.folder="./work/donor",
     colnames( tmp )[i] <- donorID
     write.table( tmp,
                  file=file.path( destination.folder, "out",
-                                 paste( mapper, ".copywriter.", fullID, "_gene_call.txt", sep="" ) ),
+                                 paste( mapper, ".copywriter.", fullID, ".gene_call.txt", sep="" ) ),
                  sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE )
     tmp <- geneCalls( segData, res, binSize=inputStructure$bin.size, type="log2", tx_obj=features )
     i   <- which( colnames( tmp ) == sampleName )
     colnames( tmp )[i] <- donorID
     write.table( tmp,
                  file=file.path( destination.folder, "out",
-                                 paste( mapper, ".copywriter.", fullID, "_gene_log2.txt", sep="" ) ),
+                                 paste( mapper, ".copywriter.", fullID, ".gene_log2.txt", sep="" ) ),
                  sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE )
 }
 
@@ -396,7 +396,7 @@ plotOneChrom <- function( binData, segData, chrLen,
         if( sum( genes$chromosome_name==myChrom ) > 0 ) {
             genes <- genes[genes$chromosome_name==myChrom,]
             genes$center <- 0.5*(genes$start_position + genes$end_position)
-            i            <- findInterval( genes$center, segData$loc.start )
+            i            <- min(max(findInterval( genes$center, segData$loc.start ), 1), nrow(segData))
             genes$ypos   <- segData$cropped[i]
                         
             points( genes$center, genes$ypos, pch=16, col=3 )

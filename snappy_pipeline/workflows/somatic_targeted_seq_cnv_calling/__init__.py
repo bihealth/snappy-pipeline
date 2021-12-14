@@ -740,7 +740,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 "gene_log2_txt": "gene_log2.txt",
                 "segments_txt": "segments.txt",
             }
-            tpl = "work/{mapper}.copywriter.{library_name}/out/{mapper}.copywriter.{library_name}_"
+            tpl = "work/{mapper}.copywriter.{library_name}/out/{mapper}.copywriter.{library_name}."
         output_files = {}
         for k, v in exts.items():
             output_files[k] = tpl + v

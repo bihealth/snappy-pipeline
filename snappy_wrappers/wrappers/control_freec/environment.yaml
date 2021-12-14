@@ -6,3 +6,4 @@ dependencies:
 - control-freec
 - sambamba
 - bcftools
+- samtools

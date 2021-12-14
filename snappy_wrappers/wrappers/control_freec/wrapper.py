@@ -2,14 +2,50 @@
 """CUBI+Snakemake wrapper code for Control-FreeC: Snakemake wrapper.py
 """
 
+import fnmatch
+
 from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
-window_str = ""
-w = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]["window_size"]
-if w >= 0:
-    window_str = "window = {}".format(w)
+cf_config = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]
+
+# Set parameters which depend on each other
+defaults = {
+    "contamination": "contaminationAdjustment = FALSE",
+    "mappability": "",
+    "window_size": ""
+}
+
+if "contamination" in cf_config and cf_config["contamination"] != "":
+    defaults["contamination"] = "contaminationAdjustment = TRUE\ncontamination = {}".format(cf_config["contamination"])
+
+if "path_mappability" in cf_config and cf_config["path_mappability"] != "":
+    defaults["mappability"] = "gemMappabilityFile = {}".format(cf_config["path_mappability"])
+    if "uniqueMatch" in cf_config and cf_config["uniqueMatch"]:
+        defaults["mappability"] += "\n" + "uniqueMatch = TRUE"
+
+if "coefficientOfVariation" in cf_config:
+    defaults["window_size"] = "coefficientOfVariation = {}".format(cf_config["coefficientOfVariation"])
+if "window_size" in cf_config and cf_config["window_size"] > 0:
+    defaults["window_size"] = "window = {}".format(cf_config["window_size"])
+    if "step" in cf_config and cf_config["step"] > 0:
+        defaults["window_size"] += "\n" + "step = {}".format(cf_config["step"])
+
+# Chromosome lengths without ignored chromosomes
+lines = []
+with open(snakemake.config["static_data_config"]["reference"]["path"] + ".fai", "rt") as f:
+    for line in f:
+        found = False
+        for ignored in cf_config["ignore_chroms"]:
+            if fnmatch.fnmatch(line[:line.index("\t")], ignored):
+                found = True
+                break
+        if not found:
+            lines.append(line.rstrip())
+lines = "\n".join(lines)
+
+print("DEBUG- snakemake.output = {}".format(snakemake.output), file=sys.stderr)
 
 shell.executable("/bin/bash")
 
@@ -45,47 +81,74 @@ export output_dir=$(dirname {snakemake.output.ratio})
 
 mkdir -p $TMPDIR/tmp.d
 
+cat << __EOF > $TMPDIR/tmp.d/chrLen.fa.fai
+{lines}
+__EOF
+
 cat <<EOF >$TMPDIR/tmp.d/freec.ini
 # http://boevalab.com/FREEC/tutorial.html
 [general]
 
-maxThreads = 16
-outputDir = $output_dir
+# Part 1: user control of algorithm
 
-## path to sambamba (faster BAM file reading)
-sambamba = sambamba
+breakPointThreshold = {cf_config[breakPointThreshold]}
 
-chrLenFile = {snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_chrlenfile]}
+chrLenFile = $TMPDIR/tmp.d/chrLen.fa.fai
+
+{defaults[contamination]}
+
+{defaults[mappability]}
+minMappabilityPerWindow = {cf_config[minMappabilityPerWindow]}
+
+minCNAlength = {cf_config[minCNAlength]}
+
+{defaults[window_size]}
+
+minExpectedGC = {cf_config[minExpectedGC]}
+maxExpectedGC = {cf_config[maxExpectedGC]}
+
+minimalSubclonePresence = {cf_config[minimalSubclonePresence]}
+
+readCountThreshold = {cf_config[readCountThreshold]}
+
+telocentromeric = {cf_config[telocentromeric]}
+
+
+# Part 2: Hard-coded defaults
+
 ploidy = 2
-
-breakPointThreshold = .8
-coefficientOfVariation = 0.05
-{window_str}
-
-# information from pathology review is that samples are at least 60% tumor tissue
-contaminationAdjustment = TRUE
-contamination = 0.4
-minimalSubclonePresence = 0.2
-
-numberOfProcesses = 4
-
-$(if [[ "{snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_mappability_enabled]}" == True ]]; then
-  echo gemMappabilityFile = {snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_mappability]};
-fi)
-
-uniqueMatch = TRUE
-forceGCcontentNormalization = 0
-
-minCNAlength = 2
-
-BedGraphOutput=TRUE
 
 # this makes CNV predictions on Gonosomes unreliable
 sex=XX
 
-# this sets the degree of polynomial; currently the step of estimating it seems to lead to a segmentation fault
-# degree=3
+breakPointType = 2
 
+forceGCcontentNormalization = 0
+
+intercept = 0
+
+noisyData = FALSE
+
+printNA = TRUE
+
+# this sets the degree of polynomial; currently the step of estimating it seems to lead to a segmentation fault
+degree = 3
+
+# chrFiles & GCcontentProfile not defined, GC correction using control sample
+# chrFiles = <missing>
+# GCcontentProfile = <missing>
+
+# Part 3: Resources & output
+maxThreads = 16
+outputDir = $output_dir
+
+BedGraphOutput = TRUE
+
+bedtools = bedtools
+sambamba = sambamba
+samtools = samtools
+
+SambambaThreards = 16
 
 [sample]
 mateFile = {snakemake.input.tumor_bam}
