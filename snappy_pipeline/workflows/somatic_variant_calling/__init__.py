@@ -92,7 +92,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 #: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
+EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5", ".full.vcf.gz", ".full.vcf.gz.tbi", ".full.vcf.gz.md5", ".full.vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
@@ -230,9 +230,9 @@ step_config:
       - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for MuTect 2
     mutect2:
-      panel_of_normals: ''      # Set path to panel of normals vcf if required
-      germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
-      common_variants: REQUIRED # Common germline variants for contamination estimation
+      panel_of_normals: ''      # Set path to panel of normals vcf if required (1000g_pon.hg38.vcf.gz)
+      germline_resource: REQUIRED # Germline variants resource (same as panel of normals, af-only-gnomad.hg38.vcf.gz)
+      common_biallelic: REQUIRED # Common biallelic germline variants for contamination estimation (small_exac_common_3.hg38.vcf.gz)
       # Parallelization configuration
       drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_cores: 2              # number of cores to use locally
@@ -372,7 +372,6 @@ step_config:
       min_freq_for_hom: 0.75
       p_value: 99e-02
 """
-
 
 class SomaticVariantCallingStepPart(BaseStepPart):
     """Base class for somatic variant calling step parts
@@ -651,7 +650,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             "pe": "smp 2",
         }
         cluster_config["somatic_variant_calling_mutect2_filter"] = {
-            "h_vmem": "8g",
+            "h_vmem": "16",
             "h_rt": "3:59:00",
             "pe": "smp 2",
         }
@@ -700,8 +699,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         )
         return result
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
+    def update_cluster_config(self, cluster_config):
         cluster_config["somatic_variant_calling_scalpel_run"] = {
             "mem": 5 * 1024 * 16,
             "time": "48:00",
@@ -739,8 +737,7 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
+    def update_cluster_config(self, cluster_config):
         cluster_config["somatic_variant_calling_strelka2_run"] = {
             "h_vmem": "4g",
             "h_rt": "24:00:00",
@@ -855,8 +852,7 @@ class VarscanJointStepPart(JointCallingStepPart):
 
     name = "varscan_joint"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
+    def update_cluster_config(self, cluster_config):
         cluster_config["somatic_variant_calling_varscan_joint_run"] = {
             "mem": 1024,
             "time": "48:00",
