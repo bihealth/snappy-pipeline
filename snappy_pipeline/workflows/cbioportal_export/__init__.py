@@ -72,7 +72,7 @@ step_config:
 """
 
 
-class cbioportalExportStepPart(BaseStepPart):
+class cbioportalExportStepPart(BaseStepPart):  # noqa: N801
     """Base class for gene expression quantifiers"""
 
     def __init__(self, parent):
@@ -140,7 +140,7 @@ class cbioportalExportStepPart(BaseStepPart):
                             yield sample_name, cnv_file_, exp_file_
 
 
-class cbioportalMetaFilesStepPart(cbioportalExportStepPart):
+class cbioportalMetaFilesStepPart(cbioportalExportStepPart):  # noqa: N801
     """Generate cbioportal meta data files"""
 
     name = "cbioportal_meta_files"
@@ -151,7 +151,7 @@ class cbioportalMetaFilesStepPart(cbioportalExportStepPart):
         yield from [os.path.join("work/upload", f) for f in META_FILES]
 
 
-class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
+class cbioportalClinicalDataStepPart(cbioportalExportStepPart):  # noqa: N801
     """Generate cbioportal patient data file"""
 
     name = "cbioportal_clinical_data"
@@ -167,7 +167,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
         return [sheet for sheet in sheets]
 
 
-class cbioportalCaseListsStepPart(cbioportalExportStepPart):
+class cbioportalCaseListsStepPart(cbioportalExportStepPart):  # noqa: N801
     """Generate cbioportal patient data file"""
 
     name = "cbioportal_case_lists"
@@ -178,7 +178,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         yield "sequenced", "work/upload/case_lists/all_cases_with_mutation_data.txt"
 
 
-class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
+class cbioportalVcf2MafStepPart(cbioportalExportStepPart):  # noqa: N801
     """Helper class for VCF2MAF step"""
 
     name = "cbioportal_vcf2maf"
@@ -243,7 +243,7 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
         }
 
 
-class cbioportalMafStepPart(cbioportalExportStepPart):
+class cbioportalMafStepPart(cbioportalExportStepPart):  # noqa: N801
     """Helper class to get all required maf files for cbioportal."""
 
     name = "cbioportal_maf"
@@ -292,7 +292,7 @@ class cbioportalMafStepPart(cbioportalExportStepPart):
                 )
 
 
-class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
+class cbioportalCnaFilesStepPart(cbioportalExportStepPart):  # noqa: N801
     """Generate cbioportal cna data files"""
 
     name = "cbioportal_cna_data"
@@ -310,7 +310,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         }
 
 
-class cbioportalZscoresStepPart(cbioportalExportStepPart):
+class cbioportalZscoresStepPart(cbioportalExportStepPart):  # noqa: N801
     """Generate a dataframe holding each biosample and the location of the CNV
     calling results and the expression quantification files"""
 
@@ -332,7 +332,7 @@ class cbioportalZscoresStepPart(cbioportalExportStepPart):
                 writer.writerow([sample_name, cnv_file, exp_file])
 
 
-class cbioportalExportWorkflow(BaseStep):
+class cbioportalExportWorkflow(BaseStep):  # noqa: N801
     """Perform cbioportal preparation"""
 
     name = "cbioportal_export"
@@ -402,16 +402,16 @@ class cbioportalExportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        RESULT_FILES = ("meta_study.txt",) + META_FILES + CLINICAL_DATA_FILES
+        result_files = ["meta_study.txt"] + META_FILES + CLINICAL_DATA_FILES
         if self.config["path_somatic_variant_filtration"]:
-            RESULT_FILES += ("data_mutation_extended.txt",)
-            RESULT_FILES += ("case_lists/all_cases_with_mutation_data.txt",)
+            result_files += ["data_mutation_extended.txt"]
+            result_files += ["case_lists/all_cases_with_mutation_data.txt"]
         if self.config["path_copy_number_step"]:
-            RESULT_FILES += CNA_DATA_FILES
+            result_files += CNA_DATA_FILES
         if self.config["path_gene_expression_quantification"]:
-            RESULT_FILES += ("data_expression_zscores.txt",)
+            result_files += ["data_expression_zscores.txt"]
 
-        yield from [os.path.join("work/upload", f) for f in RESULT_FILES]
+        yield from [os.path.join("work/upload", f) for f in result_files]
 
     def check_config(self):
         """Check config attributes for presence"""

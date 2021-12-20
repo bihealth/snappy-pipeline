@@ -428,19 +428,13 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 "call": ".gene_call.txt",
                 "segments": ".segments.txt",
                 "cns": ".cns.txt",
-                "cnr": ".cnr.txt"
+                "cnr": ".cnr.txt",
             }
-            results = {}
             for (name, value) in transform.items():
                 result[name] = self.base_path_out.format(var_caller=self.name, ext=value)
                 result[name + "_md5"] = result[name] + ".md5"
         elif action == "plot":
-            plot = {
-                "heatmap": ".heatmap.png",
-                "scatter": ".scatter.png",
-                "diagram": ".diagram.pdf"
-            }
-            results = {}
+            plot = {"heatmap": ".heatmap.png", "scatter": ".scatter.png", "diagram": ".diagram.pdf"}
             for (name, value) in plot.items():
                 result[name] = self.base_path_out.format(var_caller=self.name, ext=value)
                 result[name + "_md5"] = result[name] + ".md5"

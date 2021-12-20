@@ -92,7 +92,16 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 #: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5", ".full.vcf.gz", ".full.vcf.gz.tbi", ".full.vcf.gz.md5", ".full.vcf.gz.tbi.md5")
+EXT_VALUES = (
+    ".vcf.gz",
+    ".vcf.gz.tbi",
+    ".vcf.gz.md5",
+    ".vcf.gz.tbi.md5",
+    ".full.vcf.gz",
+    ".full.vcf.gz.tbi",
+    ".full.vcf.gz.md5",
+    ".full.vcf.gz.tbi.md5",
+)
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
@@ -373,6 +382,7 @@ step_config:
       p_value: 99e-02
 """
 
+
 class SomaticVariantCallingStepPart(BaseStepPart):
     """Base class for somatic variant calling step parts
 
@@ -615,9 +625,9 @@ class Mutect2StepPart(MutectBaseStepPart):
                 "segments_md5": ".segments.tbl.md5",
             }
         if action == "pileup_normal":
-            exts = {"pileup": ".normal.pileup", "pileup_md5": ".normal.pileup.md5"}
+            exts = {"pileup_normal": ".normal.pileup", "pileup_normal_md5": ".normal.pileup.md5"}
         if action == "pileup_tumor":
-            exts = {"pileup": ".tumor.pileup", "pileup_md5": ".tumor.pileup.md5"}
+            exts = {"pileup_tumor": ".tumor.pileup", "pileup_tumor_md5": ".tumor.pileup.md5"}
         output_files = {}
         for k, v in exts.items():
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)

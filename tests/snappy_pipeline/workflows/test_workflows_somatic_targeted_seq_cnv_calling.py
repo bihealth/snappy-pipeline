@@ -679,7 +679,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     # copywriter
     tpl = (
         "output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_{ext}"
+        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected += [
         tpl.format(i=i, t=t, ext=ext)

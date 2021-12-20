@@ -45,10 +45,10 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    get_ngs_library_folder_name,
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
-    get_ngs_library_folder_name,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"

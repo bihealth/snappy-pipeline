@@ -7,7 +7,9 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
-snappy_vcf_sort = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../scripts/snappy-vcf_sort")
+snappy_vcf_sort = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "../../../scripts/snappy-vcf_sort"
+)
 
 if snakemake.params["args"]["interval"]:
     cmd_fetch = "tabix --print-header {} {}".format(

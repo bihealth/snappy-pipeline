@@ -14,11 +14,13 @@ cf_config = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_
 defaults = {
     "contamination": "contaminationAdjustment = FALSE",
     "mappability": "",
-    "window_size": ""
+    "window_size": "",
 }
 
 if "contamination" in cf_config and cf_config["contamination"] != "":
-    defaults["contamination"] = "contaminationAdjustment = TRUE\ncontamination = {}".format(cf_config["contamination"])
+    defaults["contamination"] = "contaminationAdjustment = TRUE\ncontamination = {}".format(
+        cf_config["contamination"]
+    )
 
 if "path_mappability" in cf_config and cf_config["path_mappability"] != "":
     defaults["mappability"] = "gemMappabilityFile = {}".format(cf_config["path_mappability"])
@@ -26,7 +28,9 @@ if "path_mappability" in cf_config and cf_config["path_mappability"] != "":
         defaults["mappability"] += "\n" + "uniqueMatch = TRUE"
 
 if "coefficientOfVariation" in cf_config:
-    defaults["window_size"] = "coefficientOfVariation = {}".format(cf_config["coefficientOfVariation"])
+    defaults["window_size"] = "coefficientOfVariation = {}".format(
+        cf_config["coefficientOfVariation"]
+    )
 if "window_size" in cf_config and cf_config["window_size"] > 0:
     defaults["window_size"] = "window = {}".format(cf_config["window_size"])
     if "step" in cf_config and cf_config["step"] > 0:
@@ -38,7 +42,7 @@ with open(snakemake.config["static_data_config"]["reference"]["path"] + ".fai", 
     for line in f:
         found = False
         for ignored in cf_config["ignore_chroms"]:
-            if fnmatch.fnmatch(line[:line.index("\t")], ignored):
+            if fnmatch.fnmatch(line[: line.index("\t")], ignored):
                 found = True
                 break
         if not found:
