@@ -1452,7 +1452,8 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit.
-        self.ngs_library_to_kit = self.sub_steps["xhmm"].ngs_library_to_kit
+        sub_step_name = "xhmm" if "xhmm" in self.config["tools"] else "gcnv"
+        self.ngs_library_to_kit = self.sub_steps[sub_step_name].ngs_library_to_kit
         # Build dictionary with sample count per library kit
         _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
 
