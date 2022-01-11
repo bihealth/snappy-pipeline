@@ -11,6 +11,11 @@ common_biallelic = snakemake.config["step_config"]["somatic_variant_calling"]["m
     "common_biallelic"
 ]
 
+try:
+    output = snakemake.output.pileup_tumor
+except:
+    output = snakemake.output.pileup_normal
+
 shell.executable("/bin/bash")
 
 shell(
@@ -21,13 +26,13 @@ set -x
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty,.log.logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
@@ -39,7 +44,7 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/out
 
-out_base=$TMPDIR/out/$(basename {snakemake.output.pileup} .pileup)
+out_base=$TMPDIR/out/$(basename {output} .pileup)
 
 gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
     --input {snakemake.input.bam} \
@@ -54,7 +59,7 @@ pushd $TMPDIR && \
     done && \
     popd
 
-mkdir -p $(dirname {snakemake.output.pileup})
-mv $out_base.* $(dirname {snakemake.output.pileup})
+mkdir -p $(dirname {output})
+mv $out_base.* $(dirname {output})
 """
 )
