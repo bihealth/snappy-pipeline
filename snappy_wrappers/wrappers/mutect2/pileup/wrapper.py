@@ -32,7 +32,7 @@ if [[ -n "{snakemake.log.log}" ]]; then
         exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty,.log.logging disabled" >"{snakemake.log.log}"
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
