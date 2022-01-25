@@ -2,7 +2,7 @@ channels:
 - conda-forge
 - bioconda
 - r
-- http://cubi-conda.bihealth.org/cubiconda/
+- http://conda.cubi.bihealth.org/cubiconda/
 dependencies:
 - netmhccons ==1.1a
 - epitoper ==0.3
