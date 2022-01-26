@@ -739,7 +739,8 @@ class GcnvStepPart(BaseStepPart):
 
     def get_params(self, action):
         """
-        :param action: Action (i.e., step) in the workflow. Currently only available for 'model'.
+        :param action: Action (i.e., step) in the workflow. Currently available for:
+        'ploidy-model', 'model', and 'postgermline_models'.
         :type action: str
 
         :return: Returns input function for gCNV rule based on inputted action.
@@ -809,8 +810,8 @@ class GcnvStepPart(BaseStepPart):
     def _get_params_postgermline_models(self, wildcards):
         """Get post germline model parameters.
 
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
-        (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
+        (e.g., 'P001-N1-DNA1-WGS1').
         :type wildcards: snakemake.io.Wildcards
 
         :return: Returns model parameters dictionary if analysis type is 'case_mode';
