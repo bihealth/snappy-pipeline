@@ -76,7 +76,7 @@ rule cbioportal_export_meta_files:
 
 rule cbioportal_export_patient_metadata:
     output:
-        **wf. get_output_files('cbioportal_clinical_data','run'),
+        **wf.get_output_files('cbioportal_clinical_data','run'),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -85,7 +85,7 @@ rule cbioportal_export_patient_metadata:
 
 rule cbioportal_export_case_lists:
     output:
-        **wf. get_output_files('cbioportal_case_lists','run'),
+        **wf.get_output_files('cbioportal_case_lists','run'),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -99,9 +99,9 @@ rule cbioportal_export_case_lists:
 
 rule cbioportal_export_generate_mafs:
     input:
-        **wf. get_input_files('cbioportal_vcf2maf','run'),
+        **wf.get_input_files('cbioportal_vcf2maf','run'),
     output:
-        **wf. get_output_files('cbioportal_vcf2maf','run'),
+        **wf.get_output_files('cbioportal_vcf2maf','run'),
     params:
         args=wf.substep_dispatch("cbioportal_vcf2maf", "get_args", "run"),
     wrapper:
@@ -113,7 +113,7 @@ rule cbioportal_export_generate_mafs:
 
 rule cbioportal_export_concatenate_maf:
     input:
-        * wf.get_input_files("cbioportal_maf", "run"),
+        wf.get_input_files("cbioportal_maf", "run"),
     output:
         "work/upload/data_mutation_extended.txt",
     shell:

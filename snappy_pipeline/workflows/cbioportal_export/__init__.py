@@ -50,24 +50,22 @@ step_config:
     path_copy_number_step: ../somatic_targeted_seq_cnv_calling              # Set to '' for panels, and change for WGS
     # Select tools & filter set
     cnv_tool: copywriter                                                    # Other option: cnvkit, Control_FREEC (unsupported)
-    tools_somatic_variant_calling: [ "mutect" ]                             # Possibly scalpel, mutect2, strelka2
+    tools_somatic_variant_calling: [ "mutect2" ]                            # Possibly scalpel, mutect2, strelka2
     filter_set: dkfz_only                                                   # Possibly dkfz_and_ebfilter, dkfz_and_ebfilter_and_oxog, ...
     exclude_variant_with_flag: LowFisherScore  # REQUIRED
     # Additional parameters
     vep_data_path: REQUIRED   # Variant Effect Predictor DB for vcf -> maf conversion, must match genome release
-    filter_vcf: REQUIRED      # Common germline variants for vcf -> maf conversion, must match genome release
+    species: homo_sapiens     # Genus_species
     ncbi_build: GRCh37
+    # filter_vcf: ~             # For GRCh37, vcf2map recommends using ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz, filter not available for other genomes
+    cache_version: ~          # Taken from the vep version
+    vep_custom: ~             # Custom choice of representative transcript
     # Description of dataset in cBioPortal
     type_of_cancer: REQUIRED # REQUIRED
     cancer_study_id: REQUIRED # REQUIRED
     study_description: REQUIRED # REQUIRED
     study_name: REQUIRED # REQUIRED
     study_name_short: REQUIRED # REQUIRED
-    ncbi_build: GRCh37
-    cache_version: 100
-    vep_data_path: REQUIRED
-    filter_vcf: REQUIRED
-    tools_somatic_variant_calling: []
 
 """
 
@@ -92,7 +90,7 @@ class cbioportalExportStepPart(BaseStepPart):  # noqa: N801
         if action == "get_zscores_input":
             gene_expression = self.parent.sub_workflows.get("gene_expression_quantification")
 
-        cnv_tpl = "output/{mapper}.{tool}.{library_name}/out/{mapper}.{tool}.{library_name}_"
+        cnv_tpl = "output/{mapper}.{tool}.{library_name}/out/{mapper}.{tool}.{library_name}."
         exp_tpl = "output/{mapper}.{tool}.{library_name}/out/{mapper}.{tool}.{library_name}.tsv"
 
         for sheet in filter(is_not_background, self.parent.sheets):
@@ -148,7 +146,12 @@ class cbioportalMetaFilesStepPart(cbioportalExportStepPart):  # noqa: N801
     @listify
     def get_output_files(self, action):
         assert action == "run"
-        yield from [os.path.join("work/upload", f) for f in META_FILES]
+        for f in META_FILES:
+            if not self.config["path_gene_expression_quantification"] and f == "meta_expression_zscores.txt":
+                continue
+            if not self.config["path_copy_number_step"] and (f == "meta_CNA_gistic.txt" or f == "meta_CNA_gistic.txt" or f == "meta_CNA_gistic.txt"):
+                continue
+            yield os.path.join("work/upload", f)
 
 
 class cbioportalClinicalDataStepPart(cbioportalExportStepPart):  # noqa: N801
@@ -176,6 +179,8 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):  # noqa: N801
     def get_output_files(self, action):
         assert action == "run"
         yield "sequenced", "work/upload/case_lists/all_cases_with_mutation_data.txt"
+        if self.config["path_copy_number_step"]:
+            yield "cna", "work/upload/case_lists/all_cases_with_cna_data.txt"
 
 
 class cbioportalVcf2MafStepPart(cbioportalExportStepPart):  # noqa: N801
@@ -402,14 +407,17 @@ class cbioportalExportWorkflow(BaseStep):  # noqa: N801
 
     @listify
     def get_result_files(self):
-        result_files = ["meta_study.txt"] + META_FILES + CLINICAL_DATA_FILES
+        result_files = ["meta_study.txt"] + list(CLINICAL_DATA_FILES)
         if self.config["path_somatic_variant_filtration"]:
-            result_files += ["data_mutation_extended.txt"]
+            result_files += ["meta_mutation_extended.txt", "data_mutation_extended.txt"]
             result_files += ["case_lists/all_cases_with_mutation_data.txt"]
         if self.config["path_copy_number_step"]:
-            result_files += CNA_DATA_FILES
+            result_files += ["meta_CNA_gistic.txt", "data_CNA_gistic.txt"]
+            result_files += ["meta_CNA_log2.txt", "data_CNA_log2.txt"]
+            result_files += ["meta_segment.txt", "data_segment.txt"]
+            result_files += ["case_lists/all_cases_with_cna_data.txt"]
         if self.config["path_gene_expression_quantification"]:
-            result_files += ["data_expression_zscores.txt"]
+            result_files += ["meta_expression_zscores", "data_expression_zscores.txt"]
 
         yield from [os.path.join("work/upload", f) for f in result_files]
 
