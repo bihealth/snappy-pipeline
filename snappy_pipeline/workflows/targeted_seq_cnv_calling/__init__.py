@@ -1413,8 +1413,15 @@ class GcnvStepPart(BaseStepPart):
 
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for gCNV CNV calling"""
+        high_resource_action = [
+            "call_cnvs_cohort_mode",
+            "call_cnvs_case_mode",
+            "post_germline_calls",
+            "post_germline_calls_cohort_mode",
+            "post_germline_calls_case_mode",
+        ]
         for action in self.actions:
-            if action in ("call_cnvs", "post_germline_calls"):
+            if action in high_resource_action:
                 cluster_config["targeted_seq_cnv_calling_gcnv_{}".format(action)] = {
                     "mem": 12 * int(3.75 * 1024),
                     "time": "48:00",
