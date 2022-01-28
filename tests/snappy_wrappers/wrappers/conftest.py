@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 
-import pytest
 import yaml
 
 FORCE_RUN = os.environ.get("FORCE_RUN", "false") == "true"
@@ -22,13 +21,6 @@ if FORCE_RUN or DIFF_MASTER or DIFF_LAST_COMMIT:
 
 #: Allow running containerized (local only).
 CONTAINERIZED = os.environ.get("CONTAINERIZED", "false") == "true"
-
-
-class Skipped(Exception):
-    pass
-
-
-skip_if_not_modified = pytest.mark.xfail(raises=Skipped)
 
 
 def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):

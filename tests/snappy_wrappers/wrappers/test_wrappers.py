@@ -1,7 +1,11 @@
-from .conftest import run_workflow, skip_if_not_modified
+import pytest
+
+from .conftest import run_workflow
+
+skip = pytest.mark.xfail(run=False)
 
 
-@skip_if_not_modified
+@skip
 def test_bwa_mem(tmpdir):
     run_workflow(
         "snappy_wrappers/wrappers/bwa",
