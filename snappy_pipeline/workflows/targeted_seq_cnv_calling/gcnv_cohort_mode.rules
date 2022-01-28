@@ -1,7 +1,7 @@
 # gCNV with COHORT MODE - build model.
 
 
-rule targeted_seq_cnv_calling_gcnv_call_cnvs:
+rule targeted_seq_cnv_calling_gcnv_call_cnvs_cohort_mode:
     input:
         unpack(wf.get_input_files("gcnv", "call_cnvs_cohort_mode")),
     output:

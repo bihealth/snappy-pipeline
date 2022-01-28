@@ -36,7 +36,7 @@ rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
         wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 
 
-rule targeted_seq_cnv_calling_gcnv_call_cnvs:
+rule targeted_seq_cnv_calling_gcnv_call_cnvs_case_mode:
     input:
         unpack(wf.get_input_files("gcnv", "call_cnvs_case_mode")),
     output:
@@ -49,7 +49,7 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs:
         wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
 
-rule targeted_seq_cnv_calling_gcnv_post_germline_calls:
+rule targeted_seq_cnv_calling_gcnv_post_germline_calls_case_mode:
     input:
         unpack(wf.get_input_files("gcnv", "post_germline_calls_case_mode")),
     output:
