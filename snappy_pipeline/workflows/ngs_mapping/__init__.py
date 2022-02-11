@@ -1131,9 +1131,11 @@ class NgsMappingWorkflow(BaseStep):
             )
         )
 
+        target_coverage = False
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 if ngs_library.name in self.ngs_library_to_kit:
+                    target_coverage = True
                     extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
                     suffix = (
                         "_long"
@@ -1149,8 +1151,9 @@ class NgsMappingWorkflow(BaseStep):
                         ngs_library=[ngs_library],
                         ext=["txt", "txt.md5"],
                     )
-        yield "output/target_cov_report/out/target_cov_report.txt"
-        yield "output/target_cov_report/out/target_cov_report.txt.md5"
+        if target_coverage:
+            yield "output/target_cov_report/out/target_cov_report.txt"
+            yield "output/target_cov_report/out/target_cov_report.txt.md5"
         if (
             self.config["picard_hs_metrics"]["path_targets_interval_list"]
             and self.config["picard_hs_metrics"]["path_baits_interval_list"]
