@@ -254,7 +254,7 @@ def test_mutect2_step_part_get_output_files(somatic_variant_calling_workflow):
     assert actual == expected
 
 
-def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
+def test_mutect2_step_part_get_log_file(somatic_variant_calling_workflow):
     # Define expected
     expected = get_expected_log_files_dict(
         base_out="work/{mapper}.mutect2.{tumor_library}/log/{mapper}.mutect2.{tumor_library}"
@@ -264,10 +264,10 @@ def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
     assert actual == expected
 
 
-def test_scalpel_step_part_update_cluster_config(
+def test_mutect2_step_part_update_cluster_config(
     somatic_variant_calling_workflow, dummy_cluster_config
 ):
-    actual = set(dummy_cluster_config["somatic_variant_calling_scalpel_run"].keys())
+    actual = set(dummy_cluster_config["somatic_variant_calling_mutect2_run"].keys())
     expected = {"mem", "time", "ntasks"}
     assert actual == expected
 

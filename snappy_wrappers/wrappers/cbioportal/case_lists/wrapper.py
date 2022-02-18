@@ -12,7 +12,7 @@ def write_case_list(
     category="all_cases_with_mutation_data",
     stable_id_suffix="sequenced",
     name="Sequenced tumors",
-    description="Sequenced tumor samples"
+    description="Sequenced tumor samples",
 ):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""
     samples = []
@@ -51,7 +51,7 @@ write_case_list(
     category="all_cases_with_mutation_data",
     stable_id_suffix="sequenced",
     name="Sequenced tumors",
-    description="Sequenced tumor samples"
+    description="Sequenced tumor samples",
 )
 if snakemake.config["step_config"]["cbioportal_export"]["path_copy_number_step"]:
     write_case_list(
@@ -61,5 +61,5 @@ if snakemake.config["step_config"]["cbioportal_export"]["path_copy_number_step"]
         category="all_cases_with_cna_data",
         stable_id_suffix="cna",
         name="Tumors with CNA data",
-        description="Tumor samples with Copy Number Alteration data"
+        description="Tumor samples with Copy Number Alteration data",
     )

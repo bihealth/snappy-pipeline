@@ -147,9 +147,16 @@ class cbioportalMetaFilesStepPart(cbioportalExportStepPart):  # noqa: N801
     def get_output_files(self, action):
         assert action == "run"
         for f in META_FILES:
-            if not self.config["path_gene_expression_quantification"] and f == "meta_expression_zscores.txt":
+            if (
+                not self.config["path_gene_expression_quantification"]
+                and f == "meta_expression_zscores.txt"
+            ):
                 continue
-            if not self.config["path_copy_number_step"] and (f == "meta_CNA_gistic.txt" or f == "meta_CNA_gistic.txt" or f == "meta_CNA_gistic.txt"):
+            if not self.config["path_copy_number_step"] and (
+                f == "meta_CNA_gistic.txt"
+                or f == "meta_CNA_gistic.txt"
+                or f == "meta_CNA_gistic.txt"
+            ):
                 continue
             yield os.path.join("work/upload", f)
 

@@ -53,13 +53,13 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (
+from snappy_pipeline.workflows.abstract import (   # noqa: I101
     BaseStep,
     BaseStepPart,
-    get_ngs_library_folder_name,
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 

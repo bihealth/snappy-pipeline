@@ -11,10 +11,9 @@ common_biallelic = snakemake.config["step_config"]["somatic_variant_calling"]["m
     "common_biallelic"
 ]
 
-try:
-    output = snakemake.output.pileup_tumor
-except:
-    output = snakemake.output.pileup_normal
+output = getattr(snakemake.output, "pileup_tumor", None)
+if not output:
+    output = getattr(snakemake.output, "pileup_normal")
 
 shell.executable("/bin/bash")
 

@@ -46,7 +46,10 @@ fi
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
 if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
-    filter='FILTER ~ "germline" || FILTER ~ "weak_evidence" || FILTER ~ "OffExome" || ANN ~ "stream_gene_variant"'
+    filter="FILTER ~ \"germline\" \
+        || FILTER ~ \"weak_evidence\" \
+        || FILTER ~ \"OffExome\" \
+        || ANN ~ \"stream_gene_variant\""
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \

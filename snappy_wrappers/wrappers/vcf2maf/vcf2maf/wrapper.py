@@ -15,7 +15,7 @@ step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 
-# Extract cache version: from user config, otherwise from vep version, otherwise from data path 
+# Extract cache version: from user config, otherwise from vep version, otherwise from data path
 cache_version = None
 if not cache_version:
     if "cache_version" in config and config["cache_version"] != "":
