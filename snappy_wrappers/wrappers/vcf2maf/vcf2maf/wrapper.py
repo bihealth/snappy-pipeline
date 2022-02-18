@@ -2,11 +2,10 @@
 """Wrapper for running VCF2MAF incl VEP variant annotation
 """
 
+from pathlib import Path
 import pprint
 import re
 import shutil
-
-from pathlib import Path
 
 from snakemake.shell import shell
 

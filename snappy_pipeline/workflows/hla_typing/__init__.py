@@ -61,13 +61,13 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (
+from snappy_pipeline.workflows.abstract import (  # noqa: I101
     BaseStep,
     BaseStepPart,
-    get_ngs_library_folder_name,
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    get_ngs_library_folder_name,
 )
 
 #: Extensions of files to create as main payload
