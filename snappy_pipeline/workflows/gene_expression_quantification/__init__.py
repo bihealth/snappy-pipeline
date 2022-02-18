@@ -53,7 +53,7 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (   # noqa: I101
+from snappy_pipeline.workflows.abstract import (  # noqa: I101
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
