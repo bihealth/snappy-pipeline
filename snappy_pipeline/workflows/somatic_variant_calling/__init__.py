@@ -640,8 +640,27 @@ class Mutect2StepPart(MutectBaseStepPart):
         return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
 
     def get_output_files(self, action):
-        assert action in self.actions
+        """Get output function for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected output files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         exts = {}
+        output_files = {}
+
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Set expected extensions based on action
         if action == "run":
             exts = {
                 "raw": ".raw.vcf.gz",
@@ -675,7 +694,8 @@ class Mutect2StepPart(MutectBaseStepPart):
             exts = {"pileup": ".normal.pileup", "pileup_md5": ".normal.pileup.md5"}
         if action == "pileup_tumor":
             exts = {"pileup": ".tumor.pileup", "pileup_md5": ".tumor.pileup.md5"}
-        output_files = {}
+
+        # Define output dictionary
         for k, v in exts.items():
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files

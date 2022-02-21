@@ -71,6 +71,12 @@ def mutect2_input_base_name():
 
 
 @pytest.fixture
+def mutect2_output_base_name():
+    """Returns base path used in input methods, requires only file extension addition."""
+    return "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}"
+
+
+@pytest.fixture
 def somatic_variant_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -239,30 +245,90 @@ def test_mutect2_pileup_tumor_step_part_get_input_files(
     assert actual == expected
 
 
-# def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
-#     """Tests file structure associated with `mutect` run in the Somatic Variant Calling Workflow."""
-#     # Define expected
-#     base_name_out = "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}"
-#     expected = {
-#         "tbi": base_name_out + ".vcf.gz.tbi",
-#         "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-#         "vcf": base_name_out + ".vcf.gz",
-#         "vcf_md5": base_name_out + ".vcf.gz.md5",
-#         "full_tbi": base_name_out + ".full.vcf.gz.tbi",
-#         "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
-#         "full": base_name_out + ".full.vcf.gz",
-#         "full_md5": base_name_out + ".full.vcf.gz.md5",
-#         "txt": base_name_out + ".txt",
-#         "txt_md5": base_name_out + ".txt.md5",
-#         "wig": base_name_out + ".wig",
-#         "wig_md5": base_name_out + ".wig.md5",
-#     }
-#     # Get actual
-#     actual = somatic_variant_calling_workflow.get_output_files("mutect", "run")
-#
-#     assert actual == expected
-#
-#
+def test_mutect2_run_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - run"""
+    # Define expected
+    expected = {
+        "raw": mutect2_output_base_name + ".raw.vcf.gz",
+        "raw_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
+        "raw_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
+        "raw_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
+        "stats": mutect2_output_base_name + ".raw.vcf.stats",
+        "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
+        "f1r2": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz",
+        "f1r2_md5": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    assert actual == expected
+
+
+def test_mutect2_filter_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - filter"""
+    # Define expected
+    expected = {
+        "full": mutect2_output_base_name + ".full.vcf.gz",
+        "full_md5": mutect2_output_base_name + ".full.vcf.gz.md5",
+        "full_tbi": mutect2_output_base_name + ".full.vcf.gz.tbi",
+        "full_tbi_md5": mutect2_output_base_name + ".full.vcf.gz.tbi.md5",
+        "vcf": mutect2_output_base_name + ".vcf.gz",
+        "vcf_md5": mutect2_output_base_name + ".vcf.gz.md5",
+        "tbi": mutect2_output_base_name + ".vcf.gz.tbi",
+        "tbi_md5": mutect2_output_base_name + ".vcf.gz.tbi.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "filter")
+    assert actual == expected
+
+
+def test_mutect2_contamination_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - contamination"""
+    # Define expected
+    expected = {
+        "table": mutect2_output_base_name + ".contamination.tbl",
+        "table_md5": mutect2_output_base_name + ".contamination.tbl.md5",
+        "segments": mutect2_output_base_name + ".segments.tbl",
+        "segments_md5": mutect2_output_base_name + ".segments.tbl.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "contamination")
+    assert actual == expected
+
+
+def test_mutect2_pileup_normal_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - pileup_normal"""
+    # Define expected
+    expected = {
+        "pileup": mutect2_output_base_name + ".normal.pileup",
+        "pileup_md5": mutect2_output_base_name + ".normal.pileup.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "pileup_normal")
+    assert actual == expected
+
+
+def test_mutect2_pileup_tumor_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - pileup_tumor"""
+    # Define expected
+    expected = {
+        "pileup": mutect2_output_base_name + ".tumor.pileup",
+        "pileup_md5": mutect2_output_base_name + ".tumor.pileup.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "pileup_tumor")
+    assert actual == expected
+
+
 # def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
 #     # Define expected
 #     base_name_out = "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}"
