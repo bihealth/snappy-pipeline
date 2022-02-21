@@ -822,16 +822,15 @@ class WgsSvCallingWorkflow(BaseStep):
                     )
                     continue
                 ngs_library = pedigree.index.dna_ngs_library
+                seq_platform = ngs_library.extra_infos["seqPlatform"].lower()
+                library_type = ngs_library.extra_infos["libraryType"].lower()
                 if not ngs_library:
                     msg = "WARNING: index of pedigree has no NGS library (names: {})"
                     print(
                         msg.format(list(sorted(d.name for d in pedigree.donors))), file=sys.stderr
                     )
                     continue
-                if (
-                    ngs_library.extra_infos["libraryType"] != "WGS"
-                    or ngs_library.extra_infos["seqPlatform"] != "Illumina"
-                ):
+                if library_type != "wgs" or seq_platform != "illumina":
                     continue  # not WGS or no long read
                 yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
 
