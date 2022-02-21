@@ -640,7 +640,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
 
     def get_output_files(self, action):
-        """Get output function for Mutect2 rules.
+        """Get output files for Mutect2 rules.
 
         :param action: Action (i.e., step) in the workflow.
         :type action: str
@@ -701,20 +701,40 @@ class Mutect2StepPart(MutectBaseStepPart):
         return output_files
 
     def get_log_file(self, action):
-        assert action in self.actions
+        """Get log files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected log files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         postfix = ""
-        if action != "run":
-            postfix = "." + action
-        prefix = (
-            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
-        ).format(var_caller=self.__class__.name, postfix=postfix)
+        log_files = {}
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
-        log_files = {}
+
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Set expected format based on action
+        if action != "run":
+            postfix = "." + action
+        prefix = (
+            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
+            "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
+        ).format(var_caller=self.name, postfix=postfix)
+
+        # Define output dictionary
         for key, ext in key_ext:
             log_files[key] = prefix + ext
             log_files[key + "_md5"] = prefix + ext + ".md5"

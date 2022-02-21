@@ -77,6 +77,12 @@ def mutect2_output_base_name():
 
 
 @pytest.fixture
+def mutect2_log_base_name():
+    """Returns base path used in log methods, requires only file extension addition."""
+    return "work/{mapper}.mutect2.{tumor_library}/log/{mapper}.mutect2.{tumor_library}"
+
+
+@pytest.fixture
 def somatic_variant_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -329,22 +335,87 @@ def test_mutect2_pileup_tumor_step_part_get_output_files(
     assert actual == expected
 
 
-# def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
-#     # Define expected
-#     base_name_out = "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}"
-#     expected = get_expected_log_files_dict(base_out=base_name_out)
-#     # Get actual
-#     actual = somatic_variant_calling_workflow.get_log_file("mutect", "run")
-#
-#     assert actual == expected
-#
-#
-# def test_mutect_step_part_update_cluster_config(
-#     somatic_variant_calling_workflow, dummy_cluster_config
-# ):
-#     actual = set(dummy_cluster_config["somatic_variant_calling_mutect_run"].keys())
-#     expected = {"mem", "time", "ntasks"}
-#     assert actual == expected
+def test_mutect2_run_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - run"""
+    # Define expected
+    expected = get_expected_log_files_dict(base_out=mutect2_log_base_name)
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "run")
+    assert actual == expected
+
+
+def test_mutect2_filter_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - filter"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".filter.log",
+        "log_md5": mutect2_log_base_name + ".filter.log.md5",
+        "conda_info": mutect2_log_base_name + ".filter.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".filter.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".filter.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".filter.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "filter")
+    assert actual == expected
+
+
+def test_mutect2_contamination_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - contamination"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".contamination.log",
+        "log_md5": mutect2_log_base_name + ".contamination.log.md5",
+        "conda_info": mutect2_log_base_name + ".contamination.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".contamination.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".contamination.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".contamination.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "contamination")
+    assert actual == expected
+
+
+def test_mutect2_pileup_normal_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - pileup_normal"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".pileup_normal.log",
+        "log_md5": mutect2_log_base_name + ".pileup_normal.log.md5",
+        "conda_info": mutect2_log_base_name + ".pileup_normal.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".pileup_normal.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".pileup_normal.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".pileup_normal.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "pileup_normal")
+    assert actual == expected
+
+
+def test_mutect2_pileup_tumor_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - pileup_tumor"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".pileup_tumor.log",
+        "log_md5": mutect2_log_base_name + ".pileup_tumor.log.md5",
+        "conda_info": mutect2_log_base_name + ".pileup_tumor.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".pileup_tumor.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".pileup_tumor.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".pileup_tumor.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "pileup_tumor")
+    assert actual == expected
 
 
 # Tests for ScalpelStepPart ----------------------------------------------------------------------
