@@ -378,7 +378,7 @@ class ParallelBaseWrapper:
     #: don't go further into config dict).
     tool_name = None
     #: The token to use for job names and temporary directories.  Constructed from ``step_name``
-    #: and ``tool_name`` if not specified explicitely here.
+    #: and ``tool_name`` if not specified explicitly here.
     job_name_token = None
     #: The number of bases to pad the parallelization windows with.
     window_padding = 0
@@ -578,7 +578,8 @@ class ParallelBaseWrapper:
         """Construct rule for merging chunks."""
         raise NotImplementedError("Override me!")
 
-    def construct_epilogue(self):
+    @staticmethod
+    def construct_epilogue():
         """Return epilogue for Snakefile, default is to return empty string"""
         return ""
 
