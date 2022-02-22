@@ -112,32 +112,65 @@ class JobDescription:
 
 
 def kib(num):
-    """Return number of bytes for num KiB"""
-    return num * 1024
+    """Convert kilobytes to bytes.
+
+    :param num: Number of kilobytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of kilobytes.
+    """
+    return int(num) * 1024
 
 
 def mib(num):
-    """Return number of bytes for num MiB"""
-    return int(num * 1024 * 1024)
+    """Convert megabytes to bytes.
+
+    :param num: Number of megabytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of megabytes.
+    """
+    return int(num) * 1024 * 1024
 
 
 def gib(num):
-    """Return number of bytes for num GiB"""
-    return int(num * 1024 * 1024 * 1024)
+    """Convert gigabytes to bytes.
+
+    :param num: Number of gigabytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of gigabytes.
+    """
+    return int(num) * 1024 * 1024 * 1024
 
 
 def minutes(num):
-    """Return ``datetime.timedelta`` for ``num`` minutes"""
+    """Get Timedelta for minutes.
+
+    :param num: Number of minutes.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` for ``num`` minutes.
+    """
     return datetime.timedelta(minutes=num)
 
 
 def hours(num):
-    """Return ``datetime.timedelta`` for ``num`` hours"""
+    """Get Timedelta for hours.
+
+    :param num: Number of hours.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` for ``num`` hours.
+    """
     return datetime.timedelta(hours=num)
 
 
 def days(num):
-    """Return ``datetime.timedelta`` for ``num`` days"""
+    """Get Timedelta for days.
+
+    :param num: Number of days.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` for ``num`` days.
+    """
     return datetime.timedelta(days=num)
 
 
