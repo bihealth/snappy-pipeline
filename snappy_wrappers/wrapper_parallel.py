@@ -374,22 +374,59 @@ class ParallelBaseWrapper:
         return self.snakemake.config["step_config"][self.step_name]
 
     def get_job_mult_memory(self):
+        """Get job memory multiplier.
+
+        :return: Returns job memory multiplier, as defined in the provided config. If not defined,
+        the default is 1.
+        """
         return self._get_config().get("job_mult_memory", 1)
 
     def get_job_mult_time(self):
+        """Get job running time multiplier.
+
+        :return: Returns job running time multiplier, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("job_mult_time", 1)
 
     def get_merge_mult_memory(self):
+        """Get job running memory for merger.
+
+        :return: Returns job memory multiplier for merger, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("merge_mult_memory", 1)
 
     def get_merge_mult_time(self):
+        """Get job running time multiplier for merger.
+
+        :return: Returns job running time multiplier for merger, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("merge_mult_time", 1)
 
     def get_window_length(self):
-        return self._get_config()["window_length"]
+        """Get window length.
+
+        :return: Returns window length, as defined in the configuration.
+        :raises KeyError: if window_length not defined in the configuration.
+        """
+        try:
+            return self._get_config()["window_length"]
+        except KeyError:
+            error_msg = (
+                "No default available for 'window_length', it must be defined in configuration."
+            )
+            self.logger.error(error_msg)
+            raise
 
     def get_ignore_chroms(self):
-        return self._get_config()["ignore_chroms"]
+        """Get list of ignored chromosomes.
+
+        :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
+        If not defined, the default is an empty list.
+        """
+        return self._get_config().get("ignore_chroms", [])
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
