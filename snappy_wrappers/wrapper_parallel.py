@@ -416,6 +416,11 @@ class ParallelBaseWrapper:
     window_padding = 0
 
     def __init__(self, snakemake):
+        """Constructor.
+
+        :param snakemake: Reference to ``snakemake`` object from ``wrapper.py``.
+        :type snakemake: snakemake.script.Snakemake
+        """
         #: Reference to ``snakemake`` object from ``wrapper.py``.
         self.snakemake = snakemake
         #: Base directory to wrappers
