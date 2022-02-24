@@ -8,6 +8,8 @@ from snakemake.script import Snakemake
 from snappy_wrappers.genome_regions import GenomeRegion
 from snappy_wrappers.wrapper_parallel import (
     ParallelSomaticVariantCallingBaseWrapper,
+    ResourceUsage,
+    SgeResourceUsageConverter,
     days,
     gib,
     hours,
@@ -180,6 +182,16 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
 
 
 @pytest.fixture
+def resource_usage():
+    """Returns ResourceUsage object."""
+    return ResourceUsage(
+        cores=2,
+        memory=gib(1.0),
+        duration=hours(3),
+    )
+
+
+@pytest.fixture
 def fake_parallel_wrapper(snakemake_obj, somatic_variant_fake_fs, mocker):
     """Returns FakeParallelMutect2Wrapper object."""
     # Patch out file-system
@@ -284,6 +296,29 @@ def test_days():
     for input_, expected in expected_dict.items():
         actual = str(days(input_))
         assert actual == expected
+
+
+# Test SgeResourceUsageConverter  ------------------------------------------------------------------
+
+
+def test_sge_resource_usage_converter_to_qsub_args(resource_usage):
+    """Tests SgeResourceUsageConverter.to_qsub_args()"""
+    sge_converter = SgeResourceUsageConverter(res_usage=resource_usage)
+    # Define expected
+    expected = ["--ntasks=2", "--time=03:00", "--mem=1024"]
+    # Get actual and assert
+    actual = sge_converter.to_qsub_args()
+    assert actual == expected
+
+
+def test_sge_resource_usage_converter_to_res_dict(resource_usage):
+    """Tests SgeResourceUsageConverter.to_res_dict()"""
+    sge_converter = SgeResourceUsageConverter(res_usage=resource_usage)
+    # Define expected
+    expected = {"ntasks": 2, "time": "03:00", "mem": 1024}
+    # Get actual and assert
+    actual = sge_converter.to_res_dict()
+    assert actual == expected
 
 
 # Test ParallelBaseWrapper   -----------------------------------------------------------------------

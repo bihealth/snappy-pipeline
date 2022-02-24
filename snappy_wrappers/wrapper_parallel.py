@@ -177,7 +177,24 @@ def days(num):
 class ResourceUsage:
     """Representation of resource usage for a job"""
 
-    def __init__(self, cores=1, memory=mib(100), duration=hours(1), nodes=1, more={}):
+    def __init__(self, cores=1, memory=mib(100), duration=hours(1), nodes=1, more=None):
+        """Constructor.
+
+        :param cores: Number of cores to reserve. Default: 1.
+        :type cores: int
+
+        :param memory: Maximal memory to use in total (in bytes). Default: 102,400.
+        :type memory: int
+
+        :param duration: Maximal duration of execution. Default: 1 hour.
+        :type duration: int
+
+        :param nodes: Number of nodes to use. Default: 1.
+        :type nodes: int
+
+        :param more: Other resources usage.
+        :type more: dict
+        """
         #: number of cores to reserve
         self.cores = cores
         #: maximal memory to use in total (in bytes)
@@ -187,7 +204,7 @@ class ResourceUsage:
         #: number of nodes to use
         self.nodes = nodes
         #: other resource usages
-        self.more = dict(more)
+        self.more = dict(more) if more else dict()
 
     def __str__(self):
         tpl = "ResourceUsage(cores={}, memory={}, duration={}, " "nodes={}, more={})"
@@ -204,6 +221,11 @@ class ResourceUsageConverter:
     """
 
     def __init__(self, res_usage):
+        """Constructor.
+
+        :param res_usage: Resource usage.
+        :type res_usage: ResourceUsage
+        """
         #: resource usage to convert
         self.res_usage = res_usage
 
@@ -216,7 +238,10 @@ class SgeResourceUsageConverter(ResourceUsageConverter):
     """Converter for Slurm"""
 
     def to_qsub_args(self):
-        """Return array of arguments for qsub"""
+        """To gsub arguments.
+
+        :return: Returns array of arguments for qsub.
+        """
         res = self.to_res_dict()
         return [
             "--ntasks=%s" % res["ntasks"],
@@ -225,6 +250,11 @@ class SgeResourceUsageConverter(ResourceUsageConverter):
         ]
 
     def to_res_dict(self):
+        """To resource dictionary.
+
+        :return: Returns dictionary with arguments and available resource.
+        Keys: 'ntasks', 'time', and 'mem'.
+        """
         res = {
             "ntasks": self.res_usage.cores,
             "time": self._format_duration(),
@@ -235,13 +265,15 @@ class SgeResourceUsageConverter(ResourceUsageConverter):
         return res
 
     def _format_duration(self):
+        """Format time duration.
+
+        :return: Returns time as string, example: three hours would be '03:00'.
+        """
         total_seconds = self.res_usage.duration.total_seconds()
-        hours = int(total_seconds // 60 // 60)
-        total_seconds -= hours * 60 * 60
-        minutes = int(total_seconds // 60)
-        # total_seconds -= minutes * 60
-        # seconds = int(total_seconds)
-        return "{:0>2}:{:0>2}".format(hours, minutes)
+        hours_ = int(total_seconds // 60 // 60)
+        total_seconds -= hours_ * 60 * 60
+        minutes_ = int(total_seconds // 60)
+        return "{:0>2}:{:0>2}".format(hours_, minutes_)
 
 
 class SnakemakeExecutionFailed(Exception):
