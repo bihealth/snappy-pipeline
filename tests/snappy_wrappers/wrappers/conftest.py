@@ -145,7 +145,7 @@ def fai_file_content():
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config_mutect2():
-    """Return YAML parsing result for (germline) configuration"""
+    """Return YAML parsing result for configuration"""
     return yaml_ruamel.round_trip_load(
         textwrap.dedent(
             r"""

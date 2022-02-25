@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Wrapper for running Mutect2 variant caller in parallel, genome is split into windows."""
 import textwrap
 
 from snappy_wrappers.wrapper_parallel import (

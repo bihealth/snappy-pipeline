@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Code for testing mutect_par/run wrapper"""
 from pathlib import Path
 
 from snappy_wrappers.wrappers.mutect2_par.run.parallel_mutect2_wrapper import ParallelMutect2Wrapper

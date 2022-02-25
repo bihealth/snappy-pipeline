@@ -204,7 +204,7 @@ class ResourceUsage:
         #: number of nodes to use
         self.nodes = nodes
         #: other resource usages
-        self.more = dict(more) if more else dict()
+        self.more = dict(more) if more else {}
 
     def __str__(self):
         tpl = "ResourceUsage(cores={}, memory={}, duration={}, " "nodes={}, more={})"
