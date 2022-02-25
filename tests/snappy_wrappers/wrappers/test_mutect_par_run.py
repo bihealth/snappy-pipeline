@@ -41,7 +41,7 @@ def minimal_config_mutect():
               # Parallelization configuration
               drmaa_snippet: ''          # value to pass in as additional DRMAA arguments
               num_cores: 2               # number of cores to use locally
-              window_length: 3500000     # split input into windows of this size, each triggers a job
+              window_length: 3500000     # split input into windows, each triggers a job
               num_jobs: 500              # number of windows to process in parallel
               use_drmaa: true            # use drmaa for parallel processing
               restart_times: 5           # number of times to re-launch jobs in case of failure
