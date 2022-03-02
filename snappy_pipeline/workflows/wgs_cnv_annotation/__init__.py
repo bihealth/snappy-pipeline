@@ -84,10 +84,8 @@ step_config:
   wgs_cnv_annotation:
     path_ngs_mapping: ../ngs_mapping
     path_wgs_cnv_calling: ../wgs_cnv_calling
-    tools_ngs_mapping:
-    - bwa
-    tools_wgs_cnv_calling:
-    - erds_sv2
+    tools_ngs_mapping: [bwa]           # REQUIRED
+    tools_wgs_cnv_calling: [erds_sv2]  # REQUIRED
 """
 
 
