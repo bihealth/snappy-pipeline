@@ -114,10 +114,10 @@ set -x
 
 # Using the medium project/queue is a sensible default.
 snappy-snake --printshellcmds \
-    --snappy-pipeline-use-drmaa \
-    --snappy-pipeline-drmaa-jobs $MAX_JOBS \
+    --snappy-pipeline-use-profile=cubi-v1 \
+    --snappy-pipeline-jobs $MAX_JOBS \
+    --default-partition="%(partition)s" \
     --restart-times ${RESTART_TIMES} \
-    --drmaa-snippet="--partition=%(partition)s" \
     --rerun-incomplete \
     -- \
     $*
