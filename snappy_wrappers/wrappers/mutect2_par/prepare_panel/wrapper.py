@@ -59,7 +59,6 @@ class ParallelMutect2Wrapper(ParallelVariantCallingBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
@@ -69,11 +68,14 @@ class ParallelMutect2Wrapper(ParallelVariantCallingBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: chunk_resources_threads
+                    resources:
+                        time=chunk_resources_time,
+                        memory=chunk_resources_memory,
+                        partition=chunk_resources_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 

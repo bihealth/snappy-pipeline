@@ -411,12 +411,54 @@ class ParallelBaseWrapper:
 
             localrules: all
 
+            def resource_chunk_threads(wildcards):
+                '''Return the number of threads to use for running one chunk.'''
+                return {chunk_resources_threads}
+
+            def resource_chunk_memory(wildcards):
+                '''Return the memory to use for running one chunk.'''
+                return {chunk_resources_memory}
+
+            def resource_chunk_time(wildcards):
+                '''Return the time to use for running one chunk.'''
+                return {chunk_resources_time}
+
+            def resource_chunk_partition(wildcards):
+                '''Return the partition to use for running one chunk.'''
+                return {chunk_resources_partition}
+
+            def resource_merge_threads(wildcards):
+                '''Return the number of threads to use for running merging.'''
+                return {merge_resources_threads}
+
+            def resource_merge_memory(wildcards):
+                '''Return the memory to use for running merging.'''
+                return {merge_resources_memory}
+
+            def resource_merge_time(wildcards):
+                '''Return the time to use for running merging.'''
+                return {merge_resources_time}
+
+            def resource_merge_partition(wildcards):
+                '''Return the partition to use for running merging.'''
+                return {merge_resources_partition}
+
             rule all:
                 input: **{all_output}
         """
             )
             .lstrip()
-            .format(all_output=repr(self.get_all_output()))
+            .format(
+                all_output=repr(self.get_all_output()),
+                chunk_resources_threads=repr(self.job_resources.threads),
+                chunk_resources_time=repr(self.job_resources.time),
+                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_partition=repr(self.job_resources.partition),
+                merge_resources_threads=repr(self.merge_resources.threads),
+                merge_resources_time=repr(self.merge_resources.time),
+                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_partition=repr(self.merge_resources.partition),
+            )
         )
 
     def get_all_output(self):
@@ -604,11 +646,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output:
                     vcf='merge_out.{chunk_no}.d/out/out.vcf.gz',
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
-                threads: {resources_threads}
+                threads: merge_resources_threads
                 resources:
-                    time={resources_time},
-                    memory={resources_memory},
-                    partition={resources_partition},
+                    time=merge_resources_time,
+                    memory=merge_resources_memory,
+                    partition=merge_resources_partition,
                 shell:
                     r'''
                     set -euo pipefail  # inofficial Bash strict mode
@@ -622,18 +664,12 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
 
                     tabix -f {{output.vcf}}
                     '''
-
-            cluster_config['merge_chunk_{chunk_no}'] = {resources}
         """
             )
             .lstrip()
             .format(
                 chunk_no=chunk_no,
                 chunk_input=repr(merge_input),
-                resources_threads=repr(self.merge_resources.threads),
-                resources_time=repr(self.merge_resources.time),
-                resources_memory=repr(self.merge_resources.memory),
-                resources_partition=repr(self.merge_resources.partition),
             )
         )
 
@@ -644,11 +680,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
-                threads: {resources_threads}
+                threads: merge_resources_threads
                 resources:
-                    time={resources_time},
-                    memory={resources_memory},
-                    partition={resources_partition},
+                    time=merge_resources_time,
+                    memory=merge_resources_memory,
+                    partition=merge_resources_partitio},
                 log: **{all_log}
                 shell:
                     r'''
@@ -690,8 +726,6 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     md5sum $(basename {{log.conda_info}}) >$(basename {{log.conda_info}}).md5
                     popd
                     '''
-
-            cluster_config['merge_all'] = {resources}
         """
             )
             .lstrip()
@@ -699,10 +733,6 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 all_input=repr(merge_input),
                 all_output=repr(self.get_all_output()),
                 all_log=repr(self.get_all_log_files()),
-                resources_threads=repr(self.merge_resources.threads),
-                resources_time=repr(self.merge_resources.time),
-                resources_memory=repr(self.merge_resources.memory),
-                resources_partition=repr(self.merge_resources.partition),
             )
         )
 
@@ -728,10 +758,6 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources_threads": repr(self.job_resources.threads),
-                "resources_time": repr(self.job_resources.time),
-                "resources_memory": repr(self.job_resources.memory),
-                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -741,16 +767,14 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: {resources_threads}
+                    threads: chunk_resources_threads
                     resources:
-                        time={resources_time},
-                        memory={resources_memory},
-                        partition={resources_partition},
+                        time=chunk_resources_time,
+                        memory=chunk_resources_memory,
+                        partition=chunk_resources_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -784,10 +808,6 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources_threads": repr(self.job_resources.threads),
-                "resources_time": repr(self.job_resources.time),
-                "resources_memory": repr(self.job_resources.memory),
-                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -797,16 +817,14 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: {resources_threads}
+                    threads: chunk_resources_threads}
                     resources:
-                        time={resources_time},
-                        memory={resources_memory},
-                        partition={resources_partition},
+                        time=chunk_resources_time,
+                        memory=chunk_resources_memory,
+                        partition=chunk_resources_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -840,10 +858,6 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources_threads": repr(self.job_resources.threads),
-                "resources_time": repr(self.job_resources.time),
-                "resources_memory": repr(self.job_resources.memory),
-                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -854,17 +868,14 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: {resources_threads}
+                    threads: chunk_resources_threads
                     resources:
-                        time={resources_time},
-                        memory={resources_memory},
-                        partition={resources_partition},
+                        time=chunk_resources_time,
+                        memory=chunk_resources_memory,
+                        partition=chunk_resources_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -898,10 +909,6 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources_threads": repr(self.job_resources.threads),
-                "resources_time": repr(self.job_resources.time),
-                "resources_memory": repr(self.job_resources.memory),
-                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -911,15 +918,13 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: {resources_threads}
+                    threads: chunk_resources_threads
                     resources:
-                        time={resources_time},
-                        memory={resources_memory},
-                        partition={resources_partition},
+                        time=chunk_resources_time,
+                        memory=chunk_resources_memory,
+                        partition=chunk_resources_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
