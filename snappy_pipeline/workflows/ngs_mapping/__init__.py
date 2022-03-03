@@ -276,6 +276,7 @@ import os
 import re
 import sys
 import textwrap
+import typing
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
@@ -290,6 +291,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInStep,
     LinkOutStepPart,
     get_ngs_library_folder_name,
+    ResourceUsage,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -414,6 +416,9 @@ step_config:
 class ReadMappingStepPart(BaseStepPart):
     """Base class for read mapping step parts"""
 
+    #: Read mapping step parts only support action "run".
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
@@ -461,7 +466,7 @@ class ReadMappingStepPart(BaseStepPart):
         """Return output files that all read mapping sub steps must return
         (BAM + BAI file)
         """
-        assert action == "run"
+        assert action in self.actions
         for ext in self.extensions:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
         for ext in (".bamstats.html", ".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
@@ -519,12 +524,16 @@ class BwaStepPart(ReadMappingStepPart):
 
     name = "bwa"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["ngs_mapping_bwa_run"] = {
-            "mem": int(4.5 * 1024 * self.config["bwa"]["num_threads_align"]),
-            "time": "140:00",
-            "ntasks": self.config["bwa"]["num_threads_align"],
-        }
+    def get_resource_usage(self, action):
+        """Override method so we can incorporate configuration here dynamically."""
+        if action not in self.actions:  # action == "run"
+            raise ValueError(f"Invalid {action} not in {self.actions}")
+        mem_mb = int(4.5 * 1024 * self.config["bwa"]["num_threads_align"])
+        return ResourceUsage(
+            threads=self.config["bwa"]["num_threads_align"],
+            time="3-00:00:00", # 3 days
+            memory=f"{mem_mb}M"
+        )
 
     def check_config(self):
         """Check parameters in configuration.
@@ -558,13 +567,13 @@ class StarStepPart(ReadMappingStepPart):
 
     name = "star"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_star_run"] = {
-            "mem": int(3.7 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=16,
+            time="2-00:00:00", # 2 days
+            memory="50G"
+        )
+    }
 
     def check_config(self):
         """Check parameters in configuration.
@@ -604,13 +613,13 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     name = "minimap2"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_minimap2_run"] = {
-            "mem": int(3.7 * 1024 * 16),
-            "time": "96:00",
-            "ntasks": 16,
-        }
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=16,
+            time="4-00:00:00",
+            memory="50G"
+        )
+    }
 
 
 class NgmlrStepPart(ReadMappingStepPart):
@@ -618,13 +627,13 @@ class NgmlrStepPart(ReadMappingStepPart):
 
     name = "ngmlr"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_ngmlr_run"] = {
-            "mem": int(3.7 * 1024 * 16),
-            "time": "96:00",
-            "ntasks": 16,
-        }
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=16,
+            time="4-00:00:00",
+            memory="50G"
+        )
+    }
 
     def check_config(self):
         """Check parameters in configuration.
@@ -648,9 +657,13 @@ class ExternalStepPart(ReadMappingStepPart):
 
     name = "external"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_external_run"] = {"mem": 1024, "time": "04:00", "ntasks": 1}
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=1,
+            time="00:10:00",
+            memory="1G"
+        )
+    }
 
     def check_config(self):
         """Check parameters in configuration.
@@ -693,6 +706,14 @@ class GatkPostBamStepPart(BaseStepPart):
     """
 
     name = "gatk_post_bam"
+
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=16,
+            time="2-00:00:00",
+            memory="16G"
+        )
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -745,14 +766,6 @@ class GatkPostBamStepPart(BaseStepPart):
     def get_log_file(action):
         _ = action
         return "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
-
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_gatk_post_bam_run"] = {
-            "mem": int(3.7 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
 
 
 class LinkOutBamStepPart(BaseStepPart):
@@ -841,6 +854,14 @@ class PicardHsMetricsStepPart(BaseStepPart):
 
     name = "picard_hs_metrics"
 
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=2,
+            time="04:00:00",
+            memory="20G"
+        )
+    }
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -865,20 +886,18 @@ class PicardHsMetricsStepPart(BaseStepPart):
         _ = action
         return "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_picard_hs_metrics_run"] = {
-            "mem": int(19 * 1024 * 2),
-            "time": "04:00",
-            "ntasks": 2,
-        }
-
 
 class TargetCoverageReportStepPart(BaseStepPart):
     """Build target coverage report"""
 
     name = "target_coverage_report"
     actions = ("run", "collect")
+
+    default_resource_usage = ResourceUsage(  # for both run and collect
+        threads=2,
+        time="04:00:00",
+        memory="20G"
+    )
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -925,19 +944,19 @@ class TargetCoverageReportStepPart(BaseStepPart):
         else:
             return "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            cluster_config["ngs_mapping_target_coverage_report_{}".format(action)] = {
-                "mem": int(19 * 1024 * 2),
-                "time": "10:00",
-                "ntasks": 16,
-            }
-
 
 class GenomeCoverageReportStepPart(BaseStepPart):
     """Build genome-wide per-base coverage report"""
 
     name = "genome_coverage_report"
+
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=1,
+            time="04:00:00",
+            memory="4G"
+        )
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1005,14 +1024,6 @@ class GenomeCoverageReportStepPart(BaseStepPart):
             ).lstrip()
         )
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["ngs_mapping_genome_coverage_report_run"] = {
-            "mem": int(3.7 * 1024),
-            "time": "04:00",
-            "ntasks": 1,
-        }
-
 
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
@@ -1028,10 +1039,10 @@ class NgsMappingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
+        self, workflow, config, sconfig_lookup_paths, config_paths, workdir
     ):
         super().__init__(
-            workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
+            workflow, config, config_lookup_paths, config_paths, workdir
         )
         self.register_sub_step_classes(
             (

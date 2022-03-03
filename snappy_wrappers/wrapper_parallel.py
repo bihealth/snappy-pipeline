@@ -21,6 +21,7 @@ import textwrap
 
 from snakemake import snakemake
 
+from snappy_pipeline.workflows.abstract import ResourceUsage
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -50,10 +51,9 @@ def augment_parser(parser):
         help="Number of threads to use for local processing/jobs to spawn concurrently",
     )
     group.add_argument(
-        "--use-drmaa",
-        action="store_true",
-        default=False,
-        help="Enables running the parallelization on cluster via DRMAA",
+        "--use-profile",
+        default=None,
+        help="Enables running the parallelization on cluster with the given snakemake profile",
     )
     group.add_argument(
         "--restart-times", type=int, default=5, help="Number of times to restart jobs automatically"
@@ -62,13 +62,13 @@ def augment_parser(parser):
         "--max-jobs-per-second",
         type=int,
         default=10,
-        help="Maximal number of jobs to launch per second in DRMAA mode",
+        help="Maximal number of jobs to launch per second in cluster mode",
     )
     group.add_argument(
         "--max-status-checks-per-second",
         type=int,
         default=10,
-        help="Maximal number of DRMAA status checks for perform for second",
+        help="Maximal number of cluster status checks for perform for second",
     )
 
     return parser
@@ -82,7 +82,7 @@ class WrapperInfoMixin:
         return {
             "num_jobs": self.args.num_jobs if hasattr(self.args, "num_jobs") else 1,
             "num_thread": self.args.num_threads if hasattr(self.args, "num_threads") else 1,
-            "use_drmaa": self.args.use_drmaa,
+            "use_profile": self.args.use_profile,
             "restart_times": self.args.restart_times,
             "max_jobs_per_second": self.args.max_jobs_per_second,
             "max_status_checks_per_second": self.args.max_status_checks_per_second,
@@ -141,76 +141,6 @@ def days(num):
     return datetime.timedelta(days=num)
 
 
-class ResourceUsage:
-    """Representation of resource usage for a job"""
-
-    def __init__(self, cores=1, memory=mib(100), duration=hours(1), nodes=1, more={}):
-        #: number of cores to reserve
-        self.cores = cores
-        #: maximal memory to use in total (in bytes)
-        self.memory = memory
-        #: maximal duration of execution
-        self.duration = duration
-        #: number of nodes to use
-        self.nodes = nodes
-        #: other resource usages
-        self.more = dict(more)
-
-    def __str__(self):
-        tpl = "ResourceUsage(cores={}, memory={}, duration={}, " "nodes={}, more={})"
-        return tpl.format(self.cores, self.memory, self.duration, self.nodes, self.more)
-
-    def __repr__(self):
-        return str(self)
-
-
-class ResourceUsageConverter:
-    """Base class for resource usage converters
-
-    Such converters allow the conversion into resource mappings/dicts, e.g., for Sun Grid Engine.
-    """
-
-    def __init__(self, res_usage):
-        #: resource usage to convert
-        self.res_usage = res_usage
-
-    def to_res_dict(self):
-        """Convert ResourceUsage into a dict for usage in Snakefiles"""
-        raise NotImplementedError()
-
-
-class SgeResourceUsageConverter(ResourceUsageConverter):
-    """Converter for Slurm"""
-
-    def to_qsub_args(self):
-        """Return array of arguments for qsub"""
-        res = self.to_res_dict()
-        return [
-            "--ntasks=%s" % res["ntasks"],
-            "--time=%s" % res["time"],
-            "--mem=%s" % int(res["mem"]),
-        ]
-
-    def to_res_dict(self):
-        res = {
-            "ntasks": self.res_usage.cores,
-            "time": self._format_duration(),
-            "mem": int(self.res_usage.memory / 1024 / 1024),  # in MiB
-        }
-        res.update(self.res_usage.more)
-        res["mem"] = int(res["mem"])
-        return res
-
-    def _format_duration(self):
-        total_seconds = self.res_usage.duration.total_seconds()
-        hours = int(total_seconds // 60 // 60)
-        total_seconds -= hours * 60 * 60
-        minutes = int(total_seconds // 60)
-        # total_seconds -= minutes * 60
-        # seconds = int(total_seconds)
-        return "{:0>2}:{:0>2}".format(hours, minutes)
-
-
 class SnakemakeExecutionFailed(Exception):
     """Raised when nested snakemake execution failed"""
 
@@ -222,22 +152,16 @@ def run_snakemake(
     max_jobs_per_second=0,
     max_status_checks_per_second=0,
     job_name_token="",
-    drmaa_snippet="",
+    partition=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
-    if config["use_drmaa"]:
+    if config["use_profile"]:
         print(
-            "Running with DRMAA on {num_jobs} cores in directory {cwd}".format(
+            "Running with Snakemake profile on {num_jobs} cores in directory {cwd}".format(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
         os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
-        values = {"cwd": os.getcwd(), "drmaa_snippet": drmaa_snippet}
-        drmaa_string = (
-            " --mem={cluster.mem} --time={cluster.time} "
-            "--ntasks={cluster.ntasks} "
-            "--output=slurm_log/slurm-%%x-%%J.log %(drmaa_snippet)s"
-        ) % values
         with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
             print(
                 " ".join(
@@ -251,8 +175,8 @@ def run_snakemake(
                             "--printshellcmds",
                             "--verbose",
                             "--use-conda",  # sic!
-                            "--drmaa",
-                            shlex.quote(drmaa_string),
+                            "--profile",
+                            shlex.quote(config["use_profile"]),
                             "--jobs",
                             str(num_jobs or config["num_jobs"]),
                             "--restart-times",
@@ -275,14 +199,15 @@ def run_snakemake(
                 ),
                 file=f_call,
             )
-        print("  DRMAA string => %s" % drmaa_string)
+        if partition:
+            os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
         result = snakemake(
             snakefile,
             workdir=os.getcwd(),
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
             cores=1,
             nodes=num_jobs or config["num_jobs"],
-            drmaa=drmaa_string,
+            profile=config["use_profile"],
             max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
             max_status_checks_per_second=max_status_checks_per_second
             or config["max_status_checks_per_second"],
@@ -355,8 +280,6 @@ class ParallelBaseWrapper:
         self.snakemake = snakemake
         #: Base directory to wrappers
         self.wrapper_base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-        #: The appropriate resource converter
-        self.res_converter = SgeResourceUsageConverter
         # Kick-off initialization
         self._apply_realpath_to_output()
         # Setup logging (will run in wrapper and its own process)
@@ -604,8 +527,8 @@ class ParallelBaseWrapper:
             "max_jobs_per_second": self._get_config()["max_jobs_per_second"],
             "max_status_checks_per_second": self._get_config()["max_status_checks_per_second"],
             "job_name_token": self._job_name_token(),
-            "drmaa_snippet": (
-                self._get_config()["drmaa_snippet"] or self._get_step_config()["drmaa_snippet"]
+            "profile": (
+                self._get_config().get("profile", None) or self._get_step_config().get("profile", None)
             ),
         }
         self.logger.info("Launching excecution with args: %s", repr(kwargs))
@@ -681,6 +604,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output:
                     vcf='merge_out.{chunk_no}.d/out/out.vcf.gz',
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
+                threads: {resources_threads}
+                resources:
+                    time={resources_time},
+                    memory={resources_memory},
+                    partition={resources_partition},
                 shell:
                     r'''
                     set -euo pipefail  # inofficial Bash strict mode
@@ -702,7 +630,10 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
             .format(
                 chunk_no=chunk_no,
                 chunk_input=repr(merge_input),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
+                resources_threads=repr(self.merge_resources.threads),
+                resources_time=repr(self.merge_resources.time),
+                resources_memory=repr(self.merge_resources.memory),
+                resources_partition=repr(self.merge_resources.partition),
             )
         )
 
@@ -713,6 +644,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
+                threads: {resources_threads}
+                resources:
+                    time={resources_time},
+                    memory={resources_memory},
+                    partition={resources_partition},
                 log: **{all_log}
                 shell:
                     r'''
@@ -763,7 +699,10 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 all_input=repr(merge_input),
                 all_output=repr(self.get_all_output()),
                 all_log=repr(self.get_all_log_files()),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
+                resources_threads=repr(self.merge_resources.threads),
+                resources_time=repr(self.merge_resources.time),
+                resources_memory=repr(self.merge_resources.memory),
+                resources_partition=repr(self.merge_resources.partition),
             )
         )
 
@@ -789,7 +728,10 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
+                "resources_threads": repr(self.job_resources.threads),
+                "resources_time": repr(self.job_resources.time),
+                "resources_memory": repr(self.job_resources.memory),
+                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -799,6 +741,11 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: {resources_threads}
+                    resources:
+                        time={resources_time},
+                        memory={resources_memory},
+                        partition={resources_partition},
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -837,7 +784,10 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
+                "resources_threads": repr(self.job_resources.threads),
+                "resources_time": repr(self.job_resources.time),
+                "resources_memory": repr(self.job_resources.memory),
+                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -847,6 +797,11 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: {resources_threads}
+                    resources:
+                        time={resources_time},
+                        memory={resources_memory},
+                        partition={resources_partition},
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -885,7 +840,10 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
+                "resources_threads": repr(self.job_resources.threads),
+                "resources_time": repr(self.job_resources.time),
+                "resources_memory": repr(self.job_resources.memory),
+                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -896,6 +854,11 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: {resources_threads}
+                    resources:
+                        time={resources_time},
+                        memory={resources_memory},
+                        partition={resources_partition},
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -935,7 +898,10 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
+                "resources_threads": repr(self.job_resources.threads),
+                "resources_time": repr(self.job_resources.time),
+                "resources_memory": repr(self.job_resources.memory),
+                "resources_partition": repr(self.job_resources.partition),
             }
             yield textwrap.dedent(
                 r"""
@@ -945,6 +911,11 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: {resources_threads}
+                    resources:
+                        time={resources_time},
+                        memory={resources_memory},
+                        partition={resources_partition},
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'

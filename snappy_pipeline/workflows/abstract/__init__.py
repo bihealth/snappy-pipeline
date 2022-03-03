@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
+from argparse import ArgumentError
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
@@ -10,7 +11,9 @@ import itertools
 import os
 import os.path
 import sys
+import typing
 
+import attr
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -45,6 +48,17 @@ set -x
 
 """.lstrip()
 
+@attr.s(frozen=True, auto_attribs=True)
+class ResourceUsage:
+    """Resource usage specification to be used in ``BaseStepPart.default_resource_usage`` and
+    ``BaseStepPart.resource_usage.values()``.
+    """
+
+    threads: int
+    time: str
+    memory: str
+    partition: typing.Optional[str] = None
+
 
 class ImplementationUnavailableError(NotImplementedError):
     """Raised when a function that is to be overridden optionally is called
@@ -59,16 +73,51 @@ class BaseStepPart:
 
     name = "<base step>"
 
+    #: The actions available in the class.
+    actions: typing.Tuple[str] = None
+
+    #: Default resource usage for actions that are not given in ``resource_usage``.
+    default_resource_usage: ResourceUsage = ResourceUsage(
+        threads=1,
+        time="01:00:00", # 1h
+        memory="2G"
+    )
+
+    #: Configure resource usage here that should not use the default resource usage from
+    #: ``default_resource_usage``.
+    resource_usage: typing.Dict[str, ResourceUsage] = {}
+
     def __init__(self, parent):
         self.name = self.__class__.name
         self.parent = parent
         self.config = parent.config
         self.w_config = parent.w_config
 
-    def update_cluster_config(self, cluster_config):
-        """Override and configure the cluster resource requirements for all rules that this
-        pipeline step part uses
+    def get_resource_usage(self, action: str) -> ResourceUsage:
+        """Return the resource usage for the given action."""
+        if action not in self.actions:
+            raise ValueError(f"Invalid {action} not in {self.actions}")
+        return self.resource_usage.get(action, self.default_resource_usage)
+
+    def get_default_partition(self) -> str:
+        """Helper that returns the default partition."""
+        from snappy_pipeline.apps import snappy_snake
+        return snappy_snake.DEFAULT_PARTITION
+
+    def get_resource(self, action: str, resource_name: str):
+        """Return the amount of resources to be allocated for the givena ction.
+
+        :param action: The action to return the resource requirement for.
+        :param resource_name: The name to return the resource for.
         """
+        if resource_name not in ("threads", "time", "memory", "partition"):
+            raise ValueError(f"Invalid resource name: {resource_name}")
+        resource_usage = self.get_resource_usage(action)
+        if resource_name == "partition" and not resource_usage.partition:
+            return self.get_default_partition()
+        else:
+            return getattr(resource_usage, resource_name)
+
 
     def get_args(self, action):
         """Return args for the given action of the sub step"""
@@ -476,7 +525,6 @@ class BaseStep:
         self,
         workflow,
         config,
-        cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -496,8 +544,6 @@ class BaseStep:
         self.w_config = config
         self.w_config.update(self._update_config(config))
         self.config = self.w_config["step_config"].get(self.name, OrderedDict())
-        #: Cluster configuration dict
-        self.cluster_config = cluster_config
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = config_lookup_paths
         self.sub_steps = {}
@@ -624,20 +670,11 @@ class BaseStep:
                 )
                 raise e_class(tpl)
 
-    def update_cluster_config(self):
-        """Update cluster configuration for rule "__default__"
-
-        The sub parts' ``update_cluster_config()`` routines are called on creation in
-        ``register_sub_step_classes()``.
-        """
-        self.cluster_config["__default__"] = {"mem": 4 * 1024, "time": "12:00", "ntasks": 1}
-
     def register_sub_step_classes(self, classes):
         """Register an iterable of sub step classes
 
         Initializes objects in ``self.sub_steps`` dict
         """
-        self.update_cluster_config()
         for pair_or_class in classes:
             try:
                 klass, args = pair_or_class
@@ -645,7 +682,6 @@ class BaseStep:
                 klass = pair_or_class
                 args = ()
             obj = klass(self, *args)
-            obj.update_cluster_config(self.cluster_config)
             obj.check_config()
             self.sub_steps[klass.name] = obj
 
