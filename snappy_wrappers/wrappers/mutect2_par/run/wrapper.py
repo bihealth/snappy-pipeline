@@ -64,6 +64,111 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
             duration=hours(1 * self.get_merge_mult_time()),
         )
 
+    def construct_preamble(self):
+        """Return a preamble that redefines resource_chunk_{threads,memory} to
+        define functions as "scaling up" with the number of attempts.
+        """
+        return (
+            textwrap.dedent(
+                r"""
+            shell.executable("/bin/bash")
+            shell.prefix("set -ex;")
+
+            configfile: 'config.json'
+
+            localrules: all
+
+            def multiply_time(day_time_str, factor):
+                if "-" in day_time_str:
+                    arr = day_time_str.split("-")
+                    days = int(arr[0])
+                    time_str = arr[0]
+                else:
+                    days = 0
+                    time_str = day_time_str
+                if time_str.count(":") == 2: # hours:minutes:seconds
+                    seconds = int(arr[0]) * 60 * 60 + int(arr[1]) * 60 + int(arr[2])
+                elif time_str.count(":") == 1: # minutes:seconds
+                    arr = time_str.split(":")
+                    seconds = int(arr[0]) * 60 + int(arr[1])
+                elif time_str.count(":") == 0: # minutes
+                    seconds = int(time_str) * 60
+                else:
+                    raise ValueError(f"Invalid time: {day_time}")
+                seconds += days * 24 * 60 * 60
+                seconds = int(seconds * factor)
+                hours = seconds // (60 * 60)
+                seconds -= hours * 60 * 60
+                minutes = seconds // 60
+                seconds -= minutes * 60
+                seconds = min(seconds, 59)
+                return "%d-%d:%d:%d" % (days, hours, minutes, seconds)
+
+            def multiply_memory(memory_str, factor):
+                suffixes = (
+                    ("k", 1e-3),
+                    ("M", 1),
+                    ("G", 1e3),
+                    ("T", 1e6),
+                )
+                for (suffix, mult) in:
+                    if memory_str.endswith(suffix):
+                        memory_mb = float(memory_str[:-1]) * mult
+                        break
+                else:  # no match, assume no suffix int
+                    memory_mb = float(memory_str)
+                return int(memory_mb * factor)
+
+            def resource_chunk_threads(wildcards):
+                '''Return the number of threads to use for running one chunk.'''
+                return {chunk_resources_threads}
+
+            def resource_chunk_memory(wildcards, attempt):
+                '''Return the memory to use for running one chunk.'''
+                return multiply_memory({chunk_resources_memory}, attempt)
+
+            def resource_chunk_time(wildcards, attempt):
+                '''Return the time to use for running one chunk.'''
+                return multiply_time({chunk_resources_time}, attempt)
+
+            def resource_chunk_partition(wildcards):
+                '''Return the partition to use for running one chunk.'''
+                return {chunk_resources_partition}
+
+            def resource_merge_threads(wildcards):
+                '''Return the number of threads to use for running merging.'''
+                return {merge_resources_threads}
+
+            def resource_merge_memory(wildcards):
+                '''Return the memory to use for running merging.'''
+                return {merge_resources_memory}
+
+            def resource_merge_time(wildcards):
+                '''Return the time to use for running merging.'''
+                return {merge_resources_time}
+
+            def resource_merge_partition(wildcards):
+                '''Return the partition to use for running merging.'''
+                return {merge_resources_partition}
+
+            rule all:
+                input: **{all_output}
+        """
+            )
+            .lstrip()
+            .format(
+                all_output=repr(self.get_all_output()),
+                chunk_resources_threads=repr(self.job_resources.threads),
+                chunk_resources_time=repr(self.job_resources.time),
+                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_partition=repr(self.job_resources.partition),
+                merge_resources_threads=repr(self.merge_resources.threads),
+                merge_resources_time=repr(self.merge_resources.time),
+                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_partition=repr(self.merge_resources.partition),
+            )
+        )
+
     def _construct_level_one_merge_rule(self, chunk_no, merge_input):
         return (
             textwrap.dedent(
@@ -75,6 +180,11 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
                     stats='merge_out.{chunk_no}.d/out/out.vcf.stats',
                     f1r2='merge_out.{chunk_no}.d/out/out.f1r2_tar.tar.gz'
+                threads: chunk_resources_threads
+                resources:
+                    time=chunk_resources_time,
+                    memory=chunk_resources_memory,
+                    partition=chunk_resources_partition,
                 shell:
                     r'''
                     set -euo pipefail  # inofficial Bash strict mode
@@ -113,15 +223,12 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                     popd
                     rm -rf $tar_dir
                     '''
-
-            cluster_config['merge_chunk_{chunk_no}'] = {resources}
         """
             )
             .lstrip()
             .format(
                 chunk_no=chunk_no,
                 chunk_input=repr(merge_input),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
             )
         )
 
@@ -132,6 +239,11 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
+                threads: chunk_resources_threads
+                resources:
+                    time=merge_resources_time,
+                    memory=merge_resources_memory,
+                    partition=merge_resources_partition,
                 log: **{all_log}
                 shell:
                     r'''
@@ -204,8 +316,6 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                     md5sum $(basename {{log.conda_info}}) >$(basename {{log.conda_info}}).md5
                     popd
                     '''
-
-            cluster_config['merge_all'] = {resources}
         """
             )
             .lstrip()
@@ -213,7 +323,6 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                 all_input=repr(merge_input),
                 all_output=repr(self.get_all_output()),
                 all_log=repr(self.get_all_log_files()),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
             )
         )
 
