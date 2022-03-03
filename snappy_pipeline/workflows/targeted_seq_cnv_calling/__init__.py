@@ -637,7 +637,7 @@ class GcnvStepPart(BaseStepPart):
         expected_format = (
             '{\n    "library": "Agilent SureSelect Human All Exon V6"\n'
             '    "contig_ploidy": /path/to/ploidy-model\n'
-            '    "model_pattern": "/path/to/model_*"\n'
+            '    "model_pattern": "/path/to/model_*"\n}'
         )
         # Test
         for model in config:
