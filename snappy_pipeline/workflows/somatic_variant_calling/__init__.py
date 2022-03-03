@@ -85,6 +85,7 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -493,17 +494,21 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
 class MutectStepPart(MutectBaseStepPart):
     """Somatic variant calling with MuTect"""
 
+    #: Step name
     name = "mutect"
 
 
 class Mutect2StepPart(MutectBaseStepPart):
-    """Somatic variant calling with MuTect 2"""
+    """Somatic variant calling with Mutect2"""
 
+    #: Step name
     name = "mutect2"
+
+    #: Class available actions
+    actions = ("run", "filter", "contamination", "pileup_normal", "pileup_tumor")
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.actions = ("run", "filter", "contamination", "pileup_normal", "pileup_tumor")
 
     def check_config(self):
         if self.name not in self.config["tools"]:
@@ -514,78 +519,148 @@ class Mutect2StepPart(MutectBaseStepPart):
         )
 
     def get_input_files(self, action):
-        def input_function_run(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
-            ).format(**wildcards)
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+        """Return input function for Mutect2 rules.
 
-        def input_function_filter(wildcards):
-            base_path = (
-                "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
-                    **wildcards
-                )
-            )
-            return {
-                "raw": base_path + ".raw.vcf.gz",
-                "stats": base_path + ".raw.vcf.stats",
-                "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
-                "table": base_path + ".contamination.tbl",
-                "segments": base_path + ".segments.tbl",
-            }
+        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
+        'contamination'.
+        :type action: str
 
-        def input_function_contamination(wildcards):
-            base_path = (
-                "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
-                    **wildcards
-                )
+        :return: Returns input function for Mutect2 rules based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
             )
-            return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
+            raise UnsupportedActionException(error_message)
+        # Return requested function
+        return getattr(self, "_get_input_files_{}".format(action))
 
-        def input_function_pileup_normal(wildcards):
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                normal_library=self.get_normal_lib_name(wildcards), **wildcards
-            )
-            return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+    def _get_input_files_run(self, wildcards):
+        """Get input files for rule ``run``.
 
-        def input_function_pileup_tumor(wildcards):
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
+        """
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        tumor_base_path = (
+            "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
+        ).format(**wildcards)
+        return {
+            "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+            "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
+
+    @staticmethod
+    def _get_input_files_filter(wildcards):
+        """Get input files for rule ``filter``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'filter'.
+        """
+        base_path = (
+            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
                 **wildcards
             )
-            return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        )
+        return {
+            "raw": base_path + ".raw.vcf.gz",
+            "stats": base_path + ".raw.vcf.stats",
+            "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
+            "table": base_path + ".contamination.tbl",
+            "segments": base_path + ".segments.tbl",
+        }
 
-        assert action in self.actions
-        if action == "run":
-            return input_function_run
-        if action == "filter":
-            return input_function_filter
-        if action == "contamination":
-            return input_function_contamination
-        if action == "pileup_normal":
-            return input_function_pileup_normal
-        if action == "pileup_tumor":
-            return input_function_pileup_tumor
+    def _get_input_files_pileup_normal(self, wildcards):
+        """Get input files for rule ``pileup_normal``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'pileup_normal', BAM and BAI files.
+        """
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+
+    def _get_input_files_pileup_tumor(self, wildcards):
+        """Get input files for rule ``pileup_tumor``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'pileup_tumor', BAM and BAI files.
+        """
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
+            **wildcards
+        )
+        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+
+    @staticmethod
+    def _get_input_files_contamination(wildcards):
+        """Get input files for rule ``contamination``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'contamination', Normal and Tumor
+        pileup files.
+        """
+        base_path = (
+            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
+                **wildcards
+            )
+        )
+        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
 
     def get_output_files(self, action):
-        assert action in self.actions
+        """Get output files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected output files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         exts = {}
+        output_files = {}
+
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Set expected extensions based on action
         if action == "run":
             exts = {
                 "raw": ".raw.vcf.gz",
@@ -619,26 +694,47 @@ class Mutect2StepPart(MutectBaseStepPart):
             exts = {"pileup": ".normal.pileup", "pileup_md5": ".normal.pileup.md5"}
         if action == "pileup_tumor":
             exts = {"pileup": ".tumor.pileup", "pileup_md5": ".tumor.pileup.md5"}
-        output_files = {}
+
+        # Define output dictionary
         for k, v in exts.items():
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
     def get_log_file(self, action):
-        assert action in self.actions
+        """Get log files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected log files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         postfix = ""
-        if action != "run":
-            postfix = "." + action
-        prefix = (
-            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
-        ).format(var_caller=self.__class__.name, postfix=postfix)
+        log_files = {}
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
-        log_files = {}
+
+        # Validate inputted action
+        if action not in self.actions:
+            valid_actions_str = ", ".join(self.actions)
+            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
+                action=action, options=valid_actions_str
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Set expected format based on action
+        if action != "run":
+            postfix = "." + action
+        prefix = (
+            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
+            "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
+        ).format(var_caller=self.name, postfix=postfix)
+
+        # Define output dictionary
         for key, ext in key_ext:
             log_files[key] = prefix + ext
             log_files[key + "_md5"] = prefix + ext + ".md5"
