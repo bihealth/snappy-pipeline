@@ -30,13 +30,6 @@ if FORCE_RUN or DIFF_MASTER or DIFF_LAST_COMMIT:
 CONTAINERIZED = os.environ.get("CONTAINERIZED", "false") == "true"
 
 
-class Skipped(Exception):
-    pass
-
-
-skip_if_not_modified = pytest.mark.xfail(raises=Skipped)
-
-
 def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):
     d = str(tmpdir)
     origdir = os.getcwd()

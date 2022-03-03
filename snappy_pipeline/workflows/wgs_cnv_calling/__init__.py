@@ -121,8 +121,7 @@ step_config:
     path_ngs_mapping: ../ngs_mapping          # REQUIRED
     path_variant_calling: ../variant_calling  # REQUIRED
     variant_calling_tool: REQUIRED            # REQUIRED
-    tools:
-    - erds_sv2
+    tools: [erds_sv2]                         # REQUIRED
     cnvetti:
       window_length: null
       count_kind: null
@@ -141,9 +140,9 @@ step_config:
           segmentation: HaarSeg
           normalization: MedianGcBinned
     sv2:
-      path_hg19: /fast/projects/cubit/18.12/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
-      path_hg38: /fast/projects/cubit/18.12/static_data/reference/hg38/ucsc/hg38.fa  # REQUIRED
-      path_mm10: /fast/projects/cubit/18.12/static_data/reference/mm10/ucsc/mm10.fa  # REQUIRED
+      path_hg19: /fast/projects/cubit/current/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
+      path_hg38: /fast/projects/cubit/current/static_data/reference/hg38/ucsc/hg38.fa  # REQUIRED
+      path_mm10: /fast/projects/cubit/current/static_data/reference/mm10/ucsc/mm10.fa  # REQUIRED
       path_sv2_resource: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4   # REQUIRED
       path_sv2_models: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4/training_sets   # REQUIRED
 """

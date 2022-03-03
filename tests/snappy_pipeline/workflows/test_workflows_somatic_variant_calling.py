@@ -59,6 +59,30 @@ def minimal_config():
 
 
 @pytest.fixture
+def mutect2_wildcards():
+    """Returns Wildcard used in Mutect2 snakemake workflow."""
+    return Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+
+
+@pytest.fixture
+def mutect2_input_base_name():
+    """Returns base path used in input methods, requires only file extension addition."""
+    return "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1"
+
+
+@pytest.fixture
+def mutect2_output_base_name():
+    """Returns base path used in input methods, requires only file extension addition."""
+    return "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}"
+
+
+@pytest.fixture
+def mutect2_log_base_name():
+    """Returns base path used in log methods, requires only file extension addition."""
+    return "work/{mapper}.mutect2.{tumor_library}/log/{mapper}.mutect2.{tumor_library}"
+
+
+@pytest.fixture
 def somatic_variant_calling_workflow(
     dummy_workflow,
     minimal_config,
@@ -86,7 +110,7 @@ def somatic_variant_calling_workflow(
     )
 
 
-# Tests for MutectStepPart ------------------------------------------------------------------------
+# Tests for MutectStepPart -------------------------------------------------------------------------
 
 
 def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
@@ -140,6 +164,257 @@ def test_mutect_step_part_update_cluster_config(
 ):
     actual = set(dummy_cluster_config["somatic_variant_calling_mutect_run"].keys())
     expected = {"mem", "time", "ntasks"}
+    assert actual == expected
+
+
+# Tests for Mutect2StepPart ------------------------------------------------------------------------
+
+
+def test_mutect2_run_step_part_get_input_files(mutect2_wildcards, somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_input_files_run()"""
+    # Define expected
+    expected = {
+        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
+    assert actual == expected
+
+
+def test_mutect2_filter_step_part_get_input_files(
+    mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_filter()"""
+    # Define expected
+    expected = {
+        "raw": mutect2_input_base_name + ".raw.vcf.gz",
+        "stats": mutect2_input_base_name + ".raw.vcf.stats",
+        "f1r2": mutect2_input_base_name + ".raw.f1r2_tar.tar.gz",
+        "table": mutect2_input_base_name + ".contamination.tbl",
+        "segments": mutect2_input_base_name + ".segments.tbl",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "filter")(
+        mutect2_wildcards
+    )
+    assert actual == expected
+
+
+def test_mutect2_contamination_step_part_get_input_files(
+    mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_contamination()"""
+    # Define expected
+    expected = {
+        "normal": mutect2_input_base_name + ".normal.pileup",
+        "tumor": mutect2_input_base_name + ".tumor.pileup",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "contamination")(
+        mutect2_wildcards
+    )
+    assert actual == expected
+
+
+def test_mutect2_pileup_normal_step_part_get_input_files(
+    mutect2_wildcards, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_pileup_normal()"""
+    # Define expected
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_normal")(
+        mutect2_wildcards
+    )
+    assert actual == expected
+
+
+def test_mutect2_pileup_tumor_step_part_get_input_files(
+    mutect2_wildcards, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_pileup_tumor()"""
+    # Define expected
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_tumor")(
+        mutect2_wildcards
+    )
+    assert actual == expected
+
+
+def test_mutect2_run_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - run"""
+    # Define expected
+    expected = {
+        "raw": mutect2_output_base_name + ".raw.vcf.gz",
+        "raw_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
+        "raw_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
+        "raw_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
+        "stats": mutect2_output_base_name + ".raw.vcf.stats",
+        "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
+        "f1r2": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz",
+        "f1r2_md5": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    assert actual == expected
+
+
+def test_mutect2_filter_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - filter"""
+    # Define expected
+    expected = {
+        "full": mutect2_output_base_name + ".full.vcf.gz",
+        "full_md5": mutect2_output_base_name + ".full.vcf.gz.md5",
+        "full_tbi": mutect2_output_base_name + ".full.vcf.gz.tbi",
+        "full_tbi_md5": mutect2_output_base_name + ".full.vcf.gz.tbi.md5",
+        "vcf": mutect2_output_base_name + ".vcf.gz",
+        "vcf_md5": mutect2_output_base_name + ".vcf.gz.md5",
+        "tbi": mutect2_output_base_name + ".vcf.gz.tbi",
+        "tbi_md5": mutect2_output_base_name + ".vcf.gz.tbi.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "filter")
+    assert actual == expected
+
+
+def test_mutect2_contamination_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - contamination"""
+    # Define expected
+    expected = {
+        "table": mutect2_output_base_name + ".contamination.tbl",
+        "table_md5": mutect2_output_base_name + ".contamination.tbl.md5",
+        "segments": mutect2_output_base_name + ".segments.tbl",
+        "segments_md5": mutect2_output_base_name + ".segments.tbl.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "contamination")
+    assert actual == expected
+
+
+def test_mutect2_pileup_normal_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - pileup_normal"""
+    # Define expected
+    expected = {
+        "pileup": mutect2_output_base_name + ".normal.pileup",
+        "pileup_md5": mutect2_output_base_name + ".normal.pileup.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "pileup_normal")
+    assert actual == expected
+
+
+def test_mutect2_pileup_tumor_step_part_get_output_files(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - pileup_tumor"""
+    # Define expected
+    expected = {
+        "pileup": mutect2_output_base_name + ".tumor.pileup",
+        "pileup_md5": mutect2_output_base_name + ".tumor.pileup.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "pileup_tumor")
+    assert actual == expected
+
+
+def test_mutect2_run_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - run"""
+    # Define expected
+    expected = get_expected_log_files_dict(base_out=mutect2_log_base_name)
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "run")
+    assert actual == expected
+
+
+def test_mutect2_filter_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - filter"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".filter.log",
+        "log_md5": mutect2_log_base_name + ".filter.log.md5",
+        "conda_info": mutect2_log_base_name + ".filter.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".filter.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".filter.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".filter.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "filter")
+    assert actual == expected
+
+
+def test_mutect2_contamination_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - contamination"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".contamination.log",
+        "log_md5": mutect2_log_base_name + ".contamination.log.md5",
+        "conda_info": mutect2_log_base_name + ".contamination.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".contamination.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".contamination.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".contamination.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "contamination")
+    assert actual == expected
+
+
+def test_mutect2_pileup_normal_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - pileup_normal"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".pileup_normal.log",
+        "log_md5": mutect2_log_base_name + ".pileup_normal.log.md5",
+        "conda_info": mutect2_log_base_name + ".pileup_normal.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".pileup_normal.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".pileup_normal.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".pileup_normal.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "pileup_normal")
+    assert actual == expected
+
+
+def test_mutect2_pileup_tumor_step_part_get_log_file(
+    mutect2_log_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_log_files() - pileup_tumor"""
+    # Define expected
+    expected = {
+        "log": mutect2_log_base_name + ".pileup_tumor.log",
+        "log_md5": mutect2_log_base_name + ".pileup_tumor.log.md5",
+        "conda_info": mutect2_log_base_name + ".pileup_tumor.conda_info.txt",
+        "conda_info_md5": mutect2_log_base_name + ".pileup_tumor.conda_info.txt.md5",
+        "conda_list": mutect2_log_base_name + ".pileup_tumor.conda_list.txt",
+        "conda_list_md5": mutect2_log_base_name + ".pileup_tumor.conda_list.txt.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "pileup_tumor")
     assert actual == expected
 
 
