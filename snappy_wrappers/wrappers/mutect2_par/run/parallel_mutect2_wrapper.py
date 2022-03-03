@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Mutect2 variant caller in parallel, genome is split into windows."""
+"""Wrapper for running Mutect2 variant caller in parallel, genome is split into windows.
+
+isort:skip_file
+"""
+import os
+import sys
 import textwrap
+
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrapper_parallel import (
     ParallelSomaticVariantCallingBaseWrapper,
