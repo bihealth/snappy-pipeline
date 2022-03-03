@@ -2,7 +2,7 @@ channels:
 - conda-forge
 - bioconda
 - r
-- http://cubi-conda.bihealth.org/cubiconda
+- http://conda.cubi.bihealth.org/cubiconda
 dependencies:
 - minialign ==0.5.3
 - samtools ==1.9

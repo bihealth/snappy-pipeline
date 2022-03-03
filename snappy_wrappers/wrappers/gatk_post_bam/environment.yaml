@@ -2,7 +2,7 @@ channels:
 - conda-forge
 - bioconda
 - r
-- http://cubi-conda.bihealth.org/cubiconda
+- http://conda.cubi.bihealth.org/cubiconda
 dependencies:
 - gatk_nonfree ==3.7
 - samtools ==1.3
