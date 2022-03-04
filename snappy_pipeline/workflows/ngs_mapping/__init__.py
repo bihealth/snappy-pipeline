@@ -276,7 +276,6 @@ import os
 import re
 import sys
 import textwrap
-import typing
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
@@ -290,8 +289,8 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
-    get_ngs_library_folder_name,
     ResourceUsage,
+    get_ngs_library_folder_name,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -531,8 +530,8 @@ class BwaStepPart(ReadMappingStepPart):
         mem_mb = int(4.5 * 1024 * self.config["bwa"]["num_threads_align"])
         return ResourceUsage(
             threads=self.config["bwa"]["num_threads_align"],
-            time="3-00:00:00", # 3 days
-            memory=f"{mem_mb}M"
+            time="3-00:00:00",  # 3 days
+            memory=f"{mem_mb}M",
         )
 
     def check_config(self):
@@ -567,13 +566,7 @@ class StarStepPart(ReadMappingStepPart):
 
     name = "star"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=16,
-            time="2-00:00:00", # 2 days
-            memory="50G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=16, time="2-00:00:00", memory="50G")}  # 2 days
 
     def check_config(self):
         """Check parameters in configuration.
@@ -613,13 +606,7 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     name = "minimap2"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=16,
-            time="4-00:00:00",
-            memory="50G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=16, time="4-00:00:00", memory="50G")}
 
 
 class NgmlrStepPart(ReadMappingStepPart):
@@ -627,13 +614,7 @@ class NgmlrStepPart(ReadMappingStepPart):
 
     name = "ngmlr"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=16,
-            time="4-00:00:00",
-            memory="50G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=16, time="4-00:00:00", memory="50G")}
 
     def check_config(self):
         """Check parameters in configuration.
@@ -657,13 +638,7 @@ class ExternalStepPart(ReadMappingStepPart):
 
     name = "external"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=1,
-            time="00:10:00",
-            memory="1G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=1, time="00:10:00", memory="1G")}
 
     def check_config(self):
         """Check parameters in configuration.
@@ -707,13 +682,7 @@ class GatkPostBamStepPart(BaseStepPart):
 
     name = "gatk_post_bam"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=16,
-            time="2-00:00:00",
-            memory="16G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=16, time="2-00:00:00", memory="16G")}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -854,13 +823,7 @@ class PicardHsMetricsStepPart(BaseStepPart):
 
     name = "picard_hs_metrics"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=2,
-            time="04:00:00",
-            memory="20G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=2, time="04:00:00", memory="20G")}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -894,9 +857,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
     actions = ("run", "collect")
 
     default_resource_usage = ResourceUsage(  # for both run and collect
-        threads=2,
-        time="04:00:00",
-        memory="20G"
+        threads=2, time="04:00:00", memory="20G"
     )
 
     def __init__(self, parent):
@@ -950,13 +911,7 @@ class GenomeCoverageReportStepPart(BaseStepPart):
 
     name = "genome_coverage_report"
 
-    resource_usage = {
-        "run": ResourceUsage(
-            threads=1,
-            time="04:00:00",
-            memory="4G"
-        )
-    }
+    resource_usage = {"run": ResourceUsage(threads=1, time="04:00:00", memory="4G")}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1038,12 +993,8 @@ class NgsMappingWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, sconfig_lookup_paths, config_paths, workdir
-    ):
-        super().__init__(
-            workflow, config, config_lookup_paths, config_paths, workdir
-        )
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
         self.register_sub_step_classes(
             (
                 BwaStepPart,
@@ -1199,7 +1150,7 @@ class NgsMappingWorkflow(BaseStep):
                     tpl,
                     mapper=self.config["tools"][extraction_type.lower() + suffix],
                     ngs_library=[ngs_library],
-                    **kwargs
+                    **kwargs,
                 )
 
     def validate_project(self, config_dict, sample_sheets_list):

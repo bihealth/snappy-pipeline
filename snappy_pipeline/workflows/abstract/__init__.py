@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-from argparse import ArgumentError
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
@@ -48,6 +47,7 @@ set -x
 
 """.lstrip()
 
+
 @attr.s(frozen=True, auto_attribs=True)
 class ResourceUsage:
     """Resource usage specification to be used in ``BaseStepPart.default_resource_usage`` and
@@ -78,9 +78,7 @@ class BaseStepPart:
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
-        threads=1,
-        time="01:00:00", # 1h
-        memory="2G"
+        threads=1, time="01:00:00", memory="2G"  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
@@ -102,6 +100,7 @@ class BaseStepPart:
     def get_default_partition(self) -> str:
         """Helper that returns the default partition."""
         from snappy_pipeline.apps import snappy_snake
+
         return snappy_snake.DEFAULT_PARTITION
 
     def get_resource(self, action: str, resource_name: str):
@@ -117,7 +116,6 @@ class BaseStepPart:
             return self.get_default_partition()
         else:
             return getattr(resource_usage, resource_name)
-
 
     def get_args(self, action):
         """Return args for the given action of the sub step"""
