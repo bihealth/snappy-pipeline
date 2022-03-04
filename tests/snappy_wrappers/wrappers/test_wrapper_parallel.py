@@ -4,6 +4,7 @@ from snappy_wrappers.wrapper_parallel import days, gib, hours, kib, mib, minutes
 
 # Test isolated methods ----------------------------------------------------------------------------
 
+
 def test_kib():
     """Tests wrapper_parallel.kib() call."""
     # Define expected dictionary
@@ -98,5 +99,3 @@ def test_days():
     for input_, expected in expected_dict.items():
         actual = str(days(input_))
         assert actual == expected
-
-

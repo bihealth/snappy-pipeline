@@ -1443,13 +1443,10 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
 
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
