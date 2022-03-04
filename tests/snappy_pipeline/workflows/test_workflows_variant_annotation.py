@@ -56,7 +56,6 @@ def minimal_config():
 def variant_annotation_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -79,7 +78,6 @@ def variant_annotation_workflow(
     return VariantAnnotationWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,

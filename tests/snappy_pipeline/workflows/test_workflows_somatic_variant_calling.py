@@ -62,7 +62,6 @@ def minimal_config():
 def somatic_variant_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -79,7 +78,6 @@ def somatic_variant_calling_workflow(
     return SomaticVariantCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,

@@ -129,7 +129,6 @@ def minimal_config():
 def targeted_seq_cnv_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -146,7 +145,6 @@ def targeted_seq_cnv_calling_workflow(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,

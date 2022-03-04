@@ -60,7 +60,6 @@ def minimal_config():
 def ngs_mapping_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -77,7 +76,6 @@ def ngs_mapping_workflow(
     return NgsMappingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,

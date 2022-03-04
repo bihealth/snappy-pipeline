@@ -754,13 +754,10 @@ class WgsSvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

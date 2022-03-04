@@ -41,7 +41,6 @@ def minimal_config():
 def hla_typing_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -55,7 +54,6 @@ def hla_typing_workflow(
     return HlaTypingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,

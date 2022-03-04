@@ -6,7 +6,7 @@ import textwrap
 
 from biomedsheets.shortcuts import GenericSampleSheet
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
@@ -152,7 +152,6 @@ def dummy_config():
 def dummy_generic_step(
     dummy_workflow,
     dummy_config,
-    dummy_cluster_config,
     config_lookup_paths,
     config_paths,
     work_dir,
@@ -188,7 +187,6 @@ def dummy_generic_step(
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
