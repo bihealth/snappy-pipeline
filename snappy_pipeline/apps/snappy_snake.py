@@ -329,7 +329,10 @@ def main(argv=None):
         help="Enables running the pipeline in cluster mode using the given profile",
     )
     group.add_argument(
-        "--snappy-pipeline-jobs", type=int, default=100, help="Number of cluster jobs to run in parallel"
+        "--snappy-pipeline-jobs",
+        type=int,
+        default=100,
+        help="Number of cluster jobs to run in parallel",
     )
     group.add_argument(
         "--default-partition", type=str, default=None, help="Default partition to use, if any"

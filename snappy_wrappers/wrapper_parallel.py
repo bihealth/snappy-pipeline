@@ -21,7 +21,6 @@ import textwrap
 
 from snakemake import snakemake
 
-from snappy_pipeline.workflows.abstract import ResourceUsage
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -570,7 +569,8 @@ class ParallelBaseWrapper:
             "max_status_checks_per_second": self._get_config()["max_status_checks_per_second"],
             "job_name_token": self._job_name_token(),
             "profile": (
-                self._get_config().get("profile", None) or self._get_step_config().get("profile", None)
+                self._get_config().get("profile", None)
+                or self._get_step_config().get("profile", None)
             ),
         }
         self.logger.info("Launching excecution with args: %s", repr(kwargs))
