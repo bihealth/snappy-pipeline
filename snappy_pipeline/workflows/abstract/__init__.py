@@ -104,7 +104,7 @@ class BaseStepPart:
         return snappy_snake.DEFAULT_PARTITION
 
     def get_resource(self, action: str, resource_name: str):
-        """Return the amount of resources to be allocated for the givena ction.
+        """Return the amount of resources to be allocated for the given action.
 
         :param action: The action to return the resource requirement for.
         :param resource_name: The name to return the resource for.
@@ -731,6 +731,13 @@ class BaseStep:
         Delegates to the sub step object's get_params function
         """
         return self.substep_dispatch(sub_step, "get_params", action)
+
+    def get_resource(self, sub_step, action, resource_name):
+        """Get resource
+
+        Delegates to the sub step object's get_resource function
+        """
+        return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
 
     def get_log_file(self, sub_step, action):
         """Return path to the log file

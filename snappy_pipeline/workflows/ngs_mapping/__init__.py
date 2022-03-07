@@ -280,7 +280,7 @@ import textwrap
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import (
     STDERR_TO_LOG_FILE,
@@ -415,7 +415,7 @@ step_config:
 class ReadMappingStepPart(BaseStepPart):
     """Base class for read mapping step parts"""
 
-    #: Read mapping step parts only support action "run".
+    #: Class available actions. Read mapping step parts only support action "run".
     actions = ("run",)
 
     def __init__(self, parent):
@@ -521,12 +521,23 @@ class ReadMappingStepPart(BaseStepPart):
 class BwaStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using BWA"""
 
+    #: Step name
     name = "bwa"
 
     def get_resource_usage(self, action):
-        """Override method so we can incorporate configuration here dynamically."""
-        if action not in self.actions:  # action == "run"
-            raise ValueError(f"Invalid {action} not in {self.actions}")
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
         mem_mb = int(4.5 * 1024 * self.config["bwa"]["num_threads_align"])
         return ResourceUsage(
             threads=self.config["bwa"]["num_threads_align"],
@@ -564,9 +575,8 @@ class BwaStepPart(ReadMappingStepPart):
 class StarStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using STAR"""
 
+    #: Step name
     name = "star"
-
-    resource_usage = {"run": ResourceUsage(threads=16, time="2-00:00:00", memory="50G")}  # 2 days
 
     def check_config(self):
         """Check parameters in configuration.
@@ -600,21 +610,61 @@ class StarStepPart(ReadMappingStepPart):
                 )
                 raise InvalidConfiguration(tpl)
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_gb = int(3.5 * self.config["star"]["num_threads_align"])
+        return ResourceUsage(
+            threads=self.config["star"]["num_threads_align"],
+            time="2-00:00:00",  # 2 days
+            memory=f"{mem_gb}G",
+        )
+
 
 class Minimap2StepPart(ReadMappingStepPart):
     """Support for performing long-read alignment using minimap2"""
 
+    #: Step name
     name = "minimap2"
 
-    resource_usage = {"run": ResourceUsage(threads=16, time="4-00:00:00", memory="50G")}
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_gb = int(3.5 * self.config["minialign"]["mapping_threads"])
+        return ResourceUsage(
+            threads=self.config["minialign"]["mapping_threads"],
+            time="4-00:00:00",  # 4 days
+            memory=f"{mem_gb}G",
+        )
 
 
 class NgmlrStepPart(ReadMappingStepPart):
     """Support for performing PacBio alignment using NGMLR without chaining"""
 
+    #: Step name
     name = "ngmlr"
-
-    resource_usage = {"run": ResourceUsage(threads=16, time="4-00:00:00", memory="50G")}
 
     def check_config(self):
         """Check parameters in configuration.
@@ -632,13 +682,33 @@ class NgmlrStepPart(ReadMappingStepPart):
             msg="Path to NGMLR index is required",
         )
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        # TODO: Add resources to DEFAULT_CONFIG instead of hard-coding.
+        return ResourceUsage(
+            threads=16,
+            time="4-00:00:00",  # 4 days
+            memory="50G",
+        )
+
 
 class ExternalStepPart(ReadMappingStepPart):
     """Support for linking in external BAM files"""
 
+    #: Step name
     name = "external"
-
-    resource_usage = {"run": ResourceUsage(threads=1, time="00:10:00", memory="1G")}
 
     def check_config(self):
         """Check parameters in configuration.
@@ -671,6 +741,26 @@ class ExternalStepPart(ReadMappingStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=1,
+            time="00:10:00",  # 10 minutes
+            memory="1G",
+        )
+
 
 class GatkPostBamStepPart(BaseStepPart):
     """Support for supporting BAM postprocessing with GATK
@@ -680,9 +770,11 @@ class GatkPostBamStepPart(BaseStepPart):
     for large files.
     """
 
+    #: Step name
     name = "gatk_post_bam"
 
-    resource_usage = {"run": ResourceUsage(threads=16, time="2-00:00:00", memory="16G")}
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -735,6 +827,26 @@ class GatkPostBamStepPart(BaseStepPart):
     def get_log_file(action):
         _ = action
         return "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory="16G",
+        )
 
 
 class LinkOutBamStepPart(BaseStepPart):
@@ -821,9 +933,11 @@ class LinkOutBamStepPart(BaseStepPart):
 class PicardHsMetricsStepPart(BaseStepPart):
     """Build target report from Picard HsMetrics"""
 
+    #: Step name
     name = "picard_hs_metrics"
 
-    resource_usage = {"run": ResourceUsage(threads=2, time="04:00:00", memory="20G")}
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -849,16 +963,35 @@ class PicardHsMetricsStepPart(BaseStepPart):
         _ = action
         return "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="04:00:00",  # 4 hours
+            memory="20G",
+        )
+
 
 class TargetCoverageReportStepPart(BaseStepPart):
     """Build target coverage report"""
 
+    #: Step name
     name = "target_coverage_report"
-    actions = ("run", "collect")
 
-    default_resource_usage = ResourceUsage(  # for both run and collect
-        threads=2, time="04:00:00", memory="20G"
-    )
+    #: Class available actions
+    actions = ("run", "collect")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -905,13 +1038,35 @@ class TargetCoverageReportStepPart(BaseStepPart):
         else:
             return "work/target_cov_report/log/snakemake.target_coverage.log"
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="04:00:00",  # 4 hours
+            memory="20G",
+        )
+
 
 class GenomeCoverageReportStepPart(BaseStepPart):
     """Build genome-wide per-base coverage report"""
 
+    #: Step name
     name = "genome_coverage_report"
 
-    resource_usage = {"run": ResourceUsage(threads=1, time="04:00:00", memory="4G")}
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -979,18 +1134,39 @@ class GenomeCoverageReportStepPart(BaseStepPart):
             ).lstrip()
         )
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory="4G",
+        )
+
 
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
+    #: Step name
     name = "ngs_mapping"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
     def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
+        """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):

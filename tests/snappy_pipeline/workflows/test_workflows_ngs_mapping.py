@@ -225,6 +225,8 @@ def test_project_validation_germline(
 
 
 def test_bwa_step_part_get_args(ngs_mapping_workflow):
+    """Tests BaseStepPart.get_args()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": {
@@ -234,16 +236,23 @@ def test_bwa_step_part_get_args(ngs_mapping_workflow):
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
     }
-    assert ngs_mapping_workflow.get_args("bwa", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_args("bwa", "run")(wildcards)
+    assert actual == expected
 
 
 def test_bwa_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests BaseStepPart.get_input_files()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
-    assert ngs_mapping_workflow.get_input_files("bwa", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("bwa", "run")(wildcards)
+    assert actual == expected
 
 
 def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests BaseStepPart.get_output_files()"""
     # Define expected
     bam_base_out = "work/bwa.{library_name}/out/bwa.{library_name}"
     report_base_out = "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}"
@@ -254,6 +263,7 @@ def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests BaseStepPart.get_log_file()"""
     # Define expected
     expected = get_expected_log_files_dict(
         base_out="work/bwa.{library_name}/log/bwa.{library_name}"
@@ -263,10 +273,23 @@ def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
     assert actual == expected
 
 
+def test_bwa_step_part_get_resource(ngs_mapping_workflow):
+    """Tests BaseStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "3-00:00:00", "memory": "73728M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for StarStepPart --------------------------------------------------------------------------
 
 
 def test_star_step_part_get_args(ngs_mapping_workflow):
+    """Tests StarStepPart.get_args()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": {
@@ -276,16 +299,23 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
     }
-    assert ngs_mapping_workflow.get_args("star", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_args("star", "run")(wildcards)
+    assert actual == expected
 
 
 def test_star_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests StarStepPart.get_input_files()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
-    assert ngs_mapping_workflow.get_input_files("star", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("star", "run")(wildcards)
+    assert actual == expected
 
 
 def test_star_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests StarStepPart.get_output_files()"""
     # Define expected
     bam_base_out = "work/star.{library_name}/out/star.{library_name}"
     report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
@@ -296,6 +326,7 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_star_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests StarStepPart.get_log_file()"""
     # Define expected
     expected = get_expected_log_files_dict(
         base_out="work/star.{library_name}/log/star.{library_name}"
@@ -305,23 +336,169 @@ def test_star_step_part_get_log_file(ngs_mapping_workflow):
     assert actual == expected
 
 
-# Tests for ExternalStepPart ----------------------------------------------------------------------
+def test_star_step_part_get_resource(ngs_mapping_workflow):
+    """Tests StarStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "56G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("star", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for Minimap2StepPart -----------------------------------------------------------------------
+
+
+def test_minimap2_step_part_get_args(ngs_mapping_workflow):
+    """Tests Minimap2StepPart.get_args()"""
+    # Define expected
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "input": {
+            "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz"],
+            "reads_right": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz"],
+        },
+        "platform": "ILLUMINA",
+        "sample_name": "P001-N1-DNA1-WGS1",
+    }
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_args("minimap2", "run")(wildcards)
+    assert actual == expected
+
+
+def test_minimap2_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests Minimap2StepPart.get_input_files()"""
+    # Define expected
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("minimap2", "run")(wildcards)
+    assert actual == expected
+
+
+def test_minimap2_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests Minimap2StepPart.get_output_files()"""
+    # Define expected
+    bam_base_out = "work/minimap2.{library_name}/out/minimap2.{library_name}"
+    report_base_out = "work/minimap2.{library_name}/report/bam_qc/minimap2.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("minimap2", "run")
+    assert actual == expected
+
+
+def test_minimap2_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests Minimap2StepPart.get_log_file()"""
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/minimap2.{library_name}/log/minimap2.{library_name}"
+    )
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("minimap2", "run")
+    assert actual == expected
+
+
+def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
+    """Tests Minimap2StepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "4-00:00:00", "memory": "56G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for NgmlrStepPart -----------------------------------------------------------------------
+
+
+def test_ngmlr_step_part_get_args(ngs_mapping_workflow):
+    """Tests NgmlrStepPart.get_args()"""
+    # Define expected
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "input": {
+            "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz"],
+            "reads_right": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz"],
+        },
+        "platform": "ILLUMINA",
+        "sample_name": "P001-N1-DNA1-WGS1",
+    }
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_args("ngmlr", "run")(wildcards)
+    assert actual == expected
+
+
+def test_ngmlr_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests NgmlrStepPart.get_input_files()"""
+    # Define expected
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("ngmlr", "run")(wildcards)
+    assert actual == expected
+
+
+def test_ngmlr_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests NgmlrStepPart.get_output_files()"""
+    # Define expected
+    bam_base_out = "work/ngmlr.{library_name}/out/ngmlr.{library_name}"
+    report_base_out = "work/ngmlr.{library_name}/report/bam_qc/ngmlr.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("ngmlr", "run")
+    assert actual == expected
+
+
+def test_ngmlr_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests NgmlrStepPart.get_log_file()"""
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/ngmlr.{library_name}/log/ngmlr.{library_name}"
+    )
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("ngmlr", "run")
+    assert actual == expected
+
+
+def test_ngmlr_step_part_get_resource(ngs_mapping_workflow):
+    """Tests NgmlrStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "4-00:00:00", "memory": "50G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("ngmlr", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for ExternalStepPart -----------------------------------------------------------------------
 
 
 # TODO(holtgrewe): the fake file system should be setup with fake BAM files.
 def test_external_step_part_get_args(ngs_mapping_workflow):
+    """Tests ExternalStepPart.get_args()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"input": [], "platform": "EXTERNAL", "sample_name": "P001-N1-DNA1-WGS1"}
-    assert ngs_mapping_workflow.get_args("external", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_args("external", "run")(wildcards)
+    assert actual == expected
 
 
 def test_external_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests ExternalStepPart.get_input_files()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
-    assert ngs_mapping_workflow.get_input_files("external", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("external", "run")(wildcards)
+    assert actual == expected
 
 
 def test_external_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests ExternalStepPart.get_output_files()"""
     # Define expected
     bam_base_out = "work/external.{library_name}/out/external.{library_name}"
     report_base_out = "work/external.{library_name}/report/bam_qc/external.{library_name}"
@@ -331,16 +508,29 @@ def test_external_step_part_get_output_files(ngs_mapping_workflow):
     assert actual == expected
 
 
+def test_external_step_part_get_resource(ngs_mapping_workflow):
+    """Tests ExternalStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "00:10:00", "memory": "1G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("external", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for GatkPostBamStepPart -------------------------------------------------------------------
 
 
 def test_gatk_post_bam_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests GatkPostBamStepPart.get_input_files()"""
     expected = "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
     actual = ngs_mapping_workflow.get_input_files("gatk_post_bam", "run")
     assert actual == expected
 
 
 def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests GatkPostBamStepPart.get_output_files()"""
     # Define expected
     base_name_out = "work/{mapper}.{library_name}/out/{mapper}.{library_name}"
     expected = {
@@ -359,14 +549,29 @@ def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
 
 
 def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests GatkPostBamStepPart.get_log_file()"""
     expected = "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
-    assert ngs_mapping_workflow.get_log_file("gatk_post_bam", "run") == expected
+    actual = ngs_mapping_workflow.get_log_file("gatk_post_bam", "run")
+    assert actual == expected
+
+
+def test_gatk_post_bam_step_part_get_resource(ngs_mapping_workflow):
+    """Tests GatkPostBamStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("gatk_post_bam", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for LinkOutBamStepPart --------------------------------------------------------------------
 
 
 def test_link_out_bam_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests LinkOutBamStepPart.get_input_files()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
     expected = [
         "work/bwa.library/out/bwa.library.bam",
@@ -374,37 +579,96 @@ def test_link_out_bam_step_part_get_input_files(ngs_mapping_workflow):
         "work/bwa.library/out/bwa.library.bam.md5",
         "work/bwa.library/out/bwa.library.bam.bai.md5",
     ]
-    assert ngs_mapping_workflow.get_input_files("link_out_bam", "run")(wildcards) == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("link_out_bam", "run")(wildcards)
+    assert actual == expected
 
 
 def test_link_out_bam_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests LinkOutBamStepPart.get_output_files()"""
+    # Define expected
     expected = [
         "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam",
         "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai",
         "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.md5",
         "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai.md5",
     ]
-    assert ngs_mapping_workflow.get_output_files("link_out_bam", "run") == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_output_files("link_out_bam", "run")
+    assert actual == expected
 
 
 def test_link_out_bam_step_part_get_shell_cmd(ngs_mapping_workflow):
+    """Tests LinkOutBamStepPart.get_shell_cmd()"""
+    # Define expected
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
-    actual = ngs_mapping_workflow.get_shell_cmd("link_out_bam", "run", wildcards)
+    b_name = "bwa.library/out/bwa.library.bam"
     expected = textwrap.dedent(
-        r"""
-        test -L output/bwa.library/out/bwa.library.bam || ln -sr work/bwa.library/out/bwa.library.bam output/bwa.library/out/bwa.library.bam
-        test -L output/bwa.library/out/bwa.library.bam.bai || ln -sr work/bwa.library/out/bwa.library.bam.bai output/bwa.library/out/bwa.library.bam.bai
-        test -L output/bwa.library/out/bwa.library.bam.md5 || ln -sr work/bwa.library/out/bwa.library.bam.md5 output/bwa.library/out/bwa.library.bam.md5
-        test -L output/bwa.library/out/bwa.library.bam.bai.md5 || ln -sr work/bwa.library/out/bwa.library.bam.bai.md5 output/bwa.library/out/bwa.library.bam.bai.md5
-        """
+        rf"""
+       test -L output/{b_name} || ln -sr work/{b_name} output/{b_name}
+       test -L output/{b_name}.bai || ln -sr work/{b_name}.bai output/{b_name}.bai
+       test -L output/{b_name}.md5 || ln -sr work/{b_name}.md5 output/{b_name}.md5
+       test -L output/{b_name}.bai.md5 || ln -sr work/{b_name}.bai.md5 output/{b_name}.bai.md5
+       """
     ).strip()
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_shell_cmd("link_out_bam", "run", wildcards)
     assert actual == expected
+
+
+# Tests for PicardHsMetricsStepPart ----------------------------------------------------------------
+
+
+def test_picard_hs_metrics_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests PicardHsMetricsStepPart.get_input_files()"""
+    # Define expected
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
+        "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
+    }
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("picard_hs_metrics", "run")
+    assert actual == expected
+
+
+def test_picard_hs_metrics_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests PicardHsMetricsStepPart.get_output_files()"""
+    # Define expected
+    expected = {
+        "txt": "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt",
+        "txt_md5": "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt.md5",
+    }
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("picard_hs_metrics", "run")
+    assert actual == expected
+
+
+def test_picard_hs_metrics_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests PicardHsMetricsStepPart.get_log_file()"""
+    # Define expected
+    expected = "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("picard_hs_metrics", "run")
+    assert actual == expected
+
+
+def test_picard_hs_metrics_step_part_get_resource(ngs_mapping_workflow):
+    """Tests PicardHsMetricsStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "04:00:00", "memory": "20G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("picard_hs_metrics", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for TargetCoverageReportStepPart ----------------------------------------------------------
 
 
 def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_input_files() - run"""
     # Define expected
     expected = {
         "bam": "work/bwa.library/out/bwa.library.bam",
@@ -417,6 +681,7 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
 
 
 def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_input_files() - collect"""
     # Define expected
     expected = [
         "work/bwa.P001-N1-DNA1-WGS1/report/cov_qc/bwa.P001-N1-DNA1-WGS1.txt",
@@ -433,6 +698,7 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
 
 
 def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_output_files() - run"""
     expected = {
         "txt": "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt",
         "txt_md5": "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt.md5",
@@ -441,51 +707,68 @@ def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow)
 
 
 def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_log_file() - run"""
     expected = "work/{mapper_lib}/log/snakemake.target_coverage.log"
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
 
 def test_target_coverage_report_step_part_collect_get_log_file(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_log_file() - collect"""
     expected = "work/target_cov_report/log/snakemake.target_coverage.log"
-    assert ngs_mapping_workflow.get_log_file("target_coverage_report", "colllect") == expected
+    assert ngs_mapping_workflow.get_log_file("target_coverage_report", "collect") == expected
 
 
-def test_target_coverage_report_step_part_update_cluster_config(
-    ngs_mapping_workflow, dummy_cluster_config
-):
-    """Test that the update_cluster_config has been called for the genome coverage report step
-    part and the necessary steps are present
-    """
-    actual = set(dummy_cluster_config["ngs_mapping_target_coverage_report_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_resource()"""
+    # Define expected
+    actions = ("run", "collect")
+    expected_dict = {"threads": 2, "time": "04:00:00", "memory": "20G", "partition": None}
+    # Evaluate
+    for action in actions:
+        for resource, expected in expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = ngs_mapping_workflow.get_resource("target_coverage_report", action, resource)
+            assert actual == expected, msg_error
 
 
 # Tests for GenomeCoverageReportStepPart ----------------------------------------------------------
 
 
 def test_genome_coverage_report_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests GenomeCoverageReportStepPart.get_input_files()"""
+    # Define expected
     expected = {
         "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
         "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
     }
-    assert ngs_mapping_workflow.get_input_files("genome_coverage_report", "run") == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_input_files("genome_coverage_report", "run")
+    assert actual == expected
 
 
 def test_genome_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests GenomeCoverageReportStepPart.get_output_files()"""
+    # Define expected
     expected = {
         "bed": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz",
         "tbi": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz.tbi",
     }
-    assert ngs_mapping_workflow.get_output_files("genome_coverage_report", "run") == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_output_files("genome_coverage_report", "run")
+    assert actual == expected
 
 
 def test_genome_coverage_report_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests GenomeCoverageReportStepPart.get_log_file()"""
+    # Define expected
     expected = "work/{mapper_lib}/log/snakemake.genome_coverage.log"
-    assert ngs_mapping_workflow.get_log_file("genome_coverage_report", "run") == expected
+    # Get actual and assert
+    actual = ngs_mapping_workflow.get_log_file("genome_coverage_report", "run")
+    assert actual == expected
 
 
 def test_genome_coverage_report_step_part_get_shell_cmd(ngs_mapping_workflow):
+    """Tests GenomeCoverageReportStepPart.get_shell_cmd()"""
     cmd = ngs_mapping_workflow.get_shell_cmd("genome_coverage_report", "run", None)
     # The shell command returns a static blob and thus we only check for some important keywords.
     # The actual functionality has to be tested in an integration/system test.
@@ -494,15 +777,15 @@ def test_genome_coverage_report_step_part_get_shell_cmd(ngs_mapping_workflow):
     assert "tabix {output.bed}" in cmd
 
 
-def test_genome_coverage_report_step_part_update_cluster_config(
-    ngs_mapping_workflow, dummy_cluster_config
-):
-    """Test that the update_cluster_config has been called for the genome coverage report step
-    part and the necessary steps are present
-    """
-    actual = set(dummy_cluster_config["ngs_mapping_genome_coverage_report_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_genome_coverage_report_step_part_get_resource(ngs_mapping_workflow):
+    """Tests GenomeCoverageReportStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "4G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("genome_coverage_report", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for NgsMappingWorkflow --------------------------------------------------------------------

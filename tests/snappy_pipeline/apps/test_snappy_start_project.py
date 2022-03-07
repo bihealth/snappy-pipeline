@@ -2,7 +2,6 @@
 """Tests for ``snappy-start-step`` app."""
 
 from snappy_pipeline.apps import snappy_start_project
-
 from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
