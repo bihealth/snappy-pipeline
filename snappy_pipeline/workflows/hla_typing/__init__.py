@@ -60,6 +60,7 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -67,6 +68,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    ResourceUsage,
     get_ngs_library_folder_name,
 )
 
@@ -98,12 +100,14 @@ step_config:
 class OptiTypeStepPart(BaseStepPart):
     """HLA Typing using OptiType"""
 
+    #: Step name
     name = "optitype"
-    supported_extraction_types = ["dna", "rna"]
 
-    @staticmethod
-    def get_output_prefix():
-        return ""
+    #: Class available actions
+    actions = ("run",)
+
+    #: Supported extraction types: DNA, RNA
+    supported_extraction_types = ["dna", "rna"]
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -114,6 +118,10 @@ class OptiTypeStepPart(BaseStepPart):
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
         )
+
+    @staticmethod
+    def get_output_prefix():
+        return ""
 
     @classmethod
     @dictify
@@ -176,20 +184,38 @@ class OptiTypeStepPart(BaseStepPart):
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
         return library.test_sample.extra_infos["extractionType"].lower()
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for OptiType"""
-        cluster_config["hla_typing_optitype_run"] = {"mem": 6 * 7500, "time": "40:00", "ntasks": 6}
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=6,
+            time="40:00:00",  # 40 hours
+            memory="45000M",
+        )
 
 
 class ArcasHlaStepPart(BaseStepPart):
     """HLA Typing using arcasHLA"""
 
+    #: Step name
     name = "arcashla"
-    supported_extraction_types = ["rna"]
 
-    def get_output_prefix(self):
-        return "%s." % self.config["arcashla"]["mapper"]
+    #: Class available actions
+    actions = ("run",)
+
+    #: Supported extraction type: RNA
+    supported_extraction_types = ["rna"]
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -220,22 +246,43 @@ class ArcasHlaStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config["arcashla"]["mapper"])
 
+    def get_output_prefix(self):
+        return "%s." % self.config["arcashla"]["mapper"]
+
     @staticmethod
     def get_log_file(action):
         """Return path to log file"""
         _ = action
         return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for ArcasHla"""
-        cluster_config["hla_typing_arcashla_run"] = {"mem": 4 * 3750, "time": "60:00", "ntasks": 4}
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=4,
+            time="60:00:00",  # 60 hours
+            memory="15000M",
+        )
 
 
 class HlaTypingWorkflow(BaseStep):
     """Perform HLA Typing"""
 
+    #: Step name
     name = "hla_typing"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
@@ -285,5 +332,5 @@ class HlaTypingWorkflow(BaseStep):
                             prefix=self.sub_steps[tool].get_output_prefix(),
                             hla_typer=[tool],
                             ngs_library=[ngs_library],
-                            **kwargs
+                            **kwargs,
                         )
