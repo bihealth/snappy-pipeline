@@ -87,7 +87,12 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -483,12 +488,26 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["somatic_variant_calling_%s_run" % self.name] = {
-            "mem": int(3.7 * 1024 * 2),
-            "time": "72:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = int(3.7 * 1024 * 2)
+        return ResourceUsage(
+            threads=2,
+            time="3-00:00:00",  # 3 days
+            memory=f"{mem_mb}M",
+        )
 
 
 class MutectStepPart(MutectBaseStepPart):
@@ -496,6 +515,9 @@ class MutectStepPart(MutectBaseStepPart):
 
     #: Step name
     name = "mutect"
+
+    #: Class available actions
+    actions = ("run",)
 
 
 class Mutect2StepPart(MutectBaseStepPart):
@@ -506,6 +528,35 @@ class Mutect2StepPart(MutectBaseStepPart):
 
     #: Class available actions
     actions = ("run", "filter", "contamination", "pileup_normal", "pileup_tumor")
+
+    #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "run": ResourceUsage(
+            threads=2,
+            time="5-00:00:00",
+            memory="3584M",
+        ),
+        "filter": ResourceUsage(
+            threads=2,
+            time="03:59:00",
+            memory="15872M",
+        ),
+        "contamination": ResourceUsage(
+            threads=2,
+            time="03:59:00",
+            memory="7680M",
+        ),
+        "pileup_normal": ResourceUsage(
+            threads=2,
+            time="03:59:00",
+            memory="7680M",
+        ),
+        "pileup_tumor": ResourceUsage(
+            threads=2,
+            time="03:59:00",
+            memory="7680M",
+        ),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -767,11 +818,31 @@ class Mutect2StepPart(MutectBaseStepPart):
             "pe": "smp 2",
         }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return self.resource_usage_dict.get(action)
+
 
 class ScalpelStepPart(SomaticVariantCallingStepPart):
     """Somatic variant calling with Scalpel"""
 
+    #: Step name
     name = "scalpel"
+
+    #: Class available actions
+    actions = ("run",)
 
     def check_config(self):
         if "scalpel" not in self.config["tools"]:
@@ -804,12 +875,38 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             "ntasks": 16,
         }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 5 * 1024 * 16
+        return ResourceUsage(
+            threads=16,  # TODO: Make Scalpel number of thread configurable.
+            time="2-00:00:00",  # 2 days
+            memory=f"{mem_mb}M",
+        )
+
 
 class Strelka2StepPart(SomaticVariantCallingStepPart):
     """Somatic variant calling with strelka2/manta"""
 
+    #: Step name
     name = "strelka2"
 
+    #: Class available actions
+    actions = ("run",)
+
+    # Output extension files dictionary. Key: output type (string); Value: extension (string)
     extensions = {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
@@ -835,13 +932,25 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["somatic_variant_calling_strelka2_run"] = {
-            "h_vmem": "4g",
-            "h_rt": "24:00:00",
-            "pe": "smp 8",
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="1-00:00:00",  # 1 day
+            memory="4G",
+        )
 
 
 class JointCallingStepPart(BaseStepPart):

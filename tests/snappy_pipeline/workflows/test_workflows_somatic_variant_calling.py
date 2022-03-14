@@ -112,6 +112,7 @@ def somatic_variant_calling_workflow(
 
 
 def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests MutectStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_variant_calling_workflow.get_input_files("mutect", "run")(wildcards)
     expected = {
@@ -124,7 +125,7 @@ def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
 
 
 def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests file structure associated with `mutect` run in the Somatic Variant Calling Workflow."""
+    """Tests MutectStepPart.get_output_files()"""
     # Define expected
     base_name_out = "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}"
     expected = {
@@ -143,32 +144,34 @@ def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
     }
     # Get actual
     actual = somatic_variant_calling_workflow.get_output_files("mutect", "run")
-
     assert actual == expected
 
 
 def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests MutectStepPart.get_log_file()"""
     # Define expected
     base_name_out = "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_variant_calling_workflow.get_log_file("mutect", "run")
-
     assert actual == expected
 
 
-def test_mutect_step_part_update_cluster_config(
-    somatic_variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["somatic_variant_calling_mutect_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests MutectStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "3-00:00:00", "memory": "7577M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for Mutect2StepPart ------------------------------------------------------------------------
 
 
-def test_mutect2_run_step_part_get_input_files(mutect2_wildcards, somatic_variant_calling_workflow):
+def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_variant_calling_workflow):
     """Tests Mutect2StepPart._get_input_files_run()"""
     # Define expected
     expected = {
@@ -182,7 +185,7 @@ def test_mutect2_run_step_part_get_input_files(mutect2_wildcards, somatic_varian
     assert actual == expected
 
 
-def test_mutect2_filter_step_part_get_input_files(
+def test_mutect2_step_part_get_input_files_filter(
     mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart._get_input_files_filter()"""
@@ -201,7 +204,7 @@ def test_mutect2_filter_step_part_get_input_files(
     assert actual == expected
 
 
-def test_mutect2_contamination_step_part_get_input_files(
+def test_mutect2_step_part_get_input_files_contamination(
     mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart._get_input_files_contamination()"""
@@ -217,7 +220,7 @@ def test_mutect2_contamination_step_part_get_input_files(
     assert actual == expected
 
 
-def test_mutect2_pileup_normal_step_part_get_input_files(
+def test_mutect2_step_part_get_input_files_pileup_normal(
     mutect2_wildcards, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart._get_input_files_pileup_normal()"""
@@ -233,7 +236,7 @@ def test_mutect2_pileup_normal_step_part_get_input_files(
     assert actual == expected
 
 
-def test_mutect2_pileup_tumor_step_part_get_input_files(
+def test_mutect2_step_part_get_input_files_pileup_tumor(
     mutect2_wildcards, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart._get_input_files_pileup_tumor()"""
@@ -249,7 +252,7 @@ def test_mutect2_pileup_tumor_step_part_get_input_files(
     assert actual == expected
 
 
-def test_mutect2_run_step_part_get_output_files(
+def test_mutect2_step_part_get_output_files_run(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - run"""
@@ -269,7 +272,7 @@ def test_mutect2_run_step_part_get_output_files(
     assert actual == expected
 
 
-def test_mutect2_filter_step_part_get_output_files(
+def test_mutect2_step_part_get_output_files_filter(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - filter"""
@@ -289,7 +292,7 @@ def test_mutect2_filter_step_part_get_output_files(
     assert actual == expected
 
 
-def test_mutect2_contamination_step_part_get_output_files(
+def test_mutect2_step_part_get_output_files_contamination(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - contamination"""
@@ -305,7 +308,7 @@ def test_mutect2_contamination_step_part_get_output_files(
     assert actual == expected
 
 
-def test_mutect2_pileup_normal_step_part_get_output_files(
+def test_mutect2_step_part_get_output_files_pileup_normal(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - pileup_normal"""
@@ -319,7 +322,7 @@ def test_mutect2_pileup_normal_step_part_get_output_files(
     assert actual == expected
 
 
-def test_mutect2_pileup_tumor_step_part_get_output_files(
+def test_mutect2_step_part_get_output_files_pileup_tumor(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - pileup_tumor"""
@@ -333,7 +336,7 @@ def test_mutect2_pileup_tumor_step_part_get_output_files(
     assert actual == expected
 
 
-def test_mutect2_run_step_part_get_log_file(
+def test_mutect2_step_part_get_log_file_run(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_log_files() - run"""
@@ -344,7 +347,7 @@ def test_mutect2_run_step_part_get_log_file(
     assert actual == expected
 
 
-def test_mutect2_filter_step_part_get_log_file(
+def test_mutect2_step_part_get_log_file_filter(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_log_files() - filter"""
@@ -362,7 +365,7 @@ def test_mutect2_filter_step_part_get_log_file(
     assert actual == expected
 
 
-def test_mutect2_contamination_step_part_get_log_file(
+def test_mutect2_step_part_get_log_file_contamination(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_log_files() - contamination"""
@@ -380,7 +383,7 @@ def test_mutect2_contamination_step_part_get_log_file(
     assert actual == expected
 
 
-def test_mutect2_pileup_normal_step_part_get_log_file(
+def test_mutect2_step_part_get_log_file_pileup_normal(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_log_files() - pileup_normal"""
@@ -398,7 +401,7 @@ def test_mutect2_pileup_normal_step_part_get_log_file(
     assert actual == expected
 
 
-def test_mutect2_pileup_tumor_step_part_get_log_file(
+def test_mutect2_step_part_get_log_file_pileup_tumor(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_log_files() - pileup_tumor"""
@@ -416,10 +419,66 @@ def test_mutect2_pileup_tumor_step_part_get_log_file(
     assert actual == expected
 
 
+def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart.get_resource() - run"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "3584M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "run", resource)
+        assert actual == expected, msg_error
+
+
+def test_mutect2_step_part_get_resource_usage_filter(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart.get_resource() - filter"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "15872M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "filter", resource)
+        assert actual == expected, msg_error
+
+
+def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart.get_resource() - contamination"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "contamination", resource)
+        assert actual == expected, msg_error
+
+
+def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart.get_resource() - pileup_normal"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_normal", resource)
+        assert actual == expected, msg_error
+
+
+def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart.get_resource() - pileup_tumor"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_tumor", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for ScalpelStepPart ----------------------------------------------------------------------
 
 
 def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests ScalpelStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_variant_calling_workflow.get_input_files("scalpel", "run")(wildcards)
     expected = {
@@ -432,8 +491,7 @@ def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
 
 
 def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests file structure associated with `scalpel` run in the Somatic Variant Calling
-    Workflow."""
+    """Tests ScalpelStepPart.get_output_files()"""
     # Define expected
     base_name_out = "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}"
     expected = {
@@ -449,11 +507,11 @@ def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
     }
     # Get actual
     actual = somatic_variant_calling_workflow.get_output_files("scalpel", "run")
-
     assert actual == expected
 
 
 def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests ScalpelStepPart.get_log_file()"""
     # Define expected
     expected = get_expected_log_files_dict(
         base_out="work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}"
@@ -463,12 +521,80 @@ def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
     assert actual == expected
 
 
-def test_scalpel_step_part_update_cluster_config(
-    somatic_variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["somatic_variant_calling_scalpel_run"].keys())
-    expected = {"mem", "time", "ntasks"}
+def test_scalpel_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests ScalpelStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "81920M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for Strelka2StepPart ----------------------------------------------------------------------
+
+
+def test_strelka2_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests Strelka2StepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    actual = somatic_variant_calling_workflow.get_input_files("strelka2", "run")(wildcards)
+    expected = {
+        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+    }
     assert actual == expected
+
+
+def test_strelka2_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests Strelka2StepPart.get_output_files()"""
+    # Define expected
+    base_name_out = "work/{mapper}.strelka2.{tumor_library}/out/{mapper}.strelka2.{tumor_library}"
+    expected = {
+        "vcf": base_name_out + ".vcf.gz",
+        "vcf_md5": base_name_out + ".vcf.gz.md5",
+        "tbi": base_name_out + ".vcf.gz.tbi",
+        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "full": base_name_out + ".full.vcf.gz",
+        "full_md5": base_name_out + ".full.vcf.gz.md5",
+        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "stats": base_name_out + ".tsv",
+        "stats_md5": base_name_out + ".tsv.md5",
+        "report": base_name_out + ".xml",
+        "report_md5": base_name_out + ".xml.md5",
+        "bed": base_name_out + ".bed.gz",
+        "bed_md5": base_name_out + ".bed.gz.md5",
+        "bed_tbi": base_name_out + ".bed.gz.tbi",
+        "bed_tbi_md5": base_name_out + ".bed.gz.tbi.md5",
+    }
+    # Get actual
+    actual = somatic_variant_calling_workflow.get_output_files("strelka2", "run")
+    assert actual == expected
+
+
+def test_strelka2_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests Strelka2StepPart.get_log_file()"""
+    # Define expected
+    expected = get_expected_log_files_dict(
+        base_out="work/{mapper}.strelka2.{tumor_library}/log/{mapper}.strelka2.{tumor_library}"
+    )
+    # Get actual
+    actual = somatic_variant_calling_workflow.get_log_file("strelka2", "run")
+    assert actual == expected
+
+
+def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests Strelka2StepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "4G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for SomaticVariantCallingWorkflow ---------------------------------------------------------
