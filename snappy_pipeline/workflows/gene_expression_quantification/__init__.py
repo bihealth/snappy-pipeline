@@ -52,6 +52,7 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -59,6 +60,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    ResourceUsage,
     get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -289,27 +291,61 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     """Gene expression quantification from RNA-seq using FeatureCounts"""
 
+    #: Step name
     name = "featurecounts"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "24:00",
-            "ntasks": 2,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="1-00:00:00",  # 1 day
+            memory="6700M",
+        )
 
 
 class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     """Gene expression quantification from RNA-seq using FeatureCounts"""
 
+    #: Step name
     name = "strandedness"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "12:00",
-            "ntasks": 2,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="12:00:00",  # 12 hours
+            memory="6700M",
+        )
 
     def get_strandedness_file(self, action):
         _ = action
