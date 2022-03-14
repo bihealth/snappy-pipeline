@@ -54,6 +54,11 @@ rule repeat_expansion_run_expansionhunter:
         wf.get_input_files("expansionhunter", "run"),
     output:
         **wf. get_output_files("expansionhunter","run"),
+    threads: wf.get_resources("expansionhunter", "run", "threads")
+    resources:
+        time=wf.get_resource("expansionhunter", "run", "time"),
+        mem=wf.get_resource("expansionhunter", "run", "memory"),
+        partition=wf.get_resources("expansionhunter", "run", "partition"),
     params:
         **{"args": wf. get_params('expansionhunter','run')},
     log:
@@ -67,5 +72,10 @@ rule repeat_expansion_annotate_expansionhunter:
         wf.get_input_files("expansionhunter", "annotate"),
     output:
         **wf. get_output_files("expansionhunter","annotate"),
+    threads: wf.get_resources("expansionhunter", "run", "threads")
+    resources:
+        time=wf.get_resource("expansionhunter", "run", "time"),
+        mem=wf.get_resource("expansionhunter", "run", "memory"),
+        partition=wf.get_resources("expansionhunter", "run", "partition"),
     run:
         wf.substep_getattr("expansionhunter", "annotate_results")(wildcards, input, output)

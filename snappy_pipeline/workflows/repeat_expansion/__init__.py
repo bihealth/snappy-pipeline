@@ -112,10 +112,10 @@ step_config:
 class ExpansionHunterStepPart(BaseStepPart):
     """Repeat expansion analysis with Illumina::ExpansionHunter"""
 
-    #: Step name.
+    #: Step name
     name = "expansionhunter"
 
-    #: Valid actions.
+    #: Valid actions
     actions = ("run", "annotate")
 
     def __init__(self, *args, **kwargs):

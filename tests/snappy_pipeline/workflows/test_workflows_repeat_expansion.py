@@ -160,6 +160,17 @@ def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
     assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a male patient."
 
 
+def test_expansionhunter_step_part_get_resource_usage(repeat_expansion_workflow):
+    """Tests RepeatExpansionWorkflow.get_resource_usage()"""
+    # Define expected: default defined workflow.abstract
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for ExpansionHunterStepPart (annotate) -----------------------------------------------------
 
 
@@ -189,3 +200,14 @@ def test_expansionhunter_annotate_step_part_get_output_files(repeat_expansion_wo
     # Get actual
     actual = repeat_expansion_workflow.get_output_files("expansionhunter", "annotate")
     assert actual == expected
+
+
+def test_expansionhunter_annotate_step_part_get_resource_usage(repeat_expansion_workflow):
+    """Tests ExpansionHunterStepPart.get_resource_usage()"""
+    # Define expected: default defined workflow.abstract
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "annotate", resource)
+        assert actual == expected, msg_error
