@@ -94,6 +94,7 @@ def roh_calling_workflow(
 
 
 def test_roh_calling_bcftools_roh_step_part_get_input_files_run(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_input_files_run()"""
     # Define expected
     base_name_out = (
         "VAR_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
@@ -115,6 +116,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_run(roh_calling_work
 
 
 def test_roh_calling_bcftools_roh_step_part_get_input_files_make_bed(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_input_files_make_bed()"""
     # Define expected
     txt_file = (
         "work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/"
@@ -135,6 +137,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_make_bed(roh_calling
 
 
 def test_roh_calling_bcftools_roh_step_part_get_input_files_link_bed(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_input_files_link_bed()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -148,6 +151,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_link_bed(roh_calling
 
 
 def test_roh_calling_bcftools_roh_step_part_get_output_files_run(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_output_files_run()"""
     # Define actual
     base_name_out = (
         "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
@@ -164,11 +168,14 @@ def test_roh_calling_bcftools_roh_step_part_get_output_files_run(roh_calling_wor
 
 
 def test_roh_calling_bcftools_roh_step_part_get_output_files_make_bed(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_output_files_make_bed()"""
     expected = "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
-    assert expected == roh_calling_workflow.get_output_files("bcftools_roh", "make_bed")
+    actual = roh_calling_workflow.get_output_files("bcftools_roh", "make_bed")
+    assert actual == expected
 
 
 def test_roh_calling_bcftools_roh_step_part_get_shell_cmd_link_bed(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart.get_shell_cmd()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -177,18 +184,24 @@ def test_roh_calling_bcftools_roh_step_part_get_shell_cmd_link_bed(roh_calling_w
             "donor_ngs_library": "P002-N1-DNA1-WGS1",
         }
     )
+    base_name_str = (
+        "work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz"
+    )
     expected = "\n".join(
         [
-            "ln -sr work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz;",
-            "ln -sr work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.md5 work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.md5;",
-            "ln -sr work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi;",
-            "ln -sr work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi.md5 work/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi.md5;",
+            f"ln -sr {base_name_str} {base_name_str};",
+            f"ln -sr {base_name_str}.md5 {base_name_str}.md5;",
+            f"ln -sr {base_name_str}.tbi {base_name_str}.tbi;",
+            f"ln -sr {base_name_str}.tbi.md5 {base_name_str}.tbi.md5;",
         ]
     )
-    assert expected == roh_calling_workflow.get_shell_cmd("bcftools_roh", "link_bed", wildcards)
+    actual = roh_calling_workflow.get_shell_cmd("bcftools_roh", "link_bed", wildcards)
+    assert actual == expected
 
 
 def test_roh_calling_bcftools_roh_step_part_get_output_files_link_bed(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart._get_output_files_link_bed()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
@@ -202,11 +215,11 @@ def test_roh_calling_bcftools_roh_step_part_get_output_files_link_bed(roh_callin
     }
     # Get actual
     actual = roh_calling_workflow.get_output_files("bcftools_roh", "link_bed")
-
     assert actual == expected
 
 
 def test_roh_calling_bcftools_roh_step_part_get_log_file(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart.get_log_file() - run"""
     # Define expected
     expected = (
         "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/log/"
@@ -214,20 +227,19 @@ def test_roh_calling_bcftools_roh_step_part_get_log_file(roh_calling_workflow):
     )
     # Get actual
     actual = roh_calling_workflow.get_log_file("bcftools_roh", "run")
-
     assert actual == expected
 
 
-def test_roh_calling_bcftools_roh_step_part_run_update_cluster_config(
-    roh_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["roh_calling_bcftools_roh_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
-    actual = set(dummy_cluster_config["roh_calling_bcftools_roh_make_bed"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
-    assert "roh_calling_bcftools_roh_make_link_bed" not in dummy_cluster_config
+def test_roh_calling_bcftools_roh_step_part_get_resource_usage(roh_calling_workflow):
+    """Tests BcftoolsRohStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "00:04:00", "memory": "4000M", "partition": None}
+    # Evaluate
+    for action in ("run", "make_bed"):
+        for resource, expected in expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = roh_calling_workflow.get_resource("bcftools_roh", action, resource)
+            assert actual == expected, msg_error
 
 
 # Tests for RohCallingWorkflow ---------------------------------------------------------------------
