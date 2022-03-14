@@ -61,6 +61,11 @@ rule somatic_msi_calling_mantis:
         unpack(wf.get_input_files("mantis", "run")),
     output:
         **wf. get_output_files('mantis','run'),
+    threads: wf.get_resources("mantis", "run", "threads")
+    resources:
+        time=wf.get_resource("mantis", "run", "time"),
+        mem=wf.get_resource("mantis", "run", "memory"),
+        partition=wf.get_resources("mantis", "run", "partition"),
     log:
         wf.get_log_file("mantis", "run"),
     wrapper:

@@ -49,8 +49,14 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
@@ -69,7 +75,11 @@ step_config:
 class MantisStepPart(BaseStepPart):
     """Perform somatic microsatellite instability with MANTIS"""
 
+    #: Step name
     name = "mantis"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -141,11 +151,35 @@ class MantisStepPart(BaseStepPart):
             "ntasks": 3,
         }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 30 * 1024 * 3
+        return ResourceUsage(
+            threads=3,
+            time="02:00:00",  # 2 hours
+            memory=f"{mem_mb}M",
+        )
+
 
 class SomaticMsiCallingWorkflow(BaseStep):
     """Perform somatic microsatellite instability analysis"""
 
+    #: Step name
     name = "somatic_msi_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
     @classmethod
