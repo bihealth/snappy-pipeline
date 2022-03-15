@@ -73,6 +73,11 @@ rule variant_annotation_jannovar_annotate_vcf:
         **wf. get_input_files('jannovar','annotate_vcf'),
     output:
         **wf. get_output_files('jannovar','annotate_vcf'),
+    threads: wf.get_resources("jannovar", "annotate_vcf", "threads")
+    resources:
+        time=wf.get_resource("jannovar", "annotate_vcf", "time"),
+        mem=wf.get_resource("jannovar", "annotate_vcf", "memory"),
+        partition=wf.get_resources("jannovar", "annotate_vcf", "partition"),
     log:
         **wf. get_log_file('jannovar','annotate_vcf'),
     wrapper:
