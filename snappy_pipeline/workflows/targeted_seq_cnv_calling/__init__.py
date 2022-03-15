@@ -77,7 +77,12 @@ from snakemake.io import expand, glob_wildcards, touch
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import DictQuery, dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -164,6 +169,20 @@ class XhmmStepPart(BaseStepPart):
         "genotype",
         "extract_ped",
     )
+
+    #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "merge_cov": ResourceUsage(
+            threads=1,
+            time="1-00:00:00",
+            memory="12G",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="08:00:00",
+            memory="12G",
+        ),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -513,6 +532,24 @@ class XhmmStepPart(BaseStepPart):
                     "ntasks": 1,
                 }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        if action == "merge_cov":
+            return self.resource_usage_dict.get("merge_cov")
+        else:
+            return self.resource_usage_dict.get("default")
+
 
 class GcnvStepPart(BaseStepPart):
     """Targeted seq. CNV calling with GATK4 gCNV"""
@@ -537,6 +574,20 @@ class GcnvStepPart(BaseStepPart):
         "merge_cohort_vcfs",
         "extract_ped",
     )
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "high_resource": ResourceUsage(
+            threads=16,
+            time="2-00:00:00",
+            memory="46080M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="04:00:00",
+            memory="7680M",
+        ),
+    }
 
     def __init__(self, parent):
         """Constructor."""
@@ -1411,28 +1462,31 @@ class GcnvStepPart(BaseStepPart):
         """
         return self.analysis_type
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for gCNV CNV calling"""
-        high_resource_action = [
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        high_resource_action_list = [
             "call_cnvs_cohort_mode",
             "call_cnvs_case_mode",
             "post_germline_calls",
             "post_germline_calls_cohort_mode",
             "post_germline_calls_case_mode",
         ]
-        for action in self.actions:
-            if action in high_resource_action:
-                cluster_config["targeted_seq_cnv_calling_gcnv_{}".format(action)] = {
-                    "mem": 12 * int(3.75 * 1024),
-                    "time": "48:00",
-                    "ntasks": 16,
-                }
-            else:
-                cluster_config["targeted_seq_cnv_calling_gcnv_{}".format(action)] = {
-                    "mem": 2 * int(3.75 * 1024),
-                    "time": "04:00",
-                    "ntasks": 1,
-                }
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+
+        if action in high_resource_action_list:
+            return self.resource_usage_dict.get("high_resource")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class TargetedSeqCnvCallingWorkflow(BaseStep):
