@@ -3,7 +3,13 @@
 from snakemake.shell import shell
 
 # Filter interval list file from gCNV model input
-interval_list = [path for path in snakemake.input if str(path).endswith(".interval_list")]
+interval_list = [
+    path
+    for path in snakemake.input
+    if str(path).endswith(".interval_list")
+    and snakemake.wildcards.mapper in str(path)  # Check for correct mapper
+    and snakemake.wildcards.library_kit in str(path)  # Check for correct library kit
+]
 
 shell(
     r"""
