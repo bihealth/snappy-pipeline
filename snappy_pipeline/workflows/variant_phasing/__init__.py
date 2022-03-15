@@ -66,8 +66,14 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
@@ -125,7 +131,11 @@ step_config:
 class WriteTrioPedigreeStepPart(BaseStepPart):
     """Write out trio pedigree file for primary DNA sample given the index NGS library name"""
 
+    #: Step name
     name = "write_trio_pedigree"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -170,7 +180,11 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
 class VariantPhasingBaseStep(BaseStepPart):
     """Base step for variant phasing."""
 
+    #: The file name token.
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -210,6 +224,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
 
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
+
     #: The file name token.
     name_pattern = "gatk_pbt"
 
@@ -249,6 +264,27 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             "ntasks": 1,
         }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 14 * 1024
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{mem_mb}M",
+        )
+
 
 class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
     def __init__(self, parent):
@@ -283,12 +319,26 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
                 ]
                 yield key, list(map(ngs_mapping, files))
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_phasing_{}_run".format(self.name)] = {
-            "mem": 8 * 1024,
-            "time": "24:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 8 * 1024
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{mem_mb}M",
+        )
 
 
 class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):

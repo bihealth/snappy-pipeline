@@ -122,11 +122,14 @@ def get_expected_bam_output_file():
 
 
 def test_write_trio_pedigree_step_part_get_output_files(variant_phasing_workflow):
+    """Tests WriteTrioPedigreeStepPart.get_output_files()"""
     expected = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-    assert expected == variant_phasing_workflow.get_output_files("write_trio_pedigree", "run")
+    actual = variant_phasing_workflow.get_output_files("write_trio_pedigree", "run")
+    assert actual == expected
 
 
 def test_write_trio_pedigree_step_part_run(variant_phasing_workflow, fake_fs):
+    """Tests WriteTrioPedigreeStepPart.run()"""
     # Prepare fake file system
     fake_fs.fs.create_dir("/work/write_pedigree.P001-N1-DNA1-WGS1/out")
     # Execute trio writing
@@ -149,16 +152,26 @@ def test_write_trio_pedigree_step_part_run(variant_phasing_workflow, fake_fs):
         )
         + "\n"
     )
-    assert (
-        expected
-        == fake_fs.open("work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped").read()
-    )
+    actual = fake_fs.open("work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped").read()
+    assert actual == expected
+
+
+def test_write_trio_pedigree_step_part_get_resource_usage(variant_phasing_workflow):
+    """Tests WriteTrioPedigreeStepPart.get_resource_usage()"""
+    # Define expected: default defined workflow.abstract
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_phasing_workflow.get_resource("write_trio_pedigree", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for PhaseByTransmissionStepPart ------------------------------------------------------------
 
 
 def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_workflow):
+    """Tests PhaseByTransmissionStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
@@ -178,6 +191,7 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
 
 
 def test_gatk_phase_by_transmission_step_part_get_output_files(variant_phasing_workflow):
+    """Tests PhaseByTransmissionStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}/out/"
@@ -190,6 +204,7 @@ def test_gatk_phase_by_transmission_step_part_get_output_files(variant_phasing_w
 
 
 def test_gatk_phase_by_transmission_step_part_get_log_file(variant_phasing_workflow):
+    """Tests PhaseByTransmissionStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}/log/"
@@ -201,18 +216,24 @@ def test_gatk_phase_by_transmission_step_part_get_log_file(variant_phasing_workf
     assert actual == expected
 
 
-def test_gatk_phase_by_transmission_step_part_update_cluster_config(
-    variant_phasing_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_phasing_gatk_phase_by_transmission_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_gatk_phase_by_transmission_step_part_get_resource_usage(variant_phasing_workflow):
+    """Tests PhaseByTransmissionStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_phasing_workflow.get_resource(
+            "gatk_phase_by_transmission", "run", resource
+        )
+        assert actual == expected, msg_error
 
 
 # Tests for ReadBackedPhasingOnlyStepPart ----------------------------------------------------------
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing_workflow):
+    """Tests ReadBackedPhasingOnlyStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
@@ -232,6 +253,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_output_files(variant_phasing_workflow):
+    """Tests ReadBackedPhasingOnlyStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/out/"
@@ -244,6 +266,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_output_files(variant_phasin
 
 
 def test_gatk_read_backed_phasing_only_step_part_get_log_file(variant_phasing_workflow):
+    """Tests ReadBackedPhasingOnlyStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}/log/"
@@ -255,18 +278,24 @@ def test_gatk_read_backed_phasing_only_step_part_get_log_file(variant_phasing_wo
     assert actual == expected
 
 
-def test_gatk_read_backed_phasing_only_step_part_update_cluster_config(
-    variant_phasing_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_phasing_gatk_read_backed_phasing_only_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_gatk_read_backed_phasing_only_step_part_get_resource_usage(variant_phasing_workflow):
+    """Tests ReadBackedPhasingOnlyStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_phasing_workflow.get_resource(
+            "gatk_read_backed_phasing_only", "run", resource
+        )
+        assert actual == expected, msg_error
 
 
 # Tests for ReadBackedPhasingAlsoStepPart ----------------------------------------------------------
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing_workflow):
+    """Tests ReadBackedPhasingAlsoStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/"
@@ -286,6 +315,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_output_files(variant_phasing_workflow):
+    """Tests ReadBackedPhasingAlsoStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/out/"
@@ -298,6 +328,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_output_files(variant_phasin
 
 
 def test_gatk_read_backed_phasing_also_step_part_get_log_file(variant_phasing_workflow):
+    """Tests ReadBackedPhasingAlsoStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}/log/"
@@ -309,12 +340,17 @@ def test_gatk_read_backed_phasing_also_step_part_get_log_file(variant_phasing_wo
     assert actual == expected
 
 
-def test_gatk_read_backed_phasing_also_step_part_update_cluster_config(
-    variant_phasing_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_phasing_gatk_read_backed_phasing_also_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_gatk_read_backed_phasing_also_step_part_get_resource_usage(variant_phasing_workflow):
+    """Tests ReadBackedPhasingAlsoStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_phasing_workflow.get_resource(
+            "gatk_read_backed_phasing_also", "run", resource
+        )
+        assert actual == expected, msg_error
 
 
 # Tests for VariantPhasingWorkflow ----------------------------------------------------------------
