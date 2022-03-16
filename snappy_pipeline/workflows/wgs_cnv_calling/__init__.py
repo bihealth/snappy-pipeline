@@ -85,12 +85,13 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.base import MissingConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -151,6 +152,7 @@ step_config:
 class CnvettiStepPart(BaseStepPart):
     """Shallow WGS CNV calling with CNVetti."""
 
+    #: Step name
     name = "cnvetti"
 
     #: Supported actions
@@ -194,7 +196,8 @@ class CnvettiStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return input function for CNVetti action."""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
@@ -268,7 +271,8 @@ class CnvettiStepPart(BaseStepPart):
 
     def get_output_files(self, action):
         """Return output files that CNVetti creates for the given action."""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
     @dictify
@@ -314,8 +318,10 @@ class CnvettiStepPart(BaseStepPart):
     @dictify
     def get_log_file(self, action):
         """Return dict of log files."""
+        # Validate action
+        self._validate_action(action)
         if action in ("merge_segments", "merge_genotypes"):
-            prefix = "work/{{mapper}}.cnvetti_{action}/log/" "{{mapper}}.cnvetti_{action}".format(
+            prefix = "work/{{mapper}}.cnvetti_{action}/log/{{mapper}}.cnvetti_{action}".format(
                 action=action
             )
         else:
@@ -347,6 +353,23 @@ class CnvettiStepPart(BaseStepPart):
                 "ntasks": 1,
             }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        # Return resource
+        return ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory=f"{12 * 1024}M",
+        )
+
 
 class ErdsStepPart(BaseStepPart):
     """WGS CNV calling with ERDS
@@ -354,7 +377,11 @@ class ErdsStepPart(BaseStepPart):
     WGS CNV calling is performed on the primary DNA NGS library for each donor.
     """
 
+    #: Step name
     name = "erds"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -372,6 +399,8 @@ class ErdsStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return input function for ERDS rule"""
+        # Validate action
+        self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
@@ -391,18 +420,18 @@ class ErdsStepPart(BaseStepPart):
             ).format(
                 var_caller=self.config["variant_calling_tool"],
                 index_library_name=pedigree.index.dna_ngs_library.name,
-                **wildcards
+                **wildcards,
             )
             yield "vcf", var_calling(vcf_base + ".vcf.gz")
             yield "tbi", var_calling(vcf_base + ".vcf.gz.tbi")
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output files that ERDS returns return (VCF + TBI file)"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext)
 
@@ -412,14 +441,22 @@ class ErdsStepPart(BaseStepPart):
         _ = action
         return "work/{mapper}.erds.{library_name}/log/snakemake.wgs_cnv_calling.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for ERDS WGS CNV calling"""
-        cluster_config["wgs_cnv_calling_erds_run"] = {
-            "mem": 32 * 1024,
-            "time": "48:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        # Return resource
+        return ResourceUsage(
+            threads=1,
+            time="2-00:00:00",  # 2 days
+            memory=f"{32 * 1024}M",
+        )
 
 
 class ErdsSv2StepPart(BaseStepPart):
@@ -435,6 +472,7 @@ class ErdsSv2StepPart(BaseStepPart):
     - Reorder VCF and put pedigree in front; later on, non-pedigree variants should be removed.
     """
 
+    #: Step name
     name = "erds_sv2"
 
     #: Actions in ERDS+SV2 workflow
@@ -455,6 +493,25 @@ class ErdsSv2StepPart(BaseStepPart):
         "info_to_format": "{mapper}.erds_sv2.info_to_format.{library_name}",
         "merge_genotypes": "{mapper}.erds_sv2.merge_genotypes",
         "reorder_vcf": r"{mapper}.erds_sv2.{index_ngs_library,(?!call|merge_|genotype|info_to_format).*}",
+    }
+
+    #: Resource dictionary. Key: type of action (string); Value: resource (ResourceUsage).
+    resource_dict = {
+        "call": ResourceUsage(
+            threads=1,
+            time="6-08:00:00",  # 6.25 days
+            memory=f"{40 * 1024}M",
+        ),
+        "cheap_action": ResourceUsage(
+            threads=2,
+            time="1-00:00:00",  # 1 day
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        ),
+        "default": ResourceUsage(
+            threads=4,
+            time="6-08:00:00",  # 6.25 days
+            memory=f"{int(7.5 * 1024 * 4)}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -482,7 +539,8 @@ class ErdsSv2StepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "call": self._get_input_files_call,
             "merge_calls": self._get_input_files_merge_calls,
@@ -527,7 +585,7 @@ class ErdsSv2StepPart(BaseStepPart):
         ).format(
             var_caller=self.config["variant_calling_tool"],
             index_library_name=pedigree.index.dna_ngs_library.name,
-            **wildcards
+            **wildcards,
         )
         yield "vcf_small", var_calling(vcf_base + ".vcf.gz")
         # PED file
@@ -571,7 +629,8 @@ class ErdsSv2StepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             infix1 = self.dir_infixes[action]
             infix2 = infix1.replace(r",(?!call|merge_|genotype|info_to_format).*", "")
@@ -579,33 +638,32 @@ class ErdsSv2StepPart(BaseStepPart):
 
     def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix1 = self.dir_infixes[action]
         return "work/" + infix1 + "/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            # TODO: refine for ERDS and SV2
-            if action in ("info_to_format", "merge_genotypes", "merge_calls", "reorder_vcf"):
-                # cheap actions
-                cluster_config["wgs_cnv_calling_erds_sv2_{}".format(action)] = {
-                    "mem": int(3.75 * 1024 * 2),
-                    "time": "24:00",
-                    "ntasks": 2,
-                }
-            elif action == "call":
-                # ERDS is pretty memory hungry
-                cluster_config["wgs_cnv_calling_erds_sv2_{}".format(action)] = {
-                    "mem": 40 * 1024,
-                    "time": "150:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["wgs_cnv_calling_erds_sv2_{}".format(action)] = {
-                    "mem": int(7.5 * 1024 * 4),
-                    "time": "150:00",
-                    "ntasks": 4,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+        # Return resource
+        if action in ("info_to_format", "merge_genotypes", "merge_calls", "reorder_vcf"):
+            # cheap actions
+            return self.resource_dict.get("cheap_action")
+        elif action == "call":
+            # ERDS is pretty memory hungry
+            return self.resource_dict.get("call")
+        else:
+            return self.resource_dict.get("default")
 
 
 class WgsCnvCallingWorkflow(BaseStep):
