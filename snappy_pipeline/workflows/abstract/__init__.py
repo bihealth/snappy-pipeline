@@ -28,6 +28,7 @@ from snakemake.io import touch
 
 from snappy_pipeline.base import (
     MissingConfiguration,
+    UnsupportedActionException,
     merge_dicts,
     merge_kwargs,
     print_config,
@@ -90,6 +91,21 @@ class BaseStepPart:
         self.parent = parent
         self.config = parent.config
         self.w_config = parent.w_config
+
+    def _validate_action(self, action):
+        """Validate provided action
+
+        Checks that the provided ``action`` is listed in the valid class actions list.
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
 
     def get_resource_usage(self, action: str) -> ResourceUsage:
         """Return the resource usage for the given action."""
