@@ -85,7 +85,7 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import MissingConfiguration, UnsupportedActionException
+from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -343,15 +343,6 @@ class CnvettiStepPart(BaseStepPart):
         return " ".join(
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         )
-
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for XHMM CNV calling"""
-        for action in self.actions:
-            cluster_config["wgs_cnv_calling_cnvetti_{}".format(action)] = {
-                "mem": int(12 * 1024),
-                "time": "04:00",
-                "ntasks": 1,
-            }
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -650,8 +641,6 @@ class ErdsSv2StepPart(BaseStepPart):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         # Validate action
         self._validate_action(action)
