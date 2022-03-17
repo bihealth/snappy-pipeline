@@ -114,7 +114,12 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
 
@@ -182,6 +187,7 @@ class Delly2StepPart(BaseStepPart):
     - Reorder VCF and put pedigree in front; later on, non-pedigree variants should be removed.
     """
 
+    #: Step name
     name = "delly2"
 
     #: Actions in Delly 2 workflow
@@ -189,11 +195,25 @@ class Delly2StepPart(BaseStepPart):
 
     #: Directory infixes
     dir_infixes = {
-        "call": "{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}",
-        "merge_calls": "{mapper,[^\.]+}.delly2.merge_calls",
-        "genotype": "{mapper,[^\.]+}.delly2.genotype.{library_name,[^\.]+}",
-        "merge_genotypes": "{mapper,[^\.]+}.delly2.merge_genotypes",
+        "call": r"{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}",
+        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls",
+        "genotype": r"{mapper,[^\.]+}.delly2.genotype.{library_name,[^\.]+}",
+        "merge_genotypes": r"{mapper,[^\.]+}.delly2.merge_genotypes",
         "reorder_vcf": r"{mapper,[^\.]+}.delly2.{index_ngs_library,[^\.]+}",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "cheap_action": ResourceUsage(
+            threads=2,
+            time="4-00:00:00",  # 4 days
+            memory=f"{7 * 1024 * 2}M",
+        ),
+        "default": ResourceUsage(
+            threads=2,
+            time="7-00:00:00",  # 7 days
+            memory=f"{20 * 1024 * 2}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -217,7 +237,8 @@ class Delly2StepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "call": self._get_input_files_call,
             "merge_calls": self._get_input_files_merge_calls,
@@ -290,7 +311,8 @@ class Delly2StepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             infix = self.dir_infixes[action]
             infix2 = infix.replace(r",[^\.]+", "")
@@ -303,25 +325,26 @@ class Delly2StepPart(BaseStepPart):
 
     def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action]
         infix = infix.replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            if action in ("merge_genotypes", "merge_calls", "reorder_vcf"):  # cheap actions
-                cluster_config["wgs_sv_calling_delly2_{}".format(action)] = {
-                    "mem": 7 * 1024 * 2,
-                    "time": "96:00",
-                    "ntasks": 2,
-                }
-            else:
-                cluster_config["wgs_sv_calling_delly2_{}".format(action)] = {
-                    "mem": 20 * 1024 * 2,
-                    "time": "168:00",
-                    "ntasks": 2,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        if action in ("merge_genotypes", "merge_calls", "reorder_vcf"):  # cheap actions
+            return self.resource_usage_dict.get("cheap_action")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class MantaStepPart(BaseStepPart):
@@ -331,7 +354,11 @@ class MantaStepPart(BaseStepPart):
     However, this has the drawback of not supporting any background information.
     """
 
+    #: Step name
     name = "manta"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -345,6 +372,8 @@ class MantaStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
+        # Validate action
+        self._validate_action(action)
 
         @listify
         def input_function(wildcards):
@@ -364,35 +393,44 @@ class MantaStepPart(BaseStepPart):
                             )
                         )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         infix = "{mapper}.manta.{index_ngs_library}"
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, "work/" + infix + "/out/" + infix + ext
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return "work/{mapper}.manta.{index_ngs_library}/log/snakemake.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["wgs_sv_calling_manta_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class SvTkStepPart(BaseStepPart):
     """svtk implementation"""
 
+    #: Step name
     name = "svtk"
 
     #: Actions in svtk workflow
@@ -420,7 +458,8 @@ class SvTkStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "standardize": self._get_input_files_standardize,
         }
@@ -457,7 +496,8 @@ class SvTkStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action]
         infix2 = infix.replace(r",[^\.]+", "")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
@@ -466,18 +506,27 @@ class SvTkStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action]
         infix2 = infix.replace(r",[^\.]+", "")
-        return "work/%s/log/%s.log" % (infix, infix2)
+        return "work/%s/log/%s.log" % (infix2, infix2)
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            cluster_config["wgs_sv_svtk_%s" % action] = {
-                "mem": 4 * 1024,
-                "time": "4:00",
-                "ntasks": 1,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory=f"{4 * 1024}M",
+        )
 
 
 class PopDelStepPart(BaseStepPart):
@@ -486,6 +535,7 @@ class PopDelStepPart(BaseStepPart):
     Implemented using chromosome-wise calling.
     """
 
+    #: Step name
     name = "popdel"
 
     #: Actions in PopDel workflow
@@ -520,7 +570,8 @@ class PopDelStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "profile": self._get_input_files_profile,
             "call": self._get_input_files_call,
@@ -599,7 +650,8 @@ class PopDelStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action]
         if action == "profile":
             yield "profile", "work/" + infix + "/out/" + infix + ".profile"
@@ -610,23 +662,36 @@ class PopDelStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action]
         return "work/" + infix + "/log/" + infix + ".log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            cluster_config["wgs_sv_calling_popdel_{}".format(action)] = {
-                "mem": int(12 * 1024 * 2),
-                "time": "96:00",
-                "ntasks": 2,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-00:00:00",  # 4 days
+            memory=f"{12 * 1024 * 2}M",
+        )
 
 
 class PbHoneySpotsStepPart(BaseStepPart):
     """WGS SV identification using PB Honey Spots"""
 
+    #: Step name
     name = "pb_honey_spots"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -641,6 +706,8 @@ class PbHoneySpotsStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
+        # Validate action
+        self._validate_action(action)
 
         @listify
         def input_function(wildcards):
@@ -657,36 +724,48 @@ class PbHoneySpotsStepPart(BaseStepPart):
                         tpl.format(library_name=donor.dna_ngs_library.name, ext=ext, **wildcards)
                     )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         infix = "{mapper}.pb_honey_spots.{index_ngs_library}"
         yield "bed", "work/" + infix + "/out/" + infix + ".bed"
         yield "bed_md5", "work/" + infix + "/out/" + infix + ".bed.md5"
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return "work/{mapper}.pb_honey_spots.{index_ngs_library}/log/snakemake.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["wgs_sv_calling_pb_honey_spots_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=self.config["pb_honey_spots"]["num_threads"],
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class SnifflesStepPart(BaseStepPart):
     """WGS SV identification using Sniffles"""
 
+    #: Step name
     name = "sniffles"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -701,6 +780,8 @@ class SnifflesStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
+        # Validate action
+        self._validate_action(action)
 
         @listify
         def input_function(wildcards):
@@ -717,30 +798,38 @@ class SnifflesStepPart(BaseStepPart):
                         tpl.format(library_name=donor.dna_ngs_library.name, ext=ext, **wildcards)
                     )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output paths for the given action; include wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         infix = "{mapper}.sniffles.{index_ngs_library}"
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, "work/" + infix + "/out/" + infix + ext
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
         """Return log file path for the given action; includes wildcards"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return "work/{mapper}.sniffles.{index_ngs_library}/log/snakemake.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["wgs_sv_calling_sniffles_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=self.config["sniffles"]["num_threads"],
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class WgsSvCallingWorkflow(BaseStep):

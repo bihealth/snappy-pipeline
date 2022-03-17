@@ -81,6 +81,12 @@ def dummy_generic_step(
     )
 
 
+@pytest.fixture
+def fai_file_content():
+    """Returns FAI file content based on hs37d5 (chromosome 1 only)."""
+    return "1\t249250621\t52\t60\t61"
+
+
 def random_gender():
     """Random gender.
     :return: Returns either 'F' or 'M' by change.
