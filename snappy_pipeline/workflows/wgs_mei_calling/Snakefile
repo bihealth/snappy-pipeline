@@ -61,6 +61,11 @@ rule wgs_mei_calling_melt_preprocess:
         unpack(wf.get_input_files("melt", "preprocess")),
     output:
         **wf. get_output_files('melt','preprocess'),
+    threads: wf.get_resources("melt", "preprocess", "threads")
+    resources:
+        time=wf.get_resource("melt", "preprocess", "time"),
+        mem=wf.get_resource("melt", "make_bed", "memory"),
+        partition=wf.get_resources("melt", "preprocess", "partition"),
     log:
         wf.get_log_file("melt", "preprocess"),
     wrapper:
@@ -72,6 +77,11 @@ rule wgs_mei_calling_melt_indiv_analysis:
         unpack(wf.get_input_files("melt", "indiv_analysis")),
     output:
         **wf. get_output_files('melt','indiv_analysis'),
+    threads: wf.get_resources("melt", "indiv_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "indiv_analysis", "time"),
+        mem=wf.get_resource("melt", "indiv_analysis", "memory"),
+        partition=wf.get_resources("melt", "indiv_analysis", "partition"),
     log:
         wf.get_log_file("melt", "indiv_analysis"),
     wrapper:
@@ -83,6 +93,11 @@ rule wgs_mei_calling_melt_group_analysis:
         unpack(wf.get_input_files("melt", "group_analysis")),
     output:
         **wf. get_output_files('melt','group_analysis'),
+    threads: wf.get_resources("melt", "group_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "group_analysis", "time"),
+        mem=wf.get_resource("melt", "group_analysis", "memory"),
+        partition=wf.get_resources("melt", "group_analysis", "partition"),
     log:
         wf.get_log_file("melt", "group_analysis"),
     wrapper:
@@ -94,6 +109,11 @@ rule wgs_mei_calling_melt_genotype:
         unpack(wf.get_input_files("melt", "genotype")),
     output:
         **wf. get_output_files('melt','genotype'),
+    threads: wf.get_resources("melt", "genotype", "threads")
+    resources:
+        time=wf.get_resource("melt", "genotype", "time"),
+        mem=wf.get_resource("melt", "genotype", "memory"),
+        partition=wf.get_resources("melt", "genotype", "partition"),
     log:
         wf.get_log_file("melt", "genotype"),
     wrapper:
@@ -105,6 +125,11 @@ rule wgs_mei_calling_melt_make_vcf:
         unpack(wf.get_input_files("melt", "make_vcf")),
     output:
         **wf. get_output_files('melt','make_vcf'),
+    threads: wf.get_resources("melt", "make_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "make_vcf", "time"),
+        mem=wf.get_resource("melt", "make_vcf", "memory"),
+        partition=wf.get_resources("melt", "make_vcf", "partition"),
     log:
         wf.get_log_file("melt", "make_vcf"),
     wrapper:
@@ -116,6 +141,11 @@ rule wgs_mei_calling_melt_merge_vcf:
         unpack(wf.get_input_files("melt", "merge_vcf")),
     output:
         **wf. get_output_files('melt','merge_vcf'),
+    threads: wf.get_resources("melt", "merge_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "merge_vcf", "time"),
+        mem=wf.get_resource("melt", "merge_vcf", "memory"),
+        partition=wf.get_resources("melt", "merge_vcf", "partition"),
     log:
         wf.get_log_file("melt", "merge_vcf"),
     wrapper:
@@ -127,6 +157,11 @@ rule wgs_mei_calling_melt_pick_pedigree:
         unpack(wf.get_input_files("melt", "reorder_vcf")),
     output:
         **wf. get_output_files('melt','reorder_vcf'),
+    threads: wf.get_resources("melt", "reorder_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "reorder_vcf", "time"),
+        mem=wf.get_resource("melt", "reorder_vcf", "memory"),
+        partition=wf.get_resources("melt", "reorder_vcf", "partition"),
     log:
         wf.get_log_file("melt", "reorder_vcf"),
     params:

@@ -73,7 +73,12 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, touch
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -123,7 +128,19 @@ class MeltStepPart(BaseStepPart):
     this class is somewhat lengthy.  In the, however, it's not that complex.
     """
 
+    #: Step name
     name = "melt"
+
+    #: Class available actions
+    actions = (
+        "preprocess",
+        "indiv_analysis",
+        "group_analysis",
+        "genotype",
+        "make_vcf",
+        "merge_vcf",
+        "reorder_vcf",
+    )
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -139,7 +156,8 @@ class MeltStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def get_input_files(self, action):
-        assert action in MELT_ACTIONS, "Invalid action: {}".format(action)
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "preprocess": self._get_input_files_preprocess,
             "indiv_analysis": self._get_input_files_indiv_analysis,
@@ -213,7 +231,8 @@ class MeltStepPart(BaseStepPart):
         )
 
     def get_output_files(self, action):
-        assert action in MELT_ACTIONS
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "preprocess": self._get_output_files_preprocess,
             "indiv_analysis": self._get_output_files_indiv_analysis,
@@ -270,9 +289,9 @@ class MeltStepPart(BaseStepPart):
             yield key, tpl % (ext, "")
             yield key + "_md5", tpl % (ext, ".md5")
 
-    @staticmethod
-    def get_log_file(action):
-        assert action in MELT_ACTIONS, "Invalid action."
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
         if action == "preprocess":
             return "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
         elif action in ("indiv_analysis", "genotype"):
@@ -293,15 +312,21 @@ class MeltStepPart(BaseStepPart):
             )
         return None
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for running Melt"""
-        for action in MELT_ACTIONS:
-            cluster_config["wgs_mei_calling_melt_{}".format(action)] = {
-                "mem": int(3.75 * 1024 * 6),
-                "time": "128:00",
-                "ntasks": 6,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=6,
+            time="5-07:00:00",  # ~5.3 days
+            memory=f"{int(3.75 * 1024 * 6)}M",
+        )
 
 
 class WgsMeiCallingWorkflow(BaseStep):
