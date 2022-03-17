@@ -136,7 +136,7 @@ noisyData = FALSE
 printNA = TRUE
 
 # this sets the degree of polynomial; currently the step of estimating it seems to lead to a segmentation fault
-degree = 3
+# degree = 3
 
 # chrFiles & GCcontentProfile not defined, GC correction using control sample
 # chrFiles = <missing>
@@ -152,7 +152,7 @@ bedtools = bedtools
 sambamba = sambamba
 samtools = samtools
 
-SambambaThreards = 16
+SambambaThreads = 16
 
 [sample]
 mateFile = {snakemake.input.tumor_bam}

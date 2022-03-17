@@ -3,6 +3,6 @@ channels:
 - bioconda
 - r
 dependencies:
-- python =3.6
+- python =3.8
 - cnvkit
 - htslib

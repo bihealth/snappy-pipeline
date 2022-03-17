@@ -81,6 +81,7 @@ vcf2maf.pl --input-vcf $TMPDIR/vcf.vcf \
     --vep-data {config[vep_data_path]} \
     --ref-fasta {reference} \
     --cache-version {cache_version} \
+    --vep-forks 1 \
     {vep_custom}
 
 pushd $(dirname {snakemake.output.maf})

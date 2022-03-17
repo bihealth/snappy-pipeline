@@ -1,6 +1,6 @@
 channels:
-- conda-forge
 - bioconda
+- conda-forge
 - base
 dependencies:
 - control-freec

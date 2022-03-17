@@ -30,7 +30,7 @@ fastqc \
     --noextract \
     -o $outdir \
     -t {snakemake.params[args][num_threads]} \
-    $(echo {snakemake.input} {snakemake.params[args][more_reads]} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
+    $(echo "{snakemake.input} {snakemake.params[args][more_reads]}" | tr ' ' '\n' | grep -E '\.(f(ast)?q(\.gz)?|sam|bam)$')
 
 pushd $outdir
 pwd

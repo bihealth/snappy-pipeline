@@ -249,7 +249,7 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):  # noqa: N801
     def update_cluster_config(self, cluster_config):
         """Update cluster configuration for vcf2maf"""
         cluster_config["cbioportal_export_generate_mafs"] = {
-            "mem": 5120,
+            "mem": 16000,
             "time": "12:00",
             "ntasks": 4,
         }
@@ -424,7 +424,7 @@ class cbioportalExportWorkflow(BaseStep):  # noqa: N801
             result_files += ["meta_segment.txt", "data_segment.txt"]
             result_files += ["case_lists/all_cases_with_cna_data.txt"]
         if self.config["path_gene_expression_quantification"]:
-            result_files += ["meta_expression_zscores", "data_expression_zscores.txt"]
+            result_files += ["meta_expression_zscores.txt", "data_expression_zscores.txt"]
 
         yield from [os.path.join("work/upload", f) for f in result_files]
 
