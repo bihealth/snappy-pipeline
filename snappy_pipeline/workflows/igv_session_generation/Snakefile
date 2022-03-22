@@ -60,5 +60,10 @@ rule igv_session_generation_write_igv_session_file:
         unpack(wf.get_input_files("write_igv_session_file", "run")),
     output:
         **wf. get_output_files('write_igv_session_file','run'),
+    threads: wf.get_resources("write_igv_session_file", "run", "threads")
+    resources:
+        time=wf.get_resource("write_igv_session_file", "run", "time"),
+        mem=wf.get_resource("write_igv_session_file", "run", "memory"),
+        partition=wf.get_resources("write_igv_session_file", "run", "partition"),
     run:
         wf.substep_dispatch("write_igv_session_file", "run", wildcards, output)
