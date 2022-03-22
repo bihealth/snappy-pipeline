@@ -59,7 +59,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -165,23 +165,6 @@ class PanelOfNormalsStepPart(BaseStepPart):
     def get_log_file(self, action):
         raise NotImplementedError("Panel of normals log file generation not implemented")
 
-    # @dictify
-    # def _get_log_file(self, action):
-    #     """Return dict of log files."""
-    #     prefix = (
-    #         "work/{mapper}.{var_caller}.{{normal_library}}/log/"
-    #         "{mapper}.{var_caller}.{{normal_library}}"
-    #     ).format(var_caller=self.__class__.name)
-    #     key_ext = (
-    #         ("log", ".log"),
-    #         ("conda_info", ".conda_info.txt"),
-    #         ("conda_list", ".conda_list.txt"),
-    #     )
-    #     for key, ext in key_ext:
-    #         print("DEBUG- _get_log_file for {} = {}".format(action, prefix+ext), file=sys.stderr)
-    #         yield key, prefix + ext
-    #         yield key + "_md5", prefix + ext + ".md5"
-
 
 def get_panel_of_normals(filename, sheets, size, seed):
     """Reads from the normals list file, create it if necessary"""
@@ -215,11 +198,34 @@ def get_panel_of_normals(filename, sheets, size, seed):
 class Mutect2StepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
 
+    #: Step name
     name = "mutect2"
+
+    #: Class available actions
+    actions = ("run", "prepare_panel", "create_panel")
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "prepare_panel": ResourceUsage(
+            threads=2,
+            time="3-00:00:00",  # 3 days
+            memory=f"3.7G",
+        ),
+        "create_panel": ResourceUsage(
+            threads=2,
+            time="08:00:00",  # 8 hours
+            memory=f"30G",
+        ),
+        # TODO: Value set to default, maybe insufficient.
+        "run": ResourceUsage(
+            threads=1,
+            time="01:00:00",
+            memory=f"2G",
+        ),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.actions = ("run", "prepare_panel", "create_panel")
 
     def check_config(self):
         if self.name not in self.config["tools"]:
@@ -231,49 +237,46 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def get_input_files(self, action):
         """Return input files for mutect2 variant calling"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "prepare_panel": self._get_input_files_prepare_panel,
             "create_panel": self._get_input_files_create_panel,
         }
-        print("DEBUG- get_input_file for {}".format(action), file=sys.stderr)
         return mapping[action]
 
     def _get_input_files_prepare_panel(self, wildcards):
-        print("DEBUG- wildcards for prepare_panel = {}".format(wildcards), file=sys.stderr)
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
-        print("DEBUG- input files for prepare_panel = {}".format(bam), file=sys.stderr)
         return {"normal_bam": [bam], "normal_bai": [bam + ".bai"]}
 
     def _get_input_files_create_panel(self, wildcards):
-        print("DEBUG- wildcards for create_panel = {}".format(wildcards), file=sys.stderr)
         normals = self._get_panel_of_normals(wildcards)
         vcf_paths = []
         tpl = "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz"
         for normal in normals:
             vcf_paths.append(tpl.format(normal_library=normal, **wildcards))
-        print("DEBUG- input files for create_panel = {}".format(vcf_paths), file=sys.stderr)
         return {"txt": self._get_output_files_select_panel()["normal_list"], "vcf": vcf_paths}
 
     def get_output_files(self, action):
         """Return output files for mutect2 panel of normal creation"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "prepare_panel": self._get_output_files_prepare_panel,
             "create_panel": self._get_output_files_create_panel,
         }
-        files = mapping[action]()
-        print("DEBUG- output files for {} = {}".format(action, files), file=sys.stderr)
         return mapping[action]()
 
     @dictify
     def _get_output_files_select_panel(self):
+        # TODO: remove methods associated with action 'select_panel' if not used.
         yield "normal_list", "work/{mapper}.mutect2.select_panel.txt"
 
     @staticmethod
     def _get_output_files_prepare_panel():
+        # TODO: Potential extension error in output files, `vcf.tbi.gz` instead of `vcf.gz.tbi`.
         return {
             "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
             "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
@@ -293,41 +296,41 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def get_log_file(self, action):
         """Return log files for mutect2 panel of normal creation"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "prepare_panel": self._get_log_file_prepare_panel,
             "create_panel": self._get_log_file_create_panel,
         }
-        files = mapping[action]()
-        print("DEBUG- log files for {} = {}".format(action, files), file=sys.stderr)
         return mapping[action]()
 
     @dictify
     def _get_log_file_prepare_panel(self):
+        base_name = "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}"
         return {
-            "log": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.log",
-            "log_md5": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.log.md5",
-            "conda_info": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.conda_info.txt",
-            "conda_info_md5": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.conda_info.txt.md5",
-            "conda_list": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.conda_list.txt",
-            "conda_list_md5": "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}.conda_list.txt.md5",
+            "log": base_name + ".log",
+            "log_md5": base_name + ".log.md5",
+            "conda_info": base_name + ".conda_info.txt",
+            "conda_info_md5": base_name + ".conda_info.txt.md5",
+            "conda_list": base_name + ".conda_list.txt",
+            "conda_list_md5": base_name + ".conda_list.txt.md5",
         }
 
     @dictify
     def _get_log_file_create_panel(self):
+        base_name = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel"
         return {
-            "log": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.log",
-            "log_md5": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.log.md5",
-            "conda_info": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.conda_info.txt",
-            "conda_info_md5": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.conda_info.txt.md5",
-            "conda_list": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.conda_list.txt",
-            "conda_list_md5": "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.conda_list.txt.md5",
+            "log": base_name + ".log",
+            "log_md5": base_name + ".log.md5",
+            "conda_info": base_name + ".conda_info.txt",
+            "conda_info_md5": base_name + ".conda_info.txt.md5",
+            "conda_list": base_name + ".conda_list.txt",
+            "conda_list_md5": base_name + ".conda_list.txt.md5",
         }
 
     @listify
     def _get_panel_of_normals(self, wildcards):
         """Return list of bam files in the panel of normals"""
-        print("DEBUG- _get_panel_of_normals wildcards = {}".format(wildcards), file=sys.stderr)
         return get_panel_of_normals(
             "work/{mapper}.mutect2.select_panel.txt".format(**wildcards),
             self.parent.shortcut_sheets,
@@ -335,24 +338,28 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             self.config["shuffle_seed"],
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["panel_of_normals_%s_prepare_panel" % self.name] = {
-            "h_vmem": "3.7g",
-            "h_rt": "72:00:00",
-            "pe": "smp 2",
-        }
-        cluster_config["panel_of_normals_%s_create_panel" % self.name] = {
-            "h_vmem": "30g",
-            "h_rt": "8:00:00",
-            "pe": "smp 2",
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
 
 class PanelOfNormalsWorkflow(BaseStep):
     """Creates a panel of normals"""
 
+    # Workflow name
     name = "panel_of_normals"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -362,13 +369,10 @@ class PanelOfNormalsWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -428,32 +432,6 @@ class PanelOfNormalsWorkflow(BaseStep):
                 ),
             )
         )
-
-        # # Individual files
-        # normals = get_panel_of_normals(
-        #     "work/{mapper}.{caller}.select_panel.txt".format(
-        #         mapper="bwa", # self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-        #         caller="mutect2"
-        #     ),
-        #     self.shortcut_sheets,
-        #     self.w_config["step_config"]["panel_of_normals"]["size"],
-        #     self.w_config["step_config"]["panel_of_normals"]["shuffle_seed"]
-        # )
-        # # yield from expand(
-        # files.extend(expand(
-        #     os.path.join("work", "{mapper}.{caller}.prepare_panel", "out", "{normal}" + "{ext}"),
-        #     mapper=["bwa"], # self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-        #     caller=["mutect2"], # set(self.config["tools"]) & set(TOOLS),
-        #     normal=normals,
-        #     ext=(
-        #         ".vcf.gz",
-        #         ".vcf.gz.md5",
-        #         ".vcf.gz.tbi",
-        #         ".vcf.gz.tbi.md5"
-        #     )
-        # ))
-
-        print("DEBUG- get_return_files = {}".format(files), file=sys.stderr)
         return files
 
     def check_config(self):

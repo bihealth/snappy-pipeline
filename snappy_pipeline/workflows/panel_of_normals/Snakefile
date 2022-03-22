@@ -69,6 +69,11 @@ rule panel_of_normals_mutect2_prepare_panel:
         unpack(wf.get_input_files("mutect2", "prepare_panel")),
     output:
         **wf. get_output_files('mutect2','prepare_panel'),
+    threads: wf.get_resources("mutect2", "prepare_panel", "threads")
+    resources:
+        time=wf.get_resource("mutect2", "prepare_panel", "time"),
+        mem=wf.get_resource("mutect2", "prepare_panel", "memory"),
+        partition=wf.get_resources("mutect2", "prepare_panel", "partition"),
     log:
         **wf. get_log_file('mutect2','prepare_panel'),
     wrapper:
@@ -83,6 +88,11 @@ rule panel_of_normals_mutect2_create_panel:
         unpack(wf.get_input_files("mutect2", "create_panel")),
     output:
         **wf. get_output_files('mutect2','create_panel'),
+    threads: wf.get_resources("mutect2", "create_panel", "threads")
+    resources:
+        time=wf.get_resource("mutect2", "create_panel", "time"),
+        mem=wf.get_resource("mutect2", "create_panel", "memory"),
+        partition=wf.get_resources("mutect2", "create_panel", "partition"),
     log:
         **wf. get_log_file('mutect2','create_panel'),
     wrapper:
