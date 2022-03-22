@@ -48,7 +48,11 @@ step_config:
 class LohhlaStepPart(BaseStepPart):
     """Perform LOHHLA analysis of tumor/normal WES/WGS pairs."""
 
+    #: Step name
     name = "lohhla"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -125,8 +129,12 @@ class LohhlaStepPart(BaseStepPart):
 class SomaticHlaLohCallingWorkflow(BaseStep):
     """Perform somatic hla loh calling"""
 
+    #: Workflow name
     name = "somatic_hla_loh_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -136,13 +144,10 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
