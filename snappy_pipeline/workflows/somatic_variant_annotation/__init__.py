@@ -58,7 +58,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_JOINT,
     SOMATIC_VARIANT_CALLERS_MATCHED,
@@ -116,7 +116,11 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         The ``tumor_library`` wildcard can actually be the name of a donor!
     """
 
+    #: Step name
     name = "jannovar"
+
+    #: Class available actions
+    actions = ("annotate_somatic_vcf",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -135,7 +139,8 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        assert action == "annotate_somatic_vcf"
+        # Validate action
+        self._validate_action(action)
         tpl = (
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
@@ -148,7 +153,8 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "annotate_somatic_vcf"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
@@ -161,7 +167,8 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return mapping of log files."""
-        assert action == "annotate_somatic_vcf"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/log/"
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
@@ -195,14 +202,21 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.name
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["somatic_variant_annotation_jannovar_annotate_somatic_vcf"] = {
-            "mem": 8 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{8 * 1024 * 2}M",
+        )
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
@@ -219,13 +233,10 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
