@@ -68,6 +68,10 @@ class LohhlaStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
+
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
@@ -95,7 +99,6 @@ class LohhlaStepPart(BaseStepPart):
                 "hla": hla_typing(hla),
             }
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_normal_lib_name(self, wildcards):
@@ -105,7 +108,8 @@ class LohhlaStepPart(BaseStepPart):
 
     def get_output_files(self, action):
         """Return output files from LOHHLA"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return {"done": expand(self.base_path_out, ext=".done")}
 
     @dictify

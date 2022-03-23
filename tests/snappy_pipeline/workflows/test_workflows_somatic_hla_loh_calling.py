@@ -159,5 +159,4 @@ def test_somatic_hla_loh_calling_workflow(somatic_hla_loh_calling_workflow):
     ]
     expected = set(expected)
     actual = set(somatic_hla_loh_calling_workflow.get_result_files())
-    print(actual)
     assert actual == expected
