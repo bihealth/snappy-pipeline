@@ -81,7 +81,12 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -133,6 +138,9 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
@@ -154,7 +162,6 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
                 "tumor_bai": ngs_mapping(cancer_base_path + ".bam.bai"),
             }
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_normal_lib_name(self, wildcards):
@@ -166,13 +173,15 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
         """Return output files that all somatic variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
 
     def get_log_file(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{{mapper}}.{var_caller}.{{cancer_library}}/log/"
             "snakemake.somatic_wgs_sv_calling.log"
@@ -182,15 +191,27 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 class MantaStepPart(SomaticWgsSvCallingStepPart):
     """Somatic WGS SV calling with Manta"""
 
+    #: Step name
     name = "manta"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["somatic_wgs_sv_calling_manta_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class Delly2StepPart(BaseStepPart):
@@ -369,20 +390,32 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            cluster_config["wgs_sv_calling_delly2_{}".format(action)] = {
-                "mem": int(3.75 * 1024 * 4),
-                "time": "150:00",
-                "ntasks": 4,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="6-06:00:00",  # 6 days and 6 hours
+            memory=f"{int(3.75 * 1024 * 4)}M",
+        )
 
 
 class SomaticWgsSvCallingWorkflow(BaseStep):
     """Perform somatic variant calling"""
 
+    #: Workflow name
     name = "somatic_wgs_sv_calling"
+
+    #: Default biomedsheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -392,13 +425,10 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
