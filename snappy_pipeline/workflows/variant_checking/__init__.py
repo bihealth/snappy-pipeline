@@ -59,6 +59,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -83,7 +84,11 @@ step_config:
 class PeddyStepPart(BaseStepPart):
     """Compute variant statistics using peddy"""
 
+    #: Step name
     name = "peddy"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -95,7 +100,8 @@ class PeddyStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "ped", os.path.realpath(
             "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         )
@@ -111,7 +117,8 @@ class PeddyStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.peddy.{index_ngs_library}"
@@ -128,23 +135,36 @@ class PeddyStepPart(BaseStepPart):
             yield key, prefix + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["variant_checking_peddy_run"] = {
-            "mem": 15 * 1024,
-            "time": "10:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="10:00:00",  # 10 hours
+            memory=f"{15 * 1024}M",
+        )
 
 
 class VariantCheckingWorkflow(BaseStep):
     """Perform germline variant checking"""
 
+    #: Workflow name
     name = "variant_checking"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -152,13 +172,10 @@ class VariantCheckingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

@@ -73,6 +73,11 @@ rule variant_checking_peddy_run:
         **wf. get_input_files('peddy','run'),
     output:
         **wf. get_output_files('peddy','run'),
+    threads: wf.get_resources("peddy", "run", "threads")
+    resources:
+        time=wf.get_resource("peddy", "run", "time"),
+        mem=wf.get_resource("peddy", "run", "memory"),
+        partition=wf.get_resources("peddy", "run", "partition"),
     log:
         wf.get_log_file("peddy", "run"),
     wrapper:
