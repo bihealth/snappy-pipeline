@@ -94,7 +94,7 @@ def test_manta_somatic_step_part_get_input_files(somatic_wgs_sv_calling_workflow
     assert actual == expected
 
 
-def test_manta_somatic__step_part_get_output_files(somatic_wgs_sv_calling_workflow):
+def test_manta_somatic_step_part_get_output_files(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_output_files()"""
     base_name = "work/{mapper}.manta.{cancer_library}/out/{mapper}.manta.{cancer_library}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -102,14 +102,14 @@ def test_manta_somatic__step_part_get_output_files(somatic_wgs_sv_calling_workfl
     assert actual == expected
 
 
-def test_manta_somatic__step_part_get_log_file(somatic_wgs_sv_calling_workflow):
+def test_manta_somatic_step_part_get_log_file(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_log_file()"""
     expected = "work/{mapper}.manta.{cancer_library}/log/snakemake.somatic_wgs_sv_calling.log"
     actual = somatic_wgs_sv_calling_workflow.get_log_file("manta", "run")
     assert actual == expected
 
 
-def test_manta_somatic__step_part_get_resource(somatic_wgs_sv_calling_workflow):
+def test_manta_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
@@ -123,7 +123,7 @@ def test_manta_somatic__step_part_get_resource(somatic_wgs_sv_calling_workflow):
 # Tests for Delly2StepPart -------------------------------------------------------------------------
 
 
-def test_delly2_somatic__step_part_get_resource(somatic_wgs_sv_calling_workflow):
+def test_delly2_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     """Tests Delly2StepPart.get_resource()"""
     # Get all available actions
     all_actions = somatic_wgs_sv_calling_workflow.substep_getattr("delly2", "actions")
