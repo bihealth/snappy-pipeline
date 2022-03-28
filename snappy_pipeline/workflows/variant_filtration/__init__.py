@@ -105,6 +105,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     InputFilesStepPartMixin,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -215,10 +216,14 @@ step_config:
 class FiltersVariantsStepPartBase(BaseStepPart):
     """Base class for the different filters."""
 
-    #: Name of the step (e.g., for rule names)
+    #: Step name
     name = None
-    #: Token to use in file name
+
+    #: File name pattern
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -231,37 +236,59 @@ class FiltersVariantsStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_filtration_{}_run".format(self.name)] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "01:00:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="1-00:00:00",  # 1 day
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{ext}", ext)
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
 
 class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_quality"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}"
     )
+
     prev_class = FiltersVariantsStepPartBase
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
             yield "ped", os.path.realpath(
@@ -275,86 +302,138 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
                 ).format(**wildcards)
                 yield key, variant_annotation(output_path) + ext
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
 
 class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_inheritance"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
+
     prev_class = FilterQualityStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_frequency"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
     )
+
     prev_class = FilterInheritanceStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_regions"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
     )
+
     prev_class = FilterFrequencyStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_scores"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}"
     )
+
     prev_class = FilterRegionsStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_het_comp"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}.{het_comp,[^\.]+}"
     )
+
     prev_class = FilterScoresStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class VariantFiltrationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
+    #: Workflow name
     name = "variant_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -362,13 +441,10 @@ class VariantFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -429,7 +505,7 @@ class VariantFiltrationWorkflow(BaseStep):
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
                     filters=self.config["filter_combinations"],
-                    **kwargs
+                    **kwargs,
                 )
 
     def check_config(self):

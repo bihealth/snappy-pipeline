@@ -73,6 +73,11 @@ rule variant_filtration_filter_quality_run:
         unpack(wf.get_input_files("filter_quality", "run")),
     output:
         **wf. get_output_files('filter_quality','run'),
+    threads: wf.get_resources("filter_quality", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_quality", "run", "time"),
+        mem=wf.get_resource("filter_quality", "run", "memory"),
+        partition=wf.get_resources("filter_quality", "run", "partition"),
     log:
         wf.get_log_file("filter_quality", "run"),
     wrapper:
@@ -87,6 +92,11 @@ rule variant_filtration_filter_inheritance_run:
         unpack(wf.get_input_files("filter_inheritance", "run")),
     output:
         **wf. get_output_files('filter_inheritance','run'),
+    threads: wf.get_resources("filter_inheritance", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_inheritance", "run", "time"),
+        mem=wf.get_resource("filter_inheritance", "run", "memory"),
+        partition=wf.get_resources("filter_inheritance", "run", "partition"),
     log:
         wf.get_log_file("filter_inheritance", "run"),
     wrapper:
@@ -101,6 +111,11 @@ rule variant_filtration_filter_frequency:
         unpack(wf.get_input_files("filter_frequency", "run")),
     output:
         **wf. get_output_files('filter_frequency','run'),
+    threads: wf.get_resources("filter_frequency", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_frequency", "run", "time"),
+        mem=wf.get_resource("filter_frequency", "run", "memory"),
+        partition=wf.get_resources("filter_frequency", "run", "partition"),
     log:
         wf.get_log_file("filter_frequency", "run"),
     wrapper:
@@ -115,6 +130,11 @@ rule variant_filtration_filter_regions:
         unpack(wf.get_input_files("filter_regions", "run")),
     output:
         **wf. get_output_files('filter_regions','run'),
+    threads: wf.get_resources("filter_regions", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_regions", "run", "time"),
+        mem=wf.get_resource("filter_regions", "run", "memory"),
+        partition=wf.get_resources("filter_regions", "run", "partition"),
     log:
         wf.get_log_file("filter_regions", "run"),
     wrapper:
@@ -129,6 +149,11 @@ rule variant_filtration_filter_scores:
         unpack(wf.get_input_files("filter_scores", "run")),
     output:
         **wf. get_output_files('filter_scores','run'),
+    threads: wf.get_resources("filter_scores", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_scores", "run", "time"),
+        mem=wf.get_resource("filter_scores", "run", "memory"),
+        partition=wf.get_resources("filter_scores", "run", "partition"),
     log:
         wf.get_log_file("filter_scores", "run"),
     wrapper:
@@ -143,6 +168,11 @@ rule variant_filtration_filter_het_comp:
         unpack(wf.get_input_files("filter_het_comp", "run")),
     output:
         **wf. get_output_files('filter_het_comp','run'),
+    threads: wf.get_resources("filter_het_comp", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_het_comp", "run", "time"),
+        mem=wf.get_resource("filter_het_comp", "run", "memory"),
+        partition=wf.get_resources("filter_het_comp", "run", "partition"),
     log:
         wf.get_log_file("filter_het_comp", "run"),
     wrapper:
