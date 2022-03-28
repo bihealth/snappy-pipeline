@@ -54,6 +54,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
@@ -161,10 +162,14 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 class CombineVariantsStepPartBase(BaseStepPart):
     """Base class for the different combinations."""
 
-    #: Name of the step (e.g., for rule names)
+    #: Step name
     name = None
-    #: Token to use in file name
+
+    #: Base file name pattern
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -181,15 +186,27 @@ class CombineVariantsStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_combination_{}_run".format(self.name)] = {
-            "mem": int(3.7 * 1024 * 2),
-            "time": "01:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{int(3.7 * 1024 * 2)}M",
+        )
 
     def get_input_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
@@ -212,7 +229,8 @@ class CombineVariantsStepPartBase(BaseStepPart):
 
     def get_args(self, action):
         """Get "args" from step configuration for the given combination."""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
 
         def args_function(wildcards):
             info = self.parent.combinations[self.name][wildcards.combination]
@@ -271,17 +289,23 @@ class CombineVariantsStepPartBase(BaseStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{ext}", ext)
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
 
 class VarsIntersectStepPart(CombineVariantsStepPartBase):
+
+    #: Step name
     name = "vars_intersect"
+
+    #: Base file name pattern
     name_pattern = (
         "{mapper}.combined_variants.vars_intersect.{index_library}.{combination}."
         "{left_caller}.{right_caller}"
@@ -289,7 +313,11 @@ class VarsIntersectStepPart(CombineVariantsStepPartBase):
 
 
 class VarsShareIntervalStepPart(CombineVariantsStepPartBase):
+
+    #: Step name
     name = "vars_share_interval"
+
+    #: Base file name pattern
     name_pattern = (
         "{mapper}.combined_variants.vars_share_interval.{index_library}."
         "{combination}.{left_caller}.{right_caller}"
@@ -299,7 +327,10 @@ class VarsShareIntervalStepPart(CombineVariantsStepPartBase):
 class VariantCombinationWorkflow(BaseStep):
     """Combination of germline structural and/or sequence variants."""
 
+    #: Workflow name
     name = "variant_combination"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -307,13 +338,10 @@ class VariantCombinationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
