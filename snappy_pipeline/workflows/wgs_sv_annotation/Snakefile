@@ -75,6 +75,11 @@ rule wgs_sv_annotation_vcf_sv_filter:
         unpack(wf.get_input_files("vcf_sv_filter", "run")),
     output:
         **wf. get_output_files('vcf_sv_filter','run'),
+    threads: wf.get_resources("vcf_sv_filter", "run", "threads")
+    resources:
+        time=wf.get_resource("vcf_sv_filter", "run", "time"),
+        mem=wf.get_resource("vcf_sv_filter", "run", "memory"),
+        partition=wf.get_resources("vcf_sv_filter", "run", "partition"),
     log:
         wf.get_log_file("vcf_sv_filter", "run"),
     wrapper:
