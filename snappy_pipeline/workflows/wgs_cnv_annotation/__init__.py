@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -92,7 +93,11 @@ step_config:
 class VcfCnvFilterStepPart(BaseStepPart):
     """Annotate VCF using wgs_cnv_filter.py script."""
 
+    #: Step name
     name = "vcf_cnv_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -107,6 +112,9 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
         @dictify
         def input_function(wildcards):
+            # Validate action
+            self._validate_action(action)
+
             # TODO: make work for non-ERDS/ERDS+SV2
             tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
             yield "ped", tpl.format(**wildcards)
@@ -128,13 +136,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 yield key, wgs_cnv_calling(tpl + ext).format(**wildcards)
             return
 
-        assert action == "run"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
@@ -149,23 +157,34 @@ class VcfCnvFilterStepPart(BaseStepPart):
             yield key, prefix + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_cnv_annotation_wgs_cnv_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
 
 
 class WgsCnvAnnotationWorkflow(BaseStep):
     """Perform germline WGS SV annotation"""
 
+    #: Workflow name
     name = "wgs_cnv_annotation"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -173,13 +192,10 @@ class WgsCnvAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
