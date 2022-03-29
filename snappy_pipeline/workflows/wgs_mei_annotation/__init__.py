@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -94,7 +95,11 @@ step_config:
 class VcfMeiFilterStepPart(BaseStepPart):
     """Annotate VCF using wgs_mei_filter.py script."""
 
+    #: Step name
     name = "vcf_mei_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -152,6 +157,22 @@ class VcfMeiFilterStepPart(BaseStepPart):
             "ntasks": 2,
         }
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
+
 
 class WgsMeiAnnotationWorkflow(BaseStep):
     """Perform germline WGS SV annotation"""
@@ -164,13 +185,10 @@ class WgsMeiAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
