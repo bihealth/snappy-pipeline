@@ -277,6 +277,7 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
         r"{thresholds,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FiltersVariantsStepPartBase``
     prev_class = FiltersVariantsStepPartBase
 
     #: Types of output files by extension
@@ -317,6 +318,7 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPart
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FilterQualityStepPart``
     prev_class = FilterQualityStepPart
 
     #: Include pedigree file flag (True)
@@ -341,6 +343,7 @@ class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBa
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FilterInheritanceStepPart``
     prev_class = FilterInheritanceStepPart
 
     #: Include pedigree file flag (True)
@@ -365,6 +368,7 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FilterFrequencyStepPart``
     prev_class = FilterFrequencyStepPart
 
     #: Include pedigree file flag (True)
@@ -390,6 +394,7 @@ class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase)
         r"{scores,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FilterRegionsStepPart``
     prev_class = FilterRegionsStepPart
 
     #: Include pedigree file flag (True)
@@ -415,6 +420,7 @@ class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
         r"{scores,[^\.]+}.{het_comp,[^\.]+}"
     )
 
+    #: Pointer to the previous executed step, class ``FilterScoresStepPart``
     prev_class = FilterScoresStepPart
 
     #: Include pedigree file flag (True)
