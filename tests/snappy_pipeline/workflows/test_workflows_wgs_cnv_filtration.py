@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_cnv_filtration workflow module code"""
 
-from pathlib import Path
 import textwrap
 
 import pytest
