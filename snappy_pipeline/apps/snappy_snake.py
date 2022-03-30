@@ -7,14 +7,12 @@ more convenient to wrap the call to snakemake itself.
 
 import argparse
 import datetime
-import functools
 import logging
 import os
 import subprocess
 import sys
-import textwrap
 
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake import main as snakemake_main
 
 from .. import __version__
@@ -196,16 +194,16 @@ def run(wrapper_args):
         snakemake_argv.append("--dryrun")
     if wrapper_args.reason:
         snakemake_argv.append("--reason")
-    if not wrapper_args.snappy_pipeline_cluster_profile:
+    if not wrapper_args.snappy_pipeline_use_profile:
         snakemake_argv += ["--cores", str(wrapper_args.cores or 1)]
     if wrapper_args.use_conda:
         snakemake_argv.append("--use-conda")
         if mamba_available and wrapper_args.use_mamba:
             snakemake_argv += ["--conda-frontend", "mamba"]
 
-    # Configure DRMAA if configured so
-    if wrapper_args.snappy_pipeline_cluster_profile:
-        snakemake_argv += ["--profile", wrapper_args.snappy_pipeline_cluster_profile]
+    # Configure profile if configured
+    if wrapper_args.snappy_pipeline_use_profile:
+        snakemake_argv += ["--profile", wrapper_args.snappy_pipeline_use_profile]
         snakemake_argv += ["-j", wrapper_args.snappy_pipeline_cluster_job]
         if wrapper_args.restart_times:
             snakemake_argv += ["--restart-times", str(wrapper_args.restart_times)]
