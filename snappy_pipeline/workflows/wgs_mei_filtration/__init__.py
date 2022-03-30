@@ -106,6 +106,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     InputFilesStepPartMixin,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -153,10 +154,14 @@ step_config:
 class FiltersWgsMeiStepPartBase(BaseStepPart):
     """Base class for the different filters."""
 
-    #: Name of the step (e.g., for rule names)
+    #: Step name
     name = None
-    #: Pattern used in file name
+
+    #: File name pattern
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -169,36 +174,59 @@ class FiltersWgsMeiStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["wgs_mei_filtration_{}_run".format(self.name)] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "01:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{ext}", ext)
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
 
 class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_quality"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FiltersWgsMeiStepPartBase``
     prev_class = FiltersWgsMeiStepPartBase
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
             yield "ped", "work/write_pedigree.{index_library}/out/{index_library}.ped".format(
@@ -212,42 +240,66 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
                 ).format(**wildcards)
                 yield key, wgs_mei_annotation(output_path) + ext
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
 
 class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_inheritance"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterQualityStepPart``
     prev_class = FilterQualityStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersWgsMeiStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_regions"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{regions,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterInheritanceStepPart``
     prev_class = FilterInheritanceStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class WgsMeiFiltrationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
+    #: Workflow name
     name = "wgs_mei_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -255,13 +307,10 @@ class WgsMeiFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -317,7 +366,7 @@ class WgsMeiFiltrationWorkflow(BaseStep):
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
                     filters=self.config["filter_combinations"],
-                    **kwargs
+                    **kwargs,
                 )
 
     def check_config(self):
