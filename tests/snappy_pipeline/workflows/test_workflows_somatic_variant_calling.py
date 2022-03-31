@@ -9,7 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
-from .common import get_expected_log_files_dict
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -597,7 +597,327 @@ def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow)
         assert actual == expected, msg_error
 
 
-# Tests for SomaticVariantCallingWorkflow ---------------------------------------------------------
+# Tests for BcftoolsJointStepPart   ----------------------------------------------------------------
+
+
+def test_bcftools_joint_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests BcftoolsJointStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
+    expected = {
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+        ],
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+        ],
+    }
+    actual = somatic_variant_calling_workflow.get_input_files("bcftools_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_bcftools_joint_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests BcftoolsJointStepPart.get_output_files()"""
+    base_name_out = (
+        "work/{mapper}.bcftools_joint.{donor_name}/out/{mapper}.bcftools_joint.{donor_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    actual = somatic_variant_calling_workflow.get_output_files("bcftools_joint", "run")
+    assert actual == expected
+
+
+def test_bcftools_joint_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests BcftoolsJointStepPart.get_log_file()"""
+    base_name_log = (
+        "work/{mapper}.bcftools_joint.{donor_name}/log/{mapper}.bcftools_joint.{donor_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_log)
+    actual = somatic_variant_calling_workflow.get_log_file("bcftools_joint", "run")
+    assert actual == expected
+
+
+def test_bcftools_joint_step_part_get_args(somatic_variant_calling_workflow):
+    """Tests BcftoolsJointStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={"donor_name": "P001"})
+    expected = {
+        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
+        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+    }
+    actual = somatic_variant_calling_workflow.get_args("bcftools_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_bcftools_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests BcftoolsJointStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16384M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for VarscanJointStepPart -------------------------------------------------------------------
+
+
+def test_varscan_joint_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests VarscanJointStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
+    expected = {
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+        ],
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+        ],
+    }
+    actual = somatic_variant_calling_workflow.get_input_files("varscan_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_varscan_joint_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests VarscanJointStepPart.get_output_files()"""
+    base_name_out = (
+        "work/{mapper}.varscan_joint.{donor_name}/out/{mapper}.varscan_joint.{donor_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    actual = somatic_variant_calling_workflow.get_output_files("varscan_joint", "run")
+    assert actual == expected
+
+
+def test_varscan_joint_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests VarscanJointStepPart.get_log_file()"""
+    base_name_log = (
+        "work/{mapper}.varscan_joint.{donor_name}/log/{mapper}.varscan_joint.{donor_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_log)
+    actual = somatic_variant_calling_workflow.get_log_file("varscan_joint", "run")
+    assert actual == expected
+
+
+def test_varscan_joint_step_part_get_args(somatic_variant_calling_workflow):
+    """Tests VarscanJointStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={"donor_name": "P001"})
+    expected = {
+        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
+        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+    }
+    actual = somatic_variant_calling_workflow.get_args("varscan_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_varscan_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests VarscanJointStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "1024M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for PlatypusJointStepPart  -----------------------------------------------------------------
+
+
+def test_platypus_joint_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests PlatypusJointStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
+    expected = {
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+        ],
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+        ],
+    }
+    actual = somatic_variant_calling_workflow.get_input_files("platypus_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_platypus_joint_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests PlatypusJointStepPart.get_output_files()"""
+    base_name_out = (
+        "work/{mapper}.platypus_joint.{donor_name}/out/{mapper}.platypus_joint.{donor_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    actual = somatic_variant_calling_workflow.get_output_files("platypus_joint", "run")
+    assert actual == expected
+
+
+def test_platypus_joint_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests PlatypusJointStepPart.get_log_file()"""
+    base_name_log = (
+        "work/{mapper}.platypus_joint.{donor_name}/log/{mapper}.platypus_joint.{donor_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_log)
+    actual = somatic_variant_calling_workflow.get_log_file("platypus_joint", "run")
+    assert actual == expected
+
+
+def test_platypus_joint_step_part_get_args(somatic_variant_calling_workflow):
+    """Tests PlatypusJointStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={"donor_name": "P001"})
+    expected = {
+        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
+        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+    }
+    actual = somatic_variant_calling_workflow.get_args("platypus_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_platypus_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests PlatypusJointStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for GatkHcJointStepPart  -------------------------------------------------------------------
+
+
+def test_gatk_hc_joint_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests GatkHcJointStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
+    expected = {
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+        ],
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+        ],
+    }
+    actual = somatic_variant_calling_workflow.get_input_files("gatk_hc_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_gatk_hc_joint_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests GatkHcJointStepPart.get_output_files()"""
+    base_name_out = (
+        "work/{mapper}.gatk_hc_joint.{donor_name}/out/{mapper}.gatk_hc_joint.{donor_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    actual = somatic_variant_calling_workflow.get_output_files("gatk_hc_joint", "run")
+    assert actual == expected
+
+
+def test_gatk_hc_joint_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests GatkHcJointStepPart.get_log_file()"""
+    base_name_log = (
+        "work/{mapper}.gatk_hc_joint.{donor_name}/log/{mapper}.gatk_hc_joint.{donor_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_log)
+    actual = somatic_variant_calling_workflow.get_log_file("gatk_hc_joint", "run")
+    assert actual == expected
+
+
+def test_gatk_hc_joint_step_part_get_args(somatic_variant_calling_workflow):
+    """Tests GatkHcJointStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={"donor_name": "P001"})
+    expected = {
+        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
+        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+    }
+    actual = somatic_variant_calling_workflow.get_args("gatk_hc_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_gatk_hc_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests GatkHcJointStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for GatkUgJointStepPart  -------------------------------------------------------------------
+
+
+def test_gatk_ug_joint_step_part_get_input_files(somatic_variant_calling_workflow):
+    """Tests GatkUgJointStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
+    expected = {
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+        ],
+        "bai": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+        ],
+    }
+    actual = somatic_variant_calling_workflow.get_input_files("gatk_ug_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_gatk_ug_joint_step_part_get_output_files(somatic_variant_calling_workflow):
+    """Tests GatkUgJointStepPart.get_output_files()"""
+    base_name_out = (
+        "work/{mapper}.gatk_ug_joint.{donor_name}/out/{mapper}.gatk_ug_joint.{donor_name}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    actual = somatic_variant_calling_workflow.get_output_files("gatk_ug_joint", "run")
+    assert actual == expected
+
+
+def test_gatk_ug_joint_step_part_get_log_file(somatic_variant_calling_workflow):
+    """Tests GatkUgJointStepPart.get_log_file()"""
+    base_name_log = (
+        "work/{mapper}.gatk_ug_joint.{donor_name}/log/{mapper}.gatk_ug_joint.{donor_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_log)
+    actual = somatic_variant_calling_workflow.get_log_file("gatk_ug_joint", "run")
+    assert actual == expected
+
+
+def test_gatk_ug_joint_step_part_get_args(somatic_variant_calling_workflow):
+    """Tests GatkUgJointStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={"donor_name": "P001"})
+    expected = {
+        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
+        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+    }
+    actual = somatic_variant_calling_workflow.get_args("gatk_ug_joint", "run")(wildcards)
+    assert actual == expected
+
+
+def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
+    """Tests GatkUgJointStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for SomaticVariantCallingWorkflow  ---------------------------------------------------------
 
 
 def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):

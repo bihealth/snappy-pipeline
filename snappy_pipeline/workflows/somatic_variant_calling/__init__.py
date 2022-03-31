@@ -402,6 +402,9 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
@@ -423,7 +426,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
             }
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_normal_lib_name(self, wildcards):
@@ -440,7 +442,8 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         """Return output files that all somatic variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
@@ -448,7 +451,9 @@ class SomaticVariantCallingStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
-        _ = action
+        # Validate action
+        self._validate_action(action)
+
         prefix = (
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
             "{{mapper}}.{var_caller}.{{tumor_library}}"
@@ -498,15 +503,12 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        mem_mb = int(3.7 * 1024 * 2)
+        # Validate action
+        self._validate_action(action)
         return ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
-            memory=f"{mem_mb}M",
+            memory=f"{int(3.7 * 1024 * 2)}M",
         )
 
 
@@ -579,13 +581,8 @@ class Mutect2StepPart(MutectBaseStepPart):
         :return: Returns input function for Mutect2 rules based on inputted action.
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
@@ -703,13 +700,8 @@ class Mutect2StepPart(MutectBaseStepPart):
         exts = {}
         output_files = {}
 
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
 
         # Set expected extensions based on action
         if action == "run":
@@ -769,13 +761,8 @@ class Mutect2StepPart(MutectBaseStepPart):
             ("conda_list", ".conda_list.txt"),
         )
 
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
 
         # Set expected format based on action
         if action != "run":
@@ -828,10 +815,8 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
         return self.resource_usage_dict.get(action)
 
 
@@ -867,14 +852,6 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         )
         return result
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["somatic_variant_calling_scalpel_run"] = {
-            "mem": 5 * 1024 * 16,
-            "time": "48:00",
-            "ntasks": 16,
-        }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -885,15 +862,12 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        mem_mb = 5 * 1024 * 16
+        # Validate action
+        self._validate_action(action)
         return ResourceUsage(
             threads=16,  # TODO: Make Scalpel number of thread configurable.
             time="2-00:00:00",  # 2 days
-            memory=f"{mem_mb}M",
+            memory=f"{5 * 1024 * 16}M",
         )
 
 
@@ -942,10 +916,8 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
         return ResourceUsage(
             threads=2,
             time="1-00:00:00",  # 1 day
@@ -958,6 +930,9 @@ class JointCallingStepPart(BaseStepPart):
 
     #: Name of the step, to be overridden in sub class.
     name = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -973,6 +948,9 @@ class JointCallingStepPart(BaseStepPart):
                 self.donor_by_name[donor.name] = donor
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             donor = self.donor_by_name[wildcards.donor_name]
@@ -994,12 +972,12 @@ class JointCallingStepPart(BaseStepPart):
                             )
             return result
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_output_files(self, action):
         """Return resulting files generated by this step."""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(zip(EXT_NAMES, expand(self.base_path_out, name=[self.name], ext=EXT_VALUES)))
 
     @dictify
@@ -1019,17 +997,19 @@ class JointCallingStepPart(BaseStepPart):
             yield key, prefix + ext
 
     def get_args(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
 
         def arg_function(wildcards):
             donor = self.donor_by_name[wildcards.donor_name]
-            result = {}
-            result["sample_list"] = [
-                ngs_library.name
-                for bio_sample in donor.bio_samples.values()
-                for test_sample in bio_sample.test_samples.values()
-                for ngs_library in test_sample.ngs_libraries.values()
-            ]
+            result = {
+                "sample_list": [
+                    ngs_library.name
+                    for bio_sample in donor.bio_samples.values()
+                    for test_sample in bio_sample.test_samples.values()
+                    for ngs_library in test_sample.ngs_libraries.values()
+                ]
+            }
             if "ignore_chroms" in self.parent.config[self.name]:
                 ignore_chroms = self.parent.config[self.name]["ignore_chroms"]
                 result["ignore_chroms"] = ignore_chroms
@@ -1045,28 +1025,48 @@ class BcftoolsJointStepPart(JointCallingStepPart):
     subfiltered.
     """
 
+    #: Step name
     name = "bcftools_joint"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["somatic_variant_calling_bcftools_joint_run"] = {
-            "mem": 1024 * self.parent.config["bcftools_joint"]["num_threads"],
-            "time": "48:00",
-            "ntasks": self.parent.config["bcftools_joint"]["num_threads"],
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        mem_mb = 1024 * self.parent.config["bcftools_joint"]["num_threads"]
+        return ResourceUsage(
+            threads=self.parent.config["bcftools_joint"]["num_threads"],
+            time="2-00:00:00",  # 2 days
+            memory=f"{mem_mb}M",
+        )
 
 
 class VarscanJointStepPart(JointCallingStepPart):
     """Somatic variant calling with Varscan in "joint" mode."""
 
+    #: Step name
     name = "varscan_joint"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["somatic_variant_calling_varscan_joint_run"] = {
-            "mem": 1024,
-            "time": "48:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="2-00:00:00",  # 2 days
+            memory="1024M",
+        )
 
 
 class PlatypusJointStepPart(JointCallingStepPart):
@@ -1076,14 +1076,25 @@ class PlatypusJointStepPart(JointCallingStepPart):
     subfiltered.
     """
 
+    #: Step name
     name = "platypus_joint"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["somatic_variant_calling_platypus_joint_run"] = {
-            "mem": int(3.75 * 1024 * self.parent.config["platypus_joint"]["num_threads"]),
-            "time": "48:00",
-            "ntasks": self.parent.config["platypus_joint"]["num_threads"],
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        mem_mb = int(3.75 * 1024 * self.parent.config["platypus_joint"]["num_threads"])
+        return ResourceUsage(
+            threads=self.parent.config["platypus_joint"]["num_threads"],
+            time="2-00:00:00",  # 2 days
+            memory=f"{mem_mb}M",
+        )
 
 
 class GatkHcJointStepPart(JointCallingStepPart):
@@ -1093,14 +1104,24 @@ class GatkHcJointStepPart(JointCallingStepPart):
     subfiltered.
     """
 
+    #: Step name
     name = "gatk_hc_joint"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_{}_run".format(self.__class__.name)] = {
-            "mem": 2 * 1024,
-            "time": "80:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{2 * 1024}M",
+        )
 
 
 class GatkUgJointStepPart(JointCallingStepPart):
@@ -1110,21 +1131,35 @@ class GatkUgJointStepPart(JointCallingStepPart):
     subfiltered.
     """
 
+    #: Step name
     name = "gatk_ug_joint"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_{}_run".format(self.__class__.name)] = {
-            "mem": 2 * 1024,
-            "time": "80:00:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{2 * 1024}M",
+        )
 
 
 class SomaticVariantCallingWorkflow(BaseStep):
     """Perform somatic variant calling"""
 
+    #: Workflow name
     name = "somatic_variant_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
