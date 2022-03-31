@@ -204,7 +204,7 @@ def run(wrapper_args):
     # Configure profile if configured
     if wrapper_args.snappy_pipeline_use_profile:
         snakemake_argv += ["--profile", wrapper_args.snappy_pipeline_use_profile]
-        snakemake_argv += ["-j", wrapper_args.snappy_pipeline_cluster_job]
+        snakemake_argv += ["-j", wrapper_args.snappy_pipeline_jobs]
         if wrapper_args.restart_times:
             snakemake_argv += ["--restart-times", str(wrapper_args.restart_times)]
         if wrapper_args.max_jobs_per_second:
