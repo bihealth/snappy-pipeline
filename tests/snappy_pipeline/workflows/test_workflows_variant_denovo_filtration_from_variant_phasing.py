@@ -104,6 +104,7 @@ def variant_de_novo_filtration_workflow(
 def test_filter_de_novo_from_variant_phasing_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosStepPart.get_input_files()"""
     # Define expected
     ngs_mapping_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
     bam_ped_dict = {
@@ -129,6 +130,7 @@ def test_filter_de_novo_from_variant_phasing_step_part_get_input_files(
 def test_filter_de_novo_from_variant_phasing_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.de_novos."
@@ -144,23 +146,27 @@ def test_filter_de_novo_from_variant_phasing_step_part_get_output_files(
 def test_filter_de_novo_from_variant_phasing_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    # Define expected
+    """Tests FilterDeNovosStepPart.get_log_file()"""
     expected = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.de_novos."
         r"{index_library,[^\.]+}/log/{mapper}.{caller}.jannovar_annotate_vcf."
         r"gatk_pbt.gatk_rbp.de_novos.{index_library}.log"
     )
-    # Get actual
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
     assert actual == expected
 
 
-def test_filter_de_novo_from_variant_phasing_step_part_update_cluster_config(
-    variant_de_novo_filtration_workflow, dummy_cluster_config
+def test_filter_de_novo_from_variant_phasing_step_part_get_resource(
+    variant_de_novo_filtration_workflow,
 ):
-    expected = {"mem", "time", "ntasks"}
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
-    assert actual == expected
+    """Tests FilterDeNovosStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for FilterDeNovosHardStepPart --------------------------------------------------------------
@@ -169,6 +175,7 @@ def test_filter_de_novo_from_variant_phasing_step_part_update_cluster_config(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosHardStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.de_novos."
@@ -187,6 +194,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosHardStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.de_novos_hard."
@@ -209,23 +217,27 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    # Define expected
+    """Tests FilterDeNovosHardStepPart.get_log_file()"""
     expected = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.de_novos_hard."
         r"{index_library,[^\.]+}/log/{mapper}.{caller}.jannovar_annotate_vcf."
         r"gatk_pbt.gatk_rbp.de_novos_hard.{index_library}.log"
     )
-    # Get actual
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
     assert actual == expected
 
 
-def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_config(
-    variant_de_novo_filtration_workflow, dummy_cluster_config
+def test_filter_de_novo_from_variant_annotationhard_step_part_get_resource(
+    variant_de_novo_filtration_workflow,
 ):
-    expected = {"mem", "time", "ntasks"}
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_hard_run"].keys())
-    assert actual == expected
+    """Tests FilterDeNovosHardStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": None}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for VariantDeNovoFiltrationWorkflow --------------------------------------------------------
