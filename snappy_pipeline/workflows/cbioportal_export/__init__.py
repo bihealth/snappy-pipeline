@@ -11,6 +11,7 @@ for import.
 """
 
 from collections import OrderedDict
+import csv
 import os
 import sys
 
@@ -19,7 +20,12 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 # cbioportal meta data files
@@ -63,17 +69,16 @@ step_config:
     study_description: REQUIRED # REQUIRED
     study_name: REQUIRED # REQUIRED
     study_name_short: REQUIRED # REQUIRED
-    ncbi_build: GRCh37
     cache_version: 100
-    vep_data_path: REQUIRED
-    filter_vcf: REQUIRED
-    tools_somatic_variant_calling: []
 
 """
 
 
 class cbioportalExportStepPart(BaseStepPart):
     """Base class for gene expression quantifiers"""
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -140,25 +145,36 @@ class cbioportalExportStepPart(BaseStepPart):
                             yield sample_name, cnv_file_, exp_file_
 
 
+class CbioportalStudyMetaFilesStepPart(cbioportalExportStepPart):
+    """Generate cbioportal study meta data files"""
+
+    #: Step name
+    name = "cbioportal_study_meta_files"
+
+
 class cbioportalMetaFilesStepPart(cbioportalExportStepPart):
     """Generate cbioportal meta data files"""
 
+    #: Step name
     name = "cbioportal_meta_files"
 
     @listify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield from [os.path.join("work/upload", f) for f in META_FILES]
 
 
 class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     """Generate cbioportal patient data file"""
 
+    #: Step name
     name = "cbioportal_clinical_data"
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "patients_tsv", os.path.join("work/upload", "data_clinical_patients.txt")
         yield "samples_tsv", os.path.join("work/upload", "data_clinical_samples.txt")
 
@@ -170,20 +186,26 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
 class cbioportalCaseListsStepPart(cbioportalExportStepPart):
     """Generate cbioportal patient data file"""
 
+    #: Step name
     name = "cbioportal_case_lists"
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "sequenced", "work/upload/case_lists/all_cases_with_mutation_data.txt"
 
 
 class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
     """Helper class for VCF2MAF step"""
 
+    #: Step name
     name = "cbioportal_vcf2maf"
 
     def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def args_function(wildcards):
             result = {
                 "tumor_sample": wildcards.tumor_library,
@@ -193,7 +215,6 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
             }
             return result
 
-        assert action == "run"
         return args_function
 
     def get_normal_lib_name(self, wildcards):
@@ -213,7 +234,8 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
     @dictify
     def get_output_files(self, action):
         """Return maf output file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
@@ -224,7 +246,8 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
     @dictify
     def get_input_files(self, action):
         """Return input vcf for each output maf"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
@@ -234,24 +257,34 @@ class cbioportalVcf2MafStepPart(cbioportalExportStepPart):
         somatic_variant_filtration = self.parent.sub_workflows["somatic_variant_filtration"]
         yield "vcf", somatic_variant_filtration(tpl)
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for vcf2maf"""
-        cluster_config["cbioportal_export_generate_mafs"] = {
-            "mem": 5120,
-            "time": "12:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="12:00:00",  # 12 hours
+            memory="5120M",
+        )
 
 
 class cbioportalMafStepPart(cbioportalExportStepPart):
     """Helper class to get all required maf files for cbioportal."""
 
+    #: Step name
     name = "cbioportal_maf"
 
     @listify
     def get_input_files(self, action):
         """Return list of all input files"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         name_pattern = (
             "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}."
@@ -295,25 +328,40 @@ class cbioportalMafStepPart(cbioportalExportStepPart):
 class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     """Generate cbioportal cna data files"""
 
+    #: Step name
     name = "cbioportal_cna_data"
+
+    #: Class available actions
+    actions = ("log2", "gistic", "segments")
 
     @listify
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
         yield from self.iterate_over_biomedsheets(action)
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for merge tables"""
-        cluster_config["cbioportal_export_cna_data"] = {
-            "h_vmem": "8g",
-            "h_rt": "1:00:00",
-            "pe": "smp 2",
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory="8G",
+        )
 
 
 class cbioportalZscoresStepPart(cbioportalExportStepPart):
     """Generate a dataframe holding each biosample and the location of the CNV
     calling results and the expression quantification files"""
 
+    #:Step name
     name = "cbioportal_zscores"
 
     def get_input_files(self, action):
@@ -321,8 +369,6 @@ class cbioportalZscoresStepPart(cbioportalExportStepPart):
         yield from self.iterate_over_biomedsheets(action)
 
     def get_df(self, output):
-        import csv
-
         with open(output[0], "w") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow(["ID", "gene_call_filename", "count_filename"])
@@ -332,12 +378,22 @@ class cbioportalZscoresStepPart(cbioportalExportStepPart):
                 writer.writerow([sample_name, cnv_file, exp_file])
 
 
+class CbioportalComputeZscoresStepPart(cbioportalExportStepPart):
+    """Compute Z-Scores"""
+
+    #:Step name
+    name = "cbioportal_compute_zscores"
+
+
 class cbioportalExportWorkflow(BaseStep):
     """Perform cbioportal preparation"""
 
+    #: Workflow name
     name = "cbioportal_export"
 
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -347,13 +403,10 @@ class cbioportalExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -362,6 +415,7 @@ class cbioportalExportWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
+                CbioportalStudyMetaFilesStepPart,
                 cbioportalMetaFilesStepPart,
                 cbioportalCaseListsStepPart,
                 cbioportalClinicalDataStepPart,
@@ -369,6 +423,7 @@ class cbioportalExportWorkflow(BaseStep):
                 cbioportalMafStepPart,
                 cbioportalVcf2MafStepPart,
                 cbioportalZscoresStepPart,
+                CbioportalComputeZscoresStepPart,
                 LinkOutStepPart,
             )
         )
@@ -402,20 +457,19 @@ class cbioportalExportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        RESULT_FILES = ("meta_study.txt",) + META_FILES + CLINICAL_DATA_FILES
+        result_files = ("meta_study.txt",) + META_FILES + CLINICAL_DATA_FILES
         if self.config["path_somatic_variant_filtration"]:
-            RESULT_FILES += ("data_mutation_extended.txt",)
-            RESULT_FILES += ("case_lists/all_cases_with_mutation_data.txt",)
+            result_files += ("data_mutation_extended.txt",)
+            result_files += ("case_lists/all_cases_with_mutation_data.txt",)
         if self.config["path_copy_number_step"]:
-            RESULT_FILES += CNA_DATA_FILES
+            result_files += CNA_DATA_FILES
         if self.config["path_gene_expression_quantification"]:
-            RESULT_FILES += ("data_expression_zscores.txt",)
+            result_files += ("data_expression_zscores.txt",)
 
-        yield from [os.path.join("work/upload", f) for f in RESULT_FILES]
+        yield from [os.path.join("work/upload", f) for f in result_files]
 
     def check_config(self):
         """Check config attributes for presence"""
-        print(self.config.keys())
         if self.config["cnv_tool"] not in [
             "cnvetti_on_target_postprocess",
             "copywriter",
