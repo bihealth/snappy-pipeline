@@ -381,7 +381,7 @@ class cbioportalZscoresStepPart(cbioportalExportStepPart):
 class CbioportalComputeZscoresStepPart(cbioportalExportStepPart):
     """Compute Z-Scores"""
 
-    #:Step name
+    #: Step name
     name = "cbioportal_compute_zscores"
 
 
