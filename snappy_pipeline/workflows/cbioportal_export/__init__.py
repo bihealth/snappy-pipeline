@@ -361,7 +361,7 @@ class cbioportalZscoresStepPart(cbioportalExportStepPart):
     """Generate a dataframe holding each biosample and the location of the CNV
     calling results and the expression quantification files"""
 
-    #:Step name
+    #: Step name
     name = "cbioportal_zscores"
 
     def get_input_files(self, action):
