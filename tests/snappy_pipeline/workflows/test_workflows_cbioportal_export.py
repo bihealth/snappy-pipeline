@@ -51,10 +51,10 @@ def minimal_config():
 
         cbioportal_export:
           # Paths to snappy steps containing results to be uploaded
-          path_ngs_mapping: ../ngs_mapping
+          path_ngs_mapping: ../NGS_MAPPING
           path_gene_expression_quantification: ../GENE_EXP_QUANTIFICATION
           path_somatic_variant_filtration: ../SOM_VAR_FILTRATION
-          path_copy_number_step: ../somatic_wgs_cnv_calling
+          path_copy_number_step: ../SOM_CNV_CALLING
           # Select tools & filter set
           cnv_tool: control_freec
           tools_somatic_variant_calling: [ "mutect2" ]
