@@ -408,6 +408,9 @@ class VariantCallingStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @listify
         def input_function(wildcards):
             """Helper wrapper function"""
@@ -436,14 +439,14 @@ class VariantCallingStepPart(BaseStepPart):
                             )
                         )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_output_files(self, action):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
@@ -658,7 +661,8 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "discover": self._get_input_files_discover,
             "genotype_pedigree": self._get_input_files_genotype_pedigree,
@@ -724,7 +728,8 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         if action != "combine_gvcf":
             for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
                 if action == "discover":
@@ -747,7 +752,8 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
             yield from result.items()
 
     def get_log_file(self, action):
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
@@ -813,7 +819,8 @@ class VarscanStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "call_pedigree": self._get_input_files_call_pedigree,
             "call_cohort": self._get_input_files_call_cohort,
@@ -845,7 +852,8 @@ class VarscanStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
             infix = self.dir_infixes[action].replace(r",[^\.]+", "")
             yield name, "work/" + infix + "/out/" + infix + ext
@@ -905,7 +913,8 @@ class BcftoolsStatsStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to input files"""
-        assert action == "run", "Unsupported actions"
+        # Validate action
+        self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
             "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
@@ -917,14 +926,15 @@ class BcftoolsStatsStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
         for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
-    @staticmethod
-    def get_log_file(action):
-        assert action == "run"
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/"
             "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
@@ -973,7 +983,8 @@ class JannovarStatisticsStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to input files"""
-        assert action == "run", "Unsupported actions"
+        # Validate action
+        self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
             "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
@@ -985,14 +996,15 @@ class JannovarStatisticsStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
-    @staticmethod
-    def get_log_file(action):
-        assert action == "run"
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/jannovar_statistics/"
             "{mapper}.{var_caller}.{index_ngs_library}.log"
