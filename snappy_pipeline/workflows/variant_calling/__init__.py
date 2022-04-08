@@ -150,6 +150,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -391,6 +392,9 @@ class VariantCallingStepPart(BaseStepPart):
     for naming the output file.
     """
 
+    #: Class available actions
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
@@ -464,29 +468,47 @@ class VariantCallingStepPart(BaseStepPart):
 class BcftoolsStepPart(VariantCallingStepPart):
     """Germline variant calling with bcftools"""
 
+    #: Step name
     name = "bcftools"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["variant_calling_bcftools_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "48:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class FreebayesStepPart(VariantCallingStepPart):
     """Germline variant calling with freebayes"""
 
+    #: Step name
     name = "freebayes"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["variant_calling_freebayes_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "48:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
     def get_params(self, action):
         """
@@ -533,38 +555,58 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
             "dbSNP not configured but required for {}".format(self.__class__.name),
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_{}_run".format(self.__class__.name)] = {
-            "mem": 14 * 1024,
-            "time": "80:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{14 * 1024}M",
+        )
 
 
 class GatkHaplotypeCallerStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK HaplotypeCaller"""
 
+    #: Step name
     name = "gatk_hc"
 
 
 class GatkUnifiedGenotyperStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK UnifiedGenotyper"""
 
+    #: Step name
     name = "gatk_ug"
 
 
 class PlatypusStepPart(VariantCallingStepPart):
     """Germline variant calling with Platypus"""
 
+    #: Step name
     name = "platypus"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["variant_calling_platypus_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "20:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="20:00:00",  # 20 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
@@ -574,6 +616,7 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
     for naming the output file.
     """
 
+    #: Step name
     name = "gatk_hc_gvcf"
 
     #: Actions in GATK HC GVCF workflow
@@ -585,6 +628,20 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
         "genotype_pedigree": "{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
         "combine_gvcf": "{mapper}.gatk_hc_gvcf.combine_gvcf",
         "genotype_cohort": "{mapper}.gatk_hc_gvcf.whole_cohort",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "combine_gvcf": ResourceUsage(
+            threads=1,
+            time="10-00:00:00",  # 10 days
+            memory=f"{10 * 1024}M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{10 * 1024}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -694,20 +751,20 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            if action == "combine_gvcf":
-                cluster_config["variant_calling_gatk_hc_gvcf_{action}".format(action=action)] = {
-                    "mem": 10 * 1024,
-                    "time": "240:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["variant_calling_gatk_hc_gvcf_{action}".format(action=action)] = {
-                    "mem": 10 * 1024,
-                    "time": "80:00",
-                    "ntasks": 1,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        if action == "combine_gvcf":
+            return self.resource_usage_dict.get("combine_gvcf")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class VarscanStepPart(BaseStepPart):
@@ -716,6 +773,7 @@ class VarscanStepPart(BaseStepPart):
     Variants are called in a whole-pedigree or whole-cohort fashion.
     """
 
+    #: Step name
     name = "varscan"
 
     #: Actions in GATK HC GVCF workflow
@@ -725,6 +783,20 @@ class VarscanStepPart(BaseStepPart):
     dir_infixes = {
         "call_pedigree": "{mapper}.varscan.{index_library_name,[^\.]+}",
         "call_cohort": "{mapper}.varscan.whole_cohort",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "call_pedigree": ResourceUsage(
+            threads=1,
+            time="7-00:00:00",  # 7 days
+            memory=f"{4 * 1024}M",
+        ),
+        "call_cohort": ResourceUsage(
+            threads=1,
+            time="7-00:00:00",  # 7 days
+            memory=f"{16 * 1024}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -792,20 +864,17 @@ class VarscanStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            if action == "call_pedigree":
-                cluster_config["variant_calling_varscan_call_pedigree".format(action=action)] = {
-                    "mem": 4 * 1024,
-                    "time": "168:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["variant_calling_varscan_call_cohort".format(action=action)] = {
-                    "mem": 16 * 1024,
-                    "time": "168:00",
-                    "ntasks": 1,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
 
 class BcftoolsStatsStepPart(BaseStepPart):
@@ -816,7 +885,11 @@ class BcftoolsStatsStepPart(BaseStepPart):
 
     # TODO: maybe we need to use "--stats" anyway and can handle pedigree VCF files then...
 
+    #: Step name
     name = "bcftools_stats"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -857,13 +930,21 @@ class BcftoolsStatsStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
         )
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["variant_calling_bcftools_stats_report"] = {
-            "mem": 1024,
-            "time": "02:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="02:00:00",  # 2 hours
+            memory="1024M",
+        )
 
 
 class JannovarStatisticsStepPart(BaseStepPart):
@@ -872,7 +953,11 @@ class JannovarStatisticsStepPart(BaseStepPart):
     Statistics are computed overall and per-sample
     """
 
+    #: Step name
     name = "jannovar_statistics"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -913,13 +998,21 @@ class JannovarStatisticsStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{index_ngs_library}.log"
         )
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        cluster_config["variant_calling_jannovar_statistics_report"] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "04:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="04:00:00",  # 4 hours
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
 
 class VariantCallingWorkflow(BaseStep):
