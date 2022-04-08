@@ -503,7 +503,7 @@ def test_cbioportal_zscores_step_part_get_df(
     output = (output_path,)
     # Get actual and assert
     cbioportal_export_workflow.substep_getattr("cbioportal_zscores", "get_df")(output)
-    actual = Path(output_path).read_text(encoding='utf8')
+    actual = Path(output_path).read_text(encoding="utf8")
     assert actual == expected
 
 
