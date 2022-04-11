@@ -12,7 +12,7 @@ jobs:
           - "3.7"
           - "3.8"
           - "3.9"
-          - "3.10"
+          # - "3.10"  # `pysam` is incompatible with python v3.10
 
     steps:
       - name: Install Python via conda.
