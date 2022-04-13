@@ -140,7 +140,7 @@ def minimal_config():
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
                   path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
-                  path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
+              path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
 
         data_sets:
           first_batch:
@@ -160,6 +160,32 @@ def minimal_config_large_cohort(minimal_config):
     """Returns minimum configuration file for large trio cohort."""
     minimal_config_adjusted = copy.deepcopy(minimal_config)
     minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_large_cohort_trio.tsv"
+    return minimal_config_adjusted
+
+
+@pytest.fixture
+def minimal_config_diverse_kit_cohort(minimal_config):
+    """Returns minimum configuration file for medium cohort with two library kits and only solos."""
+    minimal_config_adjusted = copy.deepcopy(minimal_config)
+    # Exclusive test for gcnv
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["tools"] = ["gcnv"]
+    # Change sheet path
+    minimal_config_adjusted["data_sets"]["first_batch"]["file"] = "sheet_diverse_kit_solo_only.tsv"
+    # Add Agilent v8 to `path_target_interval_list_mapping`
+    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["gcnv"][
+        "path_target_interval_list_mapping"
+    ] = [
+        {
+            "pattern": "Agilent SureSelect Human All Exon V8",
+            "name": "Agilent_SureSelect_Human_All_Exon_V8",
+            "path": "/path/to/Agilent/SureSelect_Human_All_Exon_V8/GRCh37/Exons.bed",
+        },
+        {
+            "pattern": "Agilent SureSelect Human All Exon V6.*",
+            "name": "Agilent_SureSelect_Human_All_Exon_V6",
+            "path": "/path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed",
+        },
+    ]
     return minimal_config_adjusted
 
 
@@ -274,6 +300,37 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
 
 
 @pytest.fixture
+def targeted_seq_cnv_calling_workflow_diverse_kit_cohort(
+    dummy_workflow,
+    minimal_config_diverse_kit_cohort,
+    dummy_cluster_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    germline_sheet_fake_fs2,
+    mocker,
+):
+    """
+    Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    medium solo only cohort with two library kits.
+    """
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    # Construct the workflow object
+    return TargetedSeqCnvCallingWorkflow(
+        dummy_workflow,
+        minimal_config_diverse_kit_cohort,
+        dummy_cluster_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
 def targeted_seq_cnv_calling_workflow_large_cohort_background(
     dummy_workflow,
     minimal_config_large_cohort_background,
@@ -372,6 +429,52 @@ def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow
     assert actual == expected
 
 
+def test_targeted_seq_cnv_calling_workflow_diverse_kit_cohort(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests TargetedSeqCnvCallingWorkflow.get_result_files()
+
+    Tests simple functionality of the workflow: checks if file structure is created according
+    to the expected results from gCNV. Plus, if files will be differentiated by library kit.
+    """
+    # Define expected - case files
+    pattern_out = "output/bwa.{tool}.P{i}-N1-DNA1-WGS1/out/bwa.{tool}.P{i}-N1-DNA1-WGS1.{ext}"
+    expected = [
+        pattern_out.format(i=i, tool=tool, ext=ext)
+        for i in range(900, 999)  # only index: P900 until P998
+        for tool in ("gcnv",)
+        for ext in (
+            "vcf.gz",
+            "vcf.gz.md5",
+            "vcf.gz.tbi",
+            "vcf.gz.tbi.md5",
+        )
+    ]
+    # Define cohort files
+    pattern_out = (
+        "output/bwa.gcnv_merge_cohort_vcfs.{library_kit}/out/"
+        "bwa.gcnv_merge_cohort_vcfs.{library_kit}.{ext}"
+    )
+    expected += [
+        pattern_out.format(library_kit=library_kit, ext=ext)
+        for library_kit in (
+            "Agilent_SureSelect_Human_All_Exon_V8",
+            "Agilent_SureSelect_Human_All_Exon_V6",
+        )
+        for ext in (
+            "vcf.gz",
+            "vcf.gz.md5",
+            "vcf.gz.tbi",
+            "vcf.gz.tbi.md5",
+        )
+    ]
+    expected = sorted(expected)
+    # Get actual
+    actual = sorted(targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_result_files())
+    print(set(expected) - set(actual))
+    assert actual == expected
+
+
 def test_target_seq_cnv_calling_workflow_all_donors(
     targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
 ):
@@ -433,7 +536,9 @@ def test_target_seq_cnv_calling_workflow_get_library_count(targeted_seq_cnv_call
 
 
 def test_pick_kits_and_donors(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+    targeted_seq_cnv_calling_workflow,
+    targeted_seq_cnv_calling_workflow_large_cohort,
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
 ):
     """Tests TargetedSeqCnvCallingWorkflow.pick_kits_and_donors()"""
 
@@ -452,6 +557,23 @@ def test_pick_kits_and_donors(
         _,
         kit_counts,
     ) = targeted_seq_cnv_calling_workflow_large_cohort.pick_kits_and_donors()
+    assert library_kits == expected_library_kits
+    assert expected_kit_counts == kit_counts
+
+    # Test medium cohort with two library kits
+    expected_library_kits = [
+        "Agilent_SureSelect_Human_All_Exon_V6",
+        "Agilent_SureSelect_Human_All_Exon_V8",
+    ]
+    expected_kit_counts = {
+        "Agilent_SureSelect_Human_All_Exon_V8": 50,
+        "Agilent_SureSelect_Human_All_Exon_V6": 49,
+    }
+    (
+        library_kits,
+        _,
+        kit_counts,
+    ) = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.pick_kits_and_donors()
     assert library_kits == expected_library_kits
     assert expected_kit_counts == kit_counts
 
@@ -762,6 +884,71 @@ def test_gcnv_filter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_w
     assert actual == expected
 
 
+# Tests for GcnvStepPart (filter_intervals - two library kits) -------------------------------------
+
+
+def test_gcnv_filter_intervals_step_part_2lks_get_input_files_v6(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_filter_intervals() - two library kits in cohort, V6"""
+    # Wildcard for Agilent V6
+    # - library kit defined in conftest: `sheet_diverse_kit_solo_only`
+    # - mapper defined in `minimal_config`
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    tsv_out = (
+        "work/gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6.tsv"
+    )
+    csv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    csv_list_out = [csv_pattern.format(i=i) for i in range(950, 999)]  # P950 - P998
+    expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
+    # Get actual.
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "filter_intervals"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_filter_intervals_step_part_2lks_get_input_files_v8(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_filter_intervals() - two library kits in cohort, V8"""
+    # Wildcard for Agilent V8
+    # - library kit defined in conftest: `sheet_diverse_kit_solo_only`
+    # - mapper defined in `minimal_config`
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V8"}
+    )
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V8/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V8.interval_list"
+    )
+    tsv_out = (
+        "work/gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V8/out/"
+        "gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V8.tsv"
+    )
+    csv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    csv_list_out = [csv_pattern.format(i=i) for i in range(900, 950)]  # P900 - P949
+    expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
+    # Get actual.
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "filter_intervals"
+    )(wildcards)
+    assert actual == expected
+
+
 # Tests for GcnvStepPart (scatter_intervals) -------------------------------------------------------
 
 
@@ -801,6 +988,49 @@ def test_gcnv_scatter_intervals_step_part_get_log_file(targeted_seq_cnv_calling_
     expected = get_expected_gcnv_log_file(step_name="scatter_intervals")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "scatter_intervals")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (scatter_intervals - two library kits) ------------------------------------
+
+
+def test_gcnv_scatter_intervals_step_part_2lks_get_input_files_v6(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_scatter_intervals()- two library kits in cohort, V6"""
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    # Define expected
+    output_path = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "scatter_intervals"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_scatter_intervals_step_part_2lks_get_input_files_v8(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_scatter_intervals() - two library kits in cohort, V8"""
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V8"}
+    )
+    # Define expected
+    output_path = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V8/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V8.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "scatter_intervals"
+    )(wildcards)
     assert actual == expected
 
 
@@ -849,6 +1079,55 @@ def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow)
     assert actual == expected
 
 
+# Tests for GcnvStepPart (coverage - two library kits) ---------------------------------------------
+
+
+def test_gcnv_coverage_step_part_2lks_get_input_files_v9(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_coverage() - two library kits in cohort, V6"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    bam_out = "NGS_MAPPING/output/bwa.P998-N1-DNA1-WGS1/out/bwa.P998-N1-DNA1-WGS1"
+    expected = {
+        "interval_list": interval_list_out,
+        "bam": bam_out + ".bam",
+        "bai": bam_out + ".bam.bai",
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P998-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "coverage"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_coverage_step_part_2lks_get_input_files_v8(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_coverage() - two library kits in cohort, V8"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V8/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V8.interval_list"
+    )
+    bam_out = "NGS_MAPPING/output/bwa.P900-N1-DNA1-WGS1/out/bwa.P900-N1-DNA1-WGS1"
+    expected = {
+        "interval_list": interval_list_out,
+        "bam": bam_out + ".bam",
+        "bai": bam_out + ".bam.bai",
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P900-N1-DNA1-WGS1"})
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "coverage"
+    )(wildcards)
+    assert actual == expected
+
+
 # Tests for GcnvStepPart (contig_ploidy) -----------------------------------------------------------
 
 
@@ -891,6 +1170,57 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
     expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (contig_ploidy - two library kits) ----------------------------------------
+
+
+def test_gcnv_contig_ploidy_step_part_2lks_get_input_files_v6(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_contig_ploidy() - two library kits in cohort, V6"""
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(950, 999)]  # P950 - P998
+    expected = {"interval_list": interval_list_out, "tsv": tsv_list_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "contig_ploidy"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_2lks_get_input_files_v8(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """Tests GcnvStepPart._get_input_files_contig_ploidy() - two library kits in cohort, V8"""
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V8"}
+    )
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(900, 950)]  # P900 - P949
+    expected = {"interval_list": interval_list_out, "tsv": tsv_list_out}
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "contig_ploidy"
+    )(wildcards)
     assert actual == expected
 
 
@@ -1019,6 +1349,81 @@ def test_gcnv_call_cnvs_cohort_mode_step_part_get_log_file(targeted_seq_cnv_call
     )
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs_cohort_mode")
+    assert actual == expected
+
+
+# Tests for GcnvStepPart (call_cnvs_cohort_mode - two library kits) --------------------------------
+
+
+def test_gcnv_call_cnvs_cohort_mode_step_part__2lks_get_input_files_v6(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """
+    Tests GcnvStepPart._get_input_files_call_cnvs_cohort_mode() - two library kits in cohort, V6
+    """
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    # Define expected
+    interval_list_shard_out = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}/temp_{shard}/scattered.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(950, 999)]  # P950 - P998
+    ploidy_out = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+    )
+    intervals_out = "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"
+    expected = {
+        "interval_list_shard": interval_list_shard_out,
+        "tsv": tsv_list_out,
+        "ploidy": ploidy_out,
+        "intervals": intervals_out,
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "call_cnvs_cohort_mode"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_cohort_mode_step_part__2lks_get_input_files_v8(
+    targeted_seq_cnv_calling_workflow_diverse_kit_cohort,
+):
+    """
+    Tests GcnvStepPart._get_input_files_call_cnvs_cohort_mode() - two library kits in cohort, V8
+    """
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V8"}
+    )
+    # Define expected
+    interval_list_shard_out = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}/temp_{shard}/scattered.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(900, 950)]  # P900 - P949
+    ploidy_out = (
+        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V8/out/"
+        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V8/.done"
+    )
+    intervals_out = "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"
+    expected = {
+        "interval_list_shard": interval_list_shard_out,
+        "tsv": tsv_list_out,
+        "ploidy": ploidy_out,
+        "intervals": intervals_out,
+    }
+    # Get actual
+    actual = targeted_seq_cnv_calling_workflow_diverse_kit_cohort.get_input_files(
+        "gcnv", "call_cnvs_cohort_mode"
+    )(wildcards)
     assert actual == expected
 
 

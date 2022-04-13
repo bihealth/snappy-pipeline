@@ -1269,7 +1269,7 @@ class GcnvStepPart(BaseStepPart):
     @staticmethod
     @dictify
     def _get_output_files_call_cnvs_cohort_mode():
-        """Yield dictionary with output files for ``call_cnvs`` rle in COHORT MODE."""
+        """Yield dictionary with output files for ``call_cnvs`` rule in COHORT MODE."""
         ext = "done"
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(

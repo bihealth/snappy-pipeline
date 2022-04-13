@@ -442,9 +442,7 @@ def tsv_medium_cohort_diverse_ngs_kit_solo_only(
     # Change sequencing kit for 1/2 the entries
     entries_list = text_medium_cohort_solo_only.splitlines()
     for i in range(50):
-        entries_list[i] = entries_list[i].replace(
-            "Agilent SureSelect Human All Exon V6", "Illumina TruSeq PCR-free"
-        )
+        entries_list[i] = entries_list[i].replace("V6", "V8")
     new_entries_test = "\n".join(entries_list)
     return header_germline_sheet.format(entries=new_entries_test)
 
@@ -697,7 +695,10 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 
 @pytest.fixture
 def germline_sheet_fake_fs2(
-    fake_fs2, germline_sheet_tsv, tsv_large_cohort_trios_only_germline_sheet
+    fake_fs2,
+    germline_sheet_tsv,
+    tsv_large_cohort_trios_only_germline_sheet,
+    tsv_medium_cohort_diverse_ngs_kit_solo_only,
 ):
     """Return fake file system setup with files for the germline_sheet_tsv"""
     # Create work directory
@@ -717,6 +718,12 @@ def germline_sheet_fake_fs2(
     fake_fs2.fs.create_file(
         "/work/config/sheet_large_cohort_trio.tsv",
         contents=tsv_large_cohort_trios_only_germline_sheet,
+        create_missing_dirs=True,
+    )
+    # Create the sample TSV file - Large cohort trio cases only
+    fake_fs2.fs.create_file(
+        "/work/config/sheet_diverse_kit_solo_only.tsv",
+        contents=tsv_medium_cohort_diverse_ngs_kit_solo_only,
         create_missing_dirs=True,
     )
     return fake_fs2
