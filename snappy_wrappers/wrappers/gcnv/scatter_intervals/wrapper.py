@@ -2,7 +2,6 @@
 
 from snakemake.shell import shell
 
-
 shell(
     r"""
 set -x
