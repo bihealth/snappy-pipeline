@@ -29,9 +29,9 @@ def parse_requirements(path):
     return requirements
 
 
-# Enforce python version >=3.4
-if sys.version_info < (3, 4):
-    print("At least Python 3.4 is required.\n", file=sys.stderr)
+# Enforce python version >=3.7
+if sys.version_info < (3, 7):
+    print("At least Python 3.7 is required.\n", file=sys.stderr)
     sys.exit(1)
 
 with open("README.rst") as readme_file:
@@ -127,9 +127,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     test_suite="tests",
     tests_require=test_requirements,

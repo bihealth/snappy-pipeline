@@ -1,7 +1,7 @@
 channels:
+  - conda-forge
   - bioconda
   - defaults
-  - conda-forge
 
 name: snappy_env
 
@@ -13,7 +13,7 @@ dependencies:
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake
+  - snakemake >=7.0.2
 
   # Additional libraries used by snappy
   - ruamel.yaml             # Nice, round-trip enabled YAML parsing
