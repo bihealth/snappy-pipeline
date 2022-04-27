@@ -94,7 +94,7 @@ class PeddyStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_out = "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/.done"
         self.log_path = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/" "log/snakemake.filter.log"
+            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/log/snakemake.filter.log"
         )
 
     @dictify
