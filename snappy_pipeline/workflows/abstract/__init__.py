@@ -254,9 +254,6 @@ class WritePedigreeStepPart(BaseStepPart):
     def get_output_files(self, action):
         assert action == "run"
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        # return os.path.realpath(
-        #    "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        # )
 
     def run(self, wildcards, output):
         """Write out the pedigree information"""
