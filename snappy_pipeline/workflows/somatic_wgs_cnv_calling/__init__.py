@@ -447,17 +447,17 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     resource_usage_dict = {
         "plot": ResourceUsage(
             threads=1,
-            time="1-16:00:00",  #  1 day and 16 hours
+            time="1-16:00:00",  # 1 day and 16 hours
             memory=f"{2 * 30 * 1024}M",
         ),
         "transform": ResourceUsage(
             threads=1,
-            time="1-16:00:00",  #  1 day and 16 hours
+            time="1-16:00:00",  # 1 day and 16 hours
             memory=f"{2 * 8 * 1024}M",
         ),
         "run": ResourceUsage(
             threads=8,
-            time="1-16:00:00",  #  1 day and 16 hours
+            time="1-16:00:00",  # 1 day and 16 hours
             memory=f"{int(2 * 3.75 * 1024 * 8)}M",
         ),
     }

@@ -209,12 +209,12 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         "prepare_panel": ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
-            memory=f"3.7G",
+            memory="3.7G",
         ),
         "create_panel": ResourceUsage(
             threads=2,
             time="08:00:00",  # 8 hours
-            memory=f"30G",
+            memory="30G",
         ),
         # TODO: Value set to default, maybe insufficient.
         "run": ResourceUsage(

@@ -5,7 +5,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.wgs_cnv_annotation import WgsCnvAnnotationWorkflow

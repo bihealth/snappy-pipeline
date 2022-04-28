@@ -510,7 +510,7 @@ class SvTkStepPart(BaseStepPart):
         self._validate_action(action)
         infix = self.dir_infixes[action]
         infix2 = infix.replace(r",[^\.]+", "")
-        return "work/%s/log/%s.log" % (infix2, infix2)
+        return f"work/{infix2}/log/{infix2}.log"
 
     def get_resource_usage(self, action):
         """Get Resource Usage

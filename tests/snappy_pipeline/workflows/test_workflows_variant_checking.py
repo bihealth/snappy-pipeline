@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 
 from snappy_pipeline.workflows.variant_checking import VariantCheckingWorkflow
 

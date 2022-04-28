@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
@@ -364,7 +364,9 @@ def test_svtk_step_part_get_input_files(wgs_sv_calling_workflow):
         fromdict={"mapper": "bwa", "caller": "delly2", "library_name": "P001-N1-DNA1-WGS1"}
     )
     expected = {
-        "calls": "output/bwa.delly2.call.P001-N1-DNA1-WGS1/out/bwa.delly2.call.P001-N1-DNA1-WGS1.bcf"
+        "calls": (
+            "output/bwa.delly2.call.P001-N1-DNA1-WGS1/out/bwa.delly2.call.P001-N1-DNA1-WGS1.bcf"
+        )
     }
     actual = wgs_sv_calling_workflow.get_input_files("svtk", "standardize")(wildcards)
     assert actual == expected
@@ -413,7 +415,7 @@ def test_svtk_step_part_get_ped_members(wgs_sv_calling_workflow):
     assert actual == expected
 
 
-# Tests for PopDelStepPart ---------------------------------------------------------------------------
+# Tests for PopDelStepPart -------------------------------------------------------------------------
 
 
 def test_popdel_step_part_get_input_files_profile(wgs_sv_calling_workflow):
@@ -474,7 +476,7 @@ def test_popdel_step_part_get_input_files_concat_calls(wgs_sv_calling_workflow):
         "239980000-249250621",
     )
     base_out = (
-        "work/bwa.popdel.internal.call.1-{region}/out/" "bwa.popdel.internal.call.1-{region}.vcf.gz"
+        "work/bwa.popdel.internal.call.1-{region}/out/bwa.popdel.internal.call.1-{region}.vcf.gz"
     )
     expected = {"vcf": [base_out.format(region=region) for region in regions]}
     actual = wgs_sv_calling_workflow.get_input_files("popdel", "concat_calls")(wildcards)

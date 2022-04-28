@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 
 from snappy_pipeline.workflows.somatic_gene_fusion_calling import SomaticGeneFusionCallingWorkflow
 
@@ -187,7 +187,7 @@ def test_pizzly_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
         assert actual == expected, msg_error
 
 
-# Tests for StarFusionStepPart -------------------------------------------------------------------------
+# Tests for StarFusionStepPart ---------------------------------------------------------------------
 
 
 def test_star_fusion_step_part_get_input_files(somatic_gene_fusion_calling_workflow):

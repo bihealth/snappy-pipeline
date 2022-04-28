@@ -4,7 +4,7 @@ import copy
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_purity_ploidy_estimate import (

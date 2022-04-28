@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
@@ -290,29 +290,29 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 # Tests for FilterToExonsStepPart ------------------------------------------------------------------
 
 
-def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
-    """Tests FilterToExonsStepPart.get_input_files()"""
-    # TODO: fix use of `tumor_library` in get_input_files()
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "var_caller": "mutect2",
-            "filter_set": "custom_exon_list",  # totally made up, not sure it should look like
-            "tumor_library": "P001-T1-DNA1-WGS1",
-        }
-    )
-    base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
-        "{tumor_library}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-        "dkfz_bias_filter.eb_filter.{tumor_library}"
-    )
-    expected = {
-        "vcf": base_out + ".vcf.gz",
-        "tbi": base_out + ".vcf.gz.tbi",
-    }
-    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
-    _ = expected
-    assert True
+# def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
+#     """Tests FilterToExonsStepPart.get_input_files()"""
+#     # TODO: fix use of `tumor_library` in get_input_files()
+#     wildcards = Wildcards(
+#         fromdict={
+#             "mapper": "bwa",
+#             "var_caller": "mutect2",
+#             "filter_set": "custom_exon_list",  # totally made up, not sure it should look like
+#             "tumor_library": "P001-T1-DNA1-WGS1",
+#         }
+#     )
+#     base_out = (
+#         "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+#         "{tumor_library}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+#         "dkfz_bias_filter.eb_filter.{tumor_library}"
+#     )
+#     expected = {
+#         "vcf": base_out + ".vcf.gz",
+#         "tbi": base_out + ".vcf.gz.tbi",
+#     }
+#     # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
+#     _ = expected
+#     assert True
 
 
 def test_filter_to_exons_step_part_get_output_files(somatic_variant_filtration_workflow):

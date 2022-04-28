@@ -4,8 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
-from snakemake.io import Wildcards
+from ruamel import yaml
 
 from snappy_pipeline.workflows.gene_expression_report import GeneExpressionReportWorkflow
 

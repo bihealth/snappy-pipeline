@@ -5,7 +5,7 @@ from pathlib import Path
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 
 from snappy_pipeline.workflows.wgs_mei_annotation import WgsMeiAnnotationWorkflow
 

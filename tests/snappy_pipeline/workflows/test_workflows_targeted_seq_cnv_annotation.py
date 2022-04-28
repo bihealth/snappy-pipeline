@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
@@ -72,7 +72,6 @@ def targeted_seq_cnv_annotation_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2,
-    aligner_indices_fake_fs,
     mocker,
 ):
     """Return TargetedSeqCnvAnnotationWorkflow object pre-configured with germline sheet"""

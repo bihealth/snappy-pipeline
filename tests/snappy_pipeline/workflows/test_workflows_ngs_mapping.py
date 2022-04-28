@@ -622,7 +622,6 @@ def test_link_out_bam_step_part_get_shell_cmd(ngs_mapping_workflow):
 def test_picard_hs_metrics_step_part_get_input_files(ngs_mapping_workflow):
     """Tests PicardHsMetricsStepPart.get_input_files()"""
     # Define expected
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
         "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",

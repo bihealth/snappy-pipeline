@@ -182,7 +182,7 @@ def test_cnvetti_step_part_get_input_files_genotype(wgs_cnv_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "ngs_library": "P001-N1-DNA1-WGS1"})
     # Define expected
     cov_base_name = (
-        "work/bwa.cnvetti_coverage.P001-N1-DNA1-WGS1/out/" "bwa.cnvetti_coverage.P001-N1-DNA1-WGS1"
+        "work/bwa.cnvetti_coverage.P001-N1-DNA1-WGS1/out/bwa.cnvetti_coverage.P001-N1-DNA1-WGS1"
     )
     merge_base_name = "work/bwa.cnvetti_merge_segments/out/bwa.cnvetti_merge_segments"
     expected = {

@@ -422,4 +422,3 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     def check_config(self):
         """Check that the required configurations are present."""
         # TODO: implement check for REQUIRED configurations.
-        pass

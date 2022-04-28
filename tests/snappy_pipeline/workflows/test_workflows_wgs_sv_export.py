@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.wgs_sv_export import WgsSvExportWorkflow
@@ -61,7 +61,6 @@ def wgs_sv_export_workflow(
     config_paths,
     germline_sheet_fake_fs,
     mocker,
-    fai_file_content,
 ):
     """Return WgsSvExportWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)

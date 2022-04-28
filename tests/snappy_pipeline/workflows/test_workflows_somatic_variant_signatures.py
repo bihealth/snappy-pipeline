@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_signatures import SomaticVariantSignaturesWorkflow
@@ -104,7 +104,7 @@ def test_tabulate_vcf_step_part_get_output_files(somatic_variant_signatures_work
 def test_tabulate_vcf_step_part_get_log_file(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/log/" "snakemake.tabulate_vcf.log"
+        "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/log/snakemake.tabulate_vcf.log"
     )
     actual = somatic_variant_signatures_workflow.get_log_file("tabulate_vcf", "run")
     assert actual == expected

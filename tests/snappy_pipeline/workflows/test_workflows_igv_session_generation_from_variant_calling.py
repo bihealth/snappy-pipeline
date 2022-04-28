@@ -4,12 +4,11 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+from ruamel import yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.igv_session_generation import IgvSessionGenerationWorkflow
 
-from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
 

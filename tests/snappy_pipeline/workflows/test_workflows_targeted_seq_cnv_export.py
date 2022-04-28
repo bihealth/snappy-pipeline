@@ -4,12 +4,11 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
-from snakemake.io import Wildcards
+from ruamel import yaml
 
 from snappy_pipeline.workflows.targeted_seq_cnv_export import TargetedSeqCnvExportWorkflow
 
-from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 
