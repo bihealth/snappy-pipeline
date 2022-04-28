@@ -20,7 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsCnvExportWorkflow(workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd())
+wf = WgsCnvExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
