@@ -220,7 +220,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         "run": ResourceUsage(
             threads=1,
             time="01:00:00",
-            memory=f"2G",
+            memory="2G",
         ),
     }
 
