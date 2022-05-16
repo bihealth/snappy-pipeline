@@ -73,11 +73,11 @@ rule variant_export_varfish_annotator_annotate:
         unpack(wf.get_input_files("varfish_annotator", "annotate")),
     output:
         **wf. get_output_files('varfish_annotator','annotate'),
-    threads: wf.get_resources("varfish_annotator", "annotate", "threads")
+    threads: wf.get_resource("varfish_annotator", "annotate", "threads")
     resources:
         time=wf.get_resource("varfish_annotator", "annotate", "time"),
         mem=wf.get_resource("varfish_annotator", "annotate", "memory"),
-        partition=wf.get_resources("varfish_annotator", "annotate", "partition"),
+        partition=wf.get_resource("varfish_annotator", "annotate", "partition"),
     log:
         **wf. get_log_file('varfish_annotator','annotate'),
     params:
@@ -94,11 +94,11 @@ rule variant_export_varfish_annotator_bam_qc:
         unpack(wf.get_input_files("varfish_annotator", "bam_qc")),
     output:
         **wf. get_output_files('varfish_annotator','bam_qc'),
-    threads: wf.get_resources("varfish_annotator", "bam_qc", "threads")
+    threads: wf.get_resource("varfish_annotator", "bam_qc", "threads")
     resources:
         time=wf.get_resource("varfish_annotator", "bam_qc", "time"),
         mem=wf.get_resource("varfish_annotator", "bam_qc", "memory"),
-        partition=wf.get_resources("varfish_annotator", "bam_qc", "partition"),
+        partition=wf.get_resource("varfish_annotator", "bam_qc", "partition"),
     log:
         **wf. get_log_file('varfish_annotator','bam_qc'),
     wrapper:

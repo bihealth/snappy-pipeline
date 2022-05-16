@@ -73,11 +73,11 @@ rule targeted_seq_cnv_annotation_vcf_cnv_filter:
         unpack(wf.get_input_files("vcf_cnv_filter", "run")),
     output:
         **wf. get_output_files('vcf_cnv_filter','run'),
-    threads: wf.get_resources("vcf_cnv_filter", "run", "threads")
+    threads: wf.get_resource("vcf_cnv_filter", "run", "threads")
     resources:
         time=wf.get_resource("vcf_cnv_filter", "run", "time"),
         mem=wf.get_resource("vcf_cnv_filter", "run", "memory"),
-        partition=wf.get_resources("vcf_cnv_filter", "run", "partition"),
+        partition=wf.get_resource("vcf_cnv_filter", "run", "partition"),
     params:
         step_name="targeted_seq_cnv_annotation",
     log:

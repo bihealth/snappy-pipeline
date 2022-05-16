@@ -58,11 +58,11 @@ rule somatic_variant_calling_mutect_run:
         unpack(wf.get_input_files("mutect", "run")),
     output:
         **wf. get_output_files('mutect','run'),
-    threads: wf.get_resources("mutect", "run", "threads")
+    threads: wf.get_resource("mutect", "run", "threads")
     resources:
         time=wf.get_resource("mutect", "run", "time"),
         mem=wf.get_resource("mutect", "run", "memory"),
-        partition=wf.get_resources("mutect", "run", "partition"),
+        partition=wf.get_resource("mutect", "run", "partition"),
     log:
         **wf. get_log_file('mutect','run'),
     wrapper:
@@ -77,11 +77,11 @@ rule somatic_variant_calling_mutect2_pileup_normal:
         unpack(wf.get_input_files("mutect2", "pileup_normal")),
     output:
         **wf. get_output_files('mutect2','pileup_normal'),
-    threads: wf.get_resources("mutect2", "pileup_normal", "threads")
+    threads: wf.get_resource("mutect2", "pileup_normal", "threads")
     resources:
         time=wf.get_resource("mutect2", "pileup_normal", "time"),
         mem=wf.get_resource("mutect2", "pileup_normal", "memory"),
-        partition=wf.get_resources("mutect2", "pileup_normal", "partition"),
+        partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
     log:
         **wf. get_log_file('mutect2','pileup_normal'),
     params:
@@ -95,11 +95,11 @@ rule somatic_variant_calling_mutect2_pileup_tumor:
         unpack(wf.get_input_files("mutect2", "pileup_tumor")),
     output:
         **wf. get_output_files('mutect2','pileup_tumor'),
-    threads: wf.get_resources("mutect2", "pileup_tumor", "threads")
+    threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
     resources:
         time=wf.get_resource("mutect2", "pileup_tumor", "time"),
         mem=wf.get_resource("mutect2", "pileup_tumor", "memory"),
-        partition=wf.get_resources("mutect2", "pileup_tumor", "partition"),
+        partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
     log:
         **wf. get_log_file('mutect2','pileup_tumor'),
     wrapper:
@@ -111,11 +111,11 @@ rule somatic_variant_calling_mutect2_contamination:
         unpack(wf.get_input_files("mutect2", "contamination")),
     output:
         **wf. get_output_files('mutect2','contamination'),
-    threads: wf.get_resources("mutect2", "contamination", "threads")
+    threads: wf.get_resource("mutect2", "contamination", "threads")
     resources:
         time=wf.get_resource("mutect2", "contamination", "time"),
         mem=wf.get_resource("mutect2", "contamination", "memory"),
-        partition=wf.get_resources("mutect2", "contamination", "partition"),
+        partition=wf.get_resource("mutect2", "contamination", "partition"),
     log:
         **wf. get_log_file('mutect2','contamination'),
     wrapper:
@@ -127,11 +127,11 @@ rule somatic_variant_calling_mutect2_run:
         unpack(wf.get_input_files("mutect2", "run")),
     output:
         **wf. get_output_files('mutect2','run'),
-    threads: wf.get_resources("mutect2", "run", "threads")
+    threads: wf.get_resource("mutect2", "run", "threads")
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
         mem=wf.get_resource("mutect2", "run", "memory"),
-        partition=wf.get_resources("mutect2", "run", "partition"),
+        partition=wf.get_resource("mutect2", "run", "partition"),
     log:
         **wf. get_log_file('mutect2','run'),
     params:
@@ -145,11 +145,11 @@ rule somatic_variant_calling_mutect2_filter:
         unpack(wf.get_input_files("mutect2", "filter")),
     output:
         **wf. get_output_files('mutect2','filter'),
-    threads: wf.get_resources("mutect2", "filter", "threads")
+    threads: wf.get_resource("mutect2", "filter", "threads")
     resources:
         time=wf.get_resource("mutect2", "filter", "time"),
         mem=wf.get_resource("mutect2", "filter", "memory"),
-        partition=wf.get_resources("mutect2", "filter", "partition"),
+        partition=wf.get_resource("mutect2", "filter", "partition"),
     log:
         **wf. get_log_file('mutect2','filter'),
     params:
@@ -167,11 +167,11 @@ rule somatic_variant_calling_scalpel_run:
         unpack(wf.get_input_files("scalpel", "run")),
     output:
         **wf. get_output_files('scalpel','run'),
-    threads: wf.get_resources("scalpel", "run", "threads")
+    threads: wf.get_resource("scalpel", "run", "threads")
     resources:
         time=wf.get_resource("scalpel", "run", "time"),
         mem=wf.get_resource("scalpel", "run", "memory"),
-        partition=wf.get_resources("scalpel", "run", "partition"),
+        partition=wf.get_resource("scalpel", "run", "partition"),
     log:
         **wf. get_log_file('scalpel','run'),
     params:
@@ -188,11 +188,11 @@ rule somatic_variant_calling_strelka2_run:
         unpack(wf.get_input_files("strelka2", "run")),
     output:
         **wf. get_output_files('strelka2','run'),
-    threads: wf.get_resources("strelka2", "run", "threads")
+    threads: wf.get_resource("strelka2", "run", "threads")
     resources:
         time=wf.get_resource("strelka2", "run", "time"),
         mem=wf.get_resource("strelka2", "run", "memory"),
-        partition=wf.get_resources("strelka2", "run", "partition"),
+        partition=wf.get_resource("strelka2", "run", "partition"),
     log:
         **wf. get_log_file('strelka2','run'),
     params:
@@ -210,11 +210,11 @@ rule somatic_variant_calling_bcftools_joint_run:
         unpack(wf.get_input_files("bcftools_joint", "run")),
     output:
         **wf. get_output_files('bcftools_joint','run'),
-    threads: wf.get_resources("bcftools_joint", "run", "threads")
+    threads: wf.get_resource("bcftools_joint", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_joint", "run", "time"),
         mem=wf.get_resource("bcftools_joint", "run", "memory"),
-        partition=wf.get_resources("bcftools_joint", "run", "partition"),
+        partition=wf.get_resource("bcftools_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("bcftools_joint", "get_args", "run"),
     log:
@@ -231,11 +231,11 @@ rule somatic_variant_calling_platypus_joint_run:
         unpack(wf.get_input_files("platypus_joint", "run")),
     output:
         **wf. get_output_files('platypus_joint','run'),
-    threads: wf.get_resources("platypus_joint", "run", "threads")
+    threads: wf.get_resource("platypus_joint", "run", "threads")
     resources:
         time=wf.get_resource("platypus_joint", "run", "time"),
         mem=wf.get_resource("platypus_joint", "run", "memory"),
-        partition=wf.get_resources("platypus_joint", "run", "partition"),
+        partition=wf.get_resource("platypus_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("platypus_joint", "get_args", "run"),
     log:
@@ -252,11 +252,11 @@ rule somatic_variant_calling_gatk_ug_joint_run:
         unpack(wf.get_input_files("gatk_ug_joint", "run")),
     output:
         **wf. get_output_files('gatk_ug_joint','run'),
-    threads: wf.get_resources("gatk_ug_joint", "run", "threads")
+    threads: wf.get_resource("gatk_ug_joint", "run", "threads")
     resources:
         time=wf.get_resource("gatk_ug_joint", "run", "time"),
         mem=wf.get_resource("gatk_ug_joint", "run", "memory"),
-        partition=wf.get_resources("gatk_ug_joint", "run", "partition"),
+        partition=wf.get_resource("gatk_ug_joint", "run", "partition"),
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_ug_joint",
@@ -275,11 +275,11 @@ rule somatic_variant_calling_gatk_hc_joint_run:
         unpack(wf.get_input_files("gatk_hc_joint", "run")),
     output:
         **wf. get_output_files('gatk_hc_joint','run'),
-    threads: wf.get_resources("gatk_hc_joint", "run", "threads")
+    threads: wf.get_resource("gatk_hc_joint", "run", "threads")
     resources:
         time=wf.get_resource("gatk_hc_joint", "run", "time"),
         mem=wf.get_resource("gatk_hc_joint", "run", "memory"),
-        partition=wf.get_resources("gatk_hc_joint", "run", "partition"),
+        partition=wf.get_resource("gatk_hc_joint", "run", "partition"),
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_hc_joint",
@@ -298,11 +298,11 @@ rule somatic_variant_calling_varscan_joint_run:
         unpack(wf.get_input_files("varscan_joint", "run")),
     output:
         **wf. get_output_files('varscan_joint','run'),
-    threads: wf.get_resources("varscan_joint", "run", "threads")
+    threads: wf.get_resource("varscan_joint", "run", "threads")
     resources:
         time=wf.get_resource("varscan_joint", "run", "time"),
         mem=wf.get_resource("varscan_joint", "run", "memory"),
-        partition=wf.get_resources("varscan_joint", "run", "partition"),
+        partition=wf.get_resource("varscan_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("varscan_joint", "get_args", "call_pedigree"),
         step_key="somatic_variant_calling",

@@ -86,11 +86,11 @@ rule ngs_mapping_external_run:
         wf.get_input_files("external", "run"),
     output:
         **wf. get_output_files('external','run'),
-    threads: wf.get_resources("external", "run", "threads")
+    threads: wf.get_resource("external", "run", "threads")
     resources:
         time=wf.get_resource("external", "run", "time"),
         mem=wf.get_resource("external", "run", "memory"),
-        partition=wf.get_resources("external", "run", "partition"),
+        partition=wf.get_resource("external", "run", "partition"),
     params:
         args=wf.substep_dispatch("external", "get_args", "run"),
     log:
@@ -107,11 +107,11 @@ rule ngs_mapping_bwa_run:
         wf.get_input_files("bwa", "run"),
     output:
         **wf. get_output_files('bwa','run'),
-    threads: wf.get_resources("bwa", "run", "threads")
+    threads: wf.get_resource("bwa", "run", "threads")
     resources:
         time=wf.get_resource("bwa", "run", "time"),
         mem=wf.get_resource("bwa", "run", "memory"),
-        partition=wf.get_resources("bwa", "run", "partition"),
+        partition=wf.get_resource("bwa", "run", "partition"),
     params:
         args=wf.substep_dispatch("bwa", "get_args", "run"),
     log:
@@ -128,11 +128,11 @@ rule ngs_mapping_star_run:
         wf.get_input_files("star", "run"),
     output:
         **wf. get_output_files('star','run'),
-    threads: wf.get_resources("star", "run", "threads")
+    threads: wf.get_resource("star", "run", "threads")
     resources:
         time=wf.get_resource("star", "run", "time"),
         mem=wf.get_resource("star", "run", "memory"),
-        partition=wf.get_resources("star", "run", "partition"),
+        partition=wf.get_resource("star", "run", "partition"),
     params:
         args=wf.substep_dispatch("star", "get_args", "run"),
     log:
@@ -150,11 +150,11 @@ if wf.config["postprocessing"] == "gatk_post_bam":
             wf.get_input_files("gatk_post_bam", "run"),
         output:
             **wf. get_output_files('gatk_post_bam','run'),
-        threads: wf.get_resources("gatk_post_bam", "run", "threads")
+        threads: wf.get_resource("gatk_post_bam", "run", "threads")
         resources:
             time=wf.get_resource("gatk_post_bam", "run", "time"),
             mem=wf.get_resource("gatk_post_bam", "run", "memory"),
-            partition=wf.get_resources("gatk_post_bam", "run", "partition"),
+            partition=wf.get_resource("gatk_post_bam", "run", "partition"),
         log:
             **wf. get_log_file('gatk_post_bam','run'),
         wrapper:
@@ -169,11 +169,11 @@ rule ngs_mapping_minimap2_run:
         wf.get_input_files("minimap2", "run"),
     output:
         **wf. get_output_files('minimap2','run'),
-    threads: wf.get_resources("minimap2", "run", "threads")
+    threads: wf.get_resource("minimap2", "run", "threads")
     resources:
         time=wf.get_resource("minimap2", "run", "time"),
         mem=wf.get_resource("minimap2", "run", "memory"),
-        partition=wf.get_resources("minimap2", "run", "partition"),
+        partition=wf.get_resource("minimap2", "run", "partition"),
     log:
         **wf. get_log_file('minimap2','run'),
     wrapper:
@@ -188,11 +188,11 @@ rule ngs_mapping_ngmlr_run:
         wf.get_input_files("ngmlr", "run"),
     output:
         **wf. get_output_files('ngmlr','run'),
-    threads: wf.get_resources("ngmlr", "run", "threads")
+    threads: wf.get_resource("ngmlr", "run", "threads")
     resources:
         time=wf.get_resource("ngmlr", "run", "time"),
         mem=wf.get_resource("ngmlr", "run", "memory"),
-        partition=wf.get_resources("ngmlr", "run", "partition"),
+        partition=wf.get_resource("ngmlr", "run", "partition"),
     params:
         chained=False,
     log:
@@ -211,11 +211,11 @@ rule ngs_mapping_picard_hs_metrics_run:
         **wf. get_input_files('picard_hs_metrics','run'),
     output:
         **wf. get_output_files('picard_hs_metrics','run'),
-    threads: wf.get_resources("picard_hs_metrics", "run", "threads")
+    threads: wf.get_resource("picard_hs_metrics", "run", "threads")
     resources:
         time=wf.get_resource("picard_hs_metrics", "run", "time"),
         mem=wf.get_resource("picard_hs_metrics", "run", "memory"),
-        partition=wf.get_resources("picard_hs_metrics", "run", "partition"),
+        partition=wf.get_resource("picard_hs_metrics", "run", "partition"),
     log:
         wf.get_log_file("picard_hs_metrics", "run"),
     wrapper:
@@ -230,11 +230,11 @@ rule ngs_mapping_target_coverage_report_run:
         unpack(wf.get_input_files("target_coverage_report", "run")),
     output:
         **wf. get_output_files('target_coverage_report','run'),
-    threads: wf.get_resources("target_coverage_report", "run", "threads")
+    threads: wf.get_resource("target_coverage_report", "run", "threads")
     resources:
         time=wf.get_resource("target_coverage_report", "run", "time"),
         mem=wf.get_resource("target_coverage_report", "run", "memory"),
-        partition=wf.get_resources("target_coverage_report", "run", "partition"),
+        partition=wf.get_resource("target_coverage_report", "run", "partition"),
     params:
         ngs_library_to_kit=wf.ngs_library_to_kit,
     log:
@@ -251,11 +251,11 @@ rule ngs_mapping_target_coverage_report_collect:
         wf.get_input_files("target_coverage_report", "collect"),
     output:
         **wf. get_output_files('target_coverage_report','collect'),
-    threads: wf.get_resources("target_coverage_report", "run", "threads")
+    threads: wf.get_resource("target_coverage_report", "run", "threads")
     resources:
         time=wf.get_resource("target_coverage_report", "run", "time"),
         mem=wf.get_resource("target_coverage_report", "run", "memory"),
-        partition=wf.get_resources("target_coverage_report", "run", "partition"),
+        partition=wf.get_resource("target_coverage_report", "run", "partition"),
     log:
         wf.get_log_file("target_coverage_report", "collect"),
     wrapper:
@@ -270,11 +270,11 @@ rule ngs_mapping_genome_coverage_report_run:
         **wf. get_input_files('genome_coverage_report','run'),
     output:
         **wf. get_output_files('genome_coverage_report','run'),
-    threads: wf.get_resources("genome_coverage_report", "run", "threads")
+    threads: wf.get_resource("genome_coverage_report", "run", "threads")
     resources:
         time=wf.get_resource("genome_coverage_report", "run", "time"),
         mem=wf.get_resource("genome_coverage_report", "run", "memory"),
-        partition=wf.get_resources("genome_coverage_report", "run", "partition"),
+        partition=wf.get_resource("genome_coverage_report", "run", "partition"),
     log:
         wf.get_log_file("genome_coverage_report", "run"),
     run:

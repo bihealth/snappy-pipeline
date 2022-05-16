@@ -59,11 +59,11 @@ rule wgs_sv_calling_manta_run:
         wf.get_input_files("manta", "run"),
     output:
         **wf. get_output_files('manta','run'),
-    threads: wf.get_resources("manta", "run", "threads")
+    threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
         mem=wf.get_resource("manta", "run", "memory"),
-        partition=wf.get_resources("manta", "run", "partition"),
+        partition=wf.get_resource("manta", "run", "partition"),
     log:
         wf.get_log_file("manta", "run"),
     wrapper:
@@ -78,11 +78,11 @@ rule wgs_sv_calling_delly2_call:
         unpack(wf.get_input_files("delly2", "call")),
     output:
         **wf. get_output_files('delly2','call'),
-    threads: wf.get_resources("delly2", "call", "threads")
+    threads: wf.get_resource("delly2", "call", "threads")
     resources:
         time=wf.get_resource("delly2", "call", "time"),
         mem=wf.get_resource("delly2", "call", "memory"),
-        partition=wf.get_resources("delly2", "call", "partition"),
+        partition=wf.get_resource("delly2", "call", "partition"),
     params:
         library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
     log:
@@ -96,11 +96,11 @@ rule wgs_sv_calling_delly2_merge_calls:
         wf.get_input_files("delly2", "merge_calls"),
     output:
         **wf. get_output_files('delly2','merge_calls'),
-    threads: wf.get_resources("delly2", "merge_calls", "threads")
+    threads: wf.get_resource("delly2", "merge_calls", "threads")
     resources:
         time=wf.get_resource("delly2", "merge_calls", "time"),
         mem=wf.get_resource("delly2", "merge_calls", "memory"),
-        partition=wf.get_resources("delly2", "merge_calls", "partition"),
+        partition=wf.get_resource("delly2", "merge_calls", "partition"),
     log:
         wf.get_log_file("delly2", "merge_calls"),
     wrapper:
@@ -112,11 +112,11 @@ rule wgs_sv_calling_delly2_genotype:
         unpack(wf.get_input_files("delly2", "genotype")),
     output:
         **wf. get_output_files('delly2','genotype'),
-    threads: wf.get_resources("delly2", "genotype", "threads")
+    threads: wf.get_resource("delly2", "genotype", "threads")
     resources:
         time=wf.get_resource("delly2", "genotype", "time"),
         mem=wf.get_resource("delly2", "genotype", "memory"),
-        partition=wf.get_resources("delly2", "genotype", "partition"),
+        partition=wf.get_resource("delly2", "genotype", "partition"),
     params:
         library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
     log:
@@ -130,11 +130,11 @@ rule wgs_sv_calling_delly2_merge_genotypes:
         wf.get_input_files("delly2", "merge_genotypes"),
     output:
         **wf. get_output_files('delly2','merge_genotypes'),
-    threads: wf.get_resources("delly2", "merge_genotypes", "threads")
+    threads: wf.get_resource("delly2", "merge_genotypes", "threads")
     resources:
         time=wf.get_resource("delly2", "merge_genotypes", "time"),
         mem=wf.get_resource("delly2", "merge_genotypes", "memory"),
-        partition=wf.get_resources("delly2", "merge_genotypes", "partition"),
+        partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
     log:
         wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
@@ -146,11 +146,11 @@ rule wgs_sv_calling_delly2_reorder_vcf:
         unpack(wf.get_input_files("delly2", "reorder_vcf")),
     output:
         **wf. get_output_files('delly2','reorder_vcf'),
-    threads: wf.get_resources("delly2", "reorder_vcf", "threads")
+    threads: wf.get_resource("delly2", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("delly2", "reorder_vcf", "time"),
         mem=wf.get_resource("delly2", "reorder_vcf", "memory"),
-        partition=wf.get_resources("delly2", "reorder_vcf", "partition"),
+        partition=wf.get_resource("delly2", "reorder_vcf", "partition"),
     log:
         wf.get_log_file("delly2", "reorder_vcf"),
     params:
@@ -167,11 +167,11 @@ rule wgs_sv_svtk_standardize:
         unpack(wf.get_input_files("svtk", "standardize")),
     output:
         **wf. get_output_files('svtk','standardize'),
-    threads: wf.get_resources("svtk", "standardize", "threads")
+    threads: wf.get_resource("svtk", "standardize", "threads")
     resources:
         time=wf.get_resource("svtk", "standardize", "time"),
         mem=wf.get_resource("svtk", "standardize", "memory"),
-        partition=wf.get_resources("svtk", "standardize", "partition"),
+        partition=wf.get_resource("svtk", "standardize", "partition"),
     log:
         wf.get_log_file("svtk", "standardize"),
     wrapper:
@@ -186,11 +186,11 @@ rule wgs_sv_calling_pb_honey_spots_run:
         wf.get_input_files("pb_honey_spots", "run"),
     output:
         **wf. get_output_files('pb_honey_spots','run'),
-    threads: wf.get_resources("pb_honey_spots", "run", "threads")
+    threads: wf.get_resource("pb_honey_spots", "run", "threads")
     resources:
         time=wf.get_resource("pb_honey_spots", "run", "time"),
         mem=wf.get_resource("pb_honey_spots", "run", "memory"),
-        partition=wf.get_resources("pb_honey_spots", "run", "partition"),
+        partition=wf.get_resource("pb_honey_spots", "run", "partition"),
     log:
         wf.get_log_file("pb_honey_spots", "run"),
     wrapper:
@@ -205,11 +205,11 @@ rule wgs_sv_calling_sniffles_run:
         wf.get_input_files("sniffles", "run"),
     output:
         **wf. get_output_files('sniffles','run'),
-    threads: wf.get_resources("sniffles", "run", "threads")
+    threads: wf.get_resource("sniffles", "run", "threads")
     resources:
         time=wf.get_resource("sniffles", "run", "time"),
         mem=wf.get_resource("sniffles", "run", "memory"),
-        partition=wf.get_resources("sniffles", "run", "partition"),
+        partition=wf.get_resource("sniffles", "run", "partition"),
     log:
         wf.get_log_file("sniffles", "run"),
     wrapper:
@@ -227,11 +227,11 @@ rule wgs_sv_calling_popdel_profile:
         unpack(wf.get_input_files("popdel", "profile")),
     output:
         **wf. get_output_files('popdel','profile'),
-    threads: wf.get_resources("popdel", "profile", "threads")
+    threads: wf.get_resource("popdel", "profile", "threads")
     resources:
         time=wf.get_resource("popdel", "profile", "time"),
         mem=wf.get_resource("popdel", "profile", "memory"),
-        partition=wf.get_resources("popdel", "profile", "partition"),
+        partition=wf.get_resource("popdel", "profile", "partition"),
     wildcard_constraints:
         index_ngs_library=r"[^\.]+",
     log:
@@ -245,11 +245,11 @@ rule wgs_sv_calling_popdel_call:
         unpack(wf.get_input_files("popdel", "call")),
     output:
         **wf. get_output_files('popdel','call'),
-    threads: wf.get_resources("popdel", "call", "threads")
+    threads: wf.get_resource("popdel", "call", "threads")
     resources:
         time=wf.get_resource("popdel", "call", "time"),
         mem=wf.get_resource("popdel", "call", "memory"),
-        partition=wf.get_resources("popdel", "call", "partition"),
+        partition=wf.get_resource("popdel", "call", "partition"),
     log:
         wf.get_log_file("popdel", "call"),
     wrapper:
@@ -261,11 +261,11 @@ rule wgs_sv_calling_popdel_concat_calls:
         unpack(wf.get_input_files("popdel", "concat_calls")),
     output:
         **wf. get_output_files('popdel','concat_calls'),
-    threads: wf.get_resources("popdel", "concat_calls", "threads")
+    threads: wf.get_resource("popdel", "concat_calls", "threads")
     resources:
         time=wf.get_resource("popdel", "concat_calls", "time"),
         mem=wf.get_resource("popdel", "concat_calls", "memory"),
-        partition=wf.get_resources("popdel", "concat_calls", "partition"),
+        partition=wf.get_resource("popdel", "concat_calls", "partition"),
     log:
         wf.get_log_file("popdel", "concat_calls"),
     wrapper:
@@ -277,11 +277,11 @@ rule wgs_sv_calling_popdel_reorder_vcf:
         unpack(wf.get_input_files("popdel", "reorder_vcf")),
     output:
         **wf. get_output_files('popdel','reorder_vcf'),
-    threads: wf.get_resources("popdel", "reorder_vcf", "threads")
+    threads: wf.get_resource("popdel", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("popdel", "reorder_vcf", "time"),
         mem=wf.get_resource("popdel", "reorder_vcf", "memory"),
-        partition=wf.get_resources("popdel", "reorder_vcf", "partition"),
+        partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
     wildcard_constraints:
         index_ngs_library=r"[^\.]+",
     params:

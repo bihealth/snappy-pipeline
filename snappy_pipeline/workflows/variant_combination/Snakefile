@@ -71,11 +71,11 @@ rule variant_combination_vars_intersect_run:
         unpack(wf.get_input_files("vars_intersect", "run")),
     output:
         **wf. get_output_files('vars_intersect','run'),
-    threads: wf.get_resources("vars_intersect", "run", "threads")
+    threads: wf.get_resource("vars_intersect", "run", "threads")
     resources:
         time=wf.get_resource("vars_intersect", "run", "time"),
         mem=wf.get_resource("vars_intersect", "run", "memory"),
-        partition=wf.get_resources("vars_intersect", "run", "partition"),
+        partition=wf.get_resource("vars_intersect", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_intersect", "get_args", "run"),
     log:
@@ -92,11 +92,11 @@ rule variant_combination_vars_share_interval_run:
         unpack(wf.get_input_files("vars_share_interval", "run")),
     output:
         **wf. get_output_files('vars_share_interval','run'),
-    threads: wf.get_resources("vars_share_interval", "run", "threads")
+    threads: wf.get_resource("vars_share_interval", "run", "threads")
     resources:
         time=wf.get_resource("vars_share_interval", "run", "time"),
         mem=wf.get_resource("vars_share_interval", "run", "memory"),
-        partition=wf.get_resources("vars_share_interval", "run", "partition"),
+        partition=wf.get_resource("vars_share_interval", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_share_interval", "get_args", "run"),
     log:

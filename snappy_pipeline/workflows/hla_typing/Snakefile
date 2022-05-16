@@ -73,11 +73,11 @@ rule hla_typing_optitype_run:
         **wf. get_input_files('optitype','run'),
     output:
         **wf. get_output_files('optitype','run'),
-    threads: wf.get_resources("optitype", "run", "threads")
+    threads: wf.get_resource("optitype", "run", "threads")
     resources:
         time=wf.get_resource("optitype", "run", "time"),
         mem=wf.get_resource("optitype", "run", "memory"),
-        partition=wf.get_resources("optitype", "run", "partition"),
+        partition=wf.get_resource("optitype", "run", "partition"),
     log:
         wf.get_log_file("optitype", "run"),
     params:
@@ -104,11 +104,11 @@ rule hla_typing_arcashla_run:
         unpack(wf.get_input_files("arcashla", "run")),
     output:
         **wf. get_output_files('arcashla','run'),
-    threads: wf.get_resources("arcashla", "run", "threads")
+    threads: wf.get_resource("arcashla", "run", "threads")
     resources:
         time=wf.get_resource("arcashla", "run", "time"),
         mem=wf.get_resource("arcashla", "run", "memory"),
-        partition=wf.get_resources("arcashla", "run", "partition"),
+        partition=wf.get_resource("arcashla", "run", "partition"),
     log:
         wf.get_log_file("arcashla", "run"),
     wrapper:

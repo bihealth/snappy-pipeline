@@ -57,11 +57,11 @@ rule gene_expression_report_aggregate_counts:
         wf.get_input_files("aggregate_counts", "run"),
     output:
         **wf. get_output_files('aggregate_counts','run'),
-    threads: wf.get_resources("aggregate_counts", "run", "threads")
+    threads: wf.get_resource("aggregate_counts", "run", "threads")
     resources:
         time=wf.get_resource("aggregate_counts", "run", "time"),
         mem=wf.get_resource("aggregate_counts", "run", "memory"),
-        partition=wf.get_resources("aggregate_counts", "run", "partition"),
+        partition=wf.get_resource("aggregate_counts", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/rpkm_expression")
 
@@ -72,11 +72,11 @@ rule gene_expression_report_compute_ranks:
         **wf. get_input_files('compute_ranks','run'),
     output:
         **wf. get_output_files('compute_ranks','run'),
-    threads: wf.get_resources("compute_ranks", "run", "threads")
+    threads: wf.get_resource("compute_ranks", "run", "threads")
     resources:
         time=wf.get_resource("compute_ranks", "run", "time"),
         mem=wf.get_resource("compute_ranks", "run", "memory"),
-        partition=wf.get_resources("compute_ranks", "run", "partition"),
+        partition=wf.get_resource("compute_ranks", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/rank_expression")
 
@@ -87,11 +87,11 @@ rule gene_expression_report_compute_signatures:
         **wf. get_input_files('compute_ranks','run'),
     output:
         **wf. get_output_files('compute_signatures','run'),
-    threads: wf.get_resources("compute_signatures", "run", "threads")
+    threads: wf.get_resource("compute_signatures", "run", "threads")
     resources:
         time=wf.get_resource("compute_signatures", "run", "time"),
         mem=wf.get_resource("compute_signatures", "run", "memory"),
-        partition=wf.get_resources("compute_signatures", "run", "partition"),
+        partition=wf.get_resource("compute_signatures", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/compute_signatures")
 
@@ -102,10 +102,10 @@ rule gene_expression_report_plot_expression_distribution:
         **wf. get_input_files('plot_expression_distribution','run'),
     output:
         **wf. get_output_files('plot_expression_distribution','run'),
-    threads: wf.get_resources("plot_expression_distribution", "run", "threads")
+    threads: wf.get_resource("plot_expression_distribution", "run", "threads")
     resources:
         time=wf.get_resource("plot_expression_distribution", "run", "time"),
         mem=wf.get_resource("plot_expression_distribution", "run", "memory"),
-        partition=wf.get_resources("plot_expression_distribution", "run", "partition"),
+        partition=wf.get_resource("plot_expression_distribution", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/plot_expression_distribution")
