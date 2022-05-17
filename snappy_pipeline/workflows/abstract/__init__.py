@@ -116,7 +116,6 @@ class BaseStepPart:
     def get_default_partition(self) -> str:
         """Helper that returns the default partition."""
         from snappy_pipeline.apps import snappy_snake
-
         return snappy_snake.DEFAULT_PARTITION
 
     def get_resource(self, action: str, resource_name: str):

@@ -131,7 +131,7 @@ STEP_TO_MODULE = {
 }
 
 #: Configured default partition
-DEFAULT_PARTITION = None
+DEFAULT_PARTITION = "medium"
 
 
 def setup_logging(args):
