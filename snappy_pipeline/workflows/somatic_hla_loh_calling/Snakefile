@@ -60,7 +60,7 @@ rule somatic_hla_loh_calling_lohhla:
     threads: wf.get_resource("lohhla", "run", "threads")
     resources:
         time=wf.get_resource("lohhla", "run", "time"),
-        mem=wf.get_resource("lohhla", "run", "memory"),
+        memory=wf.get_resource("lohhla", "run", "memory"),
         partition=wf.get_resource("lohhla", "run", "partition"),
     log:
         **wf. get_log_file('lohhla','run'),

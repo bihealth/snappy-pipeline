@@ -39,7 +39,7 @@ rule targeted_seq_cnv_calling_gcnv_preprocess_intervals:
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
-        mem=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
@@ -56,7 +56,7 @@ rule targeted_seq_cnv_calling_gcnv_annotate_gc:
     threads: wf.get_resource("gcnv", "annotate_gc", "threads")
     resources:
         time=wf.get_resource("gcnv", "annotate_gc", "time"),
-        mem=wf.get_resource("gcnv", "annotate_gc", "memory"),
+        memory=wf.get_resource("gcnv", "annotate_gc", "memory"),
         partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
     log:
         wf.get_log_file("gcnv", "annotate_gc"),
@@ -72,7 +72,7 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
     threads: wf.get_resource("gcnv", "coverage", "threads")
     resources:
         time=wf.get_resource("gcnv", "coverage", "time"),
-        mem=wf.get_resource("gcnv", "coverage", "memory"),
+        memory=wf.get_resource("gcnv", "coverage", "memory"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
     log:
         wf.get_log_file("gcnv", "coverage"),
@@ -88,7 +88,7 @@ rule targeted_seq_cnv_calling_gcnv_filter_intervals:
     threads: wf.get_resource("gcnv", "filter_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "filter_intervals", "time"),
-        mem=wf.get_resource("gcnv", "filter_intervals", "memory"),
+        memory=wf.get_resource("gcnv", "filter_intervals", "memory"),
         partition=wf.get_resource("gcnv", "filter_intervals", "partition"),
     log:
         wf.get_log_file("gcnv", "filter_intervals"),
@@ -104,7 +104,7 @@ rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
     threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
     resources:
         time=wf.get_resource("gcnv", "contig_ploidy", "time"),
-        mem=wf.get_resource("gcnv", "contig_ploidy", "memory"),
+        memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
         partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),

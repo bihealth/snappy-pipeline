@@ -61,7 +61,7 @@ rule igv_session_generation_write_igv_session_file:
     threads: wf.get_resource("write_igv_session_file", "run", "threads")
     resources:
         time=wf.get_resource("write_igv_session_file", "run", "time"),
-        mem=wf.get_resource("write_igv_session_file", "run", "memory"),
+        memory=wf.get_resource("write_igv_session_file", "run", "memory"),
         partition=wf.get_resource("write_igv_session_file", "run", "partition"),
     run:
         wf.substep_dispatch("write_igv_session_file", "run", wildcards, output)

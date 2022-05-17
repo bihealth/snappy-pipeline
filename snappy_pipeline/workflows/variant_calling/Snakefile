@@ -76,7 +76,7 @@ rule variant_calling_bcftools_run:
     threads: wf.get_resource("bcftools", "run", "threads")
     resources:
         time=wf.get_resource("bcftools", "run", "time"),
-        mem=wf.get_resource("bcftools", "run", "memory"),
+        memory=wf.get_resource("bcftools", "run", "memory"),
         partition=wf.get_resource("bcftools", "run", "partition"),
     log:
         **wf. get_log_file('bcftools','run'),
@@ -95,7 +95,7 @@ rule variant_calling_freebayes_run:
     threads: wf.get_resource("freebayes", "run", "threads")
     resources:
         time=wf.get_resource("freebayes", "run", "time"),
-        mem=wf.get_resource("freebayes", "run", "memory"),
+        memory=wf.get_resource("freebayes", "run", "memory"),
         partition=wf.get_resource("freebayes", "run", "partition"),
     params:
         **wf. get_params("freebayes","run")(),
@@ -116,7 +116,7 @@ rule variant_calling_gatk_hc_run:
     threads: wf.get_resource("gatk_hc", "run", "threads")
     resources:
         time=wf.get_resource("gatk_hc", "run", "time"),
-        mem=wf.get_resource("gatk_hc", "run", "memory"),
+        memory=wf.get_resource("gatk_hc", "run", "memory"),
         partition=wf.get_resource("gatk_hc", "run", "partition"),
     params:
         step_key="variant_calling",
@@ -138,7 +138,7 @@ rule variant_calling_gatk_ug_run:
     threads: wf.get_resource("gatk_ug", "run", "threads")
     resources:
         time=wf.get_resource("gatk_ug", "run", "time"),
-        mem=wf.get_resource("gatk_ug", "run", "memory"),
+        memory=wf.get_resource("gatk_ug", "run", "memory"),
         partition=wf.get_resource("gatk_ug", "run", "partition"),
     params:
         step_key="variant_calling",
@@ -160,7 +160,7 @@ rule variant_calling_platypus_run:
     threads: wf.get_resource("platypus", "run", "threads")
     resources:
         time=wf.get_resource("platypus", "run", "time"),
-        mem=wf.get_resource("platypus", "run", "memory"),
+        memory=wf.get_resource("platypus", "run", "memory"),
         partition=wf.get_resource("platypus", "run", "partition"),
     log:
         **wf. get_log_file('platypus','run'),
@@ -179,7 +179,7 @@ rule variant_calling_gatk_hc_gvcf_discovery:
     threads: wf.get_resource("gatk_hc_gvcf", "discover", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "discover", "time"),
-        mem=wf.get_resource("gatk_hc_gvcf", "discover", "memory"),
+        memory=wf.get_resource("gatk_hc_gvcf", "discover", "memory"),
         partition=wf.get_resource("gatk_hc_gvcf", "discover", "partition"),
     params:
         step_key="variant_calling",
@@ -201,7 +201,7 @@ rule variant_calling_gatk_hc_gvcf_genotype_pedigree:
     threads: wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "time"),
-        mem=wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "memory"),
+        memory=wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "memory"),
         partition=wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "partition"),
     params:
         step_key="variant_calling",
@@ -226,7 +226,7 @@ rule variant_calling_gatk_hc_gvcf_combine_gvcf:
     threads: wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "time"),
-        mem=wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "memory"),
+        memory=wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "memory"),
         partition=wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "partition"),
     params:
         args=wf.substep_dispatch("gatk_hc_gvcf", "get_args", "combine_gvcf"),
@@ -247,7 +247,7 @@ rule variant_calling_gatk_hc_gvcf_genotype_cohort:
     threads: wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "time"),
-        mem=wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "memory"),
+        memory=wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "memory"),
         partition=wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "partition"),
     log:
         wf.get_log_file("gatk_hc_gvcf", "genotype_cohort"),
@@ -266,7 +266,7 @@ rule variant_calling_varscan_call_pedigree:
     threads: wf.get_resource("varscan", "call_pedigree", "threads")
     resources:
         time=wf.get_resource("varscan", "call_pedigree", "time"),
-        mem=wf.get_resource("varscan", "call_pedigree", "memory"),
+        memory=wf.get_resource("varscan", "call_pedigree", "memory"),
         partition=wf.get_resource("varscan", "call_pedigree", "partition"),
     params:
         step_key="variant_calling",
@@ -288,7 +288,7 @@ rule variant_calling_varscan_call_cohort:
     threads: wf.get_resource("varscan", "call_cohort", "threads")
     resources:
         time=wf.get_resource("varscan", "call_cohort", "time"),
-        mem=wf.get_resource("varscan", "call_cohort", "memory"),
+        memory=wf.get_resource("varscan", "call_cohort", "memory"),
         partition=wf.get_resource("varscan", "call_cohort", "partition"),
     params:
         step_key="variant_calling",
@@ -312,7 +312,7 @@ rule variant_calling_bcftools_stats_report:
     threads: wf.get_resource("bcftools_stats", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_stats", "run", "time"),
-        mem=wf.get_resource("bcftools_stats", "run", "memory"),
+        memory=wf.get_resource("bcftools_stats", "run", "memory"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
     log:
         wf.get_log_file("bcftools_stats", "run"),
@@ -331,7 +331,7 @@ rule variant_calling_jannovar_statistics_report:
     threads: wf.get_resource("jannovar_statistics", "run", "threads")
     resources:
         time=wf.get_resource("jannovar_statistics", "run", "time"),
-        mem=wf.get_resource("jannovar_statistics", "run", "memory"),
+        memory=wf.get_resource("jannovar_statistics", "run", "memory"),
         partition=wf.get_resource("jannovar_statistics", "run", "partition"),
     log:
         wf.get_log_file("jannovar_statistics", "run"),

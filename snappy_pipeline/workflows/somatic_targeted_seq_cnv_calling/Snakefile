@@ -70,7 +70,7 @@ rule somatic_targeted_seq_cnv_calling_copywriter_prepare:
     threads: wf.get_resource("copywriter", "prepare", "threads")
     resources:
         time=wf.get_resource("copywriter", "prepare", "time"),
-        mem=wf.get_resource("copywriter", "prepare", "memory"),
+        memory=wf.get_resource("copywriter", "prepare", "memory"),
         partition=wf.get_resource("copywriter", "prepare", "partition"),
     log:
         wf.get_log_file("copywriter", "prepare"),
@@ -88,7 +88,7 @@ rule somatic_targeted_seq_cnv_calling_copywriter_run:
     threads: wf.get_resource("copywriter", "run", "threads")
     resources:
         time=wf.get_resource("copywriter", "run", "time"),
-        mem=wf.get_resource("copywriter", "run", "memory"),
+        memory=wf.get_resource("copywriter", "run", "memory"),
         partition=wf.get_resource("copywriter", "run", "partition"),
     log:
         **wf. get_log_file('copywriter','run'),
@@ -104,7 +104,7 @@ rule somatic_targeted_seq_cnv_calling_copywriter_call:
     threads: wf.get_resource("copywriter", "call", "threads")
     resources:
         time=wf.get_resource("copywriter", "call", "time"),
-        mem=wf.get_resource("copywriter", "call", "memory"),
+        memory=wf.get_resource("copywriter", "call", "memory"),
         partition=wf.get_resource("copywriter", "call", "partition"),
     log:
         **wf. get_log_file('copywriter','call'),
@@ -123,7 +123,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_coverage:
     threads: wf.get_resource("cnvetti_on_target", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvetti_on_target", "coverage", "time"),
-        mem=wf.get_resource("cnvetti_on_target", "coverage", "memory"),
+        memory=wf.get_resource("cnvetti_on_target", "coverage", "memory"),
         partition=wf.get_resource("cnvetti_on_target", "coverage", "partition"),
     params:
         method_name="cnvetti_on_target",
@@ -141,7 +141,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_segment:
     threads: wf.get_resource("cnvetti_on_target", "segment", "threads")
     resources:
         time=wf.get_resource("cnvetti_on_target", "segment", "time"),
-        mem=wf.get_resource("cnvetti_on_target", "segment", "memory"),
+        memory=wf.get_resource("cnvetti_on_target", "segment", "memory"),
         partition=wf.get_resource("cnvetti_on_target", "segment", "partition"),
     params:
         method_name="cnvetti_on_target",
@@ -159,7 +159,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_postprocess:
     threads: wf.get_resource("cnvetti_on_target", "postprocess", "threads")
     resources:
         time=wf.get_resource("cnvetti_on_target", "postprocess", "time"),
-        mem=wf.get_resource("cnvetti_on_target", "postprocess", "memory"),
+        memory=wf.get_resource("cnvetti_on_target", "postprocess", "memory"),
         partition=wf.get_resource("cnvetti_on_target", "postprocess", "partition"),
     params:
         method_name="cnvetti_on_target",
@@ -180,7 +180,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_coverage:
     threads: wf.get_resource("cnvetti_off_target", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvetti_off_target", "coverage", "time"),
-        mem=wf.get_resource("cnvetti_off_target", "coverage", "memory"),
+        memory=wf.get_resource("cnvetti_off_target", "coverage", "memory"),
         partition=wf.get_resource("cnvetti_off_target", "coverage", "partition"),
     params:
         method_name="cnvetti_off_target",
@@ -198,7 +198,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_segment:
     threads: wf.get_resource("cnvetti_off_target", "segment", "threads")
     resources:
         time=wf.get_resource("cnvetti_off_target", "segment", "time"),
-        mem=wf.get_resource("cnvetti_off_target", "segment", "memory"),
+        memory=wf.get_resource("cnvetti_off_target", "segment", "memory"),
         partition=wf.get_resource("cnvetti_off_target", "segment", "partition"),
     params:
         method_name="cnvetti_off_target",
@@ -216,7 +216,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_postprocess:
     threads: wf.get_resource("cnvetti_off_target", "postprocess", "threads")
     resources:
         time=wf.get_resource("cnvetti_off_target", "postprocess", "time"),
-        mem=wf.get_resource("cnvetti_off_target", "postprocess", "memory"),
+        memory=wf.get_resource("cnvetti_off_target", "postprocess", "memory"),
         partition=wf.get_resource("cnvetti_off_target", "postprocess", "partition"),
     params:
         method_name="cnvetti_off_target",

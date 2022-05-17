@@ -9,7 +9,7 @@ rule targeted_seq_cnv_calling_gcnv_preprocess_intervals:
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
-        mem=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
@@ -25,7 +25,7 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
     threads: wf.get_resource("gcnv", "coverage", "threads")
     resources:
         time=wf.get_resource("gcnv", "coverage", "time"),
-        mem=wf.get_resource("gcnv", "coverage", "memory"),
+        memory=wf.get_resource("gcnv", "coverage", "memory"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
     log:
         wf.get_log_file("gcnv", "coverage"),
@@ -41,7 +41,7 @@ rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
     threads: wf.get_resource("gcnv", "contig_ploidy_case_mode", "threads")
     resources:
         time=wf.get_resource("gcnv", "contig_ploidy_case_mode", "time"),
-        mem=wf.get_resource("gcnv", "contig_ploidy_case_mode", "memory"),
+        memory=wf.get_resource("gcnv", "contig_ploidy_case_mode", "memory"),
         partition=wf.get_resource("gcnv", "contig_ploidy_case_mode", "partition"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy_case_mode"),
@@ -59,7 +59,7 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs_case_mode:
     threads: wf.get_resource("gcnv", "call_cnvs_case_mode", "threads")
     resources:
         time=wf.get_resource("gcnv", "call_cnvs_case_mode", "time"),
-        mem=wf.get_resource("gcnv", "call_cnvs_case_mode", "memory"),
+        memory=wf.get_resource("gcnv", "call_cnvs_case_mode", "memory"),
         partition=wf.get_resource("gcnv", "call_cnvs_case_mode", "partition"),
     log:
         wf.get_log_file("gcnv", "call_cnvs_case_mode"),
@@ -77,7 +77,7 @@ rule targeted_seq_cnv_calling_gcnv_post_germline_calls_case_mode:
     threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
     resources:
         time=wf.get_resource("gcnv", "post_germline_calls", "time"),
-        mem=wf.get_resource("gcnv", "post_germline_calls", "memory"),
+        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
         partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
@@ -95,7 +95,7 @@ rule targeted_seq_cnv_calling_gcnv_merge_cohort_vcfs:
     threads: wf.get_resource("gcnv", "merge_cohort_vcfs", "threads")
     resources:
         time=wf.get_resource("gcnv", "merge_cohort_vcfs", "time"),
-        mem=wf.get_resource("gcnv", "merge_cohort_vcfs", "memory"),
+        memory=wf.get_resource("gcnv", "merge_cohort_vcfs", "memory"),
         partition=wf.get_resource("gcnv", "merge_cohort_vcfs", "partition"),
     log:
         wf.get_log_file("gcnv", "merge_cohort_vcfs"),
@@ -111,7 +111,7 @@ rule targeted_seq_cnv_calling_gcnv_extract_ped:
     threads: wf.get_resource("gcnv", "extract_ped", "threads")
     resources:
         time=wf.get_resource("gcnv", "extract_ped", "time"),
-        mem=wf.get_resource("gcnv", "extract_ped", "memory"),
+        memory=wf.get_resource("gcnv", "extract_ped", "memory"),
         partition=wf.get_resource("gcnv", "extract_ped", "partition"),
     log:
         wf.get_log_file("gcnv", "extract_ped"),

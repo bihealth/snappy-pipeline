@@ -75,7 +75,7 @@ rule somatic_gene_fusion_calling_fusioncatcher_run:
     threads: wf.get_resource("fusioncatcher", "run", "threads")
     resources:
         time=wf.get_resource("fusioncatcher", "run", "time"),
-        mem=wf.get_resource("fusioncatcher", "run", "memory"),
+        memory=wf.get_resource("fusioncatcher", "run", "memory"),
         partition=wf.get_resource("fusioncatcher", "run", "partition"),
     params:
         args=wf.substep_dispatch("fusioncatcher", "get_args", "run"),
@@ -96,7 +96,7 @@ rule somatic_gene_fusion_calling_jaffa_run:
     threads: wf.get_resource("jaffa", "run", "threads")
     resources:
         time=wf.get_resource("jaffa", "run", "time"),
-        mem=wf.get_resource("jaffa", "run", "memory"),
+        memory=wf.get_resource("jaffa", "run", "memory"),
         partition=wf.get_resource("jaffa", "run", "partition"),
     params:
         args=wf.substep_dispatch("jaffa", "get_args", "run"),
@@ -117,7 +117,7 @@ rule somatic_gene_fusion_calling_pizzly_run:
     threads: wf.get_resource("pizzly", "run", "threads")
     resources:
         time=wf.get_resource("pizzly", "run", "time"),
-        mem=wf.get_resource("pizzly", "run", "memory"),
+        memory=wf.get_resource("pizzly", "run", "memory"),
         partition=wf.get_resource("pizzly", "run", "partition"),
     params:
         args=wf.substep_dispatch("pizzly", "get_args", "run"),
@@ -138,7 +138,7 @@ rule somatic_gene_fusion_calling_hera_run:
     threads: wf.get_resource("hera", "run", "threads")
     resources:
         time=wf.get_resource("hera", "run", "time"),
-        mem=wf.get_resource("hera", "run", "memory"),
+        memory=wf.get_resource("hera", "run", "memory"),
         partition=wf.get_resource("hera", "run", "partition"),
     params:
         args=wf.substep_dispatch("hera", "get_args", "run"),
@@ -159,7 +159,7 @@ rule somatic_gene_fusion_calling_star_fusion_run:
     threads: wf.get_resource("star_fusion", "run", "threads")
     resources:
         time=wf.get_resource("star_fusion", "run", "time"),
-        mem=wf.get_resource("star_fusion", "run", "memory"),
+        memory=wf.get_resource("star_fusion", "run", "memory"),
         partition=wf.get_resource("star_fusion", "run", "partition"),
     params:
         args=wf.substep_dispatch("star_fusion", "get_args", "run"),
@@ -180,7 +180,7 @@ rule somatic_gene_fusion_calling_defuse_run:
     threads: wf.get_resource("defuse", "run", "threads")
     resources:
         time=wf.get_resource("defuse", "run", "time"),
-        mem=wf.get_resource("defuse", "run", "memory"),
+        memory=wf.get_resource("defuse", "run", "memory"),
         partition=wf.get_resource("defuse", "run", "partition"),
     params:
         args=wf.substep_dispatch("defuse", "get_args", "run"),

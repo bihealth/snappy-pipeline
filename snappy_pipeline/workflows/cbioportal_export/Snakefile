@@ -60,7 +60,7 @@ rule cbioportal_export_study_metadata:
     threads: wf.get_resource("cbioportal_study_meta_files", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_study_meta_files", "run", "time"),
-        mem=wf.get_resource("cbioportal_study_meta_files", "run", "memory"),
+        memory=wf.get_resource("cbioportal_study_meta_files", "run", "memory"),
         partition=wf.get_resource("cbioportal_study_meta_files", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/study_meta")
@@ -72,7 +72,7 @@ rule cbioportal_export_meta_files:
     threads: wf.get_resource("cbioportal_meta_files", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_meta_files", "run", "time"),
-        mem=wf.get_resource("cbioportal_meta_files", "run", "memory"),
+        memory=wf.get_resource("cbioportal_meta_files", "run", "memory"),
         partition=wf.get_resource("cbioportal_meta_files", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/meta_files")
@@ -87,7 +87,7 @@ rule cbioportal_export_patient_metadata:
     threads: wf.get_resource("cbioportal_clinical_data", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_clinical_data", "run", "time"),
-        mem=wf.get_resource("cbioportal_clinical_data", "run", "memory"),
+        memory=wf.get_resource("cbioportal_clinical_data", "run", "memory"),
         partition=wf.get_resource("cbioportal_clinical_data", "run", "partition"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
@@ -101,7 +101,7 @@ rule cbioportal_export_case_lists:
     threads: wf.get_resource("cbioportal_case_lists", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_case_lists", "run", "time"),
-        mem=wf.get_resource("cbioportal_case_lists", "run", "memory"),
+        memory=wf.get_resource("cbioportal_case_lists", "run", "memory"),
         partition=wf.get_resource("cbioportal_case_lists", "run", "partition"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
@@ -122,7 +122,7 @@ rule cbioportal_export_generate_mafs:
     threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_vcf2maf", "run", "time"),
-        mem=wf.get_resource("cbioportal_vcf2maf", "run", "memory"),
+        memory=wf.get_resource("cbioportal_vcf2maf", "run", "memory"),
         partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
     params:
         args=wf.substep_dispatch("cbioportal_vcf2maf", "get_args", "run"),
@@ -143,7 +143,7 @@ rule cbioportal_export_concatenate_maf:
     threads: wf.get_resource("cbioportal_maf", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_maf", "run", "time"),
-        mem=wf.get_resource("cbioportal_maf", "run", "memory"),
+        memory=wf.get_resource("cbioportal_maf", "run", "memory"),
         partition=wf.get_resource("cbioportal_maf", "run", "partition"),
     shell:
         r"""
@@ -164,7 +164,7 @@ rule cbioportal_export_CNA_calls:
     threads: wf.get_resource("cbioportal_cna_data", "gistic", "threads")
     resources:
         time=wf.get_resource("cbioportal_cna_data", "gistic", "time"),
-        mem=wf.get_resource("cbioportal_cna_data", "gistic", "memory"),
+        memory=wf.get_resource("cbioportal_cna_data", "gistic", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "gistic", "partition"),
     params:
         datatype="int",
@@ -183,7 +183,7 @@ rule cbioportal_export_CNA_log2:
     threads: wf.get_resource("cbioportal_cna_data", "log2", "threads")
     resources:
         time=wf.get_resource("cbioportal_cna_data", "log2", "time"),
-        mem=wf.get_resource("cbioportal_cna_data", "log2", "memory"),
+        memory=wf.get_resource("cbioportal_cna_data", "log2", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "log2", "partition"),
     params:
         datatype="float",
@@ -202,7 +202,7 @@ rule cbioportal_export_segments:
     threads: wf.get_resource("cbioportal_cna_data", "segments", "threads")
     resources:
         time=wf.get_resource("cbioportal_cna_data", "segments", "time"),
-        mem=wf.get_resource("cbioportal_cna_data", "segments", "memory"),
+        memory=wf.get_resource("cbioportal_cna_data", "segments", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "segments", "partition"),
     shell:
         r"""
@@ -224,7 +224,7 @@ rule cbioportal_create_dataframe_matching_results:
     threads: wf.get_resource("cbioportal_zscores", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_zscores", "run", "time"),
-        mem=wf.get_resource("cbioportal_zscores", "run", "memory"),
+        memory=wf.get_resource("cbioportal_zscores", "run", "memory"),
         partition=wf.get_resource("cbioportal_zscores", "run", "partition"),
     run:
         wf.substep_dispatch("cbioportal_zscores", "get_df", output)
@@ -238,7 +238,7 @@ rule cbioportal_compute_zscores:
     threads: wf.get_resource("cbioportal_compute_zscores", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_compute_zscores", "run", "time"),
-        mem=wf.get_resource("cbioportal_compute_zscores", "run", "memory"),
+        memory=wf.get_resource("cbioportal_compute_zscores", "run", "memory"),
         partition=wf.get_resource("cbioportal_compute_zscores", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/zscores")

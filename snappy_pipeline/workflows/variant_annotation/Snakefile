@@ -74,7 +74,7 @@ rule variant_annotation_jannovar_annotate_vcf:
     threads: wf.get_resource("jannovar", "annotate_vcf", "threads")
     resources:
         time=wf.get_resource("jannovar", "annotate_vcf", "time"),
-        mem=wf.get_resource("jannovar", "annotate_vcf", "memory"),
+        memory=wf.get_resource("jannovar", "annotate_vcf", "memory"),
         partition=wf.get_resource("jannovar", "annotate_vcf", "partition"),
     log:
         **wf. get_log_file('jannovar','annotate_vcf'),

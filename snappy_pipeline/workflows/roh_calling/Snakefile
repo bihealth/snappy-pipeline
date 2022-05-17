@@ -64,7 +64,7 @@ rule roh_calling_bcftools_roh_run:
     threads: wf.get_resource("bcftools_roh", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_roh", "run", "time"),
-        mem=wf.get_resource("bcftools_roh", "run", "memory"),
+        memory=wf.get_resource("bcftools_roh", "run", "memory"),
         partition=wf.get_resource("bcftools_roh", "run", "partition"),
     log:
         wf.get_log_file("bcftools_roh", "run"),
@@ -83,7 +83,7 @@ rule roh_calling_bcftools_roh_make_bed:
     threads: wf.get_resource("bcftools_roh", "make_bed", "threads")
     resources:
         time=wf.get_resource("bcftools_roh", "make_bed", "time"),
-        mem=wf.get_resource("bcftools_roh", "make_bed", "memory"),
+        memory=wf.get_resource("bcftools_roh", "make_bed", "memory"),
         partition=wf.get_resource("bcftools_roh", "make_bed", "partition"),
     log:
         wf.get_log_file("bcftools_roh", "make_bed"),

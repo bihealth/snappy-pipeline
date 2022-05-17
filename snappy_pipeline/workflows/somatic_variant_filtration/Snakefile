@@ -64,7 +64,7 @@ rule somatic_variant_filtration_dkfz_bias_filter_run:
     threads: wf.get_resource("dkfz_bias_filter", "run", "threads")
     resources:
         time=wf.get_resource("dkfz_bias_filter", "run", "time"),
-        mem=wf.get_resource("dkfz_bias_filter", "run", "memory"),
+        memory=wf.get_resource("dkfz_bias_filter", "run", "memory"),
         partition=wf.get_resource("dkfz_bias_filter", "run", "partition"),
     params:
         **{'args': wf. get_params('dkfz_bias_filter','run')},
@@ -85,7 +85,7 @@ rule somatic_variant_filtration_eb_filter_write_panel:
     threads: wf.get_resource("eb_filter", "write_panel", "threads")
     resources:
         time=wf.get_resource("eb_filter", "write_panel", "time"),
-        mem=wf.get_resource("eb_filter", "write_panel", "memory"),
+        memory=wf.get_resource("eb_filter", "write_panel", "memory"),
         partition=wf.get_resource("eb_filter", "write_panel", "partition"),
     log:
         wf.get_log_file("eb_filter", "write_panel"),
@@ -104,7 +104,7 @@ rule somatic_variant_filtration_eb_filter_run:
     threads: wf.get_resource("eb_filter", "run", "threads")
     resources:
         time=wf.get_resource("eb_filter", "run", "time"),
-        mem=wf.get_resource("eb_filter", "run", "memory"),
+        memory=wf.get_resource("eb_filter", "run", "memory"),
         partition=wf.get_resource("eb_filter", "run", "partition"),
     params:
         **{'args': wf. get_params('eb_filter','run')},
@@ -125,7 +125,7 @@ rule variant_filtration_apply_filters_run:
     threads: wf.get_resource("apply_filters", "run", "threads")
     resources:
         time=wf.get_resource("apply_filters", "run", "time"),
-        mem=wf.get_resource("apply_filters", "run", "memory"),
+        memory=wf.get_resource("apply_filters", "run", "memory"),
         partition=wf.get_resource("apply_filters", "run", "partition"),
     log:
         wf.get_log_file("apply_filters", "run"),
@@ -146,7 +146,7 @@ rule variant_filtration_filter_to_exons_run:
     threads: wf.get_resource("filter_to_exons", "run", "threads")
     resources:
         time=wf.get_resource("filter_to_exons", "run", "time"),
-        mem=wf.get_resource("filter_to_exons", "run", "memory"),
+        memory=wf.get_resource("filter_to_exons", "run", "memory"),
         partition=wf.get_resource("filter_to_exons", "run", "partition"),
     log:
         wf.get_log_file("filter_to_exons", "run"),

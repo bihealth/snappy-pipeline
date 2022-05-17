@@ -60,7 +60,7 @@ rule gene_expression_report_aggregate_counts:
     threads: wf.get_resource("aggregate_counts", "run", "threads")
     resources:
         time=wf.get_resource("aggregate_counts", "run", "time"),
-        mem=wf.get_resource("aggregate_counts", "run", "memory"),
+        memory=wf.get_resource("aggregate_counts", "run", "memory"),
         partition=wf.get_resource("aggregate_counts", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/rpkm_expression")
@@ -75,7 +75,7 @@ rule gene_expression_report_compute_ranks:
     threads: wf.get_resource("compute_ranks", "run", "threads")
     resources:
         time=wf.get_resource("compute_ranks", "run", "time"),
-        mem=wf.get_resource("compute_ranks", "run", "memory"),
+        memory=wf.get_resource("compute_ranks", "run", "memory"),
         partition=wf.get_resource("compute_ranks", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/rank_expression")
@@ -90,7 +90,7 @@ rule gene_expression_report_compute_signatures:
     threads: wf.get_resource("compute_signatures", "run", "threads")
     resources:
         time=wf.get_resource("compute_signatures", "run", "time"),
-        mem=wf.get_resource("compute_signatures", "run", "memory"),
+        memory=wf.get_resource("compute_signatures", "run", "memory"),
         partition=wf.get_resource("compute_signatures", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/compute_signatures")
@@ -105,7 +105,7 @@ rule gene_expression_report_plot_expression_distribution:
     threads: wf.get_resource("plot_expression_distribution", "run", "threads")
     resources:
         time=wf.get_resource("plot_expression_distribution", "run", "time"),
-        mem=wf.get_resource("plot_expression_distribution", "run", "memory"),
+        memory=wf.get_resource("plot_expression_distribution", "run", "memory"),
         partition=wf.get_resource("plot_expression_distribution", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/plot_expression_distribution")

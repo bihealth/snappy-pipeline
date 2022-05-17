@@ -9,7 +9,7 @@ rule targeted_seq_cnv_calling_xhmm_coverage:
     threads: wf.get_resource("xhmm", "coverage", "threads")
     resources:
         time=wf.get_resource("xhmm", "coverage", "time"),
-        mem=wf.get_resource("xhmm", "coverage", "memory"),
+        memory=wf.get_resource("xhmm", "coverage", "memory"),
         partition=wf.get_resource("xhmm", "coverage", "partition"),
     params:
         args=wf.get_params("xhmm", "coverage"),
@@ -27,7 +27,7 @@ rule targeted_seq_cnv_calling_xhmm_merge_cov:
     threads: wf.get_resource("xhmm", "merge_cov", "threads")
     resources:
         time=wf.get_resource("xhmm", "merge_cov", "time"),
-        mem=wf.get_resource("xhmm", "merge_cov", "memory"),
+        memory=wf.get_resource("xhmm", "merge_cov", "memory"),
         partition=wf.get_resource("xhmm", "merge_cov", "partition"),
     log:
         wf.get_log_file("xhmm", "merge_cov"),
@@ -41,7 +41,7 @@ rule targeted_seq_cnv_calling_xhmm_ref_stats:
     threads: wf.get_resource("xhmm", "ref_stats", "threads")
     resources:
         time=wf.get_resource("xhmm", "ref_stats", "time"),
-        mem=wf.get_resource("xhmm", "ref_stats", "memory"),
+        memory=wf.get_resource("xhmm", "ref_stats", "memory"),
         partition=wf.get_resource("xhmm", "ref_stats", "partition"),
     log:
         wf.get_log_file("xhmm", "ref_stats"),
@@ -57,7 +57,7 @@ rule targeted_seq_cnv_calling_xhmm_filter_center:
     threads: wf.get_resource("xhmm", "filter_center", "threads")
     resources:
         time=wf.get_resource("xhmm", "filter_center", "time"),
-        mem=wf.get_resource("xhmm", "filter_center", "memory"),
+        memory=wf.get_resource("xhmm", "filter_center", "memory"),
         partition=wf.get_resource("xhmm", "filter_center", "partition"),
     log:
         wf.get_log_file("xhmm", "filter_center"),
@@ -73,7 +73,7 @@ rule targeted_seq_cnv_calling_xhmm_pca:
     threads: wf.get_resource("xhmm", "pca", "threads")
     resources:
         time=wf.get_resource("xhmm", "pca", "time"),
-        mem=wf.get_resource("xhmm", "pca", "memory"),
+        memory=wf.get_resource("xhmm", "pca", "memory"),
         partition=wf.get_resource("xhmm", "pca", "partition"),
     log:
         wf.get_log_file("xhmm", "pca"),
@@ -89,7 +89,7 @@ rule targeted_seq_cnv_calling_xhmm_normalize:
     threads: wf.get_resource("xhmm", "normalize", "threads")
     resources:
         time=wf.get_resource("xhmm", "normalize", "time"),
-        mem=wf.get_resource("xhmm", "normalize", "memory"),
+        memory=wf.get_resource("xhmm", "normalize", "memory"),
         partition=wf.get_resource("xhmm", "normalize", "partition"),
     log:
         wf.get_log_file("xhmm", "normalize"),
@@ -105,7 +105,7 @@ rule targeted_seq_cnv_calling_xhmm_zscore_center:
     threads: wf.get_resource("xhmm", "zscore_center", "threads")
     resources:
         time=wf.get_resource("xhmm", "zscore_center", "time"),
-        mem=wf.get_resource("xhmm", "zscore_center", "memory"),
+        memory=wf.get_resource("xhmm", "zscore_center", "memory"),
         partition=wf.get_resource("xhmm", "zscore_center", "partition"),
     log:
         wf.get_log_file("xhmm", "zscore_center"),
@@ -121,7 +121,7 @@ rule targeted_seq_cnv_calling_xhmm_refilter:
     threads: wf.get_resource("xhmm", "refilter", "threads")
     resources:
         time=wf.get_resource("xhmm", "refilter", "time"),
-        mem=wf.get_resource("xhmm", "refilter", "memory"),
+        memory=wf.get_resource("xhmm", "refilter", "memory"),
         partition=wf.get_resource("xhmm", "refilter", "partition"),
     log:
         wf.get_log_file("xhmm", "refilter"),
@@ -137,7 +137,7 @@ rule targeted_seq_cnv_calling_xhmm_discover:
     threads: wf.get_resource("xhmm", "discover", "threads")
     resources:
         time=wf.get_resource("xhmm", "discover", "time"),
-        mem=wf.get_resource("xhmm", "discover", "memory"),
+        memory=wf.get_resource("xhmm", "discover", "memory"),
         partition=wf.get_resource("xhmm", "discover", "partition"),
     log:
         wf.get_log_file("xhmm", "discover"),
@@ -153,7 +153,7 @@ rule targeted_seq_cnv_calling_xhmm_genotype:
     threads: wf.get_resource("xhmm", "genotype", "threads")
     resources:
         time=wf.get_resource("xhmm", "genotype", "time"),
-        mem=wf.get_resource("xhmm", "genotype", "memory"),
+        memory=wf.get_resource("xhmm", "genotype", "memory"),
         partition=wf.get_resource("xhmm", "genotype", "partition"),
     log:
         wf.get_log_file("xhmm", "genotype"),
@@ -169,7 +169,7 @@ rule targeted_seq_cnv_calling_xhmm_extract_ped:
     threads: wf.get_resource("xhmm", "extract_ped", "threads")
     resources:
         time=wf.get_resource("xhmm", "extract_ped", "time"),
-        mem=wf.get_resource("xhmm", "extract_ped", "memory"),
+        memory=wf.get_resource("xhmm", "extract_ped", "memory"),
         partition=wf.get_resource("xhmm", "extract_ped", "partition"),
     log:
         wf.get_log_file("xhmm", "extract_ped"),

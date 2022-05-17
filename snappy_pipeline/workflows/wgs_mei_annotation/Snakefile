@@ -76,7 +76,7 @@ rule wgs_mei_annotation_vcf_mei_filter:
     threads: wf.get_resource("vcf_mei_filter", "run", "threads")
     resources:
         time=wf.get_resource("vcf_mei_filter", "run", "time"),
-        mem=wf.get_resource("vcf_mei_filter", "run", "memory"),
+        memory=wf.get_resource("vcf_mei_filter", "run", "memory"),
         partition=wf.get_resource("vcf_mei_filter", "run", "partition"),
     log:
         wf.get_log_file("vcf_mei_filter", "run"),

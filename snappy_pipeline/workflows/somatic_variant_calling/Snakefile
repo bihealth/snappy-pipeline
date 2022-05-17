@@ -61,7 +61,7 @@ rule somatic_variant_calling_mutect_run:
     threads: wf.get_resource("mutect", "run", "threads")
     resources:
         time=wf.get_resource("mutect", "run", "time"),
-        mem=wf.get_resource("mutect", "run", "memory"),
+        memory=wf.get_resource("mutect", "run", "memory"),
         partition=wf.get_resource("mutect", "run", "partition"),
     log:
         **wf. get_log_file('mutect','run'),
@@ -80,7 +80,7 @@ rule somatic_variant_calling_mutect2_pileup_normal:
     threads: wf.get_resource("mutect2", "pileup_normal", "threads")
     resources:
         time=wf.get_resource("mutect2", "pileup_normal", "time"),
-        mem=wf.get_resource("mutect2", "pileup_normal", "memory"),
+        memory=wf.get_resource("mutect2", "pileup_normal", "memory"),
         partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
     log:
         **wf. get_log_file('mutect2','pileup_normal'),
@@ -98,7 +98,7 @@ rule somatic_variant_calling_mutect2_pileup_tumor:
     threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
     resources:
         time=wf.get_resource("mutect2", "pileup_tumor", "time"),
-        mem=wf.get_resource("mutect2", "pileup_tumor", "memory"),
+        memory=wf.get_resource("mutect2", "pileup_tumor", "memory"),
         partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
     log:
         **wf. get_log_file('mutect2','pileup_tumor'),
@@ -114,7 +114,7 @@ rule somatic_variant_calling_mutect2_contamination:
     threads: wf.get_resource("mutect2", "contamination", "threads")
     resources:
         time=wf.get_resource("mutect2", "contamination", "time"),
-        mem=wf.get_resource("mutect2", "contamination", "memory"),
+        memory=wf.get_resource("mutect2", "contamination", "memory"),
         partition=wf.get_resource("mutect2", "contamination", "partition"),
     log:
         **wf. get_log_file('mutect2','contamination'),
@@ -130,7 +130,7 @@ rule somatic_variant_calling_mutect2_run:
     threads: wf.get_resource("mutect2", "run", "threads")
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
-        mem=wf.get_resource("mutect2", "run", "memory"),
+        memory=wf.get_resource("mutect2", "run", "memory"),
         partition=wf.get_resource("mutect2", "run", "partition"),
     log:
         **wf. get_log_file('mutect2','run'),
@@ -148,7 +148,7 @@ rule somatic_variant_calling_mutect2_filter:
     threads: wf.get_resource("mutect2", "filter", "threads")
     resources:
         time=wf.get_resource("mutect2", "filter", "time"),
-        mem=wf.get_resource("mutect2", "filter", "memory"),
+        memory=wf.get_resource("mutect2", "filter", "memory"),
         partition=wf.get_resource("mutect2", "filter", "partition"),
     log:
         **wf. get_log_file('mutect2','filter'),
@@ -170,7 +170,7 @@ rule somatic_variant_calling_scalpel_run:
     threads: wf.get_resource("scalpel", "run", "threads")
     resources:
         time=wf.get_resource("scalpel", "run", "time"),
-        mem=wf.get_resource("scalpel", "run", "memory"),
+        memory=wf.get_resource("scalpel", "run", "memory"),
         partition=wf.get_resource("scalpel", "run", "partition"),
     log:
         **wf. get_log_file('scalpel','run'),
@@ -191,7 +191,7 @@ rule somatic_variant_calling_strelka2_run:
     threads: wf.get_resource("strelka2", "run", "threads")
     resources:
         time=wf.get_resource("strelka2", "run", "time"),
-        mem=wf.get_resource("strelka2", "run", "memory"),
+        memory=wf.get_resource("strelka2", "run", "memory"),
         partition=wf.get_resource("strelka2", "run", "partition"),
     log:
         **wf. get_log_file('strelka2','run'),
@@ -213,7 +213,7 @@ rule somatic_variant_calling_bcftools_joint_run:
     threads: wf.get_resource("bcftools_joint", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_joint", "run", "time"),
-        mem=wf.get_resource("bcftools_joint", "run", "memory"),
+        memory=wf.get_resource("bcftools_joint", "run", "memory"),
         partition=wf.get_resource("bcftools_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("bcftools_joint", "get_args", "run"),
@@ -234,7 +234,7 @@ rule somatic_variant_calling_platypus_joint_run:
     threads: wf.get_resource("platypus_joint", "run", "threads")
     resources:
         time=wf.get_resource("platypus_joint", "run", "time"),
-        mem=wf.get_resource("platypus_joint", "run", "memory"),
+        memory=wf.get_resource("platypus_joint", "run", "memory"),
         partition=wf.get_resource("platypus_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("platypus_joint", "get_args", "run"),
@@ -255,7 +255,7 @@ rule somatic_variant_calling_gatk_ug_joint_run:
     threads: wf.get_resource("gatk_ug_joint", "run", "threads")
     resources:
         time=wf.get_resource("gatk_ug_joint", "run", "time"),
-        mem=wf.get_resource("gatk_ug_joint", "run", "memory"),
+        memory=wf.get_resource("gatk_ug_joint", "run", "memory"),
         partition=wf.get_resource("gatk_ug_joint", "run", "partition"),
     params:
         step_key="somatic_variant_calling",
@@ -278,7 +278,7 @@ rule somatic_variant_calling_gatk_hc_joint_run:
     threads: wf.get_resource("gatk_hc_joint", "run", "threads")
     resources:
         time=wf.get_resource("gatk_hc_joint", "run", "time"),
-        mem=wf.get_resource("gatk_hc_joint", "run", "memory"),
+        memory=wf.get_resource("gatk_hc_joint", "run", "memory"),
         partition=wf.get_resource("gatk_hc_joint", "run", "partition"),
     params:
         step_key="somatic_variant_calling",
@@ -301,7 +301,7 @@ rule somatic_variant_calling_varscan_joint_run:
     threads: wf.get_resource("varscan_joint", "run", "threads")
     resources:
         time=wf.get_resource("varscan_joint", "run", "time"),
-        mem=wf.get_resource("varscan_joint", "run", "memory"),
+        memory=wf.get_resource("varscan_joint", "run", "memory"),
         partition=wf.get_resource("varscan_joint", "run", "partition"),
     params:
         args=wf.substep_dispatch("varscan_joint", "get_args", "call_pedigree"),

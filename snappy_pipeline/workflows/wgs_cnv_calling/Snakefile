@@ -74,7 +74,7 @@ rule wgs_cnv_calling_cnvetti_coverage:
     threads: wf.get_resource("cnvetti", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvetti", "coverage", "time"),
-        mem=wf.get_resource("cnvetti", "coverage", "memory"),
+        memory=wf.get_resource("cnvetti", "coverage", "memory"),
         partition=wf.get_resource("cnvetti", "coverage", "partition"),
     log:
         **wf. get_log_file('cnvetti','coverage'),
@@ -90,7 +90,7 @@ rule wgs_cnv_calling_cnvetti_segment:
     threads: wf.get_resource("cnvetti", "segment", "threads")
     resources:
         time=wf.get_resource("cnvetti", "segment", "time"),
-        mem=wf.get_resource("cnvetti", "segment", "memory"),
+        memory=wf.get_resource("cnvetti", "segment", "memory"),
         partition=wf.get_resource("cnvetti", "segment", "partition"),
     log:
         **wf. get_log_file('cnvetti','segment'),
@@ -106,7 +106,7 @@ rule wgs_cnv_calling_cnvetti_merge_segments:
     threads: wf.get_resource("cnvetti", "merge_segments", "threads")
     resources:
         time=wf.get_resource("cnvetti", "merge_segments", "time"),
-        mem=wf.get_resource("cnvetti", "merge_segments", "memory"),
+        memory=wf.get_resource("cnvetti", "merge_segments", "memory"),
         partition=wf.get_resource("cnvetti", "merge_segments", "partition"),
     log:
         **wf. get_log_file('cnvetti','merge_segments'),
@@ -122,7 +122,7 @@ rule wgs_cnv_calling_cnvetti_genotype:
     threads: wf.get_resource("cnvetti", "genotype", "threads")
     resources:
         time=wf.get_resource("cnvetti", "genotype", "time"),
-        mem=wf.get_resource("cnvetti", "genotype", "memory"),
+        memory=wf.get_resource("cnvetti", "genotype", "memory"),
         partition=wf.get_resource("cnvetti", "genotype", "partition"),
     log:
         **wf. get_log_file('cnvetti','genotype'),
@@ -138,7 +138,7 @@ rule wgs_cnv_calling_cnvetti_merge_genotypes:
     threads: wf.get_resource("cnvetti", "merge_genotypes", "threads")
     resources:
         time=wf.get_resource("cnvetti", "merge_genotypes", "time"),
-        mem=wf.get_resource("cnvetti", "merge_genotypes", "memory"),
+        memory=wf.get_resource("cnvetti", "merge_genotypes", "memory"),
         partition=wf.get_resource("cnvetti", "merge_genotypes", "partition"),
     log:
         **wf. get_log_file('cnvetti','merge_genotypes'),
@@ -154,7 +154,7 @@ rule wgs_cnv_calling_cnvetti_reorder_vcf:
     threads: wf.get_resource("cnvetti", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("cnvetti", "reorder_vcf", "time"),
-        mem=wf.get_resource("cnvetti", "reorder_vcf", "memory"),
+        memory=wf.get_resource("cnvetti", "reorder_vcf", "memory"),
         partition=wf.get_resource("cnvetti", "reorder_vcf", "partition"),
     log:
         **wf. get_log_file('cnvetti','reorder_vcf'),
@@ -175,7 +175,7 @@ rule wgs_cnv_calling_erds_run:
     threads: wf.get_resource("erds", "run", "threads")
     resources:
         time=wf.get_resource("erds", "run", "time"),
-        mem=wf.get_resource("erds", "run", "memory"),
+        memory=wf.get_resource("erds", "run", "memory"),
         partition=wf.get_resource("erds", "run", "partition"),
     log:
         wf.get_log_file("erds", "run"),
@@ -194,7 +194,7 @@ rule wgs_cnv_calling_erds_sv2_call:
     threads: wf.get_resource("erds_sv2", "call", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "call", "time"),
-        mem=wf.get_resource("erds_sv2", "call", "memory"),
+        memory=wf.get_resource("erds_sv2", "call", "memory"),
         partition=wf.get_resource("erds_sv2", "call", "partition"),
     log:
         wf.get_log_file("erds_sv2", "call"),
@@ -210,7 +210,7 @@ rule wgs_cnv_calling_erds_sv2_merge_calls:
     threads: wf.get_resource("erds_sv2", "merge_calls", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "merge_calls", "time"),
-        mem=wf.get_resource("erds_sv2", "merge_calls", "memory"),
+        memory=wf.get_resource("erds_sv2", "merge_calls", "memory"),
         partition=wf.get_resource("erds_sv2", "merge_calls", "partition"),
     log:
         wf.get_log_file("erds_sv2", "merge_calls"),
@@ -226,7 +226,7 @@ rule wgs_cnv_calling_erds_sv2_genotype:
     threads: wf.get_resource("erds_sv2", "genotype", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "genotype", "time"),
-        mem=wf.get_resource("erds_sv2", "genotype", "memory"),
+        memory=wf.get_resource("erds_sv2", "genotype", "memory"),
         partition=wf.get_resource("erds_sv2", "genotype", "partition"),
     log:
         wf.get_log_file("erds_sv2", "genotype"),
@@ -242,7 +242,7 @@ rule wgs_cnv_calling_erds_sv2_info_to_format:
     threads: wf.get_resource("erds_sv2", "info_to_format", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "info_to_format", "time"),
-        mem=wf.get_resource("erds_sv2", "info_to_format", "memory"),
+        memory=wf.get_resource("erds_sv2", "info_to_format", "memory"),
         partition=wf.get_resource("erds_sv2", "info_to_format", "partition"),
     log:
         wf.get_log_file("erds_sv2", "info_to_format"),
@@ -258,7 +258,7 @@ rule wgs_cnv_calling_erds_sv2_merge_genotypes:
     threads: wf.get_resource("erds_sv2", "merge_genotypes", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "merge_genotypes", "time"),
-        mem=wf.get_resource("erds_sv2", "merge_genotypes", "memory"),
+        memory=wf.get_resource("erds_sv2", "merge_genotypes", "memory"),
         partition=wf.get_resource("erds_sv2", "merge_genotypes", "partition"),
     log:
         wf.get_log_file("erds_sv2", "merge_genotypes"),
@@ -274,7 +274,7 @@ rule wgs_cnv_calling_erds_sv2_reorder_vcf:
     threads: wf.get_resource("erds_sv2", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("erds_sv2", "reorder_vcf", "time"),
-        mem=wf.get_resource("erds_sv2", "reorder_vcf", "memory"),
+        memory=wf.get_resource("erds_sv2", "reorder_vcf", "memory"),
         partition=wf.get_resource("erds_sv2", "reorder_vcf", "partition"),
     log:
         wf.get_log_file("erds_sv2", "reorder_vcf"),

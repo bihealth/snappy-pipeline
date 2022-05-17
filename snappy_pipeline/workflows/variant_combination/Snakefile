@@ -74,7 +74,7 @@ rule variant_combination_vars_intersect_run:
     threads: wf.get_resource("vars_intersect", "run", "threads")
     resources:
         time=wf.get_resource("vars_intersect", "run", "time"),
-        mem=wf.get_resource("vars_intersect", "run", "memory"),
+        memory=wf.get_resource("vars_intersect", "run", "memory"),
         partition=wf.get_resource("vars_intersect", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_intersect", "get_args", "run"),
@@ -95,7 +95,7 @@ rule variant_combination_vars_share_interval_run:
     threads: wf.get_resource("vars_share_interval", "run", "threads")
     resources:
         time=wf.get_resource("vars_share_interval", "run", "time"),
-        mem=wf.get_resource("vars_share_interval", "run", "memory"),
+        memory=wf.get_resource("vars_share_interval", "run", "memory"),
         partition=wf.get_resource("vars_share_interval", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_share_interval", "get_args", "run"),

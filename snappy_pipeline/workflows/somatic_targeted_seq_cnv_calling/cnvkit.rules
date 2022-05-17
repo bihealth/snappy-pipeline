@@ -4,7 +4,7 @@ rule somatic_accessed_seq_cnv_calling_cnvkit_access:
     threads: wf.get_resource("cnvkit", "access", "threads")
     resources:
         time=wf.get_resource("cnvkit", "access", "time"),
-        mem=wf.get_resource("cnvkit", "access", "memory"),
+        memory=wf.get_resource("cnvkit", "access", "memory"),
         partition=wf.get_resource("cnvkit", "access", "partition"),
     log:
         **wf. get_log_file('cnvkit','access'),
@@ -20,7 +20,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_target:
     threads: wf.get_resource("cnvkit", "target", "threads")
     resources:
         time=wf.get_resource("cnvkit", "target", "time"),
-        mem=wf.get_resource("cnvkit", "target", "memory"),
+        memory=wf.get_resource("cnvkit", "target", "memory"),
         partition=wf.get_resource("cnvkit", "target", "partition"),
     log:
         **wf. get_log_file('cnvkit','target'),
@@ -36,7 +36,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_antitarget:
     threads: wf.get_resource("cnvkit", "antitarget", "threads")
     resources:
         time=wf.get_resource("cnvkit", "antitarget", "time"),
-        mem=wf.get_resource("cnvkit", "antitarget", "memory"),
+        memory=wf.get_resource("cnvkit", "antitarget", "memory"),
         partition=wf.get_resource("cnvkit", "antitarget", "partition"),
     log:
         **wf. get_log_file('cnvkit','antitarget'),
@@ -52,7 +52,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_coverage:
     threads: wf.get_resource("cnvkit", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvkit", "coverage", "time"),
-        mem=wf.get_resource("cnvkit", "coverage", "memory"),
+        memory=wf.get_resource("cnvkit", "coverage", "memory"),
         partition=wf.get_resource("cnvkit", "coverage", "partition"),
     log:
         **wf. get_log_file('cnvkit','coverage'),
@@ -68,7 +68,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_reference:
     threads: wf.get_resource("cnvkit", "reference", "threads")
     resources:
         time=wf.get_resource("cnvkit", "reference", "time"),
-        mem=wf.get_resource("cnvkit", "reference", "memory"),
+        memory=wf.get_resource("cnvkit", "reference", "memory"),
         partition=wf.get_resource("cnvkit", "reference", "partition"),
     log:
         **wf. get_log_file('cnvkit','reference'),
@@ -84,7 +84,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_fix:
     threads: wf.get_resource("cnvkit", "fix", "threads")
     resources:
         time=wf.get_resource("cnvkit", "fix", "time"),
-        mem=wf.get_resource("cnvkit", "fix", "memory"),
+        memory=wf.get_resource("cnvkit", "fix", "memory"),
         partition=wf.get_resource("cnvkit", "fix", "partition"),
     log:
         **wf. get_log_file('cnvkit','fix'),
@@ -100,7 +100,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_segment:
     threads: wf.get_resource("cnvkit", "segment", "threads")
     resources:
         time=wf.get_resource("cnvkit", "segment", "time"),
-        mem=wf.get_resource("cnvkit", "segment", "memory"),
+        memory=wf.get_resource("cnvkit", "segment", "memory"),
         partition=wf.get_resource("cnvkit", "segment", "partition"),
     log:
         **wf. get_log_file('cnvkit','segment'),
@@ -116,7 +116,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_call:
     threads: wf.get_resource("cnvkit", "call", "threads")
     resources:
         time=wf.get_resource("cnvkit", "call", "time"),
-        mem=wf.get_resource("cnvkit", "call", "memory"),
+        memory=wf.get_resource("cnvkit", "call", "memory"),
         partition=wf.get_resource("cnvkit", "call", "partition"),
     log:
         **wf. get_log_file('cnvkit','call'),
@@ -132,7 +132,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_plot:
     threads: wf.get_resource("cnvkit", "plot", "threads")
     resources:
         time=wf.get_resource("cnvkit", "plot", "time"),
-        mem=wf.get_resource("cnvkit", "plot", "memory"),
+        memory=wf.get_resource("cnvkit", "plot", "memory"),
         partition=wf.get_resource("cnvkit", "plot", "partition"),
     log:
         **wf. get_log_file('cnvkit','plot'),
@@ -148,7 +148,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_export:
     threads: wf.get_resource("cnvkit", "export", "threads")
     resources:
         time=wf.get_resource("cnvkit", "export", "time"),
-        mem=wf.get_resource("cnvkit", "export", "memory"),
+        memory=wf.get_resource("cnvkit", "export", "memory"),
         partition=wf.get_resource("cnvkit", "export", "partition"),
     log:
         **wf. get_log_file('cnvkit','export'),
@@ -164,7 +164,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_report:
     threads: wf.get_resource("cnvkit", "report", "threads")
     resources:
         time=wf.get_resource("cnvkit", "report", "time"),
-        mem=wf.get_resource("cnvkit", "report", "memory"),
+        memory=wf.get_resource("cnvkit", "report", "memory"),
         partition=wf.get_resource("cnvkit", "report", "partition"),
     log:
         **wf. get_log_file('cnvkit','report'),
