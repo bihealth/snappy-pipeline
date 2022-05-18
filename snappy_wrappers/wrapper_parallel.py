@@ -759,11 +759,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 resources:
                     time=merge_resources_time,
                     memory=merge_resources_memory,
-                    partition=merge_resources_partitio},
+                    partition=merge_resources_partition,
                 log: **{all_log}
                 shell:
                     r'''
-                    set -euo pipefail  # inofficial Bash strict mode
+                    set -euo pipefail  # Unofficial Bash strict mode
 
                     # Initialize output directory -----------------------------------------
 
