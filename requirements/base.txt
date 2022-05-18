@@ -32,4 +32,4 @@ jinja2 >=2.10
 altamisa >=0.2.6
 
 # REST API client for VarFish Server
-varfish-cli >=0.2.0,<0.3.0
+varfish-cli >=0.2.0
