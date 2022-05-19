@@ -185,6 +185,7 @@ def run_snakemake(
     max_status_checks_per_second=0,
     job_name_token="",
     partition=None,
+    profile=None
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
     if config["use_profile"]:
@@ -208,7 +209,7 @@ def run_snakemake(
                             "--verbose",
                             "--use-conda",  # sic!
                             "--profile",
-                            shlex.quote(config["use_profile"]),
+                            shlex.quote(profile),
                             "--jobs",
                             str(num_jobs or config["num_jobs"]),
                             "--restart-times",
@@ -239,7 +240,7 @@ def run_snakemake(
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
             cores=1,
             nodes=num_jobs or config["num_jobs"],
-            profile=config["use_profile"],
+            #profile=config["use_profile"],
             max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
             max_status_checks_per_second=max_status_checks_per_second
             or config["max_status_checks_per_second"],
@@ -478,6 +479,8 @@ class ParallelBaseWrapper:
         return (
             textwrap.dedent(
                 r"""
+            import datetime
+
             shell.executable("/bin/bash")
             shell.prefix("set -ex;")
 
@@ -643,10 +646,7 @@ class ParallelBaseWrapper:
             "max_jobs_per_second": self._get_config()["max_jobs_per_second"],
             "max_status_checks_per_second": self._get_config()["max_status_checks_per_second"],
             "job_name_token": self._job_name_token(),
-            "profile": (
-                self._get_config().get("profile", None)
-                or self._get_step_config().get("profile", None)
-            ),
+            "profile": os.getenv('SNAPPY_PIPELINE_SNAKEMAKE_PROFILE'),
         }
         self.logger.info("Launching excecution with args: %s", repr(kwargs))
         run_snakemake(self._get_config(), **kwargs)
@@ -721,11 +721,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output:
                     vcf='merge_out.{chunk_no}.d/out/out.vcf.gz',
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
-                threads: merge_resources_threads
+                threads: resource_merge_threads
                 resources:
-                    time=merge_resources_time,
-                    memory=merge_resources_memory,
-                    partition=merge_resources_partition,
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
                 shell:
                     r'''
                     set -euo pipefail  # inofficial Bash strict mode
@@ -755,11 +755,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
-                threads: merge_resources_threads
+                threads: resource_merge_threads
                 resources:
-                    time=merge_resources_time,
-                    memory=merge_resources_memory,
-                    partition=merge_resources_partition,
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
                     r'''
@@ -842,11 +842,11 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: chunk_resources_threads
+                    threads: resource_chunk_threads
                     resources:
-                        time=chunk_resources_time,
-                        memory=chunk_resources_memory,
-                        partition=chunk_resources_partition,
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -892,7 +892,7 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: chunk_resources_threads}
+                    threads: chunk_resources_threads
                     resources:
                         time=chunk_resources_time,
                         memory=chunk_resources_memory,

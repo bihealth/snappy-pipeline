@@ -386,6 +386,8 @@ def main(argv=None):
 
     global DEFAULT_PARTITION
     DEFAULT_PARTITION = args.default_partition
+    os.environ['SNAPPY_PIPELINE_PARTITION'] = args.default_partition
+    os.environ['SNAPPY_PIPELINE_SNAKEMAKE_PROFILE'] = args.snappy_pipeline_use_profile
 
     if not args.step:
         for cfg in CONFIG_FILES:
