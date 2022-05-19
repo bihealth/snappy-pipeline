@@ -356,7 +356,7 @@ def test_cnvetti_step_part_get_resource_usage(wgs_cnv_calling_workflow):
     """Tests CnvettiStepPart.get_resource_usage()"""
     all_actions = wgs_cnv_calling_workflow.substep_getattr("cnvetti", "actions")
     # Define expected
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "12288M", "partition": None}
+    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "12288M", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():
@@ -405,7 +405,7 @@ def test_erds_step_part_get_log_file(wgs_cnv_calling_workflow):
 def test_erds_step_part_get_resource_usage(wgs_cnv_calling_workflow):
     """Tests ErdsStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "32768M", "partition": None}
+    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "32768M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -587,18 +587,23 @@ def test_erds_sv2_step_part_get_resource_usage(wgs_cnv_calling_workflow):
     all_actions = wgs_cnv_calling_workflow.substep_getattr("erds_sv2", "actions")
     default_actions = [action for action in all_actions if action not in cheap_actions + ("call",)]
     # Define expected
-    call_expected_dict = {"threads": 1, "time": "6-08:00:00", "memory": "40960M", "partition": None}
+    call_expected_dict = {
+        "threads": 1,
+        "time": "6-08:00:00",
+        "memory": "40960M",
+        "partition": "medium",
+    }
     cheap_expected_dict = {
         "threads": 2,
         "time": "1-00:00:00",
         "memory": "7680M",
-        "partition": None,
+        "partition": "medium",
     }
     default_expected_dict = {
         "threads": 4,
         "time": "6-08:00:00",
         "memory": "30720M",
-        "partition": None,
+        "partition": "medium",
     }
     # Evaluate - call
     for resource, expected in call_expected_dict.items():

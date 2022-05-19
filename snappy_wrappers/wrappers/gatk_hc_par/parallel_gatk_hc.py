@@ -37,11 +37,11 @@ class ParallelGatkHcWrapper(ParallelVariantCallingBaseWrapper):
             threads=1,
             memory=gib(14.0 * self.get_job_mult_memory()),
             time=str(hours(4 * self.get_job_mult_time())),
-            partition=os.getenv('SNAPPY_PIPELINE_PARTITION'),
+            partition=os.getenv("SNAPPY_PIPELINE_PARTITION"),
         )
         self.merge_resources = ResourceUsage(
             threads=2,
             memory=gib(2.0 * self.get_merge_mult_memory()),
             time=str(hours(4 * self.get_merge_mult_time())),
-            partition=os.getenv('SNAPPY_PIPELINE_PARTITION'),
+            partition=os.getenv("SNAPPY_PIPELINE_PARTITION"),
         )

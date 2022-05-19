@@ -120,7 +120,7 @@ def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_work
 def test_dkfz_bias_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-00:00:00", "memory": "3072M", "partition": None}
+    expected_dict = {"threads": 1, "time": "3-00:00:00", "memory": "3072M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -224,7 +224,7 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     # All actions
     actions = ("run", "write_panel")
     # Define expected
-    expected_dict = {"threads": 1, "time": "6-00:00:00", "memory": "8192M", "partition": None}
+    expected_dict = {"threads": 1, "time": "6-00:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for action in actions:
         for resource, expected in expected_dict.items():
@@ -279,7 +279,7 @@ def test_apply_filters_step_part_get_log_file(somatic_variant_filtration_workflo
 def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -343,7 +343,7 @@ def test_filter_to_exons_step_part_get_log_file(somatic_variant_filtration_workf
 def test_filter_to_exons_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

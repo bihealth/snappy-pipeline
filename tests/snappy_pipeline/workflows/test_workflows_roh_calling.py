@@ -233,7 +233,7 @@ def test_roh_calling_bcftools_roh_step_part_get_log_file(roh_calling_workflow):
 def test_roh_calling_bcftools_roh_step_part_get_resource_usage(roh_calling_workflow):
     """Tests BcftoolsRohStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "00:04:00", "memory": "4000M", "partition": None}
+    expected_dict = {"threads": 2, "time": "00:04:00", "memory": "4000M", "partition": "medium"}
     # Evaluate
     for action in ("run", "make_bed"):
         for resource, expected in expected_dict.items():

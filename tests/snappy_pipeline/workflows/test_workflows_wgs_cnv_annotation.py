@@ -135,7 +135,7 @@ def test_vcf_cnv_filter_step_part_get_log_file(wgs_cnv_annotation_workflow):
 def test_vcf_cnv_filter_step_part_get_resource_usage(wgs_cnv_annotation_workflow):
     """Tests VcfCnvFilterStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "10240M", "partition": None}
+    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "10240M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

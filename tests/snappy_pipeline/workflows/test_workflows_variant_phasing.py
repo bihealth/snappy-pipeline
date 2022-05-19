@@ -159,7 +159,7 @@ def test_write_trio_pedigree_step_part_run(variant_phasing_workflow, fake_fs):
 def test_write_trio_pedigree_step_part_get_resource_usage(variant_phasing_workflow):
     """Tests WriteTrioPedigreeStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -219,7 +219,7 @@ def test_gatk_phase_by_transmission_step_part_get_log_file(variant_phasing_workf
 def test_gatk_phase_by_transmission_step_part_get_resource_usage(variant_phasing_workflow):
     """Tests PhaseByTransmissionStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -281,7 +281,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_log_file(variant_phasing_wo
 def test_gatk_read_backed_phasing_only_step_part_get_resource_usage(variant_phasing_workflow):
     """Tests ReadBackedPhasingOnlyStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -343,7 +343,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_log_file(variant_phasing_wo
 def test_gatk_read_backed_phasing_also_step_part_get_resource_usage(variant_phasing_workflow):
     """Tests ReadBackedPhasingAlsoStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

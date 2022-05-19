@@ -135,7 +135,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_resource_usag
 ):
     """Tests WriteIgvSessionFileStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

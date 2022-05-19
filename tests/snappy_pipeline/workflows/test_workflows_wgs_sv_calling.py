@@ -116,13 +116,13 @@ def test_delly2_step_part_get_resource_usage(wgs_sv_calling_workflow):
         "threads": 2,
         "time": "4-00:00:00",
         "memory": "14336M",
-        "partition": None,
+        "partition": "medium",
     }
     default_expected_dict = {
         "threads": 2,
         "time": "7-00:00:00",
         "memory": "40960M",
-        "partition": None,
+        "partition": "medium",
     }
 
     # Evaluate - cheap actions
@@ -346,7 +346,7 @@ def test_manta_step_part_get_log_file(wgs_sv_calling_workflow):
 def test_manta_step_part_get_resource_usage(wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -396,7 +396,7 @@ def test_svtk_step_part_get_log_file(wgs_sv_calling_workflow):
 def test_svtk_step_part_get_resource_usage(wgs_sv_calling_workflow):
     """Tests SvTkStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "4096M", "partition": None}
+    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "4096M", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'standardize'
     for resource, expected in expected_dict.items():
@@ -581,7 +581,7 @@ def test_popdel_step_part_get_resource_usage(wgs_sv_calling_workflow):
     """Tests PopDelStepPart.get_resource_usage()"""
     all_actions = wgs_sv_calling_workflow.substep_getattr("popdel", "actions")
     # Define expected
-    expected_dict = {"threads": 2, "time": "4-00:00:00", "memory": "24576M", "partition": None}
+    expected_dict = {"threads": 2, "time": "4-00:00:00", "memory": "24576M", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():
@@ -644,7 +644,7 @@ def test_pb_honey_spots_step_part_get_log_file(wgs_sv_calling_workflow):
 def test_pb_honey_spots_step_part_get_resource_usage(wgs_sv_calling_workflow):
     """Tests PbHoneySpotsStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -693,7 +693,7 @@ def test_sniffles_step_part_get_log_file(wgs_sv_calling_workflow):
 def test_sniffles_step_part_get_resource_usage(wgs_sv_calling_workflow):
     """Tests SnifflesStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():

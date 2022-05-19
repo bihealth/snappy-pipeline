@@ -474,9 +474,14 @@ def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
         "threads": 16,
         "time": "2-00:00:00",
         "memory": "46080M",
-        "partition": None,
+        "partition": "medium",
     }
-    default_expected_dict = {"threads": 1, "time": "04:00:00", "memory": "7680M", "partition": None}
+    default_expected_dict = {
+        "threads": 1,
+        "time": "04:00:00",
+        "memory": "7680M",
+        "partition": "medium",
+    }
     # Evaluate - high resource actions
     for action in high_resource_actions:
         for resource, expected in high_res_expected_dict.items():
@@ -1775,9 +1780,14 @@ def test_xhmm_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
         "threads": 1,
         "time": "1-00:00:00",
         "memory": "12G",
-        "partition": None,
+        "partition": "medium",
     }
-    default_expected_dict = {"threads": 1, "time": "08:00:00", "memory": "12G", "partition": None}
+    default_expected_dict = {
+        "threads": 1,
+        "time": "08:00:00",
+        "memory": "12G",
+        "partition": "medium",
+    }
 
     # Evaluate - merge_cov
     for resource, expected in merge_cov_expected_dict.items():

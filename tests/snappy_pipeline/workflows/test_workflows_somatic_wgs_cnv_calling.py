@@ -132,7 +132,7 @@ def test_canvas_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_workflow)
 def test_canvas_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     """Tests CanvasSomaticWgsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -189,13 +189,23 @@ def test_control_freec_somatic_step_part_get_log_file(somatic_wgs_cnv_calling_wo
 def test_control_freec_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     """Tests ControlFreecStepPart.get_resource()"""
     # Define expected
-    run_expected_dict = {"threads": 8, "time": "1-16:00:00", "memory": "61440M", "partition": None}
-    plot_expected_dict = {"threads": 1, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    run_expected_dict = {
+        "threads": 8,
+        "time": "1-16:00:00",
+        "memory": "61440M",
+        "partition": "medium",
+    }
+    plot_expected_dict = {
+        "threads": 1,
+        "time": "1-16:00:00",
+        "memory": "61440M",
+        "partition": "medium",
+    }
     transform_expected_dict = {
         "threads": 1,
         "time": "1-16:00:00",
         "memory": "16384M",
-        "partition": None,
+        "partition": "medium",
     }
 
     # Evaluate action `run`
@@ -261,7 +271,7 @@ def test_cnvkit_somatic_wgs_step_part_get_log_file(somatic_wgs_cnv_calling_workf
 def test_cnvkit_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     """Tests CnvkitSomaticWgsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "1-16:00:00", "memory": "40960M", "partition": None}
+    expected_dict = {"threads": 4, "time": "1-16:00:00", "memory": "40960M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -395,7 +405,7 @@ def test_cnvetti_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Get all available actions
     all_actions = somatic_wgs_cnv_calling_workflow.substep_getattr("cnvetti", "actions")
     # Define expected
-    expected_dict = {"threads": 4, "time": "04:00:00", "memory": "15360M", "partition": None}
+    expected_dict = {"threads": 4, "time": "04:00:00", "memory": "15360M", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():

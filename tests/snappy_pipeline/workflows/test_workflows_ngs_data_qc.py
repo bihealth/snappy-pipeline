@@ -116,7 +116,7 @@ def test_fastqc_step_part_get_log_file(ngs_data_qc):
 def test_fastqc_step_part_get_resource_usage(ngs_data_qc):
     """Tests FastQcReportStepPart.get_resource_usage()"""
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

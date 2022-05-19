@@ -146,7 +146,7 @@ def test_varfish_annotator_step_part_get_log_file(targeted_seq_cnv_export_workfl
 def test_varfish_annotator_step_part_get_resource_usage(targeted_seq_cnv_export_workflow):
     """Tests VarfishAnnotatorAnnotateStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "14336M", "partition": None}
+    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

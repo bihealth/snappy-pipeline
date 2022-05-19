@@ -90,7 +90,7 @@ def test_melt_step_part_get_resource_usage(wgs_mei_calling_workflow):
     """Tests MeltStepPart.get_resource_usage()"""
     all_actions = wgs_mei_calling_workflow.substep_getattr("melt", "actions")
     # Define expected
-    expected_dict = {"threads": 6, "time": "5-07:00:00", "memory": "23040M", "partition": None}
+    expected_dict = {"threads": 6, "time": "5-07:00:00", "memory": "23040M", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():

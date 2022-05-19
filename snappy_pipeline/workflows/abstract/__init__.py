@@ -113,11 +113,10 @@ class BaseStepPart:
             raise ValueError(f"Invalid {action} not in {self.actions}")
         return self.resource_usage.get(action, self.default_resource_usage)
 
-    def get_default_partition(self) -> str:
+    @staticmethod
+    def get_default_partition() -> str:
         """Helper that returns the default partition."""
-        from snappy_pipeline.apps import snappy_snake
-
-        return snappy_snake.DEFAULT_PARTITION
+        return os.getenv("SNAPPY_PIPELINE_PARTITION")
 
     def get_resource(self, action: str, resource_name: str):
         """Return the amount of resources to be allocated for the given action.

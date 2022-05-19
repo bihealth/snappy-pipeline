@@ -129,7 +129,7 @@ def test_peddy_step_part_get_log_file(variant_checking_workflow):
 def test_peddy_step_part_get_resource_usage(variant_checking_workflow):
     """Tests PeddyStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "10:00:00", "memory": "15360M", "partition": None}
+    expected_dict = {"threads": 1, "time": "10:00:00", "memory": "15360M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

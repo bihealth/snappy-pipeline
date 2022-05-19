@@ -185,7 +185,7 @@ def run_snakemake(
     max_status_checks_per_second=0,
     job_name_token="",
     partition=None,
-    profile=None
+    profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
     if config["use_profile"]:
@@ -240,7 +240,6 @@ def run_snakemake(
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
             cores=1,
             nodes=num_jobs or config["num_jobs"],
-            #profile=config["use_profile"],
             max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
             max_status_checks_per_second=max_status_checks_per_second
             or config["max_status_checks_per_second"],
@@ -303,10 +302,12 @@ class ParallelBaseWrapper:
     #: don't go further into config dict).
     tool_name = None
     #: The token to use for job names and temporary directories.  Constructed from ``step_name``
-    #: and ``tool_name`` if not specified explicitely here.
+    #: and ``tool_name`` if not specified explicitly here.
     job_name_token = None
     #: The number of bases to pad the parallelization windows with.
     window_padding = 0
+    job_resources = None
+    merge_resources = None
 
     def __init__(self, snakemake):
         """Constructor.
@@ -479,8 +480,6 @@ class ParallelBaseWrapper:
         return (
             textwrap.dedent(
                 r"""
-            import datetime
-
             shell.executable("/bin/bash")
             shell.prefix("set -ex;")
 
@@ -646,7 +645,7 @@ class ParallelBaseWrapper:
             "max_jobs_per_second": self._get_config()["max_jobs_per_second"],
             "max_status_checks_per_second": self._get_config()["max_status_checks_per_second"],
             "job_name_token": self._job_name_token(),
-            "profile": os.getenv('SNAPPY_PIPELINE_SNAKEMAKE_PROFILE'),
+            "profile": os.getenv("SNAPPY_PIPELINE_SNAKEMAKE_PROFILE"),
         }
         self.logger.info("Launching excecution with args: %s", repr(kwargs))
         run_snakemake(self._get_config(), **kwargs)

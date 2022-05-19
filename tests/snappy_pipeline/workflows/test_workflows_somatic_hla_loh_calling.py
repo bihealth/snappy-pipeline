@@ -118,7 +118,7 @@ def test_lohhla_step_part_get_log_file(somatic_hla_loh_calling_workflow):
 def test_lohhla_step_part_get_resource_usage(somatic_hla_loh_calling_workflow):
     """Tests LohhlaStepPart.get_resource()"""
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

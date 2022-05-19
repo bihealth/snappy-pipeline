@@ -109,7 +109,7 @@ def test_fusioncatcher_step_part_get_log_file(somatic_gene_fusion_calling_workfl
 def test_fusioncatcher_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests FusioncatcherStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "30000M", "partition": None}
+    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "30000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -144,7 +144,7 @@ def test_jaffa_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
 def test_jaffa_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests JaffaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "163840M", "partition": None}
+    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "163840M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -179,7 +179,7 @@ def test_pizzly_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
 def test_pizzly_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests PizzlyStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "81920M", "partition": None}
+    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "81920M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -214,7 +214,7 @@ def test_star_fusion_step_part_get_log_file(somatic_gene_fusion_calling_workflow
 def test_star_fusion_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests StarFusionStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "122880M", "partition": None}
+    expected_dict = {"threads": 4, "time": "5-00:00:00", "memory": "122880M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -249,7 +249,7 @@ def test_defuse_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
 def test_defuse_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests DefuseStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "5-00:00:00", "memory": "81920M", "partition": None}
+    expected_dict = {"threads": 8, "time": "5-00:00:00", "memory": "81920M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -284,7 +284,7 @@ def test_hera_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
 def test_hera_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests HeraStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "5-00:00:00", "memory": "163840M", "partition": None}
+    expected_dict = {"threads": 8, "time": "5-00:00:00", "memory": "163840M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

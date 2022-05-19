@@ -117,7 +117,7 @@ def test_featurecounts_step_part_get_log_file(gene_expression_quantification_wor
 def test_featurecounts_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests FeatureCountsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "6700M", "partition": None}
+    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "6700M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

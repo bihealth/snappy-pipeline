@@ -164,15 +164,15 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
         "threads": 2,
         "time": "08:00:00",
         "memory": "30G",
-        "partition": None,
+        "partition": "medium",
     }
     prepare_panel_expected_dict = {
         "threads": 2,
         "time": "3-00:00:00",
         "memory": "3.7G",
-        "partition": None,
+        "partition": "medium",
     }
-    run_expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    run_expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
 
     # Evaluate action `create_panel`
     for resource, expected in create_panel_expected_dict.items():

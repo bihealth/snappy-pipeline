@@ -112,7 +112,7 @@ def test_manta_somatic_step_part_get_log_file(somatic_wgs_sv_calling_workflow):
 def test_manta_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -128,7 +128,7 @@ def test_delly2_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     # Get all available actions
     all_actions = somatic_wgs_sv_calling_workflow.substep_getattr("delly2", "actions")
     # Define expected
-    expected_dict = {"threads": 4, "time": "6-06:00:00", "memory": "15360M", "partition": None}
+    expected_dict = {"threads": 4, "time": "6-06:00:00", "memory": "15360M", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():

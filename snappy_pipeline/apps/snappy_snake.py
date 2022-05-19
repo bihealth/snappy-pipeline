@@ -130,9 +130,6 @@ STEP_TO_MODULE = {
     "wgs_sv_filtration": wgs_sv_filtration,
 }
 
-#: Configured default partition
-DEFAULT_PARTITION = "medium"
-
 
 def setup_logging(args):
     """Setup logger."""
@@ -333,7 +330,7 @@ def main(argv=None):
         help="Number of cluster jobs to run in parallel",
     )
     group.add_argument(
-        "--default-partition", type=str, default=None, help="Default partition to use, if any"
+        "--default-partition", type=str, default="medium", help="Default partition to use, if any"
     )
 
     group = parser.add_argument_group(
@@ -384,10 +381,9 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
 
-    global DEFAULT_PARTITION
-    DEFAULT_PARTITION = args.default_partition
-    os.environ['SNAPPY_PIPELINE_PARTITION'] = args.default_partition
-    os.environ['SNAPPY_PIPELINE_SNAKEMAKE_PROFILE'] = args.snappy_pipeline_use_profile
+    os.environ["SNAPPY_PIPELINE_PARTITION"] = args.default_partition
+    if args.snappy_pipeline_use_profile:
+        os.environ["SNAPPY_PIPELINE_SNAKEMAKE_PROFILE"] = args.snappy_pipeline_use_profile
 
     if not args.step:
         for cfg in CONFIG_FILES:

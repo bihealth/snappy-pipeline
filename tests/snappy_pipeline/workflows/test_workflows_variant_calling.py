@@ -134,7 +134,7 @@ def test_bcftools_step_part_get_log_file(variant_calling_workflow):
 def test_bcftools_step_part_get_resource(variant_calling_workflow):
     """Tests BcftoolsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -185,7 +185,7 @@ def test_freebayes_step_part_get_log_file(variant_calling_workflow):
 def test_freebayes_step_part_get_resource(variant_calling_workflow):
     """Tests FreebayesStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -251,7 +251,7 @@ def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
 def test_gatk_hc_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": None}
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -302,7 +302,7 @@ def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
 def test_gatk_ug_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": None}
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -422,13 +422,13 @@ def test_gatk_hc_gvcf_step_part_get_resource(variant_calling_workflow):
         "threads": 1,
         "time": "3-08:00:00",
         "memory": "10240M",
-        "partition": None,
+        "partition": "medium",
     }
     combine_gvcf_expected_dict = {
         "threads": 1,
         "time": "10-00:00:00",
         "memory": "10240M",
-        "partition": None,
+        "partition": "medium",
     }
 
     # Evaluate - default actions
@@ -490,7 +490,7 @@ def test_platypus_step_part_get_log_file(variant_calling_workflow):
 def test_platypus_step_part_get_resource(variant_calling_workflow):
     """Tests PlatypusStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "20:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "20:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -540,7 +540,7 @@ def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
 def test_varscan_step_part_call_pedigree_get_resource(variant_calling_workflow):
     """Tests VarscanStepPart.get_resource() - action 'call_pedigree' """
     # Define expected
-    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "4096M", "partition": None}
+    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "4096M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -581,7 +581,7 @@ def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
 def test_varscan_step_part_call_cohort_get_resource(variant_calling_workflow):
     """Tests VarscanStepPart.get_resource() - action 'call_pedigree' """
     # Define expected
-    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "16384M", "partition": None}
+    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "16384M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -633,7 +633,7 @@ def test_bcftools_stats_step_part_get_log_file(variant_calling_workflow):
 def test_bcftools_stats_step_part_get_resource(variant_calling_workflow):
     """Tests BcftoolsStatsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "1024M", "partition": None}
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "1024M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -685,7 +685,7 @@ def test_jannovar_statistics_step_part_get_log_file(variant_calling_workflow):
 def test_jannovar_statistics_stats_step_part_get_resource(variant_calling_workflow):
     """Tests JannovarStatisticsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "04:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "04:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

@@ -255,7 +255,7 @@ def test_cnvetti_on_target_step_part_get_log_file_postprocess(
 def test_cnvetti_on_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvettiOnTargetStepPart.get_resource_usage() """
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7500M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7500M", "partition": "medium"}
     # Evaluate
     all_actions = somatic_targeted_seq_cnv_calling_workflow.substep_getattr(
         "cnvetti_on_target", "actions"
@@ -293,7 +293,7 @@ def test_cnvkit_access_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_access_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'access' """
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -330,7 +330,7 @@ def test_cnvkit_target_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'target' """
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -372,7 +372,7 @@ def test_cnvkit_antitarget_step_part_get_log_file(somatic_targeted_seq_cnv_calli
 def test_cnvkit_antitarget_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget' """
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -428,7 +428,7 @@ def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling
 def test_cnvkit_coverage_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'coverage'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -478,7 +478,7 @@ def test_cnvkit_reference_step_part_get_log_file(somatic_targeted_seq_cnv_callin
 def test_cnvkit_reference_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'reference'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -527,7 +527,7 @@ def test_cnvkit_fix_step_part_get_log_file(somatic_targeted_seq_cnv_calling_work
 def test_cnvkit_fix_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'fix'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -573,7 +573,7 @@ def test_cnvkit_segment_step_part_get_log_file(somatic_targeted_seq_cnv_calling_
 def test_cnvkit_segment_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'fix'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -619,7 +619,7 @@ def test_cnvkit_call_step_part_get_log_file(somatic_targeted_seq_cnv_calling_wor
 def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -677,7 +677,7 @@ def test_cnvkit_plot_step_part_get_log_file(somatic_targeted_seq_cnv_calling_wor
 def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "30720M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "30720M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -729,7 +729,7 @@ def test_cnvkit_export_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_export_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -791,7 +791,7 @@ def test_cnvkit_report_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_report_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -899,7 +899,7 @@ def test_copywriter_step_part_get_log_file_call(somatic_targeted_seq_cnv_calling
 def test_copywriter_step_part_get_resource_usage_prepare(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CopywriterStepPart.get_resource_usage() - action 'prepare'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "4000M", "partition": None}
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "4000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -912,7 +912,7 @@ def test_copywriter_step_part_get_resource_usage_prepare(somatic_targeted_seq_cn
 def test_copywriter_step_part_get_resource_usage_run(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CopywriterStepPart.get_resource_usage() - action 'run'"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "16:00:00", "memory": "80000M", "partition": None}
+    expected_dict = {"threads": 2, "time": "16:00:00", "memory": "80000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -925,7 +925,7 @@ def test_copywriter_step_part_get_resource_usage_run(somatic_targeted_seq_cnv_ca
 def test_copywriter_step_part_get_resource_usage_call(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CopywriterStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "03:59:00", "memory": "8000M", "partition": None}
+    expected_dict = {"threads": 8, "time": "03:59:00", "memory": "8000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

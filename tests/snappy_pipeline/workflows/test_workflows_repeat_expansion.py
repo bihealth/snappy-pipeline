@@ -163,7 +163,7 @@ def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
 def test_expansionhunter_step_part_get_resource_usage(repeat_expansion_workflow):
     """Tests RepeatExpansionWorkflow.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -205,7 +205,7 @@ def test_expansionhunter_annotate_step_part_get_output_files(repeat_expansion_wo
 def test_expansionhunter_annotate_step_part_get_resource_usage(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": None}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

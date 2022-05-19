@@ -282,7 +282,7 @@ def test_ascat_step_part_get_resource_usage(somatic_purity_ploidy_estimate_workf
         "run_ascat",
     )
     # Define expected
-    expected_dict = {"threads": 8, "time": "2-00:00:00", "memory": "81920M", "partition": None}
+    expected_dict = {"threads": 8, "time": "2-00:00:00", "memory": "81920M", "partition": "medium"}
     # Evaluate
     for action in actions:
         for resource, expected in expected_dict.items():

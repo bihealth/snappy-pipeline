@@ -136,7 +136,7 @@ def test_filter_quality_step_part_get_log_file(wgs_cnv_filtration_workflow):
 def test_filter_quality_step_part_get_resource_usage(wgs_cnv_filtration_workflow):
     """Tests FilterQualityStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -196,7 +196,7 @@ def test_filter_inheritance_step_part_get_log_file(wgs_cnv_filtration_workflow):
 def test_filter_inheritance_step_part_get_resource_usage(wgs_cnv_filtration_workflow):
     """Tests FilterInheritanceStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -258,7 +258,7 @@ def test_filter_regions_step_part_get_log_file(wgs_cnv_filtration_workflow):
 def test_filter_regions_step_part_get_resource_usage(wgs_cnv_filtration_workflow):
     """Tests FilterRegionsStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

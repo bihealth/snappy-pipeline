@@ -160,7 +160,7 @@ def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
 def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests MutectStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "3-00:00:00", "memory": "7577M", "partition": None}
+    expected_dict = {"threads": 2, "time": "3-00:00:00", "memory": "7577M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -422,7 +422,7 @@ def test_mutect2_step_part_get_log_file_pileup_tumor(
 def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - run"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "3584M", "partition": None}
+    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "3584M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -433,7 +433,7 @@ def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workfl
 def test_mutect2_step_part_get_resource_usage_filter(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - filter"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "15872M", "partition": None}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "15872M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -444,7 +444,7 @@ def test_mutect2_step_part_get_resource_usage_filter(somatic_variant_calling_wor
 def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - contamination"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -455,7 +455,7 @@ def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_call
 def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - pileup_normal"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -466,7 +466,7 @@ def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_call
 def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - pileup_tumor"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": None}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -524,7 +524,7 @@ def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
 def test_scalpel_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests ScalpelStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "81920M", "partition": None}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "81920M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -589,7 +589,7 @@ def test_strelka2_step_part_get_log_file(somatic_variant_calling_workflow):
 def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests Strelka2StepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "4G", "partition": None}
+    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "4G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -653,7 +653,7 @@ def test_bcftools_joint_step_part_get_args(somatic_variant_calling_workflow):
 def test_bcftools_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests BcftoolsJointStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16384M", "partition": None}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16384M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -717,7 +717,7 @@ def test_varscan_joint_step_part_get_args(somatic_variant_calling_workflow):
 def test_varscan_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests VarscanJointStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "1024M", "partition": None}
+    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "1024M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -781,7 +781,7 @@ def test_platypus_joint_step_part_get_args(somatic_variant_calling_workflow):
 def test_platypus_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests PlatypusJointStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": None}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -845,7 +845,7 @@ def test_gatk_hc_joint_step_part_get_args(somatic_variant_calling_workflow):
 def test_gatk_hc_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests GatkHcJointStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": None}
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -909,7 +909,7 @@ def test_gatk_ug_joint_step_part_get_args(somatic_variant_calling_workflow):
 def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
     """Tests GatkUgJointStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": None}
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
