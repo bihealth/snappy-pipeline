@@ -124,7 +124,7 @@ Parallel Execution
 ==================
 
 For many of the variant callers, cluster-parallel execution has been implemented (indicated by
-having a ``drmaa_snippet`` configuration setting).  Here, a temporary directory with a Snakemake
+having a ``use_profile`` configuration setting).  Here, a temporary directory with a Snakemake
 workflow is written out and then executed.  The default behaviour that the temporary files are
 removed in the case of an error.  This behaviour can be changed by setting the ``keep_tmpdir``
 setting to ``"onerror"`` or ``"always"``.  Further, for debugging, the number of windows to
@@ -183,7 +183,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_calling
 step_config:
   variant_calling:
-    drmaa_snippet: ''  # default, you can override by step below
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     tools: ['gatk_ug']
     jannovar_statistics:
@@ -265,13 +264,12 @@ step_config:
       # Enable pedigree-wise calling
       pedigree_wise: true
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
       num_jobs_combine_gvcf_cort: 0
       num_jobs_genotype_cohort: 0
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 10         # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -300,11 +298,10 @@ step_config:
       - DepthPerSampleHC
     gatk_ug:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -349,11 +346,10 @@ step_config:
       # Divisor for window length in case of cohort-wide
       cohort_window_divisor: 50
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use drmaa for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
