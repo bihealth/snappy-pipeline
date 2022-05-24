@@ -146,5 +146,4 @@ def test_gatk_hc_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_
         expected = f.read()
     # Get actual and assert
     actual = wrapper_par.construct_merge_rule()
-    print(actual)
     assert actual == expected
