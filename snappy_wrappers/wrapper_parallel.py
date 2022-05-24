@@ -19,7 +19,7 @@ import sys
 import tempfile
 import textwrap
 
-from snakemake import snakemake
+from snakemake import get_profile_file, snakemake
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
@@ -252,11 +252,11 @@ def run_snakemake(
             restart_times=config["restart_times"],
             verbose=True,
             use_conda=False,  # has to be done externally (no locking if True here) and is!
-            jobscript="/etc/xdg/snakemake/cubi-v1/slurm-jobscript.sh",
-            cluster="/etc/xdg/snakemake/cubi-v1/slurm-submit.py",
-            cluster_status="/etc/xdg/snakemake/cubi-v1/slurm-status.py",
+            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
+            cluster=get_profile_file(profile, "slurm-submit.py"),
+            cluster_status=get_profile_file(profile, "slurm-status.py"),
+            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
             cluster_cancel="scancel",
-            cluster_sidecar="/etc/xdg/snakemake/cubi-v1/slurm-sidecar.py",
         )
     else:
         print(
