@@ -195,43 +195,46 @@ def run_snakemake(
             )
         )
         os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
-        with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
-            print(
-                " ".join(
-                    map(
-                        str,
-                        [
-                            "snakemake",
-                            "--cores 1",
-                            "--directory",
-                            os.getcwd(),
-                            "--printshellcmds",
-                            "--verbose",
-                            "--use-conda",  # sic!
-                            "--profile",
-                            shlex.quote(profile),
-                            "--jobs",
-                            str(num_jobs or config["num_jobs"]),
-                            "--restart-times",
-                            str(config["restart_times"]),
-                            "--jobname",
-                            shlex.quote(
-                                "snakejob{token}.{{rulename}}.{{jobid}}.sh".format(
-                                    token="." + job_name_token
-                                )
-                            ),
-                            "--max-jobs-per-second",
-                            str(max_jobs_per_second or config["max_jobs_per_second"]),
-                            "--max-status-checks-per-second",
-                            str(
-                                max_status_checks_per_second
-                                or config["max_status_checks_per_second"]
-                            ),
-                        ],
-                    )
-                ),
-                file=f_call,
-            )
+        # snakemake_call.sh is never used, as use snakemake(). see below
+        # TODO decide if keeping the file is worth it.
+        # might allow to re-run/finish aborted workflows in /tmp
+        #with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
+        #    print(
+        #        " ".join(
+        #            map(
+        #                str,
+        #                [
+        #                    "snakemake",
+        #                    "--directory",
+        #                    os.getcwd(),
+        #                    "--cores",
+        #                    "--printshellcmds",
+        #                    "--verbose",
+        #                    "--use-conda",  # sic!
+        #                    "--profile",
+        #                    shlex.quote(profile),
+        #                    "--jobs",
+        #                    str(num_jobs or config["num_jobs"]),
+        #                    "--restart-times",
+        #                    str(config["restart_times"]),
+        #                    "--jobname",
+        #                    shlex.quote(
+        #                        "snakejob{token}.{{rulename}}.{{jobid}}.sh".format(
+        #                            token="." + job_name_token
+        #                        )
+        #                    ),
+        #                    "--max-jobs-per-second",
+        #                    str(max_jobs_per_second or config["max_jobs_per_second"]),
+        #                    "--max-status-checks-per-second",
+        #                    str(
+        #                        max_status_checks_per_second
+        #                        or config["max_status_checks_per_second"]
+        #                    ),
+        #                ],
+        #            )
+        #        ),
+        #        file=f_call,
+        #    )
         if partition:
             os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
         result = snakemake(
@@ -246,6 +249,11 @@ def run_snakemake(
             restart_times=config["restart_times"],
             verbose=True,
             use_conda=False,  # has to be done externally (no locking if True here) and is!
+            jobscript="/etc/xdg/snakemake/cubi-v1/slurm-jobscript.sh",
+            cluster="/etc/xdg/snakemake/cubi-v1/slurm-submit.py",
+            cluster_status="/etc/xdg/snakemake/cubi-v1/slurm-status.py",
+            cluster_cancel="scancel",
+            cluster_sidecar="/etc/xdg/snakemake/cubi-v1/slurm-sidecar.py"
         )
     else:
         print(
