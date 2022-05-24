@@ -143,14 +143,44 @@ def gib(num):
     return int(num) * 1024 * 1024 * 1024
 
 
+def kib_to_string(num):
+    """
+    :param num: Number of kilobytes.
+    :type num: int
+
+    :return: Returns kilobytes string for memory usage with profile. Example: '200k'.
+    """
+    return f"{int(num)}k"
+
+
+def mib_to_string(num):
+    """
+    :param num: Number of megabytes.
+    :type num: int
+
+    :return: Returns megabytes string for memory usage with profile. Example: '8M'.
+    """
+    return f"{int(num)}M"
+
+
+def gib_to_string(num):
+    """
+    :param num: Number of gigabytes.
+    :type num: int
+
+    :return: Returns gigabytes string for memory usage with profile. Example: '12G'.
+    """
+    return f"{int(num)}G"
+
+
 def minutes(num):
     """Get Timedelta for minutes.
 
     :param num: Number of minutes.
     :type num: int
-    :return: Returns ``datetime.timedelta`` for ``num`` minutes.
+    :return: Returns ``datetime.timedelta`` as string for ``num`` minutes.
     """
-    return datetime.timedelta(minutes=num)
+    return str(datetime.timedelta(minutes=num))
 
 
 def hours(num):
@@ -158,9 +188,9 @@ def hours(num):
 
     :param num: Number of hours.
     :type num: int
-    :return: Returns ``datetime.timedelta`` for ``num`` hours.
+    :return: Returns ``datetime.timedelta`` as string for ``num`` hours.
     """
-    return datetime.timedelta(hours=num)
+    return str(datetime.timedelta(hours=num))
 
 
 def days(num):
@@ -168,9 +198,9 @@ def days(num):
 
     :param num: Number of days.
     :type num: int
-    :return: Returns ``datetime.timedelta`` for ``num`` days.
+    :return: Returns ``datetime.timedelta`` as string for ``num`` days.
     """
-    return datetime.timedelta(days=num)
+    return str(datetime.timedelta(days=num))
 
 
 class SnakemakeExecutionFailed(Exception):

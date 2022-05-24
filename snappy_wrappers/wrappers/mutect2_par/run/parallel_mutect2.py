@@ -13,10 +13,10 @@ import textwrap
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_pipeline.workflows.abstract import ResourceUsage
+from snappy_wrappers.resource_usage import ResourceUsage
 from snappy_wrappers.wrapper_parallel import (
     ParallelSomaticVariantCallingBaseWrapper,
-    gib,
+    gib_to_string,
     hours,
 )
 
@@ -53,14 +53,14 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
         super().__init__(snakemake)
         self.job_resources = ResourceUsage(
             threads=1,
-            memory=gib(14.0 * self.get_job_mult_memory()),
-            time=str(hours(1 * self.get_job_mult_time())),
+            memory=gib_to_string(14.0 * self.get_job_mult_memory()),
+            time=hours(1 * self.get_job_mult_time()),
             partition=os.getenv("SNAPPY_PIPELINE_PARTITION"),
         )
         self.merge_resources = ResourceUsage(
             threads=1,
-            memory=gib(16.0 * self.get_merge_mult_memory()),
-            time=str(hours(1 * self.get_merge_mult_time())),
+            memory=gib_to_string(16.0 * self.get_merge_mult_memory()),
+            time=hours(1 * self.get_merge_mult_time()),
             partition=os.getenv("SNAPPY_PIPELINE_PARTITION"),
         )
 
