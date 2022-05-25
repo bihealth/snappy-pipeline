@@ -12,7 +12,6 @@ import os.path
 import sys
 import typing
 
-import attr
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -37,6 +36,7 @@ from snappy_pipeline.base import (
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
+from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -47,18 +47,6 @@ set -x
 # -----------------------------------------------------------------------------
 
 """.lstrip()
-
-
-@attr.s(frozen=True, auto_attribs=True)
-class ResourceUsage:
-    """Resource usage specification to be used in ``BaseStepPart.default_resource_usage`` and
-    ``BaseStepPart.resource_usage.values()``.
-    """
-
-    threads: int
-    time: str
-    memory: str
-    partition: typing.Optional[str] = None
 
 
 class ImplementationUnavailableError(NotImplementedError):
