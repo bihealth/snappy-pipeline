@@ -965,11 +965,11 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: chunk_resources_threads
+                    threads: resource_chunk_threads
                     resources:
-                        time=chunk_resources_time,
-                        memory=chunk_resources_memory,
-                        partition=chunk_resources_partition,
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -1016,11 +1016,11 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: chunk_resources_threads
+                    threads: resource_chunk_threads
                     resources:
-                        time=chunk_resources_time,
-                        memory=chunk_resources_memory,
-                        partition=chunk_resources_partition,
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
@@ -1066,11 +1066,11 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: chunk_resources_threads
+                    threads: resource_chunk_threads
                     resources:
-                        time=chunk_resources_time,
-                        memory=chunk_resources_memory,
-                        partition=chunk_resources_partition,
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'

@@ -79,22 +79,25 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
             localrules: all
 
             def multiply_time(day_time_str, factor):
+                # Check if time contains day, ex: '1-00:00:00'
                 if "-" in day_time_str:
-                    arr = day_time_str.split("-")
-                    days = int(arr[0])
-                    time_str = arr[0]
+                    arr_ = day_time_str.split("-")
+                    days = int(arr_[0])
+                    time_str = arr_[1]
                 else:
                     days = 0
                     time_str = day_time_str
+
+                # Process based on time structure
+                arr_ = time_str.split(":")
                 if time_str.count(":") == 2: # hours:minutes:seconds
-                    seconds = int(arr[0]) * 60 * 60 + int(arr[1]) * 60 + int(arr[2])
+                    seconds = int(arr_[0]) * 60 * 60 + int(arr_[1]) * 60 + int(arr_[2])
                 elif time_str.count(":") == 1: # minutes:seconds
-                    arr = time_str.split(":")
-                    seconds = int(arr[0]) * 60 + int(arr[1])
+                    seconds = int(arr_[0]) * 60 + int(arr_[1])
                 elif time_str.count(":") == 0: # minutes
                     seconds = int(time_str) * 60
                 else:
-                    raise ValueError(f"Invalid time: {day_time}")
+                    raise ValueError(f"Invalid time: {{day_time_str}}")
                 seconds += days * 24 * 60 * 60
                 seconds = int(seconds * factor)
                 hours = seconds // (60 * 60)
@@ -105,17 +108,19 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                 return "%d-%d:%d:%d" % (days, hours, minutes, seconds)
 
             def multiply_memory(memory_str, factor):
+                memory_mb = None
                 suffixes = (
                     ("k", 1e-3),
                     ("M", 1),
                     ("G", 1e3),
                     ("T", 1e6),
                 )
-                for (suffix, mult) in:
+                for (suffix, mult) in suffixes:
                     if memory_str.endswith(suffix):
                         memory_mb = float(memory_str[:-1]) * mult
                         break
-                else:  # no match, assume no suffix int
+                # No match, assume no suffix int
+                if not memory_mb:
                     memory_mb = float(memory_str)
                 return int(memory_mb * factor)
 
@@ -180,11 +185,11 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
                     stats='merge_out.{chunk_no}.d/out/out.vcf.stats',
                     f1r2='merge_out.{chunk_no}.d/out/out.f1r2_tar.tar.gz'
-                threads: chunk_resources_threads
+                threads: resources_chunk_threads
                 resources:
-                    time=chunk_resources_time,
-                    memory=chunk_resources_memory,
-                    partition=chunk_resources_partition,
+                    time=resources_chunk_time,
+                    memory=resources_chunk_memory,
+                    partition=resources_chunk_partition,
                 shell:
                     r'''
                     set -euo pipefail  # Unofficial Bash strict mode
@@ -239,11 +244,11 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
-                threads: chunk_resources_threads
+                threads: resource_merge_threads
                 resources:
-                    time=merge_resources_time,
-                    memory=merge_resources_memory,
-                    partition=merge_resources_partition,
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
                     r'''
