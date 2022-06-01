@@ -42,7 +42,6 @@ def minimal_config():
               germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
               common_variants: REQUIRED # Common germline variants for contamination estimation
               # Parallelization configuration
-              drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
               num_cores: 2              # number of cores to use locally
               window_length: 50000000   # split input into windows of this size, each triggers a job
               num_jobs: 500             # number of windows to process in parallel
