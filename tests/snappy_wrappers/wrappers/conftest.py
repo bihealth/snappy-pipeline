@@ -159,6 +159,6 @@ def patch_module_fs(module_name, fake_fs, mocker):
     """Helper function to mock out the file-system related things in the module with the given
     name using the given fake_fs and pytest-mock mocker
     """
-    mocker.patch("{}.os".format(module_name), fake_fs.os)
-    mocker.patch("{}.open".format(module_name), fake_fs.open, create=True)
-    mocker.patch("{}.os".format(module_name), fake_fs.os)
+    mocker.patch(f"{module_name}.os", fake_fs.os)
+    mocker.patch(f"{module_name}.open", fake_fs.open, create=True)
+    mocker.patch(f"{module_name}.os", fake_fs.os)

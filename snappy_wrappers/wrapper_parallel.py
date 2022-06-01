@@ -225,9 +225,8 @@ def run_snakemake(
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
     if config["use_profile"]:
         print(
-            "Running with Snakemake profile on {num_jobs} cores in directory {cwd}".format(
-                num_jobs=config["num_jobs"], cwd=os.getcwd()
-            )
+            f"Running with Snakemake profile on {num_jobs or config['num_jobs']} "
+            f"cores in directory {os.getcwd()}"
         )
         os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
         if partition:

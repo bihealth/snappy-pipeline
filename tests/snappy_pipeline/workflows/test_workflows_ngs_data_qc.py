@@ -139,6 +139,6 @@ def test_ngs_data_qc_workflow_files(ngs_data_qc):
     """Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results from the tools."""
     # Check result file construction
-    expected = ["output/P00{i}-N1-DNA1-WGS1/report/fastqc/.done".format(i=i) for i in range(1, 7)]
+    expected = [f"output/P00{i}-N1-DNA1-WGS1/report/fastqc/.done" for i in range(1, 7)]
     actual = sorted(ngs_data_qc.get_result_files())
     assert actual == expected

@@ -149,9 +149,8 @@ def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
     # Define expected
     data_path = (Path(__file__).parent / "data/mutect2_par.snakemake").resolve()
-    with open(data_path, "r") as f:
+    with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
     # Get actual and assert
     actual = wrapper_par.construct_merge_rule()
-    print(actual)
     assert actual == expected
