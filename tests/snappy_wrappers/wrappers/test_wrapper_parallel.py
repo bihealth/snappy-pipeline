@@ -124,7 +124,14 @@ def test_minutes():
 def test_hours():
     """Tests wrapper_parallel.hours()"""
     # Define expected values
-    expected_dict = {1: "1:00:00", 0.5: "0:30:00"}
+    expected_dict = {
+        1: "1:00:00",
+        0.5: "0:30:00",
+        24: "1-00:00:00",
+        25: "1-01:00:00",
+        47: "1-23:00:00",
+        48: "2-00:00:00",
+    }
     # Get actual values and assert
     for input_, expected in expected_dict.items():
         actual = hours(input_)

@@ -190,7 +190,12 @@ def hours(num):
     :type num: int
     :return: Returns ``datetime.timedelta`` as string for ``num`` hours.
     """
-    return str(datetime.timedelta(hours=num))
+    output = str(datetime.timedelta(hours=num))
+    if "day" in output:
+        output = output.replace(" days, ", "-").replace(" day, ", "-")
+        tmp_arr = output.split("-")
+        output = tmp_arr[0] + "-" + ":".join([str(i).zfill(2) for i in tmp_arr[1].split(":")])
+    return output
 
 
 def days(num):
