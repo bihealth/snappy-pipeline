@@ -550,12 +550,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         "pileup_normal": ResourceUsage(
             threads=2,
             time="03:59:00",
-            memory="7680M",
+            memory="8000M",
         ),
         "pileup_tumor": ResourceUsage(
             threads=2,
             time="03:59:00",
-            memory="7680M",
+            memory="8000M",
         ),
     }
 

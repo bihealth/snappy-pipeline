@@ -455,7 +455,7 @@ def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_call
 def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - pileup_normal"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "8000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -466,7 +466,7 @@ def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_call
 def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - pileup_tumor"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "03:59:00", "memory": "8000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
