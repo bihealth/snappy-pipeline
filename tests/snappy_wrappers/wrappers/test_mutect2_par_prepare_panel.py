@@ -37,9 +37,8 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          somatic_variant_calling:
-            tools:
-            - mutect2
+          panel_of_normals:
+            tools: ['mutect2']
             mutect2:
               panel_of_normals: ''      # Set path to panel of normals vcf if required
               germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
@@ -48,7 +47,7 @@ def minimal_config():
               num_cores: 2              # number of cores to use locally
               window_length: 50000000   # split input into windows of this size, each triggers a job
               num_jobs: 500             # number of windows to process in parallel
-              use_drmaa: true           # use DRMAA for parallel processing
+              use_profile: true         # use Snakemake profile for parallel processing
               restart_times: 5          # number of times to re-launch jobs in case of failure
               max_jobs_per_second: 2    # throttling of job creation
               max_status_checks_per_second: 10   # throttling of status checks
@@ -65,9 +64,6 @@ def minimal_config():
               - '*_decoy'    # decoy contig
               - 'HLA-*'      # HLA genes
               - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
-
-          panel_of_normals:
-              tools: ['mutect2']
 
         data_sets:
           first_batch:
@@ -102,11 +98,15 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
     bench_iteration = 2
     script_dir = "/work"
     input_dict = {
-        "txt": "work/{mapper}.mutect2.select_panel.txt",
-        "vcf": [
-            "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
-            "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
-        ],
+        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        # "txt": "work/{mapper}.mutect2.select_panel.txt",
+        # "vcf": [
+        #     "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
+        #     "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
+        # ],
     }
 
     log_base_name = "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals"
@@ -150,7 +150,7 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
 def test_mutect2_wrapper_prepare_panel_construct_parallel_rules(
     snakemake_obj, variant_caller_fake_fs, mocker
 ):
-    """Tests ParallelMutectWrapper.construct_merge_rule()"""
+    """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
     # Patch out file-system
     patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
@@ -158,7 +158,13 @@ def test_mutect2_wrapper_prepare_panel_construct_parallel_rules(
     data_path = (Path(__file__).parent / "data/mutect2_par_prepare_panel.snakemake").resolve()
     with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
-    # Get actual and assert
-    actual = wrapper_par.construct_parallel_rules()
-    print(actual)
+    # Get actual and assert if `rule chunk_0` is correct
+    # Note: It is not feasible to test all chunks as the `wrapper` will be set to a local file
+    _tmp_actual = list(wrapper_par.construct_parallel_rules())[0]
+    actual = (
+        "\n".join(
+            [line for line in _tmp_actual.split("\n") if not ("wrapper" in line or line == "")]
+        )
+        + "\n"
+    )
     assert actual == expected
