@@ -8,7 +8,9 @@ from ruamel import yaml as yaml_ruamel
 from snakemake.io import InputFiles, Log, OutputFiles, Params, Resources, Wildcards
 from snakemake.script import Snakemake
 
-from snappy_wrappers.wrappers.mutect2_par.run.parallel_mutect2 import ParallelMutect2Wrapper
+from snappy_wrappers.wrappers.mutect2_par.prepare_panel.parallel_prepare_panel import (
+    ParallelMutect2Wrapper,
+)
 
 from .conftest import patch_module_fs
 
@@ -34,9 +36,9 @@ def minimal_config():
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-          somatic_variant_calling:
-            tools:
-            - mutect2
+
+          panel_of_normals:
+            tools: ['mutect2']
             mutect2:
               panel_of_normals: ''      # Set path to panel of normals vcf if required
               germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
@@ -45,7 +47,7 @@ def minimal_config():
               num_cores: 2              # number of cores to use locally
               window_length: 50000000   # split input into windows of this size, each triggers a job
               num_jobs: 500             # number of windows to process in parallel
-              use_drmaa: true           # use DRMAA for parallel processing
+              use_profile: true         # use Snakemake profile for parallel processing
               restart_times: 5          # number of times to re-launch jobs in case of failure
               max_jobs_per_second: 2    # throttling of job creation
               max_status_checks_per_second: 10   # throttling of status checks
@@ -62,6 +64,7 @@ def minimal_config():
               - '*_decoy'    # decoy contig
               - 'HLA-*'      # HLA genes
               - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
+
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -78,16 +81,11 @@ def minimal_config():
 @pytest.fixture
 def snakemake_output_dict():
     """Returns dictionary that defined snakemake.output"""
-    output_base_name = "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1"
     return {
-        "raw": output_base_name + ".raw.vcf.gz",
-        "raw_md5": output_base_name + ".raw.vcf.gz.md5",
-        "raw_tbi": output_base_name + ".raw.vcf.gz.tbi",
-        "raw_tbi_md5": output_base_name + ".raw.vcf.gz.tbi.md5",
-        "stats": output_base_name + ".raw.vcf.stats",
-        "stats_md5": output_base_name + ".raw.vcf.stats.md5",
-        "f1r2": output_base_name + ".raw.f1r2_tar.tar.gz",
-        "f1r2_md5": output_base_name + ".raw.f1r2_tar.tar.gz.md5",
+        "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
+        "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
+        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.tbi.gz",
+        "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
     }
 
 
@@ -98,15 +96,20 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
     rule_name = "somatic_variant_calling_mutect2_run"
     threads = 2
     bench_iteration = 2
-    scriptdir = "/work"
+    script_dir = "/work"
     input_dict = {
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        # "txt": "work/{mapper}.mutect2.select_panel.txt",
+        # "vcf": [
+        #     "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
+        #     "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
+        # ],
     }
 
-    log_base_name = "work/bwa.mutect2.P001-T1-DNA1-WGS1/log/bwa.mutect2.P001-T1-DNA1-WGS1"
+    log_base_name = "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals"
     log_dict = {
         "conda_info": log_base_name + ".conda_info.txt",
         "conda_info_md5": log_base_name + ".conda_info.txt.md5",
@@ -115,8 +118,11 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
         "log": log_base_name + ".log",
         "log_md5": log_base_name + ".log.md5",
     }
-    wildcards_dict = {"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"}
-    params_dict = {"normal_lib_name": "P001-N1-DNA1-WGS1"}
+    wildcards_dict = {
+        "mapper": "bwa",
+        "tumor_library": "P001-T1-DNA1-WGS1",
+    }
+    params_dict = {}
 
     # Define Snakemake class input
     input_ = InputFiles(fromdict=input_dict)
@@ -136,20 +142,29 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
         params=params_,
         wildcards=wildcards_,
         config=minimal_config,
-        scriptdir=scriptdir,
+        scriptdir=script_dir,
         resources=resources_,
     )
 
 
-def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_fake_fs, mocker):
+def test_mutect2_wrapper_prepare_panel_construct_parallel_rules(
+    snakemake_obj, variant_caller_fake_fs, mocker
+):
     """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
     # Patch out file-system
     patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
     # Define expected
-    data_path = (Path(__file__).parent / "data/mutect2_par_run.snakemake").resolve()
+    data_path = (Path(__file__).parent / "data/mutect2_par_prepare_panel.snakemake").resolve()
     with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
-    # Get actual and assert
-    actual = wrapper_par.construct_merge_rule()
+    # Get actual and assert if `rule chunk_0` is correct
+    # Note: It is not feasible to test all chunks as the `wrapper` will be set to a local file
+    _tmp_actual = list(wrapper_par.construct_parallel_rules())[0]
+    actual = (
+        "\n".join(
+            [line for line in _tmp_actual.split("\n") if not ("wrapper" in line or line == "")]
+        )
+        + "\n"
+    )
     assert actual == expected

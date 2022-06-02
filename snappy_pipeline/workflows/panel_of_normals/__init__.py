@@ -77,7 +77,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_variant_calling
 step_config:
   panel_of_normals:
-    drmaa_snippet: ''  # default, you can override by step below
     tools: ['mutect2']
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     size: 10
@@ -92,7 +91,7 @@ step_config:
       num_cores: 2               # number of cores to use locally
       window_length: 100000000   # split input into windows of this size, each triggers a job
       num_jobs: 500              # number of windows to process in parallel
-      use_drmaa: true            # use drmaa for parallel processing
+      use_profile: true          # use Snakemake profile for parallel processing
       restart_times: 5           # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 2     # throttling of job creation
       max_status_checks_per_second: 10 # throttling of status checks
