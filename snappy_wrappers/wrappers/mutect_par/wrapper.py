@@ -5,7 +5,6 @@ from snakemake import shell
 
 from parallel_mutect import ParallelMutectWrapper
 
-
 # Kick off execution using the wrapper class defined above.
 ParallelMutectWrapper(snakemake).run().shutdown_logging()
 

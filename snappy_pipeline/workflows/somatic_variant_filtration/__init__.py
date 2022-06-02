@@ -83,7 +83,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   somatic_variant_filtration:
-    drmaa_snippet: ''  # default, you can override by step below
     path_somatic_variant_annotation: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
     tools_ngs_mapping: null
@@ -108,10 +107,9 @@ step_config:
       min_mapq: 20
       min_baseq: 15
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       window_length: 10000000   # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use drmaa for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 2    # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
