@@ -203,10 +203,9 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   variant_annotation:
-    drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
     window_length: 5000000    # split input into windows of this size, each triggers a job
     num_jobs: 100             # number of windows to process in parallel
-    use_drmaa: true           # use DRMAA for parallel processing
+    use_profile: true         # use Snakemake profile for parallel processing
     restart_times: 10         # number of times to re-launch jobs in case of failure
     max_jobs_per_second: 10   # throttling of job creation
     max_status_checks_per_second: 10   # throttling of status checks
