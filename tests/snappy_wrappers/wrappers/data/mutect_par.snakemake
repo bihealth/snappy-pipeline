@@ -1,0 +1,72 @@
+rule merge_all:
+    input: ['job_out.0.d/.done', 'job_out.1.d/.done', 'job_out.2.d/.done', 'job_out.3.d/.done', 'job_out.4.d/.done']
+    output: **{'txt': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.out.txt.gz', 'txt_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.out.txt.gz.md5', 'vcf': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1vcf.gz', 'vcf_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1vcf.gz.md5', 'tbi': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1vcf.gz.tbi', 'tbi_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1vcf.gz.tbi.md5', 'full_vcf': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.vcf.gz', 'full_vcf_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.vcf.gz.md5', 'full_tbi': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.vcf.gz.tbi', 'full_tbi_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.vcf.gz.tbi.md5', 'wig': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.wig.txt.gz', 'wig_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1full.wig.txt.gz.md5'}
+    threads: resource_merge_threads
+    resources:
+        time=resource_merge_time,
+        memory=resource_merge_memory,
+        partition=resource_merge_partition,
+    log: **{'conda_info': '/work/bwa.mutect.P001-T1-DNA1-WGS1/log/bwa.mutect.P001-T1-DNA1-WGS1.conda_info.txt', 'conda_info_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/log/bwa.mutect.P001-T1-DNA1-WGS1.conda_info.txt.md5', 'conda_list': '/work/bwa.mutect.P001-T1-DNA1-WGS1/log/bwa.mutect.P001-T1-DNA1-WGS1.conda_list.txt', 'conda_list_md5': '/work/bwa.mutect.P001-T1-DNA1-WGS1/log/bwa.mutect.P001-T1-DNA1-WGS1.conda_list.txt.md5'}
+    shell:
+        r'''
+        # Initialize output directory -----------------------------------------
+
+        outdir=$(basename {output.vcf})
+
+        mkdir -p output
+
+        # Take first header -------------------------------------------------------
+
+        set +o pipefail
+        zcat job_out.0.d/out/tmp_0.full.out.txt.gz | head -n 2 > output/result.full.out.txt
+        zcat job_out.0.d/out/tmp_0.full.wig.txt.gz | head -n 2 > output/result.full.wig.txt
+        set -o pipefail
+
+        # Append body contents ----------------------------------------------------
+
+        for jobno in {{0..4}}; do
+            set +o pipefail
+            zcat job_out.$jobno.d/out/tmp_$jobno.full.out.txt.gz | tail -n +3 >> output/result.full.out.txt
+            zcat job_out.$jobno.d/out/tmp_$jobno.full.wig.txt.gz | tail -n +3 >> output/result.full.wig.txt
+            set -o pipefail
+        done
+
+        # Use bcftools concat for VCF files ---------------------------------------
+
+        bcftools concat -a -d none -O z -o output/result.full.vcf.gz job_out.*.d/out/tmp_*.full.vcf.gz
+        bcftools concat -a -d none -O z -o output/result.vcf.gz job_out.*.d/out/tmp_*[0-9].vcf.gz
+
+        # bgzip output and create tabix index -------------------------------------
+
+        bgzip -f output/result.full.out.txt
+        bgzip -f output/result.full.wig.txt
+
+        tabix -f output/result.full.vcf.gz
+        tabix -f output/result.vcf.gz
+
+        pushd output
+        for f in *; do md5sum $f >$f.md5; done
+        popd
+
+        # Move to output directory ------------------------------------------------
+
+        mkdir -p $(dirname {output.txt})
+        mv output/result.full.out.txt.gz {output.txt}
+        mv output/result.full.out.txt.gz.md5 {output.txt_md5}
+        mv output/result.full.vcf.gz {output.full_vcf}
+        mv output/result.full.vcf.gz.md5 {output.full_vcf_md5}
+        mv output/result.full.vcf.gz.tbi {output.full_tbi}
+        mv output/result.full.vcf.gz.tbi.md5 {output.full_tbi_md5}
+        mv output/result.vcf.gz {output.vcf}
+        mv output/result.vcf.gz.md5 {output.vcf_md5}
+        mv output/result.vcf.gz.tbi {output.tbi}
+        mv output/result.vcf.gz.tbi.md5 {output.tbi_md5}
+        mv output/result.full.wig.txt.gz {output.wig}
+        mv output/result.full.wig.txt.gz.md5 {output.wig_md5}
+
+        # Write out information about conda installation.
+        conda list >{log.conda_list}
+        conda info >{log.conda_info}
+        md5sum {log.conda_list} >{log.conda_list_md5}
+        md5sum {log.conda_info} >{log.conda_info_md5}
+        '''
