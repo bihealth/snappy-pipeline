@@ -97,17 +97,15 @@ step_config:
   variant_phasing:
     path_ngs_mapping: ../ngs_mapping
     path_variant_annotation: ../variant_annotation
-    drmaa_snippet: ''           # value to pass in as additional DRMAA arguments
     tools_ngs_mapping: []       # expected tools for ngs mapping
     tools_variant_calling: []   # expected tools for variant calling
     phasings:
     - gatk_phasing_both
     gatk_read_backed_phasing:
       phase_quality_threshold: 20.0  # quality threshold for phasing
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 1000            # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profil: true          # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
