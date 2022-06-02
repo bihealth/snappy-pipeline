@@ -67,7 +67,6 @@ class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                # "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
