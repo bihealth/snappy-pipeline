@@ -102,11 +102,6 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        # "txt": "work/{mapper}.mutect2.select_panel.txt",
-        # "vcf": [
-        #     "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
-        #     "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
-        # ],
     }
 
     log_base_name = "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals"
