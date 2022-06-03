@@ -179,7 +179,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_variant_calling
 step_config:
   somatic_variant_calling:
-    drmaa_snippet: ''  # default, you can override by step below
     tools: ['mutect', 'scalpel']
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     # Configuration for joint calling with samtools+bcftools.
@@ -267,11 +266,10 @@ step_config:
       path_target_regions: ""   # For exomes: include a bgzipped bed file with tabix index. That also triggers the --exome flag
     gatk_hc_joint:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_cores: 2              # number of cores to use locally
       window_length: 50000000   # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
@@ -307,11 +305,10 @@ step_config:
       - DepthPerSampleHC
     gatk_ug_joint:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_cores: 2              # number of cores to use locally
       window_length: 50000000   # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
@@ -348,11 +345,10 @@ step_config:
       - DepthPerSampleHC
     varscan_joint:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_cores: 2              # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use drmaa for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 2    # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
