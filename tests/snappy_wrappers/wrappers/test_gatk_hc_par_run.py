@@ -91,14 +91,6 @@ def snakemake_obj(minimal_config):
         "tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
         "vcf": output_base_name + ".vcf.gz",
         "vcf_md5": output_base_name + ".vcf.gz.md5",
-        "full_tbi": output_base_name + ".full.vcf.gz.tbi",
-        "full_tbi_md5": output_base_name + ".full.vcf.gz.tbi.md5",
-        "full": output_base_name + ".full.vcf.gz",
-        "full_md5": output_base_name + ".full.vcf.gz.md5",
-        "txt": output_base_name + ".txt",
-        "txt_md5": output_base_name + ".txt.md5",
-        "wig": output_base_name + ".wig",
-        "wig_md5": output_base_name + ".wig.md5",
     }
     log_base_name = "work/bwa.gatk_hc.P001-T1-DNA1-WGS1/log/bwa.gatk_hc.P001-T1-DNA1-WGS1"
     log_dict = {
