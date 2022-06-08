@@ -36,9 +36,9 @@ Now, make sure it is available in your ``PATH`` environment variable.
 
     $ export PATH=$HOME/miniconda3/bin:$PATH
 
----------------------
-Install CUBI Pipeline
----------------------
+-----------------------
+Install Snappy Pipeline
+-----------------------
 
 The recommended way of installing the CUBI pipeline is via ``pip``.
 
