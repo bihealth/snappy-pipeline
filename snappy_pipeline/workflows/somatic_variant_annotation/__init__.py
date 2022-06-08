@@ -65,7 +65,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")

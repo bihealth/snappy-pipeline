@@ -12,7 +12,7 @@ from snappy_pipeline.workflows.roh_calling import RohCallingWorkflow
 
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues

@@ -63,7 +63,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")

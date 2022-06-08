@@ -13,7 +13,7 @@ config = snakemake.config["step_config"]["somatic_variant_filtration"]["filter_s
 params = snakemake.params.args
 print("DEBUG- params = {}".format(params), file=sys.stderr)
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 

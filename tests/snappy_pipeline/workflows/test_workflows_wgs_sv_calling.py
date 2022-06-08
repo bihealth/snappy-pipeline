@@ -12,7 +12,7 @@ from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
 from .common import get_expected_output_bcf_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues

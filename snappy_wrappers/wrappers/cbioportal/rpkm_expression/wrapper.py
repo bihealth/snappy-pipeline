@@ -7,7 +7,7 @@ from snakemake import shell
 
 rcode = os.path.join(os.path.dirname(__file__), "scripts.R")
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 

@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Tokens to look for in the path to the reference for guessing UCSC genome
 #: ID.  This is a projection to the UCSC ids only.

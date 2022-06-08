@@ -17,7 +17,7 @@ try:
 except ImportError:
     warnings.warn("module biomedsheets not found", UserWarning)
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 class InvalidConfiguration(Exception):

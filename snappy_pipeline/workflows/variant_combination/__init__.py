@@ -61,7 +61,7 @@ from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkfl
 from snappy_pipeline.workflows.wgs_cnv_filtration import WgsCnvFiltrationWorkflow
 from snappy_pipeline.workflows.wgs_sv_filtration import WgsSvFiltrationWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the variant_combination step
 DEFAULT_CONFIG = r"""

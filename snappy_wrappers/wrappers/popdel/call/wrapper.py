@@ -6,7 +6,7 @@ import tempfile
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.

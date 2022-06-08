@@ -23,7 +23,7 @@ from snakemake import get_profile_file, snakemake
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @contextlib.contextmanager

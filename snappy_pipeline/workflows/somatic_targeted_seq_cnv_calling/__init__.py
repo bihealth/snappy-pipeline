@@ -109,7 +109,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_targeted_seq_cnv_calling step
 DEFAULT_CONFIG = r"""

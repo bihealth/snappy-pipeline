@@ -17,7 +17,7 @@ from snakemake.shell import shell
 
 import snappy_wrappers.tools.vcf_filter_denovo
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Build arguments ==================================================================================
 

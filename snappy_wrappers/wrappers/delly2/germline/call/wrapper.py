@@ -5,7 +5,7 @@
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 exclude_str = ""
 s = snakemake.config["step_config"]["wgs_sv_calling"]["delly2"]["path_exclude_tsv"]

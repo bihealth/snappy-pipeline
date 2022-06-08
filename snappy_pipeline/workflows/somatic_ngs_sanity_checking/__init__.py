@@ -29,7 +29,7 @@ The default configuration is as follows.
 .. include:: DEFAULT_CONFIG_somatic_ngs_sanity_checking.rst
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_ngs_sanity_checking step
 DEFAULT_CONFIG = r"""

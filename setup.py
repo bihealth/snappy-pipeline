@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 import versioneer
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 def parse_requirements(path):

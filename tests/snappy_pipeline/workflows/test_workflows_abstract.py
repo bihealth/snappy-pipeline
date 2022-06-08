@@ -20,7 +20,7 @@ from snappy_pipeline.workflows.abstract import (
 
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Tests for DataSetInfo ---------------------------------------------------------------------------
 

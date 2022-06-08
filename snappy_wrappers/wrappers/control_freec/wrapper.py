@@ -4,7 +4,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 window_str = ""
 w = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]["window_size"]

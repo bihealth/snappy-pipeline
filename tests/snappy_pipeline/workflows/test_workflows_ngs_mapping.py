@@ -16,7 +16,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues

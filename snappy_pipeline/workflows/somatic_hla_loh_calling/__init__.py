@@ -32,7 +32,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
 DEFAULT_CONFIG = r"""

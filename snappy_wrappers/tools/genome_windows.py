@@ -15,7 +15,7 @@ import sys
 
 from snappy_wrappers.genome_regions import GenomeRegion
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default for ``--window-size``
 DEFAULT_WINDOW_SIZE = 10000000

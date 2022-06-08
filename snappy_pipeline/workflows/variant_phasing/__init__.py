@@ -58,7 +58,7 @@ Reports
 Currently, no reports are generated.
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from collections import OrderedDict
 import os

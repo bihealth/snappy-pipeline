@@ -4,7 +4,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 if snakemake.params["args"]["interval"]:
     cmd_fetch = "tabix --print-header {} {}".format(

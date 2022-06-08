@@ -14,7 +14,7 @@ import argparse
 import datetime
 import sys
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default value for ``--max-coverage``
 DEFAULT_MAX_COVERAGE = 100

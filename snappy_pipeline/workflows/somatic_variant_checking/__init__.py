@@ -43,7 +43,7 @@ Reports
 Currently, no reports are generated.
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Available tools for checking variants
 VARIANT_CHECKERS = ("bcftools_stats", "peddy")

@@ -68,7 +68,7 @@ from ..workflows import (
     wgs_sv_filtration,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 #: Configuration file names

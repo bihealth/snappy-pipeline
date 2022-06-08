@@ -61,7 +61,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_cnv_annotation import WgsCnvAnnotationWorkflow
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")

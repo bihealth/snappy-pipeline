@@ -13,7 +13,7 @@ from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 def get_expected_log_files_dict_cnvetti(base_out):

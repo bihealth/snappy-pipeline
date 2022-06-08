@@ -14,7 +14,7 @@ import os
 import re
 import sys
 
-__author__ = "Oliver Stolpe <oliver.stolpe@bihealth.de>"
+__author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 
 
 #: Translation scheme for PED attributes (sex, disease) to text

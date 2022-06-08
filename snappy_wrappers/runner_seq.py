@@ -12,7 +12,7 @@ from snakemake import shell, snakemake
 from snakemake.script import Snakemake
 from termcolor import colored
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 #: Template for the temporary Snakemake file

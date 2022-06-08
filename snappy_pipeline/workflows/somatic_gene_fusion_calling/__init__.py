@@ -52,7 +52,7 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: HLA typing tools
 GENE_FUSION_CALLERS = ("fusioncatcher", "jaffa", "pizzly", "hera", "star_fusion")

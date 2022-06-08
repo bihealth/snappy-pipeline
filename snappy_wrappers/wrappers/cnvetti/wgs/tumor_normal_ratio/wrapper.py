@@ -7,7 +7,7 @@ otherwise the log2-transformed relative coverage of the tumor is forwarded.
 
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 tumor_bcf = snakemake.input.tumor_bcf
 normal_bcf = getattr(snakemake.input, "normal_bcf", None)
