@@ -92,8 +92,8 @@ setup(
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
     author="Manuel Holtgrewe",
-    author_email="manuel.holtgrewe@bihealth.de",
-    url="https://gitlab.bihealth.org/cubi/snappy_pipeline",
+    author_email="manuel.holtgrewe@bih-charite.de",
+    url="https://github.com/bihealth/snappy-pipeline",
     packages=find_packages(),
     package_dir={"snappy_wrappers": "snappy_wrappers", "snappy_pipeline": "snappy_pipeline"},
     entry_points={
