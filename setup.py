@@ -40,12 +40,8 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-# Use DRMAA/non-DRMAA requirements
-if "DRMAA_LIBRARY_PATH" in os.environ:
-    requirements = parse_requirements("requirements/drmaa.txt")
-else:
-    requirements = parse_requirements("requirements/base.txt")
-
+# Get requirements
+requirements = parse_requirements("requirements/base.txt")
 
 test_requirements = [
     # TODO: put package test requirements here
