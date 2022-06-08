@@ -87,7 +87,6 @@ step_config:
       # Java options
       java_options: ' -Xmx16g '
       # Parallelization configuration
-      drmaa_snippet: ''          # value to pass in as additional DRMAA arguments
       num_cores: 2               # number of cores to use locally
       window_length: 100000000   # split input into windows of this size, each triggers a job
       num_jobs: 500              # number of windows to process in parallel
