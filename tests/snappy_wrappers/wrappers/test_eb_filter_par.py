@@ -154,7 +154,7 @@ def test_eb_filter_wrapper_construct_parallel_rules(snakemake_obj, variant_calle
     patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
     wrapper_par = ParallelEasyBayesFilterWrapper(snakemake=snakemake_obj)
     # Define expected
-    data_path = (Path(__file__).parent / "data/eb_filter_par.snakemake").resolve()
+    data_path = (Path(__file__).parent / "data/eb_filter_par_parallel.snakemake").resolve()
     with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
     # Get actual and assert if `rule chunk_0` is the same
@@ -166,4 +166,19 @@ def test_eb_filter_wrapper_construct_parallel_rules(snakemake_obj, variant_calle
         )
         + "\n"
     )
+    assert actual == expected
+
+
+def test_eb_filter_wrapper_construct_merge(snakemake_obj, variant_caller_fake_fs, mocker):
+    """Tests ParallelEasyBayesFilterWrapper.construct_merge_rule()"""
+    # Patch out file-system
+    patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
+    wrapper_par = ParallelEasyBayesFilterWrapper(snakemake=snakemake_obj)
+    # Define expected
+    data_path = (Path(__file__).parent / "data/eb_filter_par_merge.snakemake").resolve()
+    with open(data_path, "r", encoding="utf8") as f:
+        expected = f.read()
+    # Get actual and assert
+    actual = wrapper_par.construct_merge_rule()
+    print(actual)
     assert actual == expected

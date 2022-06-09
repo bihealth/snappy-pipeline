@@ -77,11 +77,11 @@ class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
-                    threads: resources_chunk_threads
+                    threads: resource_chunk_threads
                     resources:
-                        time=resources_chunk_time,
-                        memory=resources_chunk_memory,
-                        partition=resources_chunk_partition,
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
