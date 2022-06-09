@@ -127,6 +127,20 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
         assert actual == expected, msg_error
 
 
+# Tests for SalmonStepPart    ----------------------------------------------------------------------
+
+
+def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
+    """Tests SalmonStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "04:00:00", "memory": "2500M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = gene_expression_quantification_workflow.get_resource("salmon", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for QCStepPartDuplication ------------------------------------------------------------------
 
 

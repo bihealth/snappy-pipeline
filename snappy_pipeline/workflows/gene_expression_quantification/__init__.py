@@ -147,7 +147,11 @@ step_config:
 class SalmonStepPart(BaseStepPart):
     """Gene expression quantification for raw data using salmon"""
 
+    #: Step name
     name = "salmon"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -224,12 +228,21 @@ class SalmonStepPart(BaseStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 2500,
-            "time": "04:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="04:00:00",  # 4 hours
+            memory="2500M",
+        )
 
 
 class GeneExpressionQuantificationStepPart(BaseStepPart):
