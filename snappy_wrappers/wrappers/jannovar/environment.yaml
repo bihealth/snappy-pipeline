@@ -6,7 +6,7 @@ dependencies:
 - bcftools ==1.12
 - htslib ==1.12
 - jannovar-cli ==0.26
-- snakemake ==5.18
+- snakemake-minimal
 - ruamel
 - ruamel.yaml
 
