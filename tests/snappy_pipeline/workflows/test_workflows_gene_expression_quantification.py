@@ -127,6 +127,64 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
         assert actual == expected, msg_error
 
 
+# Tests for QCStepPartDuplication ------------------------------------------------------------------
+
+
+def test_duplication_step_part_get_resource(gene_expression_quantification_workflow):
+    """Tests QCStepPartDuplication.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "3-00:00:00", "memory": "127G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = gene_expression_quantification_workflow.get_resource(
+            "duplication", "run", resource
+        )
+        assert actual == expected, msg_error
+
+
+# Tests for QCStepPartDupradar ---------------------------------------------------------------------
+
+
+def test_dupradar_step_part_get_resource(gene_expression_quantification_workflow):
+    """Tests QCStepPartDupradar.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 8, "time": "4-00:00:00", "memory": "6700M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = gene_expression_quantification_workflow.get_resource("dupradar", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for QCStepPartRnaseqc ----------------------------------------------------------------------
+
+
+def test_rnaseqc_step_part_get_resource(gene_expression_quantification_workflow):
+    """Tests QCStepPartRnaseqc.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "03:59:00", "memory": "16G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = gene_expression_quantification_workflow.get_resource("rnaseqc", "run", resource)
+        assert actual == expected, msg_error
+
+
+# Tests for QCStepPartStats ------------------------------------------------------------------------
+
+
+def test_stats_step_part_get_resource(gene_expression_quantification_workflow):
+    """Tests QCStepPartStats.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "03:59:00", "memory": "4G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = gene_expression_quantification_workflow.get_resource("stats", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for GeneExpressionQuantificationWorkflow ---------------------------------------------------
 
 

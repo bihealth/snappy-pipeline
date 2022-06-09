@@ -354,56 +354,111 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "duplication"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "127g",
-            "h_rt": "72:00:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-00:00:00",  # 3 days
+            memory="127G",
+        )
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "dupradar"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "96:00",
-            "ntasks": 8,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=8,
+            time="4-00:00:00",  # 4 days
+            memory="6700M",
+        )
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "rnaseqc"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "16g",
-            "h_rt": "3:59:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="03:59:00",  # 3 hours and 59 minutes
+            memory="16G",
+        )
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "stats"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "4g",
-            "h_rt": "3:59:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="03:59:00",  # 3 hours and 59 minutes
+            memory="4G",
+        )
 
 
 class GeneExpressionQuantificationWorkflow(BaseStep):
     """Perform gene expression quantification"""
 
+    #: Workflow name
     name = "gene_expression_quantification"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
