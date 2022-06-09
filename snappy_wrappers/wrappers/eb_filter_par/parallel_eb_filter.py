@@ -9,8 +9,7 @@ import sys
 import textwrap
 
 # A hack is required for being able to import snappy_wrappers modules when in development mode.
-# TODO: is there a more elegant way?
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.resource_usage import ResourceUsage
