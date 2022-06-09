@@ -148,15 +148,6 @@ class VcfMeiFilterStepPart(BaseStepPart):
         assert action == "run"
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_mei_annotation_wgs_mei_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 

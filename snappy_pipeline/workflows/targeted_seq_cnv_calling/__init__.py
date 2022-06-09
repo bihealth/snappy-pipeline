@@ -516,22 +516,6 @@ class XhmmStepPart(BaseStepPart):
                 "snakemake.targeted_seq_cnv_calling.log"
             ).format(action=action)
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for XHMM CNV calling"""
-        for action in self.actions:
-            if action == "merge_cov":
-                cluster_config["targeted_seq_cnv_calling_xhmm_{}".format(action)] = {
-                    "mem": 12 * 1024,
-                    "time": "24:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["targeted_seq_cnv_calling_xhmm_{}".format(action)] = {
-                    "mem": 12 * 1024,
-                    "time": "08:00",
-                    "ntasks": 1,
-                }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -539,12 +523,9 @@ class XhmmStepPart(BaseStepPart):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
         if action == "merge_cov":
             return self.resource_usage_dict.get("merge_cov")
         else:

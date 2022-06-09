@@ -139,18 +139,6 @@ class MantisStepPart(BaseStepPart):
         _ = action
         return "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration with resource usage limits for
-        scheduling
-        """
-        # 24g were required for WES from my limited testing
-        cluster_config["somatic_msi_calling_mantis"] = {
-            "mem": 30 * 1024 * 3,
-            "time": "120:00",
-            "ntasks": 3,
-        }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -158,18 +146,13 @@ class MantisStepPart(BaseStepPart):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        mem_mb = 30 * 1024 * 3
+        # Validate action
+        self._validate_action(action)
         return ResourceUsage(
             threads=3,
             time="02:00:00",  # 2 hours
-            memory=f"{mem_mb}M",
+            memory=f"{30 * 1024 * 3}M",
         )
 
 

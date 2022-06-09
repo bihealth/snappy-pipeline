@@ -255,13 +255,6 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_phasing_{}_run".format(self.name)] = {
-            "mem": 14 * 1024,
-            "time": "24:00",
-            "ntasks": 1,
-        }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -269,18 +262,13 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        mem_mb = 14 * 1024
+        # Validate action
+        self._validate_action(action)
         return ResourceUsage(
             threads=1,
             time="1-00:00:00",  # 1 day
-            memory=f"{mem_mb}M",
+            memory=f"{ 14 * 1024}M",
         )
 
 

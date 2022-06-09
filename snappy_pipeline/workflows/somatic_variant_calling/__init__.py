@@ -772,33 +772,6 @@ class Mutect2StepPart(MutectBaseStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["somatic_variant_calling_mutect2_run"] = {
-            "h_vmem": "4g",
-            "h_rt": "120:00:00",
-            "pe": "smp 2",
-        }
-        cluster_config["somatic_variant_calling_mutect2_filter"] = {
-            "h_vmem": "8g",
-            "h_rt": "3:59:00",
-            "pe": "smp 2",
-        }
-        cluster_config["somatic_variant_calling_mutect2_contamination"] = {
-            "h_vmem": "8g",
-            "h_rt": "3:59:00",
-            "pe": "smp 2",
-        }
-        cluster_config["somatic_variant_calling_mutect2_pileup_normal"] = {
-            "h_vmem": "8g",
-            "h_rt": "3:59:00",
-            "pe": "smp 2",
-        }
-        cluster_config["somatic_variant_calling_mutect2_pileup_tumor"] = {
-            "h_vmem": "8g",
-            "h_rt": "3:59:00",
-            "pe": "smp 2",
-        }
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
