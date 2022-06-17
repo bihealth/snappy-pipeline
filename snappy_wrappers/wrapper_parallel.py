@@ -192,6 +192,10 @@ def hours(num):
     :return: Returns ``datetime.timedelta`` as string for ``num`` hours.
     """
     output = str(datetime.timedelta(hours=num))
+    # If necessary converts datetime to resource expected format.
+    # Examples:
+    # '1 day, 1:00:00' -> '1-01:00:00'
+    # '2 days, 0:00:00' -> '2-00:00:00'
     if "day" in output:
         output = output.replace(" days, ", "-").replace(" day, ", "-")
         tmp_arr = output.split("-")
