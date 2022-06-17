@@ -40,7 +40,7 @@ def test_kib_exception():
 def test_kib_to_string():
     """Tests wrapper_parallel.kib_to_string() call."""
     # Define expected dictionary
-    expected_dict = {1: "1k", 2: "2k", 3: "3k", 1.5: "1k"}
+    expected_dict = {0.1: "1k", 1: "1k", 2: "2k", 3: "3k", 1.5: "2k"}
     # Get actual and assert
     for input_, expected in expected_dict.items():
         actual = kib_to_string(input_)
@@ -72,7 +72,7 @@ def test_mib_exception():
 def test_mib_to_string():
     """Tests wrapper_parallel.mib_to_string() call."""
     # Define expected dictionary
-    expected_dict = {1: "1M", 2: "2M", 3: "3M", 1.5: "1M"}
+    expected_dict = {0.1: "1M", 1: "1M", 2: "2M", 3: "3M", 1.5: "2M"}
     # Get actual and assert
     for input_, expected in expected_dict.items():
         actual = mib_to_string(input_)
@@ -104,7 +104,7 @@ def test_gib_exception():
 def test_gib_to_string():
     """Tests wrapper_parallel.gib_to_string() call."""
     # Define expected dictionary
-    expected_dict = {1: "1G", 2: "2G", 3: "3G", 1.5: "1G"}
+    expected_dict = {0.1: "1G", 1: "1G", 2: "2G", 3: "3G", 1.5: "2G"}
     # Get actual and assert
     for input_, expected in expected_dict.items():
         actual = gib_to_string(input_)

@@ -12,6 +12,7 @@ import functools
 import itertools
 import json
 import logging
+import math
 import os
 import shlex
 import shutil
@@ -150,7 +151,7 @@ def kib_to_string(num):
 
     :return: Returns kilobytes string for memory usage with profile. Example: '200k'.
     """
-    return f"{int(num)}k"
+    return f"{math.ceil(num)}k"
 
 
 def mib_to_string(num):
@@ -160,7 +161,7 @@ def mib_to_string(num):
 
     :return: Returns megabytes string for memory usage with profile. Example: '8M'.
     """
-    return f"{int(num)}M"
+    return f"{math.ceil(num)}M"
 
 
 def gib_to_string(num):
@@ -170,7 +171,7 @@ def gib_to_string(num):
 
     :return: Returns gigabytes string for memory usage with profile. Example: '12G'.
     """
-    return f"{int(num)}G"
+    return f"{math.ceil(num)}G"
 
 
 def minutes(num):
