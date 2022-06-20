@@ -30,7 +30,7 @@ The default configuration is as follows.
 
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the tcell_crg_report step
 DEFAULT_CONFIG = r"""

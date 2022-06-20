@@ -2,7 +2,6 @@
 """CUBI Pipeline cbioportal_export step Snakefile"""
 
 import os
-import textwrap
 
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
@@ -21,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = cbioportalExportWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = cbioportalExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 exclude_flag = wf.w_config["step_config"]["cbioportal_export"]["exclude_variant_with_flag"]
 
@@ -60,6 +57,11 @@ rule cbioportal_export_link_out_run:
 rule cbioportal_export_study_metadata:
     output:
         meta_file="work/upload/meta_study.txt",
+    threads: wf.get_resource("cbioportal_study_meta_files", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_study_meta_files", "run", "time"),
+        memory=wf.get_resource("cbioportal_study_meta_files", "run", "memory"),
+        partition=wf.get_resource("cbioportal_study_meta_files", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/study_meta")
 
@@ -67,6 +69,11 @@ rule cbioportal_export_study_metadata:
 rule cbioportal_export_meta_files:
     output:
         wf.get_output_files("cbioportal_meta_files", "run"),
+    threads: wf.get_resource("cbioportal_meta_files", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_meta_files", "run", "time"),
+        memory=wf.get_resource("cbioportal_meta_files", "run", "memory"),
+        partition=wf.get_resource("cbioportal_meta_files", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/meta_files")
 
@@ -77,6 +84,11 @@ rule cbioportal_export_meta_files:
 rule cbioportal_export_patient_metadata:
     output:
         **wf. get_output_files('cbioportal_clinical_data','run'),
+    threads: wf.get_resource("cbioportal_clinical_data", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_clinical_data", "run", "time"),
+        memory=wf.get_resource("cbioportal_clinical_data", "run", "memory"),
+        partition=wf.get_resource("cbioportal_clinical_data", "run", "partition"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -86,6 +98,11 @@ rule cbioportal_export_patient_metadata:
 rule cbioportal_export_case_lists:
     output:
         **wf. get_output_files('cbioportal_case_lists','run'),
+    threads: wf.get_resource("cbioportal_case_lists", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_case_lists", "run", "time"),
+        memory=wf.get_resource("cbioportal_case_lists", "run", "memory"),
+        partition=wf.get_resource("cbioportal_case_lists", "run", "partition"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -102,6 +119,11 @@ rule cbioportal_export_generate_mafs:
         **wf. get_input_files('cbioportal_vcf2maf','run'),
     output:
         **wf. get_output_files('cbioportal_vcf2maf','run'),
+    threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_vcf2maf", "run", "time"),
+        memory=wf.get_resource("cbioportal_vcf2maf", "run", "memory"),
+        partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
     params:
         args=wf.substep_dispatch("cbioportal_vcf2maf", "get_args", "run"),
     wrapper:
@@ -112,10 +134,17 @@ rule cbioportal_export_generate_mafs:
 
 
 rule cbioportal_export_concatenate_maf:
+    # TODO: could this be include in the `localrules`? Or simply incorporated into another step?
+    #  It looks like some postprocessing...
     input:
         * wf.get_input_files("cbioportal_maf", "run"),
     output:
         "work/upload/data_mutation_extended.txt",
+    threads: wf.get_resource("cbioportal_maf", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_maf", "run", "time"),
+        memory=wf.get_resource("cbioportal_maf", "run", "memory"),
+        partition=wf.get_resource("cbioportal_maf", "run", "partition"),
     shell:
         r"""
         cat \
@@ -132,6 +161,11 @@ rule cbioportal_export_CNA_calls:
         wf.get_input_files("cbioportal_cna_data", "gistic"),
     output:
         "work/upload/data_CNA_gistic.txt",
+    threads: wf.get_resource("cbioportal_cna_data", "gistic", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_cna_data", "gistic", "time"),
+        memory=wf.get_resource("cbioportal_cna_data", "gistic", "memory"),
+        partition=wf.get_resource("cbioportal_cna_data", "gistic", "partition"),
     params:
         datatype="int",
     wrapper:
@@ -146,6 +180,11 @@ rule cbioportal_export_CNA_log2:
         wf.get_input_files("cbioportal_cna_data", "log2"),
     output:
         "work/upload/data_CNA_log2.txt",
+    threads: wf.get_resource("cbioportal_cna_data", "log2", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_cna_data", "log2", "time"),
+        memory=wf.get_resource("cbioportal_cna_data", "log2", "memory"),
+        partition=wf.get_resource("cbioportal_cna_data", "log2", "partition"),
     params:
         datatype="float",
     wrapper:
@@ -160,6 +199,11 @@ rule cbioportal_export_segments:
         wf.get_input_files("cbioportal_cna_data", "segments"),
     output:
         "work/upload/data_segment.txt",
+    threads: wf.get_resource("cbioportal_cna_data", "segments", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_cna_data", "segments", "time"),
+        memory=wf.get_resource("cbioportal_cna_data", "segments", "memory"),
+        partition=wf.get_resource("cbioportal_cna_data", "segments", "partition"),
     shell:
         r"""
         cat \
@@ -174,8 +218,14 @@ rule cbioportal_export_segments:
 
 
 rule cbioportal_create_dataframe_matching_results:
+    # TODO: could this be include in the `localrules`?
     output:
         "work/zscores_mapping_df.tsv",
+    threads: wf.get_resource("cbioportal_zscores", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_zscores", "run", "time"),
+        memory=wf.get_resource("cbioportal_zscores", "run", "memory"),
+        partition=wf.get_resource("cbioportal_zscores", "run", "partition"),
     run:
         wf.substep_dispatch("cbioportal_zscores", "get_df", output)
 
@@ -185,5 +235,10 @@ rule cbioportal_compute_zscores:
         tsv="work/zscores_mapping_df.tsv",
     output:
         tsv="work/upload/data_expression_zscores.txt",
+    threads: wf.get_resource("cbioportal_compute_zscores", "run", "threads")
+    resources:
+        time=wf.get_resource("cbioportal_compute_zscores", "run", "time"),
+        memory=wf.get_resource("cbioportal_compute_zscores", "run", "memory"),
+        partition=wf.get_resource("cbioportal_compute_zscores", "run", "partition"),
     wrapper:
         wf.wrapper_path("cbioportal/zscores")

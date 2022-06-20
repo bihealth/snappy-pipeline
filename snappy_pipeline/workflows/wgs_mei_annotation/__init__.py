@@ -64,12 +64,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_mei_calling import WgsMeiCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -94,7 +95,11 @@ step_config:
 class VcfMeiFilterStepPart(BaseStepPart):
     """Annotate VCF using wgs_mei_filter.py script."""
 
+    #: Step name
     name = "vcf_mei_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -143,14 +148,21 @@ class VcfMeiFilterStepPart(BaseStepPart):
         assert action == "run"
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_mei_annotation_wgs_mei_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
 
 
 class WgsMeiAnnotationWorkflow(BaseStep):
@@ -164,13 +176,10 @@ class WgsMeiAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

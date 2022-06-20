@@ -37,7 +37,6 @@ Installation should be complete in 10 to 15 minutes.
     # Create conda environment "snappy_env" with the minimal requirements:
     mamba env create --file environment.yml
     conda activate snappy_env
-    pip install -r requirements/drmaa.txt
 
     # Add testing & development requirements:
     pip install -r requirements/test.txt

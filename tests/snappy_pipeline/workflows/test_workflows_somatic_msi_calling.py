@@ -52,7 +52,6 @@ def minimal_config():
 def somatic_msi_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -67,7 +66,6 @@ def somatic_msi_calling_workflow(
     return SomaticMsiCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -78,6 +76,7 @@ def somatic_msi_calling_workflow(
 
 
 def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
+    """Tests FeatureCountsStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
@@ -85,10 +84,12 @@ def test_mantis_step_part_get_input_files(somatic_msi_calling_workflow):
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
     }
-    assert somatic_msi_calling_workflow.get_input_files("mantis", "run")(wildcards) == expected
+    actual = somatic_msi_calling_workflow.get_input_files("mantis", "run")(wildcards)
+    assert actual == expected
 
 
 def test_mantis_step_part_get_output_files(somatic_msi_calling_workflow):
+    """Tests FeatureCountsStepPart.get_output_files()"""
     # Define expected
     base_name_out = "work/mantis.{mapper}.{library_name}/out/mantis.{mapper}.{library_name}_results"
     expected = {
@@ -97,13 +98,25 @@ def test_mantis_step_part_get_output_files(somatic_msi_calling_workflow):
     }
     # Get actual
     actual = somatic_msi_calling_workflow.get_output_files("mantis", "run")
-
     assert actual == expected
 
 
 def test_mantis_step_part_get_log_file(somatic_msi_calling_workflow):
+    """Tests FeatureCountsStepPart.get_log_file()"""
     expected = "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
-    assert somatic_msi_calling_workflow.get_log_file("mantis", "run") == expected
+    actual = somatic_msi_calling_workflow.get_log_file("mantis", "run")
+    assert actual == expected
+
+
+def test_mantis_step_part_get_resource_usage(somatic_msi_calling_workflow):
+    """Tests FeatureCountsStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 3, "time": "02:00:00", "memory": "92160M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_msi_calling_workflow.get_resource("mantis", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for SomaticMsiCallingWorkflow --------------------------------------------------------------

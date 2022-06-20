@@ -13,7 +13,7 @@ from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFil
 from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -60,7 +60,6 @@ def minimal_config():
 def variant_de_novo_filtration_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -91,7 +90,6 @@ def variant_de_novo_filtration_workflow(
     return VariantDeNovoFiltrationWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -104,6 +102,7 @@ def variant_de_novo_filtration_workflow(
 def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosStepPart.get_input_files()"""
     # Define expected
     ngs_mapping_name_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     bam_ped_dict = {
@@ -128,13 +127,12 @@ def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
 def test_filter_de_novo_from_variant_annotation_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
-    # Define expected
+    """Tests FilterDeNovosStepPart.get_output_files()"""
     base_name = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/out/"
         r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_name)
-    # Get actual
     actual = variant_de_novo_filtration_workflow.get_output_files("filter_denovo", "run")
     assert actual == expected
 
@@ -142,22 +140,26 @@ def test_filter_de_novo_from_variant_annotation_step_part_get_output_files(
 def test_filter_de_novo_from_variant_annotation_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    # Define expected
+    """Tests FilterDeNovosStepPart.get_log_file()"""
     expected = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/"
         r"log/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library}.log"
     )
-    # Get actual
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo", "run")
     assert actual == expected
 
 
-def test_filter_de_novo_from_variant_annotation_step_part_update_cluster_config(
-    variant_de_novo_filtration_workflow, dummy_cluster_config
+def test_filter_de_novo_from_variant_annotation_step_part_get_resource_usage(
+    variant_de_novo_filtration_workflow,
 ):
-    expected = {"mem", "time", "ntasks"}
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_run"].keys())
-    assert actual == expected
+    """Tests FilterDeNovosStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for FilterDeNovosHardStepPart --------------------------------------------------------------
@@ -166,6 +168,7 @@ def test_filter_de_novo_from_variant_annotation_step_part_update_cluster_config(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosHardStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos.{index_library,[^\.]+}/out/"
@@ -183,6 +186,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     variant_de_novo_filtration_workflow,
 ):
+    """Tests FilterDeNovosHardStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\.]+}/out/"
@@ -202,22 +206,28 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
 def test_filter_de_novo_from_variant_annotationhard_step_part_get_log_file(
     variant_de_novo_filtration_workflow,
 ):
-    # Define expected
+    """Tests FilterDeNovosHardStepPart.get_log_file()"""
     expected = (
         r"work/{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library,[^\.]+}/log/"
         r"{mapper}.{caller}.jannovar_annotate_vcf.de_novos_hard.{index_library}.log"
     )
-    # Get actual
     actual = variant_de_novo_filtration_workflow.get_log_file("filter_denovo_hard", "run")
     assert actual == expected
 
 
-def test_filter_de_novo_from_variant_annotationhard_step_part_update_cluster_config(
-    variant_de_novo_filtration_workflow, dummy_cluster_config
+def test_filter_de_novo_from_variant_annotationhard_step_part_get_resource_usage(
+    variant_de_novo_filtration_workflow,
 ):
-    expected = {"mem", "time", "ntasks"}
-    actual = set(dummy_cluster_config["variant_denovo_filtration_filter_denovo_hard_run"].keys())
-    assert actual == expected
+    """Tests FilterDeNovosHardStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "2048M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_de_novo_filtration_workflow.get_resource(
+            "filter_denovo_hard", "run", resource
+        )
+        assert actual == expected, msg_error
 
 
 # Tests for VariantDeNovoFiltrationWorkflow --------------------------------------------------------

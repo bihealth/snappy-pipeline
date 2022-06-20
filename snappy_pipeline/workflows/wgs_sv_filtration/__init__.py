@@ -106,13 +106,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     InputFilesStepPartMixin,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_sv_annotation import WgsSvAnnotationWorkflow
 from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -181,10 +182,14 @@ step_config:
 class FiltersWgsSvStepPartBase(BaseStepPart):
     """Base class for the different filters."""
 
-    #: Name of the step (e.g., for rule names)
+    #: Step name
     name = None
-    #: Token to use in file name
+
+    #: File name pattern
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -197,12 +202,21 @@ class FiltersWgsSvStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["wgs_sv_filtration_{}_run".format(self.name)] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "01:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
     @dictify
     def get_output_files(self, action):
@@ -218,12 +232,21 @@ class FiltersWgsSvStepPartBase(BaseStepPart):
 class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsSvStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_quality"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FiltersWgsSvStepPartBase``
     prev_class = FiltersWgsSvStepPartBase
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
     def get_input_files(self, action):
@@ -247,35 +270,60 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsSvStepPartBase):
 class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersWgsSvStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_inheritance"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterQualityStepPart``
     prev_class = FilterQualityStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersWgsSvStepPartBase):
     """Apply the configured filters."""
 
+    #: step name
     name = "filter_regions"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{regions,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterInheritanceStepPart``
     prev_class = FilterInheritanceStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class WgsSvFiltrationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
+    #: Workflow name
     name = "wgs_sv_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -283,13 +331,10 @@ class WgsSvFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -316,7 +361,7 @@ class WgsSvFiltrationWorkflow(BaseStep):
             self.config["tools_wgs_sv_calling"] = self.w_config["step_config"]["wgs_sv_calling"][
                 "tools"
             ]
-        # Set implicitely defined config.
+        # Set implicitly defined config.
         self.set_default_config()
 
     @listify
@@ -327,6 +372,8 @@ class WgsSvFiltrationWorkflow(BaseStep):
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
+            # TODO: `tools_wgs_sv_calling` is a list, not a dictionary.
+            #  This call triggers 'TypeError: list indices must be integers or slices, not str'
             caller=self.config["tools_wgs_sv_calling"]["dna"],
             ext=EXT_VALUES,
         )
@@ -347,7 +394,7 @@ class WgsSvFiltrationWorkflow(BaseStep):
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
                     filters=self.config["filter_combinations"],
-                    **kwargs
+                    **kwargs,
                 )
 
     def check_config(self):

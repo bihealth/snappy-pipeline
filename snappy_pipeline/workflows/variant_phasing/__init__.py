@@ -58,7 +58,7 @@ Reports
 Currently, no reports are generated.
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from collections import OrderedDict
 import os
@@ -66,8 +66,14 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
@@ -91,17 +97,15 @@ step_config:
   variant_phasing:
     path_ngs_mapping: ../ngs_mapping
     path_variant_annotation: ../variant_annotation
-    drmaa_snippet: ''           # value to pass in as additional DRMAA arguments
     tools_ngs_mapping: []       # expected tools for ngs mapping
     tools_variant_calling: []   # expected tools for variant calling
     phasings:
     - gatk_phasing_both
     gatk_read_backed_phasing:
       phase_quality_threshold: 20.0  # quality threshold for phasing
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 1000            # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profil: true          # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
@@ -125,7 +129,11 @@ step_config:
 class WriteTrioPedigreeStepPart(BaseStepPart):
     """Write out trio pedigree file for primary DNA sample given the index NGS library name"""
 
+    #: Step name
     name = "write_trio_pedigree"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -170,7 +178,11 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
 class VariantPhasingBaseStep(BaseStepPart):
     """Base step for variant phasing."""
 
+    #: The file name token.
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -210,6 +222,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
 
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
+
     #: The file name token.
     name_pattern = "gatk_pbt"
 
@@ -242,12 +255,21 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_phasing_{}_run".format(self.name)] = {
-            "mem": 14 * 1024,
-            "time": "24:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{ 14 * 1024}M",
+        )
 
 
 class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
@@ -283,12 +305,26 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
                 ]
                 yield key, list(map(ngs_mapping, files))
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_phasing_{}_run".format(self.name)] = {
-            "mem": 8 * 1024,
-            "time": "24:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 8 * 1024
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{mem_mb}M",
+        )
 
 
 class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
@@ -363,13 +399,10 @@ class VariantPhasingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

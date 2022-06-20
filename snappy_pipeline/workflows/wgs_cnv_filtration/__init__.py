@@ -106,13 +106,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     InputFilesStepPartMixin,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_cnv_annotation import WgsCnvAnnotationWorkflow
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -179,10 +180,14 @@ step_config:
 class FiltersWgsCnvStepPartBase(BaseStepPart):
     """Base class for the different filters."""
 
-    #: Name of the step (e.g., for rule names)
+    #: Step name
     name = None
-    #: Token to use in file name
+
+    #: File name pattern
     name_pattern = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -195,12 +200,21 @@ class FiltersWgsCnvStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["wgs_cnv_filtration_{}_run".format(self.name)] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "01:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
     @dictify
     def get_output_files(self, action):
@@ -216,12 +230,21 @@ class FiltersWgsCnvStepPartBase(BaseStepPart):
 class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsCnvStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_quality"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}.{thresholds,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FiltersWgsCnvStepPartBase``
     prev_class = FiltersWgsCnvStepPartBase
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
     def get_input_files(self, action):
@@ -245,35 +268,60 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersWgsCnvStepPartBase):
 class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersWgsCnvStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_inheritance"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterQualityStepPart``
     prev_class = FilterQualityStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersWgsCnvStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_regions"
+
+    #: File name pattern
     name_pattern = (
         r"{mapper}.{caller}.annotated.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{regions,[^\.]+}"
     )
+
+    #: Pointer to the previous executed step, class ``FilterInheritanceStepPart``
     prev_class = FilterInheritanceStepPart
+
+    #: Include pedigree file flag (True)
     include_ped_file = True
+
+    #: Types of output files by extension
     ext_names = EXT_NAMES
+
+    #: Output file extensions
     ext_values = EXT_VALUES
 
 
 class WgsCnvFiltrationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
+    #: Workflow name
     name = "wgs_cnv_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -281,13 +329,10 @@ class WgsCnvFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -345,7 +390,7 @@ class WgsCnvFiltrationWorkflow(BaseStep):
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
                     filters=self.config["filter_combinations"],
-                    **kwargs
+                    **kwargs,
                 )
 
     def check_config(self):

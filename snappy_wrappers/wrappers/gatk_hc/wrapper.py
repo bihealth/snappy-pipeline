@@ -4,7 +4,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # The step and caller key to use.
 step_key = snakemake.params.step_key

@@ -58,12 +58,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
@@ -92,7 +93,11 @@ step_config:
 class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     """Annotate VCF file using "varfish-annotator annotate"."""
 
+    #: Step name
     name = "varfish_annotator"
+
+    #: Class available actions
+    actions = ("annotate", "bam_qc")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -106,6 +111,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return path to pedigree input file"""
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_%s" % action)
 
     @dictify
@@ -152,13 +159,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
+        # Validate action
+        self._validate_action(action)
+
+        infixes = None
         if action == "annotate":
             infixes = ("gts", "db-infos")
         elif action == "bam_qc":
             infixes = ("bam-qc",)
-        else:
-            assert False, "Invalid action %s" % action
-
         prefix = (
             "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}"
@@ -170,7 +178,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @dictify
     def get_log_file(self, action):
-        assert action in ("annotate", "bam_qc")
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/log/"
             "{mapper}.{var_caller}.varfish_annotated.%s.{index_ngs_library}"
@@ -186,18 +195,24 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        for value in ("annotate", "bam_qc"):
-            cluster_config["variant_export_varfish_annotator_%s" % value] = {
-                "mem": 7 * 1024 * 2,
-                "time": "100:00",
-                "ntasks": 2,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 day and 4 hours
+            memory=f"{7 * 1024 * 2}M",
+        )
 
     def get_params(self, action):
-        assert action == "annotate"
+        assert action == "annotate", f"Option only valid for action 'annotate' (used: '{action}')."
 
         def get_params_func(wildcards):
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -215,7 +230,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 class VariantExportWorkflow(BaseStep):
     """Perform germline variant export"""
 
+    #: Workflow name
     name = "variant_export"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -223,13 +241,10 @@ class VariantExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

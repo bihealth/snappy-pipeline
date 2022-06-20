@@ -20,7 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsCnvExportWorkflow(workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd())
+wf = WgsCnvExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -71,6 +71,11 @@ rule wgs_cnv_export_varfish_annotator_annotate_svs:
         **wf. get_input_files('varfish_annotator','annotate'),
     output:
         **wf. get_output_files('varfish_annotator','annotate'),
+    threads: wf.get_resource("varfish_annotator", "annotate", "threads")
+    resources:
+        time=wf.get_resource("varfish_annotator", "annotate", "time"),
+        memory=wf.get_resource("varfish_annotator", "annotate", "memory"),
+        partition=wf.get_resource("varfish_annotator", "annotate", "partition"),
     log:
         **wf. get_log_file('varfish_annotator','annotate'),
     params:

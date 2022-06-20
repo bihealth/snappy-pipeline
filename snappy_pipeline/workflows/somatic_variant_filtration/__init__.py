@@ -57,7 +57,12 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
@@ -65,7 +70,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -78,7 +83,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   somatic_variant_filtration:
-    drmaa_snippet: ''  # default, you can override by step below
     path_somatic_variant_annotation: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
     tools_ngs_mapping: null
@@ -103,10 +107,9 @@ step_config:
       min_mapq: 20
       min_baseq: 15
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       window_length: 10000000   # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use drmaa for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 2    # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
@@ -150,8 +153,11 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
-        assert action in self.actions, "Invalid action"
+        # Validate action
+        self._validate_action(action)
+
         if action == "write_panel":
+            # TODO: Possible bug. It should still yield dict-like format, no?
             return (
                 "work/{mapper}.eb_filter.panel_of_normals/log/"
                 "{mapper}.eb_filter.panel_of_normals.log"
@@ -190,11 +196,14 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
 class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
     """Flag variants with the DKFZ bias filter"""
 
+    #: Step name
     name = "dkfz_bias_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.actions = ("run",)
         self.token = (
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.{tumor_library}"
@@ -203,7 +212,8 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to jannovar-annotated vcf input file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         # VCF file and index
         tpl = (
             "output/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
@@ -223,7 +233,8 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             r"dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
@@ -238,31 +249,42 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         for key, ext in key_ext.items():
             yield key, prefix + ext
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["somatic_variant_filtration_dkfz_bias_filter_run"] = {
-            "mem": 3 * 1024,
-            "time": "72:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-00:00:00",  # 3 days
+            memory=f"{3 * 1024}M",
+        )
 
 
 class EbFilterStepPart(SomaticVariantFiltrationStepPart):
     """Flag variants with EBFilter"""
 
+    #: Step name
     name = "eb_filter"
+
+    #: Class available actions
+    actions = ("run", "write_panel")
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.actions = ("run", "write_panel")
         self.token = (
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}"
         )
 
     def get_input_files(self, action):
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
@@ -292,7 +314,8 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
     @dictify
@@ -345,20 +368,31 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["somatic_variant_filtration_eb_filter_run"] = {
-            "mem": 8 * 1024,
-            "time": "144:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="6-00:00:00",  # 6 days
+            memory=f"{8 * 1024}M",
+        )
 
 
 class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
     """Base class for the different filters."""
 
+    #: Step name
     name = None
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -369,20 +403,33 @@ class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
         self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern + "{ext}")
         self.path_log = os.path.join("work", name_pattern, "log", name_pattern + ".log")
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_filtration_{}_run".format(self.name)] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "01:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
 
 class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "apply_filters"
 
     def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def args_function(wildcards):
             result = {
                 "normal_sample": self.get_normal_lib_name(wildcards),
@@ -390,12 +437,12 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
             }
             return result
 
-        assert action == "run"
         return args_function
 
     @dictify
     def get_input_files(self, action):
-        assert action == "run", "Unsupported actions"
+        # Validate action
+        self._validate_action(action)
         tpl = (
             "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
             "dkfz_bias_filter.eb_filter.{tumor_library}/out/{mapper}.{var_caller}."
@@ -408,25 +455,33 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{step}", self.name).replace(
                 "{exon_list}", "genome_wide"
             ).replace("{ext}", ext)
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log.replace("{step}", self.name).replace("{exon_list}", "genome_wide")
 
 
 class FilterToExonsStepPart(ApplyFiltersStepPartBase):
     """Apply the configured filters."""
 
+    #: Step name
     name = "filter_to_exons"
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
+            # TODO: Possible bug, missing entry for `tumor_library`
+            #  tests lead to "KeyError: 'tumor_library'"
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield key, self.base_path_out.format(
                     step="apply_filters",
@@ -437,25 +492,30 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
                     ext=ext,
                 )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{step}", "filter_to_exons").replace("{ext}", ext)
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log.replace("{step}", self.name)
 
 
 class SomaticVariantFiltrationWorkflow(BaseStep):
     """Perform somatic variant filtration"""
 
+    #: Workflow name
     name = "somatic_variant_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -465,13 +525,10 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

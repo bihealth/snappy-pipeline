@@ -5,7 +5,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Build command snippet for passing through BWA-MEM and paths to references
 tee_cmd = "tee"

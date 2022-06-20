@@ -11,7 +11,7 @@ from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkfl
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -56,7 +56,6 @@ def minimal_config():
 def variant_annotation_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -79,7 +78,6 @@ def variant_annotation_workflow(
     return VariantAnnotationWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -90,6 +88,7 @@ def variant_annotation_workflow(
 
 
 def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_workflow):
+    """Tests JannovarAnnotateVcfStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         "VAR_CALLING/output/"
@@ -108,6 +107,7 @@ def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_work
 
 
 def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_workflow):
+    """Tests JannovarAnnotateVcfStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/"
@@ -120,6 +120,7 @@ def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_wor
 
 
 def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflow):
+    """Tests JannovarAnnotateVcfStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/"
@@ -131,12 +132,15 @@ def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflo
     assert actual == expected
 
 
-def test_jannovar_annotate_vcf_step_part_cluster_config(
-    variant_annotation_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_annotation_jannovar_annotate_vcf"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_jannovar_annotate_step_part_get_resource_usage(variant_annotation_workflow):
+    """Tests JannovarAnnotateVcfStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "4-03:30:00", "memory": "14336M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_annotation_workflow.get_resource("jannovar", "annotate_vcf", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for VariantAnnotationWorkflow -------------------------------------------------------------

@@ -5,8 +5,8 @@ channels:
 dependencies:
 - bcftools ==1.12
 - htslib ==1.12
-- jannovar-cli ==0.26
-- snakemake ==5.18
+- jannovar-cli ==0.34
+- snakemake-minimal
 - ruamel
 - ruamel.yaml
 

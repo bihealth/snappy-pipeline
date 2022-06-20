@@ -7,8 +7,7 @@ import pytest
 
 from snappy_pipeline.apps import snappy_snake
 import snappy_pipeline.workflows
-
-from ..workflows.conftest import patch_module_fs
+from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
 def test_snappy_snake_help(germline_sheet_fake_project_ngs_mapping_fs, mocker):

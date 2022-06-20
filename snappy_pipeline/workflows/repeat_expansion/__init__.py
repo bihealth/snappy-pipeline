@@ -112,10 +112,10 @@ step_config:
 class ExpansionHunterStepPart(BaseStepPart):
     """Repeat expansion analysis with Illumina::ExpansionHunter"""
 
-    #: Step name.
+    #: Step name
     name = "expansionhunter"
 
-    #: Valid actions.
+    #: Valid actions
     actions = ("run", "annotate")
 
     def __init__(self, *args, **kwargs):
@@ -311,13 +311,10 @@ class RepeatExpansionWorkflow(BaseStep):
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

@@ -4,7 +4,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 arg_intervals = " ".join(
     ["--intervals {}".format(interval) for interval in snakemake.params["args"]["intervals"]]

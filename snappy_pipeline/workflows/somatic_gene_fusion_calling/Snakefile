@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticGeneFusionCallingWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticGeneFusionCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -74,6 +72,11 @@ rule somatic_gene_fusion_calling_fusioncatcher_run:
         **wf. get_input_files('fusioncatcher','run'),
     output:
         **wf. get_output_files('fusioncatcher','run'),
+    threads: wf.get_resource("fusioncatcher", "run", "threads")
+    resources:
+        time=wf.get_resource("fusioncatcher", "run", "time"),
+        memory=wf.get_resource("fusioncatcher", "run", "memory"),
+        partition=wf.get_resource("fusioncatcher", "run", "partition"),
     params:
         args=wf.substep_dispatch("fusioncatcher", "get_args", "run"),
     log:
@@ -90,6 +93,11 @@ rule somatic_gene_fusion_calling_jaffa_run:
         **wf. get_input_files('jaffa','run'),
     output:
         **wf. get_output_files('jaffa','run'),
+    threads: wf.get_resource("jaffa", "run", "threads")
+    resources:
+        time=wf.get_resource("jaffa", "run", "time"),
+        memory=wf.get_resource("jaffa", "run", "memory"),
+        partition=wf.get_resource("jaffa", "run", "partition"),
     params:
         args=wf.substep_dispatch("jaffa", "get_args", "run"),
     log:
@@ -106,6 +114,11 @@ rule somatic_gene_fusion_calling_pizzly_run:
         **wf. get_input_files('pizzly','run'),
     output:
         **wf. get_output_files('pizzly','run'),
+    threads: wf.get_resource("pizzly", "run", "threads")
+    resources:
+        time=wf.get_resource("pizzly", "run", "time"),
+        memory=wf.get_resource("pizzly", "run", "memory"),
+        partition=wf.get_resource("pizzly", "run", "partition"),
     params:
         args=wf.substep_dispatch("pizzly", "get_args", "run"),
     log:
@@ -122,6 +135,11 @@ rule somatic_gene_fusion_calling_hera_run:
         **wf. get_input_files('hera','run'),
     output:
         **wf. get_output_files('hera','run'),
+    threads: wf.get_resource("hera", "run", "threads")
+    resources:
+        time=wf.get_resource("hera", "run", "time"),
+        memory=wf.get_resource("hera", "run", "memory"),
+        partition=wf.get_resource("hera", "run", "partition"),
     params:
         args=wf.substep_dispatch("hera", "get_args", "run"),
     log:
@@ -138,6 +156,11 @@ rule somatic_gene_fusion_calling_star_fusion_run:
         **wf. get_input_files('star_fusion','run'),
     output:
         **wf. get_output_files('star_fusion','run'),
+    threads: wf.get_resource("star_fusion", "run", "threads")
+    resources:
+        time=wf.get_resource("star_fusion", "run", "time"),
+        memory=wf.get_resource("star_fusion", "run", "memory"),
+        partition=wf.get_resource("star_fusion", "run", "partition"),
     params:
         args=wf.substep_dispatch("star_fusion", "get_args", "run"),
     log:
@@ -154,6 +177,11 @@ rule somatic_gene_fusion_calling_defuse_run:
         **wf. get_input_files('defuse','run'),
     output:
         **wf. get_output_files('defuse','run'),
+    threads: wf.get_resource("defuse", "run", "threads")
+    resources:
+        time=wf.get_resource("defuse", "run", "time"),
+        memory=wf.get_resource("defuse", "run", "memory"),
+        partition=wf.get_resource("defuse", "run", "partition"),
     params:
         args=wf.substep_dispatch("defuse", "get_args", "run"),
     log:

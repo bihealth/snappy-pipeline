@@ -52,6 +52,7 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -59,6 +60,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    ResourceUsage,
     get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -145,7 +147,11 @@ step_config:
 class SalmonStepPart(BaseStepPart):
     """Gene expression quantification for raw data using salmon"""
 
+    #: Step name
     name = "salmon"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -222,12 +228,21 @@ class SalmonStepPart(BaseStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 2500,
-            "time": "04:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="04:00:00",  # 4 hours
+            memory="2500M",
+        )
 
 
 class GeneExpressionQuantificationStepPart(BaseStepPart):
@@ -289,27 +304,61 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     """Gene expression quantification from RNA-seq using FeatureCounts"""
 
+    #: Step name
     name = "featurecounts"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "24:00",
-            "ntasks": 2,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="1-00:00:00",  # 1 day
+            memory="6700M",
+        )
 
 
 class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     """Gene expression quantification from RNA-seq using FeatureCounts"""
 
+    #: Step name
     name = "strandedness"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "12:00",
-            "ntasks": 2,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        return ResourceUsage(
+            threads=2,
+            time="12:00:00",  # 12 hours
+            memory="6700M",
+        )
 
     def get_strandedness_file(self, action):
         _ = action
@@ -318,56 +367,111 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "duplication"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "127g",
-            "h_rt": "72:00:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-00:00:00",  # 3 days
+            memory="127G",
+        )
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "dupradar"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "mem": 6700,
-            "time": "96:00",
-            "ntasks": 8,
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=8,
+            time="4-00:00:00",  # 4 days
+            memory="6700M",
+        )
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "rnaseqc"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "16g",
-            "h_rt": "3:59:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="03:59:00",  # 3 hours and 59 minutes
+            memory="16G",
+        )
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
 
+    #: Step name
     name = "stats"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["gene_expression_quantification_%s_run" % self.name] = {
-            "h_vmem": "4g",
-            "h_rt": "3:59:00",
-            "pe": "smp 1",
-        }
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="03:59:00",  # 3 hours and 59 minutes
+            memory="4G",
+        )
 
 
 class GeneExpressionQuantificationWorkflow(BaseStep):
     """Perform gene expression quantification"""
 
+    #: Workflow name
     name = "gene_expression_quantification"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
@@ -375,13 +479,10 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

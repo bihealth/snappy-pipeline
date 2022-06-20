@@ -176,17 +176,19 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -201,10 +203,9 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   variant_annotation:
-    drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
     window_length: 5000000    # split input into windows of this size, each triggers a job
     num_jobs: 100             # number of windows to process in parallel
-    use_drmaa: true           # use DRMAA for parallel processing
+    use_profile: true         # use Snakemake profile for parallel processing
     restart_times: 10         # number of times to re-launch jobs in case of failure
     max_jobs_per_second: 10   # throttling of job creation
     max_status_checks_per_second: 10   # throttling of status checks
@@ -239,7 +240,11 @@ step_config:
 class JannovarAnnotateVcfStepPart(BaseStepPart):
     """Annotate VCF file using "Jannovar annotate-vcf" """
 
+    #: Step name
     name = "jannovar"
+
+    #: Class available actions
+    actions = ("annotate_vcf",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -290,14 +295,26 @@ class JannovarAnnotateVcfStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["variant_annotation_jannovar_annotate_vcf"] = {
-            "mem": 7 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = 7 * 1024 * 2
+        return ResourceUsage(
+            threads=2,
+            time="4-03:30:00",  # ~4.15 days
+            memory=f"{mem_mb}M",
+        )
 
 
 class VariantAnnotationWorkflow(BaseStep):
@@ -311,13 +328,10 @@ class VariantAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

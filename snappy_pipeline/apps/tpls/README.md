@@ -2,7 +2,7 @@
 
 - created at: %(created_at)s
 
-This directory contains a CUBI pipeline project.
+This directory contains a Snappy Pipeline project.
 
 ## Project Description
 
@@ -20,10 +20,10 @@ TODO: describe the project status here
 
 You can find out more about the used software packages here:
 
-- [CUBI Pipeline](http://gitlab.bihealth.org/cubi/cubi_pipeline) --
+- [Snappy Pipeline](https://github.com/bihealth/snappy-pipeline) --
   The Snakemake-based pipeline system used by CUBI
-- [BioMed Sample Sheets](https://gitlab.bihealth.org/cubi/biomedsheets) --
+- [BioMed Sample Sheets](https://github.com/bihealth/biomedsheets) --
   The data model and file formats used for feeding sample meta data and the
   experiment description into the pipeline
-- [CUBI Wrappers](http://gitlab.bihealth.org/cubi/snappy_wrappers) --
+- [CUBI Toolkit](https://github.com/bihealth/cubi-tk) --
   Python-based wrappers for Bioinformatics tools

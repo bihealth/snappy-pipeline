@@ -12,4 +12,4 @@ dependencies:
 - bcftools
 - htslib
 - samtools
-- snakemake ==5.18
+- snakemake-minimal

@@ -2,7 +2,7 @@
 """Wrapper for merging multiple tables in R on shared columns"""
 
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 import re
 

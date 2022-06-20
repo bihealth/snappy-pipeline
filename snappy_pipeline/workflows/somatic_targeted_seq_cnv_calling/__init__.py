@@ -101,10 +101,15 @@ from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_targeted_seq_cnv_calling step
 DEFAULT_CONFIG = r"""
@@ -191,6 +196,7 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         Postprocessing of the segmentation, annotation with copy state and gene-wise coverage.
     """
 
+    #: Class available actions
     actions = ("coverage", "segment", "postprocess")
 
     def __init__(self, parent):
@@ -205,14 +211,15 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         "coverage" action takes as input the BAI-indexed BAM files of the matched tumor/normal
         pairs, the other actions take as input the output of the previous actions.
         """
-        assert action in self.actions, "Invalid action"
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_{action}".format(action=action))()
 
     def _get_input_files_coverage(self):
         @dictify
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
+            # Get shortcut to Snakemake sub workflow
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
@@ -253,7 +260,8 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         Actually delegates to the appropriate ``_get_input_files_{action}`` function; refer to
         documentation of the individual functions for more details.
         """
-        assert action in self.actions, "Invalid action"
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_output_files_{action}".format(action=action))()
 
     @dictify
@@ -312,7 +320,8 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
-        assert action in self.actions, "Invalid action"
+        # Validate action
+        self._validate_action(action)
         name_pattern = self.name_pattern.format(action=action)
         key_ext = (
             ("log", ".log"),
@@ -322,26 +331,34 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         for key, ext in key_ext:
             yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration with resource usage limits for
-        scheduling
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
         """
-        for action in self.actions:
-            key = "somatic_targeted_seq_cnv_calling_{tool}_{action}".format(
-                tool=self.name, action=action
-            )
-            cluster_config[key] = {"mem": 7500, "time": "24:00", "ntasks": 1}
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory="7500M",
+        )
 
 
 class CnvettiOffTargetStepPart(CnvettiStepPartBase):
     """Perform somatic targeted CNV calling using CNVetti with off-target reads."""
 
+    #: Step name
     name = "cnvetti_off_target"
 
 
 class CnvettiOnTargetStepPart(CnvettiStepPartBase):
     """Perform somatic targeted CNV calling using CNVetti with on-target reads."""
 
+    #: Step name
     name = "cnvetti_on_target"
 
 
@@ -372,7 +389,37 @@ def format_id(*args):
 class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using cnvkit"""
 
+    #: Step name
     name = "cnvkit"
+
+    #: Class available actions
+    actions = (
+        "access",
+        "target",
+        "antitarget",
+        "coverage",
+        "reference",
+        "fix",
+        "call",
+        "segment",
+        "export",
+        "plot",
+        "report",
+    )
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "plot": ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{30 * 1024}M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{int(7.5 * 1024)}M",
+        ),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -388,6 +435,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_input_files(self, action):
         """Return input paths input function, dependent on rule"""
+        # Validate action
+        self._validate_action(action)
         method_mapping = {
             "access": None,
             "target": self._get_input_files_target,
@@ -401,7 +450,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "plot": self._get_input_files_plot,
             "report": self._get_input_files_report,
         }
-        assert action in method_mapping, "Unknown action"
         return method_mapping[action]
 
     @staticmethod
@@ -495,6 +543,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_output_files(self, action):
         """Return output files for the given action"""
+        # Validate action
+        self._validate_action(action)
         method_mapping = {
             "access": self._get_output_files_access,
             "target": self._get_output_files_target,
@@ -508,7 +558,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "plot": self._get_output_files_plot,
             "report": self._get_output_files_report,
         }
-        assert action in method_mapping, "Unknown action"
         return method_mapping[action]()
 
     @staticmethod
@@ -640,37 +689,52 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration with resource usage limits for
-        scheduling
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
         """
-        actions = (
-            "access",
-            "target",
-            "antitarget",
-            "coverage",
-            "reference",
-            "fix",
-            "call",
-            "segment",
-            "export",
-            "plot",
-            "report",
-        )
-        for action in actions:
-            key = "somatic_targeted_seq_cnv_calling_cnvkit_{}".format(action)
-            if action == "plot":
-                memory = 30 * 1024
-            else:
-                memory = int(7.5 * 1024)
-            cluster_config[key] = {"mem": memory, "time": "24:00", "ntasks": 1}
+        # Validate action
+        self._validate_action(action)
+        if action == "plot":
+            return self.resource_usage_dict.get("plot")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using CopywriteR"""
 
+    #: Step name
     name = "copywriter"
+
+    #: Class available actions
+    actions = ("prepare", "run", "call")
+
+    #: Actions for which there are input and output methods available
+    actions_w_in_out = ("run", "call")
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "prepare": ResourceUsage(
+            threads=1,
+            time="02:00:00",  # 2 hours
+            memory="4000M",
+        ),
+        "run": ResourceUsage(
+            threads=2,
+            time="16:00:00",  # 16 hours
+            memory="80000M",
+        ),
+        "call": ResourceUsage(
+            threads=8,
+            time="03:59:00",  # 3 hours and 59 minutes
+            memory="8000M",
+        ),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -680,9 +744,13 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
 
     def get_input_files(self, action):
+        # Validate action
+        msg = "Option available only for actions 'run' and 'call'."
+        assert action in self.actions_w_in_out, msg
+
         def input_function_run(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
+            # Get shortcut to Snakemake sub workflow
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
@@ -714,7 +782,6 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 input_files[k] = tpl + v
             return input_files
 
-        assert action in ["run", "call", "Unsupported actions"]
         if action == "run":
             return input_function_run
         if action == "call":
@@ -722,7 +789,10 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action in ["run", "call", "Unsupported actions"]
+        # Validate action
+        msg = "Option available only for actions 'run' and 'call'."
+        assert action in self.actions_w_in_out, msg
+
         exts = {}
         tpl = ""
         if action == "run":
@@ -764,6 +834,9 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
+        # Validate action
+        self._validate_action(action)
+
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -771,6 +844,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
 
         if action == "prepare":
+            # TODO: Possible bug. It should still yield dict-like format, no?
             tpl = "work/copywriter.{action}/log/snakemake.log"
             return tpl.format(action=action)
         elif action in ("call", "run"):
@@ -780,24 +854,27 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             )
             for key, ext in key_ext:
                 yield key, tpl + ext
-        else:
-            raise ValueError("Unknown action {}".format(action))
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration with resource usage limits for
-        scheduling
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
         """
-        tpl = "somatic_targeted_seq_cnv_calling_copywriter_{}"
-        cluster_config[tpl.format("prepare")] = {"mem": int(4000), "time": "2:00", "ntasks": 1}
-        cluster_config[tpl.format("run")] = {"mem": int(80000), "time": "16:00", "ntasks": 2}
-        cluster_config[tpl.format("call")] = {"mem": int(8000), "time": "3:59:00", "ntasks": 8}
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
 
 class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     """Perform somatic targeted sequencing CNV calling"""
 
+    #: Workflow name
     name = "somatic_targeted_seq_cnv_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
     @classmethod
@@ -805,13 +882,10 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

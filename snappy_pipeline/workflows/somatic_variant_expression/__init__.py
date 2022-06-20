@@ -32,7 +32,7 @@ The default configuration is as follows.
 
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_variant_expression step
 DEFAULT_CONFIG = r"""

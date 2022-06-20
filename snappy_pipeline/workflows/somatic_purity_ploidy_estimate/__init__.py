@@ -19,9 +19,9 @@ from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Tools for estimating purity and ploidy.
 PURITY_PLOIDY_TOOLS = "ascat"
@@ -56,6 +56,7 @@ class AscatStepPart(BaseStepPart):
 
     # Name of the step.
     name = "ascat"
+
     # The actions for generating BAF/CNV files for the tumor and/nor normal
     # sample, and finally to run the ASCAT pipeline.
     actions = (
@@ -84,7 +85,8 @@ class AscatStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return input files"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))()
 
     def _get_input_files_baf_tumor(self):
@@ -142,6 +144,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating CNV file from copywriter for normal."""
 
         def func(wildcards):
+            tumor_library = None
             wgs_cnv_calling = self.parent.sub_workflows["somatic_targeted_seq_cnv_calling"]
             # look up tumor to normal
             for k, v in self.tumor_ngs_library_to_sample_pair.items():
@@ -187,7 +190,8 @@ class AscatStepPart(BaseStepPart):
 
     def get_output_files(self, action):
         """Return output files"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
     @staticmethod
@@ -243,7 +247,9 @@ class AscatStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         """Return path to log file"""
-        assert action in self.actions
+        # TODO: implement log option for actions `cnv_tumor_wes` and `cnv_normal_wes`.
+        # Validate action
+        self._validate_action(action)
         log_dict = {
             "baf_tumor": (
                 "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/log/"
@@ -268,20 +274,32 @@ class AscatStepPart(BaseStepPart):
         }
         return {"log": log_dict[action]}
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            cluster_config["somatic_purity_ploidy_estimate_ascat_%s" % action] = {
-                "mem": 10 * 1024 * 8,
-                "time": "48:00",
-                "ntasks": 8,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=8,
+            time="2-00:00:00",  # 2 days
+            memory=f"{10 * 1024 * 8}M",
+        )
 
 
 class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     """Perform purity and ploidy estimation"""
 
+    #: Workflow name
     name = "somatic_purity_ploidy_estimate"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -293,13 +311,10 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -308,7 +323,10 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        # TODO: potential bug here as this step requires an entry that is not available
+        #  in DEFAULT_CONFIG.
         if self.config["tool_cnv_calling"] == "copywriter":
+
             self.register_sub_workflow(
                 "somatic_targeted_seq_cnv_calling",
                 self.config["path_somatic_targeted_seq_cnv_calling"],

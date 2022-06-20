@@ -6,6 +6,11 @@ rule targeted_seq_cnv_calling_gcnv_preprocess_intervals:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
         **wf. get_output_files("gcnv","preprocess_intervals"),
+    threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
+        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     wrapper:
@@ -17,6 +22,11 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
         unpack(wf.get_input_files("gcnv", "coverage")),
     output:
         **wf. get_output_files("gcnv","coverage"),
+    threads: wf.get_resource("gcnv", "coverage", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "coverage", "time"),
+        memory=wf.get_resource("gcnv", "coverage", "memory"),
+        partition=wf.get_resource("gcnv", "coverage", "partition"),
     log:
         wf.get_log_file("gcnv", "coverage"),
     wrapper:
@@ -28,6 +38,11 @@ rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
         unpack(wf.get_input_files("gcnv", "contig_ploidy_case_mode")),
     output:
         **wf. get_output_files("gcnv","contig_ploidy_case_mode"),
+    threads: wf.get_resource("gcnv", "contig_ploidy_case_mode", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "contig_ploidy_case_mode", "time"),
+        memory=wf.get_resource("gcnv", "contig_ploidy_case_mode", "memory"),
+        partition=wf.get_resource("gcnv", "contig_ploidy_case_mode", "partition"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy_case_mode"),
     params:
@@ -41,6 +56,11 @@ rule targeted_seq_cnv_calling_gcnv_call_cnvs_case_mode:
         unpack(wf.get_input_files("gcnv", "call_cnvs_case_mode")),
     output:
         **wf. get_output_files("gcnv","call_cnvs_case_mode"),
+    threads: wf.get_resource("gcnv", "call_cnvs_case_mode", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "call_cnvs_case_mode", "time"),
+        memory=wf.get_resource("gcnv", "call_cnvs_case_mode", "memory"),
+        partition=wf.get_resource("gcnv", "call_cnvs_case_mode", "partition"),
     log:
         wf.get_log_file("gcnv", "call_cnvs_case_mode"),
     params:
@@ -54,6 +74,11 @@ rule targeted_seq_cnv_calling_gcnv_post_germline_calls_case_mode:
         unpack(wf.get_input_files("gcnv", "post_germline_calls_case_mode")),
     output:
         **wf. get_output_files("gcnv","post_germline_calls"),
+    threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "post_germline_calls", "time"),
+        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
+        partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     params:
@@ -67,6 +92,11 @@ rule targeted_seq_cnv_calling_gcnv_merge_cohort_vcfs:
         wf.get_input_files("gcnv", "merge_cohort_vcfs"),
     output:
         **wf. get_output_files("gcnv","merge_cohort_vcfs"),
+    threads: wf.get_resource("gcnv", "merge_cohort_vcfs", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "merge_cohort_vcfs", "time"),
+        memory=wf.get_resource("gcnv", "merge_cohort_vcfs", "memory"),
+        partition=wf.get_resource("gcnv", "merge_cohort_vcfs", "partition"),
     log:
         wf.get_log_file("gcnv", "merge_cohort_vcfs"),
     wrapper:
@@ -78,6 +108,11 @@ rule targeted_seq_cnv_calling_gcnv_extract_ped:
         unpack(wf.get_input_files("gcnv", "extract_ped")),
     output:
         **( wf. get_output_files("gcnv","extract_ped")),
+    threads: wf.get_resource("gcnv", "extract_ped", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "extract_ped", "time"),
+        memory=wf.get_resource("gcnv", "extract_ped", "memory"),
+        partition=wf.get_resource("gcnv", "extract_ped", "partition"),
     log:
         wf.get_log_file("gcnv", "extract_ped"),
     params:

@@ -66,12 +66,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -97,7 +98,11 @@ step_config:
 class VcfCnvFilterStepPart(BaseStepPart):
     """Annotate VCF using targeted_seq_cnv_filter.py script."""
 
+    #: Step name
     name = "vcf_cnv_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -111,10 +116,11 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
+        # TODO: Remove dependency from 'xhmm', it should also work if only 'gcnv' is set.
         xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
         if not xhmm_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
-            for donor in self.parent._all_donors():
+            for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
 
@@ -124,7 +130,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
             for item in xhmm_config["path_target_interval_list_mapping"]
         }
         result = {}
-        for donor in self.parent._all_donors():
+        for donor in self.parent.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
                 library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
                 for pattern, name in regexes.items():
@@ -134,14 +140,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return input function returning input file dict."""
+        # Validate action
+        self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
             tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
             yield "ped", tpl.format(**wildcards)
-            # yield "ped", os.path.realpath(
-            #    "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-            # ).format(**wildcards)
             tpl = (
                 "output/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
@@ -162,13 +167,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 yield key, targeted_seq_cnv_calling(tpl + ext).format(**wildcards)
             return
 
-        assert action == "run"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
@@ -182,11 +187,11 @@ class VcfCnvFilterStepPart(BaseStepPart):
         for key, ext in key_ext.items():
             yield key, prefix + ext
 
-    @staticmethod
     @dictify
-    def get_log_file(action):
+    def get_log_file(self, action):
         """Return dict of log files."""
-        _ = action
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/log/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
@@ -200,20 +205,30 @@ class VcfCnvFilterStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["targeted_seq_cnv_annotation_targeted_seq_cnv_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "tasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
 
 
 class TargetedSeqCnvAnnotationWorkflow(BaseStep):
     """Perform germline targeted sequencing CNV annotation"""
 
+    #: Workflow name
     name = "targeted_seq_cnv_annotation"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -221,13 +236,10 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -255,7 +267,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
         self.ngs_library_to_kit = self.sub_steps["vcf_cnv_filter"].ngs_library_to_kit
 
     @listify
-    def _all_donors(self, include_background=True):
+    def all_donors(self, include_background=True):
         """Return list of all donors in sample sheet."""
         sheets = self.shortcut_sheets
         if not include_background:
@@ -273,7 +285,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
             kit_counts[name] += 1
         donors = [
             donor
-            for donor in self._all_donors()
+            for donor in self.all_donors()
             if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
         ]
         return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts

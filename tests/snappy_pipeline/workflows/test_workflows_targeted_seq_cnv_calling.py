@@ -216,7 +216,6 @@ def germline_sheet_fake_fs2_gcnv_model(germline_sheet_fake_fs2):
 def targeted_seq_cnv_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -235,7 +234,6 @@ def targeted_seq_cnv_calling_workflow(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -246,7 +244,6 @@ def targeted_seq_cnv_calling_workflow(
 def targeted_seq_cnv_calling_workflow_large_cohort(
     dummy_workflow,
     minimal_config_large_cohort,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -266,7 +263,6 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config_large_cohort,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -277,7 +273,6 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
 def targeted_seq_cnv_calling_workflow_large_cohort_background(
     dummy_workflow,
     minimal_config_large_cohort_background,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -295,7 +290,6 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config_large_cohort_background,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -306,7 +300,6 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
 def targeted_seq_cnv_calling_workflow_with_gcnv_model(
     dummy_workflow,
     minimal_config_large_cohort_with_gcnv_model,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -337,7 +330,6 @@ def targeted_seq_cnv_calling_workflow_with_gcnv_model(
     return TargetedSeqCnvCallingWorkflow(
         dummy_workflow,
         minimal_config_large_cohort_with_gcnv_model,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -465,15 +457,44 @@ def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
         targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
 
 
-def test_gcnv_update_cluster_config(targeted_seq_cnv_calling_workflow, dummy_cluster_config):
-    """Tests GcnvStepPart.update_cluster_config for all actions"""
+def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
+    """Tests GcnvStepPart.get_resource()"""
+    # Define tested actions
+    high_resource_actions = (
+        "call_cnvs_cohort_mode",
+        "call_cnvs_case_mode",
+        "post_germline_calls",
+        "post_germline_calls_cohort_mode",
+        "post_germline_calls_case_mode",
+    )
+    all_actions = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "actions")
+    default_actions = [action for action in all_actions if action not in high_resource_actions]
     # Define expected
-    expected = {"mem", "time", "ntasks"}
-    # Iterate over
-    for action in GCNV_ACTIONS:
-        key = "targeted_seq_cnv_calling_gcnv_{0}".format(action)
-        actual = set(dummy_cluster_config[key].keys())
-        assert actual == expected
+    high_res_expected_dict = {
+        "threads": 16,
+        "time": "2-00:00:00",
+        "memory": "46080M",
+        "partition": "medium",
+    }
+    default_expected_dict = {
+        "threads": 1,
+        "time": "04:00:00",
+        "memory": "7680M",
+        "partition": "medium",
+    }
+    # Evaluate - high resource actions
+    for action in high_resource_actions:
+        for resource, expected in high_res_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = targeted_seq_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            assert actual == expected, msg_error
+
+    # Evaluate - all other actions
+    for action in default_actions:
+        for resource, expected in default_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = targeted_seq_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            assert actual == expected, msg_error
 
 
 def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
@@ -1750,3 +1771,35 @@ def test_xhmm_extract_ped_part_get_log_file(targeted_seq_cnv_calling_workflow):
     # Get actual
     actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "extract_ped")
     assert actual == expected
+
+
+def test_xhmm_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
+    """Tests XhmmStepPart.get_resource()"""
+    # Define expected
+    merge_cov_expected_dict = {
+        "threads": 1,
+        "time": "1-00:00:00",
+        "memory": "12G",
+        "partition": "medium",
+    }
+    default_expected_dict = {
+        "threads": 1,
+        "time": "08:00:00",
+        "memory": "12G",
+        "partition": "medium",
+    }
+
+    # Evaluate - merge_cov
+    for resource, expected in merge_cov_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = targeted_seq_cnv_calling_workflow.get_resource("xhmm", "merge_cov", resource)
+        assert actual == expected, msg_error
+
+    # Evaluate - all other actions
+    all_actions = targeted_seq_cnv_calling_workflow.substep_getattr("xhmm", "actions")
+    default_actions = [action for action in all_actions if action != "merge_cov"]
+    for action in default_actions:
+        for resource, expected in default_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = targeted_seq_cnv_calling_workflow.get_resource("xhmm", action, resource)
+            assert actual == expected, msg_error

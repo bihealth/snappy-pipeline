@@ -22,9 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = GeneExpressionQuantificationWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = GeneExpressionQuantificationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -76,6 +74,11 @@ rule gene_expression_quantification_strandedness_run:
         unpack(wf.get_input_files("strandedness", "run")),
     output:
         **wf. get_output_files('strandedness','run'),
+    threads: wf.get_resource("strandedness", "run", "threads")
+    resources:
+        time=wf.get_resource("strandedness", "run", "time"),
+        memory=wf.get_resource("strandedness", "run", "memory"),
+        partition=wf.get_resource("strandedness", "run", "partition"),
     log:
         **wf. get_log_file('strandedness','run'),
     wrapper:
@@ -91,6 +94,11 @@ rule gene_expression_quantification_duplication_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf. get_output_files('duplication','run'),
+    threads: wf.get_resource("duplication", "run", "threads")
+    resources:
+        time=wf.get_resource("duplication", "run", "time"),
+        memory=wf.get_resource("duplication", "run", "memory"),
+        partition=wf.get_resource("duplication", "run", "partition"),
     log:
         **wf. get_log_file('duplication','run'),
     wrapper:
@@ -103,6 +111,11 @@ rule gene_expression_quantification_dupradar_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf. get_output_files('dupradar','run'),
+    threads: wf.get_resource("dupradar", "run", "threads")
+    resources:
+        time=wf.get_resource("dupradar", "run", "time"),
+        memory=wf.get_resource("dupradar", "run", "memory"),
+        partition=wf.get_resource("dupradar", "run", "partition"),
     log:
         **wf. get_log_file('dupradar','run'),
     wrapper:
@@ -115,6 +128,11 @@ rule gene_expression_quantification_rnaseqc_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf. get_output_files('rnaseqc','run'),
+    threads: wf.get_resource("rnaseqc", "run", "threads")
+    resources:
+        time=wf.get_resource("rnaseqc", "run", "time"),
+        memory=wf.get_resource("rnaseqc", "run", "memory"),
+        partition=wf.get_resource("rnaseqc", "run", "partition"),
     log:
         **wf. get_log_file('rnaseqc','run'),
     wrapper:
@@ -127,6 +145,11 @@ rule gene_expression_quantification_star_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf. get_output_files('stats','run'),
+    threads: wf.get_resource("stats", "run", "threads")
+    resources:
+        time=wf.get_resource("stats", "run", "time"),
+        memory=wf.get_resource("stats", "run", "memory"),
+        partition=wf.get_resource("stats", "run", "partition"),
     log:
         **wf. get_log_file('stats','run'),
     wrapper:
@@ -144,6 +167,11 @@ rule gene_expression_quantification_featurecounts_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf. get_output_files('featurecounts','run'),
+    threads: wf.get_resource("featurecounts", "run", "threads")
+    resources:
+        time=wf.get_resource("featurecounts", "run", "time"),
+        memory=wf.get_resource("featurecounts", "run", "memory"),
+        partition=wf.get_resource("featurecounts", "run", "partition"),
     log:
         **wf. get_log_file('featurecounts','run'),
     wrapper:
@@ -160,6 +188,11 @@ rule gene_expression_quantification_salmon_run:
         **wf. get_input_files('salmon','run'),
     output:
         **wf. get_output_files('salmon','run'),
+    threads: wf.get_resource("salmon", "run", "threads")
+    resources:
+        time=wf.get_resource("salmon", "run", "time"),
+        memory=wf.get_resource("salmon", "run", "memory"),
+        partition=wf.get_resource("salmon", "run", "partition"),
     log:
         **wf. get_log_file('salmon','run'),
     params:

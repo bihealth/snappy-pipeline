@@ -10,8 +10,7 @@ This program is a wrapper around `Snakemake <https://snakemake.bitbucket.org>`_ 
 
 - a number of pre-packaged, well-tested workflows (pipeline steps) that are
 - driven by configuration and sample sheet files and
-- can be shared over multiple projects; it has
-- good integration into DRMAA-based scheduling systems and a
+- can be shared over multiple projects; and a
 - easy-to-use command line interface.
 
 Here is how to get command line help:
@@ -19,9 +18,3 @@ Here is how to get command line help:
 .. code-block:: shell
 
     $ snappy-snake --help
-
-Here is how to print the version and enabled features:
-
-.. code-block:: shell
-
-    $ snappy-snake --snappy-pipeline-self-test

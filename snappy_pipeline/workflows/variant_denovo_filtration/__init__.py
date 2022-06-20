@@ -100,13 +100,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -143,6 +144,10 @@ step_config:
 
 
 class FilterDeNovosBaseStepPart(BaseStepPart):
+
+    #: Class available actions
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         #: Name of the previous step and token
@@ -159,17 +164,27 @@ class FilterDeNovosBaseStepPart(BaseStepPart):
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
                         self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_denovo_filtration_{}_run".format(self.name)] = {
-            "mem": 2 * 1024,
-            "time": "02:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="02:00:00",  # 2 hours
+            memory=f"{2 * 1024}M",
+        )
 
 
 class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
     """Step for soft-filtering variants (annotations and adding soft-filters)."""
 
+    #: Step name
     name = "filter_denovo"
 
     def __init__(self, parent):
@@ -186,6 +201,9 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
         )
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
             # Get name of real index, used when input is not variant_phasing
@@ -213,30 +231,41 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 )
                 yield key, prev_step(input_path) + ext
 
-        assert action == "run", "Unsupported action"
         return input_function
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_denovo_filtration_{}_run".format(self.name)] = {
-            "mem": 14 * 1024,
-            "time": "24:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{14 * 1024}M",
+        )
 
 
 class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
     """Step for hard-filtering variants."""
 
+    #: Step name
     name = "filter_denovo_hard"
 
     def __init__(self, parent):
@@ -255,23 +284,29 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
 
     @dictify
     def get_input_files(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
         yield "vcf", self.base_path_in + ".vcf.gz"
         yield "tbi", self.base_path_in + ".vcf.gz.tbi"
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out + ext
         yield "summary", self.base_path_out + ".summary.txt"
         yield "summary_md5", self.base_path_out + ".summary.txt.md5"
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
     def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def args_function(wildcards):
             donor = self.ngs_library_to_donor[wildcards.index_library]
             return {
@@ -279,13 +314,13 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
                 "mother": donor.mother.dna_ngs_library.name,
             }
 
-        assert action == "run"
         return args_function
 
 
 class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
     """Summarizing counts."""
 
+    #: Step name
     name = "summarize_counts"
 
     def __init__(self, parent):
@@ -297,7 +332,9 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
 
     @listify
     def get_input_files(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
+
         name_pattern = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (
             self.prev_token,
         )
@@ -319,22 +356,27 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "txt", self.base_path_out + ".txt"
         yield "txt_md5", self.base_path_out + ".txt.md5"
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.path_log
 
 
 class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
     """Step part for collecting the MSDN."""
 
+    #: Step name
     name = "collect_msdn"
 
     def get_input_files(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
+
         result = {"gatk_hc": [], "gatk_ug": []}
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
@@ -360,24 +402,29 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "txt", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt"
         yield "txt_md5", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt.md5"
 
     @staticmethod
     def get_log_file(action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return "work/{mapper}.multisite_de_novo/log/{mapper}.multisite_de_novo.log"
 
 
 class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
     """Step part for creating summary counts."""
 
+    #: Step name
     name = "summarize_counts"
 
     @listify
     def get_input_files(self, action):
-        _ = action
+        # Validate action
+        self._validate_action(action)
+
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
@@ -399,22 +446,26 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "txt", "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt"
         yield "txt_md5", (
             "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"
         )
 
-    @staticmethod
-    def get_log_file(action):
-        assert action == "run"
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
         return "work/{mapper}.denovo_count_summary/log/{mapper}.denovo_count_summary.log"
 
 
 class VariantDeNovoFiltrationWorkflow(BaseStep):
     """Perform (small) variant de novo filtration"""
 
+    #: Workflow name
     name = "variant_denovo_filtration"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -422,13 +473,10 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

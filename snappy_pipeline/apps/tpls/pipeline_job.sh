@@ -29,9 +29,6 @@ umask ug=rwx,o=
 
 # Configuration variables ---------------------------------------------------
 
-# Remove old, SGE-specific environment variable
-unset DRMAA_LIBRARY_PATH
-
 # Maximal number of jobs to execute at the same time
 MAX_JOBS=500
 # Maximal number of jobs per second
@@ -114,10 +111,10 @@ set -x
 
 # Using the medium project/queue is a sensible default.
 snappy-snake --printshellcmds \
-    --snappy-pipeline-use-drmaa \
-    --snappy-pipeline-drmaa-jobs $MAX_JOBS \
+    --snappy-pipeline-use-profile "cubi-v1" \
+    --snappy-pipeline-jobs $MAX_JOBS \
     --restart-times ${RESTART_TIMES} \
-    --drmaa-snippet="--partition=%(partition)s" \
+    --default-partition="medium" \
     --rerun-incomplete \
     -- \
     $*

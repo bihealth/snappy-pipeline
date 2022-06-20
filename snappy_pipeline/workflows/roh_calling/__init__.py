@@ -97,12 +97,18 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, touch
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the roh_calling step
 DEFAULT_CONFIG = r"""
@@ -240,14 +246,26 @@ class BcftoolsRohStepPart(BaseStepPart):
             "log/snakemake.bcftools_roh.%(action)s.log"
         ) % {"action": action}
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        for action in self.actions:
-            cluster_config["roh_calling_bcftools_roh_{}".format(action)] = {
-                "mem": 2000 * self.config["bcftools_roh"]["threads"],
-                "time": "04:00",
-                "ntasks": self.config["bcftools_roh"]["threads"],
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        mem_mb = int(2000 * self.config["bcftools_roh"]["threads"])
+        return ResourceUsage(
+            threads=self.config["bcftools_roh"]["threads"],
+            time="00:04:00",  # 4 minutes
+            memory=f"{mem_mb}M",
+        )
 
 
 class RohCallingWorkflow(BaseStep):
@@ -261,13 +279,10 @@ class RohCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -327,7 +342,7 @@ class RohCallingWorkflow(BaseStep):
                     ext=[".txt.gz", ".txt.gz.md5"],
                     donor_library=[pedigree.index.dna_ngs_library.name],
                     index_library=[pedigree.index.dna_ngs_library.name],
-                    **kwargs
+                    **kwargs,
                 )
                 # One BED file for each donor with a DNS librar
                 for donor in pedigree.donors:
@@ -337,5 +352,5 @@ class RohCallingWorkflow(BaseStep):
                             ext=[".bed.gz", ".bed.gz.md5", ".bed.gz.tbi", ".bed.gz.tbi.md5"],
                             donor_library=[donor.dna_ngs_library.name],
                             index_library=[pedigree.index.dna_ngs_library.name],
-                            **kwargs
+                            **kwargs,
                         )

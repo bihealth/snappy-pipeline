@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 import versioneer
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 def parse_requirements(path):
@@ -40,12 +40,8 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-# Use DRMAA/non-DRMAA requirements
-if "DRMAA_LIBRARY_PATH" in os.environ:
-    requirements = parse_requirements("requirements/drmaa.txt")
-else:
-    requirements = parse_requirements("requirements/base.txt")
-
+# Get requirements
+requirements = parse_requirements("requirements/base.txt")
 
 test_requirements = [
     # TODO: put package test requirements here
@@ -96,8 +92,8 @@ setup(
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
     author="Manuel Holtgrewe",
-    author_email="manuel.holtgrewe@bihealth.de",
-    url="https://gitlab.bihealth.org/cubi/snappy_pipeline",
+    author_email="manuel.holtgrewe@bih-charite.de",
+    url="https://github.com/bihealth/snappy-pipeline",
     packages=find_packages(),
     package_dir={"snappy_wrappers": "snappy_wrappers", "snappy_pipeline": "snappy_pipeline"},
     entry_points={

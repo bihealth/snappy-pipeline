@@ -22,10 +22,10 @@ def dummy_config():
     return CommentedMap([("data_sets", CommentedMap())])
 
 
-@pytest.fixture
-def dummy_cluster_config():
-    """Return dummy cluster configuration OrderedDicts"""
-    return CommentedMap()
+# @pytest.fixture
+# def dummy_cluster_config():
+#     """Return dummy cluster configuration OrderedDicts"""
+#     return CommentedMap()
 
 
 @pytest.fixture
@@ -79,6 +79,12 @@ def dummy_generic_step(
     return DummyBaseStep(
         dummy_workflow, dummy_config, dummy_cluster_config, config_lookup_paths, work_dir
     )
+
+
+@pytest.fixture
+def fai_file_content():
+    """Returns FAI file content based on hs37d5 (chromosome 1 only)."""
+    return "1\t249250621\t52\t60\t61"
 
 
 def random_gender():

@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantAnnotationWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = VariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -73,6 +71,11 @@ rule variant_annotation_jannovar_annotate_vcf:
         **wf. get_input_files('jannovar','annotate_vcf'),
     output:
         **wf. get_output_files('jannovar','annotate_vcf'),
+    threads: wf.get_resource("jannovar", "annotate_vcf", "threads")
+    resources:
+        time=wf.get_resource("jannovar", "annotate_vcf", "time"),
+        memory=wf.get_resource("jannovar", "annotate_vcf", "memory"),
+        partition=wf.get_resource("jannovar", "annotate_vcf", "partition"),
     log:
         **wf. get_log_file('jannovar','annotate_vcf'),
     wrapper:

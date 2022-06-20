@@ -7,7 +7,7 @@ import os
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 args_ignore_chroms = ""
 if snakemake.params.args["ignore_chroms"]:

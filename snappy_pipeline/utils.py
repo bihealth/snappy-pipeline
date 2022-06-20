@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility code"""
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 def listify(gen):

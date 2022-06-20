@@ -48,10 +48,11 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    ResourceUsage,
     get_ngs_library_folder_name,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: HLA typing tools
 GENE_FUSION_CALLERS = ("fusioncatcher", "jaffa", "pizzly", "hera", "star_fusion")
@@ -83,6 +84,9 @@ step_config:
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
     """Base class for somatic gene fusion calling"""
 
+    #: Class available actions
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
@@ -95,18 +99,21 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return input files"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "done", os.path.join(self.base_path_in, ".done")
 
     @dictify
     def get_output_files(self, action):
         """Return output files that all read mapping sub steps must return (BAM + BAI file)"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "done", touch(self.base_path_out)
 
     def get_log_file(self, action):
         """Return path to log file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return "work/{name}.{{library_name}}/log/snakemake.gene_fusion_calling.log".format(
             name=self.name
         )
@@ -126,6 +133,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
 class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using Fusioncatcher"""
 
+    #: Step name
     name = "fusioncatcher"
 
     def get_args(self, action):
@@ -148,19 +156,27 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for Fusioncatcher"""
-        cluster_config["somatic_gene_fusion_calling_fusioncatcher_run"] = {
-            "mem": 7500 * 4,
-            "time": "120:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="5-00:00:00",  # 5 days
+            memory=f"{7500 * 4}M",
+        )
 
 
 class JaffaStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using JAFFA"""
 
+    #: Step name
     name = "jaffa"
 
     def get_args(self, action):
@@ -178,19 +194,27 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for JAFFA"""
-        cluster_config["somatic_gene_fusion_calling_jaffa_run"] = {
-            "mem": 40 * 1024 * 4,
-            "time": "120:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="5-00:00:00",  # 5 days
+            memory=f"{40 * 1024 * 4}M",
+        )
 
 
 class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using Kallisto+Pizzly"""
 
+    #: Step name
     name = "pizzly"
 
     def get_args(self, action):
@@ -208,19 +232,27 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for Kallisto+Pizzly"""
-        cluster_config["somatic_gene_fusion_calling_pizzly_run"] = {
-            "mem": 20 * 1024 * 4,
-            "time": "120:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="5-00:00:00",  # 5 days
+            memory=f"{20 * 1024 * 4}M",
+        )
 
 
 class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using STAR-Fusion"""
 
+    #: Step name
     name = "star_fusion"
 
     def get_args(self, action):
@@ -238,19 +270,27 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for STAR-Fusion"""
-        cluster_config["somatic_gene_fusion_calling_star_fusion_run"] = {
-            "mem": 30 * 1024 * 4,
-            "time": "120:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="5-00:00:00",  # 5 days
+            memory=f"{30 * 1024 * 4}M",
+        )
 
 
 class DefuseStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using Defuse"""
 
+    #: Step name
     name = "defuse"
 
     def get_args(self, action):
@@ -268,19 +308,27 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for Defuse"""
-        cluster_config["somatic_gene_fusion_calling_defuse_run"] = {
-            "mem": 10 * 1024 * 8,
-            "time": "120:00",
-            "ntasks": 8,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=8,
+            time="5-00:00:00",  # 5 days
+            memory=f"{10 * 1024 * 8}M",
+        )
 
 
 class HeraStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using Hera"""
 
+    #: Step name
     name = "hera"
 
     def get_args(self, action):
@@ -298,21 +346,32 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def update_cluster_config(cluster_config):
-        """Update cluster configuration for Hera"""
-        cluster_config["somatic_gene_fusion_calling_hera_run"] = {
-            "mem": 20 * 1024 * 8,
-            "time": "120:00",
-            "ntasks": 8,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=8,
+            time="5-00:00:00",  # 5 days
+            memory=f"{20 * 1024 * 8}M",
+        )
 
 
 class SomaticGeneFusionCallingWorkflow(BaseStep):
     """Perform somatic gene fusion calling"""
 
+    #: Workflow name
     name = "somatic_gene_fusion_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -324,12 +383,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
-        super().__init__(
-            workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-        )
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
         self.register_sub_step_classes(
             (
                 FusioncatcherStepPart,
@@ -363,3 +418,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
                                 fusion_caller=fusion_caller, ngs_library=ngs_library
                             )
                             yield os.path.join("output", name_pattern_value, "out", ".done")
+
+    def check_config(self):
+        """Check that the required configurations are present."""
+        # TODO: implement check for REQUIRED configurations.

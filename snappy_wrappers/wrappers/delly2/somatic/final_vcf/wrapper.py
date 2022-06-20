@@ -5,7 +5,7 @@
 from snakemake.shell import shell
 
 __author__ = "Nina Thiessen"
-__email__ = "nina.thiessen@bihealth.de"
+__email__ = "nina.thiessen@bih-charite.de"
 
 shell(
     r"""

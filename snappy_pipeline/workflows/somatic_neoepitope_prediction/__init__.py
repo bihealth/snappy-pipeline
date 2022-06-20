@@ -31,7 +31,7 @@ The default configuration is as follows.
 
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_gene_fusion_calling step
 DEFAULT_CONFIG = r"""
