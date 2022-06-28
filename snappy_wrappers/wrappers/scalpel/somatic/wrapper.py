@@ -109,7 +109,7 @@ tabix {snakemake.output.full_vcf}
 
 # split out somatic variants
 bcftools view \
-    --include 'INFO/INH=="no" & INFO/SOMATIC==1' \
+    --include 'FILTER=="PASS" & INFO/INH=="no" & INFO/SOMATIC==1' \
     {snakemake.output.full_vcf} \
 | bgzip -c \
 > {snakemake.output.vcf}

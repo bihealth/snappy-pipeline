@@ -7,8 +7,8 @@ from snakemake import shell
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.config["static_data_config"]["reference"]["path"]
-common_variants = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
-    "common_variants"
+common_biallelic = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
+    "common_biallelic"
 ]
 
 shell.executable("/bin/bash")
@@ -44,8 +44,8 @@ out_base=$TMPDIR/out/$(basename {snakemake.output.pileup} .pileup)
 gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
     --input {snakemake.input.bam} \
     --reference {reference} \
-    --variant {common_variants} \
-    --intervals {common_variants} \
+    --variant {common_biallelic} \
+    --intervals {common_biallelic} \
     --output $out_base.pileup
 
 pushd $TMPDIR && \
@@ -54,6 +54,7 @@ pushd $TMPDIR && \
     done && \
     popd
 
+mkdir -p $(dirname {snakemake.output.pileup})
 mv $out_base.* $(dirname {snakemake.output.pileup})
 """
 )
