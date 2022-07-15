@@ -15,7 +15,7 @@ ngs_library_to_kit = snakemake.params.ngs_library_to_kit
 
 # Get path to target BED file for coverage report, if possible depending on
 # enrichment kit of sample.
-kit_name = ngs_library_to_kit.get(library_name, ngs_library_to_kit.get("default", ""))
+kit_name = ngs_library_to_kit.get(library_name, "__default__")
 
 for item in snakemake.config["step_config"]["ngs_mapping"]["target_coverage_report"][
     "path_target_interval_list_mapping"
