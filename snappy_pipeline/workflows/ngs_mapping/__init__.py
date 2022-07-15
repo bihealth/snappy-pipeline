@@ -1012,7 +1012,10 @@ class TargetCoverageReportStepPart(BaseStepPart):
         for mapper in self.config["tools"]["dna"]:
             for sheet in self.parent.shortcut_sheets:
                 for library in sheet.all_ngs_libraries:
-                    if library.name in self.parent.ngs_library_to_kit:
+                    if (
+                        self.parent.default_kit_configured
+                        or library.name in self.parent.ngs_library_to_kit
+                    ):
                         kv = {"mapper_lib": "{}.{}".format(mapper, library.name)}
                         yield self._get_output_files_run()["txt"].format(**kv)
 
@@ -1189,19 +1192,20 @@ class NgsMappingWorkflow(BaseStep):
         )
         self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
         # Take shortcut from library to library kit.
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+        self.ngs_library_to_kit, self.default_kit_configured = self._build_ngs_library_to_kit()
         # Validate project
         self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
 
-    @dictify
     def _build_ngs_library_to_kit(self):
         cov_config = DictQuery(self.w_config).get("step_config/ngs_mapping/target_coverage_report")
         # Build mapping.
-        regexes = {
-            item["pattern"]: item["name"]
-            for item in cov_config["path_target_interval_list_mapping"]
-            if item["name"] != "__default__"
-        }
+        default_kit_configured = False
+        regexes = {}
+        for item in cov_config["path_target_interval_list_mapping"]:
+            if item["name"] == "__default__":
+                default_kit_configured = True
+            else:
+                regexes[item["pattern"]] = item["name"]
         result = {}
         for donor in self._all_donors():
             for bio_sample in donor.bio_samples.values():
@@ -1211,8 +1215,8 @@ class NgsMappingWorkflow(BaseStep):
                             library_kit = library.extra_infos.get("libraryKit")
                             for pattern, name in regexes.items():
                                 if re.match(pattern, library_kit):
-                                    yield library.name, name
-        return result
+                                    result[library.name] = name
+        return result, default_kit_configured
 
     @listify
     def _all_donors(self, include_background=True):
