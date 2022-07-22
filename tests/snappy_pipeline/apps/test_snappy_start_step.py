@@ -18,4 +18,6 @@ def test_start_step_ngs_mapping(germline_sheet_fake_project_fs, mocker):
     # Check result
     germline_sheet_fake_project_fs.os.path.exists("/project-dir/ngs_mapping/config.yaml")
     germline_sheet_fake_project_fs.os.path.exists("/project-dir/ngs_mapping/pipeline_job.sh")
-    germline_sheet_fake_project_fs.os.path.exists("/project-dir/.snappy_pipeline/config.yaml.bak")
+    germline_sheet_fake_project_fs.os.path.exists(
+        "/project-dir/.snappy_pipeline/config.ruamel_yaml.bak"
+    )

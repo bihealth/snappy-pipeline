@@ -4,7 +4,7 @@
 import textwrap
 
 import pytest
-from ruamel import yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
@@ -16,7 +16,8 @@ from .conftest import patch_module_fs
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (cancer) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:

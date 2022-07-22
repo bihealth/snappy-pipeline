@@ -5,7 +5,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
@@ -59,7 +59,8 @@ def get_expected_output_bcf_csi_files_dict(base_out):
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (germline) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:

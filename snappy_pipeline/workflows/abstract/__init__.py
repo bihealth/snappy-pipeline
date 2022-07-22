@@ -22,7 +22,7 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
@@ -323,7 +323,8 @@ def _cached_read_generic_tsv_sheet(path_abs, path_rel, naming_scheme):
 @lru_cache()
 def _cached_yaml_round_trip_load_str(str_value):
     """Cached reading of YAML ``str`` objects."""
-    return yaml.round_trip_load(StringIO(str_value))
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(StringIO(str_value))
 
 
 class DataSetInfo:

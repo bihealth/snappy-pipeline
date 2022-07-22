@@ -6,7 +6,7 @@ import textwrap
 
 from biomedsheets.shortcuts import GenericSampleSheet
 import pytest
-from ruamel import yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
@@ -129,7 +129,8 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
 @pytest.fixture
 def dummy_config():
     """Return dummy configuration OrderedDicts"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         step_config: {}
