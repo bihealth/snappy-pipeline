@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 from ruamel import yaml
+from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
 
 from .. import __version__
@@ -169,6 +170,8 @@ def run(wrapper_args):
     ]
     if wrapper_args.keep_going:
         snakemake_argv.append("--keep-going")
+    if wrapper_args.rerun_triggers:
+        snakemake_argv += ["--rerun-triggers"] + wrapper_args.rerun_triggers
     if wrapper_args.unlock:
         snakemake_argv.append("--unlock")
     if wrapper_args.rerun_incomplete:
@@ -284,6 +287,13 @@ def main(argv=None):
             "fool future invocations of snakemake. Fails if a file does "
             "not yet exist."
         ),
+    )
+    group.add_argument(
+        "--rerun-triggers",
+        nargs="+",
+        choices=RERUN_TRIGGERS,
+        default=["mtime"],  # TODO: switch to RERUN_TRIGGERS,
+        help="Expose --rerun-triggers from snakemake but set to only mtime by default.",
     )
 
     group = parser.add_argument_group(
