@@ -255,4 +255,6 @@ def test_write_md5(annotate_obj):
     msg_exists = "Method should create file: {0}".format(expected_file)
     assert os.path.exists(expected_file), msg_exists
     msg_hash = "Should return hash for empty file: {0}".format(expected_hash)
-    assert open(expected_file).read() == expected_hash, msg_hash
+    with open(expected_file) as inputf:
+        res = inputf.read()
+    assert res == expected_hash, msg_hash
