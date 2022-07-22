@@ -12,8 +12,8 @@ import os
 import subprocess
 import sys
 
-from snakemake import RERUN_TRIGGERS
 import ruamel.yaml as ruamel_yaml
+from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
 
 from .. import __version__
