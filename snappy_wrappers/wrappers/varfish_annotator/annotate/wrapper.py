@@ -16,7 +16,6 @@ this_file = __file__
 annotation_args = []
 
 # TODO: care about case of WGS data
-# TODO: properly handle release
 # TODO: remove case ID parameter from annotator
 
 shell(
@@ -81,7 +80,7 @@ varfish-annotator \
     -XX:MaxHeapSize=10g \
     -XX:+UseConcMarkSweepGC \
     \
-    --release GRCh37 \
+    --release {export_config[release]} \
     \
     --ref-path {snakemake.config[static_data_config][reference][path]} \
     --db-path {export_config[path_db]} \

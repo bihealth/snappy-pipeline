@@ -83,6 +83,7 @@ step_config:
     path_variant_calling: ../variant_calling
     tools_ngs_mapping: null
     tools_variant_calling: null
+    release: GRCh37              # REQUIRED: default 'GRCh37'
     path_exon_bed: REQUIRED      # REQUIRED: exon BED file to use when handling WGS data
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
