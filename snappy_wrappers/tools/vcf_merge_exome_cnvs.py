@@ -11,10 +11,10 @@ import typing
 import attr
 import logzero
 from logzero import logger
-import pandas as pd
 import vcfpy
 
 import ncls
+import pandas as pd
 
 #: Source program is GATK gCNV
 SOURCE_GATK_GCNV = "GCNV"
