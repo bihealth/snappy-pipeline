@@ -61,6 +61,9 @@ fi
 # Export library
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
+# Hack: get back bin directory of base/root environment
+export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
+
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
