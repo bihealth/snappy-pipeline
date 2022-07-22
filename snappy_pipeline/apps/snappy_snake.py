@@ -12,8 +12,8 @@ import os
 import subprocess
 import sys
 
-from ruamel import yaml
 from snakemake import RERUN_TRIGGERS
+import ruamel.yaml as ruamel_yaml
 from snakemake import main as snakemake_main
 
 from .. import __version__
@@ -401,7 +401,8 @@ def main(argv=None):
             if not os.path.exists(path):
                 continue
             with open(path, "rt") as f:
-                data = yaml.round_trip_load(f.read())
+                yaml = ruamel_yaml.YAML()
+                data = yaml.load(f.read())
             try:
                 args.step = data["pipeline_step"]["name"]
                 break

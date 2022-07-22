@@ -4,7 +4,7 @@ from pathlib import Path
 import textwrap
 
 import pytest
-from ruamel import yaml as yaml_ruamel
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import InputFiles, Log, OutputFiles, Params, Resources, Wildcards
 from snakemake.script import Snakemake
 
@@ -16,7 +16,8 @@ from .conftest import patch_module_fs
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for configuration"""
-    return yaml_ruamel.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:

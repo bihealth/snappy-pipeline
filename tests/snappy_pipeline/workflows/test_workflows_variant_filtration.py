@@ -5,7 +5,7 @@ from pathlib import Path
 import textwrap
 
 import pytest
-from ruamel import yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
@@ -25,7 +25,8 @@ def get_project_root():
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (germline) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:

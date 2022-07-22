@@ -6,7 +6,7 @@ from itertools import chain
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
@@ -22,7 +22,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (somatic) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:

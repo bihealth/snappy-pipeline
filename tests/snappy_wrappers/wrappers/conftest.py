@@ -41,7 +41,7 @@ def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):
     if os.path.exists(os.path.join(wrapper, wrapper_file)):
         # is meta wrapper
         with open(os.path.join(wrapper, wrapper_file), "r") as wf:
-            wf = yaml.safe_load(wf)
+            wf = ruamel_yaml.safe_load(wf)
             used_wrappers = wf["wrappers"]
     else:
         used_wrappers.append(wrapper)
