@@ -39,7 +39,7 @@ Donor = namedtuple("Donor", ["family", "id", "father", "mother", "sex", "disease
 def parse_ped(ped_file):
     """Parse a given PED file and yield each line as a Donor."""
     for line in ped_file.readlines():
-        line = re.split("\s+", line.rstrip())[:6]
+        line = re.split(r"\s+", line.rstrip())[:6]
 
         if line[0].startswith("#"):
             continue

@@ -623,7 +623,7 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
     #: Directory infixes
     dir_infixes = {
         "discover": "{mapper}.gatk_hc_gvcf.discover.{library_name}",
-        "genotype_pedigree": "{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
+        "genotype_pedigree": r"{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
         "combine_gvcf": "{mapper}.gatk_hc_gvcf.combine_gvcf",
         "genotype_cohort": "{mapper}.gatk_hc_gvcf.whole_cohort",
     }
@@ -782,7 +782,7 @@ class VarscanStepPart(BaseStepPart):
 
     #: Directory infixes
     dir_infixes = {
-        "call_pedigree": "{mapper}.varscan.{index_library_name,[^\.]+}",
+        "call_pedigree": r"{mapper}.varscan.{index_library_name,[^\.]+}",
         "call_cohort": "{mapper}.varscan.whole_cohort",
     }
 
