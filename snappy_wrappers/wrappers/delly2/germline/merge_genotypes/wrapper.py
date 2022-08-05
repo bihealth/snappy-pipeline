@@ -36,8 +36,6 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         ln -s $(readlink -f $x).csi $TMPDIR/cwd/$i.bcf.csi
     done
 
-    out=$(realpath {snakemake.output.bcf})
-    
     # ---------------
     # Merge genotypes
     # ---------------
@@ -47,6 +45,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         cp $TMPDIR/cwd/1.bcf {snakemake.output.bcf}
         cp $TMPDIR/cwd/1.bcf.csi {snakemake.output.bcf}".csi"
     else
+        out=$(realpath {snakemake.output.bcf})
         pushd $TMPDIR/cwd
         bcftools merge \
             -m id \
