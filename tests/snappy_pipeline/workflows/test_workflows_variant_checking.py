@@ -35,6 +35,12 @@ def minimal_config():
             tools:
             - gatk_hc
 
+          variant_checking:
+            tools_ngs_mapping: ['bwa']  # optional, copied from ngs mapping config
+            tools_variant_calling: ['gatk_hc']  # optional, copied from variant calling config
+            path_variant_calling: ../variant_calling  # REQUIRED
+            tools: ['peddy']
+
         data_sets:
           first_batch:
             file: sheet.tsv
