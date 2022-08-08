@@ -102,9 +102,8 @@ class PeddyStepPart(BaseStepPart):
         """Return path to pedigree input file"""
         # Validate action
         self._validate_action(action)
-        yield "ped", os.path.realpath(
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        )
+        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+
         tpl = (
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
