@@ -215,7 +215,7 @@ class BcftoolsRohStepPart(BaseStepPart):
         """Return output files of internal linking"""
         tpl = (
             "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}"
+            "{mapper}.{var_caller}.bcftools_roh.{donor_ngs_library}"
         )
         for key, ext in BED_EXTENSIONS.items():
             yield key, tpl + ext
