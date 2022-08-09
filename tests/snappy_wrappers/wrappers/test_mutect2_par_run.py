@@ -200,10 +200,10 @@ def test_mutect2_wrapper_run_preamble_multiply_time(construct_preamble_module):
     factor = 10
     # Define (input, expected) pair
     input_expected_pairs = (
-        ("00:01:00", "0-0:10:0"),
-        ("01:00:00", "0-10:0:0"),
-        ("12:00:00", "0-120:0:0"),  # TODO: Should instead return "5-00:00:00"
-        ("01-00:00:00", "1-240:0:0"),  # TODO: Should instead return "10-00:00:00"
+        ("00:01:00", "0-00:10:00"),
+        ("01:00:00", "0-10:00:00"),
+        ("12:00:00", "5-00:00:00"),
+        ("01-00:00:00", "10-00:00:00"),
     )
 
     # Test all pairs
@@ -280,11 +280,11 @@ def test_mutect2_wrapper_run_preamble_resource_chunk_time(construct_preamble_mod
     """
     # Define (input, expected) pair
     input_expected_pairs = (
-        (1, "0-3:0:0"),
-        (2, "0-6:0:0"),
-        (3, "0-9:0:0"),
-        (4, "0-12:0:0"),
-        (5, "0-15:0:0"),
+        (1, "0-03:00:00"),
+        (2, "0-06:00:00"),
+        (3, "0-09:00:00"),
+        (4, "0-12:00:00"),
+        (5, "0-15:00:00"),
     )
     # Test all pairs
     for pair in input_expected_pairs:
