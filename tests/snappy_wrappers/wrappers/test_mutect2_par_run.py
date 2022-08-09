@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """Code for testing mutect2_par/run wrapper"""
-from importlib.machinery import SourceFileLoader
-import importlib.util
-import inspect
+import importlib.machinery
 import os
 from pathlib import Path
-import sys
 import tempfile
 import textwrap
+import types
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -157,7 +155,6 @@ def construct_preamble_module(snakemake_obj, variant_caller_fake_fs, mocker):
     # Get methods as string
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
     preamble_str = wrapper_par.construct_preamble()
-    print(preamble_str)
 
     # Remove Snakemake syntax
     clear_preamble_str = ""
@@ -177,7 +174,10 @@ def construct_preamble_module(snakemake_obj, variant_caller_fake_fs, mocker):
 
     # Load as module
     module_name = os.path.basename(tmp.name).replace(".py", "")
-    return SourceFileLoader(module_name, tmp.name).load_module()
+    loader = importlib.machinery.SourceFileLoader(module_name, tmp.name)
+    module = types.ModuleType(loader.name)
+    loader.exec_module(module)
+    return module
 
 
 def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_fake_fs, mocker):
