@@ -146,7 +146,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_link_bed(roh_calling
             "index_ngs_library": "P001-N1-DNA1-WGS1",
         }
     )
-    expected = {'done': 'work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done'}
+    expected = {"done": "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"}
     actual = roh_calling_workflow.get_input_files("bcftools_roh", "link_bed")(wildcards)
     assert actual == expected
 
