@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the targeted_seq_cnv_annotation workflow module code"""
+"""Tests for the targeted_seq_cnv_export workflow module code"""
 
 import textwrap
 
@@ -35,8 +35,7 @@ def minimal_config():
           targeted_seq_cnv_calling:
             tools:
               - gcnv
-            # TODO: Move to 'gcnv' when dependency issue is fixed
-            xhmm:
+            gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"

@@ -120,8 +120,13 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
-        if not xhmm_config["path_target_interval_list_mapping"]:
+        # Get XHMM or gCNV configuration
+        if "xhmm" in DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/tools"):
+            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
+        else:  # assume gCNV
+            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
+
+        if not tool_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
@@ -130,7 +135,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         # Build mapping.
         regexes = {
             item["pattern"]: item["name"]
-            for item in xhmm_config["path_target_interval_list_mapping"]
+            for item in tool_config["path_target_interval_list_mapping"]
         }
         result = {}
         for donor in self.parent.all_donors():
@@ -155,28 +160,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         targeted_seq_cnv_annotation = self.parent.sub_workflows["targeted_seq_cnv_annotation"]
         for key, ext in key_ext.items():
             yield key, targeted_seq_cnv_annotation(tpl + ext)
-
-    @dictify
-    def _build_ngs_library_to_kit(self):
-        xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
-        if not xhmm_config["path_target_interval_list_mapping"]:
-            # No mapping given, we will use the "default" one for all.
-            for donor in self.parent.all_donors():
-                if donor.dna_ngs_library:
-                    yield donor.dna_ngs_library.name, "default"
-        # Build mapping.
-        regexes = {
-            item["pattern"]: item["name"]
-            for item in xhmm_config["path_target_interval_list_mapping"]
-        }
-        result = {}
-        for donor in self.parent.all_donors():
-            if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
-                library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
-                for pattern, name in regexes.items():
-                    if re.match(pattern, library_kit):
-                        yield donor.dna_ngs_library.name, name
-        return result
 
     @dictify
     def get_output_files(self, action):
