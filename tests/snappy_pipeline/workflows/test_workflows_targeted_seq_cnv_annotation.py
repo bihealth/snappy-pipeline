@@ -36,8 +36,7 @@ def minimal_config():
           targeted_seq_cnv_calling:
             tools:
               - gcnv
-            # TODO: Change to `gcnv` when dependency is fixed in `_build_ngs_library_to_kit()`
-            xhmm:
+            gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
