@@ -109,7 +109,7 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 VCF_KEY_EXTS = dict(zip(EXT_NAMES, EXT_VALUES))
 
 #: Name/extension pairs for BCF files.
-BCF_KEY_EXTS = {"bcf": ".bcf", "bcf_md5": ".bcf.md5", "csi": ".bcf.csi", "csi.md5": ".bcf.csi.md5"}
+BCF_KEY_EXTS = {"bcf": ".bcf", "bcf_md5": ".bcf.md5", "csi": ".bcf.csi", "csi_md5": ".bcf.csi.md5"}
 
 #: Available WGS CNV callers
 WGS_CNV_CALLERS = ("erds", "erds_sv2", "cnvetti")
@@ -140,12 +140,18 @@ step_config:
           count_kind: Coverage
           segmentation: HaarSeg
           normalization: MedianGcBinned
+
+    delly2:
+      mappability: null  # REQUIRED - Path to mappability map
+      minsize: 1000  # Merge min size - set to Delly default
+      maxsize: 100000  # Merge max size - set to Delly default
+
     sv2:
       path_hg19: /fast/projects/cubit/current/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
       path_hg38: /fast/projects/cubit/current/static_data/reference/hg38/ucsc/hg38.fa  # REQUIRED
       path_mm10: /fast/projects/cubit/current/static_data/reference/mm10/ucsc/mm10.fa  # REQUIRED
       path_sv2_resource: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4   # REQUIRED
-      path_sv2_models: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4/training_sets   # REQUIRED
+      path_sv2_models: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4/training_sets # REQUIRED
 """
 
 
@@ -360,6 +366,238 @@ class CnvettiStepPart(BaseStepPart):
             time="04:00:00",  # 4 hours
             memory=f"{12 * 1024}M",
         )
+
+
+class Delly2StepPart(BaseStepPart):
+    """WGS CNV calling with Delly."""
+
+    #: Step name
+    name = "delly2"
+
+    #: Supported actions
+    actions = (
+        "call",
+        "merge_calls",
+        "genotype",
+        "merge_genotypes",
+        "filter",
+        "reorder_vcf",
+    )
+
+    #: Directory infixes
+    dir_infixes = {
+        "call": r"{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}",
+        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls",
+        "genotype": "{mapper}.delly2.genotype.{library_name}",
+        "merge_genotypes": "{mapper}.delly2.merge_genotypes",
+        "filter": r"{mapper,[^\.]+}.delly2.filter",
+        "reorder_vcf": "{mapper}.delly2.reorder_vcf.{library_name}",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "cheap_action": ResourceUsage(
+            threads=2,
+            time="4-00:00:00",  # 4 days
+            memory=f"{7 * 1024 * 2}M",
+        ),
+        "default": ResourceUsage(
+            threads=2,
+            time="7-00:00:00",  # 7 days
+            memory=f"{20 * 1024 * 2}M",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Build shortcut from index library name to pedigree
+        self.index_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        # Build shortcut from library name to library info
+        self.library_name_to_library = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.library_name_to_library.update(sheet.library_name_to_library)
+        # Build shortcut from index library name to pedigree
+        self.donor_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
+
+    def get_input_files(self, action):
+        """Return input function for Delly action."""
+        # Validate action
+        self._validate_action(action)
+        return getattr(self, "_get_input_files_{}".format(action))
+
+    @dictify
+    def _get_input_files_call(self, wildcards):
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Yield input BAM and BAI file
+        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
+            yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
+
+    @listify
+    def _get_input_files_merge_calls(self, wildcards):
+        """Return input files for "merge_calls" action"""
+        infix = self.dir_infixes["call"]
+        infix = infix.replace(r",[^\.]+", "")
+        tpl = os.path.join("work", infix, "out", infix + ".bcf")
+        for donor in self._donors_with_dna_ngs_library():
+            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards):
+        """Return input files for "genotype" action"""
+        # Sites VCF file
+        infix = self.dir_infixes["merge_calls"]
+        infix = infix.replace(r",[^\.]+", "")
+        yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
+        # BAM files
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
+            yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
+
+    @listify
+    def _get_input_files_merge_genotypes(self, wildcards):
+        """Return input files for "merge_genotypes" action"""
+        for donor in self._donors_with_dna_ngs_library():
+            infix = self.dir_infixes["genotype"]
+            infix = infix.replace(r",[^\.]+", "")
+            tpl = os.path.join("work", infix, "out", infix + ".bcf")
+            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+
+    @dictify
+    def _get_input_files_filter(self, wildcards):
+        name_pattern = "{mapper}.delly2.merge_genotypes".format(**wildcards)
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    @dictify
+    def _get_input_files_reorder_vcf(self, wildcards):
+        name_pattern = "{mapper}.delly2.filter".format(**wildcards)
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    def get_output_files(self, action):
+        """Return output files that Delly creates for the given action."""
+        # Validate action
+        self._validate_action(action)
+        return getattr(self, "_get_output_files_{}".format(action))()
+
+    @dictify
+    def _get_output_files_call(self):
+        name_pattern = "{mapper}.delly2.call.{library_name}"
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    @dictify
+    def _get_output_files_merge_calls(self):
+        for name, ext in BCF_KEY_EXTS.items():
+            infix = self.dir_infixes["merge_calls"]
+            infix2 = infix.replace(r",[^\.]+", "")
+            yield name, "work/" + infix + "/out/" + infix2 + ext
+
+    @dictify
+    def _get_output_files_genotype(self):
+        name_pattern = "{mapper}.delly2.genotype.{library_name}"
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    @dictify
+    def _get_output_files_merge_genotypes(self):
+        name_pattern = "{mapper}.delly2.merge_genotypes"
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    @dictify
+    def _get_output_files_filter(self):
+        name_pattern = "{mapper}.delly2.filter"
+        for key, ext in BCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    @dictify
+    def _get_output_files_reorder_vcf(self):
+        name_pattern = "{mapper}.delly2.{library_name}"
+        for key, ext in VCF_KEY_EXTS.items():
+            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
+
+    def get_log_file(self, action):
+        """Return dict of log files."""
+        # Validate action
+        self._validate_action(action)
+        if action == "reorder_vcf":
+            return getattr(self, "_get_log_file_reorder_vcf")()
+        else:
+            return getattr(self, "_get_log_file_common")(action)
+
+    @staticmethod
+    @dictify
+    def _get_log_file_common(action):
+        """Get log files for action
+
+        :param action: One of the actions available for step.
+        :type action: str
+
+        :return: Yield log scheme for action. Key: log type (str); Value: log file path (str).
+        """
+        if action in ("merge_calls", "merge_genotypes", "filter"):
+            prefix = "work/{{mapper}}.delly2.{action}/log/{{mapper}}.delly2.{action}".format(
+                action=action
+            )
+        else:
+            name_pattern = (
+                "work/{{mapper}}.delly2.{action}.{{library_name}}/log/"
+                "{{mapper}}.delly2.{action}.{{library_name}}"
+            )
+            prefix = name_pattern.format(action=action)
+        key_ext = (
+            ("log", ".log"),
+            ("log_md5", ".log.md5"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_info_md5", ".conda_info.txt.md5"),
+            ("conda_list", ".conda_list.txt"),
+            ("conda_list_md5", ".conda_list.txt.md5"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+
+    @staticmethod
+    def _get_log_file_reorder_vcf():
+        """:return: Return simplified log scheme for action 'reorder_vcf'"""
+        return (
+            "work/{mapper}.delly2.reorder_vcf.{library_name}/log/{"
+            "mapper}.delly2.reorder_vcf.{library_name}.snakemake.log"
+        )
+
+    def _donors_with_dna_ngs_library(self):
+        """Yield donors with DNA NGS library"""
+        for sheet in self.parent.shortcut_sheets:
+            for donor in sheet.donors:
+                if donor.dna_ngs_library:
+                    yield donor
+
+    def get_ped_members(self, wildcards):
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+        return " ".join(
+            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+        )
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        if action in ("merge_genotypes", "merge_calls", "reorder_vcf"):  # cheap actions
+            return self.resource_usage_dict.get("cheap_action")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class ErdsStepPart(BaseStepPart):
@@ -677,7 +915,14 @@ class WgsCnvCallingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
-            (WritePedigreeStepPart, CnvettiStepPart, ErdsStepPart, ErdsSv2StepPart, LinkOutStepPart)
+            (
+                WritePedigreeStepPart,
+                CnvettiStepPart,
+                Delly2StepPart,
+                ErdsStepPart,
+                ErdsSv2StepPart,
+                LinkOutStepPart,
+            )
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
