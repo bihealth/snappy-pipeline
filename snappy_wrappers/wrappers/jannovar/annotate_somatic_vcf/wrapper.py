@@ -110,7 +110,7 @@ jannovar \
     annotate-vcf \
     -XX:MaxHeapSize=5g \
     -XX:CompressedClassSpaceSize=512m \
-    -XX:+UseConcMarkSweepGC \
+    -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf {snakemake.output.vcf} \
     --database {snakemake.config[step_config][somatic_variant_annotation][path_jannovar_ser]} \

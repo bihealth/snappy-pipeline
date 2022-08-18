@@ -87,7 +87,7 @@ MALLOC_ARENA_MAX=4 \
 varfish-annotator \
     annotate-svs \
     -XX:MaxHeapSize=10g \
-    -XX:+UseConcMarkSweepGC \
+    -XX:+UseG1GC \
     \
     --release GRCh37 \
     \
