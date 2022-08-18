@@ -36,17 +36,25 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         ln -s $(readlink -f $x).csi $TMPDIR/cwd/$i.bcf.csi
     done
 
-    out=$(realpath {snakemake.output.bcf})
-
-    pushd $TMPDIR/cwd
-    bcftools merge \
-        -m id \
-        -O b \
-        -o $out \
-        *.bcf
-    popd
-
-    tabix -f {snakemake.output.bcf}
+    # ---------------
+    # Merge genotypes
+    # ---------------
+    # If a single sample, there is no need to merge.
+    # ``$i`` is reused from previous BCFs for-loop.
+    if [[ $i -eq 1 ]]; then
+        cp $TMPDIR/cwd/1.bcf {snakemake.output.bcf}
+        cp $TMPDIR/cwd/1.bcf.csi {snakemake.output.bcf}".csi"
+    else
+        out=$(realpath {snakemake.output.bcf})
+        pushd $TMPDIR/cwd
+        bcftools merge \
+            -m id \
+            -O b \
+            -o $out \
+            *.bcf
+        popd
+        tabix -f {snakemake.output.bcf}
+    fi
 
     pushd $(dirname {snakemake.output.bcf})
     md5sum $(basename {snakemake.output.bcf}) >$(basename {snakemake.output.bcf}).md5
