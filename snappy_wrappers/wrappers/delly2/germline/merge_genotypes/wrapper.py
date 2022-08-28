@@ -42,22 +42,24 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     # If a single sample, there is no need to merge.
     # ``$i`` is reused from previous BCFs for-loop.
     if [[ $i -eq 1 ]]; then
-        cp $TMPDIR/cwd/1.bcf {snakemake.output.bcf}
-        cp $TMPDIR/cwd/1.bcf.csi {snakemake.output.bcf}".csi"
+        bcftools view \
+            -O z \
+            -o {snakemake.output.vcf} \
+            $TMPDIR/cwd/1.bcf
     else
-        out=$(realpath {snakemake.output.bcf})
+        out=$(realpath {snakemake.output.vcf})
         pushd $TMPDIR/cwd
         bcftools merge \
             -m id \
-            -O b \
+            -O z \
             -o $out \
             *.bcf
         popd
-        tabix -f {snakemake.output.bcf}
     fi
+    tabix -f {snakemake.output.vcf}
 
-    pushd $(dirname {snakemake.output.bcf})
-    md5sum $(basename {snakemake.output.bcf}) >$(basename {snakemake.output.bcf}).md5
-    md5sum $(basename {snakemake.output.bcf}).csi >$(basename {snakemake.output.bcf}).csi.md5
+    pushd $(dirname {snakemake.output.vcf})
+    md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf_md5})
+    md5sum $(basename {snakemake.output.tbi}) > $(basename {snakemake.output.tbi_md5})
     """
     )
