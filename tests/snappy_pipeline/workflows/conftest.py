@@ -3,9 +3,10 @@
 
 from collections import namedtuple
 import io
+import os
 import random
 import textwrap
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
@@ -14,6 +15,13 @@ import pytest
 from ruamel.yaml.comments import CommentedMap
 
 from snappy_pipeline.workflows.abstract import BaseStep
+
+
+@pytest.fixture(autouse=True)
+def mock_settings_env_vars():
+    """For tests, we want to have fake use medium partition."""
+    with patch.dict(os.environ, {"SNAPPY_PIPELINE_PARTITION": "medium"}):
+        yield
 
 
 @pytest.fixture

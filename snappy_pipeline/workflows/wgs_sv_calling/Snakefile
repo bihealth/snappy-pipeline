@@ -141,24 +141,6 @@ rule wgs_sv_calling_delly2_merge_genotypes:
         wf.wrapper_path("delly2/germline/merge_genotypes")
 
 
-rule wgs_sv_calling_delly2_reorder_vcf:
-    input:
-        unpack(wf.get_input_files("delly2", "reorder_vcf")),
-    output:
-        **wf.get_output_files("delly2", "reorder_vcf"),
-    threads: wf.get_resource("delly2", "reorder_vcf", "threads")
-    resources:
-        time=wf.get_resource("delly2", "reorder_vcf", "time"),
-        memory=wf.get_resource("delly2", "reorder_vcf", "memory"),
-        partition=wf.get_resource("delly2", "reorder_vcf", "partition"),
-    log:
-        wf.get_log_file("delly2", "reorder_vcf"),
-    params:
-        ped_members=wf.substep_getattr("delly2", "get_ped_members"),
-    wrapper:
-        wf.wrapper_path("delly2/germline/reorder_vcf")
-
-
 # SVTK Steps ------------------------------------------------------------------
 
 
