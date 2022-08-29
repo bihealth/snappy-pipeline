@@ -381,3 +381,9 @@ rule wgs_cnv_calling_erds_sv2_reorder_vcf:
         ped_members=wf.substep_getattr("erds_sv2", "get_ped_members"),
     wrapper:
         wf.wrapper_path("erds_sv2/reorder_vcf")
+
+
+# GATK-gCNV -------------------------------------------------------------------
+
+
+include: "gcnv.rules"

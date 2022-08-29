@@ -68,6 +68,7 @@ def minimal_config():
             variant_calling_tool: gatk_ug
             tools:
             - erds_sv2
+            - gcnv
 
         data_sets:
           first_batch:
@@ -825,6 +826,7 @@ def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
     expected = ["cnvetti", "delly2", "erds", "erds_sv2", "link_out", "write_pedigree"]
+    expected = ["cnvetti", "delly2", "erds", "erds_sv2", "gcnv", "link_out", "write_pedigree"]
     assert list(sorted(wgs_cnv_calling_workflow.sub_steps.keys())) == expected
     # Check result file construction
     tpl = (
@@ -836,7 +838,7 @@ def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
         for i in (1, 4)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for cnv_caller in ("erds_sv2",)
+        for cnv_caller in ("erds_sv2", "gcnv")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(wgs_cnv_calling_workflow.get_result_files()))

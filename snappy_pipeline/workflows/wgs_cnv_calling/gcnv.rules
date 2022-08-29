@@ -1,0 +1,121 @@
+# gCNV with CASE MODE using precomputed model.
+
+
+rule wgs_cnv_calling_gcnv_preprocess_intervals:
+    input:
+        unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
+    output:
+        **wf. get_output_files("gcnv","preprocess_intervals"),
+    threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
+        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
+    log:
+        wf.get_log_file("gcnv", "preprocess_intervals"),
+    wrapper:
+        wf.wrapper_path("gcnv/preprocess_intervals_wgs")
+
+
+rule wgs_cnv_calling_gcnv_coverage:
+    input:
+        unpack(wf.get_input_files("gcnv", "coverage")),
+    output:
+        **wf. get_output_files("gcnv","coverage"),
+    threads: wf.get_resource("gcnv", "coverage", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "coverage", "time"),
+        memory=wf.get_resource("gcnv", "coverage", "memory"),
+        partition=wf.get_resource("gcnv", "coverage", "partition"),
+    log:
+        wf.get_log_file("gcnv", "coverage"),
+    wrapper:
+        wf.wrapper_path("gcnv/coverage")
+
+
+rule wgs_cnv_calling_gcnv_contig_ploidy:
+    input:
+        unpack(wf.get_input_files("gcnv", "contig_ploidy_case_mode")),
+    output:
+        **wf. get_output_files("gcnv","contig_ploidy_case_mode"),
+    threads: wf.get_resource("gcnv", "contig_ploidy_case_mode", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "contig_ploidy_case_mode", "time"),
+        memory=wf.get_resource("gcnv", "contig_ploidy_case_mode", "memory"),
+        partition=wf.get_resource("gcnv", "contig_ploidy_case_mode", "partition"),
+    log:
+        wf.get_log_file("gcnv", "contig_ploidy_case_mode"),
+    params:
+        args=wf.get_params("gcnv", "ploidy_model"),
+    wrapper:
+        wf.wrapper_path("gcnv/contig_ploidy_case_mode")
+
+
+rule wgs_cnv_calling_gcnv_call_cnvs_case_mode:
+    input:
+        unpack(wf.get_input_files("gcnv", "call_cnvs_case_mode")),
+    output:
+        **wf. get_output_files("gcnv","call_cnvs_case_mode"),
+    threads: wf.get_resource("gcnv", "call_cnvs_case_mode", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "call_cnvs_case_mode", "time"),
+        memory=wf.get_resource("gcnv", "call_cnvs_case_mode", "memory"),
+        partition=wf.get_resource("gcnv", "call_cnvs_case_mode", "partition"),
+    log:
+        wf.get_log_file("gcnv", "call_cnvs_case_mode"),
+    params:
+        args=wf.get_params("gcnv", "model"),
+    wrapper:
+        wf.wrapper_path("gcnv/call_cnvs_case_mode")
+
+
+rule wgs_cnv_calling_gcnv_post_germline_calls_case_mode:
+    input:
+        unpack(wf.get_input_files("gcnv", "post_germline_calls_case_mode")),
+    output:
+        **wf. get_output_files("gcnv","post_germline_calls"),
+    threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "post_germline_calls", "time"),
+        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
+        partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
+    log:
+        wf.get_log_file("gcnv", "post_germline_calls"),
+    params:
+        args=wf.get_params("gcnv", "postgermline_models"),
+    wrapper:
+        wf.wrapper_path("gcnv/post_germline_calls_case_mode")
+
+
+rule wgs_cnv_calling_gcnv_merge_cohort_vcfs:
+    input:
+        wf.get_input_files("gcnv", "merge_cohort_vcfs"),
+    output:
+        **wf. get_output_files("gcnv","merge_cohort_vcfs"),
+    threads: wf.get_resource("gcnv", "merge_cohort_vcfs", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "merge_cohort_vcfs", "time"),
+        memory=wf.get_resource("gcnv", "merge_cohort_vcfs", "memory"),
+        partition=wf.get_resource("gcnv", "merge_cohort_vcfs", "partition"),
+    log:
+        wf.get_log_file("gcnv", "merge_cohort_vcfs"),
+    wrapper:
+        wf.wrapper_path("gcnv/merge_cohort_vcfs")
+
+
+rule wgs_cnv_calling_gcnv_extract_ped:
+    input:
+        unpack(wf.get_input_files("gcnv", "extract_ped")),
+    output:
+        **( wf. get_output_files("gcnv","extract_ped")),
+    threads: wf.get_resource("gcnv", "extract_ped", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "extract_ped", "time"),
+        memory=wf.get_resource("gcnv", "extract_ped", "memory"),
+        partition=wf.get_resource("gcnv", "extract_ped", "partition"),
+    log:
+        wf.get_log_file("gcnv", "extract_ped"),
+    params:
+        ped_members=wf.substep_getattr("gcnv", "get_ped_members"),
+    wrapper:
+        wf.wrapper_path("gcnv/extract_ped")

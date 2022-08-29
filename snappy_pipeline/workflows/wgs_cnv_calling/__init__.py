@@ -87,12 +87,13 @@ Currently, no reports are generated.
 
 from collections import OrderedDict
 import os
+import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import MissingConfiguration
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -101,6 +102,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.targeted_seq_cnv_calling import GcnvStepPart
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -151,6 +153,18 @@ step_config:
       mappability: null  # REQUIRED - Path to mappability map
       minsize: 1000  # Merge min size - set to Delly default
       maxsize: 100000  # Merge max size - set to Delly default
+
+    gcnv:
+      # Path to gCNV model - will execute analysis in CASE MODE.
+      #
+      # Example of precomputed model:
+      # - library: "Agilent SureSelect Human All Exon V6"  # Library name
+      #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
+      #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
+      precomputed_model_paths: []  # REQUIRED
+
+      # Path to BED file with uniquely mappable regions.
+      path_uniquely_mapable_bed: REQUIRED
 
     sv2:
       path_hg19: /fast/projects/cubit/current/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
@@ -879,10 +893,64 @@ class ErdsSv2StepPart(BaseStepPart):
             return self.resource_dict.get("default")
 
 
+class GcnvWgsStepPart(GcnvStepPart):
+    """WGS CNV calling with GATK4 gCNV"""
+
+    #: Step name
+    name = "gcnv"
+
+    #: Class available actions
+    actions = (
+        "preprocess_intervals",
+        "filter_intervals",
+        "scatter_intervals",
+        "coverage",
+        "contig_ploidy_case_mode",
+        "call_cnvs_case_mode",
+        "post_germline_calls",
+        "post_germline_calls_case_mode",
+        "merge_cohort_vcfs",
+        "extract_ped",
+    )
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "high_resource": ResourceUsage(
+            threads=16,
+            time="2-00:00:00",
+            memory="46080M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="04:00:00",
+            memory="7680M",
+        ),
+    }
+
+    def validate_request(self):
+        """Validate request.
+
+        Overwrite original method, for WGS CNV calling the only option available is CASE mode based
+        on precomputed models.
+        """
+        _ = self.config
+        return "case_mode"
+
+    @dictify
+    def _build_ngs_library_to_kit(self):
+        # No mapping given as WGS, we will use the "default" one for all.
+        for donor in self.parent.all_donors():
+            if donor.dna_ngs_library:
+                yield donor.dna_ngs_library.name, "default"
+
+
 class WgsCnvCallingWorkflow(BaseStep):
     """Perform germline WGS CNV calling"""
 
+    #: Workflow name
     name = "wgs_cnv_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -907,12 +975,29 @@ class WgsCnvCallingWorkflow(BaseStep):
                 Delly2StepPart,
                 ErdsStepPart,
                 ErdsSv2StepPart,
+                GcnvWgsStepPart,
                 LinkOutStepPart,
             )
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+
+    @listify
+    def all_donors(self, include_background=True):
+        """Get all donors.
+
+        :param include_background: Boolean flag to defined if background should be included or not.
+        Default: True, i.e., background will be included.
+
+        :return: Returns list of all donors in sample sheet.
+        """
+        sheets = self.shortcut_sheets
+        if not include_background:
+            sheets = list(filter(is_not_background, sheets))
+        for sheet in sheets:
+            for pedigree in sheet.cohort.pedigrees:
+                yield from pedigree.donors
 
     @listify
     def get_result_files(self):
@@ -961,10 +1046,12 @@ class WgsCnvCallingWorkflow(BaseStep):
             ("step_config", "wgs_cnv_calling", "variant_calling_tool"),
             "Name of the germline (small) variant calling tool",
         )
-        if (
-            self.w_config["step_config"]["wgs_cnv_calling"]["variant_calling_tool"]
-            not in self.w_config["step_config"]["variant_calling"]["tools"]
-        ):
+        # Check if specified variant calling tool was used in `variant_calling` step
+        var_cal_tool = self.w_config["step_config"]["variant_calling"]["tools"]
+        check_var_cal_tool = self.w_config["step_config"]["wgs_cnv_calling"]["variant_calling_tool"]
+        if not isinstance(check_var_cal_tool, list):
+            check_var_cal_tool = [check_var_cal_tool]
+        if not all(caller in var_cal_tool for caller in check_var_cal_tool):
             tpl = "Variant caller {} is not selected in variant_calling step"
             raise MissingConfiguration(
                 tpl.format(self.w_config["step_config"]["wgs_cnv_calling"]["variant_calling_tool"])
