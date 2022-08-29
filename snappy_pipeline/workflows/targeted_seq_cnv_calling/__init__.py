@@ -1167,6 +1167,12 @@ class GcnvStepPart(BaseStepPart):
                 pattern = model.get("model_pattern")
                 model_dir_dict = self._get_model_dir_to_dict(pattern)
                 break
+
+        # Validate model
+        if not model_dir_dict:
+            msg_error = f"Configuration doesn't contain model for library '{library_kit}'"
+            raise InvalidConfiguration(msg_error)
+
         # Yield cnv calls output
         name_pattern = "{mapper}.gcnv_call_cnvs_case_mode.{library_kit}".format(
             library_kit=library_kit, **wildcards
