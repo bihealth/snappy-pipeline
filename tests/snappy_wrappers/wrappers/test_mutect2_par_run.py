@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Code for testing mutect2_par/run wrapper"""
+import importlib.machinery
+import os
 from pathlib import Path
+import tempfile
 import textwrap
+import types
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -142,6 +146,40 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
     )
 
 
+@pytest.fixture
+def construct_preamble_module(snakemake_obj, variant_caller_fake_fs, mocker):
+    """Returns ParallelMutect2Wrapper.construct_preamble() as a module"""
+    # Patch out file-system
+    patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
+
+    # Get methods as string
+    wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
+    preamble_str = wrapper_par.construct_preamble()
+
+    # Remove Snakemake syntax
+    clear_preamble_str = ""
+    for line in preamble_str.split("\n"):
+        if "rule all:" in line:
+            continue
+        elif "input: **" in line:
+            continue
+        elif "shell." in line:
+            continue
+        clear_preamble_str += line + "\n"
+
+    # Push content to temp file
+    tmp = tempfile.NamedTemporaryFile(suffix=".py")
+    with open(tmp.name, "w") as f:
+        f.write(clear_preamble_str)
+
+    # Load as module
+    module_name = os.path.basename(tmp.name).replace(".py", "")
+    loader = importlib.machinery.SourceFileLoader(module_name, tmp.name)
+    module = types.ModuleType(loader.name)
+    loader.exec_module(module)
+    return module
+
+
 def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_fake_fs, mocker):
     """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
     # Patch out file-system
@@ -153,4 +191,140 @@ def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_
         expected = f.read()
     # Get actual and assert
     actual = wrapper_par.construct_merge_rule()
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_multiply_time(construct_preamble_module):
+    """Tests Parallel Preamble multiply_time()"""
+    # Constant factor
+    factor = 10
+    # Define (input, expected) pair
+    input_expected_pairs = (
+        ("00:01:00", "0-00:10:00"),
+        ("01:00:00", "0-10:00:00"),
+        ("12:00:00", "5-00:00:00"),
+        ("01-00:00:00", "10-00:00:00"),
+    )
+
+    # Test all pairs
+    for pair in input_expected_pairs:
+        _input = pair[0]
+        _expected = pair[1]
+        actual = construct_preamble_module.multiply_time(day_time_str=_input, factor=factor)
+        msg = (
+            f"For input '{_input}' * {factor} expected output '{_expected}'. "
+            f"Received instead: {actual}"
+        )
+        assert actual == _expected, msg
+
+    # Test invalid time
+    with pytest.raises(ValueError):
+        construct_preamble_module.multiply_time(day_time_str="_not_a_valid_time", factor=factor)
+
+
+def test_mutect2_wrapper_run_preamble_multiply_memory(construct_preamble_module):
+    """Tests Parallel Preamble multiply_memory()"""
+    # Constant factor
+    factor = 10
+    # Define (input, expected) pair
+    input_expected_pairs = (
+        ("1024k", 10),
+        ("1M", 10),
+        ("16G", 160000),
+        ("1T", 10000000),
+        ("12", 120),
+    )
+    # Test all pairs
+    for pair in input_expected_pairs:
+        _input = pair[0]
+        _expected = pair[1]
+        actual = construct_preamble_module.multiply_memory(memory_str=_input, factor=factor)
+        msg = (
+            f"For input '{_input}' * {factor} expected output '{_expected}'. "
+            f"Received instead: {actual}"
+        )
+        assert actual == _expected, msg
+
+
+def test_mutect2_wrapper_run_preamble_resource_chunk_threads(construct_preamble_module):
+    """Tests Parallel Preamble resource_chunk_threads() - Chunks always get a single thread"""
+    expected = 1
+    actual = construct_preamble_module.resource_chunk_threads(wildcards=None)
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_resource_chunk_memory(construct_preamble_module):
+    """
+    Tests Parallel Preamble resource_chunk_memory() - Baseline memory defined in Snakemake object
+    """
+    # Define (input, expected) pair
+    input_expected_pairs = (
+        (1, 28000),
+        (2, 56000),
+        (3, 84000),
+        (4, 112000),
+        (5, 140000),
+    )
+    # Test all pairs
+    for pair in input_expected_pairs:
+        _input = pair[0]
+        _expected = pair[1]
+        actual = construct_preamble_module.resource_chunk_memory(wildcards=None, attempt=_input)
+        msg = f"For input '{_input}' expected output '{_expected}'. " f"Received instead: {actual}"
+        assert actual == _expected, msg
+
+
+def test_mutect2_wrapper_run_preamble_resource_chunk_time(construct_preamble_module):
+    """
+    Tests Parallel Preamble resource_chunk_time() - Baseline time defined in Snakemake object
+    """
+    # Define (input, expected) pair
+    input_expected_pairs = (
+        (1, "0-03:00:00"),
+        (2, "0-06:00:00"),
+        (3, "0-09:00:00"),
+        (4, "0-12:00:00"),
+        (5, "0-15:00:00"),
+    )
+    # Test all pairs
+    for pair in input_expected_pairs:
+        _input = pair[0]
+        _expected = pair[1]
+        actual = construct_preamble_module.resource_chunk_time(wildcards=None, attempt=_input)
+        msg = f"For input '{_input}' expected output '{_expected}'. " f"Received instead: {actual}"
+        assert actual == _expected, msg
+
+
+def test_mutect2_wrapper_run_preamble_resource_chunk_partition(construct_preamble_module):
+    """Tests Parallel Preamble resource_chunk_partition()"""
+    expected = "medium"
+    actual = construct_preamble_module.resource_chunk_partition(wildcards=None)
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_resource_merge_threads(construct_preamble_module):
+    """Tests Parallel Preamble resource_merge_threads() - Merge always get a single thread"""
+    expected = 1
+    actual = construct_preamble_module.resource_merge_threads(wildcards=None)
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_resource_merge_memory(construct_preamble_module):
+    """Tests Parallel Preamble resource_merge_memory() - Merge always get the same value"""
+    expected = "64G"
+    actual = construct_preamble_module.resource_merge_memory(wildcards=None)
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_resource_merge_time(construct_preamble_module):
+    """Tests Parallel Preamble resource_merge_time() - Merge always get the same value"""
+    expected = "5:00:00"
+    actual = construct_preamble_module.resource_merge_time(wildcards=None)
+    assert actual == expected
+
+
+def test_mutect2_wrapper_run_preamble_resource_merge_partition(construct_preamble_module):
+    """Tests Parallel Preamble resource_merge_partition()"""
+    expected = "medium"
+    actual = construct_preamble_module.resource_merge_partition(wildcards=None)
     assert actual == expected
