@@ -870,11 +870,10 @@ def test_copywriter_step_part_get_output_files_call(somatic_targeted_seq_cnv_cal
 
 def test_copywriter_step_part_get_log_file_prepare(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CopywriterStepPart.get_log_file() - action 'prepare'"""
-    # TODO: Possible bug, I would expect it return something like the dict below.
-    #  {
-    #  "log": "work/copywriter.prepare/log/snakemake.log"
-    #  }
-    expected = {}
+    expected = {
+        "log": "work/copywriter.prepare/log/snakemake.log",
+        "log_md5": "work/copywriter.prepare/log/snakemake.log.md5",
+    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("copywriter", "prepare")
     assert actual == expected
 

@@ -73,7 +73,7 @@ rule somatic_targeted_seq_cnv_calling_copywriter_prepare:
         memory=wf.get_resource("copywriter", "prepare", "memory"),
         partition=wf.get_resource("copywriter", "prepare", "partition"),
     log:
-        wf.get_log_file("copywriter", "prepare"),
+        **wf. get_log_file("copywriter","prepare"),
     wrapper:
         wf.wrapper_path("copywriter/prepare")
 

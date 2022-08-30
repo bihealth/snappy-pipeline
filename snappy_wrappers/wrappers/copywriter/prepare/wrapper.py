@@ -15,13 +15,13 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec 2> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
@@ -51,12 +51,15 @@ popd
 mv $TMPDIR/*/GC_mappability.rda {snakemake.output.gc}
 mv $TMPDIR/*/blacklist.rda {snakemake.output.blacklist}
 
-# md5 sums
+# md5 sums output
 out_dir=$(readlink -f $(dirname {snakemake.output.gc}))
 pushd $out_dir && \
     for i in *.rda; do
         md5sum $i > ${{i}}.md5
     done
     popd
+
+# md5 sum log
+md5sum {snakemake.log.log} > {snakemake.log.log_md5}
 """
 )
