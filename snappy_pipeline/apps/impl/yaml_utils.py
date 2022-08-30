@@ -9,10 +9,10 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 
 def remove_yaml_comment_lines(yaml_str):
-    """Get default configuration YAML string without comment-online lines"""
+    """Get default configuration YAML string without commented nor empty lines"""
     result = []
     for line in yaml_str.splitlines(True):
-        if not re.match(r"^\s*#", line):
+        if not (re.match(r"^\s*#", line) or line == "\n"):
             result.append(line)
     return "".join(result)
 
