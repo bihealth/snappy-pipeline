@@ -375,23 +375,16 @@ class Delly2StepPart(BaseStepPart):
     name = "delly2"
 
     #: Supported actions
-    actions = (
-        "call",
-        "merge_calls",
-        "genotype",
-        "merge_genotypes",
-        "filter",
-        "reorder_vcf",
-    )
+    actions = ("call", "merge_calls", "genotype", "merge_genotypes", "filter", "bcf_to_vcf")
 
     #: Directory infixes
     dir_infixes = {
         "call": r"{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}",
-        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls",
+        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls.{index_ngs_library,[^\.]+}",
         "genotype": "{mapper}.delly2.genotype.{library_name}",
-        "merge_genotypes": "{mapper}.delly2.merge_genotypes",
-        "filter": r"{mapper,[^\.]+}.delly2.filter",
-        "reorder_vcf": "{mapper}.delly2.reorder_vcf.{library_name}",
+        "merge_genotypes": r"{mapper}.delly2.merge_genotypes.{index_ngs_library,[^\.]+}",
+        "filter": r"{mapper,[^\.]+}.delly2.filter.{index_ngs_library,[^\.]+}",
+        "bcf_to_vcf": r"{mapper,[^\.]+}.delly2.bcf_to_vcf.{index_ngs_library,[^\.]+}",
     }
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
@@ -437,21 +430,33 @@ class Delly2StepPart(BaseStepPart):
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
+    def _get_input_files_index_dependent_rules(self, wildcards, step):
+        assert step in ("call", "genotype", "filter")
+        # Create path template to per-sample call/genotype BCF
+        infix = self.dir_infixes[step]
+        infix = infix.replace(r",[^\.]+", "")
+        tpl = os.path.join("work", infix, "out", infix + ".bcf")
+        # Yield paths to pedigree's per-sample call BCF files
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        for donor in pedigree.donors:
+            if donor.dna_ngs_library:
+                yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+
     @listify
     def _get_input_files_merge_calls(self, wildcards):
         """Return input files for "merge_calls" action"""
-        infix = self.dir_infixes["call"]
-        infix = infix.replace(r",[^\.]+", "")
-        tpl = os.path.join("work", infix, "out", infix + ".bcf")
-        for donor in self._donors_with_dna_ngs_library():
-            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+        yield from self._get_input_files_index_dependent_rules(wildcards, "call")
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
         """Return input files for "genotype" action"""
-        # Sites VCF file
+        pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
+        # Per-pedigree site BCF file
         infix = self.dir_infixes["merge_calls"]
         infix = infix.replace(r",[^\.]+", "")
+        infix = infix.format(
+            mapper=wildcards.mapper, index_ngs_library=pedigree.index.dna_ngs_library.name
+        )
         yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
         # BAM files
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
@@ -462,21 +467,17 @@ class Delly2StepPart(BaseStepPart):
     @listify
     def _get_input_files_merge_genotypes(self, wildcards):
         """Return input files for "merge_genotypes" action"""
-        for donor in self._donors_with_dna_ngs_library():
-            infix = self.dir_infixes["genotype"]
-            infix = infix.replace(r",[^\.]+", "")
-            tpl = os.path.join("work", infix, "out", infix + ".bcf")
-            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+        yield from self._get_input_files_index_dependent_rules(wildcards, "genotype")
 
     @dictify
     def _get_input_files_filter(self, wildcards):
-        name_pattern = "{mapper}.delly2.merge_genotypes".format(**wildcards)
+        name_pattern = "{mapper}.delly2.merge_genotypes.{index_ngs_library}".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
-    def _get_input_files_reorder_vcf(self, wildcards):
-        name_pattern = "{mapper}.delly2.filter".format(**wildcards)
+    def _get_input_files_bcf_to_vcf(self, wildcards):
+        name_pattern = "{mapper}.delly2.filter.{library_name}".format(**wildcards)
         for key, ext in BCF_KEY_EXTS.items():
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
@@ -507,44 +508,31 @@ class Delly2StepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_merge_genotypes(self):
-        name_pattern = "{mapper}.delly2.merge_genotypes"
+        name_pattern = "{mapper}.delly2.merge_genotypes.{index_ngs_library}"
         for key, ext in BCF_KEY_EXTS.items():
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
     def _get_output_files_filter(self):
-        name_pattern = "{mapper}.delly2.filter"
+        name_pattern = "{mapper}.delly2.filter.{index_ngs_library}"
         for key, ext in BCF_KEY_EXTS.items():
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
     @dictify
-    def _get_output_files_reorder_vcf(self):
+    def _get_output_files_bcf_to_vcf(self):
         name_pattern = "{mapper}.delly2.{library_name}"
         for key, ext in VCF_KEY_EXTS.items():
             yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
 
+    @dictify
     def get_log_file(self, action):
         """Return dict of log files."""
         # Validate action
         self._validate_action(action)
-        if action == "reorder_vcf":
-            return getattr(self, "_get_log_file_reorder_vcf")()
-        else:
-            return getattr(self, "_get_log_file_common")(action)
-
-    @staticmethod
-    @dictify
-    def _get_log_file_common(action):
-        """Get log files for action
-
-        :param action: One of the actions available for step.
-        :type action: str
-
-        :return: Yield log scheme for action. Key: log type (str); Value: log file path (str).
-        """
         if action in ("merge_calls", "merge_genotypes", "filter"):
-            prefix = "work/{{mapper}}.delly2.{action}/log/{{mapper}}.delly2.{action}".format(
-                action=action
+            prefix = (
+                f"work/{{mapper}}.delly2.{action}.{{index_ngs_library}}/log/"
+                f"{{mapper}}.delly2.{action}.{{index_ngs_library}}"
             )
         else:
             name_pattern = (
@@ -562,14 +550,6 @@ class Delly2StepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-    @staticmethod
-    def _get_log_file_reorder_vcf():
-        """:return: Return simplified log scheme for action 'reorder_vcf'"""
-        return (
-            "work/{mapper}.delly2.reorder_vcf.{library_name}/log/{"
-            "mapper}.delly2.reorder_vcf.{library_name}.snakemake.log"
-        )
 
     def _donors_with_dna_ngs_library(self):
         """Yield donors with DNA NGS library"""
@@ -594,7 +574,7 @@ class Delly2StepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        if action in ("merge_genotypes", "merge_calls", "reorder_vcf"):  # cheap actions
+        if action in ("merge_genotypes", "merge_calls", "bcf_to_vcf"):  # cheap actions
             return self.resource_usage_dict.get("cheap_action")
         else:
             return self.resource_usage_dict.get("default")

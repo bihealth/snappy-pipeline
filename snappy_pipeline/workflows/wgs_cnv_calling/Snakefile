@@ -247,22 +247,20 @@ rule wgs_cnv_calling_delly2_filter:
         wf.wrapper_path("delly2/germline_cnv/filter")
 
 
-rule wgs_cnv_calling_delly2_reorder_vcf:
+rule wgs_cnv_calling_delly2_bcf_to_vcf:
     input:
-        unpack(wf.get_input_files("delly2", "reorder_vcf")),
+        unpack(wf.get_input_files("delly2", "bcf_to_vcf")),
     output:
-        **wf. get_output_files('delly2','reorder_vcf'),
-    threads: wf.get_resource("delly2", "reorder_vcf", "threads")
+        **wf. get_output_files('delly2','bcf_to_vcf'),
+    threads: wf.get_resource("delly2", "bcf_to_vcf", "threads")
     resources:
-        time=wf.get_resource("delly2", "reorder_vcf", "time"),
-        memory=wf.get_resource("delly2", "reorder_vcf", "memory"),
-        partition=wf.get_resource("delly2", "reorder_vcf", "partition"),
+        time=wf.get_resource("delly2", "bcf_to_vcf", "time"),
+        memory=wf.get_resource("delly2", "bcf_to_vcf", "memory"),
+        partition=wf.get_resource("delly2", "bcf_to_vcf", "partition"),
     log:
-        wf.get_log_file("delly2", "reorder_vcf"),
-    params:
-        ped_members=wf.substep_getattr("delly2", "get_ped_members"),
+        **wf. get_log_file("delly2","bcf_to_vcf"),
     wrapper:
-        wf.wrapper_path("delly2/germline/reorder_vcf")
+        wf.wrapper_path("bcftools/bcf_to_vcf")
 
 
 # Run ERDS (standard; per-donor) ----------------------------------------------
