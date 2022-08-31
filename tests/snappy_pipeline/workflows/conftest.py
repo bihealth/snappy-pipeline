@@ -30,12 +30,6 @@ def dummy_config():
     return CommentedMap([("data_sets", CommentedMap())])
 
 
-# @pytest.fixture
-# def dummy_cluster_config():
-#     """Return dummy cluster configuration OrderedDicts"""
-#     return CommentedMap()
-
-
 @pytest.fixture
 def dummy_workflow():
     """Return dummy Snakemake workflow object"""
