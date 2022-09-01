@@ -262,17 +262,6 @@ class HelperBuildGcnvModelWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the gCNV build model workflow."""
-
-        """
-           for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                yield "work/{name_pattern}/out/{name_pattern}.vcf.gz".format(
-                    name_pattern=name_pattern
-                )
-        """
         ext_values = (".ratio.tsv", ".interval.vcf.gz", ".vcf.gz")
         donors = {donor.name for donor in self.all_donors() if donor.dna_ngs_library}
         name_pattern = "{mapper}.gcnv_post_germline_calls.{index.dna_ngs_library.name}"
