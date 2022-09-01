@@ -17,7 +17,7 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 bcftools convert \
-    ---output-type z \
+    --output-type z \
     --output {snakemake.output.vcf} \
     {snakemake.input.bcf}
 tabix -f {snakemake.output.vcf}
