@@ -551,7 +551,15 @@ def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
 
 def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
     """Tests GatkPostBamStepPart.get_log_file()"""
-    expected = "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
+    base_name_out = "work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}"
+    expected = {
+        "log": base_name_out + ".log",
+        "log_md5": base_name_out + ".log.md5",
+        "conda_info": base_name_out + ".conda_info.txt",
+        "conda_info_md5": base_name_out + ".conda_info.txt.md5",
+        "conda_list": base_name_out + ".conda_list.txt",
+        "conda_list_md5": base_name_out + ".conda_list.txt.md5",
+    }
     actual = ngs_mapping_workflow.get_log_file("gatk_post_bam", "run")
     assert actual == expected
 
@@ -559,7 +567,7 @@ def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
 def test_gatk_post_bam_step_part_get_resource(ngs_mapping_workflow):
     """Tests GatkPostBamStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16G", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "2-00:00:00", "memory": "52G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

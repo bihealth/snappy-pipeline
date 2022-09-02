@@ -826,7 +826,7 @@ class GatkPostBamStepPart(BaseStepPart):
     @dictify
     def get_log_file(self, action):
         _ = action
-        prefix = "work/{mapper}.{library_name}/log/gatk_pos_bam.{library_name}"
+        prefix = "work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
