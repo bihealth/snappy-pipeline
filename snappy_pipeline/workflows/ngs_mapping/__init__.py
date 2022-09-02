@@ -823,10 +823,18 @@ class GatkPostBamStepPart(BaseStepPart):
                     infix=recalibrated_infix, ext=ext
                 )
 
-    @staticmethod
-    def get_log_file(action):
+    @dictify
+    def get_log_file(self, action):
         _ = action
-        return "work/{mapper}.{library_name}/log/snakemake.gatk_post_bam.log"
+        prefix = "work/{mapper}.{library_name}/log/gatk_pos_bam.{library_name}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -843,9 +851,9 @@ class GatkPostBamStepPart(BaseStepPart):
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
-            threads=16,
+            threads=2,
             time="2-00:00:00",  # 2 days
-            memory="16G",
+            memory="52G",
         )
 
 
