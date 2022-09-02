@@ -551,15 +551,9 @@ def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
 
 def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
     """Tests GatkPostBamStepPart.get_log_file()"""
-    base_name_out = "work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}"
-    expected = {
-        "log": base_name_out + ".log",
-        "log_md5": base_name_out + ".log.md5",
-        "conda_info": base_name_out + ".conda_info.txt",
-        "conda_info_md5": base_name_out + ".conda_info.txt.md5",
-        "conda_list": base_name_out + ".conda_list.txt",
-        "conda_list_md5": base_name_out + ".conda_list.txt.md5",
-    }
+    expected = get_expected_log_files_dict(
+        base_out="work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}"
+    )
     actual = ngs_mapping_workflow.get_log_file("gatk_post_bam", "run")
     assert actual == expected
 
