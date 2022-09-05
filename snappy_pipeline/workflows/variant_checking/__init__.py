@@ -48,7 +48,6 @@ Reports
 Currently, no reports are generated.
 """
 
-import os.path
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background

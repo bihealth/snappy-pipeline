@@ -23,14 +23,15 @@ snakefmt:
 srcfmt: black snakefmt
 
 .PHONY: lint
-lint: prospector
+lint: flake8
 
 .PHONY: isort
 isort:
-	isort --force-sort-within-sections -profile
+	isort --force-sort-within-sections --profile=black .
 
-.PHONY: prospector
-prospector:
+.PHONY: flake8
+flake8:
+	flake8
 
 test:
 	py.test

@@ -1,10 +1,6 @@
 .. image:: https://github.com/bihealth/cubi-tk/workflows/CI/badge.svg
     :target: https://github.com/bihealth/snappy-pipeline/actions
     :alt: Continuous Integration Status
-.. image:: https://app.codacy.com/project/badge/Grade/d93e08bfbb554e4fbf45eed8862beb90
-    :target: https://www.codacy.com/gh/bihealth/snappy-pipeline/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bihealth/snappy-pipeline&amp;utm_campaign=Badge_Grade
-.. image:: https://app.codacy.com/project/badge/Coverage/d93e08bfbb554e4fbf45eed8862beb90
-    :target: https://www.codacy.com/gh/bihealth/snappy-pipeline/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bihealth/snappy-pipeline&amp;utm_campaign=Badge_Coverage
 .. image:: https://coveralls.io/repos/github/bihealth/snappy-pipeline/badge.svg?branch=coveralls
     :target: https://coveralls.io/github/bihealth/snappy-pipeline?branch=coveralls
 .. image:: https://readthedocs.org/projects/snappy-pipeline/badge/?version=latest

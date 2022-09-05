@@ -29,7 +29,7 @@ def listify(gen):
     """
 
     def patched(*args, **kwargs):
-        """Wrapper function """
+        """Wrapper function"""
         return list(gen(*args, **kwargs))
 
     return patched
@@ -49,7 +49,7 @@ def dictify(gen):
     """
 
     def patched(*args, **kwargs):
-        """Wrapper function """
+        """Wrapper function"""
         return dict(gen(*args, **kwargs))
 
     return patched

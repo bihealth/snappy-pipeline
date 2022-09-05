@@ -4,19 +4,13 @@
 isort:skip_file
 """
 
-import os
-import sys
-
-# A hack is required for being able to import snappy_wrappers modules when in development mode.
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
-from snappy_wrappers.resource_usage import ResourceUsage
 from snappy_wrappers.wrapper_parallel import (
     ParallelVariantCallingBaseWrapper,
     gib_to_string,
     hours,
 )
+from snappy_wrappers.resource_usage import ResourceUsage
+import os
 
 
 class ParallelGatkHcWrapper(ParallelVariantCallingBaseWrapper):

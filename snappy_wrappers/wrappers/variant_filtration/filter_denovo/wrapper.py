@@ -4,18 +4,12 @@
 isort:skip_file
 """
 
+import snappy_wrappers.tools.vcf_filter_denovo
+from snakemake.shell import shell
 import collections
 import os
 import sys
 
-# A hack is required for being able to import snappy_wrappers modules when in development mode.
-# TODO: is there a more elegant way?
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
-from snakemake.shell import shell
-
-import snappy_wrappers.tools.vcf_filter_denovo
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

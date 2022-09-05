@@ -70,7 +70,7 @@ rule variant_filtration_filter_quality_run:
     input:
         unpack(wf.get_input_files("filter_quality", "run")),
     output:
-        **wf. get_output_files('filter_quality','run'),
+        **wf.get_output_files("filter_quality", "run"),
     threads: wf.get_resource("filter_quality", "run", "threads")
     resources:
         time=wf.get_resource("filter_quality", "run", "time"),
@@ -89,7 +89,7 @@ rule variant_filtration_filter_inheritance_run:
     input:
         unpack(wf.get_input_files("filter_inheritance", "run")),
     output:
-        **wf. get_output_files('filter_inheritance','run'),
+        **wf.get_output_files("filter_inheritance", "run"),
     threads: wf.get_resource("filter_inheritance", "run", "threads")
     resources:
         time=wf.get_resource("filter_inheritance", "run", "time"),
@@ -108,7 +108,7 @@ rule variant_filtration_filter_frequency:
     input:
         unpack(wf.get_input_files("filter_frequency", "run")),
     output:
-        **wf. get_output_files('filter_frequency','run'),
+        **wf.get_output_files("filter_frequency", "run"),
     threads: wf.get_resource("filter_frequency", "run", "threads")
     resources:
         time=wf.get_resource("filter_frequency", "run", "time"),
@@ -127,7 +127,7 @@ rule variant_filtration_filter_regions:
     input:
         unpack(wf.get_input_files("filter_regions", "run")),
     output:
-        **wf. get_output_files('filter_regions','run'),
+        **wf.get_output_files("filter_regions", "run"),
     threads: wf.get_resource("filter_regions", "run", "threads")
     resources:
         time=wf.get_resource("filter_regions", "run", "time"),
@@ -146,7 +146,7 @@ rule variant_filtration_filter_scores:
     input:
         unpack(wf.get_input_files("filter_scores", "run")),
     output:
-        **wf. get_output_files('filter_scores','run'),
+        **wf.get_output_files("filter_scores", "run"),
     threads: wf.get_resource("filter_scores", "run", "threads")
     resources:
         time=wf.get_resource("filter_scores", "run", "time"),
@@ -165,7 +165,7 @@ rule variant_filtration_filter_het_comp:
     input:
         unpack(wf.get_input_files("filter_het_comp", "run")),
     output:
-        **wf. get_output_files('filter_het_comp','run'),
+        **wf.get_output_files("filter_het_comp", "run"),
     threads: wf.get_resource("filter_het_comp", "run", "threads")
     resources:
         time=wf.get_resource("filter_het_comp", "run", "time"),

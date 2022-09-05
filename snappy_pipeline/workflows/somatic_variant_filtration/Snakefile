@@ -58,18 +58,18 @@ rule somatic_variant_filtration_link_out_run:
 
 rule somatic_variant_filtration_dkfz_bias_filter_run:
     input:
-        **wf. get_input_files('dkfz_bias_filter','run'),
+        **wf.get_input_files("dkfz_bias_filter", "run"),
     output:
-        **wf. get_output_files('dkfz_bias_filter','run'),
+        **wf.get_output_files("dkfz_bias_filter", "run"),
     threads: wf.get_resource("dkfz_bias_filter", "run", "threads")
     resources:
         time=wf.get_resource("dkfz_bias_filter", "run", "time"),
         memory=wf.get_resource("dkfz_bias_filter", "run", "memory"),
         partition=wf.get_resource("dkfz_bias_filter", "run", "partition"),
     params:
-        **{'args': wf. get_params('dkfz_bias_filter','run')},
+        **{"args": wf.get_params("dkfz_bias_filter", "run")},
     log:
-        **wf. get_log_file('dkfz_bias_filter','run'),
+        **wf.get_log_file("dkfz_bias_filter", "run"),
     wrapper:
         wf.wrapper_path("dkfz_bias_filter")
 
@@ -81,7 +81,7 @@ rule somatic_variant_filtration_eb_filter_write_panel:
     input:
         unpack(wf.get_input_files("eb_filter", "write_panel")),
     output:
-        **wf. get_output_files('eb_filter','write_panel'),
+        **wf.get_output_files("eb_filter", "write_panel"),
     threads: wf.get_resource("eb_filter", "write_panel", "threads")
     resources:
         time=wf.get_resource("eb_filter", "write_panel", "time"),
@@ -100,16 +100,16 @@ rule somatic_variant_filtration_eb_filter_run:
     input:
         unpack(wf.get_input_files("eb_filter", "run")),
     output:
-        **wf. get_output_files('eb_filter','run'),
+        **wf.get_output_files("eb_filter", "run"),
     threads: wf.get_resource("eb_filter", "run", "threads")
     resources:
         time=wf.get_resource("eb_filter", "run", "time"),
         memory=wf.get_resource("eb_filter", "run", "memory"),
         partition=wf.get_resource("eb_filter", "run", "partition"),
     params:
-        **{'args': wf. get_params('eb_filter','run')},
+        **{"args": wf.get_params("eb_filter", "run")},
     log:
-        **wf. get_log_file('eb_filter','run'),
+        **wf.get_log_file("eb_filter", "run"),
     wrapper:
         wf.wrapper_path("eb_filter_par")
 
@@ -119,9 +119,9 @@ rule somatic_variant_filtration_eb_filter_run:
 
 rule variant_filtration_apply_filters_run:
     input:
-        **( wf. get_input_files('apply_filters','run')),
+        **(wf.get_input_files("apply_filters", "run")),
     output:
-        **wf. get_output_files('apply_filters','run'),
+        **wf.get_output_files("apply_filters", "run"),
     threads: wf.get_resource("apply_filters", "run", "threads")
     resources:
         time=wf.get_resource("apply_filters", "run", "time"),
@@ -142,7 +142,7 @@ rule variant_filtration_filter_to_exons_run:
     input:
         unpack(wf.get_input_files("filter_to_exons", "run")),
     output:
-        **wf. get_output_files('filter_to_exons','run'),
+        **wf.get_output_files("filter_to_exons", "run"),
     threads: wf.get_resource("filter_to_exons", "run", "threads")
     resources:
         time=wf.get_resource("filter_to_exons", "run", "time"),

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Mutect2variant caller in parallel"""
 
-from snakemake import shell
-
 from parallel_mutect import ParallelMutectWrapper
+from snakemake import shell
 
 # Kick off execution using the wrapper class defined above.
 ParallelMutectWrapper(snakemake).run().shutdown_logging()

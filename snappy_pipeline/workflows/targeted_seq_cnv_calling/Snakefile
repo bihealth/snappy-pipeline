@@ -27,9 +27,12 @@ wf = TargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths,
 
 subworkflow gcnv_model_wf:
     """Defines sub-workflow responsible for gCNV model creation."""
-    snakefile: "gcnv_model.snakefile"
-    configfile: os.path.join(os.getcwd(), "config.yaml")
-    workdir: os.getcwd()
+    snakefile:
+        "gcnv_model.snakefile"
+    configfile:
+        os.path.join(os.getcwd(), "config.yaml")
+    workdir:
+        os.getcwd()
 
 
 # Rules =======================================================================

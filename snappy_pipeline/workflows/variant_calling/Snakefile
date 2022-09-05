@@ -72,14 +72,14 @@ rule variant_calling_bcftools_run:
     input:
         unpack(wf.get_input_files("bcftools", "run")),
     output:
-        **wf. get_output_files('bcftools','run'),
+        **wf.get_output_files("bcftools", "run"),
     threads: wf.get_resource("bcftools", "run", "threads")
     resources:
         time=wf.get_resource("bcftools", "run", "time"),
         memory=wf.get_resource("bcftools", "run", "memory"),
         partition=wf.get_resource("bcftools", "run", "partition"),
     log:
-        **wf. get_log_file('bcftools','run'),
+        **wf.get_log_file("bcftools", "run"),
     wrapper:
         wf.wrapper_path("bcftools_call")
 
@@ -91,16 +91,16 @@ rule variant_calling_freebayes_run:
     input:
         unpack(wf.get_input_files("freebayes", "run")),
     output:
-        **wf. get_output_files('freebayes','run'),
+        **wf.get_output_files("freebayes", "run"),
     threads: wf.get_resource("freebayes", "run", "threads")
     resources:
         time=wf.get_resource("freebayes", "run", "time"),
         memory=wf.get_resource("freebayes", "run", "memory"),
         partition=wf.get_resource("freebayes", "run", "partition"),
     params:
-        **wf. get_params("freebayes","run")(),
+        **wf.get_params("freebayes", "run")(),
     log:
-        **wf. get_log_file('freebayes','run'),
+        **wf.get_log_file("freebayes", "run"),
     wrapper:
         wf.wrapper_path("freebayes")
 
@@ -112,7 +112,7 @@ rule variant_calling_gatk_hc_run:
     input:
         unpack(wf.get_input_files("gatk_hc", "run")),
     output:
-        **wf. get_output_files('gatk_hc','run'),
+        **wf.get_output_files("gatk_hc", "run"),
     threads: wf.get_resource("gatk_hc", "run", "threads")
     resources:
         time=wf.get_resource("gatk_hc", "run", "time"),
@@ -122,7 +122,7 @@ rule variant_calling_gatk_hc_run:
         step_key="variant_calling",
         caller_key="gatk_hc",
     log:
-        **wf. get_log_file('gatk_hc','run'),
+        **wf.get_log_file("gatk_hc", "run"),
     wrapper:
         wf.wrapper_path("gatk_hc_par")
 
@@ -134,7 +134,7 @@ rule variant_calling_gatk_ug_run:
     input:
         unpack(wf.get_input_files("gatk_ug", "run")),
     output:
-        **wf. get_output_files('gatk_ug','run'),
+        **wf.get_output_files("gatk_ug", "run"),
     threads: wf.get_resource("gatk_ug", "run", "threads")
     resources:
         time=wf.get_resource("gatk_ug", "run", "time"),
@@ -144,7 +144,7 @@ rule variant_calling_gatk_ug_run:
         step_key="variant_calling",
         caller_key="gatk_ug",
     log:
-        **wf. get_log_file('gatk_ug','run'),
+        **wf.get_log_file("gatk_ug", "run"),
     wrapper:
         wf.wrapper_path("gatk_ug_par")
 
@@ -156,14 +156,14 @@ rule variant_calling_platypus_run:
     input:
         unpack(wf.get_input_files("platypus", "run")),
     output:
-        **wf. get_output_files('platypus','run'),
+        **wf.get_output_files("platypus", "run"),
     threads: wf.get_resource("platypus", "run", "threads")
     resources:
         time=wf.get_resource("platypus", "run", "time"),
         memory=wf.get_resource("platypus", "run", "memory"),
         partition=wf.get_resource("platypus", "run", "partition"),
     log:
-        **wf. get_log_file('platypus','run'),
+        **wf.get_log_file("platypus", "run"),
     wrapper:
         wf.wrapper_path("platypus/germline")
 
@@ -175,7 +175,7 @@ rule variant_calling_gatk_hc_gvcf_discovery:
     input:
         unpack(wf.get_input_files("gatk_hc_gvcf", "discover")),
     output:
-        **wf. get_output_files('gatk_hc_gvcf','discover'),
+        **wf.get_output_files("gatk_hc_gvcf", "discover"),
     threads: wf.get_resource("gatk_hc_gvcf", "discover", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "discover", "time"),
@@ -197,7 +197,7 @@ rule variant_calling_gatk_hc_gvcf_genotype_pedigree:
     input:
         unpack(wf.get_input_files("gatk_hc_gvcf", "genotype_pedigree")),
     output:
-        **wf. get_output_files('gatk_hc_gvcf','genotype_pedigree'),
+        **wf.get_output_files("gatk_hc_gvcf", "genotype_pedigree"),
     threads: wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "genotype_pedigree", "time"),
@@ -222,7 +222,7 @@ rule variant_calling_gatk_hc_gvcf_combine_gvcf:
     input:
         unpack(wf.get_input_files("gatk_hc_gvcf", "combine_gvcf")),
     output:
-        **wf. get_output_files('gatk_hc_gvcf','combine_gvcf'),
+        **wf.get_output_files("gatk_hc_gvcf", "combine_gvcf"),
     threads: wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "combine_gvcf", "time"),
@@ -243,7 +243,7 @@ rule variant_calling_gatk_hc_gvcf_genotype_cohort:
     input:
         wf.get_input_files("gatk_hc_gvcf", "genotype_cohort"),
     output:
-        **wf. get_output_files('gatk_hc_gvcf','genotype_cohort'),
+        **wf.get_output_files("gatk_hc_gvcf", "genotype_cohort"),
     threads: wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "threads")
     resources:
         time=wf.get_resource("gatk_hc_gvcf", "genotype_cohort", "time"),
@@ -262,7 +262,7 @@ rule variant_calling_varscan_call_pedigree:
     input:
         unpack(wf.get_input_files("varscan", "call_pedigree")),
     output:
-        **wf. get_output_files('varscan','call_pedigree'),
+        **wf.get_output_files("varscan", "call_pedigree"),
     threads: wf.get_resource("varscan", "call_pedigree", "threads")
     resources:
         time=wf.get_resource("varscan", "call_pedigree", "time"),
@@ -272,7 +272,7 @@ rule variant_calling_varscan_call_pedigree:
         step_key="variant_calling",
         caller_key="varscan",
     log:
-        **wf. get_log_file('varscan','call_pedigree'),
+        **wf.get_log_file("varscan", "call_pedigree"),
     wrapper:
         wf.wrapper_path("varscan_par/call_joint")
 
@@ -284,7 +284,7 @@ rule variant_calling_varscan_call_cohort:
     input:
         wf.get_input_files("varscan", "call_cohort"),
     output:
-        **wf. get_output_files('varscan','call_cohort'),
+        **wf.get_output_files("varscan", "call_cohort"),
     threads: wf.get_resource("varscan", "call_cohort", "threads")
     resources:
         time=wf.get_resource("varscan", "call_cohort", "time"),
@@ -294,7 +294,7 @@ rule variant_calling_varscan_call_cohort:
         step_key="variant_calling",
         caller_key="varscan",
     log:
-        **wf. get_log_file('varscan','call_cohort'),
+        **wf.get_log_file("varscan", "call_cohort"),
     wrapper:
         wf.wrapper_path("varscan_par/call_joint")
 
@@ -306,9 +306,9 @@ rule variant_calling_varscan_call_cohort:
 
 rule variant_calling_bcftools_stats_report:
     input:
-        **wf. get_input_files('bcftools_stats','run'),
+        **wf.get_input_files("bcftools_stats", "run"),
     output:
-        **wf. get_output_files('bcftools_stats','run'),
+        **wf.get_output_files("bcftools_stats", "run"),
     threads: wf.get_resource("bcftools_stats", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_stats", "run", "time"),
@@ -325,9 +325,9 @@ rule variant_calling_bcftools_stats_report:
 
 rule variant_calling_jannovar_statistics_report:
     input:
-        **wf. get_input_files('jannovar_statistics','run'),
+        **wf.get_input_files("jannovar_statistics", "run"),
     output:
-        **wf. get_output_files('jannovar_statistics','run'),
+        **wf.get_output_files("jannovar_statistics", "run"),
     threads: wf.get_resource("jannovar_statistics", "run", "threads")
     resources:
         time=wf.get_resource("jannovar_statistics", "run", "time"),

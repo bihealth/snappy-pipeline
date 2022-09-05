@@ -11,10 +11,9 @@ import typing
 import attr
 import logzero
 from logzero import logger
-import vcfpy
-
 import ncls
 import pandas as pd
+import vcfpy
 
 #: Source program is GATK gCNV
 SOURCE_GATK_GCNV = "GCNV"
@@ -142,10 +141,10 @@ class CnvCluster:
 
 
 def merge_headers(headers: typing.Iterable[vcfpy.Header]) -> vcfpy.Header:
-    """"Merge Headers for output."""
+    """Merge Headers for output."""
     res = None
     for header in headers:
-        if res == None:
+        if res is None:
             res = vcfpy.Header(list(header.lines), samples=vcfpy.SamplesInfos(header.samples.names))
         else:
             for line in header.lines:
@@ -208,8 +207,8 @@ def augment_header(header: vcfpy.Header) -> vcfpy.Header:
 
 def process_contig_gatk_gcnv(contig: str, reader: vcfpy.Reader) -> typing.List[CopyNumberVariant]:
     try:
-        contig_iter = reader.fetch(contig)
-    except ValueError as _e:
+        _contig_iter = reader.fetch(contig)  # noqa: F841
+    except ValueError as _e:  # noqa: F841
         return  # contig not in file, skip
 
     for record in reader.fetch(contig):
@@ -239,8 +238,8 @@ def process_contig_cnvetti_hom_del(
     contig: str, reader: vcfpy.Reader
 ) -> typing.List[CopyNumberVariant]:
     try:
-        contig_iter = reader.fetch(contig)
-    except ValueError as _e:
+        contig_iter = reader.fetch(contig)  # noqa: F841
+    except ValueError as _e:  # noqa: F841
         return  # contig not in file, skip
 
     for record in reader.fetch(contig):

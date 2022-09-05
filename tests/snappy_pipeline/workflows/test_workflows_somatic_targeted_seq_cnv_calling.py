@@ -254,7 +254,7 @@ def test_cnvetti_on_target_step_part_get_log_file_postprocess(
 
 
 def test_cnvetti_on_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvettiOnTargetStepPart.get_resource_usage() """
+    """Tests CnvettiOnTargetStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7500M", "partition": "medium"}
     # Evaluate
@@ -292,7 +292,7 @@ def test_cnvkit_access_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 
 
 def test_cnvkit_access_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'access' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'access'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
@@ -329,7 +329,7 @@ def test_cnvkit_target_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 
 
 def test_cnvkit_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'target' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'target'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
@@ -371,7 +371,7 @@ def test_cnvkit_antitarget_step_part_get_log_file(somatic_targeted_seq_cnv_calli
 
 
 def test_cnvkit_antitarget_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate

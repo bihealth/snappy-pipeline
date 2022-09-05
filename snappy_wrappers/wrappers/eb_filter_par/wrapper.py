@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running EasyBayes-Filter variant caller in parallel"""
 
-from snakemake import shell
-
 from parallel_eb_filter import ParallelEasyBayesFilterWrapper
+from snakemake import shell
 
 # Kick off execution using the wrapper class defined above.
 ParallelEasyBayesFilterWrapper(snakemake).run().shutdown_logging()

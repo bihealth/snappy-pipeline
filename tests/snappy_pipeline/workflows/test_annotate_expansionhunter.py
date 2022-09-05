@@ -29,7 +29,7 @@ def expansionhunter_expected():
 
 @pytest.fixture
 def expansionhunter_json():
-    """:return: Returns path to real simplified Repeat Expansion JSON output file - UNCLEAR. """
+    """:return: Returns path to real simplified Repeat Expansion JSON output file - UNCLEAR."""
     return os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         os.path.join("data", "expansionhunter_normal_result.json"),
@@ -55,7 +55,7 @@ def expansionhunter_expanded_expected():
 
 @pytest.fixture
 def expansionhunter_expanded_json():
-    """:return: Returns path to real simplified Repeat Expansion JSON output file - EXPANDED. """
+    """:return: Returns path to real simplified Repeat Expansion JSON output file - EXPANDED."""
     return os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         os.path.join("data", "expansionhunter_expanded_result.json"),
@@ -81,7 +81,7 @@ def expansionhunter_unclear_expected():
 
 @pytest.fixture
 def expansionhunter_unclear_json():
-    """:return: Returns path to real simplified Repeat Expansion JSON output file - UNCLEAR. """
+    """:return: Returns path to real simplified Repeat Expansion JSON output file - UNCLEAR."""
     return os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         os.path.join("data", "expansionhunter_unclear_result.json"),
@@ -131,7 +131,7 @@ def test_class_constructor(expansionhunter_json):
 
 
 def test_load_json(annotate_obj, expansionhunter_json, annotation_json):
-    """Tests AnnotateExpansionHunter::load_json() """
+    """Tests AnnotateExpansionHunter::load_json()"""
     # Define expected
     expected_annotation_keys = ["AR", "FMR1", "RFC1"]
     expected_output_keys = ["LocusResults", "SampleParameters"]
@@ -150,7 +150,7 @@ def test_load_json(annotate_obj, expansionhunter_json, annotation_json):
 
 
 def test_explain_result(annotate_obj):
-    """Tests AnnotateExpansionHunter::explain_result() """
+    """Tests AnnotateExpansionHunter::explain_result()"""
     # Get expected
     path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -236,7 +236,7 @@ def test_run_annotation(annotate_obj):
 
 
 def test_write_md5(annotate_obj):
-    """Tests AnnotateExpansionHunter::write_md5() """
+    """Tests AnnotateExpansionHunter::write_md5()"""
 
     # Define input
     destiny = os.path.join(tempfile.gettempdir(), "empty.json")

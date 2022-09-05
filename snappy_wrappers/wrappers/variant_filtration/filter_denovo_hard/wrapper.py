@@ -11,29 +11,19 @@ We simply keep these annotations and do a post-filtration later.
 isort:skip_file
 """
 
+from snakemake.shell import shell
 import os
 import sys
 
-# A hack is required for being able to import snappy_wrappers modules when in development mode.
-# TODO: is there a more elegant way?
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
-from snakemake.shell import shell
 
 region_filter = ""
 if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:
-    region_filter = (
-        " || "
-        + " || ".join(
-            map(
-                lambda x: "({})".format(x),
-                snakemake.config["step_config"]["variant_denovo_filtration"][
-                    "bad_region_expressions"
-                ],
-            )
-        ).replace("$sample_index", snakemake.wildcards.index_library)
-    )
+    region_filter = " || " + " || ".join(
+        map(
+            lambda x: "({})".format(x),
+            snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"],
+        )
+    ).replace("$sample_index", snakemake.wildcards.index_library)
 
 shell(
     r"""
