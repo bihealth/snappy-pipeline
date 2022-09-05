@@ -3,9 +3,8 @@
 
 import os
 
-from snakemake import io, shell
-
 from parallel_gatk_ug import ParallelGatkUgWrapper
+from snakemake import io, shell
 
 # Write out information about conda installation.
 shell(

@@ -69,9 +69,9 @@ rule somatic_gene_fusion_calling_link_out_run:
 
 rule somatic_gene_fusion_calling_fusioncatcher_run:
     input:
-        **wf. get_input_files('fusioncatcher','run'),
+        **wf.get_input_files("fusioncatcher", "run"),
     output:
-        **wf. get_output_files('fusioncatcher','run'),
+        **wf.get_output_files("fusioncatcher", "run"),
     threads: wf.get_resource("fusioncatcher", "run", "threads")
     resources:
         time=wf.get_resource("fusioncatcher", "run", "time"),
@@ -90,9 +90,9 @@ rule somatic_gene_fusion_calling_fusioncatcher_run:
 
 rule somatic_gene_fusion_calling_jaffa_run:
     input:
-        **wf. get_input_files('jaffa','run'),
+        **wf.get_input_files("jaffa", "run"),
     output:
-        **wf. get_output_files('jaffa','run'),
+        **wf.get_output_files("jaffa", "run"),
     threads: wf.get_resource("jaffa", "run", "threads")
     resources:
         time=wf.get_resource("jaffa", "run", "time"),
@@ -111,9 +111,9 @@ rule somatic_gene_fusion_calling_jaffa_run:
 
 rule somatic_gene_fusion_calling_pizzly_run:
     input:
-        **wf. get_input_files('pizzly','run'),
+        **wf.get_input_files("pizzly", "run"),
     output:
-        **wf. get_output_files('pizzly','run'),
+        **wf.get_output_files("pizzly", "run"),
     threads: wf.get_resource("pizzly", "run", "threads")
     resources:
         time=wf.get_resource("pizzly", "run", "time"),
@@ -132,9 +132,9 @@ rule somatic_gene_fusion_calling_pizzly_run:
 
 rule somatic_gene_fusion_calling_hera_run:
     input:
-        **wf. get_input_files('hera','run'),
+        **wf.get_input_files("hera", "run"),
     output:
-        **wf. get_output_files('hera','run'),
+        **wf.get_output_files("hera", "run"),
     threads: wf.get_resource("hera", "run", "threads")
     resources:
         time=wf.get_resource("hera", "run", "time"),
@@ -153,9 +153,9 @@ rule somatic_gene_fusion_calling_hera_run:
 
 rule somatic_gene_fusion_calling_star_fusion_run:
     input:
-        **wf. get_input_files('star_fusion','run'),
+        **wf.get_input_files("star_fusion", "run"),
     output:
-        **wf. get_output_files('star_fusion','run'),
+        **wf.get_output_files("star_fusion", "run"),
     threads: wf.get_resource("star_fusion", "run", "threads")
     resources:
         time=wf.get_resource("star_fusion", "run", "time"),
@@ -174,9 +174,9 @@ rule somatic_gene_fusion_calling_star_fusion_run:
 
 rule somatic_gene_fusion_calling_defuse_run:
     input:
-        **wf. get_input_files('defuse','run'),
+        **wf.get_input_files("defuse", "run"),
     output:
-        **wf. get_output_files('defuse','run'),
+        **wf.get_output_files("defuse", "run"),
     threads: wf.get_resource("defuse", "run", "threads")
     resources:
         time=wf.get_resource("defuse", "run", "time"),

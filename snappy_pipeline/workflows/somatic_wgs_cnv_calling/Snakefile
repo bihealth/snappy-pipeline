@@ -58,14 +58,14 @@ rule somatic_wgs_cnv_calling_canvas_run:
     input:
         unpack(wf.get_input_files("canvas", "run")),
     output:
-        **wf. get_output_files('canvas','run'),
+        **wf.get_output_files("canvas", "run"),
     threads: wf.get_resource("canvas", "run", "threads")
     resources:
         time=wf.get_resource("canvas", "run", "time"),
         memory=wf.get_resource("canvas", "run", "memory"),
         partition=wf.get_resource("canvas", "run", "partition"),
     log:
-        **wf. get_log_file('canvas','run'),
+        **wf.get_log_file("canvas", "run"),
     wrapper:
         wf.wrapper_path("canvas/somatic_wgs")
 
@@ -80,14 +80,14 @@ rule somatic_wgs_cnv_calling_cnvetti_coverage:
     input:
         unpack(wf.get_input_files("cnvetti", "coverage")),
     output:
-        **wf. get_output_files('cnvetti','coverage'),
+        **wf.get_output_files("cnvetti", "coverage"),
     threads: wf.get_resource("cnvetti", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvetti", "coverage", "time"),
         memory=wf.get_resource("cnvetti", "coverage", "memory"),
         partition=wf.get_resource("cnvetti", "coverage", "partition"),
     log:
-        **wf. get_log_file('cnvetti','coverage'),
+        **wf.get_log_file("cnvetti", "coverage"),
     wrapper:
         wf.wrapper_path("cnvetti/wgs/coverage")
 
@@ -97,14 +97,14 @@ rule somatic_wgs_cnv_calling_cnvetti_tumor_normal_ratio:
     input:
         unpack(wf.get_input_files("cnvetti", "tumor_normal_ratio")),
     output:
-        **wf. get_output_files('cnvetti','tumor_normal_ratio'),
+        **wf.get_output_files("cnvetti", "tumor_normal_ratio"),
     threads: wf.get_resource("cnvetti", "tumor_normal_ratio", "threads")
     resources:
         time=wf.get_resource("cnvetti", "tumor_normal_ratio", "time"),
         memory=wf.get_resource("cnvetti", "tumor_normal_ratio", "memory"),
         partition=wf.get_resource("cnvetti", "tumor_normal_ratio", "partition"),
     log:
-        **wf. get_log_file('cnvetti','tumor_normal_ratio'),
+        **wf.get_log_file("cnvetti", "tumor_normal_ratio"),
     wrapper:
         wf.wrapper_path("cnvetti/wgs/tumor_normal_ratio")
 
@@ -115,14 +115,14 @@ rule somatic_wgs_cnv_calling_cnvetti_segment:
     input:
         unpack(wf.get_input_files("cnvetti", "segment")),
     output:
-        **wf. get_output_files('cnvetti','segment'),
+        **wf.get_output_files("cnvetti", "segment"),
     threads: wf.get_resource("cnvetti", "segment", "threads")
     resources:
         time=wf.get_resource("cnvetti", "segment", "time"),
         memory=wf.get_resource("cnvetti", "segment", "memory"),
         partition=wf.get_resource("cnvetti", "segment", "partition"),
     log:
-        **wf. get_log_file('cnvetti','segment'),
+        **wf.get_log_file("cnvetti", "segment"),
     wrapper:
         wf.wrapper_path("cnvetti/wgs/segment")
 
@@ -134,14 +134,14 @@ rule somatic_wgs_cnv_calling_control_freec_run:
     input:
         unpack(wf.get_input_files("control_freec", "run")),
     output:
-        **wf. get_output_files('control_freec','run'),
+        **wf.get_output_files("control_freec", "run"),
     threads: wf.get_resource("control_freec", "run", "threads")
     resources:
         time=wf.get_resource("control_freec", "run", "time"),
         memory=wf.get_resource("control_freec", "run", "memory"),
         partition=wf.get_resource("control_freec", "run", "partition"),
     log:
-        **wf. get_log_file('control_freec','run'),
+        **wf.get_log_file("control_freec", "run"),
     wrapper:
         wf.wrapper_path("control_freec")
 
@@ -151,16 +151,16 @@ rule somatic_wgs_cnv_calling_control_freec_run:
 
 rule somatic_wgs_cnv_calling_control_freec_transform_output:
     input:
-        **( wf. get_output_files('control_freec','run')),
+        **(wf.get_output_files("control_freec", "run")),
     output:
-        **wf. get_output_files('control_freec','transform'),
+        **wf.get_output_files("control_freec", "transform"),
     threads: wf.get_resource("control_freec", "transform", "threads")
     resources:
         time=wf.get_resource("control_freec", "transform", "time"),
         memory=wf.get_resource("control_freec", "transform", "memory"),
         partition=wf.get_resource("control_freec", "transform", "partition"),
     log:
-        **wf. get_log_file('control_freec','transform'),
+        **wf.get_log_file("control_freec", "transform"),
     wrapper:
         wf.wrapper_path("control_freec/transform")
 
@@ -170,16 +170,16 @@ rule somatic_wgs_cnv_calling_control_freec_transform_output:
 
 rule somatic_wgs_cnv_calling_control_freec_plot:
     input:
-        **( wf. get_output_files('control_freec','transform')),
+        **(wf.get_output_files("control_freec", "transform")),
     output:
-        **wf. get_output_files('control_freec','plot'),
+        **wf.get_output_files("control_freec", "plot"),
     threads: wf.get_resource("control_freec", "plot", "threads")
     resources:
         time=wf.get_resource("control_freec", "plot", "time"),
         memory=wf.get_resource("control_freec", "plot", "memory"),
         partition=wf.get_resource("control_freec", "plot", "partition"),
     log:
-        **wf. get_log_file('control_freec','plot'),
+        **wf.get_log_file("control_freec", "plot"),
     wrapper:
         wf.wrapper_path("cnvkit/plot")  # we're using the plotting tool from cnvkit
 
@@ -191,13 +191,13 @@ rule somatic_wgs_cnv_calling_cnvkit_run:
     input:
         unpack(wf.get_input_files("cnvkit", "run")),
     output:
-        **wf. get_output_files('cnvkit','run'),
+        **wf.get_output_files("cnvkit", "run"),
     threads: wf.get_resource("cnvkit", "run", "threads")
     resources:
         time=wf.get_resource("cnvkit", "run", "time"),
         memory=wf.get_resource("cnvkit", "run", "memory"),
         partition=wf.get_resource("cnvkit", "run", "partition"),
     log:
-        **wf. get_log_file('cnvkit','run'),
+        **wf.get_log_file("cnvkit", "run"),
     wrapper:
         wf.wrapper_path("cnvkit/wgs")

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper code for GATK ReadBackedPhasing"""
 
-from snakemake.shell import shell
-
 from parallel_read_backed_phasing import ParallelGaktReadBackedPhasingWrapper
+from snakemake.shell import shell
 
 # Write out information about conda installation.
 shell(

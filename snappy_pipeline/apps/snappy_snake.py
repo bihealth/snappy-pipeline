@@ -149,7 +149,7 @@ def binary_available(name):
     return retcode == 0
 
 
-def run(wrapper_args):
+def run(wrapper_args):  # noqa: C901
     """Launch the CUBI Pipeline wrapper for the given arguments"""
     # Setup logging
     setup_logging(wrapper_args)

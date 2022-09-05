@@ -57,8 +57,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"SNAPPY Pipeline"
-copyright = u"2015-2021, CUBI, Berlin Institute of Health"
+project = "SNAPPY Pipeline"
+copyright = "2015-2021, CUBI, Berlin Institute of Health"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -211,8 +211,8 @@ latex_documents = [
     (
         "index",
         "snappy_pipeline.tex",
-        u"SNAPPY Pipeline Documentation",
-        u"Manuel Holtgrewe",
+        "SNAPPY Pipeline Documentation",
+        "Manuel Holtgrewe",
         "manual",
     )
 ]
@@ -242,9 +242,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ("index", "snappy_pipeline", u"SNAPPY Pipeline Documentation", [u"Manuel Holtgrewe"], 1)
-]
+man_pages = [("index", "snappy_pipeline", "SNAPPY Pipeline Documentation", ["Manuel Holtgrewe"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -259,8 +257,8 @@ texinfo_documents = [
     (
         "index",
         "snappy_pipeline",
-        u"SNAPPY Pipeline Documentation",
-        u"Manuel Holtgrewe",
+        "SNAPPY Pipeline Documentation",
+        "Manuel Holtgrewe",
         "snappy_pipeline",
         "One line description of project.",
         "Miscellaneous",

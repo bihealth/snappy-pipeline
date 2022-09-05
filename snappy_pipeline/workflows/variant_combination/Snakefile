@@ -70,7 +70,7 @@ rule variant_combination_vars_intersect_run:
     input:
         unpack(wf.get_input_files("vars_intersect", "run")),
     output:
-        **wf. get_output_files('vars_intersect','run'),
+        **wf.get_output_files("vars_intersect", "run"),
     threads: wf.get_resource("vars_intersect", "run", "threads")
     resources:
         time=wf.get_resource("vars_intersect", "run", "time"),
@@ -91,7 +91,7 @@ rule variant_combination_vars_share_interval_run:
     input:
         unpack(wf.get_input_files("vars_share_interval", "run")),
     output:
-        **wf. get_output_files('vars_share_interval','run'),
+        **wf.get_output_files("vars_share_interval", "run"),
     threads: wf.get_resource("vars_share_interval", "run", "threads")
     resources:
         time=wf.get_resource("vars_share_interval", "run", "time"),

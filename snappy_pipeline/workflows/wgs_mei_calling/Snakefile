@@ -58,7 +58,7 @@ rule wgs_mei_calling_melt_preprocess:
     input:
         unpack(wf.get_input_files("melt", "preprocess")),
     output:
-        **wf. get_output_files('melt','preprocess'),
+        **wf.get_output_files("melt", "preprocess"),
     threads: wf.get_resource("melt", "preprocess", "threads")
     resources:
         time=wf.get_resource("melt", "preprocess", "time"),
@@ -74,7 +74,7 @@ rule wgs_mei_calling_melt_indiv_analysis:
     input:
         unpack(wf.get_input_files("melt", "indiv_analysis")),
     output:
-        **wf. get_output_files('melt','indiv_analysis'),
+        **wf.get_output_files("melt", "indiv_analysis"),
     threads: wf.get_resource("melt", "indiv_analysis", "threads")
     resources:
         time=wf.get_resource("melt", "indiv_analysis", "time"),
@@ -90,7 +90,7 @@ rule wgs_mei_calling_melt_group_analysis:
     input:
         unpack(wf.get_input_files("melt", "group_analysis")),
     output:
-        **wf. get_output_files('melt','group_analysis'),
+        **wf.get_output_files("melt", "group_analysis"),
     threads: wf.get_resource("melt", "group_analysis", "threads")
     resources:
         time=wf.get_resource("melt", "group_analysis", "time"),
@@ -106,7 +106,7 @@ rule wgs_mei_calling_melt_genotype:
     input:
         unpack(wf.get_input_files("melt", "genotype")),
     output:
-        **wf. get_output_files('melt','genotype'),
+        **wf.get_output_files("melt", "genotype"),
     threads: wf.get_resource("melt", "genotype", "threads")
     resources:
         time=wf.get_resource("melt", "genotype", "time"),
@@ -122,7 +122,7 @@ rule wgs_mei_calling_melt_make_vcf:
     input:
         unpack(wf.get_input_files("melt", "make_vcf")),
     output:
-        **wf. get_output_files('melt','make_vcf'),
+        **wf.get_output_files("melt", "make_vcf"),
     threads: wf.get_resource("melt", "make_vcf", "threads")
     resources:
         time=wf.get_resource("melt", "make_vcf", "time"),
@@ -138,7 +138,7 @@ rule wgs_mei_calling_melt_merge_vcf:
     input:
         unpack(wf.get_input_files("melt", "merge_vcf")),
     output:
-        **wf. get_output_files('melt','merge_vcf'),
+        **wf.get_output_files("melt", "merge_vcf"),
     threads: wf.get_resource("melt", "merge_vcf", "threads")
     resources:
         time=wf.get_resource("melt", "merge_vcf", "time"),
@@ -154,7 +154,7 @@ rule wgs_mei_calling_melt_pick_pedigree:
     input:
         unpack(wf.get_input_files("melt", "reorder_vcf")),
     output:
-        **wf. get_output_files('melt','reorder_vcf'),
+        **wf.get_output_files("melt", "reorder_vcf"),
     threads: wf.get_resource("melt", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("melt", "reorder_vcf", "time"),

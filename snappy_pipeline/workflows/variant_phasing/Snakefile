@@ -70,14 +70,14 @@ rule variant_phasing_gatk_phase_by_transmission_run:
     input:
         unpack(wf.get_input_files("gatk_phase_by_transmission", "run")),
     output:
-        **wf. get_output_files('gatk_phase_by_transmission','run'),
+        **wf.get_output_files("gatk_phase_by_transmission", "run"),
     threads: wf.get_resource("gatk_phase_by_transmission", "run", "threads")
     resources:
         time=wf.get_resource("gatk_phase_by_transmission", "run", "time"),
         memory=wf.get_resource("gatk_phase_by_transmission", "run", "memory"),
         partition=wf.get_resource("gatk_phase_by_transmission", "run", "partition"),
     log:
-        **wf. get_log_file('gatk_phase_by_transmission','run'),
+        **wf.get_log_file("gatk_phase_by_transmission", "run"),
     wrapper:
         wf.wrapper_path("gatk_phase_by_transmission")
 
@@ -89,14 +89,14 @@ rule variant_phasing_gatk_read_backed_phasing_only_run:
     input:
         unpack(wf.get_input_files("gatk_read_backed_phasing_only", "run")),
     output:
-        **wf. get_output_files('gatk_read_backed_phasing_only','run'),
+        **wf.get_output_files("gatk_read_backed_phasing_only", "run"),
     threads: wf.get_resource("gatk_read_backed_phasing_only", "run", "threads")
     resources:
         time=wf.get_resource("gatk_read_backed_phasing_only", "run", "time"),
         memory=wf.get_resource("gatk_read_backed_phasing_only", "run", "memory"),
         partition=wf.get_resource("gatk_read_backed_phasing_only", "run", "partition"),
     log:
-        **wf. get_log_file('gatk_read_backed_phasing_only','run'),
+        **wf.get_log_file("gatk_read_backed_phasing_only", "run"),
     wrapper:
         wf.wrapper_path("gatk_read_backed_phasing_par")
 
@@ -108,13 +108,13 @@ rule variant_phasing_gatk_read_backed_phasing_also_run:
     input:
         unpack(wf.get_input_files("gatk_read_backed_phasing_also", "run")),
     output:
-        **wf. get_output_files('gatk_read_backed_phasing_also','run'),
+        **wf.get_output_files("gatk_read_backed_phasing_also", "run"),
     threads: wf.get_resource("gatk_read_backed_phasing_also", "run", "threads")
     resources:
         time=wf.get_resource("gatk_read_backed_phasing_also", "run", "time"),
         memory=wf.get_resource("gatk_read_backed_phasing_also", "run", "memory"),
         partition=wf.get_resource("gatk_read_backed_phasing_also", "run", "partition"),
     log:
-        **wf. get_log_file('gatk_read_backed_phasing_also','run'),
+        **wf.get_log_file("gatk_read_backed_phasing_also", "run"),
     wrapper:
         wf.wrapper_path("gatk_read_backed_phasing_par")

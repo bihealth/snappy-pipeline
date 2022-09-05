@@ -162,7 +162,6 @@ def build_header(header_in: vcfpy.Header) -> vcfpy.Header:
 def process_contig(
     contig: str, reader: vcfpy.Reader, out_header: vcfpy.Header, max_rcv: float, max_lcv: float
 ):
-    cnvs = []
     curr = None
     for record in reader:
         call = record.calls[0]

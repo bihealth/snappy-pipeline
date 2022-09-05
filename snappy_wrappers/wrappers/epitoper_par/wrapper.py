@@ -1,4 +1,11 @@
 # isort:skip_file
+from snappy_wrappers.wrapper_parallel import (
+    ResourceUsage,
+    SgeResourceUsageConverter,
+    gib,
+    hours,
+    in_working_dir,
+)  # pylint: disable=wrong-import-position
 import json
 import os
 import sys
@@ -9,13 +16,6 @@ from math import ceil
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import (
-    ResourceUsage,
-    SgeResourceUsageConverter,
-    gib,
-    hours,
-    in_working_dir,
-)  # pylint: disable=wrong-import-position
 
 # TODO: call on overlapping windows, on merge make unique
 

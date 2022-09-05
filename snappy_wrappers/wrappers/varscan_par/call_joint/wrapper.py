@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Varscan for joint somatic/normal calling in parallel"""
 
-from snakemake import shell
-
 from parallel_call_joint import ParallelVarscanCallJointWrapper
+from snakemake import shell
 
 # Write out information about conda installation.
 shell(

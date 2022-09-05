@@ -12,7 +12,7 @@ class GenomePosition:
     is no ordering.
     """
 
-    LARGE_NUMBER = 10 ** 30
+    LARGE_NUMBER = 10**30
 
     def __init__(self, chrom, pos):
         self.chrom = chrom
