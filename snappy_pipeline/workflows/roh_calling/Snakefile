@@ -28,8 +28,6 @@ wf = RohCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd(
 localrules:
     # Linking files from work/ to output/ should be done locally
     roh_calling_link_out_run,
-    # Linking ROH BED files should also be done locally
-    roh_calling_bcftools_roh_link_bed,
 
 
 rule all:
@@ -69,37 +67,4 @@ rule roh_calling_bcftools_roh_run:
     log:
         wf.get_log_file("bcftools_roh", "run"),
     wrapper:
-        wf.wrapper_path("bcftools_roh/run")
-
-
-# Generate ROH BED files ------------------------------------------------------
-
-
-rule roh_calling_bcftools_roh_make_bed:
-    input:
-        unpack(wf.get_input_files("bcftools_roh", "make_bed")),
-    output:
-        **wf.get_output_files("bcftools_roh", "make_bed"),
-    threads: wf.get_resource("bcftools_roh", "make_bed", "threads")
-    resources:
-        time=wf.get_resource("bcftools_roh", "make_bed", "time"),
-        memory=wf.get_resource("bcftools_roh", "make_bed", "memory"),
-        partition=wf.get_resource("bcftools_roh", "make_bed", "partition"),
-    log:
-        wf.get_log_file("bcftools_roh", "make_bed"),
-    wrapper:
-        wf.wrapper_path("bcftools_roh/make_bed")
-
-
-# Internal linking of ROH BED files -------------------------------------------
-
-
-rule roh_calling_bcftools_roh_link_bed:
-    input:
-        unpack(wf.get_input_files("bcftools_roh", "link_bed")),
-    output:
-        **wf.get_output_files("bcftools_roh", "link_bed"),
-    log:
-        wf.get_log_file("bcftools_roh", "link_bed"),
-    wrapper:
-        wf.wrapper_path("bcftools_roh/link_bed")
+        wf.wrapper_path("bcftools_roh")
