@@ -1,8 +1,8 @@
 .. image:: https://github.com/bihealth/cubi-tk/workflows/CI/badge.svg
     :target: https://github.com/bihealth/snappy-pipeline/actions
     :alt: Continuous Integration Status
-.. image:: https://coveralls.io/repos/github/bihealth/snappy-pipeline/badge.svg?branch=coveralls
-    :target: https://coveralls.io/github/bihealth/snappy-pipeline?branch=coveralls
+.. image:: https://coveralls.io/repos/github/bihealth/snappy-pipeline/badge.svg?branch=master
+    :target: https://coveralls.io/github/bihealth/snappy-pipeline?branch=master
 .. image:: https://readthedocs.org/projects/snappy-pipeline/badge/?version=latest
     :target: https://snappy-pipeline.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
