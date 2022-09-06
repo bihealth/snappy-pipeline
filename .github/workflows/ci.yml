@@ -48,16 +48,8 @@ jobs:
           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/master' }}
       - name: Create text report
         run: coverage report
-      - name: Create XML report for codacy
-        run: coverage xml
       - name: Coveralls
         uses: AndreMiras/coveralls-python-action@develop
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.xml
-        if: ${{ matrix.python-version == '3.7' && (github.ref == 'refs/heads/master') }}
       - name: Check import order with isort
         run: isort --force-sort-within-sections --profile=black --check .
         if: ${{ matrix.python-version == '3.10' }}

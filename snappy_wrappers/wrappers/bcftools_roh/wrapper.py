@@ -26,12 +26,15 @@ fi
 
 # Perform ROH Calling -----------------------------------------------------------------------------
 
+out={snakemake.output.txt}
+raw_out=${{out%.regions.txt.gz}}.raw.txt.gz
+
 bcftools roh \
-    $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][af_tag]}" != "None" ]]; then
-        echo --AF-tag "{snakemake.config[step_config][roh_calling][bcftools_roh][af_tag]}"
+    $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][path_targets]}" != "None" ]]; then
+        echo --regions-file "{snakemake.config[step_config][roh_calling][bcftools_roh][path_targets]}"
     fi) \
-    $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][gts_only]}" != "None" ]]; then
-        echo --GTs-only "{snakemake.config[step_config][roh_calling][bcftools_roh][gts_only]}"
+    $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][path_af_file]}" != "None" ]]; then
+        echo --AF-file "{snakemake.config[step_config][roh_calling][bcftools_roh][path_af_file]}"
     fi) \
     $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][ignore_homref]}" != "False" ]]; then
         echo --ignore-homref
@@ -42,12 +45,20 @@ bcftools roh \
     $(if [[ "{snakemake.config[step_config][roh_calling][bcftools_roh][rec_rate]}" != "None" ]]; then
         echo --rec-rate "{snakemake.config[step_config][roh_calling][bcftools_roh][rec_rate]}"
     fi) \
-    -o {snakemake.output.txt} \
-    -O srz \
-    --threads $(({snakemake.config[step_config][roh_calling][bcftools_roh][threads]} - 1)) \
+    --output $raw_out \
+    --output-type srz \
     {snakemake.input.vcf}
 
-# Generate MD5 sum files
+# Cut out text and BED files.
+(
+    set +o pipefail
+    zcat $raw_out \
+    | head -n 3
+    zcat $raw_out \
+    | tail -n +4 \
+    | egrep "^RG|^# RG"
+) | bgzip -c \
+> {snakemake.output.txt}
 
 pushd $(dirname {snakemake.output.txt})
 md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
