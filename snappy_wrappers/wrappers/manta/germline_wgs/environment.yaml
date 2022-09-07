@@ -3,4 +3,4 @@ channels:
 - bioconda
 - r
 dependencies:
-- manta ==1.2.1
+- manta ==1.6.0
