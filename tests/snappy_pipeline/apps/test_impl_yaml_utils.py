@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for ``yaml_utils``."""
-import ruamel.yaml as ruamel_yaml
-
 import pytest
+import ruamel.yaml as ruamel_yaml
 
 from snappy_pipeline.apps.impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
 
