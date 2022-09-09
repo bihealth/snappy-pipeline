@@ -32,7 +32,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
 DEFAULT_CONFIG = r"""
@@ -48,7 +48,11 @@ step_config:
 class LohhlaStepPart(BaseStepPart):
     """Perform LOHHLA analysis of tumor/normal WES/WGS pairs."""
 
+    #: Step name
     name = "lohhla"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -64,6 +68,10 @@ class LohhlaStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
+
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
@@ -91,7 +99,6 @@ class LohhlaStepPart(BaseStepPart):
                 "hla": hla_typing(hla),
             }
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_normal_lib_name(self, wildcards):
@@ -101,12 +108,14 @@ class LohhlaStepPart(BaseStepPart):
 
     def get_output_files(self, action):
         """Return output files from LOHHLA"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return {"done": expand(self.base_path_out, ext=".done")}
 
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{mapper}.{hla_caller}.lohhla.{tumor_library}/log/"
             "{mapper}.{hla_caller}.lohhla.{tumor_library}"
@@ -124,8 +133,12 @@ class LohhlaStepPart(BaseStepPart):
 class SomaticHlaLohCallingWorkflow(BaseStep):
     """Perform somatic hla loh calling"""
 
+    #: Workflow name
     name = "somatic_hla_loh_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -135,13 +148,10 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

@@ -7,7 +7,7 @@ import tempfile
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Bad regions on hg19 with too high BND call count.
 bad_hg19 = (

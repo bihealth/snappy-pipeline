@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticHlaLohCallingWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticHlaLohCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -58,8 +56,13 @@ rule somatic_hla_loh_calling_lohhla:
     input:
         unpack(wf.get_input_files("lohhla", "run")),
     output:
-        **wf. get_output_files('lohhla','run'),
+        **wf.get_output_files("lohhla", "run"),
+    threads: wf.get_resource("lohhla", "run", "threads")
+    resources:
+        time=wf.get_resource("lohhla", "run", "time"),
+        memory=wf.get_resource("lohhla", "run", "memory"),
+        partition=wf.get_resource("lohhla", "run", "partition"),
     log:
-        **wf. get_log_file('lohhla','run'),
+        **wf.get_log_file("lohhla", "run"),
     wrapper:
         wf.wrapper_path("lohhla")

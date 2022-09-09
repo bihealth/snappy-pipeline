@@ -5,4 +5,4 @@ channels:
 dependencies:
 - bcftools >=1.9
 - htslib >=1.9
-- delly ==0.8.5
+- delly ==1.1.3

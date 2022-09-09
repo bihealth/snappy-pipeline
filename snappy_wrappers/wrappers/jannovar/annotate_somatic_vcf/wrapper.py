@@ -5,7 +5,7 @@
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Get shortcuts to static data and step configuration
 static_config = snakemake.config["static_data_config"]
@@ -110,7 +110,7 @@ jannovar \
     annotate-vcf \
     -XX:MaxHeapSize=5g \
     -XX:CompressedClassSpaceSize=512m \
-    -XX:+UseConcMarkSweepGC \
+    -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf {snakemake.output.vcf} \
     --database {snakemake.config[step_config][somatic_variant_annotation][path_jannovar_ser]} \

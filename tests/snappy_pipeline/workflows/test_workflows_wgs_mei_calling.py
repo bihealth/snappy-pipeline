@@ -5,7 +5,7 @@
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.wgs_mei_calling import WgsMeiCallingWorkflow
@@ -13,13 +13,14 @@ from snappy_pipeline.workflows.wgs_mei_calling import WgsMeiCallingWorkflow
 from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (somatic) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:
@@ -61,7 +62,6 @@ def minimal_config():
 def wgs_mei_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -78,17 +78,33 @@ def wgs_mei_calling_workflow(
     return WgsMeiCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
     )
 
 
+# Tests for MeltStepPart (all) ---------------------------------------------------------------------
+
+
+def test_melt_step_part_get_resource_usage(wgs_mei_calling_workflow):
+    """Tests MeltStepPart.get_resource_usage()"""
+    all_actions = wgs_mei_calling_workflow.substep_getattr("melt", "actions")
+    # Define expected
+    expected_dict = {"threads": 6, "time": "5-07:00:00", "memory": "23040M", "partition": "medium"}
+    # Evaluate
+    for action in all_actions:
+        for resource, expected in expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' for action '{action}'."
+            actual = wgs_mei_calling_workflow.get_resource("melt", action, resource)
+            assert actual == expected, msg_error
+
+
 # Tests for MeltStepPart (preprocess) -------------------------------------------------------------
 
 
 def test_melt_step_part_get_input_files_preprocess(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_preprocess()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = wgs_mei_calling_workflow.get_input_files("melt", "preprocess")(wildcards)
     expected = {
@@ -99,6 +115,7 @@ def test_melt_step_part_get_input_files_preprocess(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_output_files_preprocess(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_preprocess()"""
     expected = {
         "disc_bai": "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}.bam.disc.bai",
         "disc_bam": "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}.bam.disc",
@@ -106,19 +123,14 @@ def test_melt_step_part_get_output_files_preprocess(wgs_mei_calling_workflow):
         "orig_bai": "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}.bam.bai",
         "orig_bam": "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}.bam",
     }
-    assert wgs_mei_calling_workflow.get_output_files("melt", "preprocess") == expected
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "preprocess")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_preprocess(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_preprocess()"""
     expected = "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
-    assert wgs_mei_calling_workflow.get_log_file("melt", "preprocess") == expected
-
-
-def test_melt_step_part_update_cluster_config_preprocess(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_preprocess"].keys())
-    expected = {"mem", "time", "ntasks"}
+    actual = wgs_mei_calling_workflow.get_log_file("melt", "preprocess")
     assert actual == expected
 
 
@@ -126,6 +138,7 @@ def test_melt_step_part_update_cluster_config_preprocess(
 
 
 def test_melt_step_part_get_input_files_indiv_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_indiv_analysis()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = wgs_mei_calling_workflow.get_input_files("melt", "indiv_analysis")(wildcards)
     expected = {
@@ -138,11 +151,14 @@ def test_melt_step_part_get_input_files_indiv_analysis(wgs_mei_calling_workflow)
 
 
 def test_melt_step_part_get_output_files_indiv_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_indiv_analysis()"""
     expected = {"done": "work/{mapper}.melt.indiv_analysis.{me_type}/out/.done.{library_name}"}
-    assert wgs_mei_calling_workflow.get_output_files("melt", "indiv_analysis") == expected
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "indiv_analysis")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_indiv_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_indiv_analysis()"""
     # Define expected
     expected = (
         "work/{mapper}.melt.indiv_analysis.{me_type}/log/"
@@ -153,18 +169,11 @@ def test_melt_step_part_get_log_file_indiv_analysis(wgs_mei_calling_workflow):
     assert actual == expected
 
 
-def test_melt_step_part_update_cluster_config_indiv_analysis(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_indiv_analysis"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
-
-
 # Tests for MeltStepPart (group_analysis) ---------------------------------------------------------
 
 
 def test_melt_step_part_get_input_files_group_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_group_analysis()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "me_type": "ALU"})
     actual = wgs_mei_calling_workflow.get_input_files("melt", "group_analysis")(wildcards)
     expected = [
@@ -179,20 +188,16 @@ def test_melt_step_part_get_input_files_group_analysis(wgs_mei_calling_workflow)
 
 
 def test_melt_step_part_get_output_files_group_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_group_analysis()"""
     expected = {"done": "work/{mapper}.melt.group_analysis.{me_type}/out/.done"}
-    assert wgs_mei_calling_workflow.get_output_files("melt", "group_analysis") == expected
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "group_analysis")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_group_analysis(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_group_analysis()"""
     expected = "work/{mapper}.melt.group_analysis.{me_type}/log/snakemake.wgs_mei_calling.log"
-    assert wgs_mei_calling_workflow.get_log_file("melt", "group_analysis") == expected
-
-
-def test_melt_step_part_update_cluster_config_group_analysis(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_group_analysis"].keys())
-    expected = {"mem", "time", "ntasks"}
+    actual = wgs_mei_calling_workflow.get_log_file("melt", "group_analysis")
     assert actual == expected
 
 
@@ -200,6 +205,7 @@ def test_melt_step_part_update_cluster_config_group_analysis(
 
 
 def test_melt_step_part_get_input_files_genotype(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_genotype()"""
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "me_type": "ALU", "library_name": "P001-N1-DNA1-WGS1"}
     )
@@ -212,11 +218,14 @@ def test_melt_step_part_get_input_files_genotype(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_output_files_genotype(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_genotype()"""
     expected = {"done": "work/{mapper}.melt.genotype.{me_type}/out/.done.{library_name}"}
-    assert wgs_mei_calling_workflow.get_output_files("melt", "genotype") == expected
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "genotype")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_genotype(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_genotype()"""
     expected = (
         "work/{mapper}.melt.genotype.{me_type}/log/snakemake.wgs_mei_calling.{library_name}.log"
     )
@@ -224,20 +233,12 @@ def test_melt_step_part_get_log_file_genotype(wgs_mei_calling_workflow):
     assert actual == expected
 
 
-def test_melt_step_part_update_cluster_config_genotype(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_genotype"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
-
-
 # Tests for MeltStepPart (make_vcf) ---------------------------------------------------------------
 
 
 def test_melt_step_part_get_input_files_make_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_make_vcf()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "me_type": "ALU"})
-    actual = wgs_mei_calling_workflow.get_input_files("melt", "make_vcf")(wildcards)
     expected = [
         "work/bwa.melt.group_analysis.ALU/out/.done",
         "work/bwa.melt.genotype.ALU/out/.done.P001-N1-DNA1-WGS1",
@@ -247,29 +248,26 @@ def test_melt_step_part_get_input_files_make_vcf(wgs_mei_calling_workflow):
         "work/bwa.melt.genotype.ALU/out/.done.P005-N1-DNA1-WGS1",
         "work/bwa.melt.genotype.ALU/out/.done.P006-N1-DNA1-WGS1",
     ]
+    actual = wgs_mei_calling_workflow.get_input_files("melt", "make_vcf")(wildcards)
     assert actual == expected
 
 
 def test_melt_step_part_get_output_files_make_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_make_vcf()"""
     expected = {
         "done": "work/{mapper}.melt.make_vcf.{me_type}/out/.done",
         "list_txt": "work/{mapper}.melt.genotype.{me_type}/out/list.txt",
         "tbi": "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi",
         "vcf": "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz",
     }
-    assert wgs_mei_calling_workflow.get_output_files("melt", "make_vcf") == expected
+    actual = wgs_mei_calling_workflow.get_output_files("melt", "make_vcf")
+    assert actual == expected
 
 
 def test_melt_step_part_get_log_file_make_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_make_vcf()"""
     expected = "work/{mapper}.melt.make_vcf.{me_type}/log/snakemake.wgs_mei_calling.log"
-    assert wgs_mei_calling_workflow.get_log_file("melt", "make_vcf") == expected
-
-
-def test_melt_step_part_update_cluster_config_make_vcf(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_make_vcf"].keys())
-    expected = {"mem", "time", "ntasks"}
+    actual = wgs_mei_calling_workflow.get_log_file("melt", "make_vcf")
     assert actual == expected
 
 
@@ -277,17 +275,19 @@ def test_melt_step_part_update_cluster_config_make_vcf(
 
 
 def test_melt_step_part_get_input_files_merge_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_merge_vcf()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    actual = wgs_mei_calling_workflow.get_input_files("melt", "merge_vcf")(wildcards)
     expected = [
         "work/bwa.melt.merge_vcf.ALU/out/ALU.final_comp.vcf.gz",
         "work/bwa.melt.merge_vcf.LINE1/out/LINE1.final_comp.vcf.gz",
         "work/bwa.melt.merge_vcf.SVA/out/SVA.final_comp.vcf.gz",
     ]
+    actual = wgs_mei_calling_workflow.get_input_files("melt", "merge_vcf")(wildcards)
     assert actual == expected
 
 
 def test_melt_step_part_get_output_files_merge_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_merge_vcf()"""
     # Define expected
     expected = get_expected_output_vcf_files_dict(
         base_out="work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf"
@@ -298,15 +298,9 @@ def test_melt_step_part_get_output_files_merge_vcf(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_log_file_merge_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_merge_vcf()"""
     expected = "work/{mapper}.melt.merge_vcf/log/snakemake.wgs_mei_calling.log"
-    assert wgs_mei_calling_workflow.get_log_file("melt", "merge_vcf") == expected
-
-
-def test_melt_step_part_update_cluster_config_merge_vcf(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_merge_vcf"].keys())
-    expected = {"mem", "time", "ntasks"}
+    actual = wgs_mei_calling_workflow.get_log_file("melt", "merge_vcf")
     assert actual == expected
 
 
@@ -314,16 +308,18 @@ def test_melt_step_part_update_cluster_config_merge_vcf(
 
 
 def test_melt_step_part_get_input_files_reorder_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_input_files_reorder_vcf()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = wgs_mei_calling_workflow.get_input_files("melt", "reorder_vcf")(wildcards)
     expected = {
         "tbi": "work/bwa.melt.merge_vcf/out/bwa.melt.merge_vcf.vcf.gz.tbi",
         "vcf": "work/bwa.melt.merge_vcf/out/bwa.melt.merge_vcf.vcf.gz",
     }
+    actual = wgs_mei_calling_workflow.get_input_files("melt", "reorder_vcf")(wildcards)
     assert actual == expected
 
 
 def test_melt_step_part_get_output_files_reorder_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_output_files_reorder_vcf()"""
     # Define expected
     base_name_out = "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
@@ -333,17 +329,11 @@ def test_melt_step_part_get_output_files_reorder_vcf(wgs_mei_calling_workflow):
 
 
 def test_melt_step_part_get_log_file_reorder_vcf(wgs_mei_calling_workflow):
+    """Tests MeltStepPart._get_log_files_reorder_vcf()"""
     expected = (
         "work/{mapper}.melt.reorder_vcf.{index_library_name}/log/snakemake.wgs_mei_calling.log"
     )
-    assert wgs_mei_calling_workflow.get_log_file("melt", "reorder_vcf") == expected
-
-
-def test_melt_step_part_update_cluster_config_reorder_vcf(
-    wgs_mei_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["wgs_mei_calling_melt_reorder_vcf"].keys())
-    expected = {"mem", "time", "ntasks"}
+    actual = wgs_mei_calling_workflow.get_log_file("melt", "reorder_vcf")
     assert actual == expected
 
 
@@ -352,8 +342,6 @@ def test_melt_step_part_update_cluster_config_reorder_vcf(
 
 def test_sv_calling_workflow(wgs_mei_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
     # Check created sub steps
     expected = ["link_out", "melt"]
     assert list(sorted(wgs_mei_calling_workflow.sub_steps.keys())) == expected
@@ -371,4 +359,4 @@ def test_sv_calling_workflow(wgs_mei_calling_workflow):
     ]
     expected = list(sorted(expected))
     actual = list(sorted(wgs_mei_calling_workflow.get_result_files()))
-    assert expected == actual
+    assert actual == expected

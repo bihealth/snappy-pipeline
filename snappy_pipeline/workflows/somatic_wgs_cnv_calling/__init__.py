@@ -81,12 +81,16 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -171,6 +175,10 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
                     )
 
     def get_input_files(self, action):
+
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
             """Helper wrapper function"""
@@ -191,14 +199,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
             yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
             yield "tumor_bai", ngs_mapping(cancer_base_path + ".bam.bai")
 
-        #    somatic_path_base = (
-        #        "output/{mapper}.{var_caller}.{cancer_library}/out/"
-        #        "{mapper}.{var_caller}.{cancer_library}"
-        #    ).format(var_caller=self.config["somatic_variant_calling_tool"], **wildcards)
-        #    yield "somatic_vcf", var_calling(somatic_path_base + ".vcf.gz")
-        #    yield "somatic_tbi", var_calling(somatic_path_base + ".vcf.gz.tbi")
-
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_normal_lib_name(self, wildcards):
@@ -210,14 +210,18 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         """Return output files that all somatic variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
 
     @dictify
-    def _get_log_file(self, _action):
+    def _get_log_file(self, action):
         """Return path to log file"""
+        # Validate action
+        self._validate_action(action)
+
         name_pattern = "{{mapper}}.{var_caller}.{{cancer_library}}".format(
             var_caller=self.__class__.name
         )
@@ -234,7 +238,11 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS SV calling with Canvas"""
 
+    #: Step name
     name = "canvas"
+
+    #: Class available actions
+    actions = ("run",)
 
     def check_config(self):
         """Check configuration for Canvas Somatic WGS CNV calling"""
@@ -253,26 +261,39 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "Path to Canvas genome folder not configured",
         )
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for Canvas Somatic WGS CNV calling"""
-        cluster_config["somatic_wgs_cnv_calling_canvas_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "40:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with CNVetti"""
 
+    #: Step name
     name = "cnvetti"
 
+    #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
+
+    #: Extension file dictionary. Key: file type (string); Value: file extension (string)
     bcf_dict = {"bcf": ".bcf", "csi": ".bcf.csi", "bcf_md5": ".bcf.md5", "csi_md5": ".bcf.csi.md5"}
 
     def get_input_files(self, action):
         """Return input function for CNVetti rule"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
@@ -287,6 +308,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards):
         """Return input files that the merge step ("bcftools merge") needs"""
+        # TODO: Potential bug as 'library_name' is required in the wildcards but also obtained using
+        #  `get_normal_lib_name()`.
+        #  Error: "TypeError: str.format() got multiple values for keyword argument 'library_name'"
         libraries = {"tumor": wildcards.library_name, "normal": self.get_normal_lib_name(wildcards)}
         for kind, library_name in libraries.items():
             key = "{}_bcf".format(kind)
@@ -307,8 +331,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             )
 
     def get_output_files(self, action):
-        """Return output files that CNVetti creates for the given action        """
-        assert action in self.actions
+        """Return output files that CNVetti creates for the given action"""
+        # Validate action
+        self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
     @dictify
@@ -353,22 +378,35 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         if "cnvetti" not in (self.config["tools"] or []):  # pylint: disable=C0325
             return  # CNVetti not enabled, skip
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for CNVetti WGS CNV calling"""
-        for action in self.actions:
-            cluster_config["somatic_wgs_cnv_calling_cnvetti_{}".format(action)] = {
-                "mem": int(3.75 * 1024 * 4),
-                "time": "04:00",
-                "ntasks": 4,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="04:00:00",  # 4 hours
+            memory=f"{int(3.75 * 1024 * 4)}M",
+        )
 
 
 class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with cnvkit.py"""
 
+    #: Step name
     name = "cnvkit"
 
+    #: Class available actions
+    actions = ("run",)
+
     def get_output_files(self, action):
+        # Validate action
+        self._validate_action(action)
         return {
             "segment": self.base_path_out.format(var_caller=self.name, ext=".cns"),
             "segment_md5": self.base_path_out.format(var_caller=self.name, ext=".cns.md5"),
@@ -378,32 +416,57 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "scatter_md5": self.base_path_out.format(var_caller=self.name, ext=".scatter.png.md5"),
         }
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for cnvkit WGS CNV calling"""
-        cluster_config["somatic_wgs_cnv_calling_cnvkit_run"] = {
-            "mem": 10 * 1024 * 4,
-            "time": "40:00",
-            "ntasks": 4,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=4,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{10 * 1024 * 4}M",
+        )
 
 
 class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with Control-FreeC"""
 
+    #: Step name
     name = "control_freec"
+
+    #: Class available actions
+    actions = ("run", "transform", "plot")
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "plot": ResourceUsage(
+            threads=1,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{2 * 30 * 1024}M",
+        ),
+        "transform": ResourceUsage(
+            threads=1,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{2 * 8 * 1024}M",
+        ),
+        "run": ResourceUsage(
+            threads=8,
+            time="1-16:00:00",  # 1 day and 16 hours
+            memory=f"{int(2 * 3.75 * 1024 * 8)}M",
+        ),
+    }
 
     def get_output_files(self, action):
         # Initialise variable
-        valid_action_list = ["run", "transform", "plot"]
         result = {}
 
-        # Validate input
-        if action not in valid_action_list:
-            valid_actions_str = ", ".join(valid_action_list)
-            error_message = "Action {action} is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
+        # Validate action
+        self._validate_action(action)
 
         if action == "run":
             result["ratio"] = self.base_path_out.format(var_caller=self.name, ext=".ratio.txt")
@@ -450,32 +513,28 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "Path to ControlFreec mappability file not configured",
         )
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration for ControlFreec Somatic WGS CNV calling"""
-        actions = ("run", "transform_output", "plot")
-        for action in actions:
-            key = "somatic_wgs_cnv_calling_control_freec_{}".format(action)
-            if action == "plot":
-                memory = 30  # copied from cnvkit details in somatic_targeted_seq_cnv_calling
-                ntasks = 1
-            elif action == "transform_output":
-                memory = 8  # not sure how much we need, but definitely >4G
-                ntasks = 1
-            else:  # action == "run"
-                memory = 3.75
-                ntasks = 4 * 2
-            cluster_config[key] = {
-                "mem": int(2 * memory * 1024 * ntasks),
-                "time": "40:00",
-                "ntasks": ntasks,
-            }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
 
 class SomaticWgsCnvCallingWorkflow(BaseStep):
     """Perform somatic WGS CNV calling"""
 
+    #: Workflow name
     name = "somatic_wgs_cnv_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -485,13 +544,10 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -619,7 +675,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_ngs_mapping"),
-            ("Path to NGS mapping not configured but required for somatic variant calling"),
+            "Path to NGS mapping not configured but required for somatic variant calling",
         )
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
@@ -630,5 +686,5 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         )
         self.ensure_w_config(
             ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
-            ("Somatic (small) variant calling tool not configured for somatic WGS CNV calling"),
+            "Somatic (small) variant calling tool not configured for somatic WGS CNV calling",
         )

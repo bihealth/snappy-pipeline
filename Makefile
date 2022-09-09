@@ -9,6 +9,7 @@ help:
 	@echo srcfmt    -- apply black and snakefmt formatters
 	@echo lint      -- run linters
 	@echo test      -- run tests through pytest
+	@echo isort     -- run isort
 
 .PHONY: black
 black:
@@ -22,10 +23,15 @@ snakefmt:
 srcfmt: black snakefmt
 
 .PHONY: lint
-lint: prospector
+lint: flake8
 
-.PHONY: prospector
-prospector:
+.PHONY: isort
+isort:
+	isort --force-sort-within-sections --profile=black .
+
+.PHONY: flake8
+flake8:
+	flake8
 
 test:
 	py.test

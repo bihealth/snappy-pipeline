@@ -4,7 +4,7 @@
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Get shortcuts to static data and step configuration
 static_config = snakemake.config["static_data_config"]
@@ -87,13 +87,14 @@ MALLOC_ARENA_MAX=4 \
 varfish-annotator \
     annotate-svs \
     -XX:MaxHeapSize=10g \
-    -XX:+UseConcMarkSweepGC \
+    -XX:+UseG1GC \
     \
     --release GRCh37 \
     \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \
     --ensembl-ser-path {export_config[path_ensembl_ser]} \
+    --input-ped {snakemake.input.ped} \
     \
     --input-vcf $TMPDIR/tmp.vcf.gz \
     --output-db-info ${{out_db_info%.gz}} \

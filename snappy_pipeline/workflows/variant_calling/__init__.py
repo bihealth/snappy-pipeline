@@ -124,7 +124,7 @@ Parallel Execution
 ==================
 
 For many of the variant callers, cluster-parallel execution has been implemented (indicated by
-having a ``drmaa_snippet`` configuration setting).  Here, a temporary directory with a Snakemake
+having a ``use_profile`` configuration setting).  Here, a temporary directory with a Snakemake
 workflow is written out and then executed.  The default behaviour that the temporary files are
 removed in the case of an error.  This behaviour can be changed by setting the ``keep_tmpdir``
 setting to ``"onerror"`` or ``"always"``.  Further, for debugging, the number of windows to
@@ -144,17 +144,19 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -181,7 +183,6 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_calling
 step_config:
   variant_calling:
-    drmaa_snippet: ''  # default, you can override by step below
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     tools: ['gatk_ug']
     jannovar_statistics:
@@ -209,6 +210,10 @@ step_config:
       use_standard_filters: true
       window_length: 10000000
       num_threads: 16
+      min_alternate_fraction: 0.05  # FreeBayes default
+      min_mapping_quality: 1        # FreeBayes default
+      min_repeat_entropy: 1         # FreeBayes default
+      haplotype_length: 3           # FreeBayes default
       ignore_chroms:            # patterns of chromosome names to ignore
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
@@ -217,11 +222,10 @@ step_config:
       - 'HLA-*'    # HLA genes
     gatk_hc:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -260,13 +264,12 @@ step_config:
       # Enable pedigree-wise calling
       pedigree_wise: true
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
       num_jobs_combine_gvcf_cort: 0
       num_jobs_genotype_cohort: 0
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 10         # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -295,11 +298,10 @@ step_config:
       - DepthPerSampleHC
     gatk_ug:
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use DRMAA for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -344,11 +346,10 @@ step_config:
       # Divisor for window length in case of cohort-wide
       cohort_window_divisor: 50
       # Parallelization configuration
-      drmaa_snippet: ''         # value to pass in as additional DRMAA arguments
       num_threads: 2            # number of cores to use locally
       window_length: 5000000    # split input into windows of this size, each triggers a job
       num_jobs: 500             # number of windows to process in parallel
-      use_drmaa: true           # use drmaa for parallel processing
+      use_profile: true         # use Snakemake profile for parallel processing
       restart_times: 0          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 10   # throttling of job creation
       max_status_checks_per_second: 10  # throttling of status jobs
@@ -386,6 +387,9 @@ class VariantCallingStepPart(BaseStepPart):
     for naming the output file.
     """
 
+    #: Class available actions
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
@@ -399,6 +403,9 @@ class VariantCallingStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @listify
         def input_function(wildcards):
             """Helper wrapper function"""
@@ -427,14 +434,14 @@ class VariantCallingStepPart(BaseStepPart):
                             )
                         )
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     def get_output_files(self, action):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
         )
@@ -442,6 +449,7 @@ class VariantCallingStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
+        _ = action
         prefix = (
             "work/{{mapper}}.{caller}.{{index_library_name}}/log/"
             "{{mapper}}.{caller}.{{index_library_name}}"
@@ -458,27 +466,80 @@ class VariantCallingStepPart(BaseStepPart):
 class BcftoolsStepPart(VariantCallingStepPart):
     """Germline variant calling with bcftools"""
 
+    #: Step name
     name = "bcftools"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_bcftools_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "48:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class FreebayesStepPart(VariantCallingStepPart):
     """Germline variant calling with freebayes"""
 
+    #: Step name
     name = "freebayes"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_freebayes_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "48:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
+
+    def get_params(self, action):
+        """
+        :param action: Action (i.e., step) in the workflow. Currently only available for 'run'.
+        :type action: str
+
+        :return: Returns get parameters function.
+
+        :raises UnsupportedActionException: if action not 'run'.
+        """
+        # Validate inputted action
+        if action != "run":
+            error_message = "Action '{action}' is not supported. Valid option: 'run'.".format(
+                action=action
+            )
+            raise UnsupportedActionException(error_message)
+
+        # Return requested function
+        return getattr(self, "_get_params_{}".format(action))
+
+    def _get_params_run(self):
+        """Get FreeBayes parameters
+
+        :returns: Returns FreeBayes parameters dictionary.
+        """
+        parameters_key_list = [
+            "window_length",
+            "min_alternate_fraction",
+            "min_mapping_quality",
+            "min_repeat_entropy",
+            "haplotype_length",
+        ]
+        return {key: self.config["freebayes"][key] for key in parameters_key_list}
 
 
 class GatkCallerStepPartBase(VariantCallingStepPart):
@@ -492,37 +553,58 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
             "dbSNP not configured but required for {}".format(self.__class__.name),
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_{}_run".format(self.__class__.name)] = {
-            "mem": 14 * 1024,
-            "time": "80:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{14 * 1024}M",
+        )
 
 
 class GatkHaplotypeCallerStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK HaplotypeCaller"""
 
+    #: Step name
     name = "gatk_hc"
 
 
 class GatkUnifiedGenotyperStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK UnifiedGenotyper"""
 
+    #: Step name
     name = "gatk_ug"
 
 
 class PlatypusStepPart(VariantCallingStepPart):
     """Germline variant calling with Platypus"""
 
+    #: Step name
     name = "platypus"
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_platypus_run"] = {
-            "mem": int(3.75 * 1024 * 16),
-            "time": "20:00",
-            "ntasks": 16,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="20:00:00",  # 20 hours
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
 
 
 class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
@@ -532,6 +614,7 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
     for naming the output file.
     """
 
+    #: Step name
     name = "gatk_hc_gvcf"
 
     #: Actions in GATK HC GVCF workflow
@@ -540,9 +623,23 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
     #: Directory infixes
     dir_infixes = {
         "discover": "{mapper}.gatk_hc_gvcf.discover.{library_name}",
-        "genotype_pedigree": "{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
+        "genotype_pedigree": r"{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
         "combine_gvcf": "{mapper}.gatk_hc_gvcf.combine_gvcf",
         "genotype_cohort": "{mapper}.gatk_hc_gvcf.whole_cohort",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "combine_gvcf": ResourceUsage(
+            threads=1,
+            time="10-00:00:00",  # 10 days
+            memory=f"{10 * 1024}M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="3-08:00:00",  # 3 days and 8 hours
+            memory=f"{10 * 1024}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -559,7 +656,8 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "discover": self._get_input_files_discover,
             "genotype_pedigree": self._get_input_files_genotype_pedigree,
@@ -625,7 +723,8 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         if action != "combine_gvcf":
             for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
                 if action == "discover":
@@ -648,24 +747,25 @@ class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
             yield from result.items()
 
     def get_log_file(self, action):
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            if action == "combine_gvcf":
-                cluster_config["variant_calling_gatk_hc_gvcf_{action}".format(action=action)] = {
-                    "mem": 10 * 1024,
-                    "time": "240:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["variant_calling_gatk_hc_gvcf_{action}".format(action=action)] = {
-                    "mem": 10 * 1024,
-                    "time": "80:00",
-                    "ntasks": 1,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        if action == "combine_gvcf":
+            return self.resource_usage_dict.get("combine_gvcf")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class VarscanStepPart(BaseStepPart):
@@ -674,6 +774,7 @@ class VarscanStepPart(BaseStepPart):
     Variants are called in a whole-pedigree or whole-cohort fashion.
     """
 
+    #: Step name
     name = "varscan"
 
     #: Actions in GATK HC GVCF workflow
@@ -681,8 +782,22 @@ class VarscanStepPart(BaseStepPart):
 
     #: Directory infixes
     dir_infixes = {
-        "call_pedigree": "{mapper}.varscan.{index_library_name,[^\.]+}",
+        "call_pedigree": r"{mapper}.varscan.{index_library_name,[^\.]+}",
         "call_cohort": "{mapper}.varscan.whole_cohort",
+    }
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "call_pedigree": ResourceUsage(
+            threads=1,
+            time="7-00:00:00",  # 7 days
+            memory=f"{4 * 1024}M",
+        ),
+        "call_cohort": ResourceUsage(
+            threads=1,
+            time="7-00:00:00",  # 7 days
+            memory=f"{16 * 1024}M",
+        ),
     }
 
     def __init__(self, parent):
@@ -699,7 +814,8 @@ class VarscanStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         mapping = {
             "call_pedigree": self._get_input_files_call_pedigree,
             "call_cohort": self._get_input_files_call_cohort,
@@ -731,7 +847,8 @@ class VarscanStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must
         return (VCF + TBI file)
         """
-        assert action in self.actions
+        # Validate action
+        self._validate_action(action)
         for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
             infix = self.dir_infixes[action].replace(r",[^\.]+", "")
             yield name, "work/" + infix + "/out/" + infix + ext
@@ -750,20 +867,17 @@ class VarscanStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def update_cluster_config(self, cluster_config):
-        for action in self.actions:
-            if action == "call_pedigree":
-                cluster_config["variant_calling_varscan_call_pedigree".format(action=action)] = {
-                    "mem": 4 * 1024,
-                    "time": "168:00",
-                    "ntasks": 1,
-                }
-            else:
-                cluster_config["variant_calling_varscan_call_cohort".format(action=action)] = {
-                    "mem": 16 * 1024,
-                    "time": "168:00",
-                    "ntasks": 1,
-                }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
 
 class BcftoolsStatsStepPart(BaseStepPart):
@@ -774,7 +888,11 @@ class BcftoolsStatsStepPart(BaseStepPart):
 
     # TODO: maybe we need to use "--stats" anyway and can handle pedigree VCF files then...
 
+    #: Step name
     name = "bcftools_stats"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -790,7 +908,8 @@ class BcftoolsStatsStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to input files"""
-        assert action == "run", "Unsupported actions"
+        # Validate action
+        self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
             "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
@@ -802,24 +921,35 @@ class BcftoolsStatsStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        assert action == "run"
-        EXT_NAMES = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        for key, ext in EXT_NAMES.items():
+        # Validate action
+        self._validate_action(action)
+        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
+        for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/"
             "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_bcftools_stats_report"] = {
-            "mem": 1024,
-            "time": "02:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="02:00:00",  # 2 hours
+            memory="1024M",
+        )
 
 
 class JannovarStatisticsStepPart(BaseStepPart):
@@ -828,7 +958,11 @@ class JannovarStatisticsStepPart(BaseStepPart):
     Statistics are computed overall and per-sample
     """
 
+    #: Step name
     name = "jannovar_statistics"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -844,7 +978,8 @@ class JannovarStatisticsStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return path to input files"""
-        assert action == "run", "Unsupported actions"
+        # Validate action
+        self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
             "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
@@ -856,24 +991,35 @@ class JannovarStatisticsStepPart(BaseStepPart):
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        assert action == "run"
-        EXT_NAMES = {"report": ".txt", "report_md5": ".txt.md5"}
-        for key, ext in EXT_NAMES.items():
+        # Validate action
+        self._validate_action(action)
+        ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
+        for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/jannovar_statistics/"
             "{mapper}.{var_caller}.{index_ngs_library}.log"
         )
 
-    def update_cluster_config(self, cluster_config):
-        cluster_config["variant_calling_jannovar_statistics_report"] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "04:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="04:00:00",  # 4 hours
+            memory=f"{int(3.75 * 1024 * 2)}M",
+        )
 
 
 class VariantCallingWorkflow(BaseStep):
@@ -887,13 +1033,10 @@ class VariantCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

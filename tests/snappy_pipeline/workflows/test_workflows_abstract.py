@@ -6,7 +6,7 @@ import textwrap
 
 from biomedsheets.shortcuts import GenericSampleSheet
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
@@ -20,7 +20,7 @@ from snappy_pipeline.workflows.abstract import (
 
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Tests for DataSetInfo ---------------------------------------------------------------------------
 
@@ -117,6 +117,8 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
     expected = [
         ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz"),
         ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz"),
+        ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz.md5"),
+        ("/path/P001/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz.md5"),
     ]
     assert list(generator.run("P001")) == expected
 
@@ -127,7 +129,8 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
 @pytest.fixture
 def dummy_config():
     """Return dummy configuration OrderedDicts"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         step_config: {}
@@ -150,7 +153,6 @@ def dummy_config():
 def dummy_generic_step(
     dummy_workflow,
     dummy_config,
-    dummy_cluster_config,
     config_lookup_paths,
     config_paths,
     work_dir,
@@ -186,7 +188,6 @@ def dummy_generic_step(
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -216,6 +217,8 @@ def test_link_in_step_part_get_shell_cmd(
         r"""
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         """
     ).strip()
     assert actual == expected

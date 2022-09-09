@@ -3,7 +3,7 @@
 
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Get preset and individual settings from configuration.
 cnvetti_config = snakemake.config["step_config"]["wgs_cnv_calling"]["cnvetti"]

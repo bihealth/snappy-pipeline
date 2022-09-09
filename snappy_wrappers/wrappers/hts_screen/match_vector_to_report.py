@@ -5,7 +5,7 @@
 import argparse
 import sys
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 KEYS = ["unmapped", "one_one", "one_multi", "multi_one", "multi_multi"]
 

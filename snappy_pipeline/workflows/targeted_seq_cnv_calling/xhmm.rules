@@ -5,7 +5,12 @@ rule targeted_seq_cnv_calling_xhmm_coverage:
     input:
         unpack(wf.get_input_files("xhmm", "coverage")),
     output:
-        **wf. get_output_files('xhmm','coverage'),
+        **wf.get_output_files("xhmm", "coverage"),
+    threads: wf.get_resource("xhmm", "coverage", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "coverage", "time"),
+        memory=wf.get_resource("xhmm", "coverage", "memory"),
+        partition=wf.get_resource("xhmm", "coverage", "partition"),
     params:
         args=wf.get_params("xhmm", "coverage"),
     log:
@@ -19,6 +24,11 @@ rule targeted_seq_cnv_calling_xhmm_merge_cov:
         wf.get_input_files("xhmm", "merge_cov"),
     output:
         wf.get_output_files("xhmm", "merge_cov"),
+    threads: wf.get_resource("xhmm", "merge_cov", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "merge_cov", "time"),
+        memory=wf.get_resource("xhmm", "merge_cov", "memory"),
+        partition=wf.get_resource("xhmm", "merge_cov", "partition"),
     log:
         wf.get_log_file("xhmm", "merge_cov"),
     wrapper:
@@ -27,7 +37,12 @@ rule targeted_seq_cnv_calling_xhmm_merge_cov:
 
 rule targeted_seq_cnv_calling_xhmm_ref_stats:
     output:
-        **wf. get_output_files('xhmm','ref_stats'),
+        **wf.get_output_files("xhmm", "ref_stats"),
+    threads: wf.get_resource("xhmm", "ref_stats", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "ref_stats", "time"),
+        memory=wf.get_resource("xhmm", "ref_stats", "memory"),
+        partition=wf.get_resource("xhmm", "ref_stats", "partition"),
     log:
         wf.get_log_file("xhmm", "ref_stats"),
     wrapper:
@@ -38,7 +53,12 @@ rule targeted_seq_cnv_calling_xhmm_filter_center:
     input:
         unpack(wf.get_input_files("xhmm", "filter_center")),
     output:
-        **wf. get_output_files('xhmm','filter_center'),
+        **wf.get_output_files("xhmm", "filter_center"),
+    threads: wf.get_resource("xhmm", "filter_center", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "filter_center", "time"),
+        memory=wf.get_resource("xhmm", "filter_center", "memory"),
+        partition=wf.get_resource("xhmm", "filter_center", "partition"),
     log:
         wf.get_log_file("xhmm", "filter_center"),
     wrapper:
@@ -49,7 +69,12 @@ rule targeted_seq_cnv_calling_xhmm_pca:
     input:
         wf.get_input_files("xhmm", "pca"),
     output:
-        **( wf. get_output_files('xhmm','pca')),
+        **(wf.get_output_files("xhmm", "pca")),
+    threads: wf.get_resource("xhmm", "pca", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "pca", "time"),
+        memory=wf.get_resource("xhmm", "pca", "memory"),
+        partition=wf.get_resource("xhmm", "pca", "partition"),
     log:
         wf.get_log_file("xhmm", "pca"),
     wrapper:
@@ -60,7 +85,12 @@ rule targeted_seq_cnv_calling_xhmm_normalize:
     input:
         unpack(wf.get_input_files("xhmm", "normalize")),
     output:
-        **( wf. get_output_files('xhmm','normalize')),
+        **(wf.get_output_files("xhmm", "normalize")),
+    threads: wf.get_resource("xhmm", "normalize", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "normalize", "time"),
+        memory=wf.get_resource("xhmm", "normalize", "memory"),
+        partition=wf.get_resource("xhmm", "normalize", "partition"),
     log:
         wf.get_log_file("xhmm", "normalize"),
     wrapper:
@@ -71,7 +101,12 @@ rule targeted_seq_cnv_calling_xhmm_zscore_center:
     input:
         wf.get_input_files("xhmm", "zscore_center"),
     output:
-        **( wf. get_output_files('xhmm','zscore_center')),
+        **(wf.get_output_files("xhmm", "zscore_center")),
+    threads: wf.get_resource("xhmm", "zscore_center", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "zscore_center", "time"),
+        memory=wf.get_resource("xhmm", "zscore_center", "memory"),
+        partition=wf.get_resource("xhmm", "zscore_center", "partition"),
     log:
         wf.get_log_file("xhmm", "zscore_center"),
     wrapper:
@@ -83,6 +118,11 @@ rule targeted_seq_cnv_calling_xhmm_refilter:
         unpack(wf.get_input_files("xhmm", "refilter")),
     output:
         wf.get_output_files("xhmm", "refilter"),
+    threads: wf.get_resource("xhmm", "refilter", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "refilter", "time"),
+        memory=wf.get_resource("xhmm", "refilter", "memory"),
+        partition=wf.get_resource("xhmm", "refilter", "partition"),
     log:
         wf.get_log_file("xhmm", "refilter"),
     wrapper:
@@ -93,7 +133,12 @@ rule targeted_seq_cnv_calling_xhmm_discover:
     input:
         unpack(wf.get_input_files("xhmm", "discover")),
     output:
-        **( wf. get_output_files('xhmm','discover')),
+        **(wf.get_output_files("xhmm", "discover")),
+    threads: wf.get_resource("xhmm", "discover", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "discover", "time"),
+        memory=wf.get_resource("xhmm", "discover", "memory"),
+        partition=wf.get_resource("xhmm", "discover", "partition"),
     log:
         wf.get_log_file("xhmm", "discover"),
     wrapper:
@@ -104,7 +149,12 @@ rule targeted_seq_cnv_calling_xhmm_genotype:
     input:
         unpack(wf.get_input_files("xhmm", "genotype")),
     output:
-        **( wf. get_output_files('xhmm','genotype')),
+        **(wf.get_output_files("xhmm", "genotype")),
+    threads: wf.get_resource("xhmm", "genotype", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "genotype", "time"),
+        memory=wf.get_resource("xhmm", "genotype", "memory"),
+        partition=wf.get_resource("xhmm", "genotype", "partition"),
     log:
         wf.get_log_file("xhmm", "genotype"),
     wrapper:
@@ -115,7 +165,12 @@ rule targeted_seq_cnv_calling_xhmm_extract_ped:
     input:
         unpack(wf.get_input_files("xhmm", "extract_ped")),
     output:
-        **( wf. get_output_files('xhmm','extract_ped')),
+        **(wf.get_output_files("xhmm", "extract_ped")),
+    threads: wf.get_resource("xhmm", "extract_ped", "threads")
+    resources:
+        time=wf.get_resource("xhmm", "extract_ped", "time"),
+        memory=wf.get_resource("xhmm", "extract_ped", "memory"),
+        partition=wf.get_resource("xhmm", "extract_ped", "partition"),
     log:
         wf.get_log_file("xhmm", "extract_ped"),
     params:

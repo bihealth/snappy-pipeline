@@ -22,9 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticTargetedSeqCnvCallingWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticTargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -69,8 +67,13 @@ rule somatic_targeted_seq_cnv_calling_copywriter_prepare:
     output:
         gc="work/copywriter.prepare/GC_mappability.rda",
         blacklist="work/copywriter.prepare/blacklist.rda",
+    threads: wf.get_resource("copywriter", "prepare", "threads")
+    resources:
+        time=wf.get_resource("copywriter", "prepare", "time"),
+        memory=wf.get_resource("copywriter", "prepare", "memory"),
+        partition=wf.get_resource("copywriter", "prepare", "partition"),
     log:
-        wf.get_log_file("copywriter", "prepare"),
+        **wf.get_log_file("copywriter", "prepare"),
     wrapper:
         wf.wrapper_path("copywriter/prepare")
 
@@ -81,9 +84,14 @@ rule somatic_targeted_seq_cnv_calling_copywriter_run:
         gc="work/copywriter.prepare/GC_mappability.rda",
         blacklist="work/copywriter.prepare/blacklist.rda",
     output:
-        **wf. get_output_files('copywriter','run'),
+        **wf.get_output_files("copywriter", "run"),
+    threads: wf.get_resource("copywriter", "run", "threads")
+    resources:
+        time=wf.get_resource("copywriter", "run", "time"),
+        memory=wf.get_resource("copywriter", "run", "memory"),
+        partition=wf.get_resource("copywriter", "run", "partition"),
     log:
-        **wf. get_log_file('copywriter','run'),
+        **wf.get_log_file("copywriter", "run"),
     wrapper:
         wf.wrapper_path("copywriter/run")
 
@@ -92,9 +100,14 @@ rule somatic_targeted_seq_cnv_calling_copywriter_call:
     input:
         unpack(wf.get_input_files("copywriter", "call")),
     output:
-        **wf. get_output_files('copywriter','call'),
+        **wf.get_output_files("copywriter", "call"),
+    threads: wf.get_resource("copywriter", "call", "threads")
+    resources:
+        time=wf.get_resource("copywriter", "call", "time"),
+        memory=wf.get_resource("copywriter", "call", "memory"),
+        partition=wf.get_resource("copywriter", "call", "partition"),
     log:
-        **wf. get_log_file('copywriter','call'),
+        **wf.get_log_file("copywriter", "call"),
     wrapper:
         wf.wrapper_path("copywriter/call")
 
@@ -106,11 +119,16 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_coverage:
     input:
         unpack(wf.get_input_files("cnvetti_on_target", "coverage")),
     output:
-        **wf. get_output_files('cnvetti_on_target','coverage'),
+        **wf.get_output_files("cnvetti_on_target", "coverage"),
+    threads: wf.get_resource("cnvetti_on_target", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_on_target", "coverage", "time"),
+        memory=wf.get_resource("cnvetti_on_target", "coverage", "memory"),
+        partition=wf.get_resource("cnvetti_on_target", "coverage", "partition"),
     params:
         method_name="cnvetti_on_target",
     log:
-        **wf. get_log_file('cnvetti_on_target','coverage'),
+        **wf.get_log_file("cnvetti_on_target", "coverage"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/coverage")
 
@@ -119,11 +137,16 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_segment:
     input:
         unpack(wf.get_input_files("cnvetti_on_target", "segment")),
     output:
-        **wf. get_output_files('cnvetti_on_target','segment'),
+        **wf.get_output_files("cnvetti_on_target", "segment"),
+    threads: wf.get_resource("cnvetti_on_target", "segment", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_on_target", "segment", "time"),
+        memory=wf.get_resource("cnvetti_on_target", "segment", "memory"),
+        partition=wf.get_resource("cnvetti_on_target", "segment", "partition"),
     params:
         method_name="cnvetti_on_target",
     log:
-        **wf. get_log_file('cnvetti_on_target','segment'),
+        **wf.get_log_file("cnvetti_on_target", "segment"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/segment")
 
@@ -132,11 +155,16 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_postprocess:
     input:
         unpack(wf.get_input_files("cnvetti_on_target", "postprocess")),
     output:
-        **wf. get_output_files('cnvetti_on_target','postprocess'),
+        **wf.get_output_files("cnvetti_on_target", "postprocess"),
+    threads: wf.get_resource("cnvetti_on_target", "postprocess", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_on_target", "postprocess", "time"),
+        memory=wf.get_resource("cnvetti_on_target", "postprocess", "memory"),
+        partition=wf.get_resource("cnvetti_on_target", "postprocess", "partition"),
     params:
         method_name="cnvetti_on_target",
     log:
-        **wf. get_log_file('cnvetti_on_target','postprocess'),
+        **wf.get_log_file("cnvetti_on_target", "postprocess"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/postprocess")
 
@@ -148,11 +176,16 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_coverage:
     input:
         unpack(wf.get_input_files("cnvetti_off_target", "coverage")),
     output:
-        **wf. get_output_files('cnvetti_off_target','coverage'),
+        **wf.get_output_files("cnvetti_off_target", "coverage"),
+    threads: wf.get_resource("cnvetti_off_target", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_off_target", "coverage", "time"),
+        memory=wf.get_resource("cnvetti_off_target", "coverage", "memory"),
+        partition=wf.get_resource("cnvetti_off_target", "coverage", "partition"),
     params:
         method_name="cnvetti_off_target",
     log:
-        **wf. get_log_file('cnvetti_off_target','coverage'),
+        **wf.get_log_file("cnvetti_off_target", "coverage"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/coverage")
 
@@ -161,11 +194,16 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_segment:
     input:
         unpack(wf.get_input_files("cnvetti_off_target", "segment")),
     output:
-        **wf. get_output_files('cnvetti_off_target','segment'),
+        **wf.get_output_files("cnvetti_off_target", "segment"),
+    threads: wf.get_resource("cnvetti_off_target", "segment", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_off_target", "segment", "time"),
+        memory=wf.get_resource("cnvetti_off_target", "segment", "memory"),
+        partition=wf.get_resource("cnvetti_off_target", "segment", "partition"),
     params:
         method_name="cnvetti_off_target",
     log:
-        **wf. get_log_file('cnvetti_off_target','segment'),
+        **wf.get_log_file("cnvetti_off_target", "segment"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/segment")
 
@@ -174,10 +212,15 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_postprocess:
     input:
         unpack(wf.get_input_files("cnvetti_off_target", "postprocess")),
     output:
-        **wf. get_output_files('cnvetti_off_target','postprocess'),
+        **wf.get_output_files("cnvetti_off_target", "postprocess"),
+    threads: wf.get_resource("cnvetti_off_target", "postprocess", "threads")
+    resources:
+        time=wf.get_resource("cnvetti_off_target", "postprocess", "time"),
+        memory=wf.get_resource("cnvetti_off_target", "postprocess", "memory"),
+        partition=wf.get_resource("cnvetti_off_target", "postprocess", "partition"),
     params:
         method_name="cnvetti_off_target",
     log:
-        **wf. get_log_file('cnvetti_off_target','postprocess'),
+        **wf.get_log_file("cnvetti_off_target", "postprocess"),
     wrapper:
         wf.wrapper_path("cnvetti/on_target/postprocess")

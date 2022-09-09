@@ -40,7 +40,11 @@ step_config:
 class FastQcReportStepPart(BaseStepPart):
     """(Raw) data QC using FastQC"""
 
+    #: Step name
     name = "fastqc"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -51,6 +55,9 @@ class FastQcReportStepPart(BaseStepPart):
         )
 
     def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def args_function(wildcards):
             return {
                 "num_threads": 1,
@@ -62,24 +69,28 @@ class FastQcReportStepPart(BaseStepPart):
                 ),
             }
 
-        assert action == "run", "Unsupported actions"
         return args_function
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             return "work/input_links/{library_name}/.done".format(**wildcards)
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the (raw) data QC steps"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "fastqc_done", touch("work/{library_name}/report/fastqc/.done")
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
+        _ = action
         return "work/{library_name}/log/snakemake.fastqc.log"
 
     def _collect_reads(self, wildcards, library_name, prefix):
@@ -87,17 +98,11 @@ class FastQcReportStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-
-    def update_cluster_config(self, cluster_config):
-        cluster_config["data_qc_fastqc_run"] = {
-            "mem": int(3.75 * 1024 * 2),
-            "time": "12:00",
-            "ntasks": 2,
-        }
 
 
 class NgsDataQcWorkflow(BaseStep):
@@ -113,12 +118,8 @@ class NgsDataQcWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
-        super().__init__(
-            workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-        )
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
         self.register_sub_step_classes((LinkInStep, LinkOutStepPart, FastQcReportStepPart))
 
     @listify

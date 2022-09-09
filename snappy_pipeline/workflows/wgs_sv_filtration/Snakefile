@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsSvFiltrationWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = WgsSvFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -72,7 +70,12 @@ rule wgs_sv_filtration_filter_quality_run:
     input:
         unpack(wf.get_input_files("filter_quality", "run")),
     output:
-        **wf. get_output_files('filter_quality','run'),
+        **wf.get_output_files("filter_quality", "run"),
+    threads: wf.get_resource("filter_quality", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_quality", "run", "time"),
+        memory=wf.get_resource("filter_quality", "run", "memory"),
+        partition=wf.get_resource("filter_quality", "run", "partition"),
     log:
         wf.get_log_file("filter_quality", "run"),
     wrapper:
@@ -86,7 +89,12 @@ rule wgs_sv_filtration_filter_inheritance_run:
     input:
         unpack(wf.get_input_files("filter_inheritance", "run")),
     output:
-        **wf. get_output_files('filter_inheritance','run'),
+        **wf.get_output_files("filter_inheritance", "run"),
+    threads: wf.get_resource("filter_inheritance", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_inheritance", "run", "time"),
+        memory=wf.get_resource("filter_inheritance", "run", "memory"),
+        partition=wf.get_resource("filter_inheritance", "run", "partition"),
     log:
         wf.get_log_file("filter_inheritance", "run"),
     wrapper:
@@ -100,7 +108,12 @@ rule wgs_sv_filtration_filter_regions_run:
     input:
         unpack(wf.get_input_files("filter_regions", "run")),
     output:
-        **wf. get_output_files('filter_regions','run'),
+        **wf.get_output_files("filter_regions", "run"),
+    threads: wf.get_resource("filter_regions", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_regions", "run", "time"),
+        memory=wf.get_resource("filter_regions", "run", "memory"),
+        partition=wf.get_resource("filter_regions", "run", "partition"),
     log:
         wf.get_log_file("filter_regions", "run"),
     wrapper:

@@ -8,7 +8,7 @@ import argparse
 import os
 import sys
 
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 
 from .. import __version__
 from .impl.fsmanip import assume_path_existing, create_directory, create_from_tpl
@@ -70,7 +70,8 @@ class RefreshStepApp:
         """Load configuration."""
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         with open(config_filename, "rt") as f:
-            return yaml.round_trip_load(f.read())
+            yaml = ruamel_yaml.YAML()
+            return yaml.load(f.read())
 
     def _resetup_step_dir(self, dest_dir, config_yaml):
         """Re-setup the step sub directory."""

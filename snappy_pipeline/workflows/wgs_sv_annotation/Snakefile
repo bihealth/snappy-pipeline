@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsSvAnnotationWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = WgsSvAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -74,7 +72,12 @@ rule wgs_sv_annotation_vcf_sv_filter:
     input:
         unpack(wf.get_input_files("vcf_sv_filter", "run")),
     output:
-        **wf. get_output_files('vcf_sv_filter','run'),
+        **wf.get_output_files("vcf_sv_filter", "run"),
+    threads: wf.get_resource("vcf_sv_filter", "run", "threads")
+    resources:
+        time=wf.get_resource("vcf_sv_filter", "run", "time"),
+        memory=wf.get_resource("vcf_sv_filter", "run", "memory"),
+        partition=wf.get_resource("vcf_sv_filter", "run", "partition"),
     log:
         wf.get_log_file("vcf_sv_filter", "run"),
     wrapper:

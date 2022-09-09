@@ -18,7 +18,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
@@ -36,6 +36,9 @@ step_config:
 
 class SignaturesStepPart(BaseStepPart):
     """Base class for signature classes"""
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -55,40 +58,62 @@ class SignaturesStepPart(BaseStepPart):
             for donor in sheet.donors:
                 self.donors[donor.name] = donor
 
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="01:00:00",  # 1 hour
+            memory=f"{7 * 1024 * 2}M",
+        )
+
 
 class TabulateVariantsStepPart(SignaturesStepPart):
     """Tabulate mutation from VCF"""
 
+    #: Step name
     name = "tabulate_vcf"
 
     @dictify
     def get_input_files(self, action):
         """Return path to input file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         tpl = (
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
     @dictify
     def get_output_files(self, action):
         """Return output files to tabulate vcf"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "tsv", (
             "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.tabulate_vcf.{tumor_library}.tsv"
         )
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.log_path
 
     def get_params(self, action):
         """Return arguments to pass down."""
+        # Validate action
+        self._validate_action(action)
 
         def params_function(wildcards):
             if wildcards.tumor_library not in self.donors:
@@ -106,19 +131,11 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.name
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["somatic_variant_signatures_tabulate_vcf"] = {
-            "mem": 7 * 1024 * 2,
-            "time": "01:00",
-            "ntasks": 2,
-        }
-
 
 class DeconstructSigsStepPart(SignaturesStepPart):
     """Use deconstructSigs R package to identify signatures from tables"""
 
+    #: Step name
     name = "deconstruct_sigs"
 
     def __init__(self, parent):
@@ -131,7 +148,8 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     @dictify
     def get_input_files(self, action):
         """Return input files to deconstruct signatures"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "tsv", (
             "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.tabulate_vcf.{tumor_library}.tsv"
@@ -140,7 +158,8 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files to deconstruct signatures"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "tsv", (
             "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/out/"
             "{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}.tsv"
@@ -151,27 +170,23 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         )
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return (
             "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/"
             "log/snakemake.deconstruct_sigs.log"
         )
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["somatic_variant_signatures_deconstruct_sigs"] = {
-            "mem": 7 * 1024 * 2,
-            "time": "01:00",
-            "ntasks": 2,
-        }
-
 
 class SomaticVariantSignaturesWorkflow(BaseStep):
     """Perform somatic variant signatures"""
 
+    #: Workflow name
     name = "somatic_variant_signatures"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -181,13 +196,10 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -248,5 +260,5 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "somatic_variant_signatures", "path_somatic_variant_calling"),
-            ("Path to variant calling not configured but required for somatic variant signatures"),
+            "Path to variant calling not configured but required for somatic variant signatures",
         )

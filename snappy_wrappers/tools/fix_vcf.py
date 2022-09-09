@@ -13,7 +13,7 @@ from functools import reduce
 import gzip
 import sys
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: No line has been read yet
 STATE_INITIAL = 0

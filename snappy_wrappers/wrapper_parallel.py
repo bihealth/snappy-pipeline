@@ -12,6 +12,7 @@ import functools
 import itertools
 import json
 import logging
+import math
 import os
 import shlex
 import shutil
@@ -19,11 +20,11 @@ import sys
 import tempfile
 import textwrap
 
-from snakemake import snakemake
+from snakemake import get_profile_file, snakemake
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @contextlib.contextmanager
@@ -50,10 +51,9 @@ def augment_parser(parser):
         help="Number of threads to use for local processing/jobs to spawn concurrently",
     )
     group.add_argument(
-        "--use-drmaa",
-        action="store_true",
-        default=False,
-        help="Enables running the parallelization on cluster via DRMAA",
+        "--use-profile",
+        default=None,
+        help="Enables running the parallelization on cluster with the given snakemake profile",
     )
     group.add_argument(
         "--restart-times", type=int, default=5, help="Number of times to restart jobs automatically"
@@ -62,13 +62,13 @@ def augment_parser(parser):
         "--max-jobs-per-second",
         type=int,
         default=10,
-        help="Maximal number of jobs to launch per second in DRMAA mode",
+        help="Maximal number of jobs to launch per second in cluster mode",
     )
     group.add_argument(
         "--max-status-checks-per-second",
         type=int,
         default=10,
-        help="Maximal number of DRMAA status checks for perform for second",
+        help="Maximal number of cluster status checks for perform for second",
     )
 
     return parser
@@ -82,7 +82,7 @@ class WrapperInfoMixin:
         return {
             "num_jobs": self.args.num_jobs if hasattr(self.args, "num_jobs") else 1,
             "num_thread": self.args.num_threads if hasattr(self.args, "num_threads") else 1,
-            "use_drmaa": self.args.use_drmaa,
+            "use_profile": self.args.use_profile,
             "restart_times": self.args.restart_times,
             "max_jobs_per_second": self.args.max_jobs_per_second,
             "max_status_checks_per_second": self.args.max_status_checks_per_second,
@@ -112,103 +112,105 @@ class JobDescription:
 
 
 def kib(num):
-    """Return number of bytes for num KiB"""
-    return num * 1024
+    """Convert kilobytes to bytes.
+
+    :param num: Number of kilobytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of kilobytes.
+    """
+    return int(num) * 1024
 
 
 def mib(num):
-    """Return number of bytes for num MiB"""
-    return int(num * 1024 * 1024)
+    """Convert megabytes to bytes.
+
+    :param num: Number of megabytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of megabytes.
+    """
+    return int(num) * 1024 * 1024
 
 
 def gib(num):
-    """Return number of bytes for num GiB"""
-    return int(num * 1024 * 1024 * 1024)
+    """Convert gigabytes to bytes.
+
+    :param num: Number of gigabytes.
+    :type num: int
+
+    :return: Returns number of bytes for number of gigabytes.
+    """
+    return int(num) * 1024 * 1024 * 1024
+
+
+def kib_to_string(num):
+    """
+    :param num: Number of kilobytes.
+    :type num: int
+
+    :return: Returns kilobytes string for memory usage with profile. Example: '200k'.
+    """
+    return f"{math.ceil(num)}k"
+
+
+def mib_to_string(num):
+    """
+    :param num: Number of megabytes.
+    :type num: int
+
+    :return: Returns megabytes string for memory usage with profile. Example: '8M'.
+    """
+    return f"{math.ceil(num)}M"
+
+
+def gib_to_string(num):
+    """
+    :param num: Number of gigabytes.
+    :type num: int
+
+    :return: Returns gigabytes string for memory usage with profile. Example: '12G'.
+    """
+    return f"{math.ceil(num)}G"
 
 
 def minutes(num):
-    """Return ``datetime.timedelta`` for ``num`` minutes"""
-    return datetime.timedelta(minutes=num)
+    """Get Timedelta for minutes.
+
+    :param num: Number of minutes.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` as string for ``num`` minutes.
+    """
+    return str(datetime.timedelta(minutes=num))
 
 
 def hours(num):
-    """Return ``datetime.timedelta`` for ``num`` hours"""
-    return datetime.timedelta(hours=num)
+    """Get Timedelta for hours.
+
+    :param num: Number of hours.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` as string for ``num`` hours.
+    """
+    output = str(datetime.timedelta(hours=num))
+    # If necessary converts datetime to resource expected format.
+    # Examples:
+    # '1 day, 1:00:00' -> '1-01:00:00'
+    # '2 days, 0:00:00' -> '2-00:00:00'
+    if "day" in output:
+        output = output.replace(" days, ", "-").replace(" day, ", "-")
+        tmp_arr = output.split("-")
+        output = tmp_arr[0] + "-" + ":".join([str(i).zfill(2) for i in tmp_arr[1].split(":")])
+    return output
 
 
 def days(num):
-    """Return ``datetime.timedelta`` for ``num`` days"""
-    return datetime.timedelta(days=num)
+    """Get Timedelta for days.
 
-
-class ResourceUsage:
-    """Representation of resource usage for a job"""
-
-    def __init__(self, cores=1, memory=mib(100), duration=hours(1), nodes=1, more={}):
-        #: number of cores to reserve
-        self.cores = cores
-        #: maximal memory to use in total (in bytes)
-        self.memory = memory
-        #: maximal duration of execution
-        self.duration = duration
-        #: number of nodes to use
-        self.nodes = nodes
-        #: other resource usages
-        self.more = dict(more)
-
-    def __str__(self):
-        tpl = "ResourceUsage(cores={}, memory={}, duration={}, " "nodes={}, more={})"
-        return tpl.format(self.cores, self.memory, self.duration, self.nodes, self.more)
-
-    def __repr__(self):
-        return str(self)
-
-
-class ResourceUsageConverter:
-    """Base class for resource usage converters
-
-    Such converters allow the conversion into resource mappings/dicts, e.g., for Sun Grid Engine.
+    :param num: Number of days.
+    :type num: int
+    :return: Returns ``datetime.timedelta`` as string for ``num`` days.
     """
-
-    def __init__(self, res_usage):
-        #: resource usage to convert
-        self.res_usage = res_usage
-
-    def to_res_dict(self):
-        """Convert ResourceUsage into a dict for usage in Snakefiles"""
-        raise NotImplementedError()
-
-
-class SgeResourceUsageConverter(ResourceUsageConverter):
-    """Converter for Slurm"""
-
-    def to_qsub_args(self):
-        """Return array of arguments for qsub"""
-        res = self.to_res_dict()
-        return [
-            "--ntasks=%s" % res["ntasks"],
-            "--time=%s" % res["time"],
-            "--mem=%s" % int(res["mem"]),
-        ]
-
-    def to_res_dict(self):
-        res = {
-            "ntasks": self.res_usage.cores,
-            "time": self._format_duration(),
-            "mem": int(self.res_usage.memory / 1024 / 1024),  # in MiB
-        }
-        res.update(self.res_usage.more)
-        res["mem"] = int(res["mem"])
-        return res
-
-    def _format_duration(self):
-        total_seconds = self.res_usage.duration.total_seconds()
-        hours = int(total_seconds // 60 // 60)
-        total_seconds -= hours * 60 * 60
-        minutes = int(total_seconds // 60)
-        # total_seconds -= minutes * 60
-        # seconds = int(total_seconds)
-        return "{:0>2}:{:0>2}".format(hours, minutes)
+    return str(datetime.timedelta(days=num))
 
 
 class SnakemakeExecutionFailed(Exception):
@@ -222,73 +224,48 @@ def run_snakemake(
     max_jobs_per_second=0,
     max_status_checks_per_second=0,
     job_name_token="",
-    drmaa_snippet="",
+    partition=None,
+    profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
-    if config["use_drmaa"]:
+    if config["use_profile"]:
         print(
-            "Running with DRMAA on {num_jobs} cores in directory {cwd}".format(
-                num_jobs=config["num_jobs"], cwd=os.getcwd()
-            )
+            f"Running with Snakemake profile on {num_jobs or config['num_jobs']} "
+            f"cores in directory {os.getcwd()}"
         )
         os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
-        values = {"cwd": os.getcwd(), "drmaa_snippet": drmaa_snippet}
-        drmaa_string = (
-            " --mem={cluster.mem} --time={cluster.time} "
-            "--ntasks={cluster.ntasks} "
-            "--output=slurm_log/slurm-%%x-%%J.log %(drmaa_snippet)s"
-        ) % values
-        with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
-            print(
-                " ".join(
-                    map(
-                        str,
-                        [
-                            "snakemake",
-                            "--cores 1",
-                            "--directory",
-                            os.getcwd(),
-                            "--printshellcmds",
-                            "--verbose",
-                            "--use-conda",  # sic!
-                            "--drmaa",
-                            shlex.quote(drmaa_string),
-                            "--jobs",
-                            str(num_jobs or config["num_jobs"]),
-                            "--restart-times",
-                            str(config["restart_times"]),
-                            "--jobname",
-                            shlex.quote(
-                                "snakejob{token}.{{rulename}}.{{jobid}}.sh".format(
-                                    token="." + job_name_token
-                                )
-                            ),
-                            "--max-jobs-per-second",
-                            str(max_jobs_per_second or config["max_jobs_per_second"]),
-                            "--max-status-checks-per-second",
-                            str(
-                                max_status_checks_per_second
-                                or config["max_status_checks_per_second"]
-                            ),
-                        ],
-                    )
-                ),
-                file=f_call,
-            )
-        print("  DRMAA string => %s" % drmaa_string)
+        if partition:
+            os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
+
+        # Write Snakemake file: debug helper
+        write_snakemake_debug_helper(
+            profile=profile,
+            jobs=str(num_jobs or config["num_jobs"]),
+            restart_times=str(config["restart_times"]),
+            job_name_token=job_name_token,
+            max_jobs_per_second=str(max_jobs_per_second or config["max_jobs_per_second"]),
+            max_status_checks_per_second=str(
+                max_status_checks_per_second or config["max_status_checks_per_second"]
+            ),
+        )
+
         result = snakemake(
             snakefile,
             workdir=os.getcwd(),
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
             cores=1,
             nodes=num_jobs or config["num_jobs"],
-            drmaa=drmaa_string,
             max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
             max_status_checks_per_second=max_status_checks_per_second
             or config["max_status_checks_per_second"],
             restart_times=config["restart_times"],
             verbose=True,
             use_conda=False,  # has to be done externally (no locking if True here) and is!
+            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
+            cluster=get_profile_file(profile, "slurm-submit.py"),
+            cluster_status=get_profile_file(profile, "slurm-status.py"),
+            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
+            cluster_cancel="scancel",
         )
     else:
         print(
@@ -307,6 +284,69 @@ def run_snakemake(
         )
     if not result:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
+
+
+def write_snakemake_debug_helper(
+    profile, jobs, restart_times, job_name_token, max_jobs_per_second, max_status_checks_per_second
+):
+    """Write Snakemake debug helper file
+
+    When the temporary directory is kept, a failed execution can be restarted by calling snakemake
+    in the temporary directory with the command line written to the file ``snakemake_call.sh``.
+
+    :param profile: Snakemake profile name.
+    :type profile: str
+
+    :param jobs: Number of jobs argument,  ``--jobs``.
+    :type jobs: str
+
+    :param restart_times: Number of restarts argument, ``--restart-times``.
+    :type restart_times: str
+
+    :param job_name_token: Token included in job name, ``--jobname``.
+    :type job_name_token: str
+
+    :param max_jobs_per_second: Max number of jobs per second argument, ``--max-jobs-per-second``.
+    :type max_jobs_per_second: str
+
+    :param max_status_checks_per_second: Max status checks per second argument,
+    ``--max-status-checks-per-second``.
+    :type max_status_checks_per_second: str
+    """
+    with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
+        print(
+            " ".join(
+                map(
+                    str,
+                    [
+                        "snakemake",
+                        "--directory",
+                        os.getcwd(),
+                        "--cores",
+                        "--printshellcmds",
+                        "--verbose",
+                        "--use-conda",  # sic!
+                        "--profile",
+                        shlex.quote(profile),
+                        "--jobs",
+                        jobs,
+                        "--restart-times",
+                        restart_times,
+                        "--jobname",
+                        shlex.quote(
+                            "snakejob{token}.{{rulename}}.{{jobid}}.sh".format(
+                                token="." + job_name_token
+                            )
+                        ),
+                        "--max-jobs-per-second",
+                        max_jobs_per_second,
+                        "--max-status-checks-per-second",
+                        max_status_checks_per_second,
+                    ],
+                )
+            ),
+            file=f_call,
+        )
 
 
 def to_plain_python(obj):
@@ -345,18 +385,23 @@ class ParallelBaseWrapper:
     #: don't go further into config dict).
     tool_name = None
     #: The token to use for job names and temporary directories.  Constructed from ``step_name``
-    #: and ``tool_name`` if not specified explicitely here.
+    #: and ``tool_name`` if not specified explicitly here.
     job_name_token = None
     #: The number of bases to pad the parallelization windows with.
     window_padding = 0
+    job_resources = None
+    merge_resources = None
 
     def __init__(self, snakemake):
+        """Constructor.
+
+        :param snakemake: Reference to ``snakemake`` object from ``wrapper.py``.
+        :type snakemake: snakemake.script.Snakemake
+        """
         #: Reference to ``snakemake`` object from ``wrapper.py``.
         self.snakemake = snakemake
         #: Base directory to wrappers
         self.wrapper_base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-        #: The appropriate resource converter
-        self.res_converter = SgeResourceUsageConverter
         # Kick-off initialization
         self._apply_realpath_to_output()
         # Setup logging (will run in wrapper and its own process)
@@ -419,22 +464,59 @@ class ParallelBaseWrapper:
         return self.snakemake.config["step_config"][self.step_name]
 
     def get_job_mult_memory(self):
+        """Get job memory multiplier.
+
+        :return: Returns job memory multiplier, as defined in the provided config. If not defined,
+        the default is 1.
+        """
         return self._get_config().get("job_mult_memory", 1)
 
     def get_job_mult_time(self):
+        """Get job running time multiplier.
+
+        :return: Returns job running time multiplier, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("job_mult_time", 1)
 
     def get_merge_mult_memory(self):
+        """Get job running memory for merger.
+
+        :return: Returns job memory multiplier for merger, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("merge_mult_memory", 1)
 
     def get_merge_mult_time(self):
+        """Get job running time multiplier for merger.
+
+        :return: Returns job running time multiplier for merger, as defined in the provided config.
+        If not defined, the default is 1.
+        """
         return self._get_config().get("merge_mult_time", 1)
 
     def get_window_length(self):
-        return self._get_config()["window_length"]
+        """Get window length.
+
+        :return: Returns window length, as defined in the configuration.
+        :raises KeyError: if window_length not defined in the configuration.
+        """
+        try:
+            return self._get_config()["window_length"]
+        except KeyError:
+            error_msg = (
+                "No default available for 'window_length', it must be defined in configuration."
+            )
+            self.logger.error(error_msg)
+            raise
 
     def get_ignore_chroms(self):
-        return self._get_config()["ignore_chroms"]
+        """Get list of ignored chromosomes.
+
+        :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
+        If not defined, the default is an empty list.
+        """
+        return self._get_config().get("ignore_chroms", [])
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
@@ -488,12 +570,54 @@ class ParallelBaseWrapper:
 
             localrules: all
 
+            def resource_chunk_threads(wildcards):
+                '''Return the number of threads to use for running one chunk.'''
+                return {chunk_resources_threads}
+
+            def resource_chunk_memory(wildcards):
+                '''Return the memory to use for running one chunk.'''
+                return {chunk_resources_memory}
+
+            def resource_chunk_time(wildcards):
+                '''Return the time to use for running one chunk.'''
+                return {chunk_resources_time}
+
+            def resource_chunk_partition(wildcards):
+                '''Return the partition to use for running one chunk.'''
+                return {chunk_resources_partition}
+
+            def resource_merge_threads(wildcards):
+                '''Return the number of threads to use for running merging.'''
+                return {merge_resources_threads}
+
+            def resource_merge_memory(wildcards):
+                '''Return the memory to use for running merging.'''
+                return {merge_resources_memory}
+
+            def resource_merge_time(wildcards):
+                '''Return the time to use for running merging.'''
+                return {merge_resources_time}
+
+            def resource_merge_partition(wildcards):
+                '''Return the partition to use for running merging.'''
+                return {merge_resources_partition}
+
             rule all:
                 input: **{all_output}
         """
             )
             .lstrip()
-            .format(all_output=repr(self.get_all_output()))
+            .format(
+                all_output=repr(self.get_all_output()),
+                chunk_resources_threads=repr(self.job_resources.threads),
+                chunk_resources_time=repr(self.job_resources.time),
+                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_partition=repr(self.job_resources.partition),
+                merge_resources_threads=repr(self.merge_resources.threads),
+                merge_resources_time=repr(self.merge_resources.time),
+                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_partition=repr(self.merge_resources.partition),
+            )
         )
 
     def get_all_output(self):
@@ -604,9 +728,7 @@ class ParallelBaseWrapper:
             "max_jobs_per_second": self._get_config()["max_jobs_per_second"],
             "max_status_checks_per_second": self._get_config()["max_status_checks_per_second"],
             "job_name_token": self._job_name_token(),
-            "drmaa_snippet": (
-                self._get_config()["drmaa_snippet"] or self._get_step_config()["drmaa_snippet"]
-            ),
+            "profile": os.getenv("SNAPPY_PIPELINE_SNAKEMAKE_PROFILE"),
         }
         self.logger.info("Launching excecution with args: %s", repr(kwargs))
         run_snakemake(self._get_config(), **kwargs)
@@ -681,6 +803,11 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output:
                     vcf='merge_out.{chunk_no}.d/out/out.vcf.gz',
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
+                threads: resource_merge_threads
+                resources:
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
                 shell:
                     r'''
                     set -euo pipefail  # inofficial Bash strict mode
@@ -694,15 +821,12 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
 
                     tabix -f {{output.vcf}}
                     '''
-
-            cluster_config['merge_chunk_{chunk_no}'] = {resources}
         """
             )
             .lstrip()
             .format(
                 chunk_no=chunk_no,
                 chunk_input=repr(merge_input),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
             )
         )
 
@@ -713,10 +837,15 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: {all_input}
                 output: **{all_output}
+                threads: resource_merge_threads
+                resources:
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
                     r'''
-                    set -euo pipefail  # inofficial Bash strict mode
+                    set -euo pipefail  # Unofficial Bash strict mode
 
                     # Initialize output directory -----------------------------------------
 
@@ -754,8 +883,6 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     md5sum $(basename {{log.conda_info}}) >$(basename {{log.conda_info}}).md5
                     popd
                     '''
-
-            cluster_config['merge_all'] = {resources}
         """
             )
             .lstrip()
@@ -763,7 +890,6 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 all_input=repr(merge_input),
                 all_output=repr(self.get_all_output()),
                 all_log=repr(self.get_all_log_files()),
-                resources=repr(self.res_converter(self.merge_resources).to_res_dict()),
             )
         )
 
@@ -789,7 +915,6 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
@@ -799,11 +924,14 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: resource_chunk_threads
+                    resources:
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -837,7 +965,6 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
@@ -847,11 +974,14 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: resource_chunk_threads
+                    resources:
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -885,7 +1015,6 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
@@ -896,12 +1025,14 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: resource_chunk_threads
+                    resources:
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()
 
@@ -935,7 +1066,6 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "output": repr(output),
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
-                "resources": repr(self.res_converter(self.job_resources).to_res_dict()),
             }
             yield textwrap.dedent(
                 r"""
@@ -945,10 +1075,13 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     output:
                         touch("job_out.{jobno}.d/.done"),
                         **{output}
+                    threads: resource_chunk_threads
+                    resources:
+                        time=resource_chunk_time,
+                        memory=resource_chunk_memory,
+                        partition=resource_chunk_partition,
                     params:
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
-
-                cluster_config['chunk_{jobno}'] = {resources}
             """
             ).format(**vals).lstrip()

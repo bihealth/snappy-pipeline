@@ -2,7 +2,7 @@
 """Implementation of the ``wgs_sv_export`` step.
 
 The ``wgs_sv_export`` step takes as the input the results of the ``wgs_sv_annotation`` step and
-uses ``varfish-annotator-cli annotate`` commmand to create files fit for import into VarFish
+uses ``varfish-annotator-cli annotate-sv`` commmand to create files fit for import into VarFish
 Server.
 
 ==========
@@ -54,13 +54,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_sv_annotation import WgsSvAnnotationWorkflow
 from snappy_pipeline.workflows.wgs_sv_calling import WgsSvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
@@ -74,6 +75,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   wgs_sv_export:
     path_wgs_sv_annotation: ../wgs_sv_annotation
+    path_wgs_sv_calling: ../wgs_sv_calling
     tools_ngs_mapping: null
     tools_wgs_sv_calling: null
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
@@ -83,9 +85,13 @@ step_config:
 
 
 class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
-    """Annotate VCF file using "varfish-annotator annotate"."""
+    """Annotate VCF file using "varfish-annotator annotate-sv"."""
 
+    #: Step name
     name = "varfish_annotator"
+
+    #: Class available actions
+    actions = ("annotate",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -97,24 +103,42 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
-    @dictify
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        assert action == "annotate"
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        tpl = (
-            "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.annotated.{index_ngs_library}"
-        )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        wgs_sv_annotation = self.parent.sub_workflows["wgs_sv_annotation"]
-        for key, ext in key_ext.items():
-            yield key, wgs_sv_annotation(tpl + ext)
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+            yield "ped", tpl.format(**wildcards)
+            if wildcards.var_caller == "popdel":
+                tpl = (
+                    "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
+                    "{mapper}.{var_caller}.annotated.{index_ngs_library}"
+                )
+                subworkflow = self.parent.sub_workflows["wgs_sv_annotation"]
+            else:
+                tpl = (
+                    "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
+                    "{mapper}.{var_caller}.{index_ngs_library}"
+                )
+                subworkflow = self.parent.sub_workflows["wgs_sv_calling"]
+            key_ext = {
+                "vcf": ".vcf.gz",
+                "vcf_md5": ".vcf.gz.md5",
+                "tbi": ".vcf.gz.tbi",
+                "tbi_md5": ".vcf.gz.tbi.md5",
+            }
+            for key, ext in key_ext.items():
+                yield key, subworkflow(tpl.format(**wildcards) + ext)
+
+        return input_function
 
     @dictify
     def get_output_files(self, action):
-        """Return output files for the filtration"""
-        assert action == "annotate"
+        """Return output files for the export"""
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}"
@@ -126,7 +150,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @dictify
     def _get_log_file(self, action):
-        assert action == "annotate"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/log/"
             "{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}"
@@ -141,17 +166,25 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_sv_export_varfish_annotator_annotate_svs"] = {
-            "mem": 7 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{7 * 1024 * 2}M",
+        )
 
     def get_params(self, action):
-        assert action == "annotate"
+        # Validate action
+        self._validate_action(action)
 
         def get_params_func(wildcards):
             result = {"is_wgs": True, "step_name": "wgs_sv_export"}
@@ -171,7 +204,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 class WgsSvExportWorkflow(BaseStep):
     """Perform germline WGS SV export"""
 
+    #: Workflow name
     name = "wgs_sv_export"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -179,13 +215,10 @@ class WgsSvExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -195,8 +228,6 @@ class WgsSvExportWorkflow(BaseStep):
         self.register_sub_step_classes(
             (WritePedigreeStepPart, VarfishAnnotatorAnnotateStepPart, LinkOutStepPart)
         )
-        # Register sub workflows
-        self.register_sub_workflow("wgs_sv_annotation", self.config["path_wgs_sv_annotation"])
         # Copy over "tools" setting from wgs_sv_calling/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
@@ -206,6 +237,11 @@ class WgsSvExportWorkflow(BaseStep):
             self.config["tools_wgs_sv_calling"] = self.w_config["step_config"]["wgs_sv_calling"][
                 "tools"
             ]["dna"]
+        # Register sub workflows
+        if "popdel" in self.config["tools_wgs_sv_calling"]:
+            self.register_sub_workflow("wgs_sv_annotation", self.config["path_wgs_sv_annotation"])
+        if "delly2" in self.config["tools_wgs_sv_calling"]:
+            self.register_sub_workflow("wgs_sv_calling", self.config["path_wgs_sv_calling"])
 
     @listify
     def get_result_files(self):
@@ -260,5 +296,5 @@ class WgsSvExportWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_export", "path_wgs_sv_annotation"),
-            ("Path to WGS SV annotation not configured but required for WGS SV export"),
+            "Path to WGS SV annotation not configured but required for WGS SV export",
         )

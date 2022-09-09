@@ -43,7 +43,7 @@ Reports
 Currently, no reports are generated.
 """
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
 
@@ -82,7 +82,11 @@ step_config:
 class WriteIgvSessionFileStepPart(BaseStepPart):
     """Write out the IGV session XML file."""
 
+    #: Step name
     name = "write_igv_session_file"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -95,6 +99,10 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
                     self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
     def _get_path_bam(self, wildcards, donor):
+        # TODO: This cannot be correct. For each set of donors it will return the same index bam.
+        # TODO: For instance, given pedigree (P001, P002, P003) it will return three time the
+        # TODO: same value: 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
+        _ = donor
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         return ngs_mapping(
             "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)
@@ -111,6 +119,9 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         return prev_step(input_path + ".vcf.gz")
 
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         @dictify
         def input_function(wildcards):
             # Get name of real index, used when input is not variant_phasing
@@ -120,12 +131,12 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             # Input file comes from previous step.
             yield "vcf", self._get_path_vcf(wildcards, pedigree.index)
 
-        assert action == "run", "Unsupported action"
         return input_function
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{index_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
@@ -179,7 +190,10 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
 class IgvSessionGenerationWorkflow(BaseStep):
     """Perform IGV session generation"""
 
+    #: Workflow name
     name = "igv_session_generation"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -187,13 +201,10 @@ class IgvSessionGenerationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -255,7 +266,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the path to the variant annotation step is present."""
+        # TODO: Check that at least one path was provided in user provided config.
         self.ensure_w_config(
             ("step_config", "igv_session_generation", "path_ngs_mapping"),
-            ("Path to ngs_mapping not configured but required for igv_session_generation"),
+            "Path to ngs_mapping not configured but required for igv_session_generation",
         )

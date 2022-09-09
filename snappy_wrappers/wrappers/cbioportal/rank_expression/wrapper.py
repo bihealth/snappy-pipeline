@@ -7,7 +7,7 @@ from snakemake import shell
 
 sample_tpl = os.path.basename(os.path.dirname(os.path.dirname(snakemake.output.tsv)))
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 

@@ -64,12 +64,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -84,17 +85,19 @@ step_config:
   wgs_cnv_annotation:
     path_ngs_mapping: ../ngs_mapping
     path_wgs_cnv_calling: ../wgs_cnv_calling
-    tools_ngs_mapping:
-    - bwa
-    tools_wgs_cnv_calling:
-    - erds_sv2
+    tools_ngs_mapping: [bwa]           # REQUIRED
+    tools_wgs_cnv_calling: [erds_sv2]  # REQUIRED
 """
 
 
 class VcfCnvFilterStepPart(BaseStepPart):
     """Annotate VCF using wgs_cnv_filter.py script."""
 
+    #: Step name
     name = "vcf_cnv_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -109,6 +112,9 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
         @dictify
         def input_function(wildcards):
+            # Validate action
+            self._validate_action(action)
+
             # TODO: make work for non-ERDS/ERDS+SV2
             tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
             yield "ped", tpl.format(**wildcards)
@@ -130,13 +136,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 yield key, wgs_cnv_calling(tpl + ext).format(**wildcards)
             return
 
-        assert action == "run"
         return input_function
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{caller}.annotated.{index_ngs_library}"
@@ -151,23 +157,34 @@ class VcfCnvFilterStepPart(BaseStepPart):
             yield key, prefix + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_cnv_annotation_wgs_cnv_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
 
 
 class WgsCnvAnnotationWorkflow(BaseStep):
     """Perform germline WGS SV annotation"""
 
+    #: Workflow name
     name = "wgs_cnv_annotation"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -175,13 +192,10 @@ class WgsCnvAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -243,9 +257,9 @@ class WgsCnvAnnotationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_cnv_annotation", "tools_ngs_mapping"),
-            ("NGS mapping tools not configured but required for WGS SV annotation"),
+            "NGS mapping tools not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_cnv_annotation", "tools_wgs_cnv_calling"),
-            ("WGS SV calling tools not configured but required for WGS SV annotation"),
+            "WGS SV calling tools not configured but required for WGS SV annotation",
         )

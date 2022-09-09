@@ -10,6 +10,7 @@ import itertools
 import os
 import os.path
 import sys
+import typing
 
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
@@ -21,11 +22,12 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
     MissingConfiguration,
+    UnsupportedActionException,
     merge_dicts,
     merge_kwargs,
     print_config,
@@ -34,6 +36,7 @@ from snappy_pipeline.base import (
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
+from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -59,16 +62,63 @@ class BaseStepPart:
 
     name = "<base step>"
 
+    #: The actions available in the class.
+    actions: typing.Tuple[str] = None
+
+    #: Default resource usage for actions that are not given in ``resource_usage``.
+    default_resource_usage: ResourceUsage = ResourceUsage(
+        threads=1, time="01:00:00", memory="2G"  # 1h
+    )
+
+    #: Configure resource usage here that should not use the default resource usage from
+    #: ``default_resource_usage``.
+    resource_usage: typing.Dict[str, ResourceUsage] = {}
+
     def __init__(self, parent):
         self.name = self.__class__.name
         self.parent = parent
         self.config = parent.config
         self.w_config = parent.w_config
 
-    def update_cluster_config(self, cluster_config):
-        """Override and configure the cluster resource requirements for all rules that this
-        pipeline step part uses
+    def _validate_action(self, action):
+        """Validate provided action
+
+        Checks that the provided ``action`` is listed in the valid class actions list.
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+
+    def get_resource_usage(self, action: str) -> ResourceUsage:
+        """Return the resource usage for the given action."""
+        if action not in self.actions:
+            raise ValueError(f"Invalid {action} not in {self.actions}")
+        return self.resource_usage.get(action, self.default_resource_usage)
+
+    @staticmethod
+    def get_default_partition() -> str:
+        """Helper that returns the default partition."""
+        return os.getenv("SNAPPY_PIPELINE_PARTITION")
+
+    def get_resource(self, action: str, resource_name: str):
+        """Return the amount of resources to be allocated for the given action.
+
+        :param action: The action to return the resource requirement for.
+        :param resource_name: The name to return the resource for.
+        """
+        if resource_name not in ("threads", "time", "memory", "partition"):
+            raise ValueError(f"Invalid resource name: {resource_name}")
+        resource_usage = self.get_resource_usage(action)
+        if resource_name == "partition" and not resource_usage.partition:
+            return self.get_default_partition()
+        else:
+            return getattr(resource_usage, resource_name)
 
     def get_args(self, action):
         """Return args for the given action of the sub step"""
@@ -191,9 +241,6 @@ class WritePedigreeStepPart(BaseStepPart):
     def get_output_files(self, action):
         assert action == "run"
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        # return os.path.realpath(
-        #    "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        # )
 
     def run(self, wildcards, output):
         """Write out the pedigree information"""
@@ -276,7 +323,8 @@ def _cached_read_generic_tsv_sheet(path_abs, path_rel, naming_scheme):
 @lru_cache()
 def _cached_yaml_round_trip_load_str(str_value):
     """Cached reading of YAML ``str`` objects."""
-    return yaml.round_trip_load(StringIO(str_value))
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(StringIO(str_value))
 
 
 class DataSetInfo:
@@ -476,7 +524,6 @@ class BaseStep:
         self,
         workflow,
         config,
-        cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -496,8 +543,6 @@ class BaseStep:
         self.w_config = config
         self.w_config.update(self._update_config(config))
         self.config = self.w_config["step_config"].get(self.name, OrderedDict())
-        #: Cluster configuration dict
-        self.cluster_config = cluster_config
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = config_lookup_paths
         self.sub_steps = {}
@@ -624,20 +669,11 @@ class BaseStep:
                 )
                 raise e_class(tpl)
 
-    def update_cluster_config(self):
-        """Update cluster configuration for rule "__default__"
-
-        The sub parts' ``update_cluster_config()`` routines are called on creation in
-        ``register_sub_step_classes()``.
-        """
-        self.cluster_config["__default__"] = {"mem": 4 * 1024, "time": "12:00", "ntasks": 1}
-
     def register_sub_step_classes(self, classes):
         """Register an iterable of sub step classes
 
         Initializes objects in ``self.sub_steps`` dict
         """
-        self.update_cluster_config()
         for pair_or_class in classes:
             try:
                 klass, args = pair_or_class
@@ -645,7 +681,6 @@ class BaseStep:
                 klass = pair_or_class
                 args = ()
             obj = klass(self, *args)
-            obj.update_cluster_config(self.cluster_config)
             obj.check_config()
             self.sub_steps[klass.name] = obj
 
@@ -697,6 +732,13 @@ class BaseStep:
         Delegates to the sub step object's get_params function
         """
         return self.substep_dispatch(sub_step, "get_params", action)
+
+    def get_resource(self, sub_step, action, resource_name):
+        """Get resource
+
+        Delegates to the sub step object's get_resource function
+        """
+        return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
 
     def get_log_file(self, sub_step, action):
         """Return path to the log file
@@ -788,7 +830,7 @@ class LinkInPathGenerator:
             os.path.join(self.work_dir, self.cache_file_name), invalidate_paths_list
         )
 
-    def run(self, folder_name, pattern_set_keys=("left", "right", "bam")):
+    def run(self, folder_name, pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam")):
         """Yield (src_path, path_infix, filename) one-by-one
 
         Cache is saved after the last iteration
@@ -803,7 +845,13 @@ class LinkInPathGenerator:
             for pat in info.search_patterns:
                 if not isinstance(pat, (dict, MutableMapping)):
                     raise ValueError("search_patterns must be a dict!")  # pragma: no cover
+                # Add patterns as found in configuration file: DataSetInfo.search_patterns
                 patterns.append(PatternSet(pat.values(), names=pat.keys()))
+                # Add MD5 files to search file as default
+                pat_md5 = [pattern + ".md5" for pattern in pat.values()]
+                pat_names_md5 = [pattern + "_md5" for pattern in pat.keys()]
+                patterns.append(PatternSet(pat_md5, names=pat_names_md5))
+
             # Crawl all root paths, link in the resulting files
             for root_path in self._get_shell_cmd_root_paths(info):
                 if root_path in seen_root_paths:

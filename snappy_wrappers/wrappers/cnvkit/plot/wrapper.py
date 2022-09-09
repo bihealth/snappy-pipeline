@@ -5,7 +5,7 @@
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bihealth.de"
+__email__ = "manuel.holtgrewe@bih-charite.de"
 
 mapper = snakemake.wildcards.mapper
 if "library_name" in snakemake.wildcards.keys():

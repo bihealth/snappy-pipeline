@@ -64,12 +64,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -85,12 +86,10 @@ step_config:
     path_ngs_mapping: ../ngs_mapping
     path_variant_calling: ../variant_calling
     path_wgs_sv_calling: ../wgs_sv_calling
-    tool_ngs_mapping_variant_calling: bwa
-    tool_variant_calling: gatk_hc
-    tools_ngs_mapping:
-    - bwa
-    tools_wgs_sv_calling:
-    - delly2
+    tool_ngs_mapping_variant_calling: bwa  # REQUIRED
+    tool_variant_calling: gatk_hc          # REQUIRED
+    tools_ngs_mapping: [bwa]               # REQUIRED
+    tools_wgs_sv_calling: [delly2]         # REQUIRED
     path_alu_bed: ''
     path_db_bed: ''
 """
@@ -99,7 +98,11 @@ step_config:
 class VcfSvFilterStepPart(BaseStepPart):
     """Annotate VCF using wgs_sv_filter.py script."""
 
+    #: Step name
     name = "vcf_sv_filter"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -166,14 +169,21 @@ class VcfSvFilterStepPart(BaseStepPart):
         assert action == "run"
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["wgs_sv_annotation_wgs_sv_filter"] = {
-            "mem": 5 * 1024 * 2,
-            "time": "100:00",
-            "ntasks": 2,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=2,
+            time="4-04:00:00",  # 4 days and 4 hours
+            memory=f"{5 * 1024 * 2}M",
+        )
 
 
 class WgsSvAnnotationWorkflow(BaseStep):
@@ -187,13 +197,10 @@ class WgsSvAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -256,7 +263,7 @@ class WgsSvAnnotationWorkflow(BaseStep):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "path_variant_calling"),
-            (" not configured but required for WGS SV annotation"),
+            " not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tool_ngs_mapping_variant_calling"),
@@ -274,9 +281,9 @@ class WgsSvAnnotationWorkflow(BaseStep):
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tools_ngs_mapping"),
-            ("NGS mapping tools not configured but required for WGS SV annotation"),
+            "NGS mapping tools not configured but required for WGS SV annotation",
         )
         self.ensure_w_config(
             ("step_config", "wgs_sv_annotation", "tools_wgs_sv_calling"),
-            ("WGS SV calling tools not configured but required for WGS SV annotation"),
+            "WGS SV calling tools not configured but required for WGS SV annotation",
         )

@@ -7,14 +7,13 @@ more convenient to wrap the call to snakemake itself.
 
 import argparse
 import datetime
-import functools
 import logging
 import os
 import subprocess
 import sys
-import textwrap
 
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
+from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
 
 from .. import __version__
@@ -28,6 +27,7 @@ from ..workflows import (
     ngs_mapping,
     ngs_sanity_checking,
     panel_of_normals,
+    repeat_expansion,
     roh_calling,
     somatic_gene_fusion_calling,
     somatic_hla_loh_calling,
@@ -70,11 +70,7 @@ from ..workflows import (
     wgs_sv_filtration,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
-
-
-class DrmaaNotAvailable(Exception):
-    """Raised when DRMAA is not available"""
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 #: Configuration file names
@@ -93,6 +89,7 @@ STEP_TO_MODULE = {
     "ngs_mapping": ngs_mapping,
     "ngs_data_qc": ngs_data_qc,
     "panel_of_normals": panel_of_normals,
+    "repeat_analysis": repeat_expansion,
     "ngs_sanity_checking": ngs_sanity_checking,
     "roh_calling": roh_calling,
     "somatic_gene_fusion_calling": somatic_gene_fusion_calling,
@@ -154,7 +151,7 @@ def binary_available(name):
     return retcode == 0
 
 
-def run(wrapper_args):
+def run(wrapper_args):  # noqa: C901
     """Launch the CUBI Pipeline wrapper for the given arguments"""
     # Setup logging
     setup_logging(wrapper_args)
@@ -175,6 +172,8 @@ def run(wrapper_args):
     ]
     if wrapper_args.keep_going:
         snakemake_argv.append("--keep-going")
+    if wrapper_args.rerun_triggers:
+        snakemake_argv += ["--rerun-triggers"] + wrapper_args.rerun_triggers
     if wrapper_args.unlock:
         snakemake_argv.append("--unlock")
     if wrapper_args.rerun_incomplete:
@@ -197,15 +196,17 @@ def run(wrapper_args):
         snakemake_argv.append("--dryrun")
     if wrapper_args.reason:
         snakemake_argv.append("--reason")
-    if not wrapper_args.snappy_pipeline_use_drmaa:
+    if not wrapper_args.snappy_pipeline_use_profile:
         snakemake_argv += ["--cores", str(wrapper_args.cores or 1)]
     if wrapper_args.use_conda:
         snakemake_argv.append("--use-conda")
         if mamba_available and wrapper_args.use_mamba:
             snakemake_argv += ["--conda-frontend", "mamba"]
 
-    # Configure DRMAA if configured so
-    if wrapper_args.snappy_pipeline_use_drmaa:
+    # Configure profile if configured
+    if wrapper_args.snappy_pipeline_use_profile:
+        snakemake_argv += ["--profile", wrapper_args.snappy_pipeline_use_profile]
+        snakemake_argv += ["--jobs", str(wrapper_args.snappy_pipeline_jobs)]
         if wrapper_args.restart_times:
             snakemake_argv += ["--restart-times", str(wrapper_args.restart_times)]
         if wrapper_args.max_jobs_per_second:
@@ -215,8 +216,6 @@ def run(wrapper_args):
                 "--max-status-checks-per-second",
                 str(wrapper_args.max_status_checks_per_second),
             ]
-        if not drmaa_available():
-            raise DrmaaNotAvailable()
         # create output log directory, use SLURM_JOB_ID env variable for sub directory name if set
         logdir = os.path.abspath(os.path.join(wrapper_args.directory, "slurm_log"))
         if "SLURM_JOB_ID" in os.environ:
@@ -225,58 +224,12 @@ def run(wrapper_args):
             logdir = os.path.join(logdir, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         os.makedirs(logdir, exist_ok=True)
         logging.info("Creating directory %s", logdir)
-        # extend arguments with DRMAA settings
-        snakemake_argv += [
-            # arguments to DRMAA, ties in cluster configuration
-            "--drmaa",
-            (
-                " --mem={{cluster.mem}} --time={{cluster.time}} "
-                "--cpus-per-task={{cluster.ntasks}} --output={logdir}/slurm-%x-%J.log {drmaa_snippet}"
-            ).format(logdir=logdir, drmaa_snippet=" ".join(wrapper_args.drmaa_snippets)),
-            # number of parallel jobs to launch
-            "-j",
-            str(wrapper_args.snappy_pipeline_drmaa_jobs),
-        ]
     # Add positional arguments
     if wrapper_args.cleanup_metadata:
         snakemake_argv.append("--cleanup-metadata")
     snakemake_argv += wrapper_args.targets
     logging.info("Executing snakemake %s", " ".join(map(repr, snakemake_argv)))
     return snakemake_main(snakemake_argv)
-
-
-def drmaa_available():
-    """Return whether DRMAA execution is available"""
-    try:
-        pass
-    except (ImportError, RuntimeError):
-        return False
-    else:
-        return True
-
-
-def run_self_test():
-    """Print snappy_pipeline version and enabled/disabled features"""
-    yes_no = {True: "yes", False: "no"}
-    vals = {"version": __version__, "drmaa_enabled": yes_no[drmaa_available()]}
-    print(
-        textwrap.dedent(
-            r"""
-    CUBI Pipeline
-    =============
-
-    Version     {version}
-
-    Features
-    --------
-
-    DRMAA       {drmaa_enabled}
-    """
-        )
-        .lstrip()
-        .format(**vals),
-        file=sys.stderr,
-    )
 
 
 def main(argv=None):
@@ -337,6 +290,13 @@ def main(argv=None):
             "not yet exist."
         ),
     )
+    group.add_argument(
+        "--rerun-triggers",
+        nargs="+",
+        choices=RERUN_TRIGGERS,
+        default=["mtime"],  # TODO: switch to RERUN_TRIGGERS,
+        help="Expose --rerun-triggers from snakemake but set to only mtime by default.",
+    )
 
     group = parser.add_argument_group(
         "Snakemake Verbosity / Debugging",
@@ -366,31 +326,29 @@ def main(argv=None):
     )
 
     group = parser.add_argument_group(
-        "DRMAA/Cluster Configuration",
-        "Arguments for enabling and controllingn basic DRMAA execution",
+        "Cluster Configuration",
+        "Arguments for enabling and controlling cluster execution",
     )
     group.add_argument(
-        "--snappy-pipeline-use-drmaa",
-        action="store_true",
-        default=False,
-        help="Enables running the pipeline with DRMA via Snakemake",
+        "--snappy-pipeline-use-profile",
+        metavar="PROFILE",
+        default=None,
+        help="Enables running the pipeline in cluster mode using the given profile",
     )
     group.add_argument(
-        "--snappy-pipeline-drmaa-jobs", type=int, default=100, help="Number of DRMAA jobs to run"
+        "--snappy-pipeline-jobs",
+        type=int,
+        default=100,
+        help="Number of cluster jobs to run in parallel",
     )
     group.add_argument(
-        "--drmaa-snippet",
-        dest="drmaa_snippets",
-        default=[],
-        action="append",
-        nargs="+",
-        help="Snippet to include to DRMAA submission",
+        "--default-partition", type=str, default="medium", help="Default partition to use, if any"
     )
 
     group = parser.add_argument_group(
-        "DRMAA Robustness",
+        "Cluster Robustness",
         "Snakemake settings to increase robustness of executing the pipeline "
-        "during execution in DRMAA mode",
+        "during execution in cluster mode",
     )
     group.add_argument(
         "--restart-times", type=int, default=5, help="Number of times to restart jobs automatically"
@@ -399,7 +357,7 @@ def main(argv=None):
         "--max-jobs-per-second",
         type=int,
         default=10,
-        help="Maximal number of jobs to launch per second in DRMAA mode",
+        help="Maximal number of jobs to launch per second in cluster mode",
     )
     group.add_argument(
         "--max-status-checks-per-second",
@@ -409,13 +367,7 @@ def main(argv=None):
     )
 
     group = parser.add_argument_group(
-        "CUBI Pipeline Miscellaneous", "Various options specific to the CUBI pipeline"
-    )
-    group.add_argument(
-        "--snappy-pipeline-self-test",
-        action="store_true",
-        default=False,
-        help="Perform self-test and exit",
+        "SNAPPY Pipeline Miscellaneous", "Various options specific to the SNAPPY pipeline"
     )
     group.add_argument(
         "--step",
@@ -441,30 +393,26 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
 
-    args.drmaa_snippets = functools.reduce(lambda x, y: x + y, args.drmaa_snippets, [])
+    os.environ["SNAPPY_PIPELINE_PARTITION"] = args.default_partition
+    if args.snappy_pipeline_use_profile:
+        os.environ["SNAPPY_PIPELINE_SNAKEMAKE_PROFILE"] = args.snappy_pipeline_use_profile
 
-    if args.snappy_pipeline_self_test:
-        run_self_test()
-    else:
-        if not args.step:
-            for cfg in CONFIG_FILES:
-                path = os.path.join(args.directory, cfg)
-                if not os.path.exists(path):
-                    continue
-                with open(path, "rt") as f:
-                    data = yaml.round_trip_load(f.read())
-                try:
-                    args.step = data["pipeline_step"]["name"]
-                    break
-                except KeyError:
-                    logging.info("Could not pick up pipeline step/name from %s", path)
-        if not args.step:
-            parser.error("the following arguments are required: --step")
-        try:
-            return run(args)
-        except DrmaaNotAvailable:
-            parser.error("DRMAA not available but given --snappy-pipeline-use-drmaa")
-            raise e
+    if not args.step:
+        for cfg in CONFIG_FILES:
+            path = os.path.join(args.directory, cfg)
+            if not os.path.exists(path):
+                continue
+            with open(path, "rt") as f:
+                yaml = ruamel_yaml.YAML()
+                data = yaml.load(f.read())
+            try:
+                args.step = data["pipeline_step"]["name"]
+                break
+            except KeyError:
+                logging.info("Could not pick up pipeline step/name from %s", path)
+    if not args.step:
+        parser.error("the following arguments are required: --step")
+    return run(args)
 
 
 if __name__ == "__main__":

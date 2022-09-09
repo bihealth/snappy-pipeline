@@ -421,9 +421,9 @@ For running, locally use:
     $ cd somatic_variant_annotation
     $ snappy-snake -p --step somatic_variant_annotation
 
-For running with SGE on the cluster, use the ``--snappy-pipeline-use-drmaa`` parameter.
+For running with Snakemake profile on the cluster, use the ``--snappy-pipeline-use-profile`` parameter.
 
 .. code-block:: shell
 
     $ cd somatic_variant_annotation
-    $ snappy-snake -p --step somatic_variant_annotation --snappy-pipeline-use-drmaa
+    $ snappy-snake -p --step somatic_variant_annotation --snappy-pipeline-use-profile "cubi-v1"

@@ -9,7 +9,7 @@ import os
 import sys
 import warnings
 
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -17,7 +17,7 @@ try:
 except ImportError:
     warnings.warn("module biomedsheets not found", UserWarning)
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 class InvalidConfiguration(Exception):
@@ -64,26 +64,12 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
     return resolved, tuple(lookup_paths), tuple(config_files)
 
 
-def _ordered_dump(data, stream=None, dumper_klass=yaml.Dumper, **kwargs):
-    """Helper function for ordered dumping of structs as YAML"""
-
-    class OrderedDumper(dumper_klass):
-        """Helper class"""
-
-    def _dict_representer(dumper, data):
-        return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items()
-        )
-
-    OrderedDumper.add_representer(OrderedDict, _dict_representer)
-    return yaml.dump(data, stream, OrderedDumper, **kwargs)
-
-
 def print_config(config, file=sys.stderr):
     """Print human-readable version of configuration to ``file``"""
     print("\nConfiguration", file=file)
     print("-------------\n", file=file)
-    _ordered_dump(config, stream=file, default_flow_style=False)
+    yaml = ruamel_yaml.YAML()
+    return yaml.dump(config, stream=file)
 
 
 def print_sample_sheets(step, file=sys.stderr):
@@ -91,7 +77,8 @@ def print_sample_sheets(step, file=sys.stderr):
     for info in step.data_set_infos:
         print("\nSample Sheet {}".format(info.sheet_path), file=file)
         print("-------------" + "-" * len(info.sheet_path) + "\n", file=file)
-        _ordered_dump(info.sheet.json_data, stream=file, default_flow_style=False)
+        yaml = ruamel_yaml.YAML()
+        return yaml.dump(info.sheet.json_data, stream=file)
 
 
 def merge_kwargs(first_kwargs, second_kwargs):

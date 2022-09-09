@@ -50,10 +50,15 @@ from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
 DEFAULT_CONFIG = r"""
@@ -69,7 +74,11 @@ step_config:
 class MantisStepPart(BaseStepPart):
     """Perform somatic microsatellite instability with MANTIS"""
 
+    #: Step name
     name = "mantis"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -123,26 +132,36 @@ class MantisStepPart(BaseStepPart):
                 "mantis.{{mapper}}.{{library_name}}_{sfx}"
             ).format(sfx=ext)
 
-    def get_log_file(self, action):
+    @staticmethod
+    def get_log_file(action):
         """Return path to log file for the given action"""
+        _ = action
         return "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
 
-    def update_cluster_config(self, cluster_config):
-        """Update cluster configuration with resource usage limits for
-        scheduling
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
         """
-        # 24g were required for WES from my limited testing
-        cluster_config["somatic_msi_calling_mantis"] = {
-            "mem": 30 * 1024 * 3,
-            "time": "120:00",
-            "ntasks": 3,
-        }
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=3,
+            time="02:00:00",  # 2 hours
+            memory=f"{30 * 1024 * 3}M",
+        )
 
 
 class SomaticMsiCallingWorkflow(BaseStep):
     """Perform somatic microsatellite instability analysis"""
 
+    #: Step name
     name = "somatic_msi_calling"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
     @classmethod
@@ -150,13 +169,10 @@ class SomaticMsiCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,

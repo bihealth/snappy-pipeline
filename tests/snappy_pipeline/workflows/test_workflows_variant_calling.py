@@ -5,7 +5,7 @@ from copy import deepcopy
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
@@ -13,13 +13,14 @@ from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (germline) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:
@@ -63,7 +64,6 @@ def minimal_config():
 def variant_calling_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -86,7 +86,6 @@ def variant_calling_workflow(
     return VariantCallingWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -133,10 +132,15 @@ def test_bcftools_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_bcftools_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
-    actual = set(dummy_cluster_config["variant_calling_bcftools_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_bcftools_step_part_get_resource(variant_calling_workflow):
+    """Tests BcftoolsStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("bcftools", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for FreebayesStepPart ---------------------------------------------------------------------
@@ -179,9 +183,29 @@ def test_freebayes_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_freebayes_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
-    actual = set(dummy_cluster_config["variant_calling_freebayes_run"].keys())
-    expected = {"mem", "time", "ntasks"}
+def test_freebayes_step_part_get_resource(variant_calling_workflow):
+    """Tests FreebayesStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("freebayes", "run", resource)
+        assert actual == expected, msg_error
+
+
+def test_freebayes_step_part_get_params(variant_calling_workflow):
+    """Tests FreebayesStepPart._get_params_run()"""
+    # Define expected
+    expected = {
+        "window_length": 10000000,
+        "min_alternate_fraction": 0.05,
+        "min_mapping_quality": 1,
+        "min_repeat_entropy": 1,
+        "haplotype_length": 3,
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_params("freebayes", "run")()
     assert actual == expected
 
 
@@ -225,10 +249,15 @@ def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_gatk_hc_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
-    actual = set(dummy_cluster_config["variant_calling_gatk_hc_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_gatk_hc_step_part_get_resource(variant_calling_workflow):
+    """Tests GatkHaplotypeCallerStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("gatk_hc", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for GatkUnifiedGenotyperStepPart ----------------------------------------------------------
@@ -271,10 +300,15 @@ def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_gatk_ug_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
-    actual = set(dummy_cluster_config["variant_calling_gatk_ug_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_gatk_ug_step_part_get_resource(variant_calling_workflow):
+    """Tests GatkHaplotypeCallerStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("gatk_ug", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for GatkHaplotypeCallerGvcfStepPart -------------------------------------------------------
@@ -307,14 +341,6 @@ def test_gatk_hc_gvcf_step_part_discover_get_log_file(variant_calling_workflow):
     assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "discover") == expected
 
 
-def test_gatk_hc_gvcf_step_part_discover_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_gatk_hc_gvcf_discover"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
-
-
 def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_workflow):
     # Define expected
     base_out = (
@@ -325,7 +351,6 @@ def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_wor
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "combine_gvcf")(wildcards)
-    print(expected)
     assert actual == expected
 
 
@@ -367,14 +392,6 @@ def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_log_file(variant_calling_w
     assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "genotype_pedigree") == expected
 
 
-def test_gatk_hc_gvcf_step_part_genotype_pedigree_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_gatk_hc_gvcf_genotype_pedigree"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
-
-
 def test_gatk_hc_gvcf_step_part_genotype_cohort_get_input_files(variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "genotype_cohort")(wildcards)
@@ -399,12 +416,36 @@ def test_gatk_hc_gvcf_step_part_genotype_cohort_get_log_file(variant_calling_wor
     assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "genotype_cohort") == expected
 
 
-def test_gatk_hc_gvcf_step_part_genotype_cohort_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_gatk_hc_gvcf_genotype_cohort"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_gatk_hc_gvcf_step_part_get_resource(variant_calling_workflow):
+    """Tests GatkHaplotypeCallerGvcfStepPart.get_resource()"""
+    # Define expected
+    default_expected_dict = {
+        "threads": 1,
+        "time": "3-08:00:00",
+        "memory": "10240M",
+        "partition": "medium",
+    }
+    combine_gvcf_expected_dict = {
+        "threads": 1,
+        "time": "10-00:00:00",
+        "memory": "10240M",
+        "partition": "medium",
+    }
+
+    # Evaluate - default actions
+    all_actions = variant_calling_workflow.substep_getattr("gatk_hc_gvcf", "actions")
+    default_actions = [action for action in all_actions if action != "combine_gvcf"]
+    for action in default_actions:
+        for resource, expected in default_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = variant_calling_workflow.get_resource("gatk_hc_gvcf", action, resource)
+            assert actual == expected, msg_error
+
+    # Evaluate - action 'combine_gvcf'
+    for resource, expected in combine_gvcf_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("gatk_hc_gvcf", "combine_gvcf", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for PlatypusStepPart ----------------------------------------------------------------------
@@ -447,10 +488,15 @@ def test_platypus_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_platypus_step_part_update_cluster_config(variant_calling_workflow, dummy_cluster_config):
-    actual = set(dummy_cluster_config["variant_calling_platypus_run"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert actual == expected
+def test_platypus_step_part_get_resource(variant_calling_workflow):
+    """Tests PlatypusStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "20:00:00", "memory": "61440M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("platypus", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for VarscanStepPart ------------------------------------------------------------------------
@@ -489,16 +535,18 @@ def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("varscan", "call_pedigree")
-
     assert actual == expected
 
 
-def test_varscan_step_part_call_pedigree_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_varscan_call_pedigree"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_varscan_step_part_call_pedigree_get_resource(variant_calling_workflow):
+    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "4096M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("varscan", "call_pedigree", resource)
+        assert actual == expected, msg_error
 
 
 def test_varscan_step_part_call_cohort_get_input_files(variant_calling_workflow):
@@ -528,16 +576,18 @@ def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_calling_workflow.get_log_file("varscan", "call_cohort")
-
     assert actual == expected
 
 
-def test_varscan_step_part_call_cohort_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_varscan_call_cohort"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_varscan_step_part_call_cohort_get_resource(variant_calling_workflow):
+    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "16384M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("varscan", "call_cohort", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for BcftoolsStatsStepPart ------------------------------------------------------------------
@@ -581,12 +631,15 @@ def test_bcftools_stats_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_bcftools_stats_step_part_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_bcftools_stats_report"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_bcftools_stats_step_part_get_resource(variant_calling_workflow):
+    """Tests BcftoolsStatsStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "1024M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("bcftools_stats", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for JannovarStatisticsStepPart -------------------------------------------------------------
@@ -630,12 +683,15 @@ def test_jannovar_statistics_step_part_get_log_file(variant_calling_workflow):
     assert actual == expected
 
 
-def test_jannovar_statistics_step_part_update_cluster_config(
-    variant_calling_workflow, dummy_cluster_config
-):
-    actual = set(dummy_cluster_config["variant_calling_jannovar_statistics_report"].keys())
-    expected = {"mem", "time", "ntasks"}
-    assert expected == actual
+def test_jannovar_statistics_stats_step_part_get_resource(variant_calling_workflow):
+    """Tests JannovarStatisticsStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 2, "time": "04:00:00", "memory": "7680M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("jannovar_statistics", "run", resource)
+        assert actual == expected, msg_error
 
 
 # Tests for VariantCallingWorkflow ----------------------------------------------------------------
@@ -763,7 +819,6 @@ def test_variant_calling_workflow(variant_calling_workflow):
 def test_variant_calling_custom_pedigree_field(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -798,7 +853,6 @@ def test_variant_calling_custom_pedigree_field(
     vcw = VariantCallingWorkflow(
         dummy_workflow,
         local_minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -822,7 +876,6 @@ def test_variant_calling_custom_pedigree_field(
     vcw = VariantCallingWorkflow(
         dummy_workflow,
         local_minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -847,7 +900,6 @@ def test_variant_calling_custom_pedigree_field(
         VariantCallingWorkflow(
             dummy_workflow,
             local_minimal_config,
-            dummy_cluster_config,
             config_lookup_paths,
             config_paths,
             work_dir,

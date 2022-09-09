@@ -5,7 +5,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_coverage:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "coverage")),
     output:
-        **wf. get_output_files('cnvetti_homdel','coverage'),
+        **wf.get_output_files("cnvetti_homdel", "coverage"),
     params:
         args=wf.get_params("cnvetti_homdel", "coverage"),
     log:
@@ -18,7 +18,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_merge_neighbors:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "merge_neighbors")),
     output:
-        **wf. get_output_files('cnvetti_homdel','merge_neighbors'),
+        **wf.get_output_files("cnvetti_homdel", "merge_neighbors"),
     log:
         wf.get_log_file("cnvetti_homdel", "merge_neighbors"),
     wrapper:
@@ -29,7 +29,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_merge_cohort_vcfs:
     input:
         wf.get_input_files("cnvetti_homdel", "merge_cohort_vcfs"),
     output:
-        **wf. get_output_files('cnvetti_homdel','merge_cohort_vcfs'),
+        **wf.get_output_files("cnvetti_homdel", "merge_cohort_vcfs"),
     log:
         wf.get_log_file("cnvetti_homdel", "merge_cohort_vcfs"),
     wrapper:
@@ -40,7 +40,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_extract_ped:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "extract_ped")),
     output:
-        **wf. get_output_files('cnvetti_homdel','extract_ped'),
+        **wf.get_output_files("cnvetti_homdel", "extract_ped"),
     log:
         wf.get_log_file("cnvetti_homdel", "extract_ped"),
     params:

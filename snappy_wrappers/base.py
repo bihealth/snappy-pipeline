@@ -7,7 +7,7 @@ import os
 
 from .utils import dictify
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 class WrapperInfo:

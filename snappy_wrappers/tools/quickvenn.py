@@ -31,7 +31,7 @@ matplotlib.use("Agg")  # noqa
 import matplotlib.patches as mp  # noqa # isort:skip
 import matplotlib.pyplot as plt  # noqa # isort:skip
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Transparency alpha value to use
 ALPHA = 0.5

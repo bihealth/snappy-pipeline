@@ -1,0 +1,49 @@
+rule merge_all:
+    input: ['job_out.0.d/out/tmp_0.vcf.gz', 'job_out.1.d/out/tmp_1.vcf.gz', 'job_out.2.d/out/tmp_2.vcf.gz', 'job_out.3.d/out/tmp_3.vcf.gz', 'job_out.4.d/out/tmp_4.vcf.gz', 'job_out.5.d/out/tmp_5.vcf.gz', 'job_out.6.d/out/tmp_6.vcf.gz', 'job_out.7.d/out/tmp_7.vcf.gz', 'job_out.8.d/out/tmp_8.vcf.gz', 'job_out.9.d/out/tmp_9.vcf.gz', 'job_out.10.d/out/tmp_10.vcf.gz', 'job_out.11.d/out/tmp_11.vcf.gz', 'job_out.12.d/out/tmp_12.vcf.gz', 'job_out.13.d/out/tmp_13.vcf.gz', 'job_out.14.d/out/tmp_14.vcf.gz', 'job_out.15.d/out/tmp_15.vcf.gz', 'job_out.16.d/out/tmp_16.vcf.gz', 'job_out.17.d/out/tmp_17.vcf.gz', 'job_out.18.d/out/tmp_18.vcf.gz', 'job_out.19.d/out/tmp_19.vcf.gz', 'job_out.20.d/out/tmp_20.vcf.gz', 'job_out.21.d/out/tmp_21.vcf.gz', 'job_out.22.d/out/tmp_22.vcf.gz', 'job_out.23.d/out/tmp_23.vcf.gz', 'job_out.24.d/out/tmp_24.vcf.gz', 'job_out.25.d/out/tmp_25.vcf.gz', 'job_out.26.d/out/tmp_26.vcf.gz', 'job_out.27.d/out/tmp_27.vcf.gz', 'job_out.28.d/out/tmp_28.vcf.gz', 'job_out.29.d/out/tmp_29.vcf.gz', 'job_out.30.d/out/tmp_30.vcf.gz', 'job_out.31.d/out/tmp_31.vcf.gz', 'job_out.32.d/out/tmp_32.vcf.gz', 'job_out.33.d/out/tmp_33.vcf.gz', 'job_out.34.d/out/tmp_34.vcf.gz', 'job_out.35.d/out/tmp_35.vcf.gz', 'job_out.36.d/out/tmp_36.vcf.gz', 'job_out.37.d/out/tmp_37.vcf.gz', 'job_out.38.d/out/tmp_38.vcf.gz', 'job_out.39.d/out/tmp_39.vcf.gz', 'job_out.40.d/out/tmp_40.vcf.gz', 'job_out.41.d/out/tmp_41.vcf.gz', 'job_out.42.d/out/tmp_42.vcf.gz', 'job_out.43.d/out/tmp_43.vcf.gz', 'job_out.44.d/out/tmp_44.vcf.gz', 'job_out.45.d/out/tmp_45.vcf.gz', 'job_out.46.d/out/tmp_46.vcf.gz', 'job_out.47.d/out/tmp_47.vcf.gz', 'job_out.48.d/out/tmp_48.vcf.gz', 'job_out.49.d/out/tmp_49.vcf.gz', 'job_out.50.d/out/tmp_50.vcf.gz', 'job_out.51.d/out/tmp_51.vcf.gz', 'job_out.52.d/out/tmp_52.vcf.gz', 'job_out.53.d/out/tmp_53.vcf.gz', 'job_out.54.d/out/tmp_54.vcf.gz', 'job_out.55.d/out/tmp_55.vcf.gz', 'job_out.56.d/out/tmp_56.vcf.gz', 'job_out.57.d/out/tmp_57.vcf.gz', 'job_out.58.d/out/tmp_58.vcf.gz', 'job_out.59.d/out/tmp_59.vcf.gz', 'job_out.60.d/out/tmp_60.vcf.gz', 'job_out.61.d/out/tmp_61.vcf.gz', 'job_out.62.d/out/tmp_62.vcf.gz', 'job_out.63.d/out/tmp_63.vcf.gz', 'job_out.64.d/out/tmp_64.vcf.gz', 'job_out.65.d/out/tmp_65.vcf.gz', 'job_out.66.d/out/tmp_66.vcf.gz', 'job_out.67.d/out/tmp_67.vcf.gz', 'job_out.68.d/out/tmp_68.vcf.gz', 'job_out.69.d/out/tmp_69.vcf.gz', 'job_out.70.d/out/tmp_70.vcf.gz', 'job_out.71.d/out/tmp_71.vcf.gz']
+    output: **{'vcf': '/work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz', 'vcf_md5': '/work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.md5', 'tbi': '/work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.tbi', 'tbi_md5': '/work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}.vcf.gz.tbi.md5'}
+    threads: resource_merge_threads
+    resources:
+        time=resource_merge_time,
+        memory=resource_merge_memory,
+        partition=resource_merge_partition,
+    log: **{'conda_info': '/work/bwa.gatk_hc.P001-T1-DNA1-WGS1/log/bwa.gatk_hc.P001-T1-DNA1-WGS1.conda_info.txt', 'conda_info_md5': '/work/bwa.gatk_hc.P001-T1-DNA1-WGS1/log/bwa.gatk_hc.P001-T1-DNA1-WGS1.conda_info.txt.md5', 'conda_list': '/work/bwa.gatk_hc.P001-T1-DNA1-WGS1/log/bwa.gatk_hc.P001-T1-DNA1-WGS1.conda_list.txt', 'conda_list_md5': '/work/bwa.gatk_hc.P001-T1-DNA1-WGS1/log/bwa.gatk_hc.P001-T1-DNA1-WGS1.conda_list.txt.md5'}
+    shell:
+        r'''
+        set -euo pipefail  # Unofficial Bash strict mode
+
+        # Initialize output directory -----------------------------------------
+
+        outdir=$(basename {output.vcf})
+
+        mkdir -p output
+
+        # Concatenate files ---------------------------------------------------
+        bcftools concat \
+            --allow-overlaps \
+            -d none \
+            -o output/out.vcf.gz \
+            -O z \
+            {input}
+
+        tabix -f output/out.vcf.gz
+
+        pushd output
+        for f in *; do md5sum $f >$f.md5; done
+        popd
+
+        # Move to output directory --------------------------------------------
+        mkdir -p $(dirname {output.vcf})
+        mv output/out.vcf.gz {output.vcf}
+        mv output/out.vcf.gz.md5 {output.vcf_md5}
+        mv output/out.vcf.gz.tbi {output.tbi}
+        mv output/out.vcf.gz.tbi.md5 {output.tbi_md5}
+
+        # Write out information about conda installation.
+        conda list >{log.conda_list}
+        conda info >{log.conda_info}
+
+        pushd $(dirname {log.conda_list})
+        md5sum $(basename {log.conda_list}) >$(basename {log.conda_list}).md5
+        md5sum $(basename {log.conda_info}) >$(basename {log.conda_info}).md5
+        popd
+        '''

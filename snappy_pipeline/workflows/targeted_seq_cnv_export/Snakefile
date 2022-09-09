@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = TargetedSeqCnvExportWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = TargetedSeqCnvExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -72,12 +70,17 @@ rule targeted_seq_cnv_export_write_pedigree_run:
 
 rule targeted_seq_cnv_export_varfish_annotator_annotate_svs:
     input:
-        **wf. get_input_files('varfish_annotator','annotate'),
+        **wf.get_input_files("varfish_annotator", "annotate"),
     output:
-        **wf. get_output_files('varfish_annotator','annotate'),
+        **wf.get_output_files("varfish_annotator", "annotate"),
+    threads: wf.get_resource("varfish_annotator", "annotate", "threads")
+    resources:
+        time=wf.get_resource("varfish_annotator", "annotate", "time"),
+        memory=wf.get_resource("varfish_annotator", "annotate", "memory"),
+        partition=wf.get_resource("varfish_annotator", "annotate", "partition"),
     log:
-        **wf. get_log_file('varfish_annotator','annotate'),
+        **wf.get_log_file("varfish_annotator", "annotate"),
     params:
-        **{"args": wf. get_params('varfish_annotator','annotate')},
+        **{"args": wf.get_params("varfish_annotator", "annotate")},
     wrapper:
         wf.wrapper_path("varfish_annotator/annotate_sv")

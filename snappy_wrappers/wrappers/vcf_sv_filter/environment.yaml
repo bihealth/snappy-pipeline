@@ -2,11 +2,10 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
-- python =3.5
 - vcfpy ==0.11.1
 - pytabix ==0.0.2
 - intervaltree ==2.1.0
-
 - parallel
-- bcftools =1.6
-- htslib =1.6
+- bcftools ==1.11
+- htslib ==1.11
+- samtools ==1.11

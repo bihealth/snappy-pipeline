@@ -8,7 +8,7 @@ from snakemake import shell
 
 rcode = os.path.join(os.path.dirname(__file__), "scripts.R")
 
-__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bihealth.de>"
+__author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "snappy-run-zscores.R")
 

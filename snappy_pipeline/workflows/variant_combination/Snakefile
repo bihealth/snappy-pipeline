@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantCombinationWorkflow(
-    workflow, config, cluster_config, lookup_paths, config_paths, os.getcwd()
-)
+wf = VariantCombinationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -72,7 +70,12 @@ rule variant_combination_vars_intersect_run:
     input:
         unpack(wf.get_input_files("vars_intersect", "run")),
     output:
-        **wf. get_output_files('vars_intersect','run'),
+        **wf.get_output_files("vars_intersect", "run"),
+    threads: wf.get_resource("vars_intersect", "run", "threads")
+    resources:
+        time=wf.get_resource("vars_intersect", "run", "time"),
+        memory=wf.get_resource("vars_intersect", "run", "memory"),
+        partition=wf.get_resource("vars_intersect", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_intersect", "get_args", "run"),
     log:
@@ -88,7 +91,12 @@ rule variant_combination_vars_share_interval_run:
     input:
         unpack(wf.get_input_files("vars_share_interval", "run")),
     output:
-        **wf. get_output_files('vars_share_interval','run'),
+        **wf.get_output_files("vars_share_interval", "run"),
+    threads: wf.get_resource("vars_share_interval", "run", "threads")
+    resources:
+        time=wf.get_resource("vars_share_interval", "run", "time"),
+        memory=wf.get_resource("vars_share_interval", "run", "memory"),
+        partition=wf.get_resource("vars_share_interval", "run", "partition"),
     params:
         args=wf.substep_dispatch("vars_share_interval", "get_args", "run"),
     log:

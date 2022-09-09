@@ -29,6 +29,9 @@ EXT_VALUES = (".tsv",)
 class GeneExpressionReportStepPart(BaseStepPart):
     """Base class for gene expression quantifiers"""
 
+    #: Class available actions
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
@@ -43,6 +46,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
             )
 
     def get_log_file(self, action):
+        _ = action
         return (
             "work/{{mapper}}.{tool}.{{ngs_library}}/log/"
             "snakemake.gene_expression_quantification.log"
@@ -53,11 +57,14 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
     """Generate a dataframe holding each biosample and the location of the CNV
     calling results and the expression quantification files"""
 
+    #: Step name
     name = "aggregate_counts"
 
     @listify
     def get_input_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
+
         gene_expression = self.parent.sub_workflows["gene_expression_quantification"]
 
         for sheet in filter(is_not_background, self.parent.sheets):
@@ -82,54 +89,65 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
 
     @dictify
     def get_output_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "tsv", "work/gene_exp.tsv"
 
 
 class GeneExpressionReportRankExpression(GeneExpressionReportStepPart):
     """Take normalized expression values and rank and tabulate genes by expression for MTK"""
 
+    #: Step name
     name = "compute_ranks"
 
     @dictify
     def get_input_files(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         yield "tsv", "work/gene_exp.tsv"
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
 
 class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
     """Take normalized expression values and compute set of signatures"""
 
+    #: Step name
     name = "compute_signatures"
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return {"pdf": expand(self.base_path_out, ext=".pdf")}
 
 
 class GeneExpressionReportPlotGeneDistribution(GeneExpressionReportStepPart):
     """Take normalized expression values and plot genes in cohort context"""
 
+    #: Step name
     name = "plot_expression_distribution"
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return {"pdf": expand(self.base_path_out, ext=".genes.pdf")}
 
 
 class GeneExpressionReportWorkflow(BaseStep):
     """Perform per-sample gene expression analysis"""
 
+    #: Workflow name
     name = "gene_expression_report"
 
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
@@ -139,13 +157,10 @@ class GeneExpressionReportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -173,13 +188,12 @@ class GeneExpressionReportWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
+                    for _test_sample in bio_sample.test_samples.values():
                         ngs_library = bio_sample.rna_ngs_library
                         if ngs_library is None:
                             break
 
                         exts = EXT_VALUES + (".pdf", ".genes.pdf")
-                        print(exts)
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
@@ -190,3 +204,4 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     def check_config(self):
         """Check config attributes for presence"""
+        # TODO: verify that `path_gene_expression_quantification` is defined in configuration.

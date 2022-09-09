@@ -6,10 +6,11 @@ settings for the given step.
 """
 
 import argparse
+import io
 import os
 import sys
 
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from ruamel.yaml.comments import CommentedMap
 
 from .. import __version__
@@ -92,7 +93,8 @@ class StartStepApp:
         """Load configuration."""
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         with open(config_filename, "rt") as f:
-            config_yaml = yaml.round_trip_load(f.read())
+            yaml = ruamel_yaml.YAML()
+            config_yaml = yaml.load(f.read())
         if (
             self.args.manage_config
             and "step_config" in config_yaml
@@ -156,7 +158,8 @@ class StartStepApp:
 
         # Load default configuration, remove comment lines and lines not marked as required;
         # preserve comments
-        default_config_yaml = yaml.round_trip_load(
+        yaml = ruamel_yaml.YAML()
+        default_config_yaml = yaml.load(
             remove_yaml_comment_lines(STEP_TO_MODULE[self.step].DEFAULT_CONFIG)
         )
         only_required = remove_non_required(default_config_yaml)
@@ -166,10 +169,14 @@ class StartStepApp:
         # Create backup of config.yaml file and overwrite with new string, showing diff
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         backup_file(config_filename)
-        updated_contents = yaml.round_trip_dump(config_yaml, default_flow_style=False)
+        yaml = ruamel_yaml.YAML()
+        buf = io.StringIO()
+        yaml.dump(config_yaml, stream=buf)
+        buf.seek(0)
+        contents = buf.read()
         update_file(
             path=config_filename,
-            contents=updated_contents,
+            contents=contents,
             message="Updating project config with required default config for step {step}",
             message_args={"step": self.step},
         )

@@ -48,7 +48,6 @@ Reports
 Currently, no reports are generated.
 """
 
-import os.path
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -59,12 +58,13 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ResourceUsage,
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Available tools for checking variants
 VARIANT_CHECKERS = "peddy"
@@ -83,40 +83,45 @@ step_config:
 class PeddyStepPart(BaseStepPart):
     """Compute variant statistics using peddy"""
 
+    #: Step name
     name = "peddy"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/.done"
         self.log_path = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/" "log/snakemake.filter.log"
+            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/log/snakemake.filter.log"
         )
 
     @dictify
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        assert action == "run"
-        yield "ped", os.path.realpath(
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        )
+        # Validate action
+        self._validate_action(action)
+        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+
         tpl = (
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
-        KEY_EXT = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["variant_calling"]
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.peddy.{index_ngs_library}"
         )
-        KEY_EXT = {
+        key_ext = {
             "background_pca": ".background_pca.json",
             "het_check": ".het_check.csv",
             "html": ".html",
@@ -124,27 +129,40 @@ class PeddyStepPart(BaseStepPart):
             "ped": ".peddy.ped",
             "sex_check": ".sex_check.csv",
         }
-        for key, ext in KEY_EXT.items():
+        for key, ext in key_ext.items():
             yield key, prefix + ext
 
     def get_log_file(self, action):
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
         return self.log_path
 
-    @classmethod
-    def update_cluster_config(cls, cluster_config):
-        """Update cluster configuration with resource requirements"""
-        cluster_config["variant_checking_peddy_run"] = {
-            "mem": 15 * 1024,
-            "time": "10:00",
-            "ntasks": 1,
-        }
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="10:00:00",  # 10 hours
+            memory=f"{15 * 1024}M",
+        )
 
 
 class VariantCheckingWorkflow(BaseStep):
     """Perform germline variant checking"""
 
+    #: Workflow name
     name = "variant_checking"
+
+    #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -152,13 +170,10 @@ class VariantCheckingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
@@ -193,7 +208,7 @@ class VariantCheckingWorkflow(BaseStep):
                 for path in self.sub_steps["peddy"].get_output_files("run").values():
                     yield from expand(
                         path,
-                        mapper=self.config["tools_ngs_mapping"]["dna"],
+                        mapper=self.config["tools_ngs_mapping"],
                         var_caller=self.config["tools_variant_calling"],
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )
@@ -201,7 +216,7 @@ class VariantCheckingWorkflow(BaseStep):
             for path in self.sub_steps["peddy"].get_output_files("run").values():
                 yield from expand(
                     path,
-                    mapper=self.config["tools_ngs_mapping"]["dna"],
+                    mapper=self.config["tools_ngs_mapping"],
                     var_caller=["gatk_hc_gvcf"],
                     index_ngs_library=["whole_cohort"],
                 )

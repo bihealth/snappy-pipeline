@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 import versioneer
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 def parse_requirements(path):
@@ -29,9 +29,9 @@ def parse_requirements(path):
     return requirements
 
 
-# Enforce python version >=3.4
-if sys.version_info < (3, 4):
-    print("At least Python 3.4 is required.\n", file=sys.stderr)
+# Enforce python version >=3.7
+if sys.version_info < (3, 7):
+    print("At least Python 3.7 is required.\n", file=sys.stderr)
     sys.exit(1)
 
 with open("README.rst") as readme_file:
@@ -40,12 +40,8 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-# Use DRMAA/non-DRMAA requirements
-if "DRMAA_LIBRARY_PATH" in os.environ:
-    requirements = parse_requirements("requirements/drmaa.txt")
-else:
-    requirements = parse_requirements("requirements/base.txt")
-
+# Get requirements
+requirements = parse_requirements("requirements/base.txt")
 
 test_requirements = [
     # TODO: put package test requirements here
@@ -96,8 +92,8 @@ setup(
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
     author="Manuel Holtgrewe",
-    author_email="manuel.holtgrewe@bihealth.de",
-    url="https://gitlab.bihealth.org/cubi/snappy_pipeline",
+    author_email="manuel.holtgrewe@bih-charite.de",
+    url="https://github.com/bihealth/snappy-pipeline",
     packages=find_packages(),
     package_dir={"snappy_wrappers": "snappy_wrappers", "snappy_pipeline": "snappy_pipeline"},
     entry_points={
@@ -127,9 +123,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     test_suite="tests",
     tests_require=test_requirements,
