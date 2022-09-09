@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Tests for the mobile_element_insertion workflow module code"""
+"""Tests for the targeted_seq_mei_calling workflow module code"""
 
 import textwrap
 
 import pytest
-import ruamel.yaml as yaml
+import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.targeted_seq_mei_calling import MEIWorkflow
@@ -15,7 +15,8 @@ from .conftest import patch_module_fs
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for (germline) configuration"""
-    return yaml.round_trip_load(
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
         textwrap.dedent(
             r"""
         static_data_config:
@@ -44,7 +45,6 @@ def minimal_config():
 def mei_workflow(
     dummy_workflow,
     minimal_config,
-    dummy_cluster_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -61,7 +61,6 @@ def mei_workflow(
     return MEIWorkflow(
         dummy_workflow,
         minimal_config,
-        dummy_cluster_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -174,3 +173,15 @@ def test_scramble_analysis_step_part_get_parameters(mei_workflow):
     # Get actual
     actual = mei_workflow.get_params("scramble", "analysis")(None)
     assert actual == expected
+
+
+def test_scramble_analysis_step_part_get_resource_usage(mei_workflow):
+    """Tests ScrambleStepPart.get_resource_usage()"""
+    expected_dict = {"threads": 1, "time": "06:00:00", "memory": "8192M", "partition": "medium"}
+    for action in ("analysis", "cluster"):
+        for resource, expected in expected_dict.items():
+            msg_error = (
+                f"Assertion error for resource '{resource}' associated with action '{action}'."
+            )
+            actual = mei_workflow.get_resource("scramble", action, resource)
+            assert actual == expected, msg_error

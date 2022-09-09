@@ -83,9 +83,13 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 #: Extensions of files to create as main payload.
@@ -99,15 +103,15 @@ step_config:
   targeted_seq_mei_calling:
     # Full path to MEI reference file (fasta format)
     # if none is provided, it will use scramble's default
-    mei_refs: null
+    mei_refs: null  # OPTIONAL
     # Minimum cluster size, depth of soft-clipped reads (set to Scramble default)
-    n_cluster: 5
+    n_cluster: 5  # OPTIONAL
     # Minimum MEI alignment score (set to Scramble default)
-    mei_score: 50
+    mei_score: 50  # OPTIONAL
     # Minimum INDEL alignment score (set to Scramble default)
-    indel_score: 80
+    indel_score: 80  # OPTIONAL
     # Minimum fraction of clipped length for calling polyA tail in MEIs (set to Scramble default)
-    mei_polya_frac: 0.75
+    mei_polya_frac: 0.75  # OPTIONAL
     # Path to the ngs_mapping step
     path_ngs_mapping: ../ngs_mapping
 """
@@ -116,10 +120,10 @@ step_config:
 class ScrambleStepPart(BaseStepPart):
     """Mobile element insertion detection using GeneDx::scramble"""
 
-    #: Step name.
+    #: Step name
     name = "scramble"
 
-    #: Valid actions.
+    #: Class available actions
     actions = ("cluster", "analysis")
 
     def get_input_files(self, action):
@@ -132,14 +136,7 @@ class ScrambleStepPart(BaseStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
-        # Return requested function
+        self._validate_action(action=action)
         return getattr(self, "_get_input_files_{}".format(action))
 
     def get_output_files(self, action):
@@ -152,13 +149,7 @@ class ScrambleStepPart(BaseStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
+        self._validate_action(action=action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
     def get_log_file(self, action):
@@ -171,16 +162,10 @@ class ScrambleStepPart(BaseStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        # Initialise variable
+        # Validate action
+        self._validate_action(action=action)
+        # Set log
         name_pattern = "{mapper}.scramble.{library_name}"
-
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
         if action == "annotate":
             name_pattern_annotated = "{mapper}.scramble_annotated.{library_name}"
             return "work/{name_pattern}/log/{name_pattern}.log".format(
@@ -230,10 +215,8 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_cluster():
         """Yield output files' patterns for scramble cluster call."""
-        # Initialise variables
         name_pattern = "{mapper}.scramble.{library_name}"
         ext = "txt"
-        # Yield
         yield ext, "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext=ext
         )
@@ -242,10 +225,8 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_analysis():
         """Yield output files' patterns for scramble call."""
-        # Initialise variables
         name_pattern = "{mapper}.scramble.{library_name}"
         ext_dict = {"txt": "_MEIs.txt", "txt_md5": "_MEIs.txt.md5"}
-        # Yield
         for key, ext in ext_dict.items():
             yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
                 name_pattern=name_pattern, ext=ext
@@ -259,7 +240,6 @@ class ScrambleStepPart(BaseStepPart):
 
         :return: Returns parameters required to run analysis part of scramble.
         """
-        # Define dict with parameters
         params = {
             "reference_genome": self.w_config["static_data_config"]["reference"]["path"],
             "mei_refs": self.config["mei_refs"],
@@ -268,8 +248,25 @@ class ScrambleStepPart(BaseStepPart):
             "indel_score": self.config["indel_score"],
             "mei_polya_frac": self.config["mei_polya_frac"],
         }
-        # Return dict with parameters
         return params
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="06:00:00",  # 6 hours
+            memory=f"{8 * 1024}M",
+        )
 
 
 class MEIWorkflow(BaseStep):
@@ -281,13 +278,10 @@ class MEIWorkflow(BaseStep):
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(
-        self, workflow, config, cluster_config, config_lookup_paths, config_paths, workdir
-    ):
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(
             workflow,
             config,
-            cluster_config,
             config_lookup_paths,
             config_paths,
             workdir,
