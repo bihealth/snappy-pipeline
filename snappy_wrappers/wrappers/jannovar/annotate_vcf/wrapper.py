@@ -109,7 +109,7 @@ MALLOC_ARENA_MAX=4 \
 jannovar \
     annotate-vcf \
     -XX:MaxHeapSize=12g \
-    -XX:+UseConcMarkSweepGC \
+    -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf $TMPDIR/tmp.vcf \
     --database {snakemake.config[step_config][variant_annotation][path_jannovar_ser]} \

@@ -37,8 +37,9 @@ def minimal_config():
 
           wgs_sv_export:
             path_wgs_sv_annotation: ../WGS_SV_ANNOTATION
+            path_wgs_sv_export: ../WGS_SV_EXPORT
             tools_ngs_mapping: [bwa]
-            tools_wgs_sv_calling: [delly2]
+            tools_wgs_sv_calling: [delly2, popdel]
 
         data_sets:
           first_batch:
@@ -72,6 +73,7 @@ def wgs_sv_export_workflow(
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "wgs_sv_annotation": lambda x: "WGS_SV_ANNOTATION/" + x,
+        "wgs_sv_calling": lambda x: "WGS_SV_CALLING/" + x,
     }
     # Construct the workflow object
     return WgsSvExportWorkflow(
@@ -86,18 +88,68 @@ def wgs_sv_export_workflow(
 # Tests for VarfishAnnotatorAnnotateStepPart  ------------------------------------------------------
 
 
-def test_varfish_annotator_step_part_call_get_input_files(wgs_sv_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart.get_input_files()"""
+def test_varfish_annotator_step_part_call_get_input_files_delly2(wgs_sv_export_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart.get_input_files() with delly2"""
+    wildcards = Wildcards(
+        fromdict={
+            "index_ngs_library": "INDEX_NGS_LIBRARY",
+            "mapper": "bwa",
+            "var_caller": "delly2",
+        }
+    )
     wgs_base_name = (
-        "WGS_SV_ANNOTATION/output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
-        "{mapper}.{var_caller}.annotated.{index_ngs_library}"
+        "WGS_SV_CALLING/output/bwa.delly2.INDEX_NGS_LIBRARY/out/" "bwa.delly2.INDEX_NGS_LIBRARY"
     )
     expected = {
-        "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
+        "ped": "work/write_pedigree.INDEX_NGS_LIBRARY/out/INDEX_NGS_LIBRARY.ped",
         "vcf": wgs_base_name + ".vcf.gz",
+        "vcf_md5": wgs_base_name + ".vcf.gz.md5",
         "tbi": wgs_base_name + ".vcf.gz.tbi",
+        "tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
     }
-    actual = wgs_sv_export_workflow.get_input_files("varfish_annotator", "annotate")
+    actual = wgs_sv_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_call_get_output_files(wgs_sv_export_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart.get_output_files()"""
+    base_name_out = (
+        "work/bwa.delly2.varfish_annotated.INDEX_NGS_LIBRARY/out/"
+        "bwa.delly2.varfish_annotated.INDEX_NGS_LIBRARY"
+    )
+    expected = {
+        "gts": base_name_out + ".gts.tsv.gz",
+        "gts_md5": base_name_out + ".gts.tsv.gz.md5",
+        "feature_effects": base_name_out + ".feature-effects.tsv.gz",
+        "feature_effects_md5": base_name_out + ".feature-effects.tsv.gz.md5",
+        "db_infos": base_name_out + ".db-infos.tsv.gz",
+        "db_infos_md5": base_name_out + ".db-infos.tsv.gz.md5",
+    }
+    actual = wgs_sv_export_workflow.get_output_files("varfish_annotator", "annotate")
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_call_get_input_files_popdel(wgs_sv_export_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart.get_input_files() with popdel"""
+    wildcards = Wildcards(
+        fromdict={
+            "index_ngs_library": "INDEX_NGS_LIBRARY",
+            "mapper": "bwa",
+            "var_caller": "popdel",
+        }
+    )
+    wgs_base_name = (
+        "WGS_SV_ANNOTATION/output/bwa.popdel.annotated.INDEX_NGS_LIBRARY/out/"
+        "bwa.popdel.annotated.INDEX_NGS_LIBRARY"
+    )
+    expected = {
+        "ped": "work/write_pedigree.INDEX_NGS_LIBRARY/out/INDEX_NGS_LIBRARY.ped",
+        "vcf": wgs_base_name + ".vcf.gz",
+        "vcf_md5": wgs_base_name + ".vcf.gz.md5",
+        "tbi": wgs_base_name + ".vcf.gz.tbi",
+        "tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
+    }
+    actual = wgs_sv_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
 
 
@@ -184,7 +236,7 @@ def test_wgs_sv_annotation_workflow(wgs_sv_export_workflow):
             "feature-effects.tsv.gz.md5",
         )
         for mapper in ("bwa",)
-        for cnv_caller in ("delly2",)
+        for cnv_caller in ("delly2", "popdel")
     ]
     # Expected files in `log`
     expected += [
@@ -199,7 +251,7 @@ def test_wgs_sv_annotation_workflow(wgs_sv_export_workflow):
             "conda_list.txt.md5",
         )
         for mapper in ("bwa",)
-        for cnv_caller in ("delly2",)
+        for cnv_caller in ("delly2", "popdel")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(wgs_sv_export_workflow.get_result_files()))

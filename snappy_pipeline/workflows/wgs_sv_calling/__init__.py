@@ -191,15 +191,14 @@ class Delly2StepPart(BaseStepPart):
     name = "delly2"
 
     #: Actions in Delly 2 workflow
-    actions = ("call", "merge_calls", "genotype", "merge_genotypes", "reorder_vcf")
+    actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
     #: Directory infixes
     dir_infixes = {
         "call": r"{mapper,[^\.]+}.delly2.call.{library_name,[^\.]+}",
-        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls",
+        "merge_calls": r"{mapper,[^\.]+}.delly2.merge_calls.{index_ngs_library,[^\.]+}",
         "genotype": r"{mapper,[^\.]+}.delly2.genotype.{library_name,[^\.]+}",
-        "merge_genotypes": r"{mapper,[^\.]+}.delly2.merge_genotypes",
-        "reorder_vcf": r"{mapper,[^\.]+}.delly2.{index_ngs_library,[^\.]+}",
+        "merge_genotypes": r"{mapper,[^\.]+}.delly2.{index_ngs_library,[^\.]+}",
     }
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
@@ -226,6 +225,10 @@ class Delly2StepPart(BaseStepPart):
         self.index_ngs_library_to_pedigree = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        # Build shortcut from donor library name to pedigree
+        self.donor_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
         # Build shortcut from library name to library info
         self.library_name_to_library = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -244,7 +247,6 @@ class Delly2StepPart(BaseStepPart):
             "merge_calls": self._get_input_files_merge_calls,
             "genotype": self._get_input_files_genotype,
             "merge_genotypes": self._get_input_files_merge_genotypes,
-            "reorder_vcf": self._get_input_files_reorder_vcf,
         }
         return mapping[action]
 
@@ -256,21 +258,33 @@ class Delly2StepPart(BaseStepPart):
         for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
 
+    def _get_input_files_merge_calls_or_genotype(self, wildcards, step):
+        assert step in ("call", "genotype")
+        # Create path template to per-sample call/genotype BCF
+        infix = self.dir_infixes[step]
+        infix = infix.replace(r",[^\.]+", "")
+        tpl = os.path.join("work", infix, "out", infix + ".bcf")
+        # Yield paths to pedigree's per-sample call BCF files
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        for donor in pedigree.donors:
+            if donor.dna_ngs_library:
+                yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+
     @listify
     def _get_input_files_merge_calls(self, wildcards):
         """Return input files for "merge_calls" action"""
-        infix = self.dir_infixes["call"]
-        infix = infix.replace(r",[^\.]+", "")
-        tpl = os.path.join("work", infix, "out", infix + ".bcf")
-        for donor in self._donors_with_dna_ngs_library():
-            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+        yield from self._get_input_files_merge_calls_or_genotype(wildcards, "call")
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
         """Return input files for "genotype" action"""
-        # Sites VCF file
+        pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
+        # Per-pedigree site BCF file
         infix = self.dir_infixes["merge_calls"]
         infix = infix.replace(r",[^\.]+", "")
+        infix = infix.format(
+            mapper=wildcards.mapper, index_ngs_library=pedigree.index.dna_ngs_library.name
+        )
         yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
         # BAM files
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
@@ -281,19 +295,7 @@ class Delly2StepPart(BaseStepPart):
     @listify
     def _get_input_files_merge_genotypes(self, wildcards):
         """Return input files for "merge_genotypes" action"""
-        for donor in self._donors_with_dna_ngs_library():
-            infix = self.dir_infixes["genotype"]
-            infix = infix.replace(r",[^\.]+", "")
-            tpl = os.path.join("work", infix, "out", infix + ".bcf")
-            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
-
-    @dictify
-    def _get_input_files_reorder_vcf(self, wildcards):
-        """Return input files for "reorder_vcf" action"""
-        infix = self.dir_infixes["merge_genotypes"]
-        infix = infix.replace(r",[^\.]+", "")
-        tpl = os.path.join("work", infix, "out", infix + ".bcf")
-        yield "bcf", tpl.format(**wildcards)
+        yield from self._get_input_files_merge_calls_or_genotype(wildcards, "genotype")
 
     def _donors_with_dna_ngs_library(self):
         """Yield donors with DNA NGS library"""
@@ -316,7 +318,7 @@ class Delly2StepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             infix = self.dir_infixes[action]
             infix2 = infix.replace(r",[^\.]+", "")
-            if action != "reorder_vcf":  # generate bcf files internally
+            if action != "merge_genotypes":  # generate bcf files internally
                 name = name.replace("vcf", "bcf")
                 ext = ext.replace("vcf.gz", "bcf")
                 name = name.replace("tbi", "csi")
@@ -341,7 +343,7 @@ class Delly2StepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        if action in ("merge_genotypes", "merge_calls", "reorder_vcf"):  # cheap actions
+        if action in ("merge_genotypes", "merge_calls"):  # cheap actions
             return self.resource_usage_dict.get("cheap_action")
         else:
             return self.resource_usage_dict.get("default")

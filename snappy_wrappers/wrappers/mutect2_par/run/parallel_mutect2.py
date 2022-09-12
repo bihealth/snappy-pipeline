@@ -5,16 +5,11 @@ isort:skip_file
 """
 
 import os
-import sys
 import textwrap
 
-# A hack is required for being able to import snappy_wrappers modules when in development mode.
-# TODO: is there a more elegant way?
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
 
-from snappy_wrappers.resource_usage import ResourceUsage
-from snappy_wrappers.wrapper_parallel import (
+from snappy_wrappers.resource_usage import ResourceUsage  # noqa: E402
+from snappy_wrappers.wrapper_parallel import (  # noqa: E402
     ParallelSomaticVariantCallingBaseWrapper,
     gib_to_string,
     hours,
@@ -98,14 +93,24 @@ class ParallelMutect2Wrapper(ParallelSomaticVariantCallingBaseWrapper):
                     seconds = int(time_str) * 60
                 else:
                     raise ValueError(f"Invalid time: {{day_time_str}}")
-                seconds += days * 24 * 60 * 60
+                # Add days to second
+                seconds += days * 86400
+
+                # Apply factor
                 seconds = int(seconds * factor)
-                hours = seconds // (60 * 60)
-                seconds -= hours * 60 * 60
-                minutes = seconds // 60
-                seconds -= minutes * 60
-                seconds = min(seconds, 59)
-                return "%d-%d:%d:%d" % (days, hours, minutes, seconds)
+
+                # Normalise time
+                (norm_days, remainder) = divmod(seconds, 86400)
+                (hours, remainder) = divmod(remainder, 3600)
+                (minutes, seconds) = divmod(remainder, 60)
+
+                # Fill string - example hour '7' -> '07'
+                h_str = str(hours).zfill(2)
+                m_str = str(minutes).zfill(2)
+                s_str = str(seconds).zfill(2)
+
+                return "%d-%s:%s:%s" % (norm_days, h_str, m_str, s_str)
+
 
             def multiply_memory(memory_str, factor):
                 memory_mb = None

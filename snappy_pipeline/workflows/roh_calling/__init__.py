@@ -95,7 +95,7 @@ import os  # noqa: F401
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand, touch
+from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -116,17 +116,18 @@ DEFAULT_CONFIG = r"""
 step_config:
   roh_calling:
     path_variant_calling: ../variant_calling
-    tools_ngs_mapping: []
-    tools_variant_calling: []
+    tools_ngs_mapping:
+      - bwa
+    tools_variant_calling:
+      - gatk_hc
     tools:
-    - bcftools_roh
+      - bcftools_roh
     bcftools_roh:
-      af_tag: AF
-      gts_only: null
-      ignore_homref: true
-      skip_indels: true
-      rec_rate: null
-      threads: 2
+      path_targets: null
+      path_af_file: null
+      ignore_homref: false
+      skip_indels: false
+      rec_rate: 1e-8
 """
 
 
@@ -144,12 +145,12 @@ class BcftoolsRohStepPart(BaseStepPart):
 
     name = "bcftools_roh"
 
-    actions = ("run", "make_bed", "link_bed")
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{name}.{{library_name}}/out/" "{{mapper}}.{name}.{{library_name}}{ext}"
+            "work/{{mapper}}.{name}.{{library_name}}/out/{{mapper}}.{name}.{{library_name}}{ext}"
         )
         # Build shortcut from index library name to pedigree
         self.donor_ngs_library_to_pedigree = OrderedDict()
@@ -173,21 +174,6 @@ class BcftoolsRohStepPart(BaseStepPart):
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl.format(**wildcards) + ext)
 
-    @dictify
-    def _get_input_files_make_bed(self, wildcards):
-        """Return path for generating BED files"""
-        path = (
-            "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}.txt.gz"
-        )
-        yield "txt", path.format(**wildcards)
-
-    @staticmethod
-    def _get_input_files_link_bed(wildcards):
-        """Return path to .done file for BED file generation"""
-        _ = wildcards
-        return "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
-
     def get_output_files(self, action):
         """Return output function for bcftools_roh rule"""
         assert action in self.actions
@@ -198,53 +184,17 @@ class BcftoolsRohStepPart(BaseStepPart):
         """Return output files for ROH calling"""
         path = (
             "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}.txt.gz"
+            "{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}"
         )
-        yield "txt", path
-        yield "txt_md5", path + ".md5"
-
-    @staticmethod
-    def _get_output_files_make_bed():
-        """Return output files for the BED creation"""
-        path = "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/.done"
-        return touch(path)
-
-    @dictify
-    def _get_output_files_link_bed(self):
-        """Return output files of internal linking"""
-        tpl = (
-            "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.bcftools_roh.{donor_ngs_library}"
-        )
-        for key, ext in BED_EXTENSIONS.items():
-            yield key, tpl + ext
-
-    @staticmethod
-    def _rreplace(s, old, new, occurrence=1):
-        """Helper function for replacing last occurence."""
-        li = s.rsplit(old, occurrence)
-        return new.join(li)
-
-    def get_shell_cmd(self, action, wildcards):
-        """Return shell command for internal linking of BED files"""
-        assert action == "link_bed"
-        lines = []
-        input_files = sorted(self._get_output_files_link_bed().values())
-        for input_file in input_files:
-            input_file = input_file.format(**wildcards)
-            lines.append(
-                "ln -sr {} {};".format(
-                    input_file, BcftoolsRohStepPart._rreplace(input_file, "/old/", "/")
-                )
-            )
-        return "\n".join(lines)
+        yield "txt", path + ".regions.txt.gz"
+        yield "txt_md5", path + ".regions.txt.gz.md5"
 
     def get_log_file(self, action):
         assert action in self.actions
         return (
             "work/{mapper}.{var_caller}.bcftools_roh.{index_ngs_library}/"
-            "log/snakemake.bcftools_roh.%(action)s.log"
-        ) % {"action": action}
+            "log/snakemake.bcftools_roh.log"
+        )
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -260,11 +210,10 @@ class BcftoolsRohStepPart(BaseStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_mb = int(2000 * self.config["bcftools_roh"]["threads"])
         return ResourceUsage(
-            threads=self.config["bcftools_roh"]["threads"],
-            time="00:04:00",  # 4 minutes
-            memory=f"{mem_mb}M",
+            threads=1,
+            time="00:10:00",
+            memory="4G",
         )
 
 
@@ -339,18 +288,8 @@ class RohCallingWorkflow(BaseStep):
                 # Text file only for the index
                 yield from expand(
                     tpl,
-                    ext=[".txt.gz", ".txt.gz.md5"],
+                    ext=[".regions.txt.gz", ".regions.txt.gz.md5"],
                     donor_library=[pedigree.index.dna_ngs_library.name],
                     index_library=[pedigree.index.dna_ngs_library.name],
                     **kwargs,
                 )
-                # One BED file for each donor with a DNS librar
-                for donor in pedigree.donors:
-                    if donor.dna_ngs_library:
-                        yield from expand(
-                            tpl,
-                            ext=[".bed.gz", ".bed.gz.md5", ".bed.gz.tbi", ".bed.gz.tbi.md5"],
-                            donor_library=[donor.dna_ngs_library.name],
-                            index_library=[pedigree.index.dna_ngs_library.name],
-                            **kwargs,
-                        )

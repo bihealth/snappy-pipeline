@@ -56,7 +56,7 @@ rule gene_expression_report_aggregate_counts:
     input:
         wf.get_input_files("aggregate_counts", "run"),
     output:
-        **wf. get_output_files('aggregate_counts','run'),
+        **wf.get_output_files("aggregate_counts", "run"),
     threads: wf.get_resource("aggregate_counts", "run", "threads")
     resources:
         time=wf.get_resource("aggregate_counts", "run", "time"),
@@ -69,9 +69,9 @@ rule gene_expression_report_aggregate_counts:
 # Per sample, rank gene expression + compute some stats compared to cohort
 rule gene_expression_report_compute_ranks:
     input:
-        **wf. get_input_files('compute_ranks','run'),
+        **wf.get_input_files("compute_ranks", "run"),
     output:
-        **wf. get_output_files('compute_ranks','run'),
+        **wf.get_output_files("compute_ranks", "run"),
     threads: wf.get_resource("compute_ranks", "run", "threads")
     resources:
         time=wf.get_resource("compute_ranks", "run", "time"),
@@ -84,9 +84,9 @@ rule gene_expression_report_compute_ranks:
 # All samples together, compute signatures + plot
 rule gene_expression_report_compute_signatures:
     input:
-        **wf. get_input_files('compute_ranks','run'),
+        **wf.get_input_files("compute_ranks", "run"),
     output:
-        **wf. get_output_files('compute_signatures','run'),
+        **wf.get_output_files("compute_signatures", "run"),
     threads: wf.get_resource("compute_signatures", "run", "threads")
     resources:
         time=wf.get_resource("compute_signatures", "run", "time"),
@@ -99,9 +99,9 @@ rule gene_expression_report_compute_signatures:
 # All samples together, plot gene expression in cohort context
 rule gene_expression_report_plot_expression_distribution:
     input:
-        **wf. get_input_files('plot_expression_distribution','run'),
+        **wf.get_input_files("plot_expression_distribution", "run"),
     output:
-        **wf. get_output_files('plot_expression_distribution','run'),
+        **wf.get_output_files("plot_expression_distribution", "run"),
     threads: wf.get_resource("plot_expression_distribution", "run", "threads")
     resources:
         time=wf.get_resource("plot_expression_distribution", "run", "time"),

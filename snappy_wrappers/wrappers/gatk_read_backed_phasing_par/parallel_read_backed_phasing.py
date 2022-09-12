@@ -4,21 +4,15 @@
 isort:skip_file
 """
 
-import os
-import sys
-import textwrap
-
-# A hack is required for being able to import snappy_wrappers modules when in development mode.
-# TODO: is there a more elegant way?
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
-from snappy_wrappers.resource_usage import ResourceUsage
 from snappy_wrappers.wrapper_parallel import (
     ParallelVariantAnnotationBaseWrapper,
     gib_to_string,
     hours,
 )
+from snappy_wrappers.resource_usage import ResourceUsage
+import os
+import textwrap
+
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

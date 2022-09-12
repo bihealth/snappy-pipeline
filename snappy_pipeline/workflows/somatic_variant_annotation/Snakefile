@@ -56,18 +56,18 @@ rule somatic_variant_annotation_link_out_run:
 
 rule somatic_variant_annotation_jannovar_annotate_somatic_vcf:
     input:
-        **wf. get_input_files('jannovar','annotate_somatic_vcf'),
+        **wf.get_input_files("jannovar", "annotate_somatic_vcf"),
     output:
-        **wf. get_output_files('jannovar','annotate_somatic_vcf'),
+        **wf.get_output_files("jannovar", "annotate_somatic_vcf"),
     threads: wf.get_resource("jannovar", "annotate_somatic_vcf", "threads")
     resources:
         time=wf.get_resource("jannovar", "annotate_somatic_vcf", "time"),
         memory=wf.get_resource("jannovar", "annotate_somatic_vcf", "memory"),
         partition=wf.get_resource("jannovar", "annotate_somatic_vcf", "partition"),
     params:
-        **{'args': wf. get_params('jannovar','annotate_somatic_vcf')},
+        **{"args": wf.get_params("jannovar", "annotate_somatic_vcf")},
     log:
-        **wf. get_log_file('jannovar','annotate_somatic_vcf'),
+        **wf.get_log_file("jannovar", "annotate_somatic_vcf"),
     wrapper:
         wf.wrapper_path("jannovar_par/annotate_somatic_vcf")
 

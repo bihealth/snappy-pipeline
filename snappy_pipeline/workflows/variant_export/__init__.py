@@ -148,7 +148,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             ).format(**vals, index_ngs_library=donor.dna_ngs_library.name)
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(ngs_mapping(tpl % key))
-            if not donor.dna_ngs_library.name in self.parent.ngs_library_to_kit:
+            if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
                 continue
             path = (
                 "output/{mapper}.{index_ngs_library}/report/cov_qc/"

@@ -58,7 +58,7 @@ rule wgs_sv_calling_manta_run:
     input:
         wf.get_input_files("manta", "run"),
     output:
-        **wf. get_output_files('manta','run'),
+        **wf.get_output_files("manta", "run"),
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
@@ -77,7 +77,7 @@ rule wgs_sv_calling_delly2_call:
     input:
         unpack(wf.get_input_files("delly2", "call")),
     output:
-        **wf. get_output_files('delly2','call'),
+        **wf.get_output_files("delly2", "call"),
     threads: wf.get_resource("delly2", "call", "threads")
     resources:
         time=wf.get_resource("delly2", "call", "time"),
@@ -95,7 +95,7 @@ rule wgs_sv_calling_delly2_merge_calls:
     input:
         wf.get_input_files("delly2", "merge_calls"),
     output:
-        **wf. get_output_files('delly2','merge_calls'),
+        **wf.get_output_files("delly2", "merge_calls"),
     threads: wf.get_resource("delly2", "merge_calls", "threads")
     resources:
         time=wf.get_resource("delly2", "merge_calls", "time"),
@@ -111,7 +111,7 @@ rule wgs_sv_calling_delly2_genotype:
     input:
         unpack(wf.get_input_files("delly2", "genotype")),
     output:
-        **wf. get_output_files('delly2','genotype'),
+        **wf.get_output_files("delly2", "genotype"),
     threads: wf.get_resource("delly2", "genotype", "threads")
     resources:
         time=wf.get_resource("delly2", "genotype", "time"),
@@ -129,7 +129,7 @@ rule wgs_sv_calling_delly2_merge_genotypes:
     input:
         wf.get_input_files("delly2", "merge_genotypes"),
     output:
-        **wf. get_output_files('delly2','merge_genotypes'),
+        **wf.get_output_files("delly2", "merge_genotypes"),
     threads: wf.get_resource("delly2", "merge_genotypes", "threads")
     resources:
         time=wf.get_resource("delly2", "merge_genotypes", "time"),
@@ -141,24 +141,6 @@ rule wgs_sv_calling_delly2_merge_genotypes:
         wf.wrapper_path("delly2/germline/merge_genotypes")
 
 
-rule wgs_sv_calling_delly2_reorder_vcf:
-    input:
-        unpack(wf.get_input_files("delly2", "reorder_vcf")),
-    output:
-        **wf. get_output_files('delly2','reorder_vcf'),
-    threads: wf.get_resource("delly2", "reorder_vcf", "threads")
-    resources:
-        time=wf.get_resource("delly2", "reorder_vcf", "time"),
-        memory=wf.get_resource("delly2", "reorder_vcf", "memory"),
-        partition=wf.get_resource("delly2", "reorder_vcf", "partition"),
-    log:
-        wf.get_log_file("delly2", "reorder_vcf"),
-    params:
-        ped_members=wf.substep_getattr("delly2", "get_ped_members"),
-    wrapper:
-        wf.wrapper_path("delly2/germline/reorder_vcf")
-
-
 # SVTK Steps ------------------------------------------------------------------
 
 
@@ -166,7 +148,7 @@ rule wgs_sv_svtk_standardize:
     input:
         unpack(wf.get_input_files("svtk", "standardize")),
     output:
-        **wf. get_output_files('svtk','standardize'),
+        **wf.get_output_files("svtk", "standardize"),
     threads: wf.get_resource("svtk", "standardize", "threads")
     resources:
         time=wf.get_resource("svtk", "standardize", "time"),
@@ -185,7 +167,7 @@ rule wgs_sv_calling_pb_honey_spots_run:
     input:
         wf.get_input_files("pb_honey_spots", "run"),
     output:
-        **wf. get_output_files('pb_honey_spots','run'),
+        **wf.get_output_files("pb_honey_spots", "run"),
     threads: wf.get_resource("pb_honey_spots", "run", "threads")
     resources:
         time=wf.get_resource("pb_honey_spots", "run", "time"),
@@ -204,7 +186,7 @@ rule wgs_sv_calling_sniffles_run:
     input:
         wf.get_input_files("sniffles", "run"),
     output:
-        **wf. get_output_files('sniffles','run'),
+        **wf.get_output_files("sniffles", "run"),
     threads: wf.get_resource("sniffles", "run", "threads")
     resources:
         time=wf.get_resource("sniffles", "run", "time"),
@@ -226,7 +208,7 @@ rule wgs_sv_calling_popdel_profile:
     input:
         unpack(wf.get_input_files("popdel", "profile")),
     output:
-        **wf. get_output_files('popdel','profile'),
+        **wf.get_output_files("popdel", "profile"),
     threads: wf.get_resource("popdel", "profile", "threads")
     resources:
         time=wf.get_resource("popdel", "profile", "time"),
@@ -244,7 +226,7 @@ rule wgs_sv_calling_popdel_call:
     input:
         unpack(wf.get_input_files("popdel", "call")),
     output:
-        **wf. get_output_files('popdel','call'),
+        **wf.get_output_files("popdel", "call"),
     threads: wf.get_resource("popdel", "call", "threads")
     resources:
         time=wf.get_resource("popdel", "call", "time"),
@@ -260,7 +242,7 @@ rule wgs_sv_calling_popdel_concat_calls:
     input:
         unpack(wf.get_input_files("popdel", "concat_calls")),
     output:
-        **wf. get_output_files('popdel','concat_calls'),
+        **wf.get_output_files("popdel", "concat_calls"),
     threads: wf.get_resource("popdel", "concat_calls", "threads")
     resources:
         time=wf.get_resource("popdel", "concat_calls", "time"),
@@ -276,7 +258,7 @@ rule wgs_sv_calling_popdel_reorder_vcf:
     input:
         unpack(wf.get_input_files("popdel", "reorder_vcf")),
     output:
-        **wf. get_output_files('popdel','reorder_vcf'),
+        **wf.get_output_files("popdel", "reorder_vcf"),
     threads: wf.get_resource("popdel", "reorder_vcf", "threads")
     resources:
         time=wf.get_resource("popdel", "reorder_vcf", "time"),

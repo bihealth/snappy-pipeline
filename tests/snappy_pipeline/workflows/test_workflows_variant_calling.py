@@ -539,7 +539,7 @@ def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
 
 
 def test_varscan_step_part_call_pedigree_get_resource(variant_calling_workflow):
-    """Tests VarscanStepPart.get_resource() - action 'call_pedigree' """
+    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "4096M", "partition": "medium"}
     # Evaluate
@@ -580,7 +580,7 @@ def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
 
 
 def test_varscan_step_part_call_cohort_get_resource(variant_calling_workflow):
-    """Tests VarscanStepPart.get_resource() - action 'call_pedigree' """
+    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "16384M", "partition": "medium"}
     # Evaluate

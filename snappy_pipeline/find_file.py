@@ -177,7 +177,7 @@ class FileSystemCrawler:
                 else:
                     returned = len(set_matches)
                 # Must have the same number of matches for each pattern
-                lst_lens = [len(l) for l in set_matches.values()]
+                lst_lens = [len(i) for i in set_matches.values()]
                 if len(set(lst_lens)) != 1:
                     raise ValueError(  # pragma: no cover
                         "Must have the same number of matches per pattern, but found {}".format(

@@ -47,7 +47,7 @@ def strip(x):
         return x
 
 
-def run(args):
+def run(args):  # noqa: C901
     # Query investigation JSON from API.
     url = URL_TPL % vars(args)
     print("Fetching %s" % url, file=sys.stderr)
@@ -63,7 +63,6 @@ def run(args):
     study_top = study_infos["top_header"]
     n_source = study_top[0]["colspan"]
     n_extraction = study_top[1]["colspan"]
-    n_sample = study_top[2]["colspan"]
     cols_source = study_infos["field_header"][:n_source]
     cols_extraction = study_infos["field_header"][n_source : n_source + n_extraction]
     cols_sample = study_infos["field_header"][n_source + n_extraction :]
@@ -129,7 +128,7 @@ def run(args):
     # Generate the resulting sample sheet.
     print("\n".join(HEADER_TPL) % vars(args), file=args.output)
     for source, info in study_map.items():
-        if not source in assay_map:
+        if source not in assay_map:
             print("INFO: source %s does not have an assay." % source, file=sys.stderr)
             dict_lib = {"Name": "-.1", "Folder Name": ".", "Batch": "."}  # HAAACKY
             proc_lib = {}

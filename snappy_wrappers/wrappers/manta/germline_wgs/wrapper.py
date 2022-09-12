@@ -27,9 +27,10 @@ configManta.py \
     --runDir $workdir \
     $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
 
-python $workdir/runWorkflow.py \
-    -m local \
-    -j 16
+perl -p -i -e 's/isEmail = .*/isEmail = False/g' $workdir/runWorkflow.py
+
+python2 $workdir/runWorkflow.py \
+    --jobs 16
 
 cp -ra $workdir/results $outdir
 rm -rf $workdir

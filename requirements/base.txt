@@ -2,7 +2,7 @@
 ruamel.yaml>=0.15.35
 
 # File-based locks
-fasteners==0.14.1
+fasteners==0.17.3
 
 # We're trying to keep the PyPi package up to date, you might have to install
 # from source, though.
@@ -14,7 +14,7 @@ termcolor==1.1.0
 # Snakemake is used for providing the actual wrapper calling functionality
 snakemake >=7.8.0
 # Snakemake needs manual install of PyYAML to make YAML configuration loading work
-PyYAML>=3.12
+PyYAML>=6.0
 
 # Required for plotting
 matplotlib>=2.1.2
@@ -22,11 +22,11 @@ matplotlib>=2.1.2
 # Library for working with VCF files.
 vcfpy >=0.13.2
 # Support for vcfpy
-pysam
-pytabix
+pysam >=0.19.1
+pytabix >=0.1
 
 # Jinja 2 template rendering
-jinja2 >=2.10
+jinja2 >=3.1.2
 
 # Parsing of ISA-tab.
 altamisa >=0.2.6

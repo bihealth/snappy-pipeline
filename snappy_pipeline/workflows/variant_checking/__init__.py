@@ -48,7 +48,6 @@ Reports
 Currently, no reports are generated.
 """
 
-import os.path
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -102,9 +101,8 @@ class PeddyStepPart(BaseStepPart):
         """Return path to pedigree input file"""
         # Validate action
         self._validate_action(action)
-        yield "ped", os.path.realpath(
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        )
+        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+
         tpl = (
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
@@ -210,7 +208,7 @@ class VariantCheckingWorkflow(BaseStep):
                 for path in self.sub_steps["peddy"].get_output_files("run").values():
                     yield from expand(
                         path,
-                        mapper=self.config["tools_ngs_mapping"]["dna"],
+                        mapper=self.config["tools_ngs_mapping"],
                         var_caller=self.config["tools_variant_calling"],
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )
@@ -218,7 +216,7 @@ class VariantCheckingWorkflow(BaseStep):
             for path in self.sub_steps["peddy"].get_output_files("run").values():
                 yield from expand(
                     path,
-                    mapper=self.config["tools_ngs_mapping"]["dna"],
+                    mapper=self.config["tools_ngs_mapping"],
                     var_caller=["gatk_hc_gvcf"],
                     index_ngs_library=["whole_cohort"],
                 )

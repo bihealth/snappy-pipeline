@@ -407,8 +407,7 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
         yield "txt", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt"
         yield "txt_md5", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt.md5"
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
         return "work/{mapper}.multisite_de_novo/log/{mapper}.multisite_de_novo.log"

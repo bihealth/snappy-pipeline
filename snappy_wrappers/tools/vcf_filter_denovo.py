@@ -400,7 +400,7 @@ class HaplotypeProcessor:
             raise Exception("Missing father or mother in pedigree!")
         return father, mother
 
-    def process_record(self, record, left, right):
+    def process_record(self, record, left, right):  # noqa: C901
         """Process record with neighborhood"""
         # TODO: much better would be to process all inner of a window at once
         # Check whether record is de novo at all

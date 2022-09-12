@@ -72,7 +72,7 @@ rule targeted_seq_cnv_annotation_vcf_cnv_filter:
     input:
         unpack(wf.get_input_files("vcf_cnv_filter", "run")),
     output:
-        **wf. get_output_files('vcf_cnv_filter','run'),
+        **wf.get_output_files("vcf_cnv_filter", "run"),
     threads: wf.get_resource("vcf_cnv_filter", "run", "threads")
     resources:
         time=wf.get_resource("vcf_cnv_filter", "run", "time"),
@@ -81,6 +81,6 @@ rule targeted_seq_cnv_annotation_vcf_cnv_filter:
     params:
         step_name="targeted_seq_cnv_annotation",
     log:
-        **wf. get_log_file('vcf_cnv_filter','run'),
+        **wf.get_log_file("vcf_cnv_filter", "run"),
     wrapper:
         wf.wrapper_path("vcf_cnv_filter")

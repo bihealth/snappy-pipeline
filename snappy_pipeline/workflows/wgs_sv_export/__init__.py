@@ -2,7 +2,7 @@
 """Implementation of the ``wgs_sv_export`` step.
 
 The ``wgs_sv_export`` step takes as the input the results of the ``wgs_sv_annotation`` step and
-uses ``varfish-annotator-cli annotate`` commmand to create files fit for import into VarFish
+uses ``varfish-annotator-cli annotate-sv`` commmand to create files fit for import into VarFish
 Server.
 
 ==========
@@ -75,6 +75,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   wgs_sv_export:
     path_wgs_sv_annotation: ../wgs_sv_annotation
+    path_wgs_sv_calling: ../wgs_sv_calling
     tools_ngs_mapping: null
     tools_wgs_sv_calling: null
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
@@ -84,7 +85,7 @@ step_config:
 
 
 class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
-    """Annotate VCF file using "varfish-annotator annotate"."""
+    """Annotate VCF file using "varfish-annotator annotate-sv"."""
 
     #: Step name
     name = "varfish_annotator"
@@ -102,24 +103,40 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
-    @dictify
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        # Validate action
         self._validate_action(action)
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        tpl = (
-            "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.annotated.{index_ngs_library}"
-        )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        wgs_sv_annotation = self.parent.sub_workflows["wgs_sv_annotation"]
-        for key, ext in key_ext.items():
-            yield key, wgs_sv_annotation(tpl + ext)
+
+        @dictify
+        def input_function(wildcards):
+            tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+            yield "ped", tpl.format(**wildcards)
+            if wildcards.var_caller == "popdel":
+                tpl = (
+                    "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
+                    "{mapper}.{var_caller}.annotated.{index_ngs_library}"
+                )
+                subworkflow = self.parent.sub_workflows["wgs_sv_annotation"]
+            else:
+                tpl = (
+                    "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
+                    "{mapper}.{var_caller}.{index_ngs_library}"
+                )
+                subworkflow = self.parent.sub_workflows["wgs_sv_calling"]
+            key_ext = {
+                "vcf": ".vcf.gz",
+                "vcf_md5": ".vcf.gz.md5",
+                "tbi": ".vcf.gz.tbi",
+                "tbi_md5": ".vcf.gz.tbi.md5",
+            }
+            for key, ext in key_ext.items():
+                yield key, subworkflow(tpl.format(**wildcards) + ext)
+
+        return input_function
 
     @dictify
     def get_output_files(self, action):
-        """Return output files for the filtration"""
+        """Return output files for the export"""
         # Validate action
         self._validate_action(action)
         prefix = (
@@ -211,8 +228,6 @@ class WgsSvExportWorkflow(BaseStep):
         self.register_sub_step_classes(
             (WritePedigreeStepPart, VarfishAnnotatorAnnotateStepPart, LinkOutStepPart)
         )
-        # Register sub workflows
-        self.register_sub_workflow("wgs_sv_annotation", self.config["path_wgs_sv_annotation"])
         # Copy over "tools" setting from wgs_sv_calling/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
@@ -222,6 +237,11 @@ class WgsSvExportWorkflow(BaseStep):
             self.config["tools_wgs_sv_calling"] = self.w_config["step_config"]["wgs_sv_calling"][
                 "tools"
             ]["dna"]
+        # Register sub workflows
+        if "popdel" in self.config["tools_wgs_sv_calling"]:
+            self.register_sub_workflow("wgs_sv_annotation", self.config["path_wgs_sv_annotation"])
+        if "delly2" in self.config["tools_wgs_sv_calling"]:
+            self.register_sub_workflow("wgs_sv_calling", self.config["path_wgs_sv_calling"])
 
     @listify
     def get_result_files(self):

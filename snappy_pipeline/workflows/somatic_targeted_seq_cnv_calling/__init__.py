@@ -844,9 +844,9 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
 
         if action == "prepare":
-            # TODO: Possible bug. It should still yield dict-like format, no?
-            tpl = "work/copywriter.{action}/log/snakemake.log"
-            return tpl.format(action=action)
+            log_file = "work/copywriter.prepare/log/snakemake.log"
+            yield "log", log_file
+            yield "log_md5", log_file + ".md5"
         elif action in ("call", "run"):
             tpl = (
                 "work/{mapper}.copywriter.{library_name}/log/{mapper}.copywriter.{library_name}."

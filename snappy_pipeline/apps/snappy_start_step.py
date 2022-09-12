@@ -172,9 +172,11 @@ class StartStepApp:
         yaml = ruamel_yaml.YAML()
         buf = io.StringIO()
         yaml.dump(config_yaml, stream=buf)
+        buf.seek(0)
+        contents = buf.read()
         update_file(
             path=config_filename,
-            contents=str(buf),
+            contents=contents,
             message="Updating project config with required default config for step {step}",
             message_args={"step": self.step},
         )

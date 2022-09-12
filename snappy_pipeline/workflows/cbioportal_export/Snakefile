@@ -83,7 +83,7 @@ rule cbioportal_export_meta_files:
 
 rule cbioportal_export_patient_metadata:
     output:
-        **wf. get_output_files('cbioportal_clinical_data','run'),
+        **wf.get_output_files("cbioportal_clinical_data", "run"),
     threads: wf.get_resource("cbioportal_clinical_data", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_clinical_data", "run", "time"),
@@ -97,7 +97,7 @@ rule cbioportal_export_patient_metadata:
 
 rule cbioportal_export_case_lists:
     output:
-        **wf. get_output_files('cbioportal_case_lists','run'),
+        **wf.get_output_files("cbioportal_case_lists", "run"),
     threads: wf.get_resource("cbioportal_case_lists", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_case_lists", "run", "time"),
@@ -116,9 +116,9 @@ rule cbioportal_export_case_lists:
 
 rule cbioportal_export_generate_mafs:
     input:
-        **wf. get_input_files('cbioportal_vcf2maf','run'),
+        **wf.get_input_files("cbioportal_vcf2maf", "run"),
     output:
-        **wf. get_output_files('cbioportal_vcf2maf','run'),
+        **wf.get_output_files("cbioportal_vcf2maf", "run"),
     threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
     resources:
         time=wf.get_resource("cbioportal_vcf2maf", "run", "time"),
@@ -137,7 +137,7 @@ rule cbioportal_export_concatenate_maf:
     # TODO: could this be include in the `localrules`? Or simply incorporated into another step?
     #  It looks like some postprocessing...
     input:
-        * wf.get_input_files("cbioportal_maf", "run"),
+        *wf.get_input_files("cbioportal_maf", "run"),
     output:
         "work/upload/data_mutation_extended.txt",
     threads: wf.get_resource("cbioportal_maf", "run", "threads")

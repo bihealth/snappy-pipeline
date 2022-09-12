@@ -254,7 +254,7 @@ def test_cnvetti_on_target_step_part_get_log_file_postprocess(
 
 
 def test_cnvetti_on_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvettiOnTargetStepPart.get_resource_usage() """
+    """Tests CnvettiOnTargetStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7500M", "partition": "medium"}
     # Evaluate
@@ -292,7 +292,7 @@ def test_cnvkit_access_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 
 
 def test_cnvkit_access_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'access' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'access'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
@@ -329,7 +329,7 @@ def test_cnvkit_target_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 
 
 def test_cnvkit_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'target' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'target'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
@@ -371,7 +371,7 @@ def test_cnvkit_antitarget_step_part_get_log_file(somatic_targeted_seq_cnv_calli
 
 
 def test_cnvkit_antitarget_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget' """
+    """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget'"""
     # Define expected
     expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
@@ -870,11 +870,10 @@ def test_copywriter_step_part_get_output_files_call(somatic_targeted_seq_cnv_cal
 
 def test_copywriter_step_part_get_log_file_prepare(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CopywriterStepPart.get_log_file() - action 'prepare'"""
-    # TODO: Possible bug, I would expect it return something like the dict below.
-    #  {
-    #  "log": "work/copywriter.prepare/log/snakemake.log"
-    #  }
-    expected = {}
+    expected = {
+        "log": "work/copywriter.prepare/log/snakemake.log",
+        "log_md5": "work/copywriter.prepare/log/snakemake.log.md5",
+    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("copywriter", "prepare")
     assert actual == expected
 

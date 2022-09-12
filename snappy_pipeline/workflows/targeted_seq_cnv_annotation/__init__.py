@@ -116,9 +116,13 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        # TODO: Remove dependency from 'xhmm', it should also work if only 'gcnv' is set.
-        xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
-        if not xhmm_config["path_target_interval_list_mapping"]:
+        # Get XHMM or gCNV configuration
+        if "xhmm" in DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/tools"):
+            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
+        else:  # assume gCNV
+            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
+
+        if not tool_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
@@ -127,7 +131,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
         # Build mapping.
         regexes = {
             item["pattern"]: item["name"]
-            for item in xhmm_config["path_target_interval_list_mapping"]
+            for item in tool_config["path_target_interval_list_mapping"]
         }
         result = {}
         for donor in self.parent.all_donors():
