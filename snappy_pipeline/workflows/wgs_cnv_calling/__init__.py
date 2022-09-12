@@ -16,6 +16,12 @@ However, large-range CNVs are more reliably detected with read depth signal cons
 calling.
 
 ==========
+Stability
+==========
+
+This step is considered experimental, use it at your own discretion.
+
+==========
 Step Input
 ==========
 
