@@ -11,13 +11,20 @@ import collections
 import datetime
 import itertools
 import logging
+import os
 import sys
 
 import pysam
 import vcfpy
 from vcfpy.exceptions import InvalidRecordException
 
-from snappy_wrappers import genome_regions, sweep
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, base_dir)
+
+from snappy_wrappers import genome_regions, sweep  # noqa: E402
 
 # PED Parsing ======================================================================================
 
