@@ -80,7 +80,7 @@ fi
 bcftools concat \
     $TMPDIR/after_eb_filter.vcf \
     $TMPDIR/not_for_eb_filter.vcf.gz \
-| bcftools sort -o {snakemake.output.vcf} -O z
+| bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}
 

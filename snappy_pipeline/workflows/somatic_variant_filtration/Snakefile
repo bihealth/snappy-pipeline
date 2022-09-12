@@ -88,7 +88,7 @@ rule somatic_variant_filtration_eb_filter_write_panel:
         memory=wf.get_resource("eb_filter", "write_panel", "memory"),
         partition=wf.get_resource("eb_filter", "write_panel", "partition"),
     log:
-        wf.get_log_file("eb_filter", "write_panel"),
+        **wf.get_log_file("eb_filter", "write_panel"),
     run:
         wf.substep_getattr("eb_filter", "write_panel_of_normals_file")(wildcards)
 

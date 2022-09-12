@@ -157,11 +157,8 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         self._validate_action(action)
 
         if action == "write_panel":
-            # TODO: Possible bug. It should still yield dict-like format, no?
-            return {
-                "log": "work/{mapper}.eb_filter.panel_of_normals/log/"
-                "{mapper}.eb_filter.panel_of_normals.log"
-            }
+            # No log returned by EbFilterStepPart.write_panel_of_normals_file
+            return {}
         else:
             name_pattern = self.token
             key_ext = (
@@ -337,7 +334,6 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_output_files_write_panel(self):
-        # TODO: add the actual normal sample here?!
         yield "txt", (
             "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
             "panel_of_normals.txt"
