@@ -164,6 +164,105 @@ rule wgs_cnv_calling_cnvetti_reorder_vcf:
         wf.wrapper_path("cnvetti/wgs/reorder_vcf")
 
 
+# Delly2 Steps -------------------------------------------------------------------------------------
+
+
+rule wgs_cnv_calling_delly2_call:
+    input:
+        unpack(wf.get_input_files("delly2", "call")),
+    output:
+        **wf.get_output_files("delly2", "call"),
+    threads: wf.get_resource("delly2", "call", "threads")
+    resources:
+        time=wf.get_resource("delly2", "call", "time"),
+        memory=wf.get_resource("delly2", "call", "memory"),
+        partition=wf.get_resource("delly2", "call", "partition"),
+    log:
+        **wf.get_log_file("delly2", "call"),
+    wrapper:
+        wf.wrapper_path("delly2/germline_cnv/call")
+
+
+rule wgs_cnv_calling_delly2_merge_calls:
+    input:
+        wf.get_input_files("delly2", "merge_calls"),
+    output:
+        **wf.get_output_files("delly2", "merge_calls"),
+    threads: wf.get_resource("delly2", "merge_calls", "threads")
+    resources:
+        time=wf.get_resource("delly2", "merge_calls", "time"),
+        memory=wf.get_resource("delly2", "merge_calls", "memory"),
+        partition=wf.get_resource("delly2", "merge_calls", "partition"),
+    log:
+        **wf.get_log_file("delly2", "merge_calls"),
+    wrapper:
+        wf.wrapper_path("delly2/germline_cnv/merge_calls")
+
+
+rule wgs_cnv_calling_delly2_genotype:
+    input:
+        unpack(wf.get_input_files("delly2", "genotype")),
+    output:
+        **wf.get_output_files("delly2", "genotype"),
+    threads: wf.get_resource("delly2", "genotype", "threads")
+    resources:
+        time=wf.get_resource("delly2", "genotype", "time"),
+        memory=wf.get_resource("delly2", "genotype", "memory"),
+        partition=wf.get_resource("delly2", "genotype", "partition"),
+    log:
+        **wf.get_log_file("delly2", "genotype"),
+    wrapper:
+        wf.wrapper_path("delly2/germline_cnv/genotype")
+
+
+rule wgs_cnv_calling_delly2_merge_genotypes:
+    input:
+        wf.get_input_files("delly2", "merge_genotypes"),
+    output:
+        **wf.get_output_files("delly2", "merge_genotypes"),
+    threads: wf.get_resource("delly2", "merge_genotypes", "threads")
+    resources:
+        time=wf.get_resource("delly2", "merge_genotypes", "time"),
+        memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
+        partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
+    log:
+        **wf.get_log_file("delly2", "merge_genotypes"),
+    wrapper:
+        wf.wrapper_path("delly2/germline_cnv/merge_genotypes")
+
+
+rule wgs_cnv_calling_delly2_filter:
+    input:
+        unpack(wf.get_input_files("delly2", "filter")),
+    output:
+        **wf.get_output_files("delly2", "filter"),
+    threads: wf.get_resource("delly2", "filter", "threads")
+    resources:
+        time=wf.get_resource("delly2", "filter", "time"),
+        memory=wf.get_resource("delly2", "filter", "memory"),
+        partition=wf.get_resource("delly2", "filter", "partition"),
+    log:
+        **wf.get_log_file("delly2", "filter"),
+    wrapper:
+        wf.wrapper_path("delly2/germline_cnv/filter")
+
+
+rule wgs_cnv_calling_delly2_bcf_to_vcf:
+    input:
+        unpack(wf.get_input_files("delly2", "bcf_to_vcf")),
+    output:
+        **wf.get_output_files("delly2", "bcf_to_vcf"),
+    threads: wf.get_resource("delly2", "bcf_to_vcf", "threads")
+    resources:
+        time=wf.get_resource("delly2", "bcf_to_vcf", "time"),
+        memory=wf.get_resource("delly2", "bcf_to_vcf", "memory"),
+        partition=wf.get_resource("delly2", "bcf_to_vcf", "partition"),
+    log:
+        **wf.get_log_file("delly2", "bcf_to_vcf"),
+    wrapper:
+        wf.wrapper_path("bcftools/bcf_to_vcf")
+
+
 # Run ERDS (standard; per-donor) ----------------------------------------------
 
 
