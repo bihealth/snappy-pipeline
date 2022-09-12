@@ -1,21 +1,23 @@
-# isort:skip_file
-from snappy_wrappers.wrapper_parallel import (
+import json
+from math import ceil
+import os
+import sys
+import tempfile
+import textwrap
+
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(0, base_dir)
+
+from snappy_wrappers.wrapper_parallel import (  # noqa: E402
     ResourceUsage,
     SgeResourceUsageConverter,
     gib,
     hours,
     in_working_dir,
-)  # pylint: disable=wrong-import-position
-import json
-import os
-import sys
-import tempfile
-import textwrap
-from math import ceil
-
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
+)
 
 # TODO: call on overlapping windows, on merge make unique
 

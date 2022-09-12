@@ -5,11 +5,14 @@ import sys
 import tempfile
 import textwrap
 
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.tools.genome_windows import yield_regions
-from snappy_wrappers.wrapper_parallel import (
+from snappy_wrappers.tools.genome_windows import yield_regions  # noqa: E402
+from snappy_wrappers.wrapper_parallel import (  # noqa: E402
     ResourceUsage,
     SgeResourceUsageConverter,
     gib,
