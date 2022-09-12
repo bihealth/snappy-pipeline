@@ -87,13 +87,12 @@ Currently, no reports are generated.
 
 from collections import OrderedDict
 import os
-import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import MissingConfiguration
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,

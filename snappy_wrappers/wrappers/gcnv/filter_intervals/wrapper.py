@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from snakemake.shell import shell
 
 paths_cov = " ".join(snakemake.input.covs)
