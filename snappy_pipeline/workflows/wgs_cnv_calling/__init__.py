@@ -163,7 +163,7 @@ step_config:
       precomputed_model_paths: []  # REQUIRED
 
       # Path to BED file with uniquely mappable regions.
-      path_uniquely_mapable_bed: REQUIRED
+      path_uniquely_mapable_bed: null  # REQUIRED
 
     sv2:
       path_hg19: /fast/projects/cubit/current/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
