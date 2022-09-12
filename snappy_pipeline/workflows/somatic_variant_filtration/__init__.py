@@ -158,10 +158,10 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
 
         if action == "write_panel":
             # TODO: Possible bug. It should still yield dict-like format, no?
-            return (
-                "work/{mapper}.eb_filter.panel_of_normals/log/"
+            return {
+                "log": "work/{mapper}.eb_filter.panel_of_normals/log/"
                 "{mapper}.eb_filter.panel_of_normals.log"
-            )
+            }
         else:
             name_pattern = self.token
             key_ext = (

@@ -1,7 +1,6 @@
 channels:
 - conda-forge
 - bioconda
-- r
 - http://conda.cubi.bihealth.org/cubiconda
 dependencies:
 - ebfilter >=0.2.2
