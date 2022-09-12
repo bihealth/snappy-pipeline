@@ -61,13 +61,10 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          variant_calling:
-            tools:
-            - gatk_ug
           wgs_cnv_calling:
             variant_calling_tool: gatk_ug
             tools:
-            - erds_sv2
+            - delly2
             - gcnv
 
         data_sets:
@@ -98,10 +95,7 @@ def wgs_cnv_calling_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VARIANT_CALLING/" + x,
-    }
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return WgsCnvCallingWorkflow(
         dummy_workflow,
@@ -560,273 +554,14 @@ def test_delly2_step_part_bcf_to_vcf_get_log_file(wgs_cnv_calling_workflow):
     assert actual == expected
 
 
-# Tests for ErdsStepPart ---------------------------------------------------------------------------
-
-
-def test_erds_step_part_get_input_files(wgs_cnv_calling_workflow):
-    """Tests ErdsStepPart.get_input_files()"""
-    # Define expected
-    ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
-    variant_calling_path = "VARIANT_CALLING/output/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/"
-    expected = {
-        "bai": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
-        "tbi": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "vcf": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz",
-    }
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = wgs_cnv_calling_workflow.get_input_files("erds", "run")(wildcards)
-    assert actual == expected
-
-
-def test_erds_step_part_get_output_files_call(wgs_cnv_calling_workflow):
-    """Tests ErdsStepPart.get_output_files()"""
-    # Define expected
-    base_file_name = "work/{mapper}.erds.{library_name}/out/{mapper}.erds.{library_name}"
-    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds", "run")
-    assert actual == expected
-
-
-def test_erds_step_part_get_log_file(wgs_cnv_calling_workflow):
-    """Tests ErdsStepPart.get_log_file()"""
-    expected = "work/{mapper}.erds.{library_name}/log/snakemake.wgs_cnv_calling.log"
-    actual = wgs_cnv_calling_workflow.get_log_file("erds", "run")
-    assert actual == expected
-
-
-def test_erds_step_part_get_resource_usage(wgs_cnv_calling_workflow):
-    """Tests ErdsStepPart.get_resource_usage()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "32768M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = wgs_cnv_calling_workflow.get_resource("erds", "run", resource)
-        assert actual == expected, msg_error
-
-
-# Tests for ErdsSv2StepPart -----------------------------------------------------------------------
-
-
-def test_erds_sv2_step_part_get_input_files_call(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_call()"""
-    # Define expected
-    ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
-    variant_calling_path = "VARIANT_CALLING/output/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/"
-    expected = {
-        "bai": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
-        "tbi": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz.tbi",
-        "vcf": variant_calling_path + "bwa.gatk_ug.P001-N1-DNA1-WGS1.vcf.gz",
-    }
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "call")(wildcards)
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_input_files_merge_calls(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_merge_calls()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    # Define expected
-    expected = [
-        "work/bwa.erds_sv2.call.P001-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P001-N1-DNA1-WGS1.vcf.gz",
-        "work/bwa.erds_sv2.call.P002-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P002-N1-DNA1-WGS1.vcf.gz",
-        "work/bwa.erds_sv2.call.P003-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P003-N1-DNA1-WGS1.vcf.gz",
-        "work/bwa.erds_sv2.call.P004-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P004-N1-DNA1-WGS1.vcf.gz",
-        "work/bwa.erds_sv2.call.P005-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P005-N1-DNA1-WGS1.vcf.gz",
-        "work/bwa.erds_sv2.call.P006-N1-DNA1-WGS1/out/bwa.erds_sv2.call.P006-N1-DNA1-WGS1.vcf.gz",
-    ]
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "merge_calls")(wildcards)
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_input_files_genotype(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_genotype()"""
-    lb_name = "P001-N1-DNA1-WGS1"
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": lb_name})
-    # Define expected
-    expected = {
-        "bam": f"NGS_MAPPING/output/bwa.{lb_name}/out/bwa.{lb_name}.bam",
-        "vcf_cnv": "work/bwa.erds_sv2.merge_calls/out/bwa.erds_sv2.merge_calls.vcf.gz",
-        "vcf_small": (
-            f"VARIANT_CALLING/output/bwa.gatk_ug.{lb_name}/out/" f"bwa.gatk_ug.{lb_name}.vcf.gz"
-        ),
-        "ped": f"work/write_pedigree.{lb_name}/out/{lb_name}.ped",
-    }
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "genotype")(wildcards)
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_input_files_info_to_format(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_info_to_format()"""
-    lb_name = "P001-N1-DNA1-WGS1"
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": lb_name})
-    # Define expected
-    expected = [f"work/bwa.erds_sv2.genotype.{lb_name}/out/bwa.erds_sv2.genotype.{lb_name}.vcf.gz"]
-    # Get actual
-    actual = sorted(
-        wgs_cnv_calling_workflow.get_input_files("erds_sv2", "info_to_format")(wildcards)
-    )
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_input_files_merge_genotypes(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_merge_genotypes()"""
-    work_part = "work/bwa.erds_sv2.info_to_format.P00"
-    out_part = "-N1-DNA1-WGS1/out/bwa.erds_sv2.info_to_format.P00"
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    # Define expected
-    expected = [
-        f"{work_part}1{out_part}1-N1-DNA1-WGS1.vcf.gz",
-        f"{work_part}2{out_part}2-N1-DNA1-WGS1.vcf.gz",
-        f"{work_part}3{out_part}3-N1-DNA1-WGS1.vcf.gz",
-        f"{work_part}4{out_part}4-N1-DNA1-WGS1.vcf.gz",
-        f"{work_part}5{out_part}5-N1-DNA1-WGS1.vcf.gz",
-        f"{work_part}6{out_part}6-N1-DNA1-WGS1.vcf.gz",
-    ]
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "merge_genotypes")(wildcards)
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_input_files_reorder_vcf(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_input_files_reorder_vcf()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    # Define expected
-    expected = {"vcf": "work/bwa.erds_sv2.merge_genotypes/out/bwa.erds_sv2.merge_genotypes.vcf.gz"}
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_input_files("erds_sv2", "reorder_vcf")(wildcards)
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_output_files_call(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_output_files_call()"""
-    # Define expected
-    base_file_name = (
-        "work/{mapper}.erds_sv2.call.{library_name}/out/{mapper}.erds_sv2.call.{library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "call")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_call_output_files_merge_calls(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_output_files_merge_calls()"""
-    # Define expected
-    base_name = "work/{mapper}.erds_sv2.merge_calls/out/{mapper}.erds_sv2.merge_calls"
-    expected = {
-        "vcf": f"{base_name}.vcf.gz",
-        "tbi": f"{base_name}.vcf.gz.tbi",
-        "vcf_md5": f"{base_name}.vcf.gz.md5",
-        "tbi_md5": f"{base_name}.vcf.gz.tbi.md5",
-    }
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "merge_calls")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_call_output_files_genotype(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_output_files_genotype()"""
-    # Define expected
-    base_file_name = (
-        "work/{mapper}.erds_sv2.genotype.{library_name}/out/"
-        "{mapper}.erds_sv2.genotype.{library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "genotype")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_call_output_files_info_to_format(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_output_files_info_to_format()"""
-    # Define expected
-    base_file_name = (
-        "work/{mapper}.erds_sv2.info_to_format.{library_name}/out/"
-        "{mapper}.erds_sv2.info_to_format.{library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "info_to_format")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_call_output_files_merge_genotypes(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart._get_output_files_merge_genotypes()"""
-    # Define expected
-    base_file_name = "work/{mapper}.erds_sv2.merge_genotypes/out/{mapper}.erds_sv2.merge_genotypes"
-    expected = get_expected_output_vcf_files_dict(base_out=base_file_name)
-    # Get actual
-    actual = wgs_cnv_calling_workflow.get_output_files("erds_sv2", "merge_genotypes")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_log_file(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart.get_log_file()"""
-    expected = "work/{mapper}.erds_sv2.call.{library_name}/log/snakemake.log"
-    actual = wgs_cnv_calling_workflow.get_log_file("erds_sv2", "call")
-    assert actual == expected
-
-
-def test_erds_sv2_step_part_get_resource_usage(wgs_cnv_calling_workflow):
-    """Tests ErdsSv2StepPart.get_resource()"""
-    # Define tested actions
-    cheap_actions = ("info_to_format", "merge_genotypes", "merge_calls", "reorder_vcf")
-    all_actions = wgs_cnv_calling_workflow.substep_getattr("erds_sv2", "actions")
-    default_actions = [action for action in all_actions if action not in cheap_actions + ("call",)]
-    # Define expected
-    call_expected_dict = {
-        "threads": 1,
-        "time": "6-08:00:00",
-        "memory": "40960M",
-        "partition": "medium",
-    }
-    cheap_expected_dict = {
-        "threads": 2,
-        "time": "1-00:00:00",
-        "memory": "7680M",
-        "partition": "medium",
-    }
-    default_expected_dict = {
-        "threads": 4,
-        "time": "6-08:00:00",
-        "memory": "30720M",
-        "partition": "medium",
-    }
-    # Evaluate - call
-    for resource, expected in call_expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}' in action 'call'."
-        actual = wgs_cnv_calling_workflow.get_resource("erds_sv2", "call", resource)
-        assert actual == expected, msg_error
-    # Evaluate - cheap actions
-    for action in cheap_actions:
-        for resource, expected in cheap_expected_dict.items():
-            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = wgs_cnv_calling_workflow.get_resource("erds_sv2", action, resource)
-            assert actual == expected, msg_error
-    # Evaluate - all other actions
-    for action in default_actions:
-        for resource, expected in default_expected_dict.items():
-            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = wgs_cnv_calling_workflow.get_resource("erds_sv2", action, resource)
-            assert actual == expected, msg_error
-
-
 # Tests for VariantCallingWorkflow ----------------------------------------------------------------
 
 
 def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["cnvetti", "delly2", "erds", "erds_sv2", "link_out", "write_pedigree"]
-    expected = ["cnvetti", "delly2", "erds", "erds_sv2", "gcnv", "link_out", "write_pedigree"]
+    expected = ["cnvetti", "delly2", "gcnv", "link_out", "write_pedigree"]
+
     assert list(sorted(wgs_cnv_calling_workflow.sub_steps.keys())) == expected
     # Check result file construction
     tpl = (
@@ -838,7 +573,7 @@ def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
         for i in (1, 4)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for cnv_caller in ("erds_sv2", "gcnv")
+        for cnv_caller in ("delly2", "gcnv")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(wgs_cnv_calling_workflow.get_result_files()))

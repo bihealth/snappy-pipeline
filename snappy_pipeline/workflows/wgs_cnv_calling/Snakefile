@@ -164,7 +164,7 @@ rule wgs_cnv_calling_cnvetti_reorder_vcf:
         wf.wrapper_path("cnvetti/wgs/reorder_vcf")
 
 
-# Delly2 Steps -------------------------------------------------------------------------------------
+# Delly2 steps ---------------------------------------------------
 
 
 rule wgs_cnv_calling_delly2_call:
@@ -263,127 +263,7 @@ rule wgs_cnv_calling_delly2_bcf_to_vcf:
         wf.wrapper_path("bcftools/bcf_to_vcf")
 
 
-# Run ERDS (standard; per-donor) ----------------------------------------------
-
-
-rule wgs_cnv_calling_erds_run:
-    input:
-        unpack(wf.get_input_files("erds", "run")),
-    output:
-        **wf.get_output_files("erds", "run"),
-    threads: wf.get_resource("erds", "run", "threads")
-    resources:
-        time=wf.get_resource("erds", "run", "time"),
-        memory=wf.get_resource("erds", "run", "memory"),
-        partition=wf.get_resource("erds", "run", "partition"),
-    log:
-        wf.get_log_file("erds", "run"),
-    wrapper:
-        wf.wrapper_path("erds")
-
-
-# Run ERDS (with SV2 genotyping) ----------------------------------------------
-
-
-rule wgs_cnv_calling_erds_sv2_call:
-    input:
-        unpack(wf.get_input_files("erds_sv2", "call")),
-    output:
-        **wf.get_output_files("erds_sv2", "call"),
-    threads: wf.get_resource("erds_sv2", "call", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "call", "time"),
-        memory=wf.get_resource("erds_sv2", "call", "memory"),
-        partition=wf.get_resource("erds_sv2", "call", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "call"),
-    wrapper:
-        wf.wrapper_path("erds")
-
-
-rule wgs_cnv_calling_erds_sv2_merge_calls:
-    input:
-        wf.get_input_files("erds_sv2", "merge_calls"),
-    output:
-        **wf.get_output_files("erds_sv2", "merge_calls"),
-    threads: wf.get_resource("erds_sv2", "merge_calls", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "merge_calls", "time"),
-        memory=wf.get_resource("erds_sv2", "merge_calls", "memory"),
-        partition=wf.get_resource("erds_sv2", "merge_calls", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "merge_calls"),
-    wrapper:
-        wf.wrapper_path("erds_sv2/merge_calls")
-
-
-rule wgs_cnv_calling_erds_sv2_genotype:
-    input:
-        unpack(wf.get_input_files("erds_sv2", "genotype")),
-    output:
-        **wf.get_output_files("erds_sv2", "genotype"),
-    threads: wf.get_resource("erds_sv2", "genotype", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "genotype", "time"),
-        memory=wf.get_resource("erds_sv2", "genotype", "memory"),
-        partition=wf.get_resource("erds_sv2", "genotype", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "genotype"),
-    wrapper:
-        wf.wrapper_path("erds_sv2/genotype")
-
-
-rule wgs_cnv_calling_erds_sv2_info_to_format:
-    input:
-        unpack(wf.get_input_files("erds_sv2", "info_to_format")),
-    output:
-        **wf.get_output_files("erds_sv2", "info_to_format"),
-    threads: wf.get_resource("erds_sv2", "info_to_format", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "info_to_format", "time"),
-        memory=wf.get_resource("erds_sv2", "info_to_format", "memory"),
-        partition=wf.get_resource("erds_sv2", "info_to_format", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "info_to_format"),
-    wrapper:
-        wf.wrapper_path("erds_sv2/info_to_format")
-
-
-rule wgs_cnv_calling_erds_sv2_merge_genotypes:
-    input:
-        wf.get_input_files("erds_sv2", "merge_genotypes"),
-    output:
-        **wf.get_output_files("erds_sv2", "merge_genotypes"),
-    threads: wf.get_resource("erds_sv2", "merge_genotypes", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "merge_genotypes", "time"),
-        memory=wf.get_resource("erds_sv2", "merge_genotypes", "memory"),
-        partition=wf.get_resource("erds_sv2", "merge_genotypes", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "merge_genotypes"),
-    wrapper:
-        wf.wrapper_path("erds_sv2/merge_genotypes")
-
-
-rule wgs_cnv_calling_erds_sv2_reorder_vcf:
-    input:
-        unpack(wf.get_input_files("erds_sv2", "reorder_vcf")),
-    output:
-        **wf.get_output_files("erds_sv2", "reorder_vcf"),
-    threads: wf.get_resource("erds_sv2", "reorder_vcf", "threads")
-    resources:
-        time=wf.get_resource("erds_sv2", "reorder_vcf", "time"),
-        memory=wf.get_resource("erds_sv2", "reorder_vcf", "memory"),
-        partition=wf.get_resource("erds_sv2", "reorder_vcf", "partition"),
-    log:
-        wf.get_log_file("erds_sv2", "reorder_vcf"),
-    params:
-        ped_members=wf.substep_getattr("erds_sv2", "get_ped_members"),
-    wrapper:
-        wf.wrapper_path("erds_sv2/reorder_vcf")
-
-
-# GATK-gCNV -------------------------------------------------------------------
+# GATK-gCNV steps  ---------------------------------------------------
 
 
 include: "gcnv.rules"
