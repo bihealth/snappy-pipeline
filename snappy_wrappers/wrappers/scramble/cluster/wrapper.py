@@ -27,3 +27,10 @@ mkdir -p $(dirname {snakemake.output.txt})
 cluster_identifier {snakemake.input} > {snakemake.output.txt}
 """
 )
+
+# Compute MD5 sums of log
+shell(
+    r"""
+md5sum {snakemake.log} > {snakemake.log}.md5
+"""
+)

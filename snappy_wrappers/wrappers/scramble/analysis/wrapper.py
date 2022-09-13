@@ -44,13 +44,19 @@ scramble.sh  {mei_ref_argument} \
   --indel-score {snakemake.params.args[indel_score]} \
   --poly-a-frac {snakemake.params.args[mei_polya_frac]} \
   --eval-meis
+
+# Post-process VCF
+bgzip --stdout {snakemake.output.vcf} > {snakemake.output.vcf_gz}
+tabix {snakemake.output.vcf_gz}
 """
 )
 
-# Compute MD5 sums of log and MEI txt.
+# Compute MD5 sums of log and MEI output
 shell(
     r"""
 md5sum {snakemake.log} > {snakemake.log}.md5
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+md5sum {snakemake.output.vcf_gz} > {snakemake.output.vcf_gz_md5}
+md5sum {snakemake.output.tbi} > {snakemake.output.tbi_md5}
 """
 )
