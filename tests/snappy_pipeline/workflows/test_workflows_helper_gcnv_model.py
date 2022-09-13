@@ -108,6 +108,62 @@ def test_gcnv_get_cnv_model_result_files(helper_gcnv_model_workflow):
     assert actual == expected
 
 
+def test_gcnv_get_resource(helper_gcnv_model_workflow):
+    """Tests BuildGcnvModelStepPart.get_resource()"""
+    high_resource_action_list = (
+        "call_cnvs_cohort_mode",
+        "call_cnvs_case_mode",
+        "post_germline_calls",
+        "post_germline_calls_cohort_mode",
+        "post_germline_calls_case_mode",
+    )
+    actions = (
+        "preprocess_intervals",
+        "annotate_gc",
+        "filter_intervals",
+        "scatter_intervals",
+        "coverage",
+        "contig_ploidy",
+        "scatter_intervals",
+        "call_cnvs_cohort_mode",
+        "post_germline_calls",
+        "post_germline_calls_cohort_mode",
+        "merge_cohort_vcfs",
+    )
+    expected_low = {
+        "threads": 1,
+        "time": "04:00:00",
+        "memory": "7680M",
+    }
+    expected_high = {
+        "threads": 16,
+        "time": "2-00:00:00",
+        "memory": "46080M",
+    }
+    for action in actions:
+        for resource in expected_low.keys():
+            if action == "filter_intervals" and resource == "memory":
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
+                    None, attempt=1
+                )
+                assert actual == "20480M"
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
+                    None, attempt=2
+                )
+                assert actual == "24576M"
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
+                    None, attempt=3
+                )
+                assert actual == "28672M"
+            else:
+                if action in high_resource_action_list:
+                    actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)
+                    assert actual == expected_high.get(resource)
+                else:
+                    actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)
+                    assert actual == expected_low.get(resource)
+
+
 def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(helper_gcnv_model_workflow):
     """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs_cohort_mode()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
