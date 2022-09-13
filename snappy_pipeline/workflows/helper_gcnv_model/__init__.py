@@ -85,6 +85,7 @@ The default configuration is as follows.
 
 import os
 
+import attr
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards
 
@@ -229,6 +230,28 @@ class BuildGcnvModelStepPart(GcnvWgsStepPart):
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             library_kit=chosen_kits,
         )
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        result = super().get_resource_usage(action)
+
+        def get_memory(wildcards, input=None, threads=None, attempt=None):
+            _, _ = input, threads  # unused but cannot be renamed
+            return f"{attempt * 4 * 1024 + 16 * 1024}M"
+
+        if action == "filter_intervals":
+            result = attr.evolve(
+                result,
+                memory=get_memory,
+            )
+
+        return result
 
 
 class HelperBuildGcnvModelWorkflow(BaseStep):
