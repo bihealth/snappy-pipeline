@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """Definition for Jannovar somatic annotation in parallel, genome is split into windows
-
-isort:skip_file
 """
+import os
+import sys
 
-from snappy_wrappers.wrapper_parallel import (
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
+
+from snappy_wrappers.resource_usage import ResourceUsage  # noqa: E402
+from snappy_wrappers.wrapper_parallel import (  # noqa: E402
     ParallelSomaticVariantAnnotationBaseWrapper,
     gib_to_string,
     hours,
 )
-from snappy_wrappers.resource_usage import ResourceUsage
-import os
 
 
 class ParallelJannovarAnnotateSomaticVcfWrapper(ParallelSomaticVariantAnnotationBaseWrapper):

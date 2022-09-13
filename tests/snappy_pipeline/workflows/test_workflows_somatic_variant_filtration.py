@@ -211,10 +211,6 @@ def test_eb_eb_filter_step_part_get_log_file_run(somatic_variant_filtration_work
 
 def test_eb_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_log_file_write_panel()"""
-    # TODO: Possible bug, I would expect it return something like the dict below.
-    #  {
-    #  "log": "work/{mapper}.eb_filter.panel_of_normals/log/{mapper}.eb_filter.panel_of_normals.log"
-    #  }
     expected = {}
     actual = somatic_variant_filtration_workflow.get_log_file("eb_filter", "write_panel")
     assert actual == expected

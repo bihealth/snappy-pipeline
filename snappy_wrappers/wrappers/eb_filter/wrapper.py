@@ -77,15 +77,10 @@ else
     > $TMPDIR/after_eb_filter.vcf
 fi
 
-# Hack: get back bin directory of base/root environment.
-export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
-
 bcftools concat \
     $TMPDIR/after_eb_filter.vcf \
     $TMPDIR/not_for_eb_filter.vcf.gz \
-| snappy-vcf_sort $REF.fai \
-| bgzip -c \
-> {snakemake.output.vcf}
+| bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}
 
