@@ -1,4 +1,4 @@
 channels:
   - bioconda
 dependencies:
-  - scramble
+  - scramble >=1.0.2
