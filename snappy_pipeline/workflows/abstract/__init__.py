@@ -353,27 +353,28 @@ class DataSetInfo:
         :param sheet_path: Path to sheet file that should be loaded.
         :type sheet_path: str
 
-        :param base_paths:  All base paths of all configuration, too look for ``sheet_path``.
+        :param base_paths:  All base paths of all configuration, to look for ``sheet_path``.
         :type base_paths: list
 
         :param search_paths: Search paths for the files in the sample sheet.
+        :type search_paths: list
 
         :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
         right: '**/*_R2_*.fastq.gz'}".
         :type search_patterns: dict
 
-        :param sheet_type: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
+        :param sheet_type: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
         attempt to load from sheet.
         :type sheet_type: str
 
-        :param is_background: Whether or not the data set info is to be used only for background.
+        :param is_background: Whether the data set info is to be used only for background.
         :type is_background: bool
 
         :param naming_scheme: Selected naming schema: either 'secondary_id_pk' or
         'only_secondary_id'.
         :type naming_scheme: str
 
-        :param mixed_se_pe: Whether or not mixing SE and PE data sets is allowed.
+        :param mixed_se_pe: Whether mixing SE and PE data sets is allowed.
 
         :param sodar_uuid: The UUID of the corresponding SODAR project.
         :type sodar_uuid: str
@@ -390,22 +391,22 @@ class DataSetInfo:
         self.name = name
         #: Path to the sheet file, for loading
         self.sheet_path = sheet_path
-        #: All base paths of all configuration, too look for ``sheet_path``
+        #: All base paths of all configuration, to look for ``sheet_path``
         self.base_paths = base_paths
         #: Search paths for the files in the sample sheet
         self.search_paths = list(search_paths)
         #: Search patterns
         self.search_patterns = search_patterns
-        #: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will attempt to load
+        #: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will attempt to load
         # from sheet.
         self.sheet_type = sheet_type
-        #: Whether or not the data set info is to be used only for background
+        #: Whether the data set info is to be used only for background
         self.is_background = is_background
         #: Selected naming schema
         if naming_scheme not in NAMING_SCHEMES:
             raise ValueError("Invalid naming scheme: {}".format(naming_scheme))  # pragma: no cover
         self.naming_scheme = naming_scheme
-        #: Whether or not mixing SE and PE data sets is allowed.
+        #: Whether mixing SE and PE data sets is allowed.
         self.mixed_se_pe = mixed_se_pe
         #: The BioMed SampleSheet
         self.sheet = self._load_sheet()
@@ -637,7 +638,7 @@ class BaseStep:
 
         :param config_keys: List of strings with all keys that must be present in the configuration
         for a given step of the analysis to be performed.
-        :type config_keys: list
+        :type config_keys: tuple
 
         :param msg: Message to be used in case of exception.
         :type msg: str
