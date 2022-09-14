@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
-
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
@@ -12,6 +11,7 @@ import os.path
 import sys
 import typing
 
+import attr
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -361,7 +361,7 @@ class DataSetInfo:
 
         :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
         right: '**/*_R2_*.fastq.gz'}".
-        :type search_patterns: dict
+        :type search_patterns: List[Dict[str, str]]
 
         :param sheet_type: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
         attempt to load from sheet.
@@ -474,6 +474,17 @@ class DataSetInfo:
         sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
         sheet.extra_infos["is_background"] = flag
         return sheet
+
+
+@attr.s(frozen=True, auto_attribs=True)
+class DataSearchInfo:
+    """Data search information - simplified version of ``DataSetInfo``."""
+
+    sheet_path: str
+    base_paths: list
+    search_paths: list
+    search_patterns: list
+    mixed_se_pe: bool
 
 
 class BaseStep:
@@ -800,6 +811,17 @@ class BaseStep:
                 data_set.get("pedigree_field", None),
             )
 
+    def _load_data_search_infos(self):
+        """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
+        for _, data_set in self.w_config["data_sets"].items():
+            yield DataSearchInfo(
+                sheet_path=data_set["file"],
+                base_paths=self.config_lookup_paths,
+                search_paths=self.config["search_paths"],
+                search_patterns=self.config["search_patterns"],
+                mixed_se_pe=True,
+            )
+
     @classmethod
     def wrapper_path(cls, path):
         """Generate path to wrapper"""
@@ -852,7 +874,6 @@ class LinkInPathGenerator:
                 pat_md5 = [pattern + ".md5" for pattern in pat.values()]
                 pat_names_md5 = [pattern + "_md5" for pattern in pat.keys()]
                 patterns.append(PatternSet(pat_md5, names=pat_names_md5))
-
             # Crawl all root paths, link in the resulting files
             for root_path in self._get_shell_cmd_root_paths(info):
                 if root_path in seen_root_paths:
@@ -1033,6 +1054,61 @@ class LinkInStep(BaseStepPart):
         raise ImplementationUnavailableError(
             "run() not implemented for linking in reads"
         )  # pragma: no cover
+
+
+class LinkInExternalStepPart(LinkInStep):
+    """Link in the external VCF files."""
+
+    #: Step name
+    name = "link_in_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_shell_cmd(self, action, wildcards):
+        """Return call for linking in the files
+
+        The files are linked, keeping their relative paths to the item matching the "folderName"
+        intact.
+        """
+        self._validate_action(action)
+        # Define path generator
+        path_gen = LinkInPathGenerator(
+            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
+        )
+        # Get base out path
+        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Perform the command generation
+        lines = []
+        tpl = (
+            "mkdir -p {out_path}/{path_infix} && "
+            "{{{{ test -h {out_path}/{path_infix}/{filename} || "
+            "ln -sr {src_path}/{filename} {out_path}/{path_infix}; }}}}"
+        )
+        filenames = {}
+        for src_path, path_infix, filename in path_gen.run(
+            folder_name=wildcards.library_name, pattern_set_keys=("vcf", "vcf_md5")
+        ):
+            new_path = os.path.join(out_path, path_infix, filename)
+            if new_path in filenames:
+                if filenames[new_path] == src_path:
+                    continue  # ignore TODO: better correct this
+                msg = "WARNING: Detected double output path {}"
+                print(msg.format(filename), file=sys.stderr)
+            filenames[new_path] = src_path
+            lines.append(
+                tpl.format(
+                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                )
+            )
+        if not lines:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
+        return "\n".join(lines)
 
 
 class InputFilesStepPartMixin:

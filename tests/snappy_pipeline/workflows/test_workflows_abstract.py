@@ -12,7 +12,9 @@ from snakemake.io import Wildcards
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
+    DataSearchInfo,
     DataSetInfo,
+    LinkInExternalStepPart,
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
@@ -92,10 +94,13 @@ def test_data_set_info_load_cancer_tsv(cancer_sheet_fake_fs, config_lookup_paths
     assert actual == expected
 
 
-# Test LinkInPathGenerator ------------------------------------------------------------------------
+# Test LinkInPathGenerator -------------------------------------------------------------------------
 
 
-def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, work_dir, mocker):
+def test_link_in_path_generator_data_set_info(
+    germline_sheet_fake_fs, config_lookup_paths, work_dir, mocker
+):
+    """Tests LinkInPathGenerator.run() using ``DataSetInfo`` as input"""
     # Patch out the file system related things in the abstract workflow module
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Exercise the code under test
@@ -123,7 +128,38 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
     assert list(generator.run("P001")) == expected
 
 
-# Test LinkInStep ------------------------------------------------------------------------
+def test_link_in_path_generator_data_search_info(
+    germline_sheet_with_ext_vcf_fake_fs, config_lookup_paths, work_dir, mocker
+):
+    """Tests LinkInPathGenerator.run() using ``DataSearchInfo`` as input"""
+    # Patch out the file system related things in the abstract workflow module
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_with_ext_vcf_fake_fs, mocker
+    )
+    # Define input
+    info = DataSearchInfo(
+        sheet_path="sheet.tsv",
+        base_paths=config_lookup_paths,
+        search_paths=["/vcf_path"],
+        search_patterns=[{"vcf": "*_dragen.vcf.gz"}],
+        mixed_se_pe=True,
+    )
+    # Define expected
+    root_path = "/vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1"
+    expected = [
+        (root_path, ".", "P001_dragen.vcf.gz"),
+        (root_path, ".", "P001_dragen.vcf.gz.md5"),
+    ]
+    # Check results
+    actual = list(
+        LinkInPathGenerator(work_dir, [info], [], cache_file_name="_cache_file").run(
+            "P001-N1-DNA1-WGS1", ("vcf", "vcf_md5")
+        )
+    )
+    assert actual == expected
+
+
+# Test LinkInStep ----------------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -204,9 +240,7 @@ def test_link_in_step_part_get_output_files(dummy_generic_step):
     assert actual == expected
 
 
-def test_link_in_step_part_get_shell_cmd(
-    germline_sheet_fake_fs, config_lookup_paths, work_dir, mocker, dummy_generic_step
-):
+def test_link_in_step_part_get_shell_cmd(germline_sheet_fake_fs, mocker, dummy_generic_step):
     # Patch out file system--related stuff in abstract workflow
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Exercise code under test
@@ -225,7 +259,7 @@ def test_link_in_step_part_get_shell_cmd(
 
 
 def test_link_in_step_part_get_shell_cmd_double_link_in_regression(
-    germline_sheet_fake_fs2, config_lookup_paths, work_dir, mocker, capsys, dummy_generic_step
+    germline_sheet_fake_fs2, mocker, capsys, dummy_generic_step
 ):
     # Patch out file system--related stuff in abstract workflow
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
@@ -248,7 +282,118 @@ def test_link_in_step_part_get_shell_cmd_double_link_in_regression(
     assert actual == expected
 
 
-# Tests for LinkOutStepPart -----------------------------------------------------------------------
+# Test LinkInExternalStepPart ----------------------------------------------------------------------
+
+
+@pytest.fixture
+def vcf_dummy_config():
+    """Return dummy configuration OrderedDicts"""
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
+        textwrap.dedent(
+            r"""
+        step_config: {}
+        static_data_config: {}
+        data_sets:
+          first_batch:  # example for a matched cancer data set
+            file: sheet.tsv
+            search_patterns:
+            # Note that currently only "left" and "right" key known
+            - {'left': '*/*/*_R1.fastq.gz', 'right': '*/*/*_R2.fastq.gz'}
+            search_paths: ['/path']
+            type: germline_variants
+            naming_scheme: only_secondary_id
+        """
+        ).lstrip()
+    )
+
+
+@pytest.fixture
+def vcf_dummy_generic_step(
+    dummy_workflow,
+    vcf_dummy_config,
+    config_lookup_paths,
+    config_paths,
+    work_dir,
+    germline_sheet_with_ext_vcf_fake_fs,
+    mocker,
+):
+    """Return BaseStep sub class instance using generic sample sheets; for use in tests of the
+    abstract workflow module
+    """
+
+    class DummyBaseStep(BaseStep):
+        """Dummy BaseStep sub class; for use in tests"""
+
+        name = "dummy"
+        sheet_shortcut_class = GenericSampleSheet
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.register_sub_step_classes((LinkInExternalStepPart, LinkOutStepPart))
+            self.data_search_infos = list(self._load_data_search_infos())
+
+        @classmethod
+        def default_config_yaml(cls):
+            """Return default config YAML"""
+            return textwrap.dedent(
+                r"""
+                step_config:
+                  dummy:
+                    key: value
+                    search_paths: ["/vcf_path"]  # Path to all VCF files.
+                    search_patterns: [{"vcf": "*_dragen.vcf.gz"}] # List of search pattern.
+                """
+            ).lstrip()
+
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_with_ext_vcf_fake_fs, mocker
+    )
+    return DummyBaseStep(
+        dummy_workflow,
+        vcf_dummy_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+def test_link_in_external_step_part_get_input_files(vcf_dummy_generic_step):
+    """Tests LinkInExternalStepPart.get_input_files()"""
+    actual = vcf_dummy_generic_step.get_input_files("link_in_external", "run")
+    assert len(actual) == 0
+
+
+def test_link_in_external_step_part_get_output_files(vcf_dummy_generic_step):
+    expected = "work/input_links/{library_name}/.done"
+    actual = vcf_dummy_generic_step.get_output_files("link_in_external", "run")
+    assert actual == expected
+
+
+def test_link_in_external_step_part_get_shell_cmd(
+    germline_sheet_with_ext_vcf_fake_fs,
+    mocker,
+    vcf_dummy_generic_step,
+):
+    # Patch out file system--related stuff in abstract workflow
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_with_ext_vcf_fake_fs, mocker
+    )
+    # Define input
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    # Define expected
+    expected = textwrap.dedent(
+        r"""
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz work/input_links/P001-N1-DNA1-WGS1/.; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz.md5 || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz.md5 work/input_links/P001-N1-DNA1-WGS1/.; }}
+        """
+    ).strip()
+    # Check results
+    actual = vcf_dummy_generic_step.get_shell_cmd("link_in_external", "run", wildcards)
+    assert actual == expected
+
+
+# Tests for LinkOutStepPart ------------------------------------------------------------------------
 
 
 def test_link_out_step_part_get_input_files(dummy_generic_step):
