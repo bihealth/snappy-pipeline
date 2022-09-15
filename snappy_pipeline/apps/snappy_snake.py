@@ -67,6 +67,7 @@ from ..workflows import (
     wgs_sv_annotation,
     wgs_sv_calling,
     wgs_sv_export,
+    wgs_sv_export_external,
     wgs_sv_filtration,
 )
 
@@ -130,6 +131,7 @@ STEP_TO_MODULE = {
     "wgs_sv_annotation": wgs_sv_annotation,
     "wgs_sv_calling": wgs_sv_calling,
     "wgs_sv_export": wgs_sv_export,
+    "wgs_sv_export_external": wgs_sv_export_external,
     "wgs_sv_filtration": wgs_sv_filtration,
 }
 
