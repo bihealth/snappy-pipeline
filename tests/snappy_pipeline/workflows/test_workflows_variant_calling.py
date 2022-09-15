@@ -729,9 +729,9 @@ def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow
 def test_baf_file_generation_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     tpl = (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
-            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
-        )
+        "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
+        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+    )
     key_ext = {
         "log": ".log",
         "conda_info": ".conda_info.txt",
@@ -739,10 +739,7 @@ def test_baf_file_generation_step_part_get_log_file(variant_calling_workflow):
         "conda_list": ".conda_list.txt",
         "conda_list_md5": ".conda_list.txt.md5",
     }
-    expected = {
-        key: tpl + ext
-        for key, ext in key_ext.items()
-    }
+    expected = {key: tpl + ext for key, ext in key_ext.items()}
     # Get actual
     actual = variant_calling_workflow.get_log_file("baf_file_generation", "run")
     assert actual == expected
