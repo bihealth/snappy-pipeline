@@ -344,6 +344,9 @@ step_config:
       min_cov_warning: 20  # >= 20x for WARNING
       min_cov_ok: 50  # >= 50x for OK
       detailed_reporting: false  # per-exon details (cannot go into multiqc)
+    bam_collect_doc:
+      enabled: true
+      window_length: 1000
     # Enable Picard HS metrics by setting both paths
     picard_hs_metrics:
       path_targets_interval_list: null
@@ -1166,6 +1169,70 @@ class GenomeCoverageReportStepPart(BaseStepPart):
         )
 
 
+class BamCollectDocStepPart(BaseStepPart):
+    """Generate depth of coverage files."""
+
+    #: Step name
+    name = "bam_collect_doc"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_input_files(self, action):
+        """Return required input files"""
+        self._check_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    def _check_action(self, action):
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+
+    @dictify
+    def _get_input_files_run(self):
+        yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam"
+        yield "bai", "work/{mapper_lib}/out/{mapper_lib}.bam.bai"
+
+    def get_output_files(self, action):
+        """Return output files"""
+        self._check_action(action)
+        return getattr(self, "_get_output_files_{action}".format(action=action))()
+
+    @dictify
+    def _get_output_files_run(self):
+        yield "vcf", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz"
+        yield "vcf_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.md5"
+        yield "tbi", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi"
+        yield "tbi_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi.md5"
+        yield "bw", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw"
+        yield "bw_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw.md5"
+
+    @staticmethod
+    def get_log_file(action):
+        return "work/{mapper_lib}/log/snakemake.bam_collect_doc.log"
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        self._check_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="04:00:00",
+            memory="2G",
+        )
+
+
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
@@ -1196,6 +1263,7 @@ class NgsMappingWorkflow(BaseStep):
                 PicardHsMetricsStepPart,
                 StarStepPart,
                 TargetCoverageReportStepPart,
+                BamCollectDocStepPart,
             )
         )
         self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
@@ -1258,6 +1326,11 @@ class NgsMappingWorkflow(BaseStep):
                 "conda_list.txt.md5",
             ),
         )
+        if self.config["bam_collect_doc"]["enabled"]:
+            yield from self._yield_result_files(
+                os.path.join("output", name_pattern, "report", "cov", name_pattern + ".cov.{ext}"),
+                ext=("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5", "bw", "bw.md5"),
+            )
         yield from self._yield_result_files(
             os.path.join(
                 "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"
