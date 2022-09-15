@@ -696,6 +696,69 @@ def test_jannovar_statistics_stats_step_part_get_resource(variant_calling_workfl
         assert actual == expected, msg_error
 
 
+# Tests for BafFileGeneration ---------------------------------------------------------------------
+
+
+def test_baf_file_generation_step_part_get_input_files(variant_calling_workflow):
+    # Define expected
+    vcf_file = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
+        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+    )
+    expected = {"vcf": vcf_file}
+    # Get actual
+    actual = variant_calling_workflow.get_input_files("baf_file_generation", "run")
+    assert actual == expected
+
+
+def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.{var_caller}.{index_ngs_library}/report/baf/"
+        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library,[^\\.]+}.baf"
+    )
+    expected = {
+        "bw": base_name_out + ".bw",
+        "bw_md5": base_name_out + ".bw.md5",
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_output_files("baf_file_generation", "run")
+    assert actual == expected
+
+
+def test_baf_file_generation_step_part_get_log_file(variant_calling_workflow):
+    # Define expected
+    tpl = (
+            "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
+            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+        )
+    key_ext = {
+        "log": ".log",
+        "conda_info": ".conda_info.txt",
+        "conda_info_md5": ".conda_info.txt.md5",
+        "conda_list": ".conda_list.txt",
+        "conda_list_md5": ".conda_list.txt.md5",
+    }
+    expected = {
+        key: tpl + ext
+        for key, ext in key_ext.items()
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_log_file("baf_file_generation", "run")
+    assert actual == expected
+
+
+def test_baf_file_generation_step_part_get_resource(variant_calling_workflow):
+    """Tests BafFileGeneration.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "1024M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = variant_calling_workflow.get_resource("baf_file_generation", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for VariantCallingWorkflow ----------------------------------------------------------------
 
 

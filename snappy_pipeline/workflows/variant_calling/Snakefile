@@ -353,6 +353,6 @@ rule variant_calling_baf_file_generation:
         memory=wf.get_resource("baf_file_generation", "run", "memory"),
         partition=wf.get_resource("baf_file_generation", "run", "partition"),
     log:
-        wf.get_log_file("baf_file_generation", "run"),
+        **wf.get_log_file("baf_file_generation", "run"),
     wrapper:
         wf.wrapper_path("baf_file_generation")

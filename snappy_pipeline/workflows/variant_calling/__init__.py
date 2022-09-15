@@ -184,7 +184,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   variant_calling:
     baf_file_generation:
-      min_ad: 10
+      min_dp: 10  # minimal DP of variant, must be >=1
       enabled: false
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     tools: ['gatk_ug']
@@ -1070,13 +1070,22 @@ class BafFileGenerationStepPart(BaseStepPart):
         for key, ext in ext_names.items():
             yield key, self.base_path_out + ext
 
+    @dictify
     def get_log_file(self, action):
-        # Validate action
         self._validate_action(action)
-        return (
+        prefix = (
             "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
-            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
+            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
         )
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            if key != "log":
+                yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
