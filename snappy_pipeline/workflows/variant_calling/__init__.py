@@ -183,6 +183,9 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_calling
 step_config:
   variant_calling:
+    baf_file_generation:
+      min_ad: 10
+      enabled: false
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     tools: ['gatk_ug']
     jannovar_statistics:
@@ -1022,6 +1025,76 @@ class JannovarStatisticsStepPart(BaseStepPart):
         )
 
 
+class BafFileGenerationStepPart(BaseStepPart):
+    """Base class for computing B allele fraction files.
+
+    One file is generated per sample in the output VCF files.
+    """
+
+    #: Step name
+    name = "baf_file_generation"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_out = (
+            "work/{mapper}.{var_caller}.{index_ngs_library}/report/baf/"
+            r"{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library,[^\.]+}.baf"
+        )
+        # Build shortcut from index library name to pedigree
+        self.index_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+
+    @dictify
+    def get_input_files(self, action):
+        """Return path to input files"""
+        # Validate action
+        self._validate_action(action)
+        # Return path to input VCF file
+        yield "vcf", (
+            "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
+            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+        )
+
+    @dictify
+    def get_output_files(self, action):
+        """Return output files that all germline variant calling sub steps must return (VCF +
+        TBI file)
+        """
+        # Validate action
+        self._validate_action(action)
+        ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
+        for key, ext in ext_names.items():
+            yield key, self.base_path_out + ext
+
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
+        return (
+            "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
+            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
+        )
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="02:00:00",
+            memory="1024M",
+        )
+
+
 class VariantCallingWorkflow(BaseStep):
     """Perform germline variant calling"""
 
@@ -1055,6 +1128,7 @@ class VariantCallingWorkflow(BaseStep):
                 VarscanStepPart,
                 BcftoolsStatsStepPart,
                 JannovarStatisticsStepPart,
+                BafFileGenerationStepPart,
                 LinkOutStepPart,
             )
         )
@@ -1101,6 +1175,8 @@ class VariantCallingWorkflow(BaseStep):
                 )
         # Yield report files
         yield from self._yield_bcftools_report_files()
+        if self.config["baf_file_generation"]["enabled"]:
+            yield from self._yield_baf_file_generation_files()
         yield from self._yield_jannovar_report_files()
 
     def _yield_result_files(self, tpl, **kwargs):
@@ -1169,6 +1245,50 @@ class VariantCallingWorkflow(BaseStep):
                                     index_library=[pedigree.index.dna_ngs_library],
                                     donor_library=[donor.dna_ngs_library],
                                     ext=["txt", "txt.md5"],
+                                )
+
+    def _yield_baf_file_generation_files(self):
+        name_pattern = "{mapper}.{caller}.{index_library.name}"
+        tpl = (
+            "output/"
+            + name_pattern
+            + "/report/baf/"
+            + name_pattern
+            + ".{donor_library.name}.baf.{ext}"
+        )
+        for sheet in filter(is_not_background, self.shortcut_sheets):
+            for caller in self.config["tools"]:
+                if self.config[caller].get("pedigree_wise", True):
+                    for pedigree in sheet.cohort.pedigrees:
+                        if not pedigree.index:
+                            msg = "INFO: pedigree without index (names: {})"  # pragma: no cover
+                            print(
+                                msg.format(  # pragma: no cover
+                                    list(sorted(d.name for d in pedigree.donors))
+                                ),
+                                file=sys.stderr,
+                            )
+                            continue  # pragma: no cover
+                        elif not pedigree.index.dna_ngs_library:  # pragma: no cover
+                            msg = "INFO: pedigree index DNA NGS library (names: {})"
+                            print(
+                                msg.format(  # pragma: no cover
+                                    list(sorted(d.name for d in pedigree.donors))
+                                ),
+                                file=sys.stderr,
+                            )
+                            continue  # pragma: no cover
+                        for donor in pedigree.donors:
+                            if donor.dna_ngs_library:
+                                yield from expand(
+                                    tpl,
+                                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"][
+                                        "dna"
+                                    ],
+                                    caller=[caller],
+                                    index_library=[pedigree.index.dna_ngs_library],
+                                    donor_library=[donor.dna_ngs_library],
+                                    ext=["bw", "bw.md5"],
                                 )
 
     def _yield_jannovar_report_files(self):

@@ -39,6 +39,8 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
+            baf_file_generation:
+              enabled: true
             tools:
             - bcftools
             - freebayes
@@ -701,6 +703,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
     """Tests simple functionality of the workflow."""
     # Check created sub steps
     expected = [
+        "baf_file_generation",
         "bcftools",
         "bcftools_stats",
         "freebayes",
@@ -793,6 +796,24 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "platypus",
         )
         for ext in ("txt", "txt.md5")
+    ]
+    tpl = (
+        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
+        "baf/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.P00{t}-N1-DNA1-WGS1.baf.{ext}"
+    )
+    expected += [
+        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
+        for i, t in ((1, 1), (1, 2), (1, 3), (4, 4), (4, 5), (4, 6))
+        for mapper in ("bwa",)
+        for var_caller in (
+            "bcftools",
+            "freebayes",
+            "gatk_hc",
+            "gatk_hc_gvcf",
+            "gatk_ug",
+            "platypus",
+        )
+        for ext in ("bw", "bw.md5")
     ]
     tpl = "output/{mapper}.{var_caller}.whole_cohort/out/{mapper}.{var_caller}.whole_cohort.{ext}"
     expected += [
