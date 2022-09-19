@@ -81,3 +81,6 @@ docs/_build/
 
 # Auto-generated default value files
 docs/step/DEFAULT_CONFIG_*.rst
+
+# Test directory
+work/
