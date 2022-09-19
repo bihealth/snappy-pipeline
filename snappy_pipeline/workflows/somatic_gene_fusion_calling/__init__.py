@@ -80,8 +80,8 @@ step_config:
     defuse:
       path_dataset_directory: REQUIRED
     arriba:
-      path_index: REQUIRED       # STAR path index (preferably 2.7.10 or later)
-      features: REQUIRED         # Gene features (for ex. ENCODE or ENSEMBL) in gtf format
+      path_index: REQUIRED       # REQUIRED  STAR path index (preferably 2.7.10 or later)
+      features: REQUIRED         # REQUIRED  Gene features (for ex. ENCODE or ENSEMBL) in gtf format
       blacklist: ""              # optional (provided in the arriba distribution, see /fast/work/groups/cubi/projects/biotools/static_data/app_support/arriba/v2.3.0)
       known_fusions: ""          # optional
       tags: ""                   # optional (can be set to the same path as known_fusions)
@@ -89,7 +89,7 @@ step_config:
       protein_domains: ""        # optional
       num_threads: 8
       trim_adapters: false
-      num_threads_trimming: 4
+      num_threads_trimming: 2
       star_parameters:
       - " --outFilterMultimapNmax 50"
       - " --peOverlapNbasesMin 10"
@@ -141,15 +141,6 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         self._validate_action(action)
         return "work/{name}.{{library_name}}/log/snakemake.gene_fusion_calling.log".format(
             name=self.name
-        )
-
-    @listify
-    def get_result_files(self):
-        return (
-            "output/{name}.{{library_name}}/out/.done".format(name=self.name),
-            "output/{name}.{{library_name}}/log/snakemake.gene_fusion_calling.log".format(
-                name=self.name
-            ),
         )
 
     def _collect_reads(self, wildcards, library_name, prefix):
@@ -475,13 +466,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    @listify
-    def get_result_files(self):
-        for path in self.get_output_files("run").values():
-            yield path.replace("work", "output")
-        for path in self.get_log_file("run").values():
-            yield path.replace("work", "output")
-
     def get_resource_usage(self, action):
         """Get resource Usage
 
@@ -492,7 +476,9 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return ResourceUsage(threads=8, time="24:00:00", memory=f"{64 * 1024}M")  # 1 day
+        return ResourceUsage(
+            threads=self.config["arriba"]["num_threads"], time="24:00:00", memory=f"{64 * 1024}M"
+        )  # 1 day
 
 
 class SomaticGeneFusionCallingWorkflow(BaseStep):
@@ -538,18 +524,34 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
+        # Convert sheet parsing into method
+        library_names_list = self._get_all_rna_ngs_libraries()
+        # Get results
+        name_pattern = "{fusion_caller}.{ngs_library.name}"
         for fusion_caller in self.config["tools"]:
-            sub_step = self.sub_steps[fusion_caller]
-            name_patterns = sub_step.get_result_files()
-            for sheet in self.shortcut_sheets:
-                for donor in sheet.donors:
-                    for bio_sample in donor.bio_samples.values():
-                        for _test_sample in bio_sample.test_samples.values():
-                            ngs_library = bio_sample.rna_ngs_library
-                            if ngs_library is None:
-                                break
-                            for name_pattern in name_patterns:
-                                yield name_pattern.format(library_name=ngs_library.name)
+            for ngs_library in library_names_list:
+                # Constant to all callers
+                name_pattern_value = name_pattern.format(
+                    fusion_caller=fusion_caller, ngs_library=ngs_library
+                )
+                yield os.path.join("output", name_pattern_value, "out", ".done")
+                # Caller specific stuff...
+                if fusion_caller == "arriba":
+                    yield from self._yield_arriba_files(ngs_library)
+                else:
+                    yield os.path.join(
+                        "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
+                    )
+
+    def _yield_arribe_files(self, ngs_library):
+        tpl = "output/arriba.{library_name}/out/arriba.{library_name}.{ext}"
+        for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
+            yield tpl.format(library_name=ngs_library.name, ext=ext)
+            yield tpl.format(library_name=ngs_library.name, ext=ext + ".md5")
+        tpl = "output/arriba.{library_name}/log/arriba.{library_name}.{ext}"
+        for ext in ("log", "conda_list", "conda_info"):
+            yield tpl.format(library_name=ngs_library.name, ext=ext)
+            yield tpl.format(library_name=ngs_library.name, ext=ext + ".md5")
 
     def check_config(self):
         """Check that the required configurations are present."""

@@ -4,7 +4,7 @@
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
