@@ -31,7 +31,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:
-              tools: ['fusioncatcher', 'jaffa']
+              tools: ['fusioncatcher', 'jaffa', 'arriba']
               fusioncatcher:
                 data_dir: REQUIRED   # REQUIRED
               pizzly:
@@ -45,6 +45,9 @@ def minimal_config():
                 path_ctat_resource_lib: REQUIRED
               defuse:
                 path_dataset_directory: REQUIRED
+              arriba:
+                path_index: /path/to/star/index
+                features: /path/to/features.gtf
 
         data_sets:
           first_batch:
@@ -67,11 +70,16 @@ def somatic_gene_fusion_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticGeneFusionCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    # Patch out files for aligner indices
+    patch_module_fs(
+        "snappy_pipeline.workflows.somatic_gene_fusion_calling", aligner_indices_fake_fs, mocker
+    )
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return SomaticGeneFusionCallingWorkflow(
@@ -290,6 +298,58 @@ def test_hera_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow)
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_gene_fusion_calling_workflow.get_resource("hera", "run", resource)
+        assert actual == expected, msg_error
+
+
+# ArribaStepPart -----------------------------------------------------------------------------------
+
+
+def test_arriba_step_part_get_input_files(somatic_gene_fusion_calling_workflow):
+    """Tests ArribaStepPart.get_input_files()"""
+    expected = {"done": "work/input_links/{library_name}/.done"}
+    actual = somatic_gene_fusion_calling_workflow.get_input_files("arriba", "run")
+    assert actual == expected
+
+
+def test_arriba_step_part_get_output_files(somatic_gene_fusion_calling_workflow):
+    """Tests ArribaStepPart.get_output_files()"""
+    key_ext = (
+        ("fusions", "fusions.tsv"),
+        ("discarded", "discarded_fusions.tsv.gz"),
+    )
+    expected = {"done": "work/arriba.{library_name}/out/.done"}
+    prefix = "work/arriba.{library_name}/out/arriba.{library_name}."
+    for key, ext in key_ext:
+        expected[key] = prefix + ext
+        expected[key + "_md5"] = prefix + ext + ".md5"
+    actual = somatic_gene_fusion_calling_workflow.get_output_files("arriba", "run")
+    assert actual == expected
+
+
+def test_arriba_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
+    """Tests ArribaStepPart.get_log_file()"""
+    key_ext = (
+        ("log", "log"),
+        ("conda_info", "conda_info.txt"),
+        ("conda_list", "conda_list.txt"),
+    )
+    expected = {}
+    prefix = "work/arriba.{library_name}/log/arriba.{library_name}."
+    for key, ext in key_ext:
+        expected[key] = prefix + ext
+        expected[key + "_md5"] = prefix + ext + ".md5"
+    actual = somatic_gene_fusion_calling_workflow.get_log_file("arriba", "run")
+    assert actual == expected
+
+
+def test_arriba_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
+    """Tests ArribaStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 8, "time": "24:00:00", "memory": "65536M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_gene_fusion_calling_workflow.get_resource("arriba", "run", resource)
         assert actual == expected, msg_error
 
 
