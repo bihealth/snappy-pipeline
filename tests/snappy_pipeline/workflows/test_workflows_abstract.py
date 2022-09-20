@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """Code for testing the code in the "abstract" workflow
 """
-
+import filecmp
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 import textwrap
+from unittest.mock import patch
 
-from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.io import OutputFiles, Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.abstract import (
@@ -18,6 +21,8 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    WritePedigreeSampleNameStepPart,
+    WritePedigreeStepPart,
 )
 
 from .conftest import patch_module_fs
@@ -423,6 +428,110 @@ def test_link_out_step_part_get_shell_cmd(dummy_generic_step):
     actual = dummy_generic_step.get_shell_cmd("link_out", "run", wildcards)
 
     assert actual == expected
+
+
+# Tests for WritePedigreeStepPart* -----------------------------------------------------------------
+
+
+@pytest.fixture
+def dummy_generic_step_w_write_pedigree(
+    dummy_workflow,
+    dummy_config,
+    config_lookup_paths,
+    config_paths,
+    work_dir,
+    germline_sheet_fake_fs,
+    mocker,
+):
+    """Return BaseStep sub class instance using generic sample sheets; for use in tests of
+    classes ``WritePedigreeStepPart`` and ``WritePedigreeSampleNameStepPart``.
+    """
+
+    class DummyBaseStep(BaseStep):
+        """Dummy BaseStep sub class; for use in tests"""
+
+        name = "dummy"
+        sheet_shortcut_class = GermlineCaseSheet
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.register_sub_step_classes((WritePedigreeStepPart, WritePedigreeSampleNameStepPart))
+
+        @classmethod
+        def default_config_yaml(cls):
+            """Return default config YAML"""
+            return textwrap.dedent(
+                r"""
+                step_config:
+                  dummy:
+                    key: value
+                """
+            ).lstrip()
+
+    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    return DummyBaseStep(
+        dummy_workflow,
+        dummy_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+def test_write_pedigree_step_part_get_input_files(dummy_generic_step_w_write_pedigree):
+    """Tests WritePedigreeStepPart.get_input_files()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = []  # as 'ngs_mapping' is not in self.parent.sub_workflows
+    actual = dummy_generic_step_w_write_pedigree.get_input_files("write_pedigree", "run")(wildcards)
+    assert actual == expected
+
+
+def test_write_pedigree_step_part_get_output_files(dummy_generic_step_w_write_pedigree):
+    """Tests WritePedigreeStepPart.get_output_files()"""
+    expected = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+    actual = dummy_generic_step_w_write_pedigree.get_output_files("write_pedigree", "run")
+    assert actual == expected
+
+
+def test_write_pedigree_step_part_run_for_library(dummy_generic_step_w_write_pedigree):
+    """Tests WritePedigreeStepPart.run() - for library 'P001-N1-DNA1-WGS1'"""
+    # Define input
+    observed_file = NamedTemporaryFile()
+    output_ = OutputFiles([observed_file.name])
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    # Define expected
+    expected_file = (Path(__file__).parent / "data/write_pedigree.P001-N1-DNA1-WGS1.ped").resolve()
+    # Call and compare files
+    dummy_generic_step_w_write_pedigree.sub_steps["write_pedigree"].run(wildcards, output_)
+    assert filecmp.cmp(observed_file.name, expected_file)
+
+
+def test_write_pedigree_step_part_run_for_whole_cohort(dummy_generic_step_w_write_pedigree):
+    """Tests WritePedigreeStepPart.run() - for whole cohort"""
+    # Define input
+    observed_file = NamedTemporaryFile()
+    output_ = OutputFiles([observed_file.name])
+    wildcards = Wildcards(fromdict={"index_ngs_library": "whole_cohort"})
+    # Define expected
+    expected_file = (Path(__file__).parent / "data/write_pedigree.whole_cohort.ped").resolve()
+    # Call and compare files
+    dummy_generic_step_w_write_pedigree.sub_steps["write_pedigree"].run(wildcards, output_)
+    assert filecmp.cmp(observed_file.name, expected_file)
+
+
+def test_write_pedigree_sample_name_step_part_run_for_library(dummy_generic_step_w_write_pedigree):
+    """Tests WritePedigreeStepPart.run() - for library 'P001-N1-DNA1-WGS1'"""
+    # Define input
+    observed_file = NamedTemporaryFile(delete=False)
+    output_ = OutputFiles([observed_file.name])
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    # Define expected
+    expected_file = (Path(__file__).parent / "data/write_pedigree.P001.ped").resolve()
+    # Call and compare files
+    dummy_generic_step_w_write_pedigree.sub_steps["write_pedigree_with_sample_name"].run(
+        wildcards, output_
+    )
+    assert filecmp.cmp(observed_file.name, expected_file)
 
 
 # Tests for BaseStep ------------------------------------------------------------------------------

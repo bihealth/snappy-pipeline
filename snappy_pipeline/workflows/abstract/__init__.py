@@ -36,6 +36,7 @@ from snappy_pipeline.base import (
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -178,11 +179,15 @@ class BaseStepPart:
 class WritePedigreeStepPart(BaseStepPart):
     """Write out pedigree file for primary DNA sample given the index NGS library name"""
 
+    #: Step name
     name = "write_pedigree"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent, require_dna_ngs_library=False, only_trios=False):
         super().__init__(parent)
-        #: Whether or not to prevent writing out of samples with out NGS library.
+        #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = OrderedDict()
@@ -210,12 +215,13 @@ class WritePedigreeStepPart(BaseStepPart):
         Returns a dict with entry ``"bam"`` mapping to list of input BAM files.  This list will
         be empty if the parent step does not define an ``"ngs_mapping"`` workflow.
         """
+        self._validate_action(action=action)
 
         @listify
         def get_input_files(wildcards):
             if "ngs_mapping" not in self.parent.sub_workflows:
                 return  # early exit
-            # Get shorcut to NGS mapping sub workflow
+            # Get shortcut to NGS mapping sub workflow
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
@@ -235,21 +241,55 @@ class WritePedigreeStepPart(BaseStepPart):
                     )
                     yield ngs_mapping(path)
 
-        assert action == "run", "Unsupported actions"
         return get_input_files
 
     def get_output_files(self, action):
-        assert action == "run"
+        self._validate_action(action=action)
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
     def run(self, wildcards, output):
-        """Write out the pedigree information"""
+        """Write out the pedigree information
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :param output: Snakemake output associated with rule.
+        :type output: snakemake.io.Namedlist
+        """
         if wildcards.index_ngs_library == "whole_cohort":
             write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
         else:
             write_pedigree_to_ped(
                 self.index_ngs_library_to_pedigree[wildcards.index_ngs_library], str(output)
             )
+
+
+class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
+    """
+    Class contains method to write pedigree file for primary DNA sample given the index
+    NGS library name.It will create pedigree information based sole on sample name,
+    example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+    """
+
+    #: Step name
+    name = "write_pedigree_with_sample_name"
+
+    def __init__(self, *args, **kwargs):
+        WritePedigreeStepPart.__init__(self, *args, **kwargs)
+
+    def run(self, wildcards, output):
+        """Write out the pedigree information
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :param output: Snakemake output associated with rule.
+        :type output: snakemake.io.Namedlist
+        """
+        append_pedigree_to_ped(
+            pedigree=self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
+            output_path=str(output),
+        )
 
 
 class LinkOutStepPart(BaseStepPart):
