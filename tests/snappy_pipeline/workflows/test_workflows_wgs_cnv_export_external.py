@@ -28,14 +28,6 @@ def minimal_config():
             path: /path/to/dbsnp.vcf.gz
 
         step_config:
-          ngs_mapping:
-            tools:
-              dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
-            bwa:
-              path_index: /path/to/bwa/index.fa
-
           wgs_cnv_export_external:
             search_paths: [/search_path]
             search_patterns: [{"vcf": "*/*.vcf.gz"}]
@@ -83,12 +75,6 @@ def wgs_cnv_export_external_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.wgs_cnv_export_external", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really a NGSMappingPipelineStep here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "wgs_sv_annotation": lambda x: "WGS_SV_ANNOTATION/" + x,
-    }
     # Construct the workflow object
     return WgsCnvExportExternalWorkflow(
         dummy_workflow,
@@ -116,12 +102,6 @@ def test_workflow_check_config_invalid_annotator_files(
     patch_module_fs(
         "snappy_pipeline.workflows.wgs_cnv_export_external", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really a NGSMappingPipelineStep here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "wgs_sv_annotation": lambda x: "WGS_SV_ANNOTATION/" + x,
-    }
     # Construct the workflow object
     with pytest.raises(MissingConfiguration) as exec_info:
         WgsCnvExportExternalWorkflow(
@@ -158,12 +138,6 @@ def test_workflow_check_config_invalid_search_directory(
     patch_module_fs(
         "snappy_pipeline.workflows.wgs_cnv_export_external", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really a NGSMappingPipelineStep here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "wgs_sv_annotation": lambda x: "WGS_SV_ANNOTATION/" + x,
-    }
     # Construct the workflow object
     with pytest.raises(MissingConfiguration) as exec_info:
         WgsCnvExportExternalWorkflow(
@@ -200,12 +174,6 @@ def test_workflow_check_config_invalid_search_pattern(
     patch_module_fs(
         "snappy_pipeline.workflows.wgs_cnv_export_external", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really a NGSMappingPipelineStep here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "wgs_sv_annotation": lambda x: "WGS_SV_ANNOTATION/" + x,
-    }
     # Change search patterns to invalid
     modified_config = deepcopy(minimal_config)
     modified_config["step_config"]["wgs_cnv_export_external"]["search_patterns"] = [
@@ -270,6 +238,17 @@ def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(
     assert actual == expected
 
 
+def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'annotate'"""
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "14336M", "partition": "medium"}
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'merge_vcf'."
+        actual = wgs_cnv_export_external_workflow.get_resource(
+            "varfish_annotator_external", "merge_vcf", resource
+        )
+        assert actual == expected, msg_error
+
+
 # Tests for VarfishAnnotatorExternalStepPart (annotate)   ------------------------------------------
 
 
@@ -326,6 +305,17 @@ def test_varfish_annotator_step_part_call_get_log_file_annotate(
     expected = {**wrapper_dict, **log_dict}
     actual = wgs_cnv_export_external_workflow.get_log_file("varfish_annotator_external", "annotate")
     assert actual == expected
+
+
+def test_varfish_annotator_step_part_get_resource_usage_annotate(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'annotate'"""
+    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "14336M", "partition": "medium"}
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'annotate'."
+        actual = wgs_cnv_export_external_workflow.get_resource(
+            "varfish_annotator_external", "annotate", resource
+        )
+        assert actual == expected, msg_error
 
 
 # Tests for WgsCnvExportExternalWorkflow   ----------------------------------------------------------
