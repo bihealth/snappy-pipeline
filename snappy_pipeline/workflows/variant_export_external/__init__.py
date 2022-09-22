@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``wgs_cnv_export_external`` step.
+"""Implementation of the ``variant_export`` step.
 
-The ``wgs_cnv_export_external`` step takes as the input externally generated VCFs and uses
-``varfish-annotator-cli annotate-sv`` command to create files fit for import into VarFish Server.
+The ``variant_export`` step takes as the input the results of the ``variant_calling`` step and
+uses ``varfish-annotator-cli annotate`` command to create files fit for import into VarFish
+Server.
 
 ==========
 Stability
@@ -14,7 +15,7 @@ This step is considered experimental, use it at your own discretion.
 Step Input
 ==========
 
-The WGS CNV export external step uses VCFs externally generated as input.
+The variant export external step uses VCFs externally generated as input.
 
 ===========
 Step Output
@@ -24,6 +25,8 @@ For all samples, the workflow will execute ``varfish-annotator-cli``, pedigrees 
 will be merged based on `id`. The name of the index's primary DNA NGS library will be used as an
 identification token in the output file. The following is an example of the files that
 will be generated:
+
+TODO: add bam qc files.
 
 ::
     output/
@@ -46,7 +49,6 @@ will be generated:
     |
     [...]
 
-
 ====================
 Global Configuration
 ====================
@@ -57,7 +59,7 @@ Not applicable.
 Default Configuration
 =====================
 
-.. include:: DEFAULT_CONFIG_wgs_cnv_external.rst
+.. include:: DEFAULT_CONFIG_variant_export_external.rst
 
 ==================
 Parallel Execution
@@ -77,52 +79,53 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    LinkInBaiExternalStepPart,
+    LinkInBamExternalStepPart,
     LinkInPathGenerator,
     LinkInVcfExternalStepPart,
     LinkOutStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.ngs_mapping import TargetCoverageReportStepPart
 
-#: Extension of files
-EXTS = (".tsv.gz", ".tsv.gz.md5")
-
-#: Infixes to use for file name generation
-INFIXES = ("gts", "feature-effects", "db-infos")
-
-#: VCF key to file extensions
-KEY_EXT = {
-    "vcf": ".vcf.gz",
-    "vcf_md5": ".vcf.gz.md5",
-    "tbi": ".vcf.gz.tbi",
-    "tbi_md5": ".vcf.gz.tbi.md5",
-}
-
-#: Default configuration for the wgs_cnv_export_external step
+#: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
-# Default configuration wgs_cnv_export_external.
+# Default configuration variant_export_external.
 step_config:
-  wgs_cnv_export_external:
-    tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
-    tool_wgs_cnv_calling: null   # OPTIONAL: used to create output file prefix.
+  variant_export_external:
+    external_tool: dragen        # OPTIONAL: external tool name.
+    bam_available_flag: false    # REQUIRED: BAM QC only possible if BAM files are present.
     merge_vcf_flag: true         # REQUIRED: true if pedigree VCFs still need merging.
-    merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
-    search_paths: []             # REQUIRED: path to all VCF files.
-    search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
-    path_db: REQUIRED            # REQUIRED: path to annotator DB file to use
+    merge_option: null           # OPTIONAL: How to merge VCF, used in `bcftools --merge` argument.
+    gvcf_option: false           # OPTIONAL: Flag to indicate if inputs are genomic VCFs.
+    search_paths: []             # REQUIRED: list of paths to VCF files.
+    search_patterns: []          # REQUIRED: list of search patterns, ex.: [{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}]
+    release: GRCh37              # OPTIONAL: genome release; default 'GRCh37'.
+    path_exon_bed: REQUIRED      # OPTIONAL: exon BED file to use when handling WGS data.
+    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file.
+    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file.
+    path_db: REQUIRED            # REQUIRED: path to annotator DB file to use.
+    target_coverage_report:
+      # Mapping from enrichment kit to target region BED file, for either computing per target
+      # region coverage or selecting targeted exons. Only used if 'bam_available_flag' is True.
+      # It will not generated detailed reporting.
+      path_targets_bed: OPTIONAL # OPTIONAL
+      # Maximal/minimal/warning coverage
+      max_coverage: 200
+      min_cov_warning: 20  # >= 20x for WARNING
+      min_cov_ok: 50  # >= 50x for OK
 """
 
 
-class VarfishAnnotatorExternalStepPart(BaseStepPart):
-    """Annotate externally generated VCF file using "varfish-annotator annotate-sv"."""
+class BamReportsExternalStepPart(TargetCoverageReportStepPart):
+    """Build target coverage report and QC report for external BAM files"""
 
     #: Step name
-    name = "varfish_annotator_external"
+    name = "bam_reports"
 
     #: Class available actions
-    actions = ("annotate", "merge_vcf")
+    actions = ("bam_qc", "collect", "run")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -134,8 +137,137 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
         )
-        # Define mapper+caller tag
-        self.mapper_caller_tag = self._get_mapper_caller_tag()
+
+    @staticmethod
+    def _get_input_files_bam_qc(wildcards):
+        library_name = wildcards.mapper_lib.split(".")[-1]
+        yield f"work/input_links/{library_name}/.done_bam_external"
+        yield f"work/input_links/{library_name}/.done_bai_external"
+
+    def _get_input_files_run(self, wildcards):
+        library_name = wildcards.mapper_lib.split(".")[-1]
+        yield f"work/input_links/{library_name}/.done_bam_external"
+        yield f"work/input_links/{library_name}/.done_bai_external"
+
+    @listify
+    def _get_input_files_collect(self, _wildcards):
+        yield "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
+
+    @dictify
+    def _get_output_files_bam_qc(self):
+        for report in ("bamstats", "flagstats", "idxstats"):
+            report_path = f"work/{{mapper_lib}}/report/bam_qc/{{mapper_lib}}.bam.{report}.txt"
+            yield report, report_path
+            yield report + "_md5", report_path + ".md5"
+
+    def get_log_file(self, action):
+        self._validate_action(action)
+        if action == "run":
+            return "work/{mapper_lib}/log/snakemake.target_coverage.log"
+        elif action == "bam_qc":
+            return self._get_log_file_bam_qc()
+        else:
+            return "work/target_cov_report/log/snakemake.target_coverage.log"
+
+    def get_params(self, action):
+        assert action in (
+            "run",
+            "bam_qc",
+        ), "Parameters only available for actions 'run' and 'bam_qc'."
+        return getattr(self, f"_get_params_{action}")
+
+    @staticmethod
+    @dictify
+    def _get_log_file_bam_qc():
+        prefix = "work/{mapper_lib}/log/snakemake.bam_qc"
+        key_ext = (
+            ("log", ".log"),
+            ("log_md5", ".log.md5"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_info_md5", ".conda_info.txt.md5"),
+            ("conda_list", ".conda_list.txt"),
+            ("conda_list_md5", ".conda_list.txt.md5"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+
+    def _get_params_run(self, wildcards):
+        return {
+            "bam": sorted(list(self._collect_bam_files(wildcards))),
+            "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
+            "path_targets_bed": self.config["target_coverage_report"]["path_targets_bed"],
+            "max_coverage": self.config["target_coverage_report"]["max_coverage"],
+            "min_cov_warning": self.config["target_coverage_report"]["min_cov_warning"],
+            "min_cov_ok": self.config["target_coverage_report"]["min_cov_ok"],
+            "detailed_reporting": False,
+        }
+
+    def _get_params_bam_qc(self, wildcards):
+        return {
+            "bam": sorted(list(self._collect_bam_files(wildcards))),
+            "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
+        }
+
+    def _collect_bam_files(self, wildcards):
+        """Collect BAM files."""
+        # Initialise variables
+        seen = []  # seen paths list
+        base_path_in = "work/input_links/{library_name}"
+        library_name = wildcards.mapper_lib.split(".")[-1]
+        folder_name = library_name
+
+        for _, path_infix, filename in self.path_gen.run(
+            folder_name=folder_name, pattern_set_keys=("bam",)
+        ):
+            path = os.path.join(base_path_in, path_infix, filename).format(
+                library_name=library_name
+            )
+            if path in seen:
+                print(f"WARNING: ignoring path seen before {path}", file=sys.stderr)
+            else:
+                seen.append(path)
+                yield path
+
+
+class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
+    """Annotate VCF file using "varfish-annotator annotate"."""
+
+    #: Step name
+    name = "varfish_annotator_external"
+
+    #: Class available actions
+    actions = ("annotate", "bam_qc", "merge_vcf")
+
+    #: VCF key to file extensions
+    vcf_key_ext_dict = {
+        "vcf": ".vcf.gz",
+        "vcf_md5": ".vcf.gz.md5",
+        "tbi": ".vcf.gz.tbi",
+        "tbi_md5": ".vcf.gz.tbi.md5",
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Build shortcut from index library name to pedigree
+        self.index_ngs_library_to_pedigree = {}
+        for sheet in self.parent.shortcut_sheets:
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        # Path generator for linking in
+        self.path_gen = LinkInPathGenerator(
+            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
+        )
+        # External tool prefix - included in merged VCF name
+        self.external_tool_prefix = self._get_external_source_prefix()
+
+    def _get_external_source_prefix(self):
+        """Get external source prefix
+
+        :return: Returns external tool prefix if any provided, example: "dragen.". Otherwise,
+        returns empty string.
+        """
+        if self.config["external_tool"]:
+            return self.config["external_tool"].lower() + "."
+        return ""
 
     def get_input_files(self, action):
         """Return path to pedigree input file"""
@@ -144,7 +276,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
-        """"""
         if self.config["merge_vcf_flag"]:
             pedigree = self.index_ngs_library_to_pedigree.get(wildcards.index_ngs_library)
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
@@ -157,31 +288,48 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
-        """"""
         # Pedigree
-        tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        yield "ped", tpl.format(**wildcards)
+        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         # VCF
         tpl = (
-            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
-            f"{self.mapper_caller_tag}{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
+            f"{self.external_tool_prefix}{{index_ngs_library}}"
         )
-        for key, ext in KEY_EXT.items():
+        for key, ext in self.vcf_key_ext_dict.items():
             yield key, tpl.format(**wildcards) + ext
+
+    def _get_input_files_bam_qc(self, wildcards):
+        # Get names of primary libraries of the selected pedigree.  The pedigree is selected
+        # by the primary DNA NGS library of the index.
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
+        for donor in pedigree.donors:
+            mapper_lib = self.external_tool_prefix + donor.dna_ngs_library.name
+            if not donor.dna_ngs_library:
+                continue
+            tpl = f"work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.%s.txt"
+            for key in ("bamstats", "flagstats", "idxstats"):
+                result[key].append(tpl % key)
+            if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
+                continue
+            path = f"work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
+            result["cov_qc"].append(path)
+
+        return result
 
     @dictify
     def get_output_files(self, action):
-        """Return output files for the export"""
+        """Return output files for action"""
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
     def _get_output_files_merge_vcf(self):
         tpl = (
-            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
-            f"{self.mapper_caller_tag}{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
+            f"{self.external_tool_prefix}{{index_ngs_library}}"
         )
-        for key, ext in KEY_EXT.items():
+        for key, ext in self.vcf_key_ext_dict.items():
             yield key, tpl + ext
 
     @dictify
@@ -189,20 +337,33 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         prefix = (
             "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
         )
-        for infix in INFIXES:
+        for infix in ("gts", "db-infos"):
             key = infix.replace("-", "_")
             yield key, prefix + f".{infix}.tsv.gz"
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
 
+    @dictify
+    def _get_output_files_bam_qc(self):
+        key = "bam_qc"
+        prefix = (
+            "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
+        )
+        yield key, prefix + ".bam-qc.tsv.gz"
+        yield key + "_md5", prefix + ".bam-qc.tsv.gz.md5"
+
+    @dictify
     def get_log_file(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_log_file_{action}")()
+        if action == "merge_vcf":
+            return getattr(self, f"_get_log_file_{action}")()
+        else:
+            return getattr(self, "_get_log_file_annotation_generic")(action)
 
     @dictify
     def _get_log_file_merge_vcf(self):
         prefix = (
-            f"work/{self.mapper_caller_tag}varfish_annotated.merge_vcf.{{index_ngs_library}}/log/"
-            f"{self.mapper_caller_tag}varfish_annotated.merge_vcf.{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}varfish_annotated.merge_vcf.{{index_ngs_library}}/"
+            f"log/{self.external_tool_prefix}varfish_annotated.merge_vcf.{{index_ngs_library}}"
         )
         key_ext = (
             ("log", ".log"),
@@ -215,24 +376,22 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
+    @staticmethod
     @dictify
-    def _get_log_file_annotate(self):
+    def _get_log_file_annotation_generic(action):
         prefix = (
-            "work/varfish_annotated.{index_ngs_library}/log/"
-            "varfish_annotated.{index_ngs_library}"
+            f"work/varfish_annotated.{{index_ngs_library}}/log/"
+            f"varfish_annotated.{action}.{{index_ngs_library}}"
         )
         key_ext = (
             ("wrapper", ".wrapper.py"),
-            ("wrapper_md5", ".wrapper.py.md5"),
             ("log", ".log"),
-            ("log_md5", ".log.md5"),
             ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
             ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -265,21 +424,19 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config["merge_option"],
-            "gvcf_option": False,
+            "gvcf_option": self.config["gvcf_option"],
         }
         return result
 
     def _get_params_annotate(self, wildcards):
-        result = {"is_wgs": True, "step_name": "wgs_cnv_export_external"}
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if (
                 donor.dna_ngs_library
                 and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
             ):
-                result["is_wgs"] = True
-                return result
-        return result
+                return {"is_wgs": True, "step_name": "variant_export_external"}
+        return {"is_wgs": False, "step_name": "variant_export_external"}
 
     def _collect_vcfs(self, wildcards):
         """Yield path to pedigree VCF"""
@@ -307,29 +464,12 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
             yield donor.name
 
-    def _get_mapper_caller_tag(self):
-        """Get mapper and caller tag
 
-        :return: Returns tag to be used to name intermediate and final files. Tag based on
-        information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
-        """
-        mapper = self.config["tool_ngs_mapping"]
-        caller = self.config["tool_wgs_sv_calling"]
-        if mapper and caller:
-            return f"{mapper}.{caller}."
-        elif mapper or caller:
-            mapper = mapper or ""
-            caller = caller or ""
-            return f"{mapper}{caller}."
-        else:
-            return ""
-
-
-class WgsCnvExportExternalWorkflow(BaseStep):
-    """Perform germline WGS CNV export external"""
+class VariantExportExternalWorkflow(BaseStep):
+    """Perform germline variant export for externally generated VCFs"""
 
     #: Workflow name
-    name = "wgs_cnv_export_external"
+    name = "variant_export_external"
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -354,11 +494,24 @@ class WgsCnvExportExternalWorkflow(BaseStep):
         self.register_sub_step_classes(
             (
                 WritePedigreeSampleNameStepPart,
-                VarfishAnnotatorExternalStepPart,
-                LinkInVcfExternalStepPart,
+                VarfishAnnotatorAnnotateStepPart,
+                BamReportsExternalStepPart,
                 LinkOutStepPart,
+                LinkInVcfExternalStepPart,
+                LinkInBamExternalStepPart,
+                LinkInBaiExternalStepPart,
             )
         )
+        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+
+    @dictify
+    def _build_ngs_library_to_kit(self):
+        for sheet in self.shortcut_sheets:
+            for donor in sheet.donors:
+                for bio_sample in donor.bio_samples.values():
+                    for test_sample in bio_sample.test_samples.values():
+                        for library in test_sample.ngs_libraries.values():
+                            yield library.name, "default"
 
     @listify
     def get_result_files(self):
@@ -366,23 +519,38 @@ class WgsCnvExportExternalWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
+        # Initialise variables
         name_pattern = "varfish_annotated.{index_library.name}"
+        file_exts = (".tsv.gz", ".tsv.gz.md5")
+
+        # Define infixes and actions - check if BAM QC is possible
+        infixes = ("gts", "db-infos")
+        performed_actions = ("annotate",)
+        if self.config["bam_available_flag"]:
+            infixes += ("bam-qc",)
+            performed_actions += ("bam_qc",)
+
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
-            infix=INFIXES,
-            ext=EXTS,
+            infix=infixes,
+            ext=file_exts,
         )
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-            ),
-        )
+        for action in performed_actions:
+            name_pattern_action = name_pattern.replace(
+                "varfish_annotated.", f"varfish_annotated.{action}."
+            )
+            prefix = os.path.join("output", name_pattern, "log", name_pattern_action + "{ext}")
+            yield from self._yield_result_files(
+                prefix,
+                ext=(
+                    ".log",
+                    ".log.md5",
+                    ".conda_info.txt",
+                    ".conda_info.txt.md5",
+                    ".conda_list.txt",
+                    ".conda_list.txt.md5",
+                ),
+            )
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""

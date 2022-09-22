@@ -8,12 +8,10 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Get shortcuts to static data and step configuration
 static_config = snakemake.config["static_data_config"]
-export_config = snakemake.config["step_config"]["variant_export"]
+export_config = snakemake.config["step_config"][snakemake.params.args["step_name"]]
 
 this_file = __file__
 
-# Build list of arguments to pass to Jannovar
-annotation_args = []
 
 # TODO: care about case of WGS data
 # TODO: remove case ID parameter from annotator

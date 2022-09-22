@@ -5,7 +5,6 @@ import filecmp
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 import textwrap
-from unittest.mock import patch
 
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 import pytest
@@ -17,9 +16,9 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     DataSearchInfo,
     DataSetInfo,
-    LinkInExternalStepPart,
     LinkInPathGenerator,
     LinkInStep,
+    LinkInVcfExternalStepPart,
     LinkOutStepPart,
     WritePedigreeSampleNameStepPart,
     WritePedigreeStepPart,
@@ -335,7 +334,7 @@ def vcf_dummy_generic_step(
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.register_sub_step_classes((LinkInExternalStepPart, LinkOutStepPart))
+            self.register_sub_step_classes((LinkInVcfExternalStepPart, LinkOutStepPart))
             self.data_search_infos = list(self._load_data_search_infos())
 
         @classmethod
@@ -365,13 +364,13 @@ def vcf_dummy_generic_step(
 
 def test_link_in_external_step_part_get_input_files(vcf_dummy_generic_step):
     """Tests LinkInExternalStepPart.get_input_files()"""
-    actual = vcf_dummy_generic_step.get_input_files("link_in_external", "run")
+    actual = vcf_dummy_generic_step.get_input_files("link_in_vcf_external", "run")
     assert len(actual) == 0
 
 
 def test_link_in_external_step_part_get_output_files(vcf_dummy_generic_step):
     expected = "work/input_links/{library_name}/.done"
-    actual = vcf_dummy_generic_step.get_output_files("link_in_external", "run")
+    actual = vcf_dummy_generic_step.get_output_files("link_in_vcf_external", "run")
     assert actual == expected
 
 
@@ -394,7 +393,7 @@ def test_link_in_external_step_part_get_shell_cmd(
         """
     ).strip()
     # Check results
-    actual = vcf_dummy_generic_step.get_shell_cmd("link_in_external", "run", wildcards)
+    actual = vcf_dummy_generic_step.get_shell_cmd("link_in_vcf_external", "run", wildcards)
     assert actual == expected
 
 

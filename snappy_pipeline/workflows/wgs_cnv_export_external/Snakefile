@@ -42,11 +42,11 @@ rule all:
 
 rule wgs_sv_export_external_link_in_run:
     input:
-        wf.get_input_files("link_in_external", "run"),
+        wf.get_input_files("link_in_vcf_external", "run"),
     output:
-        wf.get_output_files("link_in_external", "run"),
+        wf.get_output_files("link_in_vcf_external", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in_external", "run", wildcards))
+        shell(wf.get_shell_cmd("link_in_vcf_external", "run", wildcards))
 
 
 rule wgs_sv_export_external_link_out_run:

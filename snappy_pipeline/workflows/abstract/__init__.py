@@ -859,7 +859,7 @@ class BaseStep:
                 base_paths=self.config_lookup_paths,
                 search_paths=self.config["search_paths"],
                 search_patterns=self.config["search_patterns"],
-                mixed_se_pe=True,
+                mixed_se_pe=False,
             )
 
     @classmethod
@@ -1096,14 +1096,17 @@ class LinkInStep(BaseStepPart):
         )  # pragma: no cover
 
 
-class LinkInExternalStepPart(LinkInStep):
+class LinkInVcfExternalStepPart(LinkInStep):
     """Link in the external VCF files."""
 
     #: Step name
-    name = "link_in_external"
+    name = "link_in_vcf_external"
 
     #: Class available actions
     actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("vcf", "vcf_md5")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1130,7 +1133,7 @@ class LinkInExternalStepPart(LinkInStep):
         )
         filenames = {}
         for src_path, path_infix, filename in path_gen.run(
-            folder_name=wildcards.library_name, pattern_set_keys=("vcf", "vcf_md5")
+            folder_name=wildcards.library_name, pattern_set_keys=self.pattern_set_keys
         ):
             new_path = os.path.join(out_path, path_infix, filename)
             if new_path in filenames:
@@ -1149,6 +1152,40 @@ class LinkInExternalStepPart(LinkInStep):
             print(msg, file=sys.stderr)
             raise Exception(msg)
         return "\n".join(lines)
+
+
+class LinkInBamExternalStepPart(LinkInVcfExternalStepPart):
+    """Link in the external BAM files."""
+
+    #: Step name
+    name = "link_in_bam_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("bam", "bam_md5")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_pattern_out = "work/input_links/{library_name}/.done_bam_external"
+
+
+class LinkInBaiExternalStepPart(LinkInVcfExternalStepPart):
+    """Link in the external BAI files."""
+
+    #: Step name
+    name = "link_in_bai_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("bai", "bai_md5")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_pattern_out = "work/input_links/{library_name}/.done_bai_external"
 
 
 class InputFilesStepPartMixin:

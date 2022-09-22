@@ -325,7 +325,7 @@ def test_wgs_sv_annotation_workflow(wgs_cnv_export_external_workflow):
     """Tests simple functionality of the workflow."""
     # Check created sub steps
     expected = [
-        "link_in_external",
+        "link_in_vcf_external",
         "link_out",
         "varfish_annotator_external",
         "write_pedigree_with_sample_name",

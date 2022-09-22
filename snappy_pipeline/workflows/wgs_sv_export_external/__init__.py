@@ -2,7 +2,7 @@
 """Implementation of the ``wgs_sv_export_external`` step.
 
 The ``wgs_sv_export_external`` step takes as the input externally generated VCFs and uses
-``varfish-annotator-cli annotate-sv`` commmand to create files fit for import into VarFish Server.
+``varfish-annotator-cli annotate-sv`` command to create files fit for import into VarFish Server.
 
 ==========
 Stability
@@ -14,7 +14,7 @@ This step is considered experimental, use it at your own discretion.
 Step Input
 ==========
 
-The WGS SV export external step uses VCFs externally generated as result.
+The WGS SV export external step uses VCFs externally generated as input.
 
 ===========
 Step Output
@@ -77,8 +77,8 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInExternalStepPart,
     LinkInPathGenerator,
+    LinkInVcfExternalStepPart,
     LinkOutStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
@@ -140,7 +140,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     def get_input_files(self, action):
         """Return path to pedigree input file"""
         self._validate_action(action)
-        return getattr(self, "_get_input_files_{}".format(action))
+        return getattr(self, f"_get_input_files_{action}")
 
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -173,7 +173,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files for the export"""
         self._validate_action(action)
-        return getattr(self, "_get_output_files_{}".format(action))()
+        return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
     def _get_output_files_merge_vcf(self):
@@ -196,7 +196,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_log_file_{}".format(action))()
+        return getattr(self, f"_get_log_file_{action}")()
 
     @dictify
     def _get_log_file_merge_vcf(self):
@@ -258,7 +258,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_params_{}".format(action))
+        return getattr(self, f"_get_params_{action}")
 
     def _get_params_merge_vcf(self, wildcards):
         result = {
@@ -303,7 +303,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
-        # Seen paths list
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
             yield donor.name
@@ -356,7 +355,7 @@ class WgsSvExportExternalWorkflow(BaseStep):
             (
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorExternalStepPart,
-                LinkInExternalStepPart,
+                LinkInVcfExternalStepPart,
                 LinkOutStepPart,
             )
         )

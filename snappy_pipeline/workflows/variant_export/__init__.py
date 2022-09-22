@@ -222,8 +222,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                     donor.dna_ngs_library
                     and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
                 ):
-                    return {"is_wgs": True}
-            return {"is_wgs": False}
+                    return {"is_wgs": True, "step_name": "variant_export"}
+            return {"is_wgs": False, "step_name": "variant_export"}
 
         return get_params_func
 
