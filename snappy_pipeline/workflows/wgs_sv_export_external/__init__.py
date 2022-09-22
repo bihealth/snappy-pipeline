@@ -8,31 +8,56 @@ The ``wgs_sv_export_external`` step takes as the input externally generated VCFs
 Stability
 ==========
 
-TODO
+This step is considered experimental, use it at your own discretion.
 
 ==========
 Step Input
 ==========
 
-TODO
+The WGS SV export external step uses VCFs externally generated as result.
 
 ===========
 Step Output
 ===========
 
-TODO
+For all samples, the workflow will execute ``varfish-annotator-cli``, pedigrees with multiple VCFs
+will be merged based on `id`. The name of the index's primary DNA NGS library will be used as an
+identification token in the output file. The following is an example of the files that
+will be generated:
+
+::
+    output/
+    +-- varfish_annotated.P001-N1-DNA1-WGS1
+    |   `-- out
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz.md5
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
+    |   |   +-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
+    |   |
+    |   +-- log
+    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt
+    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt.md5
+    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt
+    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt.md5
+    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.log
+    |       +-- varfish_annotated.P001-N1-DNA1-WGS1.log.md5
+    |
+    [...]
+
 
 ====================
 Global Configuration
 ====================
 
-TODO
+Not applicable.
 
 =====================
 Default Configuration
 =====================
 
-.. include:: DEFAULT_CONFIG_wgs_sv.rst
+.. include:: DEFAULT_CONFIG_wgs_sv_external.rst
 
 ==================
 Parallel Execution

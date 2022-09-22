@@ -9,26 +9,51 @@ Server.
 Stability
 ==========
 
-TODO
+This step is considered is considered stable for short Illumina reads.
 
 ==========
 Step Input
 ==========
 
 The WGS SV export step uses Snakemake sub workflows for using the result of the
-``wgs_sv_export`` step.
+``wgs_sv_calling`` step.
 
 ===========
 Step Output
 ===========
 
-TODO
+For all pedigrees, annotation will be performed on the merged VCF file contained all samples.
+The name of the primary DNA NGS library of the index will be used as an identification token
+in the output file.  For each read mapper, sv caller, and pedigree, the following is an example of
+the files that will be generated:
+
+::
+    output/
+    +-- varfish_annotated.P001-N1-DNA1-WGS1
+    |   `-- out
+    |   |   |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz
+    |   |   |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz.md5
+    |   |   |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz
+    |   |   |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
+    |   |   |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
+    |   |   +-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
+    |   |
+    |   +-- log
+    |       |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt
+    |       |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt.md5
+    |       |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt
+    |       |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt.md5
+    |       |-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.log
+    |       +-- bwa.delly2.varfish_annotated.P001-N1-DNA1-WGS1.log.md5
+    |
+    [...]
+
 
 ====================
 Global Configuration
 ====================
 
-TODO
+Not applicable.
 
 =====================
 Default Configuration
