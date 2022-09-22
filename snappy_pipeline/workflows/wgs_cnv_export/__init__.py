@@ -16,7 +16,7 @@ Step Input
 ==========
 
 The WGS CNV export step uses Snakemake sub workflows for using the result of the
-``wgs_cnv_callinng`` step.
+``wgs_cnv_calling`` step.
 
 ===========
 Step Output
