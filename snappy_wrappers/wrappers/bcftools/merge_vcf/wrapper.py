@@ -32,7 +32,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         # Variables
         # vcf=$1
         # sample=$2
-        
+
         # Check
         if bcftools query --list-samples $1 | grep --quiet --word-regexp $2; then
            return 0
@@ -55,6 +55,19 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     # -----------
     # Merge VCFs
     # -----------
+
+    # Define merge option
+    merge_option="--merge none"
+    if [[ "{snakemake.params.args[merge_option]}" != "None" ]]; then
+        merge_option="--merge {snakemake.params.args[merge_option]}"
+    fi
+
+    # Set merge gVCF option
+    gvcf_option=""
+    if [[ "{snakemake.params.args[gvcf_option]}" != "False" ]]; then
+        gvcf_option="--gvcf"
+    fi
+
     # If a single sample, there is no need to merge.
     # ``$i`` is reused from previous BCFs for-loop.
     if [[ $i -eq 1 ]]; then
@@ -69,7 +82,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         out=$(realpath {snakemake.output.vcf})
         pushd $TMPDIR/cwd
         bcftools merge \
-            --merge id \
+            $merge_option $gvcf_option \
             --output-type z \
             --output $out \
             *.vcf.gz

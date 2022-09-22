@@ -106,6 +106,7 @@ step_config:
     tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
     tool_wgs_sv_calling: null    # OPTIONAL: used to create output file prefix.
     merge_vcf_flag: true         # REQUIRED: true if pedigree VCFs still need merging.
+    merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
     search_paths: []             # REQUIRED: path to all VCF files.
     search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
@@ -263,6 +264,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
+            "merge_option": self.config["merge_option"],
+            "gvcf_option": False,
         }
         return result
 
