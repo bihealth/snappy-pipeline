@@ -720,6 +720,29 @@ def test_target_coverage_report_step_part_collect_get_log_file(ngs_mapping_workf
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "collect") == expected
 
 
+def test_target_coverage_report_step_part_run_get_params(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_params() - action 'run'"""
+    wildcards = Wildcards(fromdict={"mapper_lib": "bwa.P001-N1-DNA1-WGS1"})
+    expected = {
+        "path_targets_bed": "path/to/SureSelect_Human_All_Exon_V6_r2.bed",
+        "max_coverage": 200,
+        "min_cov_warning": 20,
+        "min_cov_ok": 50,
+        "detailed_reporting": False,
+    }
+    actual = ngs_mapping_workflow.get_params("target_coverage_report", "run")(wildcards)
+    assert actual == expected
+
+
+def test_target_coverage_report_step_part_collect_get_params(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_params() - action 'collect'"""
+    wildcards = Wildcards(fromdict={"mapper_lib": "bwa.P001-N1-DNA1-WGS1"})
+    expected_error_msg = "Parameters only available for action 'run'."
+    with pytest.raises(AssertionError) as exec_info:
+        ngs_mapping_workflow.get_params("target_coverage_report", "collect")(wildcards)
+    assert exec_info.value.args[0] == expected_error_msg
+
+
 def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_resource()"""
     # Define expected

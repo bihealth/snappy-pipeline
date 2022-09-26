@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for STAR: Snakemake wrapper.py
+"""CUBI+Snakemake wrapper code for target coverage report: Snakemake wrapper.py
 """
 
 from snakemake import shell
@@ -8,23 +8,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-# Extract NGS library name.
-library_name = snakemake.wildcards.mapper_lib.split(".", 1)[1]
-# Get map from library to kit name and paths to BED files.
-ngs_library_to_kit = snakemake.params.ngs_library_to_kit
-
-# Get path to target BED file for coverage report, if possible depending on
-# enrichment kit of sample.
-kit_name = ngs_library_to_kit.get(library_name, "__default__")
-
-for item in snakemake.config["step_config"]["ngs_mapping"]["target_coverage_report"][
-    "path_target_interval_list_mapping"
-]:
-    if item["name"] == kit_name:
-        path_targets_bed = item["path"]
-        break
-else:
-    path_targets_bed = ""
 
 shell(
     r"""
@@ -48,7 +31,7 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # Get sorted targets BED file.
-zcat --force "{path_targets_bed}" \
+zcat --force {snakemake.params.args[path_targets_bed]} \
 | awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \
 > $TMPDIR/targets.tmp.bed
 
@@ -66,16 +49,14 @@ bedtools coverage \
     -sorted \
 | python $(dirname {__file__})/../../../tools/bam_cov_stats.py \
     --bed-path $TMPDIR/targets.bed \
-    --min-cov-warning {snakemake.config[step_config][ngs_mapping][target_coverage_report][min_cov_warning]} \
-    --min-cov-ok {snakemake.config[step_config][ngs_mapping][target_coverage_report][min_cov_ok]} \
-    --max-coverage {snakemake.config[step_config][ngs_mapping][target_coverage_report][max_coverage]} \
-    $(if [[ "{snakemake.config[step_config][ngs_mapping][target_coverage_report][detailed_reporting]}" == "True" ]]; then \
+    --min-cov-warning {snakemake.params.args[min_cov_warning]} \
+    --min-cov-ok {snakemake.params.args[min_cov_ok]} \
+    --max-coverage {snakemake.params.args[max_coverage]} \
+    $(if [[ "{snakemake.params.args[detailed_reporting]}" == "True" ]]; then \
         echo --report dec; \
     fi) \
 > {snakemake.output.txt}
 
-pushd $(dirname {snakemake.output.txt}) &&
-    md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5 &&
-    popd
+md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
 """
 )

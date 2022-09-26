@@ -37,7 +37,6 @@ for path in $(echo {snakemake.input} | tr ' ' '\n' | sort); do
     >> $OUT_REPORT
 done
 
-pushd $(dirname {snakemake.output.txt})
-md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
+md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
 """
 )
