@@ -292,7 +292,7 @@ class ScrambleStepPart(BaseStepPart):
         )
 
 
-class MEIWorkflow(BaseStep):
+class MeiWorkflow(BaseStep):
     """Perform germline mobile element insertion detection."""
 
     #: Workflow name

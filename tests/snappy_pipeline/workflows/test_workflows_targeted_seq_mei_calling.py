@@ -7,7 +7,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.targeted_seq_mei_calling import MEIWorkflow
+from snappy_pipeline.workflows.targeted_seq_mei_calling import MeiWorkflow
 
 from .conftest import patch_module_fs
 
@@ -57,7 +57,7 @@ def mei_workflow(
     germline_sheet_fake_fs,
     mocker,
 ):
-    """Return MEIWorkflow object pre-configured with germline sheet"""
+    """Return MeiWorkflow object pre-configured with germline sheet"""
     # Create reference genome file
     germline_sheet_fake_fs.fs.create_file(
         "/path/to/blast_ref.fa",
@@ -73,7 +73,7 @@ def mei_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return MEIWorkflow(
+    return MeiWorkflow(
         dummy_workflow,
         minimal_config,
         config_lookup_paths,
@@ -174,11 +174,11 @@ def test_scramble_analysis_step_part_get_resource_usage(mei_workflow):
             assert actual == expected, msg_error
 
 
-# Tests for MEIWorkflow      -----------------------------------------------------------------------
+# Tests for MeiWorkflow      -----------------------------------------------------------------------
 
 
 def test_mei_workflow_files(mei_workflow):
-    """Tests MEIWorkflow.get_result_files()
+    """Tests MeiWorkflow.get_result_files()
     Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results for scramble.
     """

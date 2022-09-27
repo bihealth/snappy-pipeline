@@ -4,7 +4,7 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.targeted_seq_mei_calling import MEIWorkflow
+from snappy_pipeline.workflows.targeted_seq_mei_calling import MeiWorkflow
 
 
 # Configuration ===============================================================
@@ -18,7 +18,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = MEIWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = MeiWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
