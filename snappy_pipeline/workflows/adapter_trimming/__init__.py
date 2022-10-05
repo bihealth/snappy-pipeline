@@ -59,8 +59,8 @@ The following adpter trimming tools are currently available
 
 """
 
-import os
 from collections import OrderedDict
+import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
