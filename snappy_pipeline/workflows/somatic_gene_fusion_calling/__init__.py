@@ -62,7 +62,8 @@ GENE_FUSION_CALLERS = ("fusioncatcher", "jaffa", "pizzly", "hera", "star_fusion"
 DEFAULT_CONFIG = r"""
 step_config:
   somatic_gene_fusion_calling:
-    tools: ['fusioncatcher', 'jaffa']
+    path_link_in: ""
+    tools: ['fusioncatcher', 'jaffa', 'arriba']
     fusioncatcher:
       data_dir: REQUIRED   # REQUIRED
       configuration: null  # optional
@@ -118,7 +119,10 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         self.base_path_out = "work/{name}.{{library_name}}/out/.done".format(name=self.name)
         # Path generator for linking in
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     @dictify

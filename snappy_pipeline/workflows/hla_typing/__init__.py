@@ -87,6 +87,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   hla_typing:
     path_ngs_mapping: ../ngs_mapping
+    path_link_in: ""
     tools:
       - optitype
     optitype:
@@ -116,7 +117,10 @@ class OptiTypeStepPart(BaseStepPart):
         self.extensions = EXT_VALUES
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     @staticmethod

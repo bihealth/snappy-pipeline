@@ -32,6 +32,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration ngs_mapping
 step_config:
   ngs_data_qc:
+    path_link_in: ""
     tools:
     - fastqc
 """
@@ -51,7 +52,10 @@ class FastQcReportStepPart(BaseStepPart):
         self.base_path_in = "work/input_links/{library_name}"
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     def get_args(self, action):

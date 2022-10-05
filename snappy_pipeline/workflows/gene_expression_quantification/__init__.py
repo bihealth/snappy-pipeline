@@ -115,6 +115,7 @@ EXTENSIONS = {
 DEFAULT_CONFIG = r"""
 step_config:
   gene_expression_quantification:
+    path_link_in: ""
     tools:
     - strandedness
     - featurecounts
@@ -165,7 +166,10 @@ class SalmonStepPart(BaseStepPart):
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     @classmethod

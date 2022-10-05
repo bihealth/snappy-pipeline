@@ -324,6 +324,7 @@ step_config:
       dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
       dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'ngmlr'.
+    path_link_in: "" # Must be set for mapping to use trimmed fastqs
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
@@ -428,7 +429,10 @@ class ReadMappingStepPart(BaseStepPart):
         self.extensions = EXT_VALUES
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     def get_args(self, action):
