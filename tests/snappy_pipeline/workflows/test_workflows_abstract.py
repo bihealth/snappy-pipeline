@@ -180,6 +180,7 @@ def dummy_generic_step(
                 r"""
                 step_config:
                   dummy:
+                    path_link_in: ""
                     key: value
                 """
             ).lstrip()
