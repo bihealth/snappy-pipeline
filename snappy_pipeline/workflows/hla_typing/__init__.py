@@ -54,8 +54,8 @@ The following HLA typing tools are currently available
 
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand

@@ -4,9 +4,9 @@
 
 import textwrap
 
-from biomedsheets.shortcuts import GenericSampleSheet
 import pytest
 import ruamel.yaml as ruamel_yaml
+from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration

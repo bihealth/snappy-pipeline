@@ -59,8 +59,8 @@ The following adpter trimming tools are currently available
 
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -76,7 +76,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
-
 
 #: Adatper trimming tools
 TRIMMERS = ("bbduk", "fastp")
