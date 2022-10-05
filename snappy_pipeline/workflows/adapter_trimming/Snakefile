@@ -70,16 +70,16 @@ rule adapter_trimming_link_out_fastq_run:  # localrule
 
 rule adapter_trimming_bbduk_run:
     input:
-        **wf. get_input_files("bbduk","run"),
+        **wf.get_input_files("bbduk", "run"),
     output:
-        **wf. get_output_files("bbduk","run"),
+        **wf.get_output_files("bbduk", "run"),
     threads: wf.get_resource("bbduk", "run", "threads")
     resources:
         time=wf.get_resource("bbduk", "run", "time"),
         memory=wf.get_resource("bbduk", "run", "memory"),
         partition=wf.get_resource("bbduk", "run", "partition"),
     log:
-        **wf. get_log_file("bbduk","run"),
+        **wf.get_log_file("bbduk", "run"),
     params:
         args=wf.substep_dispatch("bbduk", "get_args", "run"),
     wrapper:
@@ -91,16 +91,16 @@ rule adapter_trimming_bbduk_run:
 
 rule adapter_trimming_fastp_run:
     input:
-        **wf. get_input_files("fastp","run"),
+        **wf.get_input_files("fastp", "run"),
     output:
-        **wf. get_output_files("fastp","run"),
+        **wf.get_output_files("fastp", "run"),
     threads: wf.get_resource("fastp", "run", "threads")
     resources:
         time=wf.get_resource("fastp", "run", "time"),
         memory=wf.get_resource("fastp", "run", "memory"),
         partition=wf.get_resource("fastp", "run", "partition"),
     log:
-        **wf. get_log_file("fastp","run"),
+        **wf.get_log_file("fastp", "run"),
     params:
         args=wf.substep_dispatch("fastp", "get_args", "run"),
     wrapper:
