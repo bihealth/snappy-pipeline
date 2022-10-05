@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline adapter_trimming step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.adapter_trimming import AdapterTrimmingWorkflow
+
+__author__ = "Eric Blanc <eric.blanc@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = AdapterTrimmingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking the FASTQ files in and linking out the alignments should
+    # be done locally by the Snakemake master process
+    adapter_trimming_link_in_run,
+    adapter_trimming_link_out_fastq_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Link in FASTQ files ---------------------------------------------------------
+
+
+rule adapter_trimming_link_in_run:
+    input:
+        wf.get_input_files("link_in", "run"),
+    output:
+        wf.get_output_files("link_in", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+
+# Link out fastq files --------------------------------------------------------
+
+
+rule adapter_trimming_link_out_fastq_run:  # localrule
+    input:
+        wf.get_input_files("link_out_fastq", "run"),
+    output:
+        wf.get_output_files("link_out_fastq", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out_fastq", "run", wildcards))
+
+
+# Adapter trimming ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# bbduk -----------------------------------------------------------------------
+
+
+rule adapter_trimming_bbduk_run:
+    input:
+        **wf.get_input_files("bbduk", "run"),
+    output:
+        **wf.get_output_files("bbduk", "run"),
+    threads: wf.get_resource("bbduk", "run", "threads")
+    resources:
+        time=wf.get_resource("bbduk", "run", "time"),
+        memory=wf.get_resource("bbduk", "run", "memory"),
+        partition=wf.get_resource("bbduk", "run", "partition"),
+    log:
+        **wf.get_log_file("bbduk", "run"),
+    params:
+        args=wf.substep_dispatch("bbduk", "get_args", "run"),
+    wrapper:
+        wf.wrapper_path("bbduk/run")
+
+
+# fastp -----------------------------------------------------------------------
+
+
+rule adapter_trimming_fastp_run:
+    input:
+        **wf.get_input_files("fastp", "run"),
+    output:
+        **wf.get_output_files("fastp", "run"),
+    threads: wf.get_resource("fastp", "run", "threads")
+    resources:
+        time=wf.get_resource("fastp", "run", "time"),
+        memory=wf.get_resource("fastp", "run", "memory"),
+        partition=wf.get_resource("fastp", "run", "partition"),
+    log:
+        **wf.get_log_file("fastp", "run"),
+    params:
+        args=wf.substep_dispatch("fastp", "get_args", "run"),
+    wrapper:
+        wf.wrapper_path("fastp/run")
