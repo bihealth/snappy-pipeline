@@ -231,7 +231,7 @@ def test_bam_reports_step_part_call_get_log_file_bam_qc(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_log_file_bam_qc()"""
-    base_out = "work/{mapper_lib}/log/snakemake.bam_qc"
+    base_out = "work/{mapper_lib}/log/{mapper_lib}.bam_qc"
     expected = get_expected_log_files_dict(base_out)
     actual = variant_export_external_workflow.get_log_file("bam_reports", "bam_qc")
     assert actual == expected
@@ -326,14 +326,9 @@ def test_varfish_annotator_step_part_call_get_output_files_merge_vcf(
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(
-    variant_export_external_workflow,
-):
+def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(variant_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart._get_log_file_merge_vcf()"""
-    base_name = (
-        "work/dragen.varfish_annotated.merge_vcf.{index_ngs_library}/log/"
-        "dragen.varfish_annotated.merge_vcf.{index_ngs_library}"
-    )
+    base_name = "work/dragen.{index_ngs_library}/log/dragen.{index_ngs_library}.merge_vcf"
     expected = get_expected_log_files_dict(base_out=base_name)
     actual = variant_export_external_workflow.get_log_file(
         "varfish_annotator_external", "merge_vcf"

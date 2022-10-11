@@ -179,7 +179,7 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
     @staticmethod
     @dictify
     def _get_log_file_bam_qc():
-        prefix = "work/{mapper_lib}/log/snakemake.bam_qc"
+        prefix = "work/{mapper_lib}/log/{mapper_lib}.bam_qc"
         key_ext = (
             ("log", ".log"),
             ("log_md5", ".log.md5"),
@@ -310,7 +310,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             tpl = f"work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
-            if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
+            if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
             path = f"work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
             result["cov_qc"].append(path)
@@ -362,8 +362,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _get_log_file_merge_vcf(self):
         prefix = (
-            f"work/{self.external_tool_prefix}varfish_annotated.merge_vcf.{{index_ngs_library}}/"
-            f"log/{self.external_tool_prefix}varfish_annotated.merge_vcf.{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
+            f"log/{self.external_tool_prefix}{{index_ngs_library}}.merge_vcf"
         )
         key_ext = (
             ("log", ".log"),
@@ -502,16 +502,16 @@ class VariantExportExternalWorkflow(BaseStep):
                 LinkInBaiExternalStepPart,
             )
         )
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+        self.ngs_library_list = self._build_ngs_library_list()
 
-    @dictify
-    def _build_ngs_library_to_kit(self):
+    @listify
+    def _build_ngs_library_list(self):
         for sheet in self.shortcut_sheets:
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
                     for test_sample in bio_sample.test_samples.values():
                         for library in test_sample.ngs_libraries.values():
-                            yield library.name, "default"
+                            yield library.name
 
     @listify
     def get_result_files(self):
@@ -520,7 +520,7 @@ class VariantExportExternalWorkflow(BaseStep):
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
         # Initialise variables
-        name_pattern = "varfish_annotated.{index_library.name}"
+        name_pattern = "varfish_annotated.{index.dna_ngs_library.name}"
         file_exts = (".tsv.gz", ".tsv.gz.md5")
 
         # Define infixes and actions - check if BAM QC is possible
@@ -571,7 +571,7 @@ class VariantExportExternalWorkflow(BaseStep):
                         file=sys.stderr,
                     )
                     continue  # pragma: no cover
-                yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
+                yield from expand(tpl, index=[pedigree.index], **kwargs)
 
     def check_config(self):
         """Check configuration
