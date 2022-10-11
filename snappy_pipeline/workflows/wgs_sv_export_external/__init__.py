@@ -201,8 +201,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @dictify
     def _get_log_file_merge_vcf(self):
         prefix = (
-            f"work/{self.mapper_caller_tag}varfish_annotated.merge_vcf.{{index_ngs_library}}/log/"
-            f"{self.mapper_caller_tag}varfish_annotated.merge_vcf.{{index_ngs_library}}"
+            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/log/"
+            f"{self.mapper_caller_tag}{{index_ngs_library}}.merge_vcf"
         )
         key_ext = (
             ("log", ".log"),

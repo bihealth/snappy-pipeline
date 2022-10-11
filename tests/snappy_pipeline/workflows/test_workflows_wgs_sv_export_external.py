@@ -223,14 +223,9 @@ def test_varfish_annotator_step_part_call_get_output_files_merge_vcf(
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(
-    wgs_sv_export_external_workflow,
-):
+def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(wgs_sv_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart._get_log_file_merge_vcf()"""
-    base_name = (
-        "work/dragen.varfish_annotated.merge_vcf.{index_ngs_library}/log/"
-        "dragen.varfish_annotated.merge_vcf.{index_ngs_library}"
-    )
+    base_name = "work/dragen.{index_ngs_library}/log/dragen.{index_ngs_library}.merge_vcf"
     expected = get_expected_log_files_dict(base_out=base_name)
     actual = wgs_sv_export_external_workflow.get_log_file("varfish_annotator_external", "merge_vcf")
     assert actual == expected
