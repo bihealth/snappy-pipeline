@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools merge - Structural VCF files (CNV, SV).
+"""Wrapper for running bcftools merge - VCF files.
 """
 
 import tempfile
@@ -84,9 +84,12 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         bcftools merge \
             $merge_option $gvcf_option \
             --missing-to-ref \
-            --output-type z \
-            --output $out \
-            *.vcf.gz
+            --output-type u \
+            *.vcf.gz \
+        | bcftools norm \
+            --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+            --multiallelics -any \
+        | bgzip -c > $out
         popd
         tabix -f {snakemake.output.vcf}
     fi
