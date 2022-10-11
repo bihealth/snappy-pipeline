@@ -69,7 +69,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     fi
 
     # If a single sample, there is no need to merge.
-    # ``$i`` is reused from previous BCFs for-loop.
+    # ``$i`` is reused from previous VCFs to temp dir for-loop.
     if [[ $i -eq 1 ]]; then
         # Validate VCF: contains all expected samples
         while read sample; do
@@ -83,9 +83,13 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         pushd $TMPDIR/cwd
         bcftools merge \
             $merge_option $gvcf_option \
-            --output-type z \
-            --output $out \
-            *.vcf.gz
+            --missing-to-ref \
+            --output-type u \
+            *.vcf.gz \
+        | bcftools norm \
+            --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+            --multiallelics -any \
+        | bgzip -c > $out
         popd
         tabix -f {snakemake.output.vcf}
     fi
