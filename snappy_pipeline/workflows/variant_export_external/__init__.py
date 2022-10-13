@@ -438,6 +438,32 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 return {"is_wgs": True, "step_name": "variant_export_external"}
         return {"is_wgs": False, "step_name": "variant_export_external"}
 
+    def _get_params_bam_qc(self, wildcards):
+        """Get parameters for wrapper ``variant_annotator/bam_qc``
+
+        Creates dictionary that links library name to identifier that should be used in output file.
+        The wrapper will derive the library name from the input file name, for analysis using
+        externally generated data, the values will be the sample name as provided by the external
+        source (sample name). For snappy-based analysis, both keys and values will be the
+        library name.
+
+        Dictionary expected structure:
+        {
+            "P001-N1-DNA1-WGS1": "P001",
+            "P002-N1-DNA1-WGS1": "P002",
+            "P003-N1-DNA1-WGS1": "P003",
+        }
+
+        :return: Dictionary linking library name to identifier that should be used in output file.
+        Key: library name; Value: identifier to be used in file.
+        """
+        library_name_to_file_identifier = {}
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        for donor in pedigree.donors:
+            if donor.dna_ngs_library:
+                library_name_to_file_identifier[donor.dna_ngs_library.name] = donor.secondary_id
+        return library_name_to_file_identifier
+
     def _collect_vcfs(self, wildcards):
         """Yield path to pedigree VCF"""
         # Seen paths list

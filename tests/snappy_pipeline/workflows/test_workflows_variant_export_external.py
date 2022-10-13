@@ -423,8 +423,8 @@ def test_varfish_annotator_step_part_get_log_file_annotate(variant_export_extern
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params(variant_export_external_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart.get_params() - only available for `annotate`"""
+def test_varfish_annotator_step_part_get_params_annotate(variant_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {"is_wgs": True, "step_name": "variant_export_external"}
     actual = variant_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
@@ -509,6 +509,20 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(variant_export_external
     expected = {**wrapper_dict, **log_dict}
     # Get actual
     actual = variant_export_external_workflow.get_log_file("varfish_annotator_external", "bam_qc")
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_get_params_bam_qc(variant_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_params_bam_qc()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "P001-N1-DNA1-WGS1": "P001",
+        "P002-N1-DNA1-WGS1": "P002",
+        "P003-N1-DNA1-WGS1": "P003",
+    }
+    actual = variant_export_external_workflow.get_params("varfish_annotator_external", "bam_qc")(
+        wildcards
+    )
     assert actual == expected
 
 
