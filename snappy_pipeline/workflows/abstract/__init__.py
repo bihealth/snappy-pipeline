@@ -1027,6 +1027,8 @@ class LinkInStep(BaseStepPart):
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.config["path_link_in"]:
+            folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
         tpl = (
