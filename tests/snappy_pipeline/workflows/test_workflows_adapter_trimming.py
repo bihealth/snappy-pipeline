@@ -121,18 +121,18 @@ def test_bbduk_step_part_get_args_input(adapter_trimming_workflow):
     expected = {
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
-            "reads_left": [
-                (
-                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz",
-                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz"},
-                )
-            ],
-            "reads_right": [
-                (
-                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz",
-                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz"},
-                )
-            ],
+            "reads_left": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz": {
+                    "relative_path": "FCXXXXXX/L001",
+                    "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz",
+                },
+            },
+            "reads_right": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz": {
+                    "relative_path": "FCXXXXXX/L001",
+                    "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz",
+                },
+            },
         },
     }
     assert actual == expected
@@ -194,18 +194,18 @@ def test_fastp_step_part_get_args_input(adapter_trimming_workflow):
     expected = {
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
-            "reads_left": [
-                (
-                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz",
-                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz"},
-                )
-            ],
-            "reads_right": [
-                (
-                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz",
-                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz"},
-                )
-            ],
+            "reads_left": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz": {
+                    "relative_path": "FCXXXXXX/L001",
+                    "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz",
+                },
+            },
+            "reads_right": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz": {
+                    "relative_path": "FCXXXXXX/L001",
+                    "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz",
+                },
+            },
         },
     }
     assert actual == expected
