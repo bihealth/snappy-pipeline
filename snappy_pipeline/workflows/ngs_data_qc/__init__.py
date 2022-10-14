@@ -32,7 +32,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration ngs_mapping
 step_config:
   ngs_data_qc:
-    path_link_in: ""
+    path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
     tools:
     - fastqc
 """

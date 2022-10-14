@@ -87,7 +87,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   hla_typing:
     path_ngs_mapping: ../ngs_mapping
-    path_link_in: ""
+    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
     tools:
       - optitype
     optitype:

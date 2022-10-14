@@ -324,7 +324,7 @@ step_config:
       dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
       dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'ngmlr'.
-    path_link_in: "" # Must be set for mapping to use trimmed fastqs
+    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying

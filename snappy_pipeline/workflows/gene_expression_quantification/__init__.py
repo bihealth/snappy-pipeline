@@ -115,7 +115,7 @@ EXTENSIONS = {
 DEFAULT_CONFIG = r"""
 step_config:
   gene_expression_quantification:
-    path_link_in: ""
+    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
     tools:
     - strandedness
     - featurecounts
