@@ -25,6 +25,11 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+           adapter_trimming:
+             tools: ["bbduk", "fastp"]
+             bbduk:
+               adapter_sequences: /path/to/adapter_sequences.fa
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -61,6 +66,34 @@ def adapter_trimming_workflow(
     )
 
 
+# Tests for LinkOutFastqStepPart ---------------------------------------------------------------
+
+
+def test_link_out_fastq_step_part_get_output_files(adapter_trimming_workflow):
+    """Tests LinkOutFastqStepPart.get_output_files()"""
+    expected = [
+        "output/{trimmer}/{library_name}/log/.done",
+        "output/{trimmer}/{library_name}/report/.done",
+        "output/{trimmer}/{library_name}/out/.done",
+    ]
+    actual = adapter_trimming_workflow.get_output_files("link_out_fastq", "run")
+    assert actual == expected
+
+
+def test_link_out_fastq_step_part_get_shell_cmd(adapter_trimming_workflow):
+    """Tests LinkOutFastqStepPart.get_output_files()"""
+    wildcards = Wildcards(fromdict={"trimmer": "bbduk", "library_name": "P001-N1-DNA1-WGS1"})
+    expected = textwrap.dedent(
+        r"""
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/log/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/log/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/report/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/report/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/out/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/out/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
+        """
+    ).strip()
+    actual = adapter_trimming_workflow.get_shell_cmd("link_out_fastq", "run", wildcards)
+    assert actual == expected
+
+
 # Tests for BbdukStepPart ----------------------------------------------------------------------
 
 
@@ -76,6 +109,7 @@ def test_bbduk_step_part_get_output_files(adapter_trimming_workflow):
     expected = {
         "out_done": "work/bbduk.{library_name}/out/.done",
         "report_done": "work/bbduk.{library_name}/report/.done",
+        "rejected_done": "work/bbduk.{library_name}/rejected/.done",
     }
     actual = adapter_trimming_workflow.get_output_files("bbduk", "run")
     assert actual == expected
@@ -83,13 +117,25 @@ def test_bbduk_step_part_get_output_files(adapter_trimming_workflow):
 
 def test_bbduk_step_part_get_args_input(adapter_trimming_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
-    sinput = adapter_trimming_workflow.substep_dispatch("bbduk", "get_args", "run")(wildcards)
-    assert sinput["input"]["reads_left"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz"
-    ]
-    assert sinput["input"]["reads_right"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz"
-    ]
+    actual = adapter_trimming_workflow.substep_dispatch("bbduk", "get_args", "run")(wildcards)
+    expected = {
+        "library_name": "P001-T1-DNA1-WGS1",
+        "input": {
+            "reads_left": [
+                (
+                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz",
+                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz"},
+                )
+            ],
+            "reads_right": [
+                (
+                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz",
+                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz"},
+                )
+            ],
+        },
+    }
+    assert actual == expected
 
 
 def test_bbduk_step_part_get_log_file(adapter_trimming_workflow):
@@ -136,6 +182,7 @@ def test_fastp_step_part_get_output_files(adapter_trimming_workflow):
     expected = {
         "out_done": "work/fastp.{library_name}/out/.done",
         "report_done": "work/fastp.{library_name}/report/.done",
+        "rejected_done": "work/fastp.{library_name}/rejected/.done",
     }
     actual = adapter_trimming_workflow.get_output_files("fastp", "run")
     assert actual == expected
@@ -143,13 +190,25 @@ def test_fastp_step_part_get_output_files(adapter_trimming_workflow):
 
 def test_fastp_step_part_get_args_input(adapter_trimming_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
-    sinput = adapter_trimming_workflow.substep_dispatch("fastp", "get_args", "run")(wildcards)
-    assert sinput["input"]["reads_left"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz"
-    ]
-    assert sinput["input"]["reads_right"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz"
-    ]
+    actual = adapter_trimming_workflow.substep_dispatch("fastp", "get_args", "run")(wildcards)
+    expected = {
+        "library_name": "P001-T1-DNA1-WGS1",
+        "input": {
+            "reads_left": [
+                (
+                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz",
+                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz"},
+                )
+            ],
+            "reads_right": [
+                (
+                    "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz",
+                    {"relative_path": "FCXXXXXX/L001", "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz"},
+                )
+            ],
+        },
+    }
+    assert actual == expected
 
 
 def test_fastp_step_part_get_log_file(adapter_trimming_workflow):
@@ -179,3 +238,28 @@ def test_fastp_step_part_get_resource_usage(adapter_trimming_workflow):
         msg_error = f"Assertion error for resource '{resource}'."
         actual = adapter_trimming_workflow.get_resource("fastp", "run", resource)
         assert actual == expected, msg_error
+
+
+# Tests for AdapterTrimmingWorkflow ------------------------------------------------------------
+
+
+def test_adapter_trimming_workflow_get_results(adapter_trimming_workflow):
+    """Tests the ouput of AdapterTrimmingWorkflow.get_result_files()"""
+    libraries = (
+        "P001-N1-DNA1-WGS1",
+        "P001-T1-DNA1-WGS1",
+        "P001-T1-RNA1-mRNA_seq1",
+        "P002-N1-DNA1-WGS1",
+        "P002-T1-DNA1-WGS1",
+        "P002-T1-DNA1-WGS2",
+        "P002-T2-DNA1-WGS1",
+        "P002-T2-RNA1-mRNA_seq1",
+    )
+    tpl = "output/{tool}/{library}/{sub_dir}/.done"
+    expected = []
+    for library in libraries:
+        for tool in ["bbduk", "fastp"]:
+            for sub_dir in ["out", "report", "log"]:
+                expected.append(tpl.format(tool=tool, library=library, sub_dir=sub_dir))
+    actual = adapter_trimming_workflow.get_result_files()
+    assert actual == expected

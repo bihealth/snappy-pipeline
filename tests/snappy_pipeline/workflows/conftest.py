@@ -704,6 +704,30 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 
 
 @pytest.fixture
+def germline_sheet_fake_fs_path_link_in(fake_fs, germline_sheet_tsv):
+    """Return fake file system setup with files for the germline_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create FASTQ read files for the samples
+    tpl = "/preprocess/{donor}-N1-DNA1-WGS1/FCXXXXXX/L001/{donor}_R{i}.fastq.gz"
+    for line in germline_sheet_tsv.splitlines()[1:]:
+        donor = line.split("\t")[0]
+        # Create fastq files
+        fake_fs.fs.create_file(tpl.format(donor=donor, i=1), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(donor=donor, i=2), create_missing_dirs=True)
+        # Create md5 files
+        md5_r1 = tpl.format(donor=donor, i=1) + ".md5"
+        fake_fs.fs.create_file(md5_r1, create_missing_dirs=True)
+        md5_r2 = tpl.format(donor=donor, i=2) + ".md5"
+        fake_fs.fs.create_file(md5_r2, create_missing_dirs=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
+    )
+    return fake_fs
+
+
+@pytest.fixture
 def germline_sheet_fake_fs2(
     fake_fs2, germline_sheet_tsv, tsv_large_cohort_trios_only_germline_sheet
 ):
