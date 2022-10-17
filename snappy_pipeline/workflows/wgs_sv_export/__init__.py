@@ -103,6 +103,7 @@ step_config:
     path_wgs_sv_calling: ../wgs_sv_calling
     tools_ngs_mapping: null
     tools_wgs_sv_calling: null
+    release: GRCh37              # REQUIRED: default 'GRCh37'
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
     path_db: REQUIRED            # REQUIRED: spath to annotator DB file to use

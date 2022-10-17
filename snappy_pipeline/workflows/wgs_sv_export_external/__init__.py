@@ -109,6 +109,7 @@ step_config:
     merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
     search_paths: []             # REQUIRED: path to all VCF files.
     search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]
+    release: GRCh37              # REQUIRED: default 'GRCh37'
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
     path_db: REQUIRED            # REQUIRED: path to annotator DB file to use

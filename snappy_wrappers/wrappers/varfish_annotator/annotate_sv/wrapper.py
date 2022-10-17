@@ -89,7 +89,7 @@ varfish-annotator \
     -XX:MaxHeapSize=10g \
     -XX:+UseG1GC \
     \
-    --release GRCh37 \
+    --release {export_config[release]} \
     \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \
