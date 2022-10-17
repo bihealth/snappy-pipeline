@@ -321,7 +321,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
         """
         mapper = self.config["tool_ngs_mapping"]
-        caller = self.config["tool_wgs_sv_calling"]
+        caller = self.config["tool_wgs_cnv_calling"]
         if mapper and caller:
             return f"{mapper}.{caller}."
         elif mapper or caller:
