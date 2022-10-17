@@ -212,7 +212,7 @@ rule variant_export_external_varfish_annotator_bam_qc:
         memory=wf.get_resource("varfish_annotator_external", "bam_qc", "memory"),
         partition=wf.get_resource("varfish_annotator_external", "bam_qc", "partition"),
     params:
-        **{"args": wf.get_params("varfish_annotator_external","bam_qc")},
+        **{"args": wf.get_params("varfish_annotator_external", "bam_qc")},
     log:
         **wf.get_log_file("varfish_annotator_external", "bam_qc"),
     wrapper:

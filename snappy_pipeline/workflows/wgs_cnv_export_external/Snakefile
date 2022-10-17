@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline wgs_sv_export_external step Snakefile"""
+"""CUBI Pipeline wgs_cnv_export_external step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.wgs_sv_export_external import WgsSvExportExternalWorkflow
+from snappy_pipeline.workflows.wgs_cnv_export_external import WgsCnvExportExternalWorkflow
 
 
 # Configuration ===============================================================
@@ -18,18 +18,18 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsSvExportExternalWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = WgsCnvExportExternalWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
 
 localrules:
     # Linking external VCF files
-    wgs_sv_export_external_link_in_run,
+    wgs_cnv_export_external_link_in_run,
     # Linking files from work/ to output/ should be done locally
-    wgs_sv_export_external_link_out_run,
+    wgs_cnv_export_external_link_out_run,
     # Writing pedigrees should be done locally as well
-    wgs_sv_export_external_write_pedigree_run,
+    wgs_cnv_export_external_write_pedigree_run,
 
 
 rule all:
@@ -40,7 +40,7 @@ rule all:
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule wgs_sv_export_external_link_in_run:
+rule wgs_cnv_export_external_link_in_run:
     input:
         wf.get_input_files("link_in_vcf_external", "run"),
     output:
@@ -49,7 +49,7 @@ rule wgs_sv_export_external_link_in_run:
         shell(wf.get_shell_cmd("link_in_vcf_external", "run", wildcards))
 
 
-rule wgs_sv_export_external_link_out_run:
+rule wgs_cnv_export_external_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:
@@ -63,7 +63,7 @@ rule wgs_sv_export_external_link_out_run:
 # Write out pedigree file -----------------------------------------------------
 
 
-rule wgs_sv_export_external_write_pedigree_run:
+rule wgs_cnv_export_external_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree_with_sample_name", "run"),
     run:
@@ -73,7 +73,7 @@ rule wgs_sv_export_external_write_pedigree_run:
 # Merge external VCFs by pedigree (if necessary) ------------------------------
 
 
-rule wgs_sv_export_external_varfish_annotator_external_merge_vcf:
+rule wgs_cnv_export_external_varfish_annotator_external_merge_vcf:
     input:
         unpack(wf.get_input_files("varfish_annotator_external", "merge_vcf")),
     output:
@@ -94,7 +94,7 @@ rule wgs_sv_export_external_varfish_annotator_external_merge_vcf:
 # Run varfish-annotator-cli annotate ------------------------------------------
 
 
-rule wgs_sv_export_external_varfish_annotator_external_annotate_svs:
+rule wgs_cnv_export_external_varfish_annotator_external_annotate_svs:
     input:
         unpack(wf.get_input_files("varfish_annotator_external", "annotate")),
     output:

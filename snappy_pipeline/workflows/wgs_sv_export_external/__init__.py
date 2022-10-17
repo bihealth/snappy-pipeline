@@ -113,6 +113,7 @@ step_config:
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
     path_db: REQUIRED            # REQUIRED: path to annotator DB file to use
+    varfish_server_compatibility: false # OPTIONAL: build output compatible with varfish-server v1.2 (Anthenea) and early versions of the v2 (Bollonaster).
 """
 
 
@@ -271,7 +272,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return result
 
     def _get_params_annotate(self, wildcards):
-        result = {"is_wgs": True, "step_name": "wgs_sv_export_external"}
+        result = {
+            "is_wgs": True,
+            "step_name": "wgs_sv_export_external",
+            "varfish_server_compatibility": self.config["varfish_server_compatibility"],
+        }
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if (

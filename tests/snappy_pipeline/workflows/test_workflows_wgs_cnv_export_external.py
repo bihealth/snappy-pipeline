@@ -233,6 +233,21 @@ def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(wgs_cnv_export_
     assert actual == expected
 
 
+def test_varfish_annotator_step_part_get_params_merge_vcf(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorExternalStepPart._get_params_merge_vcf()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "input": [],
+        "sample_names": ["P001", "P002", "P003"],
+        "merge_option": "id",
+        "gvcf_option": False,
+    }
+    actual = wgs_cnv_export_external_workflow.get_params("varfish_annotator_external", "merge_vcf")(
+        wildcards
+    )
+    assert actual == expected
+
+
 def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(wgs_cnv_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'annotate'"""
     expected_dict = {"threads": 1, "time": "02:00:00", "memory": "14336M", "partition": "medium"}
@@ -285,9 +300,7 @@ def test_varfish_annotator_step_part_call_get_output_files_annotate(
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_call_get_log_file_annotate(
-    wgs_cnv_export_external_workflow,
-):
+def test_varfish_annotator_step_part_call_get_log_file_annotate(wgs_cnv_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart._get_log_file_annotate()"""
     base_name = (
         "work/varfish_annotated.{index_ngs_library}/log/varfish_annotated.{index_ngs_library}"
@@ -299,6 +312,20 @@ def test_varfish_annotator_step_part_call_get_log_file_annotate(
     log_dict = get_expected_log_files_dict(base_out=base_name)
     expected = {**wrapper_dict, **log_dict}
     actual = wgs_cnv_export_external_workflow.get_log_file("varfish_annotator_external", "annotate")
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_get_params_annotate(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "is_wgs": True,
+        "step_name": "wgs_cnv_export_external",
+        "varfish_server_compatibility": False,
+    }
+    actual = wgs_cnv_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
+        wildcards
+    )
     assert actual == expected
 
 
