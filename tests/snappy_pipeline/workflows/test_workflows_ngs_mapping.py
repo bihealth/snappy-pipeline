@@ -31,6 +31,8 @@ def minimal_config():
             path: /path/to/ref.fa
 
         step_config:
+          bam_collect_doc:
+            enabled: true
           ngs_mapping:
             tools:
               dna: ['bwa']
@@ -756,6 +758,48 @@ def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
             assert actual == expected, msg_error
 
 
+# Tests for BamCollectDocStepPart -----------------------------------------------------------------
+
+
+def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workflow):
+    """Tests BamCollectDocStepPart.get_input_files() - run"""
+    # Define expected
+    expected = {
+        "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
+        "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
+    }
+    # Get actual
+    actual = ngs_mapping_workflow.get_input_files("bam_collect_doc", "run")()
+    assert actual == expected
+
+
+def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests BamCollectDocStepPart.get_output_files() - run"""
+    expected = {
+        "bw": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw",
+        "bw_md5": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw.md5",
+        "vcf": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz",
+        "vcf_md5": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.md5",
+        "tbi": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi",
+        "tbi_md5": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi.md5",
+    }
+    assert ngs_mapping_workflow.get_output_files("bam_collect_doc", "run") == expected
+
+
+def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow):
+    """Tests BamCollectDocStepPart.get_log_file() - run"""
+    expected = "work/{mapper_lib}/log/snakemake.bam_collect_doc.log"
+    assert ngs_mapping_workflow.get_log_file("bam_collect_doc", "run") == expected
+
+
+def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
+    """Tests BamCollectDocStepPart.get_resource()"""
+    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "2G", "partition": "medium"}
+    for resource, expected in expected_dict.items():
+        actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)
+        assert actual == expected
+
+
 # Tests for GenomeCoverageReportStepPart ----------------------------------------------------------
 
 
@@ -821,6 +865,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
     i.e., the tools associated with gene expression quantification."""
     # Check created sub steps
     expected = [
+        "bam_collect_doc",
         "bwa",
         "external",
         "gatk_post_bam",
@@ -875,6 +920,13 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     )
     expected += [
         bam_stats_html_out.format(i=i, ext=ext) for ext in ("html", "html.md5") for i in range(1, 7)
+    ]
+    expected += [
+        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.cov.{ext}".format(
+            i=i, ext=ext
+        )
+        for ext in ("bw", "bw.md5", "vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for i in range(1, 7)
     ]
     expected += [
         "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(

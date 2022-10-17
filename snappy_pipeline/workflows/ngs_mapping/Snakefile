@@ -278,3 +278,22 @@ rule ngs_mapping_genome_coverage_report_run:
         wf.get_log_file("genome_coverage_report", "run"),
     run:
         shell(wf.get_shell_cmd("genome_coverage_report", "run", wildcards))
+
+
+# Compute depth of coverage files (VCF and bigWig) ----------------------------
+
+
+rule ngs_mapping_generate_doc_files:
+    input:
+        **wf.get_input_files("bam_collect_doc", "run")(),
+    output:
+        **wf.get_output_files("bam_collect_doc", "run"),
+    threads: wf.get_resource("bam_collect_doc", "run", "threads")
+    resources:
+        time=wf.get_resource("bam_collect_doc", "run", "time"),
+        memory=wf.get_resource("bam_collect_doc", "run", "memory"),
+        partition=wf.get_resource("bam_collect_doc", "run", "partition"),
+    log:
+        wf.get_log_file("bam_collect_doc", "run"),
+    wrapper:
+        wf.wrapper_path("maelstrom/bam_collect_doc")

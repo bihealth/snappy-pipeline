@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - star
+  - trimadap ==r11
+  - arriba
+

@@ -26,8 +26,7 @@ Step Input
 ==========
 
 The variant annotation step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` (for the aligned reads BAM files) and the ``variant_calling`` (for looking at the
-B allele frequency).
+``ngs_mapping`` (for the aligned reads BAM files).
 
 ===========
 Step Output
@@ -77,6 +76,8 @@ Available CNV Callers
 The following CNV callers are currently available
 
 - ``"canvas"``
+- ``"Delly2"``
+- ``"gCNV"``
 
 =======
 Reports
@@ -91,7 +92,6 @@ import os
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -102,7 +102,6 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import GcnvStepPart
-from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -119,7 +118,7 @@ VCF_KEY_EXTS = dict(zip(EXT_NAMES, EXT_VALUES))
 BCF_KEY_EXTS = {"bcf": ".bcf", "bcf_md5": ".bcf.md5", "csi": ".bcf.csi", "csi_md5": ".bcf.csi.md5"}
 
 #: Available WGS CNV callers
-WGS_CNV_CALLERS = ("erds", "erds_sv2", "cnvetti")
+WGS_CNV_CALLERS = ("cnvetti", "delly2", "gcnv")
 
 #: Default configuration for the wgs_cnv_calling schema
 DEFAULT_CONFIG = r"""
@@ -127,14 +126,13 @@ DEFAULT_CONFIG = r"""
 step_config:
   wgs_cnv_calling:
     path_ngs_mapping: ../ngs_mapping          # REQUIRED
-    path_variant_calling: ../variant_calling  # REQUIRED
-    variant_calling_tool: REQUIRED            # REQUIRED
-    tools: [erds_sv2]                         # REQUIRED
+    tools: [delly2, gcnv]                     # REQUIRED
+
     cnvetti:
-      window_length: null
-      count_kind: null
-      segmentation: null
-      normalization: null
+      window_length: null  # Optional
+      count_kind: null     # Optional
+      segmentation: null   # Optional
+      normalization: null  # Optional
       preset: deep_wgs
       presets:
         shallow_wgs:
@@ -164,13 +162,6 @@ step_config:
 
       # Path to BED file with uniquely mappable regions.
       path_uniquely_mapable_bed: null  # REQUIRED
-
-    sv2:
-      path_hg19: /fast/projects/cubit/current/static_data/reference/hg19/ucsc/hg19.fa  # REQUIRED
-      path_hg38: /fast/projects/cubit/current/static_data/reference/hg38/ucsc/hg38.fa  # REQUIRED
-      path_mm10: /fast/projects/cubit/current/static_data/reference/mm10/ucsc/mm10.fa  # REQUIRED
-      path_sv2_resource: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4   # REQUIRED
-      path_sv2_models: /fast/work/users/holtgrem_c/cubit_incoming/SV2/v1.4.3.4/training_sets # REQUIRED
 """
 
 
@@ -599,299 +590,6 @@ class Delly2StepPart(BaseStepPart):
             return self.resource_usage_dict.get("default")
 
 
-class ErdsStepPart(BaseStepPart):
-    """WGS CNV calling with ERDS
-
-    WGS CNV calling is performed on the primary DNA NGS library for each donor.
-    """
-
-    #: Step name
-    name = "erds"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.erds.{{library_name}}/out/{{mapper}}.erds.{{library_name}}{ext}"
-        )
-        # Build shortcut from index library name to donor
-        self.index_ngs_library_to_donor = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_donor.update(sheet.index_ngs_library_to_donor)
-        # Build shortcut from index library name to pedigree
-        self.donor_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
-
-    def get_input_files(self, action):
-        """Return input function for ERDS rule"""
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to sub workflows
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            var_calling = self.parent.sub_workflows["variant_calling"]
-            # Get names of BAM and BAI file for the given donor
-            bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-            for ext in (".bam", ".bam.bai"):
-                yield ext.split(".")[-1], ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
-            # Get names of the VCF files for the given library's donor/pedigree
-            pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-            vcf_base = (
-                "output/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}"
-            ).format(
-                var_caller=self.config["variant_calling_tool"],
-                index_library_name=pedigree.index.dna_ngs_library.name,
-                **wildcards,
-            )
-            yield "vcf", var_calling(vcf_base + ".vcf.gz")
-            yield "tbi", var_calling(vcf_base + ".vcf.gz.tbi")
-
-        return input_function
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files that ERDS returns return (VCF + TBI file)"""
-        # Validate action
-        self._validate_action(action)
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, self.base_path_out.format(ext=ext)
-
-    @staticmethod
-    def get_log_file(action):
-        """Return path to log file"""
-        _ = action
-        return "work/{mapper}.erds.{library_name}/log/snakemake.wgs_cnv_calling.log"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        # Return resource
-        return ResourceUsage(
-            threads=1,
-            time="2-00:00:00",  # 2 days
-            memory=f"{32 * 1024}M",
-        )
-
-
-class ErdsSv2StepPart(BaseStepPart):
-    """WGS SV identification using ERDS+SV2
-
-    ERDS+SV2 supports the calling based on whole cohorts.  The rough steps are as follows:
-
-    - Perform variant calling on each sample individually with ERDS ("erds_sv2_call")
-    - Merge called variants to get a cohort-wide site list ("erds_sv2_merge_calls")
-    - Perform genotyping of the variants in the cohort-wide site list in each sample
-      with SV2 ("erds_sv2_genotype")
-    - Merge cohort-wide site list ("erds_sv2_merge_genotypes"); using bcftools
-    - Reorder VCF and put pedigree in front; later on, non-pedigree variants should be removed.
-    """
-
-    #: Step name
-    name = "erds_sv2"
-
-    #: Actions in ERDS+SV2 workflow
-    actions = (
-        "call",
-        "merge_calls",
-        "genotype",
-        "info_to_format",
-        "merge_genotypes",
-        "reorder_vcf",
-    )
-
-    #: Directory infixes
-    dir_infixes = {
-        "call": "{mapper}.erds_sv2.call.{library_name}",
-        "merge_calls": "{mapper}.erds_sv2.merge_calls",
-        "genotype": "{mapper}.erds_sv2.genotype.{library_name}",
-        "info_to_format": "{mapper}.erds_sv2.info_to_format.{library_name}",
-        "merge_genotypes": "{mapper}.erds_sv2.merge_genotypes",
-        "reorder_vcf": r"{mapper}.erds_sv2.{index_ngs_library,(?!call|merge_|genotype|info_to_format).*}",
-    }
-
-    #: Resource dictionary. Key: type of action (string); Value: resource (ResourceUsage).
-    resource_dict = {
-        "call": ResourceUsage(
-            threads=1,
-            time="6-08:00:00",  # 6.25 days
-            memory=f"{40 * 1024}M",
-        ),
-        "cheap_action": ResourceUsage(
-            threads=2,
-            time="1-00:00:00",  # 1 day
-            memory=f"{int(3.75 * 1024 * 2)}M",
-        ),
-        "default": ResourceUsage(
-            threads=4,
-            time="6-08:00:00",  # 6.25 days
-            memory=f"{int(7.5 * 1024 * 4)}M",
-        ),
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{index_ngs_library}}/out/"
-            "{{mapper}}.{var_caller}.{{index_ngs_library}}{ext}"
-        )
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-        # Build shortcut from library name to library info
-        self.library_name_to_library = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.library_name_to_library.update(sheet.library_name_to_library)
-        # Build shortcut from index library name to pedigree
-        self.donor_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
-
-    def get_library_extra_infos(self, wildcards):
-        """Returns library extra infos for the given library name"""
-        return self.library_name_to_library[wildcards.library_name].ngs_library.extra_infos
-
-    def get_input_files(self, action):
-        """Return appropriate input function for the given action"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "call": self._get_input_files_call,
-            "merge_calls": self._get_input_files_merge_calls,
-            "genotype": self._get_input_files_genotype,
-            "info_to_format": self._get_input_files_info_to_format,
-            "merge_genotypes": self._get_input_files_merge_genotypes,
-            "reorder_vcf": self._get_input_files_reorder_vcf,
-        }
-        return mapping[action]
-
-    @dictify
-    def _get_input_files_call(self, wildcards):
-        """Return input files for "call" action"""
-        return ErdsStepPart(self.parent).get_input_files("run")(wildcards)
-
-    @listify
-    def _get_input_files_merge_calls(self, wildcards):
-        """Return input files for "merge_calls" action"""
-        tpl = os.path.join(
-            "work", self.dir_infixes["call"], "out", self.dir_infixes["call"] + ".vcf.gz"
-        )
-        for donor in self._donors_with_dna_ngs_library():
-            yield tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
-
-    @dictify
-    def _get_input_files_genotype(self, wildcards):
-        """Return input files for "genotype" action"""
-        # Get shorcut to sub workflows
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        var_calling = self.parent.sub_workflows["variant_calling"]
-        # Get names of BAM file for the given donor
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-        yield "bam", ngs_mapping(bam_tpl.format(ext=".bam", **wildcards))
-        # CNV sites VCF file
-        infix = self.dir_infixes["merge_calls"]
-        yield "vcf_cnv", os.path.join("work", infix, "out", infix + ".vcf.gz").format(**wildcards)
-        # Small variants VCF file
-        pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-        vcf_base = (
-            "output/{mapper}.{var_caller}.{index_library_name}/out/"
-            "{mapper}.{var_caller}.{index_library_name}"
-        ).format(
-            var_caller=self.config["variant_calling_tool"],
-            index_library_name=pedigree.index.dna_ngs_library.name,
-            **wildcards,
-        )
-        yield "vcf_small", var_calling(vcf_base + ".vcf.gz")
-        # PED file
-        tpl = "work/write_pedigree.{index_library_name}/out/{index_library_name}.ped"
-        yield "ped", tpl.format(index_library_name=pedigree.index.dna_ngs_library.name, **wildcards)
-
-    def _get_input_files_info_to_format(self, wildcards):
-        """Return input files for "info_to_format" action"""
-        infix = self.dir_infixes["genotype"]
-        tpl = os.path.join("work", infix, "out", infix + ".vcf.gz")
-        yield tpl.format(**wildcards)
-
-    @listify
-    def _get_input_files_merge_genotypes(self, wildcards):
-        """Return input files for "merge_genotypes" action"""
-        for donor in self._donors_with_dna_ngs_library():
-            infix = self.dir_infixes["info_to_format"]
-            tpl = os.path.join("work", infix, "out", infix + ".vcf.gz")
-            yield tpl.format(**{**wildcards, "library_name": donor.dna_ngs_library.name})
-
-    @dictify
-    def _get_input_files_reorder_vcf(self, wildcards):
-        """Return input files for "reorder_vcf" action"""
-        infix = self.dir_infixes["merge_genotypes"]
-        tpl = os.path.join("work", infix, "out", infix + ".vcf.gz")
-        yield "vcf", tpl.format(**wildcards)
-
-    def _donors_with_dna_ngs_library(self):
-        """Yield donors with DNA NGS library"""
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    yield donor
-
-    def get_ped_members(self, wildcards):
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        return " ".join(
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        )
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output paths for the given action; include wildcards"""
-        # Validate action
-        self._validate_action(action)
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            infix1 = self.dir_infixes[action]
-            infix2 = infix1.replace(r",(?!call|merge_|genotype|info_to_format).*", "")
-            yield name, "work/" + infix1 + "/out/" + infix2 + ext
-
-    def get_log_file(self, action):
-        """Return log file path for the given action; includes wildcards"""
-        # Validate action
-        self._validate_action(action)
-        infix1 = self.dir_infixes[action]
-        return "work/" + infix1 + "/log/snakemake.log"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        # Return resource
-        if action in ("info_to_format", "merge_genotypes", "merge_calls", "reorder_vcf"):
-            # cheap actions
-            return self.resource_dict.get("cheap_action")
-        elif action == "call":
-            # ERDS is pretty memory hungry
-            return self.resource_dict.get("call")
-        else:
-            return self.resource_dict.get("default")
-
-
 class GcnvWgsStepPart(GcnvStepPart):
     """WGS CNV calling with GATK4 gCNV"""
 
@@ -964,7 +662,7 @@ class WgsCnvCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow, VariantCallingWorkflow),
+            (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -972,15 +670,12 @@ class WgsCnvCallingWorkflow(BaseStep):
                 WritePedigreeStepPart,
                 CnvettiStepPart,
                 Delly2StepPart,
-                ErdsStepPart,
-                ErdsSv2StepPart,
                 GcnvWgsStepPart,
                 LinkOutStepPart,
             )
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
 
     @listify
     def all_donors(self, include_background=True):
@@ -1034,24 +729,3 @@ class WgsCnvCallingWorkflow(BaseStep):
             ("step_config", "wgs_cnv_calling", "path_ngs_mapping"),
             "Path to NGS mapping not configured but required for germline variant calling",
         )
-        self.ensure_w_config(
-            ("step_config", "wgs_cnv_calling", "path_variant_calling"),
-            (
-                "Path to germline (small) variant calling not configured but required for germline "
-                "WGS CNV calling"
-            ),
-        )
-        self.ensure_w_config(
-            ("step_config", "wgs_cnv_calling", "variant_calling_tool"),
-            "Name of the germline (small) variant calling tool",
-        )
-        # Check if specified variant calling tool was used in `variant_calling` step
-        var_cal_tool = self.w_config["step_config"]["variant_calling"]["tools"]
-        check_var_cal_tool = self.w_config["step_config"]["wgs_cnv_calling"]["variant_calling_tool"]
-        if not isinstance(check_var_cal_tool, list):
-            check_var_cal_tool = [check_var_cal_tool]
-        if not all(caller in var_cal_tool for caller in check_var_cal_tool):
-            tpl = "Variant caller {} is not selected in variant_calling step"
-            raise MissingConfiguration(
-                tpl.format(self.w_config["step_config"]["wgs_cnv_calling"]["variant_calling_tool"])
-            )
