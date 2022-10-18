@@ -104,6 +104,8 @@ class FastQcReportStepPart(BaseStepPart):
         """
         _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.config["path_link_in"]:
+            folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
