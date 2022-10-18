@@ -709,7 +709,7 @@ def germline_sheet_fake_fs_path_link_in(fake_fs, germline_sheet_tsv):
     # Create work directory
     fake_fs.fs.makedirs("/work", exist_ok=True)
     # Create FASTQ read files for the samples
-    tpl = "/preprocess/{donor}-N1-DNA1-WGS1/FCXXXXXX/L001/{donor}_R{i}.fastq.gz"
+    tpl = "/preprocess/{donor}-N1-DNA1-WGS1/FCXXXXXX/L001/out/{donor}_R{i}.fastq.gz"
     for line in germline_sheet_tsv.splitlines()[1:]:
         donor = line.split("\t")[0]
         # Create fastq files

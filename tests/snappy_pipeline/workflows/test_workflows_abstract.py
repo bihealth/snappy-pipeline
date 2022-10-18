@@ -149,10 +149,26 @@ def test_link_in_path_generator_path_link_in(
     )
     # Check results
     expected = [
-        ("/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz"),
-        ("/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz"),
-        ("/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R1.fastq.gz.md5"),
-        ("/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001", "FCXXXXXX/L001", "P001_R2.fastq.gz.md5"),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R1.fastq.gz",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R2.fastq.gz",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R1.fastq.gz.md5",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R2.fastq.gz.md5",
+        ),
     ]
     assert list(generator.run("P001-N1-DNA1-WGS1")) == expected
 
@@ -324,10 +340,10 @@ def test_link_in_step_part_get_shell_cmd_path_link_in(
     # Check results
     expected = textwrap.dedent(
         r"""
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
         """
     ).strip()
     assert actual == expected
