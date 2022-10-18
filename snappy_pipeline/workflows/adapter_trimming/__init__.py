@@ -447,12 +447,11 @@ class AdapterTrimmingStepPart(BaseStepPart):
             preprocessed_path=self.config["path_link_in"],
         )
 
-    @classmethod
     @dictify
-    def get_input_files(cls, action):
+    def get_input_files(self, action):
         """Return input files"""
         # Validate action
-        cls._validate_action(action)
+        self._validate_action(action)
         yield "done", "work/input_links/{library_name}/.done"
 
     @dictify
@@ -524,10 +523,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
             }
             path_info[input_path] = paths
         return path_info
-
-    @classmethod
-    def _validate_action(cls, action):
-        assert action in cls.actions
 
 
 class BbdukStepPart(AdapterTrimmingStepPart):
@@ -627,7 +622,11 @@ class LinkOutFastqStepPart(BaseStepPart):
         cmd = cmd + " ; fns=$(find $din_ -type f -printf '%P\\n')"
         cmd = (
             cmd
-            + " ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done"
+            + " ; for fn in $fns ; do"
+            + "     if [[ ! -L $din_/$fn ]] ; then"
+            + "       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn"
+            + "   ; fi"
+            + " ; done"
         )
         return "\n".join((cmd.format(in_=in_, out=out) for in_, out in zip(ins, outs)))
 

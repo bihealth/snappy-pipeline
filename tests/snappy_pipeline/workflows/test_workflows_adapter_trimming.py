@@ -85,9 +85,9 @@ def test_link_out_fastq_step_part_get_shell_cmd(adapter_trimming_workflow):
     wildcards = Wildcards(fromdict={"trimmer": "bbduk", "library_name": "P001-N1-DNA1-WGS1"})
     expected = textwrap.dedent(
         r"""
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/log/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/log/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/report/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/report/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/out/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/out/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do if [[ ! -L $din_/$fn ]] ; then mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn ; fi ; done
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/log/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/log/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/report/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/report/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
+        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/out/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/out/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
         """
     ).strip()
     actual = adapter_trimming_workflow.get_shell_cmd("link_out_fastq", "run", wildcards)
