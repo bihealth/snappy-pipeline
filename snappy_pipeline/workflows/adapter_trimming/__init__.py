@@ -26,14 +26,14 @@ Consider the following data set definition from the main configuration file.
 
     data_sets:
       first_batch:
-        file: 01_first_batch.json
+        file: 01_first_batch.tsv
         search_patterns:
           # Note that currently only "left" and "right" key known
           - {'left': '*/L???/*_R1.fastq.gz', 'right': '*/L???/*_R2.fastq.gz'}
         search_paths: ['../input/01_first_batch']
 
 Here, the data set ``first_batch`` is defined.  The sample sheet file is named
-``01_first_batch.json`` and looked for in the relative path to the configuration file.  The input
+``01_first_batch.tsv`` and looked for in the relative path to the configuration file.  The input
 search will be start in the (one, but could be more than one) path ``../input/01_first_batch``
 (relative to the directory containing the configuration file).  The sample sheet provides a
 ``folderName`` ``extraInfo`` entry for each NGS library.  This folder name is searched for (e.g.,
@@ -43,8 +43,11 @@ search will be start in the (one, but could be more than one) path ``../input/01
 Currently, the only supported keys in the ``search_patterns`` dict are ``"left"`` and ``"right""``
 (the latter can be omitted when only searching for single-end reads).
 
-Consider the following example::
-    ../input/
+Consider the following example:
+
+::
+
+  ../input/
     `-- 01_first_batch
         |-- P001-N1-DNA1-WES1
         |   `-- 42KF5AAXX
