@@ -122,15 +122,15 @@ def test_bbduk_step_part_get_args_input(adapter_trimming_workflow):
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
             "reads_left": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
-                    "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz",
+                    "filename": "P001_T1_DNA1_WGS1_R1.fastq.gz",
                 },
             },
             "reads_right": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
-                    "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz",
+                    "filename": "P001_T1_DNA1_WGS1_R2.fastq.gz",
                 },
             },
         },
@@ -195,15 +195,15 @@ def test_fastp_step_part_get_args_input(adapter_trimming_workflow):
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
             "reads_left": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R1.fastq.gz": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
-                    "filename": "P001-T1-DNA1-WGS1_R1.fastq.gz",
+                    "filename": "P001_T1_DNA1_WGS1_R1.fastq.gz",
                 },
             },
             "reads_right": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001-T1-DNA1-WGS1_R2.fastq.gz": {
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
-                    "filename": "P001-T1-DNA1-WGS1_R2.fastq.gz",
+                    "filename": "P001_T1_DNA1_WGS1_R2.fastq.gz",
                 },
             },
         },
@@ -251,7 +251,6 @@ def test_adapter_trimming_workflow_get_results(adapter_trimming_workflow):
         "P001-T1-RNA1-mRNA_seq1",
         "P002-N1-DNA1-WGS1",
         "P002-T1-DNA1-WGS1",
-        "P002-T1-DNA1-WGS2",
         "P002-T2-DNA1-WGS1",
         "P002-T2-RNA1-mRNA_seq1",
     )
