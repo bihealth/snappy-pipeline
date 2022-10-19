@@ -886,9 +886,12 @@ class LinkInPathGenerator:
         #: Working directory
         self.work_dir = work_dir
         #: Data set info list from configuration
-        self.data_set_infos = [
-            self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
-        ]
+        if preprocessed_path:
+            self.data_set_infos = [
+                self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
+            ]
+        else:
+            self.data_set_infos = data_set_infos
         #: Path to configuration files, used for invalidating cache
         self.config_paths = config_paths
         #: Name of cache file to create
@@ -1060,13 +1063,22 @@ class LinkInStep(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
+
+        # The key 'path_link_in' is only defined for pipelines that could used preprocessed
+        # FASTQ files. That doesn't make sense for pipelines that are using externally generated
+        # data already.
+        try:
+            preprocessed_path = self.config["path_link_in"]
+        except KeyError:
+            preprocessed_path = ""
+
         # Path generator.
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
             cache_file_name=".snappy_path_cache",
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=preprocessed_path,
         )
 
     def get_input_files(self, action):
