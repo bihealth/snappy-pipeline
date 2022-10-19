@@ -226,7 +226,6 @@ class SalmonStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
-        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if self.config["path_link_in"]:
             folder_name = library_name

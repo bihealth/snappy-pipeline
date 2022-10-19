@@ -142,7 +142,6 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -537,15 +536,9 @@ class BbdukStepPart(AdapterTrimmingStepPart):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         # Validate action
         self._validate_action(action)
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=self.config["bbduk"]["num_threads"],
             time="12:00:00",  # 40 hours
@@ -566,15 +559,9 @@ class FastpStepPart(AdapterTrimmingStepPart):
         :type action: str
 
         :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         # Validate action
         self._validate_action(action)
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=self.config["fastp"]["num_threads"],
             time="12:00:00",  # 60 hours
