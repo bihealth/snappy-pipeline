@@ -28,6 +28,7 @@ def minimal_config():
         step_config:
           variant_export_external:
             bam_available_flag: true
+            merge_vcf_flag: true
             search_paths: [/search_path]
             search_patterns: [{"vcf": "*.vcf.gz", "bam": "*.bam", "bai": "*.bai"}]
             external_tool: dragen
@@ -295,6 +296,71 @@ def test_bam_reports_step_part_call_get_params_run(
     assert actual == expected
 
 
+# Tests for VarfishAnnotatorExternalStepPart (gvcf_to_vcf)   -----------------------------------------
+
+
+def test_varfish_annotator_step_part_call_get_input_files_gvcf_to_vcf(
+    variant_export_external_workflow,
+):
+    """Tests VarfishAnnotatorExternalStepPart._get_input_files_gvcf_to_vcf()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = ["work/input_links/P001-N1-DNA1-WGS1/.done"]
+    actual = variant_export_external_workflow.get_input_files(
+        "varfish_annotator_external", "gvcf_to_vcf"
+    )(wildcards)
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_call_get_output_files_gvcf_to_vcf(
+    variant_export_external_workflow,
+):
+    """Tests VarfishAnnotatorExternalStepPart._get_output_files_gvcf_to_vcf()"""
+    base_name = "work/dragen.{index_ngs_library}/out/dragen.{index_ngs_library}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_name)
+    actual = variant_export_external_workflow.get_output_files(
+        "varfish_annotator_external", "gvcf_to_vcf"
+    )
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_call_get_log_file_gvcf_to_vcf(
+    variant_export_external_workflow,
+):
+    """Tests VarfishAnnotatorExternalStepPart._get_log_file_gvcf_to_vcf()"""
+    base_name = "work/dragen.{index_ngs_library}/log/dragen.{index_ngs_library}.gvcf_to_vcf"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = variant_export_external_workflow.get_log_file(
+        "varfish_annotator_external", "gvcf_to_vcf"
+    )
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_get_resource_usage_gvcf_to_vcf(
+    variant_export_external_workflow,
+):
+    """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'gvcf_to_vcf'"""
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "14336M", "partition": "medium"}
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'gvcf_to_vcf'."
+        actual = variant_export_external_workflow.get_resource(
+            "varfish_annotator_external", "gvcf_to_vcf", resource
+        )
+        assert actual == expected, msg_error
+
+
+def test_varfish_annotator_step_part_get_params_gvcf_to_vcf(variant_export_external_workflow):
+    """Tests TargetCoverageReportStepPart._get_params_gvcf_to_vcf()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "input": [],
+        "sample_names": ["P001", "P002", "P003"],
+    }
+    actual = variant_export_external_workflow.get_params(
+        "varfish_annotator_external", "gvcf_to_vcf"
+    )(wildcards)
+    assert actual == expected
+
+
 # Tests for VarfishAnnotatorExternalStepPart (merge_vcf)   -----------------------------------------
 
 
@@ -354,7 +420,6 @@ def test_varfish_annotator_step_part_get_params_merge_vcf(variant_export_externa
         "input": [],
         "sample_names": ["P001", "P002", "P003"],
         "merge_option": None,
-        "gvcf_option": False,
     }
     actual = variant_export_external_workflow.get_params("varfish_annotator_external", "merge_vcf")(
         wildcards

@@ -96,9 +96,9 @@ step_config:
   variant_export_external:
     external_tool: dragen        # OPTIONAL: external tool name.
     bam_available_flag: false    # REQUIRED: BAM QC only possible if BAM files are present.
-    merge_vcf_flag: true         # REQUIRED: true if pedigree VCFs still need merging.
+    merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
     merge_option: null           # OPTIONAL: How to merge VCF, used in `bcftools --merge` argument.
-    gvcf_option: false           # OPTIONAL: Flag to indicate if inputs are genomic VCFs.
+    gvcf_option: true            # OPTIONAL: Flag to indicate if inputs are genomic VCFs.
     search_paths: []             # REQUIRED: list of paths to VCF files.
     search_patterns: []          # REQUIRED: list of search patterns, ex.: [{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}]
     release: GRCh37              # OPTIONAL: genome release; default 'GRCh37'.
@@ -236,7 +236,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     name = "varfish_annotator_external"
 
     #: Class available actions
-    actions = ("annotate", "bam_qc", "merge_vcf")
+    actions = ("annotate", "bam_qc", "gvcf_to_vcf", "merge_vcf")
 
     #: VCF key to file extensions
     vcf_key_ext_dict = {
@@ -273,6 +273,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         """Return path to pedigree input file"""
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")
+
+    @listify
+    def _get_input_files_gvcf_to_vcf(self, wildcards):
+        yield f"work/input_links/{wildcards.index_ngs_library}/.done"
 
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -324,6 +328,15 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
+    def _get_output_files_gvcf_to_vcf(self):
+        tpl = (
+            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
+            f"{self.external_tool_prefix}{{index_ngs_library}}"
+        )
+        for key, ext in self.vcf_key_ext_dict.items():
+            yield key, tpl + ext
+
+    @dictify
     def _get_output_files_merge_vcf(self):
         tpl = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
@@ -354,16 +367,16 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def get_log_file(self, action):
         self._validate_action(action)
-        if action == "merge_vcf":
-            return getattr(self, f"_get_log_file_{action}")()
+        if action in ("gvcf_to_vcf", "merge_vcf"):
+            return getattr(self, f"_get_log_file_complete_set")(action)
         else:
             return getattr(self, "_get_log_file_annotation_generic")(action)
 
     @dictify
-    def _get_log_file_merge_vcf(self):
+    def _get_log_file_complete_set(self, action):
         prefix = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
-            f"log/{self.external_tool_prefix}{{index_ngs_library}}.merge_vcf"
+            f"log/{self.external_tool_prefix}{{index_ngs_library}}.{action}"
         )
         key_ext = (
             ("log", ".log"),
@@ -419,12 +432,18 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_params_{action}")
 
+    def _get_params_gvcf_to_vcf(self, wildcards):
+        result = {
+            "input": list(sorted(self._collect_gvcf(wildcards))),
+            "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
+        }
+        return result
+
     def _get_params_merge_vcf(self, wildcards):
         result = {
-            "input": list(sorted(self._collect_vcfs(wildcards))),
+            "input": list(sorted(self._collect_gvcf(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config["merge_option"],
-            "gvcf_option": self.config["gvcf_option"],
         }
         return result
 
@@ -463,6 +482,24 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             if donor.dna_ngs_library:
                 library_name_to_file_identifier[donor.dna_ngs_library.name] = donor.secondary_id
         return library_name_to_file_identifier
+
+    def _collect_gvcf(self, wildcards):
+        """Yield path to index gVCF"""
+        # Seen paths list
+        seen = []
+        base_path_in = "work/input_links/{library_name}"
+        folder_name = wildcards.index_ngs_library
+        for _, path_infix, filename in self.path_gen.run(
+            folder_name=folder_name, pattern_set_keys=("vcf",)
+        ):
+            path = os.path.join(base_path_in, path_infix, filename).format(
+                library_name=wildcards.index_ngs_library
+            )
+            if path in seen:
+                print(f"WARNING: ignoring path seen before {path}", file=sys.stderr)
+            else:
+                seen.append(path)
+                yield path
 
     def _collect_vcfs(self, wildcards):
         """Yield path to pedigree VCF"""

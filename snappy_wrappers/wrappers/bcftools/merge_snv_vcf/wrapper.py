@@ -62,12 +62,6 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         merge_option="--merge {snakemake.params.args[merge_option]}"
     fi
 
-    # Set merge gVCF option
-    gvcf_option=""
-    if [[ "{snakemake.params.args[gvcf_option]}" != "False" ]]; then
-        gvcf_option="--gvcf"
-    fi
-
     # If a single sample, there is no need to merge.
     # ``$i`` is reused from previous VCFs to temp dir for-loop.
     if [[ $i -eq 1 ]]; then
@@ -81,9 +75,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     else
         out=$(realpath {snakemake.output.vcf})
         pushd $TMPDIR/cwd
-        bcftools merge \
-            $merge_option $gvcf_option \
-            --missing-to-ref \
+        bcftools merge $merge_option  \
             --output-type u \
             *.vcf.gz \
         | bcftools norm \
