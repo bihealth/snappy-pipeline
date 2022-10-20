@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline helper_gcnv_model step Snakefile"""
+"""CUBI Pipeline helper_gcnv_model_wgs step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.helper_gcnv_model import HelperBuildGcnvModelWorkflow
+from snappy_pipeline.workflows.helper_gcnv_model_wgs import HelperBuildWgsGcnvModelWorkflow
 
 
 # Configuration ===============================================================
@@ -18,7 +18,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = HelperBuildGcnvModelWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = HelperBuildWgsGcnvModelWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 

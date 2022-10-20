@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``helper_gcnv_model`` step
+"""Implementation of the ``helper_gcnv_model_wgs`` step
 
-The ``helper_gcnv_model`` step takes as the input the results of the ``ngs_mapping`` step
+The ``helper_gcnv_model_wgs`` step takes as the input the results of the ``ngs_mapping`` step
 (aligned germline reads) and builds a model that can be used by GATK4 gCNV. Important: the workflow
-assumes that all samples in the cohort use the same library kit.
+assumes that all samples in the cohort use the same library kit and all are WGS.
 
 ==========
 Step Input
@@ -79,7 +79,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_helper_gcnv_model.rst
+.. include:: DEFAULT_CONFIG_helper_gcnv_model_wgs.rst
 
 """
 
@@ -94,11 +94,11 @@ from snappy_pipeline.workflows.abstract import BaseStep, ResourceUsage
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.wgs_cnv_calling import GcnvWgsStepPart
 
-#: Default configuration for the helper_gcnv_model schema
+#: Default configuration for the helper_gcnv_model_wgs schema
 DEFAULT_CONFIG = r"""
-# Default configuration helper_gcnv_model
+# Default configuration helper_gcnv_model_wgs
 step_config:
-  helper_gcnv_model:
+  helper_gcnv_model_wgs:
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
 
     gcnv:
@@ -242,7 +242,7 @@ class BuildGcnvModelStepPart(GcnvWgsStepPart):
         result = super().get_resource_usage(action)
 
         def get_memory(wildcards, input=None, threads=None, attempt=None):
-            _, _ = input, threads  # unused but cannot be renamed
+            _, _, _ = wildcards, input, threads  # unused but cannot be renamed
             return f"{attempt * 4 * 1024 + 16 * 1024}M"
 
         if action == "filter_intervals":
@@ -254,11 +254,11 @@ class BuildGcnvModelStepPart(GcnvWgsStepPart):
         return result
 
 
-class HelperBuildGcnvModelWorkflow(BaseStep):
-    """Perform gCNV model building"""
+class HelperBuildWgsGcnvModelWorkflow(BaseStep):
+    """Perform gCNV model building for WGS samples"""
 
     #: Workflow name
-    name = "helper_gcnv_model"
+    name = "helper_gcnv_model_wgs"
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -324,6 +324,6 @@ class HelperBuildGcnvModelWorkflow(BaseStep):
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
-            ("step_config", "helper_gcnv_model", "path_ngs_mapping"),
+            ("step_config", "helper_gcnv_model_wgs", "path_ngs_mapping"),
             "Path to NGS mapping not configured but required for gCNV model building.",
         )

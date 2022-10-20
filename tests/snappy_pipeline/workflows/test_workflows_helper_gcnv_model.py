@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the helper_gcnv_model workflow module code"""
+"""Tests for the helper_gcnv_model_wgs workflow module code"""
 
 import textwrap
 import unittest.mock as mock
@@ -8,7 +8,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.helper_gcnv_model import HelperBuildGcnvModelWorkflow
+from snappy_pipeline.workflows.helper_gcnv_model_wgs import HelperBuildWgsGcnvModelWorkflow
 
 from .conftest import patch_module_fs
 
@@ -82,7 +82,7 @@ def helper_gcnv_model_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return HelperBuildGcnvModelWorkflow(
+    return HelperBuildWgsGcnvModelWorkflow(
         dummy_workflow,
         minimal_config,
         config_lookup_paths,
