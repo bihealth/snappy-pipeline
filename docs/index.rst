@@ -46,6 +46,7 @@ Project Info
 
     step_intro
     step_generic
+    step/adapter_trimming
     step/helper_gcnv_model
     step/hla_typing
     step/igv_session_generation

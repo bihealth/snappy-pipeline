@@ -123,6 +123,56 @@ def test_link_in_path_generator(germline_sheet_fake_fs, config_lookup_paths, wor
     assert list(generator.run("P001")) == expected
 
 
+def test_link_in_path_generator_path_link_in(
+    germline_sheet_fake_fs_path_link_in, config_lookup_paths, work_dir, mocker
+):
+    # Patch out the file system related things in the abstract workflow module
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
+    )
+    # Exercise the code under test
+    info = DataSetInfo(
+        "first_batch",
+        "sheet.tsv",
+        config_lookup_paths,
+        ["/path"],
+        [{"left": "*/*/*_R1.fastq.gz", "right": "*/*/*_R2.fastq.gz"}],
+        "germline_variants",
+        False,
+        "secondary_id_pk",
+        False,
+        None,
+        None,
+    )
+    generator = LinkInPathGenerator(
+        work_dir, [info], [], cache_file_name="_cache_file", preprocessed_path="/preprocess"
+    )
+    # Check results
+    expected = [
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R1.fastq.gz",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R2.fastq.gz",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R1.fastq.gz.md5",
+        ),
+        (
+            "/preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out",
+            "FCXXXXXX/L001/out",
+            "P001_R2.fastq.gz.md5",
+        ),
+    ]
+    assert list(generator.run("P001-N1-DNA1-WGS1")) == expected
+
+
 # Test LinkInStep ------------------------------------------------------------------------
 
 
@@ -180,11 +230,60 @@ def dummy_generic_step(
                 r"""
                 step_config:
                   dummy:
+                    path_link_in: ""
                     key: value
                 """
             ).lstrip()
 
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    return DummyBaseStep(
+        dummy_workflow,
+        dummy_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+@pytest.fixture
+def dummy_generic_step_path_link_in(
+    dummy_workflow,
+    dummy_config,
+    config_lookup_paths,
+    config_paths,
+    work_dir,
+    germline_sheet_fake_fs_path_link_in,
+    mocker,
+):
+    """Return BaseStep sub class instance using generic sample sheets; for use in tests of the
+    abstract workflow module
+    """
+
+    class DummyBaseStep(BaseStep):
+        """Dummy BaseStep sub class; for use in tests"""
+
+        name = "dummy"
+        sheet_shortcut_class = GenericSampleSheet
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.register_sub_step_classes((LinkInStep, LinkOutStepPart))
+
+        @classmethod
+        def default_config_yaml(cls):
+            """Return default config YAML"""
+            return textwrap.dedent(
+                r"""
+                step_config:
+                  dummy:
+                    path_link_in: "/preprocess"
+                    key: value
+                """
+            ).lstrip()
+
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
+    )
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
@@ -219,6 +318,32 @@ def test_link_in_step_part_get_shell_cmd(
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        """
+    ).strip()
+    assert actual == expected
+
+
+def test_link_in_step_part_get_shell_cmd_path_link_in(
+    germline_sheet_fake_fs_path_link_in,
+    config_lookup_paths,
+    work_dir,
+    mocker,
+    dummy_generic_step_path_link_in,
+):
+    # Patch out file system--related stuff in abstract workflow
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
+    )
+    # Exercise code under test
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    actual = dummy_generic_step_path_link_in.get_shell_cmd("link_in", "run", wildcards)
+    # Check results
+    expected = textwrap.dedent(
+        r"""
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
         """
     ).strip()
     assert actual == expected

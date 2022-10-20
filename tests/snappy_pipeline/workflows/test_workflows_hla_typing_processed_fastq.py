@@ -25,6 +25,10 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+          hla_typing:
+            path_link_in: /preprocess
+            tools: [optitype]
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -45,12 +49,12 @@ def hla_typing_workflow(
     config_lookup_paths,
     work_dir,
     config_paths,
-    cancer_sheet_fake_fs,
+    cancer_sheet_fake_fs_path_link_in,
     mocker,
 ):
     """Return HlaTypingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs_path_link_in, mocker)
     # Construct the workflow object
     return HlaTypingWorkflow(
         dummy_workflow,
@@ -99,10 +103,10 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
     sinput = hla_typing_workflow.substep_dispatch("optitype", "get_args", "run")(wildcards)
     assert sinput["input"]["reads_left"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz"
+        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz"
     ]
     assert sinput["input"]["reads_right"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz"
+        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
     ]
 
 
