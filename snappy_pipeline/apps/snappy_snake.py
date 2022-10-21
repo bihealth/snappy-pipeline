@@ -18,6 +18,7 @@ from snakemake import main as snakemake_main
 
 from .. import __version__
 from ..workflows import (
+    adapter_trimming,
     cbioportal_export,
     gene_expression_quantification,
     gene_expression_report,
@@ -85,6 +86,7 @@ SHELL = "/bin/bash"
 
 #: Mapping from step name to module
 STEP_TO_MODULE = {
+    "adapter_trimming": adapter_trimming,
     "gene_expression_quantification": gene_expression_quantification,
     "gene_expression_report": gene_expression_report,
     "cbioportal_export": cbioportal_export,

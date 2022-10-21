@@ -156,6 +156,26 @@ The different parts are as follows:
 - The static data files setup by the Cubit administrator (here, it would be the reference FASTA path and the read mapper index location).
 - The raw data files to be processed by the pipeline step (here, it would be the sample FASTQ files).
 
+How FASTQ files are found
+=========================
+
+In its ``data_sets`` section, the project-level configuration file provides search paths and search patterns to find the input FASTQ files. ``snappy`` internally combines these paths & search patterns with the sample-specific path information provided in the sample sheet. In the end, FASTQ files retained for processing are files which paths match:
+
+::
+
+    <configuration search path>/<sample-specific folder>/../<search pattern>
+
+The search will loop over provided search paths & search patterns. Paired reads files are coupled by similarity of their path. Note that when the ``Folder`` entry is absent from the sample sheet, the library name is used instead.
+
+However, this default behaviour can be overriden using the ``path_link_in`` option (which is available only for steps that use FASTQ files as input). When this configuration option is not empty, ``snappy`` will use it instead of the list of search paths defined in the ``data_set`` part. It will also ignore the folder information, and rely instead on the library names to search FASTQ files. The search path becomes:
+
+::
+
+    <path_link_in>/<library_name>/../<search_pattern>
+
+This mechanism enables steps that generate FASTQ files on output, for example adapter trimming. In that case, the input of the mapping step can be redirected towards the ouput of the adapter trimming step using this method.
+
+
 Overview of the Somatic Variant Pipeline
 ========================================
 

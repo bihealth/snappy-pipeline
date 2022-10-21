@@ -590,14 +590,13 @@ def cancer_sheet_tsv():
     return textwrap.dedent(
         """
         patientName\tsampleName\tisTumor\tlibraryType\tfolderName
-        P001\tN1\tN\tWGS\tP001-N1-DNA1-WGS1
-        P001\tT1\tY\tWGS\tP001-T1-DNA1-WGS1
-        P001\tT1\tY\tmRNA_seq\tP001-T1-RNA1-mRNAseq1
-        P002\tN1\tN\tWGS\tP002-N1-DNA1-WGS1
-        P002\tT1\tY\tWGS\tP002-T1-DNA1-WGS1
-        P002\tT1\tY\tWGS\tP002-T1-DNA1-WGS2
-        P002\tT2\tY\tWGS\tP002-T2-DNA1-WGS1
-        P002\tT2\tY\tmRNA_seq\tP002-T2-RNA1-mRNAseq1
+        P001\tN1\tN\tWGS\tP001_N1_DNA1_WGS1
+        P001\tT1\tY\tWGS\tP001_T1_DNA1_WGS1
+        P001\tT1\tY\tmRNA_seq\tP001_T1_RNA1_mRNA_seq1
+        P002\tN1\tN\tWGS\tP002_N1_DNA1_WGS1
+        P002\tT1\tY\tWGS\tP002_T1_DNA1_WGS1
+        P002\tT2\tY\tWGS\tP002_T2_DNA1_WGS1
+        P002\tT2\tY\tmRNA_seq\tP002_T12RNA1_mRNA_seq1
         """
     ).lstrip()
 
@@ -704,6 +703,30 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
 
 
 @pytest.fixture
+def germline_sheet_fake_fs_path_link_in(fake_fs, germline_sheet_tsv):
+    """Return fake file system setup with files for the germline_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create FASTQ read files for the samples
+    tpl = "/preprocess/{donor}-N1-DNA1-WGS1/FCXXXXXX/L001/out/{donor}_R{i}.fastq.gz"
+    for line in germline_sheet_tsv.splitlines()[1:]:
+        donor = line.split("\t")[0]
+        # Create fastq files
+        fake_fs.fs.create_file(tpl.format(donor=donor, i=1), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(donor=donor, i=2), create_missing_dirs=True)
+        # Create md5 files
+        md5_r1 = tpl.format(donor=donor, i=1) + ".md5"
+        fake_fs.fs.create_file(md5_r1, create_missing_dirs=True)
+        md5_r2 = tpl.format(donor=donor, i=2) + ".md5"
+        fake_fs.fs.create_file(md5_r2, create_missing_dirs=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv", contents=germline_sheet_tsv, create_missing_dirs=True
+    )
+    return fake_fs
+
+
+@pytest.fixture
 def germline_sheet_fake_fs2(
     fake_fs2, germline_sheet_tsv, tsv_large_cohort_trios_only_germline_sheet
 ):
@@ -773,8 +796,32 @@ def cancer_sheet_fake_fs(fake_fs, cancer_sheet_tsv):
     tpl = "/path/{folder}/FCXXXXXX/L001/{folder}_R{i}.fastq.gz"
     for line in cancer_sheet_tsv.splitlines()[1:]:
         folder = line.split("\t")[4]
-        fake_fs.fs.create_file(tpl.format(folder=folder, i=1))
-        fake_fs.fs.create_file(tpl.format(folder=folder, i=2))
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=1), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=2), create_missing_dirs=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv", contents=cancer_sheet_tsv, create_missing_dirs=True
+    )
+    return fake_fs
+
+
+@pytest.fixture
+def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
+    """Return fake file system setup with files for the cancer_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create FASTQ read files for the samples
+    tpl = "/preprocess/{library_name}/FCXXXXXX/L001/out/{donor}_R{i}.fastq.gz"
+    for line in cancer_sheet_tsv.splitlines()[1:]:
+        (donor, sample, isTumor, assay, folder) = line.split("\t")
+        extract = "RNA" if assay == "mRNA_seq" else "DNA"
+        library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+        fake_fs.fs.create_file(
+            tpl.format(donor=donor, library_name=library_name, i=1), create_missing_dirs=True
+        )
+        fake_fs.fs.create_file(
+            tpl.format(donor=donor, library_name=library_name, i=2), create_missing_dirs=True
+        )
     # Create the sample TSV file
     fake_fs.fs.create_file(
         "/work/config/sheet.tsv", contents=cancer_sheet_tsv, create_missing_dirs=True

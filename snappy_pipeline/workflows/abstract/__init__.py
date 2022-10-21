@@ -876,18 +876,25 @@ class LinkInPathGenerator:
     """Helper class for generating paths to link in"""
 
     def __init__(
-        self, work_dir, data_set_infos, config_paths, cache_file_name=".snappy_path_cache"
+        self,
+        work_dir,
+        data_set_infos,
+        config_paths,
+        cache_file_name=".snappy_path_cache",
+        preprocessed_path="",
     ):
         #: Working directory
         self.work_dir = work_dir
         #: Data set info list from configuration
-        self.data_set_infos = data_set_infos
+        self.data_set_infos = [
+            self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
+        ]
         #: Path to configuration files, used for invalidating cache
         self.config_paths = config_paths
         #: Name of cache file to create
         self.cache_file_name = cache_file_name
         #: File system crawler to use
-        invalidate_paths_list = self._merge_cache_invalidate_paths(data_set_infos)
+        invalidate_paths_list = self._merge_cache_invalidate_paths(self.data_set_infos)
         invalidate_paths_list += config_paths
         self.crawler = FileSystemCrawler(
             os.path.join(self.work_dir, self.cache_file_name), invalidate_paths_list
@@ -935,6 +942,21 @@ class LinkInPathGenerator:
                         yield src_dir, path_infix, filename
         # Finally, save the cache
         self.crawler.save_cache()
+
+    def _update_datasetinfo(self, data_set_info, preprocessed_path=""):
+        return DataSetInfo(
+            name=data_set_info.name,
+            sheet_path=data_set_info.sheet_path,
+            base_paths=data_set_info.base_paths,
+            search_paths=[preprocessed_path] if preprocessed_path else data_set_info.search_paths,
+            search_patterns=data_set_info.search_patterns,
+            sheet_type=data_set_info.sheet_type,
+            is_background=data_set_info.is_background,
+            naming_scheme=data_set_info.naming_scheme,
+            mixed_se_pe=data_set_info.mixed_se_pe,
+            sodar_uuid=data_set_info.sodar_uuid,
+            sodar_title=data_set_info.sodar_title,
+        )
 
     @classmethod
     def _get_shell_cmd_root_paths(cls, info):
@@ -1040,7 +1062,11 @@ class LinkInStep(BaseStepPart):
         self.base_pattern_out = "work/input_links/{library_name}/.done"
         # Path generator.
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            cache_file_name=".snappy_path_cache",
+            preprocessed_path=self.config["path_link_in"],
         )
 
     def get_input_files(self, action):
@@ -1063,6 +1089,8 @@ class LinkInStep(BaseStepPart):
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.config["path_link_in"]:
+            folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
         tpl = (
