@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``variant_export`` step.
+"""Implementation of the ``variant_export_external`` step.
 
-The ``variant_export`` step takes as the input the results of the ``variant_calling`` step and
-uses ``varfish-annotator-cli annotate`` command to create files fit for import into VarFish
-Server.
+The ``variant_export_external`` takes externally generated VCF files and uses
+``varfish-annotator-cli annotate`` command to create files fit for import into VarFish
+Server. If externally generated BAM files are also available, it can optionally generate QC reports.
 
 ==========
 Stability
@@ -24,14 +24,15 @@ Step Output
 For all samples, the workflow will execute ``varfish-annotator-cli``, pedigrees with multiple VCFs
 will be merged based on `id`. The name of the index's primary DNA NGS library will be used as an
 identification token in the output file. The following is an example of the files that
-will be generated:
+will be generated if BAM files are also available:
 
-TODO: add bam qc files.
 
 ::
     output/
     +-- varfish_annotated.P001-N1-DNA1-WGS1
     |   `-- out
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.bam-qc.tsv.gz
+    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.bam-qc.tsv.gz.md5
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz.md5
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz
@@ -40,12 +41,18 @@ TODO: add bam qc files.
     |   |   +-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
     |   |
     |   +-- log
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt.md5
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt.md5
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.log
-    |       +-- varfish_annotated.P001-N1-DNA1-WGS1.log.md5
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_info.txt
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_info.txt.md5
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_list.txt
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_list.txt.md5
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.log
+    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.log.md5
+    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_info.txt
+    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_info.txt.md5
+    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_list.txt
+    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_list.txt.md5
+    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.log
+    |       +-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.log.md5
     |
     [...]
 
