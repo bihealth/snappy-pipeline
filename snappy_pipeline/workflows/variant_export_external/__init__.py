@@ -368,7 +368,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def get_log_file(self, action):
         self._validate_action(action)
         if action in ("gvcf_to_vcf", "merge_vcf"):
-            return getattr(self, f"_get_log_file_complete_set")(action)
+            return getattr(self, "_get_log_file_complete_set")(action)
         else:
             return getattr(self, "_get_log_file_annotation_generic")(action)
 
