@@ -448,7 +448,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _get_params_merge_vcf(self, wildcards):
         result = {
-            "input": list(sorted(self._collect_gvcf(wildcards))),
+            "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config["merge_option"],
         }
