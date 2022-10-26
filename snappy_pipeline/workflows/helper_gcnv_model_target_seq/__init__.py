@@ -82,8 +82,8 @@ The default configuration is as follows.
 .. include:: DEFAULT_CONFIG_helper_gcnv_model_target_seq.rst
 
 """
-import re
 import os
+import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards

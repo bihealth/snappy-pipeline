@@ -587,37 +587,31 @@ class GcnvStepPart(BaseStepPart):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-        # Get type of run: 'cohort_mode' or 'case_mode'.
-        self.analysis_type = self.validate_request()
+        # Validate configuration, precomputed models must be present
+        self.validate_request()
 
     def validate_request(self):
         """Validate request.
 
-        Checks if the request can be performed given the provided information and parameters.
-        Three scenarios are evaluated:
-        1) If no model was provided in the config (``precomputed_model_paths``), no check is
-        required. Analysis will run in COHORT MODE and build a new model with all foreground
-        samples available for each library kit.
-
-        2) If a path to a model was provided in the config (``precomputed_model_paths``), it will
+        Checks if the request can be performed given the provided information and parameters:
+        Given a path to a model provided in the config (``precomputed_model_paths``), it will
         check that the path were provided for each available library kit and that the paths
-        contain the necessary files for analysis, namely: ...
-        Analysis will run in CASE MODE for each sample.
-
-        :return: Returns type of analysis: 'cohort_mode' or 'case_mode'.
+        contain the necessary files for analysis.
 
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
+        if "gcnv" not in self.config["tools"]:
+            return
+
         # Get precomputed models from configurations
         path_to_models = self.config["gcnv"]["precomputed_model_paths"]
 
-        # Case 1: no model provided -> analysis in COHORT MODE
-        if len(path_to_models) == 0:
-            return "cohort_mode"
+        # No model provided
+        if not path_to_models:
+            msg_tpl = "Precomputed model paths must be configured (key: 'precomputed_model_paths')."
+            raise InvalidConfiguration(msg_tpl)
         else:
-            # Case 2: path to model provided -> analysis in CASE MODE using precomputed model
-
             # Validate configuration - check if only expected keys are present
             self.validate_precomputed_model_paths_config(config=path_to_models)
 
@@ -645,8 +639,6 @@ class GcnvStepPart(BaseStepPart):
                             "does not contain all required call model files: {0}"
                         )
                         raise InvalidConfiguration(msg_tpl.format(str(model)))
-            # All checked out - return
-            return "case_mode"
 
     def validate_precomputed_model_paths_config(self, config):
         """Validate precomputed model config.
@@ -802,17 +794,13 @@ class GcnvStepPart(BaseStepPart):
         otherwise, returns empty dictionary. Step: Calling autosomal and allosomal contig ploidy
         with `DetermineGermlineContigPloidy`.
         """
-        analysis_type = self.get_analysis_type()
-        if analysis_type == "case_mode":
-            path = "__no_ploidy_model_for_library_in_config__"
-            for model in self.config["gcnv"]["precomputed_model_paths"]:
-                # Adjust library kit name from config to wildcard
-                library_to_wildcard = model.get("library").strip().replace(" ", "_")
-                if library_to_wildcard == wildcards.library_kit:
-                    path = model.get("contig_ploidy")
-            return {"model": path}
-        else:
-            return {}
+        path = "__no_ploidy_model_for_library_in_config__"
+        for model in self.config["gcnv"]["precomputed_model_paths"]:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            if library_to_wildcard == wildcards.library_kit:
+                path = model.get("contig_ploidy")
+        return {"model": path}
 
     def _get_params_model(self, wildcards):
         """Get model parameters.
@@ -825,19 +813,15 @@ class GcnvStepPart(BaseStepPart):
         otherwise, returns empty dictionary. Step: Calling copy number variants with
         `GermlineCNVCaller`.
         """
-        analysis_type = self.get_analysis_type()
-        if analysis_type == "case_mode":
-            path = "__no_model_for_library_in_config__"
-            for model in self.config["gcnv"]["precomputed_model_paths"]:
-                # Adjust library kit name from config to wildcard
-                library_to_wildcard = model.get("library").strip().replace(" ", "_")
-                if library_to_wildcard == wildcards.library_kit:
-                    pattern = model.get("model_pattern")
-                    model_dir_dict = self._get_model_dir_to_dict(pattern)
-                    path = model_dir_dict.get(wildcards.shard)
-            return {"model": path}
-        else:
-            return {}
+        path = "__no_model_for_library_in_config__"
+        for model in self.config["gcnv"]["precomputed_model_paths"]:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            if library_to_wildcard == wildcards.library_kit:
+                pattern = model.get("model_pattern")
+                model_dir_dict = self._get_model_dir_to_dict(pattern)
+                path = model_dir_dict.get(wildcards.shard)
+        return {"model": path}
 
     def _get_params_postgermline_models(self, wildcards):
         """Get post germline model parameters.
@@ -851,21 +835,17 @@ class GcnvStepPart(BaseStepPart):
         `GermlineCNVCaller` results, performs segmentation and calls copy number states with
         `PostprocessGermlineCNVCalls `.
         """
-        analysis_type = self.get_analysis_type()
-        if analysis_type == "case_mode":
-            paths = ["__no_model_available_for_library__"]
-            for model in self.config["gcnv"]["precomputed_model_paths"]:
-                # Adjust library kit name from config to wildcard
-                library_to_wildcard = model.get("library").strip().replace(" ", "_")
-                # Get library kit associated with library name
-                library_kit = self.ngs_library_to_kit[wildcards.library_name]
-                if library_to_wildcard == library_kit:
-                    pattern = model.get("model_pattern")
-                    model_dir_dict = self._get_model_dir_to_dict(pattern)
-                    paths = list(model_dir_dict.values())
-            return {"model": paths}
-        else:
-            return {}
+        paths = ["__no_model_available_for_library__"]
+        for model in self.config["gcnv"]["precomputed_model_paths"]:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            # Get library kit associated with library name
+            library_kit = self.ngs_library_to_kit[wildcards.library_name]
+            if library_to_wildcard == library_kit:
+                pattern = model.get("model_pattern")
+                model_dir_dict = self._get_model_dir_to_dict(pattern)
+                paths = list(model_dir_dict.values())
+        return {"model": paths}
 
     def _get_model_dir_to_dict(self, pattern):
         """Get model directories dictionary.
@@ -1400,54 +1380,6 @@ class GcnvStepPart(BaseStepPart):
         else:
             name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
             return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-
-    def get_cnv_model_result_files(self, _unused=None):
-        """Get gCNV model results.
-        :return: Returns list of result files for the gCNV build model sub-workflow.
-        """
-        # Initialise variables
-        chosen_kits = []
-        name_pattern_contig_ploidy = (
-            "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
-            "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
-        )
-        name_pattern_filter_intervals = (
-            "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
-            "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
-        )
-
-        # Get run mode
-        analysis_mode = self.get_analysis_type()
-
-        # Get list of library kits and donors to use.
-        library_kits, _, kit_counts = self.parent.pick_kits_and_donors()
-
-        if "gcnv" in self.config["tools"]:
-            if analysis_mode == "cohort_mode":
-                chosen_kits = [
-                    kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES
-                ]
-            elif analysis_mode == "case_mode_build":
-                chosen_kits = list(library_kits)
-
-            yield from expand(
-                name_pattern_contig_ploidy,
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                library_kit=chosen_kits,
-            )
-            yield from expand(
-                name_pattern_filter_intervals,
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                library_kit=chosen_kits,
-            )
-
-    def get_analysis_type(self):
-        """Get analysis type.
-
-        :return: Returns analysis type based on information provided on configuration file and
-        sample sheets, either 'cohort_mode' or 'case_mode'.
-        """
-        return self.analysis_type
 
     def get_resource_usage(self, action):
         """Get Resource Usage
