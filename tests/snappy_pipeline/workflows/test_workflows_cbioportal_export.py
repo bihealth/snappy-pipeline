@@ -52,10 +52,10 @@ def minimal_config():
 
         cbioportal_export:
           # Paths to snappy steps containing results to be uploaded
-          path_ngs_mapping: ../NGS_MAPPING
-          path_gene_expression_quantification: ../GENE_EXP_QUANTIFICATION
-          path_somatic_variant_filtration: ../SOM_VAR_FILTRATION
-          path_copy_number_step: ../SOM_CNV_CALLING
+          path_ngs_mapping: /NGS_MAPPING
+          path_gene_expression_quantification: /GENE_EXP_QUANTIFICATION
+          path_somatic_variant_filtration: /SOM_VAR_FILTRATION
+          path_copy_number_step: /SOM_CNV_CALLING
           # Select tools & filter set
           cnv_tool: control_freec
           tools_somatic_variant_calling: [ "mutect2" ]
@@ -388,10 +388,10 @@ def test_cbioportal_cna_data_step_part_get_input_files_log2(cbioportal_export_wo
     """Tests cbioportalCnaFilesStepPart.get_input_files() - action 'log2'"""
     # Define expected
     base_name = (
-        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}_gene_log2.txt"
+        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
+        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_gene_log2.txt"
     )
-    expected = [base_name.format(i=i, t=t, g=g) for i, t, g in ((1, 1, 1), (2, 1, 2), (2, 2, 1))]
+    expected = [base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))]
     # Get actual
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cna_data", "log2")
     assert actual == expected
@@ -401,10 +401,10 @@ def test_cbioportal_cna_data_step_part_get_input_files_gistic(cbioportal_export_
     """Tests cbioportalCnaFilesStepPart.get_input_files() - action 'gistic'"""
     # Define expected
     base_name = (
-        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}_gene_call.txt"
+        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
+        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_gene_call.txt"
     )
-    expected = [base_name.format(i=i, t=t, g=g) for i, t, g in ((1, 1, 1), (2, 1, 2), (2, 2, 1))]
+    expected = [base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))]
     # Get actual
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cna_data", "gistic")
     assert actual == expected
@@ -414,10 +414,10 @@ def test_cbioportal_cna_data_step_part_get_input_files_segments(cbioportal_expor
     """Tests cbioportalCnaFilesStepPart.get_input_files() - action 'segments'"""
     # Define expected
     base_name = (
-        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS{g}_segments.txt"
+        "SOM_CNV_CALLING/output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
+        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_segments.txt"
     )
-    expected = [base_name.format(i=i, t=t, g=g) for i, t, g in ((1, 1, 1), (2, 1, 2), (2, 2, 1))]
+    expected = [base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))]
     # Get actual
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cna_data", "segments")
     assert actual == expected

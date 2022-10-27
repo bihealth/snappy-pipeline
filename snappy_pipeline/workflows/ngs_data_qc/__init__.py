@@ -32,6 +32,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration ngs_mapping
 step_config:
   ngs_data_qc:
+    path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
     tools:
     - fastqc
 """
@@ -51,7 +52,10 @@ class FastQcReportStepPart(BaseStepPart):
         self.base_path_in = "work/input_links/{library_name}"
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_set_infos,
+            self.parent.config_lookup_paths,
+            preprocessed_path=self.config["path_link_in"],
         )
 
     def get_args(self, action):
@@ -98,8 +102,9 @@ class FastQcReportStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
-        _ = library_name
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.config["path_link_in"]:
+            folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
