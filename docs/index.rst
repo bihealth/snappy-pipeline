@@ -46,6 +46,7 @@ Project Info
 
     step_intro
     step_generic
+    step/helper_gcnv_model_target_seq
     step/helper_gcnv_model_wgs
     step/hla_typing
     step/igv_session_generation
