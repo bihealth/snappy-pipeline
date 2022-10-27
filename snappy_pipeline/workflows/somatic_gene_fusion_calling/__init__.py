@@ -439,7 +439,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {"input": {"reads_left": left, "reads_right": right}}
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -466,6 +466,16 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+        prefix = "work/{name}.{{library_name}}/log/".format(name=self.name)
+        key_ext = (
+            ("out", "Log.out"),
+            ("final", "Log.final.out"),
+            ("std", "Log.std.out"),
+            ("SJ", "SJ.out.tab"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
@@ -530,9 +540,9 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         sheets.
         """
         # Convert sheet parsing into method
-        library_names_list = self._get_all_rna_ngs_libraries()
+        library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
-        name_pattern = "{fusion_caller}.{ngs_library.name}"
+        name_pattern = "{fusion_caller}.{ngs_library}"
         for fusion_caller in self.config["tools"]:
             for ngs_library in library_names_list:
                 # Constant to all callers
@@ -548,15 +558,29 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
                         "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
                     )
 
-    def _yield_arribe_files(self, ngs_library):
+    def _get_all_rna_ngs_libraries(self):
+        for sheet in self.shortcut_sheets:
+            for donor in sheet.donors:
+                for _, bio_sample in donor.bio_samples.items():
+                    for _, test_sample in bio_sample.test_samples.items():
+                        extraction_type = test_sample.extra_infos["extractionType"]
+                        if extraction_type.lower() == "rna":
+                            for _, ngs_library in test_sample.ngs_libraries.items():
+                                yield ngs_library.name
+
+    def _yield_arriba_files(self, ngs_library):
         tpl = "output/arriba.{library_name}/out/arriba.{library_name}.{ext}"
         for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
-            yield tpl.format(library_name=ngs_library.name, ext=ext)
-            yield tpl.format(library_name=ngs_library.name, ext=ext + ".md5")
+            yield tpl.format(library_name=ngs_library, ext=ext)
+            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
         tpl = "output/arriba.{library_name}/log/arriba.{library_name}.{ext}"
-        for ext in ("log", "conda_list", "conda_info"):
-            yield tpl.format(library_name=ngs_library.name, ext=ext)
-            yield tpl.format(library_name=ngs_library.name, ext=ext + ".md5")
+        for ext in ("log", "conda_list.txt", "conda_info.txt"):
+            yield tpl.format(library_name=ngs_library, ext=ext)
+            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
+        tpl = "output/arriba.{library_name}/log/{ext}"
+        for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
+            yield tpl.format(library_name=ngs_library, ext=ext)
+            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
 
     def check_config(self):
         """Check that the required configurations are present."""
