@@ -23,3 +23,7 @@ pytest-flake8 ==1.1.1
 
 # coveralls.io tooling
 coveralls
+
+# Workaround missing py module bug
+# See https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
+py ==1.11.0
