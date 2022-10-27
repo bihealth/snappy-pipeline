@@ -204,3 +204,25 @@ def test_gcnv_get_input_files_post_germline_calls_cohort_mode(helper_gcnv_model_
             "gcnv", "post_germline_calls_cohort_mode"
         )(wildcards, patched_checkpoints)
         assert actual == expected
+
+
+# Test for HelperBuildWgsGcnvModelWorkflow  --------------------------------------------------------
+
+
+def test_helper_gcnv_model_workflow(helper_gcnv_model_workflow):
+    """Tests HelperBuildWgsGcnvModelWorkflow.get_result_files()"""
+    pattern_out = (
+        "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1.{ext}"
+    )
+    expected = [
+        pattern_out.format(i=i, ext=ext)
+        for i in (1, 4)  # only index: P001, P004
+        for ext in (
+            "interval.vcf.gz",
+            "ratio.tsv",
+            "vcf.gz",
+        )
+    ]
+    actual = sorted(helper_gcnv_model_workflow.get_result_files())
+    assert actual == expected
