@@ -37,4 +37,5 @@ dependencies:
   - pip:
     - varfish-cli
     - biomedsheets
+    - py >=1.8.2
 

@@ -40,9 +40,10 @@ jobs:
           samtools version
           bcftools version
       - name: Install some more dependencies via pip
-        run: pip install -r requirements/test.txt
+        # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
+        run: pip install -r requirements/test.txt; pip install --ignore-installed py
       - name: Run tests
-        run: pytest
+        run: pip list; pytest
         env:
           DIFF_MASTER: ${{ github.event_name == 'pull_request' }}
           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/master' }}
