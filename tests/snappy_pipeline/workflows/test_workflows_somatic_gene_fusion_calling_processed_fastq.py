@@ -33,7 +33,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:
               path_link_in: /preprocess
-              tools: ['fusioncatcher', 'jaffa', 'arriba']
+              tools: ['arriba', 'fusioncatcher', 'jaffa', 'star_fusion', 'defuse', 'hera', 'pizzly']
               fusioncatcher:
                 data_dir: REQUIRED   # REQUIRED
               pizzly:
@@ -385,20 +385,104 @@ def test_arriba_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
 # Tests for SomaticGeneFusionCallingWorkflow -------------------------------------------------------
 
 
-# def test_somatic_gene_fusion_calling_workflow(somatic_gene_fusion_calling_workflow):
-#     """Test simple functionality of the workflow"""
-#     # Check created sub steps
-#     expected = ["link_out", "mantis"]
-#     assert list(sorted(somatic_gene_fusion_calling_workflow.sub_steps.keys())) == expected
-#     # Check result file construction
-#     expected = [
-#         "output/mantis.bwa.P001-T1-DNA1-WGS1/out/mantis.bwa.P001-T1-DNA1-WGS1_results.txt",
-#         "output/mantis.bwa.P001-T1-DNA1-WGS1/out/mantis.bwa.P001-T1-DNA1-WGS1_results.txt.status",
-#         "output/mantis.bwa.P002-T1-DNA1-WGS1/out/mantis.bwa.P002-T1-DNA1-WGS1_results.txt",
-#         "output/mantis.bwa.P002-T1-DNA1-WGS1/out/mantis.bwa.P002-T1-DNA1-WGS1_results.txt.status",
-#         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt",
-#         "output/mantis.bwa.P002-T2-DNA1-WGS1/out/mantis.bwa.P002-T2-DNA1-WGS1_results.txt.status",
-#     ]
-#     actual = set(somatic_gene_fusion_calling_workflow.get_result_files())
-#     expected = set(expected)
-#     assert actual == expected
+def test_somatic_gene_fusion_calling_workflow(somatic_gene_fusion_calling_workflow):
+    """Test simple functionality of the workflow"""
+    # Check created sub steps
+    expected = [
+        "arriba",
+        "defuse",
+        "fusioncatcher",
+        "hera",
+        "jaffa",
+        "pizzly",
+        "star_fusion",
+        "link_in",
+        "link_out",
+    ]
+    assert list(sorted(somatic_gene_fusion_calling_workflow.sub_steps.keys())) == sorted(expected)
+    # Check result file construction
+    expected = []
+    # Add expected for `arriba` - special case
+    # Out:
+    expected += [
+        "output/arriba.P002-T2-RNA1-mRNA_seq1/out/.done",
+        "output/arriba.P001-T1-RNA1-mRNA_seq1/out/.done",
+    ]
+    base_name_out = (
+        "output/arriba.P00{i}-T{i}-RNA1-mRNA_seq1/{dir_}/arriba.P00{i}-T{i}-RNA1-mRNA_seq1.{ext}"
+    )
+    expected += [
+        base_name_out.format(i=i, dir_="out", ext=ext)
+        for i in (1, 2)
+        for ext in (
+            "fusions.tsv",
+            "fusions.tsv.md5",
+            "discarded_fusions.tsv.gz",
+            "discarded_fusions.tsv.gz.md5",
+        )
+    ]
+    # Log
+    expected += [
+        base_name_out.format(i=i, dir_="log", ext=ext)
+        for i in (1, 2)
+        for ext in (
+            "log",
+            "log.md5",
+            "conda_list.txt",
+            "conda_list.txt.md5",
+            "conda_info.txt",
+            "conda_info.txt.md5",
+        )
+    ]
+    base_name_log = "output/arriba.P00{i}-T{i}-RNA1-mRNA_seq1/log/{file_}"
+    expected += [
+        base_name_log.format(i=i, file_=file_)
+        for i in (1, 2)
+        for file_ in (
+            "Log.out",
+            "Log.out.md5",
+            "Log.std.out",
+            "Log.std.out.md5",
+            "Log.final.out",
+            "Log.final.out.md5",
+            "SJ.out.tab",
+            "SJ.out.tab.md5",
+            "Log.out",
+            "Log.out.md5",
+        )
+    ]
+    # Expected for remaining callers
+    # Out:
+    base_name_out = "output/{caller}.P00{i}-T{i}-RNA1-mRNA_seq1/out/.done"
+    expected += [
+        base_name_out.format(i=i, caller=caller)
+        for i in (1, 2)
+        for caller in (
+            "defuse",
+            "fusioncatcher",
+            "hera",
+            "jaffa",
+            "pizzly",
+            "star_fusion",
+        )
+    ]
+    # Log:
+    base_name_log = (
+        "output/{caller}.P00{i}-T{i}-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+    )
+    expected += [
+        base_name_log.format(i=i, caller=caller)
+        for i in (1, 2)
+        for caller in (
+            "defuse",
+            "fusioncatcher",
+            "hera",
+            "jaffa",
+            "pizzly",
+            "star_fusion",
+        )
+    ]
+    expected = set(expected)
+
+    actual = set(somatic_gene_fusion_calling_workflow.get_result_files())
+    assert actual == expected

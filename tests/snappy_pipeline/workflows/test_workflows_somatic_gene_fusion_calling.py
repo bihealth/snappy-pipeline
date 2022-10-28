@@ -32,7 +32,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:
-              tools: ['arriba', 'fusioncatcher']
+              tools: ['arriba', 'fusioncatcher', 'jaffa', 'star_fusion', 'defuse', 'hera', 'pizzly']
               fusioncatcher:
                 data_dir: REQUIRED   # REQUIRED
               pizzly:
@@ -387,85 +387,101 @@ def test_arriba_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
 def test_somatic_gene_fusion_calling_workflow(somatic_gene_fusion_calling_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["fusioncatcher", "pizzly", "hera", "star_fusion", "defuse", "arriba", "jaffa"]
-    expected.extend(["link_in", "link_out"])
+    expected = [
+        "arriba",
+        "defuse",
+        "fusioncatcher",
+        "hera",
+        "jaffa",
+        "pizzly",
+        "star_fusion",
+        "link_in",
+        "link_out",
+    ]
     assert list(sorted(somatic_gene_fusion_calling_workflow.sub_steps.keys())) == sorted(expected)
     # Check result file construction
-    callers = ["arriba", "fusioncatcher"]
     expected = []
-    for library in ["P001-T1-RNA1-mRNA_seq1", "P002-T2-RNA1-mRNA_seq1"]:
-        for caller in callers:
-            if caller == "arriba":
-                expected.append("output/arriba.{library}/out/.done".format(library=library))
-                expected.append(
-                    "output/arriba.{library}/out/arriba.{library}.fusions.tsv".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/out/arriba.{library}.discarded_fusions.tsv.gz".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.log".format(library=library)
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.conda_list.txt".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.conda_info.txt".format(
-                        library=library
-                    )
-                )
-                expected.append("output/arriba.{library}/log/Log.out".format(library=library))
-                expected.append("output/arriba.{library}/log/Log.std.out".format(library=library))
-                expected.append("output/arriba.{library}/log/Log.final.out".format(library=library))
-                expected.append("output/arriba.{library}/log/SJ.out.tab".format(library=library))
-                expected.append(
-                    "output/arriba.{library}/out/arriba.{library}.fusions.tsv.md5".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/out/arriba.{library}.discarded_fusions.tsv.gz.md5".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.log.md5".format(library=library)
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.conda_list.txt.md5".format(
-                        library=library
-                    )
-                )
-                expected.append(
-                    "output/arriba.{library}/log/arriba.{library}.conda_info.txt.md5".format(
-                        library=library
-                    )
-                )
-                expected.append("output/arriba.{library}/log/Log.out.md5".format(library=library))
-                expected.append(
-                    "output/arriba.{library}/log/Log.std.out.md5".format(library=library)
-                )
-                expected.append(
-                    "output/arriba.{library}/log/Log.final.out.md5".format(library=library)
-                )
-                expected.append(
-                    "output/arriba.{library}/log/SJ.out.tab.md5".format(library=library)
-                )
-            else:
-                expected.append(
-                    "output/{caller}.{library}/out/.done".format(caller=caller, library=library)
-                )
-                expected.append(
-                    "output/{caller}.{library}/log/snakemake.gene_fusion_calling.log".format(
-                        caller=caller, library=library
-                    )
-                )
-    actual = set(somatic_gene_fusion_calling_workflow.get_result_files())
+    # Add expected for `arriba` - special case
+    # Out:
+    expected += [
+        "output/arriba.P002-T2-RNA1-mRNA_seq1/out/.done",
+        "output/arriba.P001-T1-RNA1-mRNA_seq1/out/.done",
+    ]
+    base_name_out = (
+        "output/arriba.P00{i}-T{i}-RNA1-mRNA_seq1/{dir_}/arriba.P00{i}-T{i}-RNA1-mRNA_seq1.{ext}"
+    )
+    expected += [
+        base_name_out.format(i=i, dir_="out", ext=ext)
+        for i in (1, 2)
+        for ext in (
+            "fusions.tsv",
+            "fusions.tsv.md5",
+            "discarded_fusions.tsv.gz",
+            "discarded_fusions.tsv.gz.md5",
+        )
+    ]
+    # Log
+    expected += [
+        base_name_out.format(i=i, dir_="log", ext=ext)
+        for i in (1, 2)
+        for ext in (
+            "log",
+            "log.md5",
+            "conda_list.txt",
+            "conda_list.txt.md5",
+            "conda_info.txt",
+            "conda_info.txt.md5",
+        )
+    ]
+    base_name_log = "output/arriba.P00{i}-T{i}-RNA1-mRNA_seq1/log/{file_}"
+    expected += [
+        base_name_log.format(i=i, file_=file_)
+        for i in (1, 2)
+        for file_ in (
+            "Log.out",
+            "Log.out.md5",
+            "Log.std.out",
+            "Log.std.out.md5",
+            "Log.final.out",
+            "Log.final.out.md5",
+            "SJ.out.tab",
+            "SJ.out.tab.md5",
+            "Log.out",
+            "Log.out.md5",
+        )
+    ]
+    # Expected for remaining callers
+    # Out:
+    base_name_out = "output/{caller}.P00{i}-T{i}-RNA1-mRNA_seq1/out/.done"
+    expected += [
+        base_name_out.format(i=i, caller=caller)
+        for i in (1, 2)
+        for caller in (
+            "defuse",
+            "fusioncatcher",
+            "hera",
+            "jaffa",
+            "pizzly",
+            "star_fusion",
+        )
+    ]
+    # Log:
+    base_name_log = (
+        "output/{caller}.P00{i}-T{i}-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+    )
+    expected += [
+        base_name_log.format(i=i, caller=caller)
+        for i in (1, 2)
+        for caller in (
+            "defuse",
+            "fusioncatcher",
+            "hera",
+            "jaffa",
+            "pizzly",
+            "star_fusion",
+        )
+    ]
     expected = set(expected)
+
+    actual = set(somatic_gene_fusion_calling_workflow.get_result_files())
     assert actual == expected

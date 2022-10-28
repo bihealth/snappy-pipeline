@@ -56,14 +56,22 @@ from snappy_pipeline.workflows.abstract import (
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: HLA typing tools
-GENE_FUSION_CALLERS = ("fusioncatcher", "jaffa", "pizzly", "hera", "star_fusion")
+GENE_FUSION_CALLERS = (
+    "arriba",
+    "defuse",
+    "fusioncatcher",
+    "hera",
+    "jaffa",
+    "pizzly",
+    "star_fusion",
+)
 
 #: Default configuration for the somatic_gene_fusion_calling step
 DEFAULT_CONFIG = r"""
 step_config:
   somatic_gene_fusion_calling:
     path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: ['fusioncatcher', 'jaffa', 'arriba']
+    tools: ['fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion']
     fusioncatcher:
       data_dir: REQUIRED   # REQUIRED
       configuration: null  # optional
