@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Implementation of the ``helper_gcnv_model_target_seq`` step
 
-The ``helper_gcnv_model_wgs`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned germline reads) and builds a model that can be used by GATK4 gCNV for a particular
+The ``helper_gcnv_model_target_seq`` step takes as the input the results of the ``ngs_mapping``
+step (aligned germline reads) and builds a model that can be used by GATK4 gCNV for a particular
 library kit.
 
 ==========
@@ -93,10 +93,11 @@ from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_calling import GcnvStepPart
 
-#: Default configuration for the helper_gcnv_model_wgs schema
+#: Default configuration for the helper_gcnv_model_target_seq schema
 DEFAULT_CONFIG = r"""
 # Default configuration helper_gcnv_model_target_seq
 step_config:
+
   helper_gcnv_model_target_seq:
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
 
