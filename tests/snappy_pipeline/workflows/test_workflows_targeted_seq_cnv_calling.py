@@ -14,20 +14,6 @@ from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCal
 from .common import get_expected_gcnv_log_file, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-# List of valid actions - gCNV
-GCNV_ACTIONS = [
-    "preprocess_intervals",
-    "annotate_gc",
-    "filter_intervals",
-    "scatter_intervals",
-    "coverage",
-    "contig_ploidy",
-    "call_cnvs_cohort_mode",
-    "post_germline_calls_cohort_mode",
-    "merge_cohort_vcfs",
-    "extract_ped",
-]
-
 # List of valid actions - XHMM
 XHMM_ACTIONS = [
     "coverage",
@@ -388,7 +374,7 @@ def test_pick_kits_and_donors(
     assert expected_kit_counts == kit_counts
 
 
-# Global GcnvStepPart Tests ------------------------------------------------------------------------
+# Global RunGcnvTargetSeqStepPart Tests ------------------------------------------------------------
 
 
 def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
@@ -398,7 +384,7 @@ def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_resource()"""
+    """Tests RunGcnvTargetSeqStepPart.get_resource()"""
     # Define tested actions
     high_resource_actions = (
         "call_cnvs",
@@ -435,9 +421,18 @@ def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_params for all actions"""
-    actions_w_params = ("model",)
-    for action in GCNV_ACTIONS:
+    """Tests RunGcnvTargetSeqStepPart.get_params for all actions"""
+    all_actions = (
+        "preprocess_intervals",
+        "coverage",
+        "contig_ploidy",
+        "call_cnvs",
+        "post_germline_calls",
+        "merge_cohort_vcfs",
+        "extract_ped",
+    )
+    actions_w_params = ("model", "ploidy_model", "postgermline_models")
+    for action in all_actions:
         if action in actions_w_params:
             targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
         else:
@@ -446,7 +441,7 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_validate_precomputed_model_paths_config(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.validate_model_requirements()"""
+    """Tests RunGcnvTargetSeqStepPart.validate_model_requirements()"""
     # Initialise input
     valid_dict = {
         "library": "library",
@@ -479,7 +474,7 @@ def test_gcnv_validate_precomputed_model_paths_config(targeted_seq_cnv_calling_w
 def test_gcnv_validate_ploidy_model_directory(
     fake_fs, mocker, targeted_seq_cnv_calling_workflow, ploidy_model_files
 ):
-    """Tests GcnvStepPart.validate_ploidy_model_directory()"""
+    """Tests RunGcnvTargetSeqStepPart.validate_ploidy_model_directory()"""
     # Create data directories
     fake_fs.fs.makedirs("/data", exist_ok=True)
     fake_fs.fs.makedirs("/empty", exist_ok=True)
@@ -507,7 +502,7 @@ def test_gcnv_validate_ploidy_model_directory(
 def test_gcnv_validate_call_model_directory(
     fake_fs, mocker, targeted_seq_cnv_calling_workflow, call_model_files
 ):
-    """Tests GcnvStepPart.validate_call_model_directory()"""
+    """Tests RunGcnvTargetSeqStepPart.validate_call_model_directory()"""
     # Create data directories
     fake_fs.fs.makedirs("/call_data", exist_ok=True)
     fake_fs.fs.makedirs("/empty", exist_ok=True)
@@ -532,11 +527,11 @@ def test_gcnv_validate_call_model_directory(
     )("__not_a_directory__")
 
 
-# Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (preprocess_intervals) ----------------------------------------
 
 
 def test_gcnv_preprocess_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_preprocess_intervals()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_preprocess_intervals()"""
     # Define expected - empty dictionary for all
     expected = {}
     # Get actual
@@ -545,7 +540,7 @@ def test_gcnv_preprocess_intervals_step_part_get_input_files(targeted_seq_cnv_ca
 
 
 def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_preprocess_intervals()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_preprocess_intervals()"""
     # Define expected
     output_path = (
         "work/gcnv_preprocess_intervals.{library_kit}/out/"
@@ -558,7 +553,7 @@ def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_c
 
 
 def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'preprocess_intervals' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'preprocess_intervals' step"""
     # Define expected
     expected = (
         "work/gcnv_preprocess_intervals.{library_kit}/log/"
@@ -569,11 +564,11 @@ def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
     assert actual == expected
 
 
-# Tests for GcnvStepPart (coverage) ----------------------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (coverage) ----------------------------------------------------
 
 
 def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_coverage()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_coverage()"""
     # Define expected
     interval_list_out = (
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -592,7 +587,7 @@ def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workfl
 
 
 def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_coverage()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_coverage()"""
     # Define expected
     tsv_out = (
         "work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv"
@@ -604,7 +599,7 @@ def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
 
 
 def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'coverage' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'coverage' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
@@ -614,11 +609,11 @@ def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow)
     assert actual == expected
 
 
-# Tests for GcnvStepPart (contig_ploidy) -----------------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (contig_ploidy) -----------------------------------------------
 
 
 def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_contig_ploidy()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_contig_ploidy()"""
     # Define expected
     tsv_pattern = (
         "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
@@ -634,7 +629,7 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_w
 
 
 def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_contig_ploidy()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_contig_ploidy()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
@@ -647,7 +642,7 @@ def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_
 
 
 def test_gcnv_get_params_ploidy_model(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_params_ploidy_model()"""
+    """Tests RunGcnvTargetSeqStepPart._get_params_ploidy_model()"""
     # Initialise wildcard
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
@@ -662,7 +657,7 @@ def test_gcnv_get_params_ploidy_model(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'contig_ploidy' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'contig_ploidy' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
     # Get actual
@@ -670,11 +665,11 @@ def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_work
     assert actual == expected
 
 
-# Tests for GcnvStepPart (call_cnvs) ---------------------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (call_cnvs) ---------------------------------------------------
 
 
 def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_call_cnvs()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_call_cnvs()"""
     # Define expected
     tsv_pattern = (
         "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
@@ -697,7 +692,7 @@ def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workf
 
 
 def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_call_cnvs()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_call_cnvs()"""
     # Define expected
     done_out = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
@@ -710,7 +705,7 @@ def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_work
 
 
 def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_params_model()"""
+    """Tests RunGcnvTargetSeqStepPart._get_params_model()"""
     # Initialise wildcard
     wildcards_01 = Wildcards(
         fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6", "shard": "01"}
@@ -734,7 +729,7 @@ def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'call_cnvs' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'call_cnvs' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
@@ -745,13 +740,13 @@ def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow
     assert actual == expected
 
 
-# Tests for GcnvStepPart (post_germline_calls) -----------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (post_germline_calls) -----------------------------------------
 
 
 def test_gcnv_post_germline_calls_step_part_get_input_files(
     targeted_seq_cnv_calling_workflow,
 ):
-    """Tests GcnvStepPart._get_input_files_post_germline_calls()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_post_germline_calls()"""
     # Define expected
     call_pattern = (
         "work/bwa.gcnv_call_cnvs.Agilent_SureSelect_Human_All_Exon_V6.0{i}/out/"
@@ -775,18 +770,18 @@ def test_gcnv_post_germline_calls_step_part_get_input_files(
 
 
 def test_gcnv_get_params_postgermline_models(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_params_postgermline_models()"""
+    """Tests RunGcnvTargetSeqStepPart._get_params_postgermline_models()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
     actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "postgermline_models")(wildcards)
     assert actual == expected
 
 
-# Tests for GcnvStepPart (merge_cohort_vcfs) -------------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (merge_cohort_vcfs) -------------------------------------------
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_merge_cohort_vcfs()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_merge_cohort_vcfs()"""
     # Define expected
     pattern_out = (
         "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
@@ -804,7 +799,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(targeted_seq_cnv_calli
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_merge_cohort_vcfs()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_merge_cohort_vcfs()"""
     # Define expected
     pattern_out = (
         "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/out/"
@@ -817,7 +812,7 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(targeted_seq_cnv_call
 
 
 def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'merge_cohort_vcfs' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'merge_cohort_vcfs' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="merge_cohort_vcfs")
     # Get actual
@@ -825,11 +820,11 @@ def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(targeted_seq_cnv_calling_
     assert actual == expected
 
 
-# Tests for GcnvStepPart (extract_ped) -------------------------------------------------------------
+# Tests for RunGcnvTargetSeqStepPart (extract_ped) -------------------------------------------------
 
 
 def test_gcnv_extract_ped_vcfs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_input_files_extract_ped()"""
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_extract_ped()"""
     # Define expected
     pattern_out = (
         "work/bwa.gcnv_merge_cohort_vcfs.Agilent_SureSelect_Human_All_Exon_V6/out/"
@@ -843,7 +838,7 @@ def test_gcnv_extract_ped_vcfs_step_part_get_input_files(targeted_seq_cnv_callin
 
 
 def test_gcnv_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart._get_output_files_extract_ped()"""
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_extract_ped()"""
     # Define expected
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
@@ -853,7 +848,7 @@ def test_gcnv_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_wo
 
 
 def test_gcnv_extract_ped_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
-    """Tests GcnvStepPart.get_log_file for 'extract_ped' step"""
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'extract_ped' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_extract_ped.{library_name}/log/"
