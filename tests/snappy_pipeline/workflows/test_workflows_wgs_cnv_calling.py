@@ -7,9 +7,11 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
+from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.workflows.wgs_cnv_calling import WgsCnvCallingWorkflow
 
 from .common import (
+    get_expected_gcnv_log_file,
     get_expected_log_files_dict,
     get_expected_output_bcf_files_dict,
     get_expected_output_vcf_files_dict,
@@ -570,14 +572,443 @@ def test_delly2_step_part_bcf_to_vcf_get_log_file(wgs_cnv_calling_workflow):
     assert actual == expected
 
 
-# Tests for VariantCallingWorkflow ----------------------------------------------------------------
+# Global RunGcnvWgsStepPart Tests ------------------------------------------------------------------
+
+
+def test_gcnv_call_assertion(wgs_cnv_calling_workflow):
+    """Tests raise UnsupportedActionException"""
+    with pytest.raises(UnsupportedActionException):
+        wgs_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
+
+
+def test_gcnv_step_part_get_resource_usage(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_resource()"""
+    # Define tested actions
+    high_resource_actions = (
+        "call_cnvs",
+        "post_germline_calls",
+    )
+    all_actions = wgs_cnv_calling_workflow.substep_getattr("gcnv", "actions")
+    default_actions = [action for action in all_actions if action not in high_resource_actions]
+    # Define expected
+    high_res_expected_dict = {
+        "threads": 16,
+        "time": "2-00:00:00",
+        "memory": "46080M",
+        "partition": "medium",
+    }
+    default_expected_dict = {
+        "threads": 1,
+        "time": "04:00:00",
+        "memory": "7680M",
+        "partition": "medium",
+    }
+    # Evaluate - high resource actions
+    for action in high_resource_actions:
+        for resource, expected in high_res_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = wgs_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            assert actual == expected, msg_error
+
+    # Evaluate - all other actions
+    for action in default_actions:
+        for resource, expected in default_expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
+            actual = wgs_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            assert actual == expected, msg_error
+
+
+def test_gcnv_get_params(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_params for all actions"""
+    all_actions = (
+        "preprocess_intervals",
+        "annotate_gc",
+        "filter_intervals",
+        "scatter_intervals",
+        "coverage",
+        "contig_ploidy",
+        "call_cnvs",
+        "post_germline_calls",
+        "merge_cohort_vcfs",
+        "extract_ped",
+    )
+    actions_w_params = ("model", "ploidy_model", "postgermline_models")
+    for action in all_actions:
+        if action in actions_w_params:
+            wgs_cnv_calling_workflow.get_params("gcnv", action)
+        else:
+            with pytest.raises(UnsupportedActionException):
+                wgs_cnv_calling_workflow.get_params("gcnv", action)
+
+
+def test_gcnv_validate_precomputed_model_paths_config(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.validate_model_requirements()"""
+    # Initialise input
+    valid_dict = {
+        "library": "library",
+        "contig_ploidy": "/path/to/ploidy-model",
+        "model_pattern": "/path/to/model_*",
+    }
+    typo_dict = {
+        "library_n": "library",
+        "contig_ploidy": "/path/to/ploidy-model",
+        "model_pattern": "/path/to/model_*",
+    }
+    missing_key_dict = {"model_pattern": "/path/to/model_*"}
+
+    # Sanity check
+    wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_precomputed_model_paths_config")(
+        config=[valid_dict]
+    )
+    # Test key typo
+    with pytest.raises(InvalidConfiguration):
+        wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_precomputed_model_paths_config")(
+            config=[valid_dict, typo_dict]
+        )
+    # Test key missing
+    with pytest.raises(InvalidConfiguration):
+        wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_precomputed_model_paths_config")(
+            config=[valid_dict, missing_key_dict]
+        )
+
+
+def test_gcnv_validate_ploidy_model_directory(
+    fake_fs, mocker, wgs_cnv_calling_workflow, ploidy_model_files
+):
+    """Tests RunGcnvWgsStepPart.validate_ploidy_model_directory()"""
+    # Create data directories
+    fake_fs.fs.makedirs("/data", exist_ok=True)
+    fake_fs.fs.makedirs("/empty", exist_ok=True)
+    # Create required files
+    tpl = "/data/{file_}"
+    for file_ in ploidy_model_files:
+        fake_fs.fs.create_file(tpl.format(file_=file_))
+    # Patch out file-system
+    patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
+
+    # Should return True as it is a directory and it contains the expected files
+    assert wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_ploidy_model_directory")(
+        "/data"
+    )
+    # Should return False as empty directory
+    assert not wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_ploidy_model_directory")(
+        "/empty"
+    )
+    # Should return False not a directory
+    assert not wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_ploidy_model_directory")(
+        "__not_a_directory__"
+    )
+
+
+def test_gcnv_validate_call_model_directory(
+    fake_fs, mocker, wgs_cnv_calling_workflow, call_model_files
+):
+    """Tests RunGcnvWgsStepPart.validate_call_model_directory()"""
+    # Create data directories
+    fake_fs.fs.makedirs("/call_data", exist_ok=True)
+    fake_fs.fs.makedirs("/empty", exist_ok=True)
+    # Create required files
+    tpl = "/call_data/{file_}"
+    for file_ in call_model_files:
+        fake_fs.fs.create_file(tpl.format(file_=file_))
+    # Patch out file-system
+    patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
+
+    # Should return True as it is a directory and it contains the expected files
+    assert wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_call_model_directory")(
+        "/call_data"
+    )
+    # Should return False as empty directory
+    assert not wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_call_model_directory")(
+        "/empty"
+    )
+    # Should return False not a directory
+    assert not wgs_cnv_calling_workflow.substep_getattr("gcnv", "validate_call_model_directory")(
+        "__not_a_directory__"
+    )
+
+
+# Tests for RunGcnvWgsStepPart (preprocess_intervals) ----------------------------------------------
+
+
+def test_gcnv_preprocess_intervals_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_preprocess_intervals()"""
+    expected = {}
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "preprocess_intervals")(None)
+    assert actual == expected
+
+
+def test_gcnv_preprocess_intervals_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_preprocess_intervals()"""
+    output_path = (
+        "work/gcnv_preprocess_intervals.{library_kit}/out/"
+        "gcnv_preprocess_intervals.{library_kit}.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "preprocess_intervals")
+    assert actual == expected
+
+
+def test_gcnv_target_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'preprocess_intervals' step"""
+    expected = (
+        "work/gcnv_preprocess_intervals.{library_kit}/log/"
+        "gcnv_preprocess_intervals.{library_kit}.log"
+    )
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "preprocess_intervals")
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (coverage) ----------------------------------------------------------
+
+
+def test_gcnv_coverage_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_coverage()"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.default/out/"
+        "gcnv_preprocess_intervals.default.interval_list"
+    )
+    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    expected = {
+        "interval_list": interval_list_out,
+        "bam": bam_out + ".bam",
+        "bai": bam_out + ".bam.bai",
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "coverage")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_coverage_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_coverage()"""
+    tsv_out = (
+        "work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv"
+    )
+    expected = {"tsv": tsv_out}
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "coverage")
+    assert actual == expected
+
+
+def test_gcnv_coverage_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'coverage' step"""
+    expected = (
+        "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
+    )
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "coverage")
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (contig_ploidy) -----------------------------------------------------
+
+
+def test_gcnv_contig_ploidy_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_contig_ploidy()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_kit": "default"})
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    expected = {"tsv": tsv_list_out}
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_contig_ploidy()"""
+    done_out = (
+        "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
+        "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
+    )
+    expected = {"done": done_out}
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+def test_gcnv_get_params_ploidy_model(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_params_ploidy_model()"""
+    # Initialise wildcard
+    wildcards = Wildcards(fromdict={"library_kit": "default"})
+    wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
+    # Test large cohort - model defined in config
+    expected = {"model": "/path/to/ploidy-model"}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards)
+    assert actual == expected
+    # Test large cohort - model not defined in config
+    expected = {"model": "__no_ploidy_model_for_library_in_config__"}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards_fake)
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'contig_ploidy' step"""
+    expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (call_cnvs) ---------------------------------------------------------
+
+
+def test_gcnv_call_cnvs_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_call_cnvs()"""
+    # Define expected
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    ploidy_out = "work/bwa.gcnv_contig_ploidy.default/out/bwa.gcnv_contig_ploidy.default/.done"
+    expected = {
+        "tsv": tsv_list_out,
+        "ploidy": ploidy_out,
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_kit": "default"})
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_call_cnvs()"""
+    done_out = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/.done"
+    )
+    expected = {"done": done_out}
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+def test_gcnv_get_params_model(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_params_model()"""
+    # Initialise wildcard
+    wildcards_01 = Wildcards(fromdict={"library_kit": "default", "shard": "01"})
+    wildcards_02 = Wildcards(fromdict={"library_kit": "default", "shard": "02"})
+    wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
+    # Test large cohort - model defined in config - shard 01
+    expected = {"model": "/data/model_01"}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_01)
+    assert actual == expected
+    # Test large cohort - model defined in config - shard 02
+    expected = {"model": "/data/model_02"}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_02)
+    assert actual == expected
+    # Test large cohort - model not defined in config
+    expected = {"model": "__no_model_for_library_in_config__"}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_fake)
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'call_cnvs' step"""
+    expected = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
+    )
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (post_germline_calls) -----------------------------------------------
+
+
+def test_gcnv_post_germline_calls_step_part_get_input_files(
+    wgs_cnv_calling_workflow,
+):
+    """Tests RunGcnvWgsStepPart._get_input_files_post_germline_calls()"""
+    # Define expected
+    call_pattern = "work/bwa.gcnv_call_cnvs.default.0{i}/out/bwa.gcnv_call_cnvs.default.0{i}/.done"
+    call_list_out = [call_pattern.format(i=i) for i in range(1, 4)]  # model 01 - 03
+    ploidy_out = "work/bwa.gcnv_contig_ploidy.default/out/bwa.gcnv_contig_ploidy.default/.done"
+    expected = {
+        "calls": call_list_out,
+        "ploidy": ploidy_out,
+    }
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "post_germline_calls")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_get_params_postgermline_models(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_params_postgermline_models()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
+    actual = wgs_cnv_calling_workflow.get_params("gcnv", "postgermline_models")(wildcards)
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (merge_cohort_vcfs) -------------------------------------------------
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_merge_cohort_vcfs()"""
+    pattern_out = (
+        "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1.vcf.gz"
+    )
+    expected = [pattern_out.format(i=i) for i in range(1, 7)]  # P001 - P006
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_kit": "default"})
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "merge_cohort_vcfs")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_merge_cohort_vcfs()"""
+    pattern_out = (
+        "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/out/"
+        "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "merge_cohort_vcfs")
+    assert actual == expected
+
+
+def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'merge_cohort_vcfs' step"""
+    expected = get_expected_gcnv_log_file(step_name="merge_cohort_vcfs")
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "merge_cohort_vcfs")
+    assert actual == expected
+
+
+# Tests for RunGcnvWgsStepPart (extract_ped) -------------------------------------------------------
+
+
+def test_gcnv_extract_ped_vcfs_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_extract_ped()"""
+    pattern_out = "work/bwa.gcnv_merge_cohort_vcfs.default/out/bwa.gcnv_merge_cohort_vcfs.default"
+    expected = {"vcf": pattern_out + ".vcf.gz", "tbi": pattern_out + ".vcf.gz.tbi"}
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "extract_ped")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_extract_ped_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_extract_ped()"""
+    pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
+    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "extract_ped")
+    assert actual == expected
+
+
+def test_gcnv_extract_ped_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'extract_ped' step"""
+    expected = (
+        "work/{mapper}.gcnv_extract_ped.{library_name}/log/"
+        "{mapper}.gcnv_extract_ped.{library_name}.log"
+    )
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "extract_ped")
+    assert actual == expected
+
+
+# Tests for WgsCnvCallingWorkflow ------------------------------------------------------------------
 
 
 def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
     expected = ["cnvetti", "delly2", "gcnv", "link_out", "write_pedigree"]
-
     assert list(sorted(wgs_cnv_calling_workflow.sub_steps.keys())) == expected
     # Check result file construction
     tpl = (
