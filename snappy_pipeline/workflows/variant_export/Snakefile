@@ -101,5 +101,7 @@ rule variant_export_varfish_annotator_bam_qc:
         partition=wf.get_resource("varfish_annotator", "bam_qc", "partition"),
     log:
         **wf.get_log_file("varfish_annotator", "bam_qc"),
+    params:
+        **{"args": wf.get_params("varfish_annotator", "bam_qc")},
     wrapper:
         wf.wrapper_path("varfish_annotator/bam_qc")
