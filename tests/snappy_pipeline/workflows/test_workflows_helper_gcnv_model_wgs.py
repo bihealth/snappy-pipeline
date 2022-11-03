@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the helper_gcnv_model workflow module code"""
+"""Tests for the helper_gcnv_model_wgs workflow module code"""
 
 import textwrap
 import unittest.mock as mock
@@ -8,7 +8,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.helper_gcnv_model import HelperBuildGcnvModelWorkflow
+from snappy_pipeline.workflows.helper_gcnv_model_wgs import HelperBuildWgsGcnvModelWorkflow
 
 from .conftest import patch_module_fs
 
@@ -82,7 +82,7 @@ def helper_gcnv_model_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return HelperBuildGcnvModelWorkflow(
+    return HelperBuildWgsGcnvModelWorkflow(
         dummy_workflow,
         minimal_config,
         config_lookup_paths,
@@ -204,3 +204,25 @@ def test_gcnv_get_input_files_post_germline_calls_cohort_mode(helper_gcnv_model_
             "gcnv", "post_germline_calls_cohort_mode"
         )(wildcards, patched_checkpoints)
         assert actual == expected
+
+
+# Test for HelperBuildWgsGcnvModelWorkflow  --------------------------------------------------------
+
+
+def test_helper_gcnv_model_workflow(helper_gcnv_model_workflow):
+    """Tests HelperBuildWgsGcnvModelWorkflow.get_result_files()"""
+    pattern_out = (
+        "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1.{ext}"
+    )
+    expected = [
+        pattern_out.format(i=i, ext=ext)
+        for i in (1, 4)  # only index: P001, P004
+        for ext in (
+            "interval.vcf.gz",
+            "ratio.tsv",
+            "vcf.gz",
+        )
+    ]
+    actual = sorted(helper_gcnv_model_workflow.get_result_files())
+    assert actual == expected

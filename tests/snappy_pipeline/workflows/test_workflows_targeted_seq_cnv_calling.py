@@ -142,6 +142,10 @@ def minimal_config():
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
                   path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
                   path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
+              precomputed_model_paths:
+                - library: "Agilent SureSelect Human All Exon V6"
+                  contig_ploidy: /path/to/ploidy-model
+                  model_pattern: "/data/model_*"
 
         data_sets:
           first_batch:
@@ -174,20 +178,12 @@ def minimal_config_large_cohort_background(minimal_config_large_cohort):
 
 
 @pytest.fixture
-def minimal_config_large_cohort_with_gcnv_model(minimal_config_large_cohort):
-    """Returns minimum configuration file for large trio cohort. Path defined in fixture
-    ``germline_sheet_fake_fs2_gcnv_model``.
-    """
+def minimal_config_large_cohort_without_gcnv_model(minimal_config_large_cohort):
+    """Returns minimum configuration file for large trio cohort, no precomputed models defined."""
     minimal_config_adjusted = copy.deepcopy(minimal_config_large_cohort)
     minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["gcnv"][
         "precomputed_model_paths"
-    ] = [
-        {
-            "library": "Agilent SureSelect Human All Exon V6",
-            "contig_ploidy": "/path/to/ploidy-model",
-            "model_pattern": "/data/model_*",
-        }
-    ]
+    ] = []
     return minimal_config_adjusted
 
 
@@ -220,14 +216,26 @@ def targeted_seq_cnv_calling_workflow(
     config_lookup_paths,
     work_dir,
     config_paths,
-    germline_sheet_fake_fs,
+    germline_sheet_fake_fs2_gcnv_model,
     mocker,
 ):
     """
     Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - small cohort
     """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
+    )
+    patch_module_fs(
+        "snappy_pipeline.workflows.targeted_seq_cnv_calling",
+        germline_sheet_fake_fs2_gcnv_model,
+        mocker,
+    )
+    # Patch glob.glob with expected model directories
+    mocker.patch(
+        "snappy_pipeline.workflows.targeted_seq_cnv_calling.glob.glob",
+        return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
+    )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
@@ -297,18 +305,19 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
     )
 
 
-@pytest.fixture
-def targeted_seq_cnv_calling_workflow_with_gcnv_model(
+# Global tests -------------------------------------------------------------------------------------
+
+
+def test_validate_request(
     dummy_workflow,
-    minimal_config_large_cohort_with_gcnv_model,
+    minimal_config_large_cohort_without_gcnv_model,
     config_lookup_paths,
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
     mocker,
 ):
-    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
-    large trio cohort as background."""
+    """Tests TargetedSeqCnvCallingWorkflow.validate_request()"""
     # Patch out file-system
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
@@ -327,17 +336,15 @@ def targeted_seq_cnv_calling_workflow_with_gcnv_model(
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
-    # Construct the workflow object
-    return TargetedSeqCnvCallingWorkflow(
-        dummy_workflow,
-        minimal_config_large_cohort_with_gcnv_model,
-        config_lookup_paths,
-        config_paths,
-        work_dir,
-    )
-
-
-# Global tests -------------------------------------------------------------------------------------
+    # Empty precomputed models, should fail
+    with pytest.raises(InvalidConfiguration):
+        TargetedSeqCnvCallingWorkflow(
+            dummy_workflow,
+            minimal_config_large_cohort_without_gcnv_model,
+            config_lookup_paths,
+            config_paths,
+            work_dir,
+        )
 
 
 def test_target_seq_cnv_calling_workflow_files(targeted_seq_cnv_calling_workflow):
@@ -509,43 +516,6 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
                 targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
 
 
-def test_gcnv_validate_request(
-    targeted_seq_cnv_calling_workflow,
-    targeted_seq_cnv_calling_workflow_with_gcnv_model,
-):
-    """Tests GcnvStepPart.validate_request()"""
-    # Test small cohort - COHORT MODE
-    expected = "cohort_mode"
-    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "validate_request")()
-    assert actual == expected
-
-    # Test large background cohort - CASE MODE, gCNV model provided
-    expected = "case_mode"
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.substep_getattr(
-        "gcnv", "validate_request"
-    )()
-    assert actual == expected
-
-
-def test_gcnv_get_analysis_type(
-    targeted_seq_cnv_calling_workflow,
-    targeted_seq_cnv_calling_workflow_with_gcnv_model,
-):
-    """Tests GcnvStepPart.get_analysis_type()"""
-    # Test small cohort - COHORT MODE
-    expected = "cohort_mode"
-    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "get_analysis_type")()
-    assert actual == expected
-
-    # Test large background cohort - CASE MODE, gCNV model provided
-    expected = "case_mode"
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.substep_getattr(
-        "gcnv", "get_analysis_type"
-    )()
-    assert actual == expected
-
-
-# validate_precomputed_model_paths_config
 def test_gcnv_validate_precomputed_model_paths_config(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart.validate_model_requirements()"""
     # Initialise input
@@ -627,36 +597,6 @@ def test_gcnv_validate_call_model_directory(fake_fs, mocker, targeted_seq_cnv_ca
     assert not targeted_seq_cnv_calling_workflow.substep_getattr(
         "gcnv", "validate_call_model_directory"
     )("__not_a_directory__")
-
-
-def test_gcnv_get_cnv_model_result_files(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
-):
-    """Tests GcnvStepPart.get_cnv_model_result_files()"""
-
-    # Test small cohort - 6 individuals, not enough to build a model (<10)
-    expected = []
-    actual = targeted_seq_cnv_calling_workflow.substep_getattr(
-        "gcnv", "get_cnv_model_result_files"
-    )(None)
-    actual = sorted(actual)
-    assert actual == expected
-
-    # Test large trio cohort - 501 individuals, all Agilent v6, enough for a model (>10)
-    interval_file = (
-        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
-        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
-    )
-    ploidy_file = (
-        "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
-        "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
-    )
-    expected = sorted([interval_file, ploidy_file])
-    actual = targeted_seq_cnv_calling_workflow_large_cohort.substep_getattr(
-        "gcnv", "get_cnv_model_result_files"
-    )(None)
-    actual = sorted(actual)
-    assert actual == expected
 
 
 # Tests for GcnvStepPart (preprocess_intervals) ----------------------------------------------------
@@ -950,28 +890,18 @@ def test_gcnv_contig_ploidy_case_mode_step_part_get_output_files(targeted_seq_cn
     assert actual == expected
 
 
-def test_gcnv_get_params_ploidy_model(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_with_gcnv_model
-):
+def test_gcnv_get_params_ploidy_model(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart._get_params_ploidy_model()"""
     # Initialise wildcard
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
-    # Test small cohort - undefined model and wrong mode
-    expected = {}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards)
-    assert actual == expected
     # Test large cohort - model defined in config
     expected = {"model": "/path/to/ploidy-model"}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params("gcnv", "ploidy_model")(
-        wildcards
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params("gcnv", "ploidy_model")(
-        wildcards_fake
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards_fake)
     assert actual == expected
 
 
@@ -1085,9 +1015,7 @@ def test_gcnv_call_cnvs_case_mode_step_part_get_output_files(targeted_seq_cnv_ca
     assert actual == expected
 
 
-def test_gcnv_get_params_model(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_with_gcnv_model
-):
+def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart._get_params_model()"""
     # Initialise wildcard
     wildcards_01 = Wildcards(
@@ -1097,27 +1025,17 @@ def test_gcnv_get_params_model(
         fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6", "shard": "02"}
     )
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
-    # Test small cohort - undefined model
-    expected = {}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_01)
-    assert actual == expected
     # Test large cohort - model defined in config - shard 01
     expected = {"model": "/data/model_01"}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params("gcnv", "model")(
-        wildcards_01
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_01)
     assert actual == expected
     # Test large cohort - model defined in config - shard 02
     expected = {"model": "/data/model_02"}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params("gcnv", "model")(
-        wildcards_02
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_02)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params("gcnv", "model")(
-        wildcards_fake
-    )
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_fake)
     assert actual == expected
 
 
@@ -1137,7 +1055,7 @@ def test_gcnv_call_cnvs_case_mode_step_part_get_log_file(targeted_seq_cnv_callin
 
 
 def test_gcnv_post_germline_calls_case_mode_step_part_get_input_files(
-    targeted_seq_cnv_calling_workflow_with_gcnv_model,
+    targeted_seq_cnv_calling_workflow,
 ):
     """Tests GcnvStepPart._get_input_files_post_germline_calls_case_mode()"""
     # Define expected
@@ -1156,27 +1074,17 @@ def test_gcnv_post_germline_calls_case_mode_step_part_get_input_files(
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_input_files(
+    actual = targeted_seq_cnv_calling_workflow.get_input_files(
         "gcnv", "post_germline_calls_case_mode"
     )(wildcards)
     assert actual == expected
 
 
-def test_gcnv_get_params_postgermline_models(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_with_gcnv_model
-):
+def test_gcnv_get_params_postgermline_models(targeted_seq_cnv_calling_workflow):
     """Tests GcnvStepPart._get_params_postgermline_models()"""
-    # Initialise wildcard
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    # Test small cohort - undefined model and wrong mode
-    expected = {}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "postgermline_models")(wildcards)
-    assert actual == expected
-    # Test large cohort - model defined in config
     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-    actual = targeted_seq_cnv_calling_workflow_with_gcnv_model.get_params(
-        "gcnv", "postgermline_models"
-    )(wildcards)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "postgermline_models")(wildcards)
     assert actual == expected
 
 

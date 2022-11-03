@@ -22,19 +22,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = TargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
-# Subworkflow =================================================================
-
-
-subworkflow gcnv_model_wf:
-    """Defines sub-workflow responsible for gCNV model creation."""
-    snakefile:
-        "gcnv_model.snakefile"
-    configfile:
-        os.path.join(os.getcwd(), "config.yaml")
-    workdir:
-        os.getcwd()
-
-
 # Rules =======================================================================
 
 
@@ -72,12 +59,5 @@ include: "xhmm.rules"
 
 # GATK-gCNV -------------------------------------------------------------------
 
-analsys_type = wf.substep_getattr("gcnv", "get_analysis_type")()
-if analsys_type == "cohort_mode":
 
-    include: "gcnv_cohort_mode.rules"
-
-
-elif analsys_type == "case_mode":
-
-    include: "gcnv_case_mode.rules"
+include: "gcnv.rules"

@@ -637,7 +637,7 @@ class BaseStep:
 
         :param config_keys: List of strings with all keys that must be present in the configuration
         for a given step of the analysis to be performed.
-        :type config_keys: list
+        :type config_keys: tuple
 
         :param msg: Message to be used in case of exception.
         :type msg: str

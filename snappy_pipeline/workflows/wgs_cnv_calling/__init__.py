@@ -701,17 +701,9 @@ class WgsCnvCallingWorkflow(BaseStep):
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             index_only=True,
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=[t for t in self.config["tools"] if t != "erds"],
+            caller=self.config["tools"],
             ext=EXT_VALUES,
         )
-        if "erds" in self.config["tools"]:
-            yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                index_only=False,
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                caller=["erds"],
-                ext=EXT_VALUES,
-            )
 
     def _yield_result_files(self, tpl, index_only, **kwargs):
         """Build output paths from path template and extension list"""
