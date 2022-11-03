@@ -90,8 +90,8 @@ from snakemake.io import expand, glob_wildcards
 
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.workflows.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import GcnvStepPart
 
 #: Default configuration for the helper_gcnv_model_target_seq schema
 DEFAULT_CONFIG = r"""
@@ -105,7 +105,7 @@ step_config:
       path_uniquely_mapable_bed: null  # REQUIRED - path to BED file with uniquely mappable regions.
       path_target_interval_list_mapping: []  # REQUIRED - define one or more set of target intervals.
       # The following will match both the stock IDT library kit and the ones
-      # with spike-ins seen fromr Yale genomics.  The path above would be
+      # with spike-ins seen from Yale genomics.  The path above would be
       # mapped to the name "default".
       # - name: IDT_xGen_V1_0
       #   pattern: "xGen Exome Research Panel V1\\.0*"
@@ -113,59 +113,13 @@ step_config:
 """
 
 
-class BuildGcnvModelStepPart(GcnvStepPart):
+class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
     """Build model for GATK4 gCNV"""
 
-    #: Step name
-    name = "gcnv"
-
-    #: Class available actions
-    actions = (
-        "preprocess_intervals",
-        "annotate_gc",
-        "filter_intervals",
-        "scatter_intervals",
-        "coverage",
-        "contig_ploidy",
-        "scatter_intervals",
-        "call_cnvs_cohort_mode",
-        "post_germline_calls",
-        "post_germline_calls_cohort_mode",
-        "merge_cohort_vcfs",
-    )
-
-    def validate_request(self):
-        """Override validation method.
-
-        Build model always in COHORT MODE.
-        """
-        return "cohort_mode"
-
-    @dictify
-    def _get_input_files_post_germline_calls_cohort_mode(self, wildcards, checkpoints):
-        checkpoint = checkpoints.build_gcnv_model_scatter_intervals
-        library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
-        scatter_out = checkpoint.get(library_kit=library_kit, **wildcards).output[0]
-        shards = list(
-            map(
-                os.path.basename,
-                glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
-            )
-        )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
-            for shard in shards
-        ]
-        ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Take shortcut from library to library kit.
+        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     @dictify
     def _build_ngs_library_to_kit(self):
@@ -189,6 +143,32 @@ class BuildGcnvModelStepPart(GcnvStepPart):
                     if re.match(pattern, library_kit):
                         yield donor.dna_ngs_library.name, name
         return result
+
+    @dictify
+    def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
+        checkpoint = checkpoints.build_gcnv_model_scatter_intervals
+        library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
+        scatter_out = checkpoint.get(library_kit=library_kit, **wildcards).output[0]
+        shards = list(
+            map(
+                os.path.basename,
+                glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
+            )
+        )
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
+        yield "calls", [
+            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                name_pattern=name_pattern, shard=shard
+            )
+            for shard in shards
+        ]
+        ext = "ploidy"
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+            library_kit=library_kit, **wildcards
+        )
+        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
 
 class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
@@ -215,7 +195,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((BuildGcnvModelStepPart,))
+        self.register_sub_step_classes((BuildGcnvTargetSeqModelStepPart,))
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit

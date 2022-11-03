@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.helper_gcnv_model_target_seq import (
     HelperBuildTargetSeqGcnvModelWorkflow,
 )
 
+from .common import get_expected_gcnv_log_file
 from .conftest import patch_module_fs
 
 
@@ -105,8 +106,202 @@ def helper_gcnv_model_workflow(
 # Test for BuildGcnvModelStepPart ------------------------------------------------------------------
 
 
-def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs_cohort_mode()"""
+def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
+    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "calls": [],
+        "ploidy": (
+            "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+            "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+        ),
+    }
+    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
+        # Patch checkpoint
+        patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
+        # Get actual
+        actual = helper_gcnv_model_workflow.get_input_files("gcnv", "post_germline_calls")(
+            wildcards, patched_checkpoints
+        )
+        assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (annotate_gc) ------------------------------------------
+
+
+def test_gcnv_annotate_gc_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_annotate_gc()"""
+    # Define expected
+    output_path = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    # Get actual - Note: library kit defined in conftest: germline_sheet_tsv
+    wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "annotate_gc")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_annotate_gc_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_annotate_gc()"""
+    # Define expected
+    expected = {"tsv": "work/gcnv_annotate_gc.{library_kit}/out/gcnv_annotate_gc.{library_kit}.tsv"}
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "annotate_gc")
+    assert actual == expected
+
+
+def test_gcnv_annotate_gc_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'annotate_gc' step"""
+    # Define expected
+    expected = "work/gcnv_annotate_gc.{library_kit}/log/gcnv_annotate_gc.{library_kit}.log"
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "annotate_gc")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (filter_intervals) -------------------------------------
+
+
+def test_gcnv_filter_intervals_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_filter_intervals()"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    tsv_out = (
+        "work/gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_annotate_gc.Agilent_SureSelect_Human_All_Exon_V6.tsv"
+    )
+    csv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    csv_list_out = [csv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    expected = {"interval_list": interval_list_out, "tsv": tsv_out, "covs": csv_list_out}
+    # Get actual. Notes:
+    # - library kit defined in conftest: `germline_sheet_tsv`
+    # - mapper defined in `minimal_config`
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "filter_intervals")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_filter_intervals_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_filter_intervals()"""
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    expected = {"interval_list": interval_list_out}
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "filter_intervals")
+    assert actual == expected
+
+
+def test_gcnv_filter_intervals_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'filter_intervals' step"""
+    # Define expected
+    expected = get_expected_gcnv_log_file(step_name="filter_intervals")
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "filter_intervals")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (scatter_intervals) ------------------------------------
+
+
+def test_gcnv_scatter_intervals_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_scatter_intervals()"""
+    # Define expected
+    output_path = (
+        "work/bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "bwa.gcnv_filter_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    # Get actual - Note: library kit defined in conftest: germline_sheet_tsv
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "scatter_intervals")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_scatter_intervals_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_scatter_intervals()"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_scatter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_scatter_intervals.{library_kit}"
+    )
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "scatter_intervals")
+    assert actual == expected
+
+
+def test_gcnv_scatter_intervals_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'scatter_intervals' step"""
+    # Define expected
+    expected = get_expected_gcnv_log_file(step_name="scatter_intervals")
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "scatter_intervals")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (contig_ploidy) ----------------------------------------
+
+
+def test_gcnv_contig_ploidy_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_contig_ploidy()"""
+    # Define expected
+    interval_list_out = (
+        "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
+        "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
+    )
+    tsv_pattern = (
+        "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
+    )
+    tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
+    expected = {"interval_list": interval_list_out, "tsv": tsv_list_out}
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
+    )
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_contig_ploidy()"""
+    # Define expected
+    done_out = (
+        "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
+        "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
+    )
+    expected = {"done": done_out}
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+def test_gcnv_contig_ploidy_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'contig_ploidy' step"""
+    # Define expected
+    expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "contig_ploidy")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (call_cnvs) --------------------------------------------
+
+
+def test_gcnv_call_cnvs_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
@@ -131,28 +326,33 @@ def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(helper_gcnv_model_
         "intervals": intervals_out,
     }
     # Get actual
-    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "call_cnvs_cohort_mode")(wildcards)
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_get_input_files_post_germline_calls_cohort_mode(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs_cohort_mode()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    expected = {
-        "calls": [],
-        "ploidy": (
-            "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
-            "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
-        ),
-    }
-    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
-        # Patch checkpoint
-        patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
-        # Get actual
-        actual = helper_gcnv_model_workflow.get_input_files(
-            "gcnv", "post_germline_calls_cohort_mode"
-        )(wildcards, patched_checkpoints)
-        assert actual == expected
+def test_gcnv_call_cnvs_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_call_cnvs()"""
+    # Define expected
+    done_out = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/out/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/.done"
+    )
+    expected = {"done": done_out}
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+def test_gcnv_call_cnvs_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'call_cnvs' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_call_cnvs.{library_kit}.{shard}/log/"
+        "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
+    )
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "call_cnvs")
+    assert actual == expected
 
 
 # Test for HelperBuildTargetSeqGcnvModelWorkflow  --------------------------------------------------
