@@ -94,28 +94,11 @@ def helper_gcnv_model_workflow(
 # Test for BuildGcnvModelStepPart ------------------------------------------------------------------
 
 
-def test_gcnv_get_cnv_model_result_files(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart.get_cnv_model_result_files()"""
-    # Define expected
-    interval_file = (
-        "work/bwa.gcnv_filter_intervals.default/out/bwa.gcnv_filter_intervals.default.interval_list"
-    )
-    ploidy_file = "work/bwa.gcnv_contig_ploidy.default/out/bwa.gcnv_contig_ploidy.default/.done"
-    expected = sorted([interval_file, ploidy_file])
-    # Get actual
-    actual = helper_gcnv_model_workflow.substep_getattr("gcnv", "get_cnv_model_result_files")(None)
-    actual = sorted(actual)
-    assert actual == expected
-
-
 def test_gcnv_get_resource(helper_gcnv_model_workflow):
     """Tests BuildGcnvModelStepPart.get_resource()"""
     high_resource_action_list = (
-        "call_cnvs_cohort_mode",
-        "call_cnvs_case_mode",
+        "call_cnvs",
         "post_germline_calls",
-        "post_germline_calls_cohort_mode",
-        "post_germline_calls_case_mode",
     )
     actions = (
         "preprocess_intervals",
@@ -125,10 +108,8 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
         "coverage",
         "contig_ploidy",
         "scatter_intervals",
-        "call_cnvs_cohort_mode",
+        "call_cnvs",
         "post_germline_calls",
-        "post_germline_calls_cohort_mode",
-        "merge_cohort_vcfs",
     )
     expected_low = {
         "threads": 1,
@@ -165,7 +146,7 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
 
 
 def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs_cohort_mode()"""
+    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     # Define expected
     interval_list_shard_out = (
@@ -185,12 +166,12 @@ def test_gcnv_call_cnvs_cohort_mode_step_part_get_input_files(helper_gcnv_model_
         "intervals": intervals_out,
     }
     # Get actual
-    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "call_cnvs_cohort_mode")(wildcards)
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_get_input_files_post_germline_calls_cohort_mode(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs_cohort_mode()"""
+def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
+    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "calls": [],
@@ -200,9 +181,9 @@ def test_gcnv_get_input_files_post_germline_calls_cohort_mode(helper_gcnv_model_
         # Patch checkpoint
         patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
         # Get actual
-        actual = helper_gcnv_model_workflow.get_input_files(
-            "gcnv", "post_germline_calls_cohort_mode"
-        )(wildcards, patched_checkpoints)
+        actual = helper_gcnv_model_workflow.get_input_files("gcnv", "post_germline_calls")(
+            wildcards, patched_checkpoints
+        )
         assert actual == expected
 
 
