@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_cnv_calling workflow module code"""
 
-
 import textwrap
 
 import pytest
@@ -66,6 +65,11 @@ def minimal_config():
             tools:
             - delly2
             - gcnv
+            gcnv:
+              precomputed_model_paths:
+                - library: "default"
+                  contig_ploidy: /path/to/ploidy-model
+                  model_pattern: "/data/model_*"
 
         data_sets:
           first_batch:
@@ -87,12 +91,24 @@ def wgs_cnv_calling_workflow(
     config_lookup_paths,
     work_dir,
     config_paths,
-    germline_sheet_fake_fs,
+    germline_sheet_fake_fs2_gcnv_model,
     mocker,
 ):
     """Return WgsCnvCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs(
+        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
+    )
+    patch_module_fs(
+        "snappy_pipeline.workflows.gcnv.gcnv_run",
+        germline_sheet_fake_fs2_gcnv_model,
+        mocker,
+    )
+    # Patch glob.glob with expected model directories
+    mocker.patch(
+        "snappy_pipeline.workflows.gcnv.gcnv_run.glob.glob",
+        return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
+    )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}

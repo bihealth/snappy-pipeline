@@ -35,43 +35,43 @@ rule targeted_seq_cnv_calling_gcnv_coverage:
 
 rule targeted_seq_cnv_calling_gcnv_contig_ploidy:
     input:
-        unpack(wf.get_input_files("gcnv", "contig_ploidy_case_mode")),
+        unpack(wf.get_input_files("gcnv", "contig_ploidy")),
     output:
-        **wf.get_output_files("gcnv", "contig_ploidy_case_mode"),
-    threads: wf.get_resource("gcnv", "contig_ploidy_case_mode", "threads")
+        **wf.get_output_files("gcnv", "contig_ploidy"),
+    threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
     resources:
-        time=wf.get_resource("gcnv", "contig_ploidy_case_mode", "time"),
-        memory=wf.get_resource("gcnv", "contig_ploidy_case_mode", "memory"),
-        partition=wf.get_resource("gcnv", "contig_ploidy_case_mode", "partition"),
+        time=wf.get_resource("gcnv", "contig_ploidy", "time"),
+        memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
+        partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
     log:
-        wf.get_log_file("gcnv", "contig_ploidy_case_mode"),
+        wf.get_log_file("gcnv", "contig_ploidy"),
     params:
         args=wf.get_params("gcnv", "ploidy_model"),
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 
 
-rule targeted_seq_cnv_calling_gcnv_call_cnvs_case_mode:
+rule targeted_seq_cnv_calling_gcnv_call_cnvs:
     input:
-        unpack(wf.get_input_files("gcnv", "call_cnvs_case_mode")),
+        unpack(wf.get_input_files("gcnv", "call_cnvs")),
     output:
-        **wf.get_output_files("gcnv", "call_cnvs_case_mode"),
-    threads: wf.get_resource("gcnv", "call_cnvs_case_mode", "threads")
+        **wf.get_output_files("gcnv", "call_cnvs"),
+    threads: wf.get_resource("gcnv", "call_cnvs", "threads")
     resources:
-        time=wf.get_resource("gcnv", "call_cnvs_case_mode", "time"),
-        memory=wf.get_resource("gcnv", "call_cnvs_case_mode", "memory"),
-        partition=wf.get_resource("gcnv", "call_cnvs_case_mode", "partition"),
+        time=wf.get_resource("gcnv", "call_cnvs", "time"),
+        memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
+        partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
     log:
-        wf.get_log_file("gcnv", "call_cnvs_case_mode"),
+        wf.get_log_file("gcnv", "call_cnvs"),
     params:
         args=wf.get_params("gcnv", "model"),
     wrapper:
         wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
 
-rule targeted_seq_cnv_calling_gcnv_post_germline_calls_case_mode:
+rule targeted_seq_cnv_calling_gcnv_post_germline_calls:
     input:
-        unpack(wf.get_input_files("gcnv", "post_germline_calls_case_mode")),
+        unpack(wf.get_input_files("gcnv", "post_germline_calls")),
     output:
         **wf.get_output_files("gcnv", "post_germline_calls"),
     threads: wf.get_resource("gcnv", "post_germline_calls", "threads")

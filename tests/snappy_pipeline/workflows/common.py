@@ -63,3 +63,20 @@ def get_expected_output_bcf_files_dict(base_out):
     }
     # Return
     return expected
+
+
+def get_expected_gcnv_log_file(step_name):
+    """
+    :param step_name: Step name.
+    :type step_name: str
+
+    :return: Returns expected log file path for basic steps in gCNV.
+    """
+    expected_log = (
+        "work/{mapper}.gcnv_"
+        + step_name
+        + ".{library_kit}/log/{mapper}.gcnv_"
+        + step_name
+        + ".{library_kit}.log"
+    )
+    return expected_log

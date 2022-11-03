@@ -754,6 +754,65 @@ def germline_sheet_fake_fs2(
 
 
 @pytest.fixture
+def ploidy_model_files():
+    """Returns ploidy model required files."""
+    return (
+        "contig_ploidy_prior.tsv",
+        "gcnvkernel_version.json",
+        "interval_list.tsv",
+        "mu_mean_bias_j_lowerbound__.tsv",
+        "mu_psi_j_log__.tsv",
+        "ploidy_config.json",
+        "std_mean_bias_j_lowerbound__.tsv",
+        "std_psi_j_log__.tsv",
+    )
+
+
+@pytest.fixture
+def call_model_files():
+    """Returns call model required files"""
+    return (
+        "calling_config.json",
+        "gcnvkernel_version.json",
+        "log_q_tau_tk.tsv",
+        "mu_ard_u_log__.tsv",
+        "mu_psi_t_log__.tsv",
+        "std_ard_u_log__.tsv",
+        "std_psi_t_log__.tsv",
+        "denoising_config.json",
+        "interval_list.tsv",
+        "mu_W_tu.tsv",
+        "mu_log_mean_bias_t.tsv",
+        "std_W_tu.tsv",
+        "std_log_mean_bias_t.tsv",
+    )
+
+
+@pytest.fixture
+def germline_sheet_fake_fs2_gcnv_model(
+    germline_sheet_fake_fs2, ploidy_model_files, call_model_files
+):
+    """Return fake file system setup with files for the germline_sheet_tsv and gCNV files."""
+    # Create contig-ploidy model
+    ploidy_dir = "/path/to/ploidy-model"
+    germline_sheet_fake_fs2.fs.makedirs(ploidy_dir, exist_ok=True)
+    # Create required files
+    tpl = ploidy_dir + "/{file_}"
+    for file_ in ploidy_model_files:
+        germline_sheet_fake_fs2.fs.create_file(tpl.format(file_=file_))
+
+    # Create model directories
+    for model_n in ("01", "02", "03"):
+        model_path = "/data/model_{0}".format(model_n)
+        germline_sheet_fake_fs2.fs.makedirs(model_path, exist_ok=True)
+        # Create required files
+        tpl = model_path + "/{file_}"
+        for file_ in call_model_files:
+            germline_sheet_fake_fs2.fs.create_file(tpl.format(file_=file_))
+    return germline_sheet_fake_fs2
+
+
+@pytest.fixture
 def germline_trio_plus_sheet_fake_fs(fake_fs, germline_trio_plus_sheet_tsv):
     """Return fake file system setup with files for the germline_trio_plus_sheet_tsv"""
     # Create work directory
