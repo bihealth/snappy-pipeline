@@ -59,8 +59,8 @@ if [[ {snakemake.params.args[is_wgs]} == True ]]; then
     tabix -f $TMPDIR/tmp.vcf.gz
 else
     set -e
-    ln -s {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
-    ln -s {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
+    ln -sr {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
+    ln -sr {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
 fi
 
 
