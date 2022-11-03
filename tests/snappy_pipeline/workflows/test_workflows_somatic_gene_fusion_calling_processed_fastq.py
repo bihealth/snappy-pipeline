@@ -32,6 +32,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:
+              path_link_in: /preprocess
               tools: ['arriba', 'fusioncatcher', 'jaffa', 'star_fusion', 'defuse', 'hera', 'pizzly']
               fusioncatcher:
                 data_dir: REQUIRED   # REQUIRED
@@ -70,13 +71,13 @@ def somatic_gene_fusion_calling_workflow(
     config_lookup_paths,
     work_dir,
     config_paths,
-    cancer_sheet_fake_fs,
+    cancer_sheet_fake_fs_path_link_in,
     aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticGeneFusionCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs_path_link_in, mocker)
     # Patch out files for aligner indices
     patch_module_fs(
         "snappy_pipeline.workflows.somatic_gene_fusion_calling", aligner_indices_fake_fs, mocker
@@ -318,10 +319,10 @@ def test_arriba_step_part_get_args(somatic_gene_fusion_calling_workflow):
     expected = {
         "input": {
             "reads_left": [
-                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_T1_RNA1_mRNA_seq1_R1.fastq.gz"
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R1.fastq.gz"
             ],
             "reads_right": [
-                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_T1_RNA1_mRNA_seq1_R2.fastq.gz"
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
             ],
         }
     }
