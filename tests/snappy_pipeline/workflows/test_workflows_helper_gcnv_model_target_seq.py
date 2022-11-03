@@ -103,27 +103,76 @@ def helper_gcnv_model_workflow(
     )
 
 
-# Test for BuildGcnvModelStepPart ------------------------------------------------------------------
+# Tests for BuildGcnvTargetSeqModelStepPart (preprocess_intervals) ---------------------------------
 
 
-def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
-    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+def test_gcnv_preprocess_intervals_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_preprocess_intervals()"""
+    expected = {}
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "preprocess_intervals")(None)
+    assert actual == expected
+
+
+def test_gcnv_preprocess_intervals_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_preprocess_intervals()"""
+    output_path = (
+        "work/gcnv_preprocess_intervals.{library_kit}/out/"
+        "gcnv_preprocess_intervals.{library_kit}.interval_list"
+    )
+    expected = {"interval_list": output_path}
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "preprocess_intervals")
+    assert actual == expected
+
+
+def test_gcnv_target_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'preprocess_intervals' step"""
+    expected = (
+        "work/gcnv_preprocess_intervals.{library_kit}/log/"
+        "gcnv_preprocess_intervals.{library_kit}.log"
+    )
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "preprocess_intervals")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (coverage) ---------------------------------------------
+
+
+def test_gcnv_coverage_step_part_get_input_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_input_files_coverage()"""
+    # Define expected
+    interval_list_out = (
+        "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
+        "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
+    )
+    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
-        "calls": [],
-        "ploidy": (
-            "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
-            "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
-        ),
+        "interval_list": interval_list_out,
+        "bam": bam_out + ".bam",
+        "bai": bam_out + ".bam.bai",
     }
-    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
-        # Patch checkpoint
-        patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
-        # Get actual
-        actual = helper_gcnv_model_workflow.get_input_files("gcnv", "post_germline_calls")(
-            wildcards, patched_checkpoints
-        )
-        assert actual == expected
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = helper_gcnv_model_workflow.get_input_files("gcnv", "coverage")(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_coverage_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_coverage()"""
+    tsv_out = (
+        "work/{mapper}.gcnv_coverage.{library_name}/out/{mapper}.gcnv_coverage.{library_name}.tsv"
+    )
+    expected = {"tsv": tsv_out}
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "coverage")
+    assert actual == expected
+
+
+def test_gcnv_coverage_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file for 'coverage' step"""
+    expected = (
+        "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
+    )
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "coverage")
+    assert actual == expected
 
 
 # Tests for BuildGcnvTargetSeqModelStepPart (annotate_gc) ------------------------------------------
@@ -352,6 +401,58 @@ def test_gcnv_call_cnvs_step_part_get_log_file(helper_gcnv_model_workflow):
     )
     # Get actual
     actual = helper_gcnv_model_workflow.get_log_file("gcnv", "call_cnvs")
+    assert actual == expected
+
+
+# Tests for BuildGcnvTargetSeqModelStepPart (post_germline_calls) ----------------------------------
+
+
+def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
+    """Tests BuildGcnvModelStepPart._get_input_files_call_cnvs()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "calls": [],
+        "ploidy": (
+            "work/bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/out/"
+            "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
+        ),
+    }
+    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
+        # Patch checkpoint
+        patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
+        # Get actual
+        actual = helper_gcnv_model_workflow.get_input_files("gcnv", "post_germline_calls")(
+            wildcards, patched_checkpoints
+        )
+        assert actual == expected
+
+
+def test_gcnv_post_germline_calls_step_part_get_output_files(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart._get_output_files_post_germline_calls()"""
+    # Define expected
+    base_name = (
+        "work/{mapper}.gcnv_post_germline_calls.{library_name}/out/"
+        "{mapper}.gcnv_post_germline_calls.{library_name}"
+    )
+    expected = {
+        "ratio_tsv": base_name + ".ratio.tsv",
+        "itv_vcf": base_name + ".interval.vcf.gz",
+        "seg_vcf": base_name + ".vcf.gz",
+    }
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_output_files("gcnv", "post_germline_calls")
+    assert actual == expected
+
+
+def test_gcnv_post_germline_calls_step_part_get_log_file(helper_gcnv_model_workflow):
+    """Tests BuildGcnvTargetSeqModelStepPart.get_log_file() for 'post_germline_calls' step"""
+    # Define expected
+    expected = (
+        "work/{mapper}.gcnv_post_germline_calls.{library_name}/log/"
+        "{mapper}.gcnv_post_germline_calls.{library_name}.log"
+    )
+    # Get actual
+    actual = helper_gcnv_model_workflow.get_log_file("gcnv", "post_germline_calls")
     assert actual == expected
 
 
