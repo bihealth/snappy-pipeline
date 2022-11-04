@@ -26,19 +26,22 @@ set -x
 export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
-
-# TODO: add through shell.prefix
-export TMPDIR=/fast/users/$USER/scratch/tmp
 
 # Setup auto-cleaned TMPDIR
 export TMPDIR=$(mktemp -d)
@@ -71,7 +74,7 @@ rm -rf pon_db
 gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
     --tmp-dir ${{TMPDIR}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
-    --genomicsdb-workspace-path pon_db \
+    --genomicsdb-workspace-path ${{TMPDIR}}/pon_db \
     --intervals ${{TMPDIR}}/contigs.list \
     $cmd
 
@@ -80,7 +83,7 @@ gatk CreateSomaticPanelOfNormals \
     --tmp-dir ${{TMPDIR}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --germline-resource "{snakemake.config[step_config][panel_of_normals][mutect2][germline_resource]}" \
-    --variant gendb://pon_db \
+    --variant gendb://${{TMPDIR}}/pon_db \
     --output ${{out_base}}.vcf
 
 bgzip ${{out_base}}.vcf
@@ -93,5 +96,12 @@ pushd $TMPDIR && \
     popd
 
 mv ${{out_base}}.* $(dirname {snakemake.output.vcf})
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
