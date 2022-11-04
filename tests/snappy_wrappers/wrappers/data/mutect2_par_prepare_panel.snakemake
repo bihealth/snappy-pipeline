@@ -4,10 +4,10 @@ rule chunk_0:
     output:
         touch("job_out.0.d/.done"),
         **{'vcf': 'job_out.0.d/out/tmp_0.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.vcf.gz.md5', 'tbi': 'job_out.0.d/out/tmp_0.vcf.gz.tbi', 'tbi_md5': 'job_out.0.d/out/tmp_0.vcf.gz.tbi.md5'}
-    threads: chunk_resources_threads
+    threads: resource_chunk_threads
     resources:
-        time=chunk_resources_time,
-        memory=chunk_resources_memory,
-        partition=chunk_resources_partition,
+        time=resource_chunk_time,
+        memory=resource_chunk_memory,
+        partition=resource_chunk_partition,
     params:
         **{'args': {'intervals': ['1:1-50,010,000']}}
