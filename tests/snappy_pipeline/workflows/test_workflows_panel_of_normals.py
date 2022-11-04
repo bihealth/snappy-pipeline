@@ -170,7 +170,7 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     prepare_panel_expected_dict = {
         "threads": 2,
         "time": "3-00:00:00",
-        "memory": "3.7G",
+        "memory": "8G",
         "partition": "medium",
     }
     run_expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}

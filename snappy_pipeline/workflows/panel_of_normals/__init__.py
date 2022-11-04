@@ -58,8 +58,13 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -207,7 +212,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         "prepare_panel": ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
-            memory="3.7G",
+            memory="8G",
         ),
         "create_panel": ResourceUsage(
             threads=2,
