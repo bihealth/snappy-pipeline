@@ -92,10 +92,8 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
         }
     )
     expected = {
-        "normal_bam": ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"],
-        "normal_bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai"
-        ],
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
     assert actual == expected
@@ -110,8 +108,7 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
         }
     )
     expected = {
-        "txt": "work/{mapper}.mutect2.select_panel.txt",
-        "vcf": [
+        "normals": [
             "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
             "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
         ],
@@ -127,7 +124,7 @@ def test_mutect2_step_part_get_output_files_prepare_panel(panel_of_normals_workf
     expected = {
         "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
         "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
-        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.tbi.gz",
+        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi",
         "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "prepare_panel")
@@ -144,7 +141,7 @@ def test_mutect2_step_part_get_output_files_create_panel(panel_of_normals_workfl
 
 def test_mutect2_step_part_get_log_file_prepare_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_prepare_panel()"""
-    base_name_out = "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}"
+    base_name_out = "work/{mapper}.mutect2.prepare_panel/log/{normal_library}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "prepare_panel")
     assert actual == expected
@@ -152,7 +149,7 @@ def test_mutect2_step_part_get_log_file_prepare_panel(panel_of_normals_workflow)
 
 def test_mutect2_step_part_get_log_file_create_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_create_panel()"""
-    base_name_out = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel"
+    base_name_out = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "create_panel")
     assert actual == expected

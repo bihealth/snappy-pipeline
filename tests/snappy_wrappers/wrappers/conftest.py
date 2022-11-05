@@ -5,7 +5,7 @@ from itertools import chain
 import os
 import shutil
 import subprocess
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from pyfakefs import fake_filesystem
 import pytest
@@ -25,6 +25,13 @@ if FORCE_RUN or DIFF_MASTER or DIFF_LAST_COMMIT:
 
 #: Allow running containerized (local only).
 CONTAINERIZED = os.environ.get("CONTAINERIZED", "false") == "true"
+
+
+@pytest.fixture(autouse=True)
+def mock_settings_env_vars():
+    """For tests, we want to have fake use medium partition."""
+    with patch.dict(os.environ, {"SNAPPY_PIPELINE_PARTITION": "medium"}):
+        yield
 
 
 def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):
