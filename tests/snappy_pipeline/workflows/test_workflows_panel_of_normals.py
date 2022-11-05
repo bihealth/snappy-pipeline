@@ -209,7 +209,7 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
         for mapper in ("bwa",)
     ]
     # add log files
-    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.{ext}"
+    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals.{ext}"
     expected += [
         tpl.format(mapper=mapper, ext=ext)
         for ext in (
