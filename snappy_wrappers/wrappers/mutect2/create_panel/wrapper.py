@@ -51,7 +51,7 @@ mkdir -p ${{TMPDIR}}/vcfs
 
 out_base=${{TMPDIR}}/out/$(basename {snakemake.output.vcf} .vcf.gz)
 
-vcfs=$(echo "{snakemake.input.vcf}" | tr ' ' '\n')
+vcfs=$(echo "{snakemake.input.normals}" | tr ' ' '\n')
 
 # Create a file with the list of contigs & vcf list for GenomicsDBImport
 rm -f ${{TMPDIR}}/contigs.txt
@@ -63,9 +63,6 @@ do
         | sed -re "s/.*ID=([^,>]+),length=([^,>]+).*/\1:1-\2/" \
         >> ${{TMPDIR}}/contigs_all.list
     cmd="$cmd -V ${{vcf}} "
-
-    rm -f ${{vcf}}.tbi ${{vcf}}.tbi.md5
-    gatk IndexFeatureFile -I ${{vcf}}
 done
 sort ${{TMPDIR}}/contigs_all.list | uniq > ${{TMPDIR}}/contigs.list
 
