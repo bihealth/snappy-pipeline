@@ -50,7 +50,6 @@ Currently, no reports are generated.
 """
 
 import os
-import random
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
@@ -193,34 +192,6 @@ class PanelOfNormalsStepPart(BaseStepPart):
 
     def _get_extensions(self, action, is_log=False):
         raise NotImplementedError("Panel of normals log file generation not implemented")
-
-
-def get_panel_of_normals(filename, sheets, size, seed):
-    """Reads from the normals list file, create it if necessary"""
-
-    # Create the file if missing
-    if not os.path.exists(filename):
-        libraries = []
-        for sheet in sheets:
-            for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    if not bio_sample.extra_infos["isTumor"]:
-                        libraries.append(bio_sample.dna_ngs_library.name)
-        libraries.sort()
-        random.seed(seed)
-        random.shuffle(libraries)
-        if not os.path.exists(os.path.dirname(filename)):
-            os.mkdir(os.path.dirname(filename))
-        f = open(filename, "x")
-        for normal_library in libraries[:size]:
-            print(normal_library, file=f)
-        f.close()
-
-    normals = []
-    with open(filename, "r") as f:
-        for line in f:
-            normals.append(line.rstrip())
-    return normals
 
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
