@@ -105,7 +105,7 @@ step_config:
   wgs_sv_export_external:
     tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
     tool_wgs_sv_calling: null    # OPTIONAL: used to create output file prefix.
-    merge_vcf_flag: true         # REQUIRED: true if pedigree VCFs still need merging.
+    merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
     merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
     search_paths: []             # REQUIRED: path to all VCF files.
     search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]

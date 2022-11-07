@@ -29,6 +29,7 @@ def minimal_config():
 
         step_config:
           wgs_sv_export_external:
+            merge_vcf_flag: true
             search_paths: [/search_path]
             search_patterns: [{"vcf": "*/*.vcf.gz"}]
             tool_ngs_mapping: null
