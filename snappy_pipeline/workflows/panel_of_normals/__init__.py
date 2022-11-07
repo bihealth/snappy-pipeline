@@ -49,17 +49,19 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
-import random
-import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -113,84 +115,29 @@ step_config:
 class PanelOfNormalsStepPart(BaseStepPart):
     """Base class for panel of normals step parts
 
-    Variant calling is performed on matched cancer bio sample pairs.  That is, the primary NGS
-    library for the primary bio sample is used for each cancer bio sample (paired with the primary
-    normal bio sample's primary NGS library).
+    Two steps: the preparation is done on each normal samples separately, and the panel creation
+    merges all the individual results in the the panel.
     """
+
+    #: Class available actions
+    actions = ("prepare_panel", "create_panel")
 
     def __init__(self, parent):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
+        self.normal_libraries = self._get_normal_libraries()
+
+    def _get_normal_libraries(self):
         for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-
-    def get_input_files(self, action):
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            print("DEBUG- input function [Part] wildcards = {}".format(wildcards), file=sys.stderr)
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(**wildcards)
-            )
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-            }
-
-        assert action == "run", "Unsupported actions"
-        return input_function
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
-
-    def get_output_files(self, action):
-        """Return output files that all somatic variant calling sub steps must
-        return (VCF + TBI file)
-        """
-        assert action == "run"
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
-        )
-
-    def get_log_file(self, action):
-        raise NotImplementedError("Panel of normals log file generation not implemented")
-
-
-def get_panel_of_normals(filename, sheets, size, seed):
-    """Reads from the normals list file, create it if necessary"""
-
-    # Create the file if missing
-    if not os.path.exists(filename):
-        libraries = []
-        for sheet in sheets:
             for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    if not bio_sample.extra_infos["isTumor"]:
-                        libraries.append(bio_sample.dna_ngs_library.name)
-        libraries.sort()
-        random.seed(seed)
-        random.shuffle(libraries)
-        print("DEBUG- get_panel_of_normals bam files = {}".format(libraries), file=sys.stderr)
-        if not os.path.exists(os.path.dirname(filename)):
-            os.mkdir(os.path.dirname(filename))
-        f = open(filename, "x")
-        for normal_library in libraries[:size]:
-            print(normal_library, file=f)
-        f.close()
-
-    normals = []
-    with open(filename, "r") as f:
-        for line in f:
-            normals.append(line.rstrip())
-    return normals
+                for _, bio_sample in donor.bio_samples.items():
+                    if bio_sample.is_tumor:
+                        continue
+                    for _, test_sample in bio_sample.test_samples.items():
+                        extraction_type = test_sample.extra_infos["extractionType"]
+                        if extraction_type.lower() == "dna":
+                            for _, ngs_library in test_sample.ngs_libraries.items():
+                                yield ngs_library.name
 
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
@@ -199,26 +146,17 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     #: Step name
     name = "mutect2"
 
-    #: Class available actions
-    actions = ("run", "prepare_panel", "create_panel")
-
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
         "prepare_panel": ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
-            memory="3.7G",
+            memory="8G",
         ),
         "create_panel": ResourceUsage(
             threads=2,
             time="08:00:00",  # 8 hours
             memory="30G",
-        ),
-        # TODO: Value set to default, maybe insufficient.
-        "run": ResourceUsage(
-            threads=1,
-            time="01:00:00",
-            memory="2G",
         ),
     }
 
@@ -233,109 +171,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
 
-    def get_input_files(self, action):
-        """Return input files for mutect2 variant calling"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "prepare_panel": self._get_input_files_prepare_panel,
-            "create_panel": self._get_input_files_create_panel,
-        }
-        return mapping[action]
-
-    def _get_input_files_prepare_panel(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
-        bam = ngs_mapping(tpl.format(**wildcards))
-        return {"normal_bam": [bam], "normal_bai": [bam + ".bai"]}
-
-    def _get_input_files_create_panel(self, wildcards):
-        normals = self._get_panel_of_normals(wildcards)
-        vcf_paths = []
-        tpl = "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz"
-        for normal in normals:
-            vcf_paths.append(tpl.format(normal_library=normal, **wildcards))
-        return {"txt": self._get_output_files_select_panel()["normal_list"], "vcf": vcf_paths}
-
-    def get_output_files(self, action):
-        """Return output files for mutect2 panel of normal creation"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "prepare_panel": self._get_output_files_prepare_panel,
-            "create_panel": self._get_output_files_create_panel,
-        }
-        return mapping[action]()
-
-    @dictify
-    def _get_output_files_select_panel(self):
-        # TODO: remove methods associated with action 'select_panel' if not used.
-        yield "normal_list", "work/{mapper}.mutect2.select_panel.txt"
-
-    @staticmethod
-    def _get_output_files_prepare_panel():
-        # TODO: Potential extension error in output files, `vcf.tbi.gz` instead of `vcf.gz.tbi`.
-        return {
-            "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
-            "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
-            "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.tbi.gz",
-            "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
-        }
-
-    @staticmethod
-    def _get_output_files_create_panel():
-        base_name = "work/{mapper}.mutect2.create_panel/out/{mapper}.mutect2.panel_of_normals"
-        return {
-            "vcf": base_name + ".vcf.gz",
-            "vcf_md5": base_name + ".vcf.gz.md5",
-            "tbi": base_name + ".vcf.gz.tbi",
-            "tbi_md5": base_name + ".vcf.gz.tbi.md5",
-        }
-
-    def get_log_file(self, action):
-        """Return log files for mutect2 panel of normal creation"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "prepare_panel": self._get_log_file_prepare_panel,
-            "create_panel": self._get_log_file_create_panel,
-        }
-        return mapping[action]()
-
-    @dictify
-    def _get_log_file_prepare_panel(self):
-        base_name = "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}"
-        return {
-            "log": base_name + ".log",
-            "log_md5": base_name + ".log.md5",
-            "conda_info": base_name + ".conda_info.txt",
-            "conda_info_md5": base_name + ".conda_info.txt.md5",
-            "conda_list": base_name + ".conda_list.txt",
-            "conda_list_md5": base_name + ".conda_list.txt.md5",
-        }
-
-    @dictify
-    def _get_log_file_create_panel(self):
-        base_name = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel"
-        return {
-            "log": base_name + ".log",
-            "log_md5": base_name + ".log.md5",
-            "conda_info": base_name + ".conda_info.txt",
-            "conda_info_md5": base_name + ".conda_info.txt.md5",
-            "conda_list": base_name + ".conda_list.txt",
-            "conda_list_md5": base_name + ".conda_list.txt.md5",
-        }
-
-    @listify
-    def _get_panel_of_normals(self, wildcards):
-        """Return list of bam files in the panel of normals"""
-        return get_panel_of_normals(
-            "work/{mapper}.mutect2.select_panel.txt".format(**wildcards),
-            self.parent.shortcut_sheets,
-            self.config["size"],
-            self.config["shuffle_seed"],
-        )
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -347,6 +182,68 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         # Validate action
         self._validate_action(action)
         return self.resource_usage_dict.get(action)
+
+    def get_input_files(self, action):
+        """Return input files for mutect2 variant calling"""
+        # Validate action
+        self._validate_action(action)
+        mapping = {
+            "prepare_panel": self._get_input_files_prepare_panel,
+            "create_panel": self._get_input_files_create_panel,
+        }
+        return mapping[action]
+
+    def _get_input_files_prepare_panel(self, wildcards):
+        """Helper wrapper function for single sample panel preparation"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
+        bam = ngs_mapping(tpl.format(**wildcards))
+        return {"normal_bam": bam, "normal_bai": bam + ".bai"}
+
+    def _get_input_files_create_panel(self, wildcards):
+        """Helper wrapper function for merging individual results & panel creation"""
+        paths = []
+        tpl = "work/{mapper}.{tool}.prepare_panel/out/{normal_library}.vcf.gz"
+        for normal in self.normal_libraries:
+            paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
+        return {"normals": paths}
+
+    @dictify
+    def get_output_files(self, action):
+        """Return panel of normal files"""
+        self._validate_action(action)
+        ext_dict = {
+            "vcf": "vcf.gz",
+            "vcf_md5": "vcf.gz.md5",
+            "tbi": "vcf.gz.tbi",
+            "tbi_md5": "vcf.gz.tbi.md5",
+        }
+        tpls = {
+            "prepare_panel": "work/{{mapper}}.{tool}.prepare_panel/out/{{normal_library}}.{ext}",
+            "create_panel": "work/{{mapper}}.{tool}.create_panel/out/{{mapper}}.{tool}.panel_of_normals.{ext}",
+        }
+        for key, ext in ext_dict.items():
+            yield key, tpls[action].format(tool=self.name, ext=ext)
+
+    @dictify
+    def get_log_file(self, action):
+        """Return panel of normal files"""
+        self._validate_action(action)
+        ext_dict = {
+            "conda_list": "conda_list.txt",
+            "conda_list_md5": "conda_list.txt.md5",
+            "conda_info": "conda_info.txt",
+            "conda_info_md5": "conda_info.txt.md5",
+            "log": "log",
+            "log_md5": "log.md5",
+        }
+        tpls = {
+            "prepare_panel": "work/{{mapper}}.{tool}.prepare_panel/log/{{normal_library}}.{ext}",
+            "create_panel": "work/{{mapper}}.{tool}.create_panel/log/{{mapper}}.{tool}.panel_of_normals.{ext}",
+        }
+        for key, ext in ext_dict.items():
+            yield key, tpls[action].format(tool=self.name, ext=ext)
 
 
 class PanelOfNormalsWorkflow(BaseStep):
@@ -416,7 +313,7 @@ class PanelOfNormalsWorkflow(BaseStep):
                     "output",
                     "{mapper}.{caller}.create_panel",
                     "log",
-                    "{mapper}.{caller}.create_panel" + "{ext}",
+                    "{mapper}.{caller}.panel_of_normals" + "{ext}",
                 ),
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller=set(self.config["tools"]) & set(TOOLS),

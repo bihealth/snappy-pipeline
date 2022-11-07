@@ -3,8 +3,9 @@ channels:
 - bioconda
 
 dependencies:
-- gatk4
+- python =3.9
+- gatk4 =4.3
 - htslib >=1.9
 - bcftools >=1.9
 - datrie
-- snakemake-minimal
+- snakemake-minimal =7

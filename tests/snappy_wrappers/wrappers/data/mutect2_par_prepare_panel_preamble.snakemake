@@ -1,0 +1,49 @@
+rule merge_all:
+    input: ['job_out.0.d/out/tmp_0.vcf.gz', 'job_out.1.d/out/tmp_1.vcf.gz', 'job_out.2.d/out/tmp_2.vcf.gz', 'job_out.3.d/out/tmp_3.vcf.gz', 'job_out.4.d/out/tmp_4.vcf.gz']
+    output: **{'vcf': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.md5', 'tbi': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.tbi.gz', 'tbi_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
+    threads: resource_merge_threads
+    resources:
+        time=resource_merge_time,
+        memory=resource_merge_memory,
+        partition=resource_merge_partition,
+    log: **{'conda_info': '/work/bwa.mutect2.prepare_panel/log/P001-N1-DNA1-WGS1.conda_info.txt', 'conda_info_md5': '/work/bwa.mutect2.prepare_panel/log/P001-N1-DNA1-WGS1.conda_info.txt.md5', 'conda_list': '/work/bwa.mutect2.prepare_panel/log/P001-N1-DNA1-WGS1.conda_list.txt', 'conda_list_md5': '/work/bwa.mutect2.prepare_panel/log/P001-N1-DNA1-WGS1.conda_list.txt.md5'}
+    shell:
+        r'''
+        set -euo pipefail  # Unofficial Bash strict mode
+
+        # Initialize output directory -----------------------------------------
+
+        outdir=$(basename {output.vcf})
+
+        mkdir -p output
+
+        # Concatenate files ---------------------------------------------------
+        bcftools concat \
+            --allow-overlaps \
+            -d none \
+            -o output/out.vcf.gz \
+            -O z \
+            {input}
+
+        tabix -f output/out.vcf.gz
+
+        pushd output
+        for f in *; do md5sum $f >$f.md5; done
+        popd
+
+        # Move to output directory --------------------------------------------
+        mkdir -p $(dirname {output.vcf})
+        mv output/out.vcf.gz {output.vcf}
+        mv output/out.vcf.gz.md5 {output.vcf_md5}
+        mv output/out.vcf.gz.tbi {output.tbi}
+        mv output/out.vcf.gz.tbi.md5 {output.tbi_md5}
+
+        # Write out information about conda installation.
+        conda list >{log.conda_list}
+        conda info >{log.conda_info}
+
+        pushd $(dirname {log.conda_list})
+        md5sum $(basename {log.conda_list}) >$(basename {log.conda_list}).md5
+        md5sum $(basename {log.conda_info}) >$(basename {log.conda_info}).md5
+        popd
+        '''

@@ -39,6 +39,8 @@ def minimal_config():
 
           panel_of_normals:
               tools: ['mutect2']
+              mutect2:
+                  germline_resource: /path/to/germline_resource.vcf
 
         data_sets:
           first_batch:
@@ -88,14 +90,11 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
         fromdict={
             "mapper": "bwa",
             "normal_library": "P001-N1-DNA1-WGS1",
-            "tumor_library": "P001-T1-DNA1-WGS1",
         }
     )
     expected = {
-        "normal_bam": ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"],
-        "normal_bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai"
-        ],
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
     assert actual == expected
@@ -106,12 +105,10 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "tumor_library": "P001-T1-DNA1-WGS1",
         }
     )
     expected = {
-        "txt": "work/{mapper}.mutect2.select_panel.txt",
-        "vcf": [
+        "normals": [
             "work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz",
             "work/bwa.mutect2.prepare_panel/out/P002-N1-DNA1-WGS1.vcf.gz",
         ],
@@ -127,7 +124,7 @@ def test_mutect2_step_part_get_output_files_prepare_panel(panel_of_normals_workf
     expected = {
         "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
         "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
-        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.tbi.gz",
+        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi",
         "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "prepare_panel")
@@ -144,7 +141,7 @@ def test_mutect2_step_part_get_output_files_create_panel(panel_of_normals_workfl
 
 def test_mutect2_step_part_get_log_file_prepare_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_prepare_panel()"""
-    base_name_out = "work/{mapper}.mutect2.prepare_panel/log/{mapper}.mutect2.{normal_library}"
+    base_name_out = "work/{mapper}.mutect2.prepare_panel/log/{normal_library}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "prepare_panel")
     assert actual == expected
@@ -152,7 +149,7 @@ def test_mutect2_step_part_get_log_file_prepare_panel(panel_of_normals_workflow)
 
 def test_mutect2_step_part_get_log_file_create_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_create_panel()"""
-    base_name_out = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel"
+    base_name_out = "work/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "create_panel")
     assert actual == expected
@@ -170,7 +167,7 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     prepare_panel_expected_dict = {
         "threads": 2,
         "time": "3-00:00:00",
-        "memory": "3.7G",
+        "memory": "8G",
         "partition": "medium",
     }
     run_expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
@@ -185,12 +182,6 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     for resource, expected in prepare_panel_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'prepare_panel'."
         actual = panel_of_normals_workflow.get_resource("mutect2", "prepare_panel", resource)
-        assert actual == expected, msg_error
-
-    # Evaluate action `run`
-    for resource, expected in run_expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}' for action 'run'."
-        actual = panel_of_normals_workflow.get_resource("mutect2", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -212,7 +203,7 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
         for mapper in ("bwa",)
     ]
     # add log files
-    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.create_panel.{ext}"
+    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals.{ext}"
     expected += [
         tpl.format(mapper=mapper, ext=ext)
         for ext in (
