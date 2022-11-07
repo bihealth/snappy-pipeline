@@ -120,7 +120,7 @@ class PanelOfNormalsStepPart(BaseStepPart):
     """
 
     #: Class available actions
-    actions = ("run", "prepare_panel", "create_panel")
+    actions = ("prepare_panel", "create_panel")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -138,6 +138,50 @@ class PanelOfNormalsStepPart(BaseStepPart):
                         if extraction_type.lower() == "dna":
                             for _, ngs_library in test_sample.ngs_libraries.items():
                                 yield ngs_library.name
+
+
+class Mutect2StepPart(PanelOfNormalsStepPart):
+    """Somatic variant calling with MuTect 2"""
+
+    #: Step name
+    name = "mutect2"
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "prepare_panel": ResourceUsage(
+            threads=2,
+            time="3-00:00:00",  # 3 days
+            memory="8G",
+        ),
+        "create_panel": ResourceUsage(
+            threads=2,
+            time="08:00:00",  # 8 hours
+            memory="30G",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return  # Mutect not enabled, skip
+        self.parent.ensure_w_config(
+            ("static_data_config", "reference", "path"),
+            "Path to reference FASTA not configured but required for %s" % (self.name,),
+        )
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return self.resource_usage_dict.get(action)
 
     def get_input_files(self, action):
         """Return input files for mutect2 variant calling"""
@@ -160,137 +204,46 @@ class PanelOfNormalsStepPart(BaseStepPart):
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for merging individual results & panel creation"""
         paths = []
-        tpl = "work/{mapper}.{tool}.prepare_panel/out/{normal_library}.{ext}"
+        tpl = "work/{mapper}.{tool}.prepare_panel/out/{normal_library}.vcf.gz"
         for normal in self.normal_libraries:
-            for _, ext in self._get_extensions(action="prepare_panel").items():
-                paths.append(
-                    tpl.format(normal_library=normal, tool=self.name, ext=ext, **wildcards)
-                )
+            paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
         return {"normals": paths}
 
     @dictify
     def get_output_files(self, action):
         """Return panel of normal files"""
         self._validate_action(action)
+        ext_dict = {
+            "vcf": "vcf.gz",
+            "vcf_md5": "vcf.gz.md5",
+            "tbi": "vcf.gz.tbi",
+            "tbi_md5": "vcf.gz.tbi.md5",
+        }
         tpls = {
             "prepare_panel": "work/{{mapper}}.{tool}.prepare_panel/out/{{normal_library}}.{ext}",
             "create_panel": "work/{{mapper}}.{tool}.create_panel/out/{{mapper}}.{tool}.panel_of_normals.{ext}",
         }
-        for key, ext in self._get_extensions(action=action).items():
+        for key, ext in ext_dict.items():
             yield key, tpls[action].format(tool=self.name, ext=ext)
 
     @dictify
     def get_log_file(self, action):
         """Return panel of normal files"""
         self._validate_action(action)
+        ext_dict = {
+            "conda_list": "conda_list.txt",
+            "conda_list_md5": "conda_list.txt.md5",
+            "conda_info": "conda_info.txt",
+            "conda_info_md5": "conda_info.txt.md5",
+            "log": "log",
+            "log_md5": "log.md5",
+        }
         tpls = {
             "prepare_panel": "work/{{mapper}}.{tool}.prepare_panel/log/{{normal_library}}.{ext}",
             "create_panel": "work/{{mapper}}.{tool}.create_panel/log/{{mapper}}.{tool}.panel_of_normals.{ext}",
         }
-        for key, ext in self._get_extensions(action=action, is_log=True).items():
+        for key, ext in ext_dict.items():
             yield key, tpls[action].format(tool=self.name, ext=ext)
-
-    def _get_extensions(self, action, is_log=False):
-        raise NotImplementedError("Panel of normals log file generation not implemented")
-
-
-class Mutect2StepPart(PanelOfNormalsStepPart):
-    """Somatic variant calling with MuTect 2"""
-
-    #: Step name
-    name = "mutect2"
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "prepare_panel": ResourceUsage(
-            threads=2,
-            time="3-00:00:00",  # 3 days
-            memory="8G",
-        ),
-        "create_panel": ResourceUsage(
-            threads=2,
-            time="08:00:00",  # 8 hours
-            memory="30G",
-        ),
-        # TODO: Value set to default, maybe insufficient.
-        "run": ResourceUsage(
-            threads=1,
-            time="01:00:00",
-            memory="2G",
-        ),
-    }
-
-    #: Class key/values extensions
-    extensions_dict_out = {
-        "prepare_panel": {
-            "vcf": "vcf.gz",
-            "vcf_md5": "vcf.gz.md5",
-            "tbi": "vcf.gz.tbi",
-            "tbi_md5": "vcf.gz.tbi.md5",
-        },
-        "create_panel": {
-            "vcf": "vcf.gz",
-            "vcf_md5": "vcf.gz.md5",
-            "tbi": "vcf.gz.tbi",
-            "tbi_md5": "vcf.gz.tbi.md5",
-        },
-    }
-    extensions_dict_log = {
-        "prepare_panel": {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
-        },
-        "create_panel": {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
-        },
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return  # Mutect not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
-    def _get_extensions(self, action, is_log=False):
-        # Validate action
-        self._validate_action(action)
-        if is_log:
-            return self.extensions_dict_log.get(action)
-        return self.extensions_dict_out.get(action)
-
-    def _get_input_files_create_panel(self, wildcards):
-        """Helper wrapper function for merging individual results & panel creation"""
-        paths = []
-        tpl = "work/{mapper}.{tool}.prepare_panel/out/{normal_library}.vcf.gz"
-        for normal in self.normal_libraries:
-            paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
-        return {"normals": paths}
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
 
 
 class PanelOfNormalsWorkflow(BaseStep):

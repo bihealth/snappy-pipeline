@@ -39,6 +39,8 @@ def minimal_config():
 
           panel_of_normals:
               tools: ['mutect2']
+              mutect2:
+                  germline_resource: /path/to/germline_resource.vcf
 
         data_sets:
           first_batch:
@@ -88,7 +90,6 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
         fromdict={
             "mapper": "bwa",
             "normal_library": "P001-N1-DNA1-WGS1",
-            "tumor_library": "P001-T1-DNA1-WGS1",
         }
     )
     expected = {
@@ -104,7 +105,6 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "tumor_library": "P001-T1-DNA1-WGS1",
         }
     )
     expected = {
@@ -182,12 +182,6 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     for resource, expected in prepare_panel_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'prepare_panel'."
         actual = panel_of_normals_workflow.get_resource("mutect2", "prepare_panel", resource)
-        assert actual == expected, msg_error
-
-    # Evaluate action `run`
-    for resource, expected in run_expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}' for action 'run'."
-        actual = panel_of_normals_workflow.get_resource("mutect2", "run", resource)
         assert actual == expected, msg_error
 
 
