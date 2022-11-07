@@ -51,6 +51,7 @@ mkdir -p ${TMPDIR}
 test -z "${SLURM_JOB_ID-}" && SLURM_JOB_ID=$(date +%%Y-%%m-%%d_%%H-%%M)
 LOGDIR=slurm_log/${SLURM_JOB_ID}
 mkdir -p ${LOGDIR}
+export SBATCH_DEFAULTS=" --output=${LOGDIR}/%%x-%%j.log"
 
 # Activate appropriate Miniconda3 installation ------------------------------
 
