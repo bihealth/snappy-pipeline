@@ -346,7 +346,7 @@ step_config:
       min_cov_ok: 50  # >= 50x for OK
       detailed_reporting: false  # per-exon details (cannot go into multiqc)
     bam_collect_doc:
-      enabled: true
+      enabled: false
       window_length: 1000
     # Enable Picard HS metrics by setting both paths
     picard_hs_metrics:
