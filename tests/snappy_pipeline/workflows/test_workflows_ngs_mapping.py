@@ -31,8 +31,6 @@ def minimal_config():
             path: /path/to/ref.fa
 
         step_config:
-          bam_collect_doc:
-            enabled: true
           ngs_mapping:
             tools:
               dna: ['bwa']
@@ -44,6 +42,8 @@ def minimal_config():
             compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta
+            bam_collect_doc:
+              enabled: true
 
         data_sets:
           first_batch:
@@ -738,7 +738,7 @@ def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
 # Tests for BamCollectDocStepPart -----------------------------------------------------------------
 
 
-def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workflow):
+def test_generate_doc_files_step_part_run_get_input_files(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_input_files() - run"""
     # Define expected
     expected = {
@@ -750,7 +750,7 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
     assert actual == expected
 
 
-def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
+def test_generate_doc_files_step_part_get_output_files(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_output_files() - run"""
     expected = {
         "bw": "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw",
@@ -763,13 +763,13 @@ def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow)
     assert ngs_mapping_workflow.get_output_files("bam_collect_doc", "run") == expected
 
 
-def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow):
+def test_generate_doc_files_step_part_run_get_log_file(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_log_file() - run"""
     expected = "work/{mapper_lib}/log/snakemake.bam_collect_doc.log"
     assert ngs_mapping_workflow.get_log_file("bam_collect_doc", "run") == expected
 
 
-def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
+def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
     expected_dict = {"threads": 1, "time": "04:00:00", "memory": "2G", "partition": "medium"}
     for resource, expected in expected_dict.items():

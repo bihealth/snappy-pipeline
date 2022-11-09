@@ -29,8 +29,6 @@ def minimal_config():
             path: /path/to/ref.fa
 
         step_config:
-          bam_collect_doc:
-            enabled: true
           ngs_mapping:
             path_link_in: "/preprocess"
             tools:
@@ -43,6 +41,8 @@ def minimal_config():
             compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta
+            bam_collect_doc:
+              enabled: true
 
         data_sets:
           first_batch:
