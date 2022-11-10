@@ -755,7 +755,7 @@ def germline_sheet_fake_fs2(
 
 @pytest.fixture
 def germline_trio_plus_sheet_fake_fs(fake_fs, germline_trio_plus_sheet_tsv):
-    """Return fake file system setup with files for the germline_trio_plus_sheet_tsv"""
+    """Return fake file system setup with files for the germline_sheet_tsv and external VCFs"""
     # Create work directory
     fake_fs.fs.makedirs("/work", exist_ok=True)
     # Create the sample TSV file
@@ -764,6 +764,26 @@ def germline_trio_plus_sheet_fake_fs(fake_fs, germline_trio_plus_sheet_tsv):
         contents=germline_trio_plus_sheet_tsv,
         create_missing_dirs=True,
     )
+    return fake_fs
+
+
+@pytest.fixture
+def germline_sheet_with_ext_vcf_fake_fs(fake_fs, germline_sheet_tsv):
+    """Return fake file system setup with files for the germline_trio_plus_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv",
+        contents=germline_sheet_tsv,
+        create_missing_dirs=True,
+    )
+    # Create FASTQ read files for the samples in small cohort
+    tpl = "/vcf_path/220911_A00000_0000_BH7MHCDMXY/{donor}-N1-DNA1-WGS1/{donor}_dragen.{ext}"
+    for line in germline_sheet_tsv.splitlines()[1:]:
+        donor = line.split("\t")[0]
+        fake_fs.fs.create_file(tpl.format(donor=donor, ext="vcf.gz"), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(donor=donor, ext="vcf.gz.md5"), create_missing_dirs=True)
     return fake_fs
 
 

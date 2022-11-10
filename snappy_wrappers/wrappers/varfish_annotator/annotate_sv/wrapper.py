@@ -16,7 +16,6 @@ this_file = __file__
 annotation_args = []
 
 # TODO: care about case of WGS data
-# TODO: properly handle release
 # TODO: remove case ID parameter from annotator
 
 shell(
@@ -82,6 +81,12 @@ bcftools annotate \
     -o $TMPDIR/tmp.vcf.gz
 tabix -s1 -b2 -e2 -f $TMPDIR/tmp.vcf.gz
 
+# Compatibility mode with VarFish Server
+compatibility_option=""
+if [[ "{snakemake.params.args[varfish_server_compatibility]}" != "False" ]]; then
+    compatibility_option="--opt-out callers-array"
+fi
+
 # Call jannovar statistics
 MALLOC_ARENA_MAX=4 \
 varfish-annotator \
@@ -89,7 +94,7 @@ varfish-annotator \
     -XX:MaxHeapSize=10g \
     -XX:+UseG1GC \
     \
-    --release GRCh37 \
+    --release {export_config[release]} \
     \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \
@@ -99,7 +104,7 @@ varfish-annotator \
     --input-vcf $TMPDIR/tmp.vcf.gz \
     --output-db-info ${{out_db_info%.gz}} \
     --output-gts ${{out_gts%.gz}} \
-    --output-feature-effects ${{out_effects%.gz}}
+    --output-feature-effects ${{out_effects%.gz}}  $compatibility_option
 
 gzip ${{out_db_info%.gz}}
 gzip ${{out_gts%.gz}}

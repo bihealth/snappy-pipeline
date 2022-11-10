@@ -58,11 +58,13 @@ from ..workflows import (
     variant_combination,
     variant_denovo_filtration,
     variant_export,
+    variant_export_external,
     variant_filtration,
     variant_phasing,
     wgs_cnv_annotation,
     wgs_cnv_calling,
     wgs_cnv_export,
+    wgs_cnv_export_external,
     wgs_cnv_filtration,
     wgs_mei_annotation,
     wgs_mei_calling,
@@ -70,6 +72,7 @@ from ..workflows import (
     wgs_sv_annotation,
     wgs_sv_calling,
     wgs_sv_export,
+    wgs_sv_export_external,
     wgs_sv_filtration,
 )
 
@@ -124,11 +127,13 @@ STEP_TO_MODULE = {
     "variant_combination": variant_combination,
     "variant_denovo_filtration": variant_denovo_filtration,
     "variant_export": variant_export,
+    "variant_export_external": variant_export_external,
     "variant_filtration": variant_filtration,
     "variant_phasing": variant_phasing,
     "wgs_cnv_annotation": wgs_cnv_annotation,
     "wgs_cnv_calling": wgs_cnv_calling,
     "wgs_cnv_export": wgs_cnv_export,
+    "wgs_cnv_export_external": wgs_cnv_export_external,
     "wgs_cnv_filtration": wgs_cnv_filtration,
     "wgs_mei_annotation": wgs_mei_annotation,
     "wgs_mei_calling": wgs_mei_calling,
@@ -136,6 +141,7 @@ STEP_TO_MODULE = {
     "wgs_sv_annotation": wgs_sv_annotation,
     "wgs_sv_calling": wgs_sv_calling,
     "wgs_sv_export": wgs_sv_export,
+    "wgs_sv_export_external": wgs_sv_export_external,
     "wgs_sv_filtration": wgs_sv_filtration,
 }
 

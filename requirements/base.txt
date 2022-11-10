@@ -1,3 +1,6 @@
+# Simplified class builder
+attrs
+
 # Nice, round-trip enabled YAML parsing
 ruamel.yaml>=0.15.35
 

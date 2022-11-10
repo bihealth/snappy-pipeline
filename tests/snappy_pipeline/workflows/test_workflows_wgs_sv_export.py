@@ -192,7 +192,7 @@ def test_varfish_annotator_step_part_call_get_log_file(wgs_sv_export_workflow):
 def test_varfish_annotator_step_part_get_params(wgs_sv_export_workflow):
     """Tests VarfishAnnotatorAnnotateStepPart.get_params()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    expected = {"is_wgs": True, "step_name": "wgs_sv_export"}
+    expected = {"is_wgs": True, "step_name": "wgs_sv_export", "varfish_server_compatibility": False}
     actual = wgs_sv_export_workflow.get_params("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
 

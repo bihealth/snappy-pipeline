@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools ==1.9
+  # NB: gnuplot 5.2.7 is incompatible with samtools ==1.9
+  # see https://github.com/samtools/samtools/issues/1065
+  - gnuplot ==5.2.6
+

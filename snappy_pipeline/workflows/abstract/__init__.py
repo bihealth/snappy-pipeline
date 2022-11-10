@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
-
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
@@ -12,6 +11,7 @@ import os.path
 import sys
 import typing
 
+import attr
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -36,6 +36,7 @@ from snappy_pipeline.base import (
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -178,11 +179,15 @@ class BaseStepPart:
 class WritePedigreeStepPart(BaseStepPart):
     """Write out pedigree file for primary DNA sample given the index NGS library name"""
 
+    #: Step name
     name = "write_pedigree"
+
+    #: Class available actions
+    actions = ("run",)
 
     def __init__(self, parent, require_dna_ngs_library=False, only_trios=False):
         super().__init__(parent)
-        #: Whether or not to prevent writing out of samples with out NGS library.
+        #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = OrderedDict()
@@ -210,12 +215,13 @@ class WritePedigreeStepPart(BaseStepPart):
         Returns a dict with entry ``"bam"`` mapping to list of input BAM files.  This list will
         be empty if the parent step does not define an ``"ngs_mapping"`` workflow.
         """
+        self._validate_action(action=action)
 
         @listify
         def get_input_files(wildcards):
             if "ngs_mapping" not in self.parent.sub_workflows:
                 return  # early exit
-            # Get shorcut to NGS mapping sub workflow
+            # Get shortcut to NGS mapping sub workflow
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
@@ -235,21 +241,55 @@ class WritePedigreeStepPart(BaseStepPart):
                     )
                     yield ngs_mapping(path)
 
-        assert action == "run", "Unsupported actions"
         return get_input_files
 
     def get_output_files(self, action):
-        assert action == "run"
+        self._validate_action(action=action)
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
     def run(self, wildcards, output):
-        """Write out the pedigree information"""
+        """Write out the pedigree information
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :param output: Snakemake output associated with rule.
+        :type output: snakemake.io.Namedlist
+        """
         if wildcards.index_ngs_library == "whole_cohort":
             write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
         else:
             write_pedigree_to_ped(
                 self.index_ngs_library_to_pedigree[wildcards.index_ngs_library], str(output)
             )
+
+
+class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
+    """
+    Class contains method to write pedigree file for primary DNA sample given the index
+    NGS library name.It will create pedigree information based sole on sample name,
+    example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+    """
+
+    #: Step name
+    name = "write_pedigree_with_sample_name"
+
+    def __init__(self, *args, **kwargs):
+        WritePedigreeStepPart.__init__(self, *args, **kwargs)
+
+    def run(self, wildcards, output):
+        """Write out the pedigree information
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :param output: Snakemake output associated with rule.
+        :type output: snakemake.io.Namedlist
+        """
+        append_pedigree_to_ped(
+            pedigree=self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
+            output_path=str(output),
+        )
 
 
 class LinkOutStepPart(BaseStepPart):
@@ -353,27 +393,28 @@ class DataSetInfo:
         :param sheet_path: Path to sheet file that should be loaded.
         :type sheet_path: str
 
-        :param base_paths:  All base paths of all configuration, too look for ``sheet_path``.
+        :param base_paths:  All base paths of all configuration, to look for ``sheet_path``.
         :type base_paths: list
 
         :param search_paths: Search paths for the files in the sample sheet.
+        :type search_paths: list
 
         :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
         right: '**/*_R2_*.fastq.gz'}".
-        :type search_patterns: dict
+        :type search_patterns: List[Dict[str, str]]
 
-        :param sheet_type: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
+        :param sheet_type: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
         attempt to load from sheet.
         :type sheet_type: str
 
-        :param is_background: Whether or not the data set info is to be used only for background.
+        :param is_background: Whether the data set info is to be used only for background.
         :type is_background: bool
 
         :param naming_scheme: Selected naming schema: either 'secondary_id_pk' or
         'only_secondary_id'.
         :type naming_scheme: str
 
-        :param mixed_se_pe: Whether or not mixing SE and PE data sets is allowed.
+        :param mixed_se_pe: Whether mixing SE and PE data sets is allowed.
 
         :param sodar_uuid: The UUID of the corresponding SODAR project.
         :type sodar_uuid: str
@@ -390,22 +431,22 @@ class DataSetInfo:
         self.name = name
         #: Path to the sheet file, for loading
         self.sheet_path = sheet_path
-        #: All base paths of all configuration, too look for ``sheet_path``
+        #: All base paths of all configuration, to look for ``sheet_path``
         self.base_paths = base_paths
         #: Search paths for the files in the sample sheet
         self.search_paths = list(search_paths)
         #: Search patterns
         self.search_patterns = search_patterns
-        #: Explicite sheet type (e.g. "matched_cancer"), if any.  Otherwise, will attempt to load
+        #: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will attempt to load
         # from sheet.
         self.sheet_type = sheet_type
-        #: Whether or not the data set info is to be used only for background
+        #: Whether the data set info is to be used only for background
         self.is_background = is_background
         #: Selected naming schema
         if naming_scheme not in NAMING_SCHEMES:
             raise ValueError("Invalid naming scheme: {}".format(naming_scheme))  # pragma: no cover
         self.naming_scheme = naming_scheme
-        #: Whether or not mixing SE and PE data sets is allowed.
+        #: Whether mixing SE and PE data sets is allowed.
         self.mixed_se_pe = mixed_se_pe
         #: The BioMed SampleSheet
         self.sheet = self._load_sheet()
@@ -473,6 +514,17 @@ class DataSetInfo:
         sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
         sheet.extra_infos["is_background"] = flag
         return sheet
+
+
+@attr.s(frozen=True, auto_attribs=True)
+class DataSearchInfo:
+    """Data search information - simplified version of ``DataSetInfo``."""
+
+    sheet_path: str
+    base_paths: list
+    search_paths: list
+    search_patterns: list
+    mixed_se_pe: bool
 
 
 class BaseStep:
@@ -799,6 +851,17 @@ class BaseStep:
                 data_set.get("pedigree_field", None),
             )
 
+    def _load_data_search_infos(self):
+        """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
+        for _, data_set in self.w_config["data_sets"].items():
+            yield DataSearchInfo(
+                sheet_path=data_set["file"],
+                base_paths=self.config_lookup_paths,
+                search_paths=self.config["search_paths"],
+                search_patterns=self.config["search_patterns"],
+                mixed_se_pe=False,
+            )
+
     @classmethod
     def wrapper_path(cls, path):
         """Generate path to wrapper"""
@@ -823,9 +886,12 @@ class LinkInPathGenerator:
         #: Working directory
         self.work_dir = work_dir
         #: Data set info list from configuration
-        self.data_set_infos = [
-            self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
-        ]
+        if preprocessed_path:
+            self.data_set_infos = [
+                self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
+            ]
+        else:
+            self.data_set_infos = data_set_infos
         #: Path to configuration files, used for invalidating cache
         self.config_paths = config_paths
         #: Name of cache file to create
@@ -858,7 +924,6 @@ class LinkInPathGenerator:
                 pat_md5 = [pattern + ".md5" for pattern in pat.values()]
                 pat_names_md5 = [pattern + "_md5" for pattern in pat.keys()]
                 patterns.append(PatternSet(pat_md5, names=pat_names_md5))
-
             # Crawl all root paths, link in the resulting files
             for root_path in self._get_shell_cmd_root_paths(info):
                 if root_path in seen_root_paths:
@@ -998,13 +1063,22 @@ class LinkInStep(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
+
+        # The key 'path_link_in' is only defined for pipelines that could used preprocessed
+        # FASTQ files. That doesn't make sense for pipelines that are using externally generated
+        # data already.
+        try:
+            preprocessed_path = self.config["path_link_in"]
+        except KeyError:
+            preprocessed_path = ""
+
         # Path generator.
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
             cache_file_name=".snappy_path_cache",
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=preprocessed_path,
         )
 
     def get_input_files(self, action):
@@ -1060,6 +1134,98 @@ class LinkInStep(BaseStepPart):
         raise ImplementationUnavailableError(
             "run() not implemented for linking in reads"
         )  # pragma: no cover
+
+
+class LinkInVcfExternalStepPart(LinkInStep):
+    """Link in the external VCF files."""
+
+    #: Step name
+    name = "link_in_vcf_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("vcf", "vcf_md5")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_shell_cmd(self, action, wildcards):
+        """Return call for linking in the files
+
+        The files are linked, keeping their relative paths to the item matching the "folderName"
+        intact.
+        """
+        self._validate_action(action)
+        # Define path generator
+        path_gen = LinkInPathGenerator(
+            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
+        )
+        # Get base out path
+        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Perform the command generation
+        lines = []
+        tpl = (
+            "mkdir -p {out_path}/{path_infix} && "
+            "{{{{ test -h {out_path}/{path_infix}/{filename} || "
+            "ln -sr {src_path}/{filename} {out_path}/{path_infix}; }}}}"
+        )
+        filenames = {}
+        for src_path, path_infix, filename in path_gen.run(
+            folder_name=wildcards.library_name, pattern_set_keys=self.pattern_set_keys
+        ):
+            new_path = os.path.join(out_path, path_infix, filename)
+            if new_path in filenames:
+                if filenames[new_path] == src_path:
+                    continue  # ignore TODO: better correct this
+                msg = "WARNING: Detected double output path {}"
+                print(msg.format(filename), file=sys.stderr)
+            filenames[new_path] = src_path
+            lines.append(
+                tpl.format(
+                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                )
+            )
+        if not lines:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
+        return "\n".join(lines)
+
+
+class LinkInBamExternalStepPart(LinkInVcfExternalStepPart):
+    """Link in the external BAM files."""
+
+    #: Step name
+    name = "link_in_bam_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("bam", "bam_md5")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_pattern_out = "work/input_links/{library_name}/.done_bam_external"
+
+
+class LinkInBaiExternalStepPart(LinkInVcfExternalStepPart):
+    """Link in the external BAI files."""
+
+    #: Step name
+    name = "link_in_bai_external"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Patterns set keys
+    pattern_set_keys = ("bai", "bai_md5")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_pattern_out = "work/input_links/{library_name}/.done_bai_external"
 
 
 class InputFilesStepPartMixin:

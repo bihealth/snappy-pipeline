@@ -213,19 +213,46 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
 
     def get_params(self, action):
-        assert action == "annotate", f"Option only valid for action 'annotate' (used: '{action}')."
+        self._validate_action(action)
+        return getattr(self, f"_get_params_{action}")
 
-        def get_params_func(wildcards):
-            pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-            for donor in pedigree.donors:
-                if (
-                    donor.dna_ngs_library
-                    and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
-                ):
-                    return {"is_wgs": True}
-            return {"is_wgs": False}
+    def _get_params_annotate(self, wildcards):
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        for donor in pedigree.donors:
+            if (
+                donor.dna_ngs_library
+                and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
+            ):
+                return {"is_wgs": True, "step_name": "variant_export"}
+        return {"is_wgs": False, "step_name": "variant_export"}
 
-        return get_params_func
+    def _get_params_bam_qc(self, wildcards):
+        """Get parameters for wrapper ``variant_annotator/bam_qc``
+
+        Creates dictionary that links library name to identifier that should be used in output file.
+        The wrapper will derive the library name from the input file name, for analysis using
+        externally generated data, the values will be the sample name as provided by the external
+        source (sample name). For snappy-based analysis it is redundant, both keys and values will
+        be the library name.
+
+        Dictionary expected structure:
+        {
+            "P001-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
+            "P002-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
+            "P003-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
+        }
+
+        :return: Dictionary linking library name to identifier that should be used in output file.
+        Key: library name; Value: identifier to be used in file.
+        """
+        library_name_to_file_identifier = {}
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        for donor in pedigree.donors:
+            if donor.dna_ngs_library:
+                library_name_to_file_identifier[
+                    donor.dna_ngs_library.name
+                ] = donor.dna_ngs_library.name
+        return library_name_to_file_identifier
 
 
 class VariantExportWorkflow(BaseStep):

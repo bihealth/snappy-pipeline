@@ -9,26 +9,50 @@ Server.
 Stability
 ==========
 
-TODO
+This step is considered is considered stable for short Illumina reads.
 
 ==========
 Step Input
 ==========
 
-The WGS SV export step uses Snakemake sub workflows for using the result of the
-``wgs_cnv_export`` step.
+The WGS CNV export step uses Snakemake sub workflows for using the result of the
+``wgs_cnv_calling`` step.
 
 ===========
 Step Output
 ===========
 
-TODO
+For all pedigrees, annotation will be performed on the merged VCF file contained all samples.
+The name of the primary DNA NGS library of the index will be used as an identification token
+in the output file.  For each read mapper, sv caller, and pedigree, the following is an example of
+the files that will be generated:
+
+::
+    output/
+    +-- varfish_annotated.P001-N1-DNA1-WGS1
+    |   `-- out
+    |   |   |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz
+    |   |   |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz.md5
+    |   |   |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz
+    |   |   |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
+    |   |   |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
+    |   |   +-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
+    |   |
+    |   +-- log
+    |       |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt
+    |       |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt.md5
+    |       |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt
+    |       |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt.md5
+    |       |-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.log
+    |       +-- bwa.gcnv.varfish_annotated.P001-N1-DNA1-WGS1.log.md5
+    |
+    [...]
 
 ====================
 Global Configuration
 ====================
 
-TODO
+Not applicable.
 
 =====================
 Default Configuration
@@ -77,9 +101,11 @@ step_config:
     path_wgs_cnv_annotation: ../wgs_cnv_annotation
     tools_ngs_mapping: null
     tools_wgs_cnv_calling: null
+    release: GRCh37              # REQUIRED: default 'GRCh37'
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
     path_db: REQUIRED            # REQUIRED: spath to annotator DB file to use
+    varfish_server_compatibility: false # OPTIONAL: build output compatible with varfish-server v1.2 (Anthenea) and early versions of the v2 (Bollonaster)
 """
 
 
@@ -166,11 +192,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
 
     def get_params(self, action):
-        # Validate action
         self._validate_action(action)
 
         def get_params_func(wildcards):
-            result = {"is_wgs": True, "step_name": "wgs_cnv_export"}
+            result = {
+                "is_wgs": True,
+                "step_name": "wgs_cnv_export",
+                "varfish_server_compatibility": self.config["varfish_server_compatibility"],
+            }
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
             for donor in pedigree.donors:
                 if (

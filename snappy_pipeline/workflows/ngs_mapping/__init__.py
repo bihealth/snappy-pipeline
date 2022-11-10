@@ -1014,8 +1014,8 @@ class TargetCoverageReportStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return required input files"""
-        assert action in self.actions, "Invalid action"
-        return getattr(self, "_get_input_files_{action}".format(action=action))
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -1037,8 +1037,8 @@ class TargetCoverageReportStepPart(BaseStepPart):
 
     def get_output_files(self, action):
         """Return output files"""
-        assert action in self.actions, "Invalid action"
-        return getattr(self, "_get_output_files_{action}".format(action=action))()
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
     def _get_output_files_run(self):
@@ -1050,12 +1050,34 @@ class TargetCoverageReportStepPart(BaseStepPart):
         yield "txt", "work/target_cov_report/out/target_cov_report.txt"
         yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
+        self._validate_action(action)
         if action == "run":
             return "work/{mapper_lib}/log/snakemake.target_coverage.log"
         else:
             return "work/target_cov_report/log/snakemake.target_coverage.log"
+
+    def get_params(self, action):
+        assert action == "run", "Parameters only available for action 'run'."
+        return getattr(self, "_get_params_run")
+
+    def _get_params_run(self, wildcards):
+        # Find bed file associated with library kit
+        library_name = wildcards.mapper_lib.split(".")[1]
+        path_targets_bed = ""
+        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
+        for item in self.config["target_coverage_report"]["path_target_interval_list_mapping"]:
+            if item["name"] == kit_name:
+                path_targets_bed = item["path"]
+                break
+
+        return {
+            "path_targets_bed": path_targets_bed,
+            "max_coverage": self.config["target_coverage_report"]["max_coverage"],
+            "min_cov_warning": self.config["target_coverage_report"]["min_cov_warning"],
+            "min_cov_ok": self.config["target_coverage_report"]["min_cov_ok"],
+            "detailed_reporting": self.config["target_coverage_report"]["detailed_reporting"],
+        }
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -1067,10 +1089,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
 
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        self._validate_action(action)
         return ResourceUsage(
             threads=2,
             time="04:00:00",  # 4 hours
