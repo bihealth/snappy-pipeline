@@ -83,6 +83,7 @@ step_config:
     path_targeted_seq_cnv_annotation: ../targeted_seq_cnv_annotation
     tools_ngs_mapping: null
     tools_targeted_seq_cnv_calling: null
+    release: GRCh37              # OPTIONAL: default 'GRCh37'
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
     path_db: REQUIRED            # REQUIRED: spath to annotator DB file to use
