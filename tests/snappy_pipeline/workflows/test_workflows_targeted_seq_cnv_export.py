@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
+from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.targeted_seq_cnv_export import TargetedSeqCnvExportWorkflow
 
@@ -140,6 +141,18 @@ def test_varfish_annotator_step_part_get_log_file(targeted_seq_cnv_export_workfl
     log_dict = get_expected_log_files_dict(base_out=base_name_log)
     expected = {**wrapper_dict, **log_dict}
     actual = targeted_seq_cnv_export_workflow.get_log_file("varfish_annotator", "annotate")
+    assert actual == expected
+
+
+def test_varfish_annotator_step_part_get_params_annotate(targeted_seq_cnv_export_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
+    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    expected = {
+        "is_wgs": True,
+        "step_name": "targeted_seq_cnv_export",
+        "varfish_server_compatibility": False,
+    }
+    actual = targeted_seq_cnv_export_workflow.get_params("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
 
 
