@@ -178,9 +178,9 @@ def run(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("reference_fasta", help="Reference FASTA file.")
-    parser.add_argument("input_vcf", help="Input VCF file.")
-    parser.add_argument("output_vcf", help="Output VCF file.")
+    parser.add_argument("--reference-fasta", required=True, help="Reference FASTA file.")
+    parser.add_argument("--input-vcf", required=True, help="Input VCF file.")
+    parser.add_argument("--output-vcf", required=True, help="Output VCF file.")
 
     args = parser.parse_args(argv)
     return run(args)
