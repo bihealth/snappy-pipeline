@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running ``varfish-annotator annotate``."""
 
+import os
+
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
@@ -11,6 +13,11 @@ static_config = snakemake.config["static_data_config"]
 export_config = snakemake.config["step_config"][snakemake.params.args["step_name"]]
 
 this_file = __file__
+
+fix_manta_invs = os.path.join(
+    os.path.dirname(__file__),
+    "fix_manta_invs.py",
+)
 
 # Build list of arguments to pass to Jannovar
 annotation_args = []
@@ -59,27 +66,33 @@ out_effects={snakemake.output.feature_effects}
 
 samples=$(cut -f 2 {snakemake.input.ped} | tr '\n' ',' | sed -e 's/,$//g')
 
+# Fix the Manta inversions
+python3 {fix_manta_invs} \
+    --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+    --input-vcf {snakemake.input.vcf} \
+    --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
+bcftools sort -o $TMPDIR/fixed_bnd_to_inv.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
+
 # TODO: remove vcf4.3 to vcf4.2 conversion once varfish-annotator uses modern HTSJDK
 bcftools view \
     --threads 4 \
     --force-samples \
     -s $samples \
-    {snakemake.input.vcf} \
-| bcftools view -e '(SVTYPE == "BND")' \
+    $TMPDIR/fixed_bnd_to_inv.vcf \
 | perl -p -i -e 's/fileformat=VCFv4.3/fileformat=VCFv4.2/' \
-> $TMPDIR/tmp2.vcf
+> $TMPDIR/cut_samples.vcf
 
 echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
 > $TMPDIR/header.gt.txt
 
 bcftools annotate \
     -h $TMPDIR/header.gt.txt \
-    $TMPDIR/tmp2.vcf \
+    $TMPDIR/cut_samples.vcf \
 | bcftools view \
     -i 'GT ~ "1"' \
     -O z \
-    -o $TMPDIR/tmp.vcf.gz
-tabix -s1 -b2 -e2 -f $TMPDIR/tmp.vcf.gz
+    -o $TMPDIR/final_for_import.vcf.gz
+tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.vcf.gz
 
 # Compatibility mode with VarFish Server
 compatibility_option=""
@@ -101,7 +114,7 @@ varfish-annotator \
     --ensembl-ser-path {export_config[path_ensembl_ser]} \
     --input-ped {snakemake.input.ped} \
     \
-    --input-vcf $TMPDIR/tmp.vcf.gz \
+    --input-vcf $TMPDIR/final_for_import.vcf.gz \
     --output-db-info ${{out_db_info%.gz}} \
     --output-gts ${{out_gts%.gz}} \
     --output-feature-effects ${{out_effects%.gz}}  $compatibility_option
