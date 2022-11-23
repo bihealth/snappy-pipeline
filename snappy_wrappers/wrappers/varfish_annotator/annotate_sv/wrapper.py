@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running ``varfish-annotator annotate``."""
 
+import os
+
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
@@ -11,6 +13,11 @@ static_config = snakemake.config["static_data_config"]
 export_config = snakemake.config["step_config"][snakemake.params.args["step_name"]]
 
 this_file = __file__
+
+fix_manta_invs = os.path.join(
+    os.path.dirname(__file__),
+    "fix_manta_invs.py",
+)
 
 # Build list of arguments to pass to Jannovar
 annotation_args = []
@@ -59,13 +66,16 @@ out_effects={snakemake.output.feature_effects}
 
 samples=$(cut -f 2 {snakemake.input.ped} | tr '\n' ',' | sed -e 's/,$//g')
 
+# Fix the Manta inversions
+python3 {fix_manta_invs} {snakemake.config[static_data_config][reference][path]} {snakemake.input.vcf} $TMPDIR/tmp4.vcf
+bcftools sort -o $TMPDIR/tmp3.vcf $TMPDIR/tmp4.vcf
+
 # TODO: remove vcf4.3 to vcf4.2 conversion once varfish-annotator uses modern HTSJDK
 bcftools view \
     --threads 4 \
     --force-samples \
     -s $samples \
-    {snakemake.input.vcf} \
-| bcftools view -e '(SVTYPE == "BND")' \
+    $TMPDIR/tmp3.vcf \
 | perl -p -i -e 's/fileformat=VCFv4.3/fileformat=VCFv4.2/' \
 > $TMPDIR/tmp2.vcf
 
