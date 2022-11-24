@@ -13,6 +13,8 @@ def looks_like_manta(header):
     for line in header.lines:
         if line.key == "source" and line.value.startswith("GenerateSVCandidates"):
             return True
+        elif line.key == "source" and line.value.startswith("DRAGEN"):
+            return True
     return False
 
 
@@ -169,7 +171,7 @@ def run(args):
     """
     with vcfpy.Reader.from_path(args.input_vcf) as reader:
         if not looks_like_manta(reader.header):  # simply copy
-            with vcfpy.Writer.from_path(args.output_vcf) as writer:
+            with vcfpy.Writer.from_path(args.output_vcf, reader.header) as writer:
                 for record in reader:
                     writer.write_record(record)
         else:
