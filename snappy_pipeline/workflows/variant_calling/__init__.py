@@ -187,7 +187,7 @@ step_config:
       min_dp: 10  # minimal DP of variant, must be >=1
       enabled: false
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    tools: ['gatk_ug']
+    tools: ['gatk_ug']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug', and 'freebayes'.
     jannovar_statistics:
       path_ser: REQUIRED  # REQUIRED
     platypus:

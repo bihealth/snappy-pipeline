@@ -120,8 +120,7 @@ step_config:
       - bwa
     tools_variant_calling:
       - gatk_hc
-    tools:
-      - bcftools_roh
+    tools: [bcftools_roh] # REQUIRED, available: 'bcftools_roh'.
     bcftools_roh:
       path_targets: null
       path_af_file: null

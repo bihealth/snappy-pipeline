@@ -178,7 +178,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_variant_calling
 step_config:
   somatic_variant_calling:
-    tools: ['mutect', 'scalpel']
+    tools: ['mutect', 'scalpel']  # REQUIRED, examples: 'mutect' and 'scalpel'.
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     # Configuration for joint calling with samtools+bcftools.
     bcftools_joint:
