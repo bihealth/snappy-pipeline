@@ -38,14 +38,13 @@ def minimal_config():
 
           wgs_cnv_calling:
             variant_calling_tool: gatk_ug
-            tools:
-            - erds_sv2
+            tools: [delly2, gcnv]
 
           wgs_cnv_annotation:
             path_ngs_mapping: ../ngs_mapping
             path_wgs_cnv_calling: ../wgs_cnv_calling
             tools_ngs_mapping: [bwa]
-            tools_wgs_cnv_calling: [erds_sv2]
+            tools_wgs_cnv_calling: [delly2, gcnv]
 
         data_sets:
           first_batch:
@@ -95,11 +94,11 @@ def wgs_cnv_annotation_workflow(
 def test_vcf_cnv_filter_step_part_get_input_files(wgs_cnv_annotation_workflow):
     """Tests VcfCnvFilterStepPart.get_input_files()"""
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1", "caller": "erds_sv2"}
+        fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1", "caller": "delly2"}
     )
     # Define expected
     wgs_cnv_calling_path = (
-        "WGS_CNV_CALLING/work/bwa.erds_sv2.merge_genotypes/out/bwa.erds_sv2.merge_genotypes"
+        "WGS_CNV_CALLING/output/bwa.delly2.P001-N1-DNA1-WGS1/out/bwa.delly2.P001-N1-DNA1-WGS1"
     )
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
@@ -164,7 +163,7 @@ def test_wgs_cnv_annotation_workflow(wgs_cnv_annotation_workflow):
         for i in (1, 4)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for cnv_caller in ("erds_sv2",)
+        for cnv_caller in ("delly2", "gcnv")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(wgs_cnv_annotation_workflow.get_result_files()))

@@ -114,27 +114,18 @@ class VcfCnvFilterStepPart(BaseStepPart):
         def input_function(wildcards):
             # Validate action
             self._validate_action(action)
-
-            # TODO: make work for non-ERDS/ERDS+SV2
+            # Pedigree file
             tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
             yield "ped", tpl.format(**wildcards)
+            # SVs
+            key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
             tpl = (
-                "work/{mapper}.{caller}.{index_ngs_library}/out/"
+                "output/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
             )
-            if wildcards.caller.startswith("erds"):
-                key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-            else:
-                key_ext = {"vcf": ".bcf", "tbi": ".bcf.csi"}
-            # SVs
             wgs_cnv_calling = self.parent.sub_workflows["wgs_cnv_calling"]
-            if wildcards.caller == "erds_sv2":
-                tpl = tpl.replace(".{index_ngs_library}", ".merge_genotypes")
-            elif not wildcards.caller.startswith("erds"):
-                tpl = tpl.replace(".{index_ngs_library}", ".merge_genotypes")
             for key, ext in key_ext.items():
                 yield key, wgs_cnv_calling(tpl + ext).format(**wildcards)
-            return
 
         return input_function
 
