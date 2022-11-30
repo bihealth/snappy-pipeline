@@ -98,18 +98,42 @@ def wgs_sv_annotation_workflow(
 # Tests for VcfSvFilterStepPart  -------------------------------------------------------------------
 
 
-def test_vcf_sv_filter_step_part_call_get_input_files(wgs_sv_annotation_workflow):
-    """Tests VcfSvFilterStepPart.get_input_files()"""
+def test_vcf_sv_filter_step_part_call_get_input_files_delly2(wgs_sv_annotation_workflow):
+    """Tests VcfSvFilterStepPart.get_input_files() - caller ``delly2``"""
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1", "caller": "delly2"}
     )
     # Define expected
-    sv_base_name = "WGS_SV_CALLING/work/bwa.delly2.merge_genotypes/out/bwa.delly2.merge_genotypes"
+    sv_base_name = (
+        "WGS_SV_CALLING/output/bwa.delly2.P001-N1-DNA1-WGS1/out/bwa.delly2.P001-N1-DNA1-WGS1"
+    )
     v_base_name = "VAR_CALLING/work/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "sv_bcf": sv_base_name + ".bcf",
-        "sv_csi": sv_base_name + ".bcf.csi",
+        "sv_bcf": sv_base_name + ".vcf.gz",
+        "sv_csi": sv_base_name + ".vcf.gz.tbi",
+        "var_vcf": v_base_name + ".vcf.gz",
+        "var_tbi": v_base_name + ".vcf.gz.tbi",
+    }
+    # Get actual
+    actual = wgs_sv_annotation_workflow.get_input_files("vcf_sv_filter", "run")(wildcards)
+    assert actual == expected
+
+
+def test_vcf_sv_filter_step_part_call_get_input_files_popdel(wgs_sv_annotation_workflow):
+    """Tests VcfSvFilterStepPart.get_input_files() - caller ``popdel``"""
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1", "caller": "popdel"}
+    )
+    # Define expected
+    sv_base_name = (
+        "WGS_SV_CALLING/work/bwa.popdel.internal.concat_calls/out/bwa.popdel.internal.concat_calls"
+    )
+    v_base_name = "VAR_CALLING/work/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+    expected = {
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "sv_bcf": sv_base_name + ".vcf.gz",
+        "sv_csi": sv_base_name + ".vcf.gz.tbi",
         "var_vcf": v_base_name + ".vcf.gz",
         "var_tbi": v_base_name + ".vcf.gz.tbi",
     }
