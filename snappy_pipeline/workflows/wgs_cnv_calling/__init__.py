@@ -100,8 +100,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import GcnvStepPart
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -590,48 +590,13 @@ class Delly2StepPart(BaseStepPart):
             return self.resource_usage_dict.get("default")
 
 
-class GcnvWgsStepPart(GcnvStepPart):
+class RunGcnvWgsStepPart(RunGcnvStepPart):
     """WGS CNV calling with GATK4 gCNV"""
 
-    #: Step name
-    name = "gcnv"
-
-    #: Class available actions
-    actions = (
-        "preprocess_intervals",
-        "filter_intervals",
-        "scatter_intervals",
-        "coverage",
-        "contig_ploidy_case_mode",
-        "call_cnvs_case_mode",
-        "post_germline_calls",
-        "post_germline_calls_case_mode",
-        "merge_cohort_vcfs",
-        "extract_ped",
-    )
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "high_resource": ResourceUsage(
-            threads=16,
-            time="2-00:00:00",
-            memory="46080M",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            time="04:00:00",
-            memory="7680M",
-        ),
-    }
-
-    def validate_request(self):
-        """Validate request.
-
-        Overwrite original method, for WGS CNV calling the only option available is CASE mode based
-        on precomputed models.
-        """
-        _ = self.config
-        return "case_mode"
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Take shortcut from library to library kit.
+        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     @dictify
     def _build_ngs_library_to_kit(self):
@@ -670,7 +635,7 @@ class WgsCnvCallingWorkflow(BaseStep):
                 WritePedigreeStepPart,
                 CnvettiStepPart,
                 Delly2StepPart,
-                GcnvWgsStepPart,
+                RunGcnvWgsStepPart,
                 LinkOutStepPart,
             )
         )

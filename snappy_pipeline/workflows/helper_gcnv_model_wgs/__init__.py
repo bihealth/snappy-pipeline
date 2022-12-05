@@ -90,9 +90,9 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand, glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, ResourceUsage
+from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.workflows.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.wgs_cnv_calling import GcnvWgsStepPart
 
 #: Default configuration for the helper_gcnv_model_wgs schema
 DEFAULT_CONFIG = r"""
@@ -107,43 +107,23 @@ step_config:
 """
 
 
-class BuildGcnvModelStepPart(GcnvWgsStepPart):
+class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
     """Build model for GATK4 gCNV"""
 
-    #: Step name
-    name = "gcnv"
-
-    #: Class available actions
-    actions = (
-        "preprocess_intervals",
-        "annotate_gc",
-        "filter_intervals",
-        "scatter_intervals",
-        "coverage",
-        "contig_ploidy",
-        "scatter_intervals",
-        "call_cnvs_cohort_mode",
-        "post_germline_calls",
-        "post_germline_calls_cohort_mode",
-        "merge_cohort_vcfs",
-    )
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "high_resource": ResourceUsage(
-            threads=16,
-            time="2-00:00:00",
-            memory="46080M",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            time="04:00:00",
-            memory="7680M",
-        ),
-    }
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Take shortcut from library to library kit.
+        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     @dictify
-    def _get_input_files_call_cnvs_cohort_mode(self, wildcards):
+    def _build_ngs_library_to_kit(self):
+        # No mapping given as WGS, we will use the "default" one for all.
+        for donor in self.parent.all_donors():
+            if donor.dna_ngs_library:
+                yield donor.dna_ngs_library.name, "default"
+
+    @dictify
+    def _get_input_files_call_cnvs(self, wildcards):
         """Yield input files for ``call_cnvs`` in COHORT mode.
 
         Overwrites original method to set `library_kit` to 'default'. The general assumption is
@@ -179,7 +159,7 @@ class BuildGcnvModelStepPart(GcnvWgsStepPart):
         )
 
     @dictify
-    def _get_input_files_post_germline_calls_cohort_mode(self, wildcards, checkpoints):
+    def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
         checkpoint = checkpoints.build_gcnv_model_scatter_intervals
         library_kit = "default"
         scatter_out = checkpoint.get(library_kit=library_kit, **wildcards).output[0]
@@ -203,33 +183,6 @@ class BuildGcnvModelStepPart(GcnvWgsStepPart):
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
-
-    def get_cnv_model_result_files(self, _unused=None):
-        """Get gCNV model results.
-
-        :return: Returns list of result files for the gCNV build model workflow.
-        """
-        # Initialise variables
-        name_pattern_contig_ploidy = (
-            "work/{mapper}.gcnv_contig_ploidy.{library_kit}/out/"
-            "{mapper}.gcnv_contig_ploidy.{library_kit}/.done"
-        )
-        name_pattern_filter_intervals = (
-            "work/{mapper}.gcnv_filter_intervals.{library_kit}/out/"
-            "{mapper}.gcnv_filter_intervals.{library_kit}.interval_list"
-        )
-        chosen_kits = ["default"]  # as defined in ``GcnvWgsStepPart._build_ngs_library_to_kit()``
-
-        yield from expand(
-            name_pattern_contig_ploidy,
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            library_kit=chosen_kits,
-        )
-        yield from expand(
-            name_pattern_filter_intervals,
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            library_kit=chosen_kits,
-        )
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -278,7 +231,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((BuildGcnvModelStepPart,))
+        self.register_sub_step_classes((BuildGcnvWgsModelStepPart,))
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
