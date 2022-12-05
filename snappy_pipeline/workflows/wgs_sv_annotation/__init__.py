@@ -114,32 +114,35 @@ class VcfSvFilterStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         """Return path to pedigree input file"""
-        assert action == "run"
+        # Validate action
+        self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
-            if wildcards.caller == "popdel":
-                name_pattern = "internal.concat_calls"
-                key_ext = {"bcf": ".vcf.gz", "csi": ".vcf.gz.tbi"}
-            else:  # delly2
-                name_pattern = "merge_genotypes"
-                key_ext = {"bcf": ".bcf", "csi": ".bcf.csi"}
+            # Pedigree file
+            tpl_pedigree = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+            yield "ped", tpl_pedigree.format(**wildcards)
 
-            tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-            yield "ped", tpl.format(**wildcards)
-            # TODO: make work for non-Delly?
+            # SVs
+            # TODO: Align key names with content and wrapper ``vcf_sv_filter``
+            key_ext = {"bcf": ".vcf.gz", "csi": ".vcf.gz.tbi"}
+            tpl_sv = (
+                "output/{mapper}.{caller}.{index_ngs_library}/out/"
+                "{mapper}.{caller}.{index_ngs_library}"
+            )
+            if wildcards.caller == "popdel":
+                tpl_sv = tpl_sv.replace("{index_ngs_library}", "internal.concat_calls")
+                tpl_sv = tpl_sv.replace("output", "work")
+
+            wgs_sv_calling = self.parent.sub_workflows["wgs_sv_calling"]
+            for key, ext in key_ext.items():
+                yield "sv_" + key, wgs_sv_calling(tpl_sv + ext).format(**wildcards)
+
+            # Small variants
             tpl = (
                 "work/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
             )
-            # SVs
-            wgs_sv_calling = self.parent.sub_workflows["wgs_sv_calling"]
-            for key, ext in key_ext.items():
-                yield "sv_" + key, wgs_sv_calling(
-                    tpl.replace("{index_ngs_library}", name_pattern) + ext
-                ).format(**wildcards)
-
-            # Small variants
             key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
             variant_calling = self.parent.sub_workflows["variant_calling"]
             for key, ext in key_ext.items():

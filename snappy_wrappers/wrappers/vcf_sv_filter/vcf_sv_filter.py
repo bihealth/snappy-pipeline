@@ -405,7 +405,7 @@ class MantaGenotypeMetricsBuilder(GenotypeMetricsBuilder):
         else:
             # confidence intervals don't overlap
             pos_begin += ci_pos[1]
-            pos_end += ci_pos[0]  # negative
+            pos_end += ci_end[0]  # negative
             return GenomeRegion(record.CHROM, pos_begin, pos_end)
 
 
