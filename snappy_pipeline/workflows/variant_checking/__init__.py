@@ -76,7 +76,7 @@ step_config:
     tools_ngs_mapping: []  # optional, copied from ngs mapping config
     tools_variant_calling: []  # optional, copied from variant calling config
     path_variant_calling: ../variant_calling  # REQUIRED
-    tools: ['peddy']
+    tools: ['peddy']  # REQUIRED - available: 'peddy'
 """
 
 

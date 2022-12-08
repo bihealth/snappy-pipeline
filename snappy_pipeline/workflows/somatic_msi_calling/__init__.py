@@ -65,7 +65,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_msi_calling
 step_config:
   somatic_msi_calling:
-    tools: ['mantis']
+    tools: ['mantis']  # REQUIRED - available: 'mantis'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     loci_bed: /fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed  # REQUIRED
 """

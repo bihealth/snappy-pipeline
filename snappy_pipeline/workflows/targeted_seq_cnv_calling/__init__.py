@@ -108,8 +108,7 @@ step_config:
     path_ngs_mapping: ../ngs_mapping
 
     # List of used tools, by default it only uses XHMM.
-    tools:
-    - xhmm
+    tools: [xhmm]  # REQUIRED - available: 'xhmm' and 'gcnv'
 
     # Tool specific configurations
     xhmm:

@@ -105,7 +105,7 @@ step_config:
     # Path to the ngs_mapping step
     path_ngs_mapping: ../ngs_mapping
 
-    tools: [scramble]
+    tools: [scramble]  # REQUIRED - available: 'scramble'
 
     scramble:
       blast_ref: null  # REQUIRED: path to FASTA reference with BLAST DB (`makeblastdb`)

@@ -116,14 +116,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   gene_expression_quantification:
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools:
-    - strandedness
-    - featurecounts
-    - duplication
-    - dupradar
-    - rnaseqc
-    - stats
-    - salmon
+    tools: [strandedness, featurecounts, duplication, dupradar, rnaseqc, stats, salmon]  # REQUIRED
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     strand: -1 # Use 0, 1 or 2 to force unstranded, forward or reverse strand
     featurecounts:
