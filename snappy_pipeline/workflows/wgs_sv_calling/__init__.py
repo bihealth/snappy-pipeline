@@ -143,10 +143,8 @@ DEFAULT_CONFIG = r"""
 step_config:
   wgs_sv_calling:
     tools:
-      dna:  # short
-      - delly2
-      dna_long:  # PacBio/Oxford Nanopore
-      - sniffles
+      dna: [delly2] # Required if short-read mapper used; otherwise, leave empty. Example: 'delly2'.
+      dna_long: []  # Required if long-read mapper used (PacBio/Oxford Nanopore); otherwise, leave empty. Example: 'sniffles'.
     path_ngs_mapping: ../ngs_mapping    # REQUIRED
     delly2:
       path_exclude_tsv: null  # optional

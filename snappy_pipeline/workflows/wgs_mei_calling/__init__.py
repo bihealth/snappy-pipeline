@@ -107,8 +107,7 @@ MELT_ACTIONS = (
 DEFAULT_CONFIG = r"""
 step_config:
   wgs_mei_calling:
-    tools:
-    - melt
+    tools: [melt]  # REQUIRED - available: 'melt'
     path_ngs_mapping: ../ngs_mapping
     melt:
       me_refs_infix: 1KGP_Hg19

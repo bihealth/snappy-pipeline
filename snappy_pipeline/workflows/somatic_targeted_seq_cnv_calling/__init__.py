@@ -116,7 +116,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_targeted_seq_cnv_calling
 step_config:
   somatic_targeted_seq_cnv_calling:
-    tools: ['cnvkit']
+    tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'copywriter', 'cnvetti_on_target' and 'cnvetti_off_target'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     cnvkit:
       path_target_regions: REQUIRED   # REQUIRED

@@ -71,7 +71,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   somatic_gene_fusion_calling:
     path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: ['fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion']
+    tools: ['fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion']  # REQUIRED, available: 'fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion'.
     fusioncatcher:
       data_dir: REQUIRED   # REQUIRED
       configuration: null  # optional

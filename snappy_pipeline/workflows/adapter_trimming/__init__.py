@@ -161,9 +161,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   adapter_trimming:
     path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools:
-      - bbduk
-      - fastp
+    tools: [bbduk, fastp]  # REQUIRED, available: 'bbduk' and 'fastp'.
     bbduk:
       adapter_sequences: []  # REQUIRED
       # - /fast/work/groups/cubi/projects/biotools/static_data/app_support/bbtools/39.01/resources/adapters.fa

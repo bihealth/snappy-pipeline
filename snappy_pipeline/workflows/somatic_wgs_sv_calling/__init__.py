@@ -106,8 +106,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   somatic_wgs_sv_calling:
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    tools:
-    - manta
+    tools: [manta]  # REQUIRED - available: 'delly2' and 'manta'
     delly2:
       path_exclude_tsv: null  # optional
       max_threads: 16

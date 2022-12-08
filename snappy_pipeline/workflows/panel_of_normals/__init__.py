@@ -79,7 +79,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_variant_calling
 step_config:
   panel_of_normals:
-    tools: ['mutect2']
+    tools: ['mutect2']  # REQUIRED - available: 'mutect2'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     size: 10
     shuffle_seed: 1234567

@@ -30,7 +30,7 @@ PURITY_PLOIDY_TOOLS = "ascat"
 DEFAULT_CONFIG = r"""
 step_config:
   somatic_purity_ploidy_estimate:
-    tools: ['ascat']
+    tools: ['ascat']  # REQUIRED - available: 'ascat'
     tool_cnv_calling: cnvetti
     # Configuration with read mapper and path to mapping output. Will use this
     # for generating a pileup using samtools for obtaining the b allele

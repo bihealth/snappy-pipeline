@@ -33,8 +33,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   ngs_data_qc:
     path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools:
-    - fastqc
+    tools: [fastqc]  # REQUIRED - available: 'fastqc'
 """
 
 

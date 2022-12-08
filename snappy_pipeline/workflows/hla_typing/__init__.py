@@ -88,8 +88,7 @@ step_config:
   hla_typing:
     path_ngs_mapping: ../ngs_mapping
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools:
-      - optitype
+    tools: [optitype]  # REQUIRED - available: 'optitype' and 'arcashla'
     optitype:
       max_reads: 5000  # suggestion by OptiType author
       num_mapping_threads: 4

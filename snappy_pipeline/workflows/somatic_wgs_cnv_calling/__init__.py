@@ -110,8 +110,7 @@ step_config:
     path_ngs_mapping: ../ngs_mapping                          # REQUIRED
     path_somatic_variant_calling: ../somatic_variant_calling  # REQUIRED
     somatic_variant_calling_tool: null                        # REQUIRED
-    tools:
-    - cnvetti
+    tools: [cnvetti]  # REQUIRED, examples: 'cnvetti' and 'control_freec'.
     canvas:
       path_reference: REQUIRED       # REQUIRED
       path_filter_bed: REQUIRED      # REQUIRED
