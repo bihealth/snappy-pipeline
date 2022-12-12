@@ -663,9 +663,16 @@ class Minimap2StepPart(ReadMappingStepPart):
         mem_gb = int(3.5 * self.config["minialign"]["mapping_threads"])
         return ResourceUsage(
             threads=self.config["minialign"]["mapping_threads"],
-            time="4-00:00:00",  # 4 days
+            time="0-12:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
+
+    def get_params(self, action):
+        assert action == "run", "Parameters only available for action 'run'."
+        return getattr(self, "_get_params_run")
+
+    def _get_params_run(self, wildcards):
+        return {"extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]}
 
 
 class NgmlrStepPart(ReadMappingStepPart):
@@ -1025,14 +1032,19 @@ class TargetCoverageReportStepPart(BaseStepPart):
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
-        for mapper in self.config["tools"]["dna"]:
-            for sheet in self.parent.shortcut_sheets:
-                for library in sheet.all_ngs_libraries:
+        for sheet in self.parent.shortcut_sheets:
+            for ngs_library in sheet.all_ngs_libraries:
+                extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
+                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
+                    suffix = "_long"
+                else:
+                    suffix = ""
+                for mapper in self.config["tools"][extraction_type.lower() + suffix]:
                     if (
                         self.parent.default_kit_configured
-                        or library.name in self.parent.ngs_library_to_kit
+                        or ngs_library.name in self.parent.ngs_library_to_kit
                     ):
-                        kv = {"mapper_lib": "{}.{}".format(mapper, library.name)}
+                        kv = {"mapper_lib": "{}.{}".format(mapper, ngs_library.name)}
                         yield self._get_output_files_run()["txt"].format(**kv)
 
     def get_output_files(self, action):
@@ -1293,8 +1305,20 @@ class NgsMappingWorkflow(BaseStep):
         self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit, self.default_kit_configured = self._build_ngs_library_to_kit()
+        # Create shortcut from library to all extra infos.
+        self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
         # Validate project
         self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
+
+    def _build_ngs_library_to_extra_infos(self):
+        result = {}
+        for donor in self._all_donors():
+            for bio_sample in donor.bio_samples.values():
+                for test_sample in bio_sample.test_samples.values():
+                    for library in test_sample.ngs_libraries.values():
+                        if library.extra_infos.get("libraryKit"):
+                            result[library.name] = library.extra_infos
+        return result
 
     def _build_ngs_library_to_kit(self):
         cov_config = DictQuery(self.w_config).get("step_config/ngs_mapping/target_coverage_report")

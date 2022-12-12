@@ -405,7 +405,7 @@ def test_minimap2_step_part_get_log_file(ngs_mapping_workflow):
 def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     """Tests Minimap2StepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "4-00:00:00", "memory": "56G", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "0-12:00:00", "memory": "56G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

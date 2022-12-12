@@ -92,7 +92,7 @@ The following germline SV callers are currently available
 
 - ``"dna_long"`` (PacBio)
     - ``"pb_honey_spots"``
-    - ``"sniffles"``
+    - ``"sniffles"``, ``"sniffles2"``
 
 =======
 Reports
@@ -107,6 +107,7 @@ Currently, no reports are generated.
 # TODO: only WGS libraries!
 
 from collections import OrderedDict
+import itertools
 import os
 import sys
 
@@ -135,7 +136,7 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel")
 
 #: Available (long) DNA WGS SV callers
-LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles")
+LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
 
 #: Default configuration for the wgs_sv_calling step
 DEFAULT_CONFIG = r"""
@@ -169,6 +170,9 @@ step_config:
       num_threads: 16
     sniffles:
       num_threads: 16
+    sniffles2:
+      num_threads: 16
+      tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed
 """
 
 
@@ -832,6 +836,109 @@ class SnifflesStepPart(BaseStepPart):
         )
 
 
+class Sniffles2StepPart(BaseStepPart):
+    """WGS SV identification using Sniffles 2"""
+
+    #: Step name
+    name = "sniffles2"
+
+    #: Class available actions
+    actions = ("bam_to_snf", "snf_to_vcf")
+
+    #: Directory infixes
+    dir_infixes = {
+        "bam_to_snf": r"{mapper,[^\.]+}.sniffles2.bam_to_snf.{library_name,[^\.]+}",
+        "snf_to_vcf": r"{mapper,[^\.]+}.sniffles2.{index_ngs_library,[^\.]+}",
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_out = (
+            "work/{mapper}.sniffles2.{index_ngs_library}/out/"
+            "{mapper}.sniffles2.{index_ngs_library}{ext}"
+        )
+        # Build shortcut from index library name to pedigree
+        self.index_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        # Build shortcut from donor library name to pedigree
+        self.donor_ngs_library_to_pedigree = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
+        # Build shortcut from library name to library info
+        self.library_name_to_library = OrderedDict()
+        for sheet in self.parent.shortcut_sheets:
+            self.library_name_to_library.update(sheet.library_name_to_library)
+
+    def get_input_files(self, action):
+        """Return appropriate input function for the given action"""
+        # Validate action
+        self._validate_action(action)
+        mapping = {
+            "bam_to_snf": self._get_input_files_bam_to_snf,
+            "snf_to_vcf": self._get_input_files_snf_to_vcf,
+        }
+        return mapping[action]
+
+    @dictify
+    def _get_input_files_bam_to_snf(self, wildcards):
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
+            yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
+
+    @dictify
+    def _get_input_files_snf_to_vcf(self, wildcards):
+        # Create path template to per-sample call/genotype BCF
+        infix = self.dir_infixes["bam_to_snf"]
+        infix = infix.replace(r",[^\.]+", "")
+        tpl = os.path.join("work", infix, "out", infix + ".snf")
+        # Yield paths to pedigree's per-sample call BCF files
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        yield "snf", [
+            tpl.format(library_name=donor.dna_ngs_library.name, **wildcards)
+            for donor in pedigree.donors
+            if donor.dna_ngs_library
+        ]
+
+    @dictify
+    def get_output_files(self, action):
+        """Return output paths for the given action; include wildcards"""
+        # Validate action
+        self._validate_action(action)
+        ext_names = EXT_NAMES
+        ext_values = EXT_VALUES
+        if action == "bam_to_snf":
+            ext_names = list(itertools.chain(ext_names, ["snf", "snf_md5"]))
+            ext_values = list(itertools.chain(ext_values, [".snf", ".snf.md5"]))
+        for name, ext in zip(ext_names, ext_values):
+            infix = self.dir_infixes[action]
+            infix2 = infix.replace(r",[^\.]+", "")
+            yield name, "work/" + infix + "/out/" + infix2 + ext
+
+    def get_log_file(self, action):
+        """Return log file path for the given action; includes wildcards"""
+        # Validate action
+        self._validate_action(action)
+        infix = self.dir_infixes[action]
+        infix = infix.replace(r",[^\.]+", "")
+        return "work/" + infix + "/log/snakemake.log"
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=self.config["sniffles2"]["num_threads"], time="0-02:00:00", memory="4G"
+        )
+
+
 class WgsSvCallingWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
@@ -861,6 +968,7 @@ class WgsSvCallingWorkflow(BaseStep):
                 PopDelStepPart,
                 PbHoneySpotsStepPart,
                 SnifflesStepPart,
+                Sniffles2StepPart,
                 LinkOutStepPart,
             )
         )

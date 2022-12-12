@@ -643,7 +643,7 @@ def test_pb_honey_spots_step_part_get_resource_usage(wgs_sv_calling_workflow):
 # Tests for SnifflesStepPart -----------------------------------------------------------------------
 
 
-def test_sniffles_spots_step_part_get_input_files(wgs_sv_calling_workflow):
+def test_sniffles_step_part_get_input_files(wgs_sv_calling_workflow):
     """Tests SnifflesStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
     actual = wgs_sv_calling_workflow.get_input_files("sniffles", "run")(wildcards)
@@ -689,13 +689,123 @@ def test_sniffles_step_part_get_resource_usage(wgs_sv_calling_workflow):
         assert actual == expected, msg_error
 
 
+# Tests for Sniffles2StepPart ----------------------------------------------------------------------
+
+
+def test_sniffles2_spots_step_part_get_input_files_bam_to_snf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_input_files() for bam_to_snf"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = wgs_sv_calling_workflow.get_input_files("sniffles2", "bam_to_snf")(wildcards)
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+    }
+    assert actual == expected
+
+
+def test_sniffles2_spots_step_part_get_input_files_snf_to_vcf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_input_files() for snf_to_vcf"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
+    actual = wgs_sv_calling_workflow.get_input_files("sniffles2", "snf_to_vcf")(wildcards)
+    expected = {
+        "snf": [
+            "work/bwa.sniffles2.bam_to_snf.P001-N1-DNA1-WGS1/out/bwa.sniffles2.bam_to_snf.P001-N1-DNA1-WGS1.snf",
+            "work/bwa.sniffles2.bam_to_snf.P002-N1-DNA1-WGS1/out/bwa.sniffles2.bam_to_snf.P002-N1-DNA1-WGS1.snf",
+            "work/bwa.sniffles2.bam_to_snf.P003-N1-DNA1-WGS1/out/bwa.sniffles2.bam_to_snf.P003-N1-DNA1-WGS1.snf",
+        ],
+    }
+    assert actual == expected
+
+
+def test_sniffles2_step_part_get_output_files_bam_to_snf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_output_files() for bam_to_snf"""
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.sniffles2.{index_ngs_library}/out/{mapper}.sniffles2.{index_ngs_library}"
+    )
+    expected = {
+        "snf": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.snf",
+        "snf_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.snf.md5",
+        "tbi": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi",
+        "tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi.md5",
+        "vcf": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz",
+        "vcf_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.md5",
+    }  # Get actual
+    actual = wgs_sv_calling_workflow.get_output_files("sniffles2", "bam_to_snf")
+    assert actual == expected
+
+
+def test_sniffles2_step_part_get_output_files_snf_to_vf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_output_files() for snf_to_vcf"""
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.sniffles2.{index_ngs_library}/out/{mapper}.sniffles2.{index_ngs_library}"
+    )
+    expected = {
+        "tbi": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi",
+        "tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi.md5",
+        "vcf": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz",
+        "vcf_md5": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.md5",
+    }
+    # Get actual
+    actual = wgs_sv_calling_workflow.get_output_files("sniffles2", "snf_to_vcf")
+    assert actual == expected
+
+
+def test_sniffles2_step_part_get_log_file_bam_to_snf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_log_file() for bam_to_snf"""
+    expected = "work/{mapper}.sniffles2.bam_to_snf.{library_name}/log/snakemake.log"
+    actual = wgs_sv_calling_workflow.get_log_file("sniffles2", "bam_to_snf")
+    assert actual == expected
+
+
+def test_sniffles2_step_part_get_log_file_snf_to_vcf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_log_file() for snf_to_vcf"""
+    expected = "work/{mapper}.sniffles2.{index_ngs_library}/log/snakemake.log"
+    actual = wgs_sv_calling_workflow.get_log_file("sniffles2", "snf_to_vcf")
+    assert actual == expected
+
+
+def test_sniffles2_step_part_get_resource_usage_bam_to_snf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_resource_usage() for bam_to_snf"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "0-02:00:00", "memory": "4G", "partition": "medium"}
+    # Evaluate
+    # Note: only action available is 'run'
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'run'."
+        actual = wgs_sv_calling_workflow.get_resource("sniffles2", "bam_to_snf", resource)
+        assert actual == expected, msg_error
+
+
+def test_sniffles2_step_part_get_resource_usage_snf_to_vcf(wgs_sv_calling_workflow):
+    """Tests Sniffles2StepPart.get_resource_usage() for snf_to_vcf"""
+    # Define expected
+    expected_dict = {"threads": 16, "time": "0-02:00:00", "memory": "4G", "partition": "medium"}
+    # Evaluate
+    # Note: only action available is 'run'
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'run'."
+        actual = wgs_sv_calling_workflow.get_resource("sniffles2", "snf_to_vcf", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for WgsSvCallingWorkflow -----------------------------------------------------------
 
 
 def test_wgs_sv_calling_workflow(wgs_sv_calling_workflow):
     """Tests simple functionality of the workflow."""
     # Check created sub steps
-    expected = ["delly2", "link_out", "manta", "pb_honey_spots", "popdel", "sniffles", "svtk"]
+    expected = [
+        "delly2",
+        "link_out",
+        "manta",
+        "pb_honey_spots",
+        "popdel",
+        "sniffles",
+        "sniffles2",
+        "svtk",
+    ]
     actual = list(sorted(wgs_sv_calling_workflow.sub_steps.keys()))
     assert actual == expected
 
