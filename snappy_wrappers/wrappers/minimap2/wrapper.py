@@ -8,7 +8,8 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 this_file = __file__
 
-# TODO: write out separate read groups
+seq_platform = snakemake.params.args["extra_infos"]["seqPlatform"]
+library_kit = snakemake.params.args["extra_infos"]["libraryKit"]
 
 shell(
     r"""
@@ -33,11 +34,16 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
-#if [[ "{snakemake.wildcards.library_name}" == *PacBio* ]]; then
-preset=map-pb
-#else
-#    preset=map-ont
-#fi
+if [[ "{library_kit}" == "PacBio HiFi" ]]; then
+    preset=map-hifi
+elif [[ "{library_kit}" == "PacBio CLR" ]]; then
+    preset=map-pb
+elif [[ "{library_kit}" == ONT* ]]; then
+    preset=map-ont
+else
+    >&2 echo "Unknown library kit {library_kit}"
+    exit 1
+fi
 
 i=1
 for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast?.gz'); do
@@ -52,10 +58,11 @@ for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast
         -t 16 \
         -x $preset \
         -a {snakemake.config[step_config][ngs_mapping][minimap2][path_index]} \
+        -Y \
+        --MD \
         /dev/stdin \
     | samtools addreplacerg \
-        -r "@RT\tID:{snakemake.wildcards.library_name}.$i\tSM:{snakemake.wildcards.library_name}\tPL:PACBIO" - \
-    | samtools sort -l 9 -n -m 4G -@4 -O BAM \
+        -r "@RG\tID:{snakemake.wildcards.library_name}.$i\tSM:{snakemake.wildcards.library_name}\tPL:PACBIO" - \
     >$TMPDIR/out/$i.bam
 
     samtools sort -m 4G -@ 3 \

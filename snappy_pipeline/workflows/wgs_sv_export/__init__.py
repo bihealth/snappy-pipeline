@@ -271,7 +271,10 @@ class WgsSvExportWorkflow(BaseStep):
         # Register sub workflows
         if "popdel" in self.config["tools_wgs_sv_calling"]:
             self.register_sub_workflow("wgs_sv_annotation", self.config["path_wgs_sv_annotation"])
-        if "delly2" in self.config["tools_wgs_sv_calling"]:
+        if (
+            "delly2" in self.config["tools_wgs_sv_calling"]
+            or "sniffles2" in self.config["tools_wgs_sv_calling"]
+        ):
             self.register_sub_workflow("wgs_sv_calling", self.config["path_wgs_sv_calling"])
 
     @listify
