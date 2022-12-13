@@ -92,7 +92,8 @@ The following germline SV callers are currently available
 
 - ``"dna_long"`` (PacBio)
     - ``"pb_honey_spots"``
-    - ``"sniffles"``, ``"sniffles2"``
+    - ``"sniffles"``
+    - ``"sniffles2"``
 
 =======
 Reports
@@ -172,7 +173,7 @@ step_config:
       num_threads: 16
     sniffles2:
       num_threads: 16
-      tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed
+      tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed  # REQUIRED
 """
 
 

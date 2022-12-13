@@ -663,7 +663,7 @@ class Minimap2StepPart(ReadMappingStepPart):
         mem_gb = int(3.5 * self.config["minialign"]["mapping_threads"])
         return ResourceUsage(
             threads=self.config["minialign"]["mapping_threads"],
-            time="0-12:00:00",  # 2 days
+            time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
 

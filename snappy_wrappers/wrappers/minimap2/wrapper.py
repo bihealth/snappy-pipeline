@@ -11,10 +11,6 @@ this_file = __file__
 seq_platform = snakemake.params.args["extra_infos"]["seqPlatform"]
 library_kit = snakemake.params.args["extra_infos"]["libraryKit"]
 
-import pdb
-
-pdb.set_trace()
-
 shell(
     r"""
 set -x
