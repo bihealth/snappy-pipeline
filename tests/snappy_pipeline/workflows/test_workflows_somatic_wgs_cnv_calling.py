@@ -461,11 +461,17 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
             "ratio.txt",
             "ratio.txt.md5",
             "gene_log2.txt",
+            "gene_log2.txt.md5",
             "gene_call.txt",
+            "gene_call.txt.md5",
             "segments.txt",
+            "segments.txt.md5",
             "heatmap.png",
+            "heatmap.png.md5",
             "scatter.png",
+            "scatter.png.md5",
             "diagram.pdf",
+            "diagram.pdf.md5",
         )
         for mapper in ("bwa",)
         for cnv_caller in ("control_freec",)

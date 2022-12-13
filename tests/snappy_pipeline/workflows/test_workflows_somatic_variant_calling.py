@@ -42,6 +42,7 @@ def minimal_config():
           somatic_variant_calling:
             tools:
             - mutect
+            - mutect2
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
@@ -926,7 +927,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
     # Perform the tests
     #
     # Check created sub steps
-    expected = ["link_out", "mutect", "scalpel"]
+    expected = ["link_out", "mutect", "mutect2", "scalpel"]
     assert set(expected).issubset(list(sorted(somatic_variant_calling_workflow.sub_steps.keys())))
     # Check result file construction
     tpl = (
@@ -936,9 +937,18 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
     expected = [
         tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for ext in (
+            "vcf.gz",
+            "vcf.gz.md5",
+            "vcf.gz.tbi",
+            "vcf.gz.tbi.md5",
+            "full.vcf.gz",
+            "full.vcf.gz.md5",
+            "full.vcf.gz.tbi",
+            "full.vcf.gz.tbi.md5",
+        )
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
+        for var_caller in ("mutect", "mutect2", "scalpel")
     ]
     # add log files
     tpl = (
@@ -957,7 +967,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
             "log.md5",
         )
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
+        for var_caller in ("mutect", "mutect2", "scalpel")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_calling_workflow.get_result_files()))

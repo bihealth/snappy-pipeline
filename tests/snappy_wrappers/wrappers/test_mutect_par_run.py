@@ -79,7 +79,7 @@ def minimal_config():
 @pytest.fixture
 def snakemake_output_dict():
     """Returns dictionary that defined snakemake.output"""
-    output_base_name = "work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1"
+    output_base_name = "work/bwa.mutect.P001-T1-DNA1-WGS1/out/bwa.mutect.P001-T1-DNA1-WGS1."
     return {
         "txt": output_base_name + "full.out.txt.gz",
         "txt_md5": output_base_name + "full.out.txt.gz.md5",
@@ -87,8 +87,8 @@ def snakemake_output_dict():
         "vcf_md5": output_base_name + "vcf.gz.md5",
         "tbi": output_base_name + "vcf.gz.tbi",
         "tbi_md5": output_base_name + "vcf.gz.tbi.md5",
-        "full_vcf": output_base_name + "full.vcf.gz",
-        "full_vcf_md5": output_base_name + "full.vcf.gz.md5",
+        "full": output_base_name + "full.vcf.gz",
+        "full_md5": output_base_name + "full.vcf.gz.md5",
         "full_tbi": output_base_name + "full.vcf.gz.tbi",
         "full_tbi_md5": output_base_name + "full.vcf.gz.tbi.md5",
         "wig": output_base_name + "full.wig.txt.gz",

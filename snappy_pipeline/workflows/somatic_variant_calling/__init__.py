@@ -97,7 +97,16 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
+EXT_VALUES = (
+    ".vcf.gz",
+    ".vcf.gz.tbi",
+    ".vcf.gz.md5",
+    ".vcf.gz.tbi.md5",
+    ".full.vcf.gz",
+    ".full.vcf.gz.tbi",
+    ".full.vcf.gz.md5",
+    ".full.vcf.gz.tbi.md5",
+)
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
@@ -233,9 +242,9 @@ step_config:
       - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for MuTect 2
     mutect2:
-      panel_of_normals: ''      # Set path to panel of normals vcf if required
+      panel_of_normals: ''        # Set path to panel of normals vcf if required
       germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
-      common_variants: REQUIRED # Common germline variants for contamination estimation
+      common_biallelic: REQUIRED  # Common biallelic germline variants for contamination estimation
       # Parallelization configuration
       num_cores: 2              # number of cores to use locally
       window_length: 50000000   # split input into windows of this size, each triggers a job

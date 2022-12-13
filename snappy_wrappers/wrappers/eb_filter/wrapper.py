@@ -37,10 +37,13 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
+# Hack: get back bin directory of base/root environment - find `snappy_vcf_sort`
+export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
+
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
 if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
-    filter='FILTER == "germline" || FILTER == "weak_evidence" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
+    filter='FILTER ~ "germline" || FILTER ~ "weak_evidence" || FILTER ~ "OffExome" || ANN ~ "stream_gene_variant"'
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \

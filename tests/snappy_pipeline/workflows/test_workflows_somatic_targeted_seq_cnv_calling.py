@@ -855,14 +855,14 @@ def test_copywriter_step_part_get_output_files_call(somatic_targeted_seq_cnv_cal
     """Tests CopywriterStepPart.get_output_files() - action 'call'"""
     base_name = "work/{mapper}.copywriter.{library_name}/out/{mapper}.copywriter.{library_name}"
     expected = {
-        "bins_txt": base_name + "_bins.txt",
-        "bins_txt_md5": base_name + "_bins.txt.md5",
-        "gene_call_txt": base_name + "_gene_call.txt",
-        "gene_call_txt_md5": base_name + "_gene_call.txt.md5",
-        "gene_log2_txt": base_name + "_gene_log2.txt",
-        "gene_log2_txt_md5": base_name + "_gene_log2.txt.md5",
-        "segments_txt": base_name + "_segments.txt",
-        "segments_txt_md5": base_name + "_segments.txt.md5",
+        "bins_txt": base_name + ".bins.txt",
+        "bins_txt_md5": base_name + ".bins.txt.md5",
+        "gene_call_txt": base_name + ".gene_call.txt",
+        "gene_call_txt_md5": base_name + ".gene_call.txt.md5",
+        "gene_log2_txt": base_name + ".gene_log2.txt",
+        "gene_log2_txt_md5": base_name + ".gene_log2.txt.md5",
+        "segments_txt": base_name + ".segments.txt",
+        "segments_txt_md5": base_name + ".segments.txt.md5",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("copywriter", "call")
     assert actual == expected
@@ -1042,7 +1042,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     # copywriter
     tpl = (
         "output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_{ext}"
+        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected += [
         tpl.format(i=i, t=t, ext=ext)
@@ -1060,6 +1060,5 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_targeted_seq_cnv_calling_workflow.get_result_files()))
-    # HACK TODO
     actual = [f for f in actual if "/log/" not in f]
     assert expected == actual

@@ -23,14 +23,13 @@ from snappy_wrappers.wrapper_parallel import (  # noqa: E402
 class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
     """Parallel execution of MuTect"""
 
-    # TODO: probably, nobody looked at anything but the vcf/tbi files... get rid of them?
     realpath_output_keys = (
         "vcf",
         "vcf_md5",
         "tbi",
         "tbi_md5",
-        "full_vcf",
-        "full_vcf_md5",
+        "full",
+        "full_md5",
         "full_tbi",
         "full_tbi",
         "full_tbi_md5",
@@ -47,8 +46,8 @@ class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
         "vcf_md5": "vcf.gz.md5",
         "tbi": "vcf.gz.tbi",
         "tbi_md5": "vcf.gz.tbi.md5",
-        "full_vcf": "full.vcf.gz",
-        "full_vcf_md5": "full.vcf.gz.md5",
+        "full": "full.vcf.gz",
+        "full_md5": "full.vcf.gz.md5",
         "full_tbi": "full.vcf.gz.tbi",
         "full_tbi_md5": "full.vcf.gz.tbi.md5",
         "wig": "full.wig.txt.gz",
@@ -134,8 +133,8 @@ class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
                     mkdir -p $(dirname {{output.txt}})
                     mv output/result.full.out.txt.gz {{output.txt}}
                     mv output/result.full.out.txt.gz.md5 {{output.txt_md5}}
-                    mv output/result.full.vcf.gz {{output.full_vcf}}
-                    mv output/result.full.vcf.gz.md5 {{output.full_vcf_md5}}
+                    mv output/result.full.vcf.gz {{output.full}}
+                    mv output/result.full.vcf.gz.md5 {{output.full_md5}}
                     mv output/result.full.vcf.gz.tbi {{output.full_tbi}}
                     mv output/result.full.vcf.gz.tbi.md5 {{output.full_tbi_md5}}
                     mv output/result.vcf.gz {{output.vcf}}
