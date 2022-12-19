@@ -900,9 +900,12 @@ class LinkOutBamStepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper rapper function"""
+            postproc = [""]
+            if wildcards["mapper"] in self.config["tools"]["dna"]:
+                postproc = [self._get_postproc_token()]
             return expand(
                 self.base_path_in.format(wildcards=wildcards),
-                postproc=[self._get_postproc_token()],
+                postproc=postproc,
                 ext=self.extensions,
             )
 
@@ -917,9 +920,12 @@ class LinkOutBamStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking out postprocessed (or not) files"""
         assert action == "run", "Unsupported action"
+        postproc = [""]
+        if wildcards["mapper"] in self.config["tools"]["dna"]:
+            postproc = [self._get_postproc_token()]
         ins = expand(
             self.base_path_in.format(wildcards=wildcards),
-            postproc=[self._get_postproc_token()],
+            postproc=postproc,
             ext=self.extensions,
         )
         outs = [s.format(**wildcards) for s in expand(self.base_path_out, ext=self.extensions)]
