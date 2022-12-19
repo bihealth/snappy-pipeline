@@ -180,7 +180,6 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         $(if [[ -n "{config[kmask]}" ]] ; then \
             echo kmask={config[kmask]} 
         fi) \
-        kmask={config[kmask]}                         \
         maskfullycovered={config[maskfullycovered]}   \
         ksplit={config[ksplit]}                       \
         mink={config[mink]}                           \
