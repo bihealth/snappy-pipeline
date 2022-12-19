@@ -177,7 +177,9 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         skipr2={config[skipr2]}                       \
         ecco={config[ecco]}                           \
         ktrim={config[ktrim]}                         \
-        kmask={config[kmask]}                         \
+        $(if [[ -n "{config[kmask]}" ]] ; then \
+            echo kmask={config[kmask]} 
+        fi) \
         maskfullycovered={config[maskfullycovered]}   \
         ksplit={config[ksplit]}                       \
         mink={config[mink]}                           \

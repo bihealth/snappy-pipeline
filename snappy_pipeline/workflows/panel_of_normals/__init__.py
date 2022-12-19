@@ -81,10 +81,9 @@ step_config:
   panel_of_normals:
     tools: ['mutect2']  # REQUIRED - available: 'mutect2'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    size: 10
-    shuffle_seed: 1234567
     # Configuration for mutect2
     mutect2:
+      path_normals_list: null    # Optional file listing libraries to include in panel
       germline_resource: REQUIRED
       # Java options
       java_options: ' -Xmx16g '
@@ -162,6 +161,11 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        if self.config["mutect2"]["path_normals_list"]:
+            self.normal_libraries = []
+            with open(self.config["mutect2"]["path_normals_list"], "rt") as f:
+                for line in f:
+                    self.normal_libraries.append(line.strip())
 
     def check_config(self):
         if self.name not in self.config["tools"]:

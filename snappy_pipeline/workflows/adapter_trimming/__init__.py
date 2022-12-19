@@ -249,7 +249,7 @@ step_config:
                            #   f (don't trim), [bbduk default]
                            #   r (trim to the right),
                            #   l (trim to the left)
-      kmask:               # Replace bases matching ref kmers with another symbol.
+      kmask: ""            # Replace bases matching ref kmers with another symbol.
                            # Allows any non-whitespace character, and processes short
                            # kmers on both ends if mink is set.  'kmask: lc' will
                            # convert masked bases to lowercase.
@@ -337,11 +337,11 @@ step_config:
                            # at least this length on either end of reads.
       trimpolygleft: 0     # If greater than 0, trim poly-G prefixes of at least this
                            # length on the left end of reads.  Does not trim poly-C.
-      trimpolygright: 0    # If greater than 0, trim poly-G tails of at least this
+      trimpolygright: 8    # If greater than 0, trim poly-G tails of at least this
                            # length on the right end of reads.  Does not trim poly-C.
-      trimpolyg: 8         # This sets both left and right at once.
                            # bbduk default: don't trim polyG (trimpolyg=0)
-      filterpolyg: 0       # If greater than 0, remove reads with a poly-G prefix of
+      trimpolyg: 0         # This sets both left and right at once.
+      filterpolyg: 8       # If greater than 0, remove reads with a poly-G prefix of
                            # at least this length (on the left).
       # Note: there are also equivalent poly-C flags.
 
