@@ -111,7 +111,7 @@ def test_lohhla_step_part_get_log_file(somatic_hla_loh_calling_workflow):
         "work/{mapper}.{hla_caller}.lohhla.{tumor_library}/log/"
         "{mapper}.{hla_caller}.lohhla.{tumor_library}"
     )
-    expected = get_expected_log_files_dict(base_name_log)
+    expected = get_expected_log_files_dict(base_out=base_name_log)
     actual = somatic_hla_loh_calling_workflow.get_log_file("lohhla", "run")
     assert actual == expected
 

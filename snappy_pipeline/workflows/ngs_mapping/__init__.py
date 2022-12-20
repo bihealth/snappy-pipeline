@@ -790,6 +790,8 @@ class GatkPostBamStepPart(BaseStepPart):
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
@@ -1365,13 +1367,12 @@ class NgsMappingWorkflow(BaseStep):
                     suffix = "_long"
                 else:
                     suffix = ""
-                xs = list(expand(
+                yield from expand(
                     tpl,
                     mapper=self.config["tools"][extraction_type.lower() + suffix],
                     ngs_library=[ngs_library],
                     **kwargs,
-                ))
-                yield from xs
+                )
 
     def validate_project(self, config_dict, sample_sheets_list):
         """Validates project.

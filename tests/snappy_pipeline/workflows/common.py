@@ -1,25 +1,41 @@
 """Shared method used in methods."""
 
+import typing
 
-def get_expected_log_files_dict(base_out):
+
+def get_expected_log_files_dict(
+    *, base_out: str, infix: typing.Optional[str] = None, extended: bool = False
+):
     """
     :param base_out: Base path structure for log files. For example, if the expected path for
     the log is 'work/step.path/log/step.conda_info.txt', the argument should be
     'work/step.path/log/step'.
-    :type base_out: str
+    :param infix: Optional infix string.
+    :param extended: Whether to include env_yaml and wrapper in output
 
     :return: Returns dictionary with expected path for log files based on the provided input.
     """
-    # Define expected
+    if infix:
+        infix_dot = f"{infix}."
+    else:
+        infix_dot = ""
     expected = {
-        "conda_info": base_out + ".conda_info.txt",
-        "conda_info_md5": base_out + ".conda_info.txt.md5",
-        "conda_list": base_out + ".conda_list.txt",
-        "conda_list_md5": base_out + ".conda_list.txt.md5",
-        "log": base_out + ".log",
-        "log_md5": base_out + ".log.md5",
+        "conda_info": f"{base_out}.{infix_dot}conda_info.txt",
+        "conda_info_md5": f"{base_out}.{infix_dot}conda_info.txt.md5",
+        "conda_list": f"{base_out}.{infix_dot}conda_list.txt",
+        "conda_list_md5": f"{base_out}.{infix_dot}conda_list.txt.md5",
+        "log": f"{base_out}.{infix_dot}log",
+        "log_md5": f"{base_out}.{infix_dot}log.md5",
     }
-    # Return
+    if extended:
+        expected.update(
+            {
+                "env_yaml": f"{base_out}.{infix_dot}environment.yaml",
+                "env_yaml_md5": f"{base_out}.{infix_dot}environment.yaml.md5",
+                "wrapper": f"{base_out}.{infix_dot}wrapper.py",
+                "wrapper_md5": f"{base_out}.{infix_dot}wrapper.py.md5",
+            }
+        )
     return expected
 
 
@@ -35,10 +51,10 @@ def get_expected_output_vcf_files_dict(base_out):
     """
     # Define expected
     expected = {
-        "vcf": base_out + ".vcf.gz",
-        "vcf_md5": base_out + ".vcf.gz.md5",
-        "tbi": base_out + ".vcf.gz.tbi",
-        "tbi_md5": base_out + ".vcf.gz.tbi.md5",
+        "vcf": f"{base_out}.vcf.gz",
+        "vcf_md5": f"{base_out}.vcf.gz.md5",
+        "tbi": f"{base_out}.vcf.gz.tbi",
+        "tbi_md5": f"{base_out}.vcf.gz.tbi.md5",
     }
     # Return
     return expected
@@ -56,10 +72,10 @@ def get_expected_output_bcf_files_dict(base_out):
     """
     # Define expected
     expected = {
-        "bcf": base_out + ".bcf",
-        "bcf_md5": base_out + ".bcf.md5",
-        "csi": base_out + ".bcf.csi",
-        "csi_md5": base_out + ".bcf.csi.md5",
+        "bcf": f"{base_out}.bcf",
+        "bcf_md5": f"{base_out}.bcf.md5",
+        "csi": f"{base_out}.bcf.csi",
+        "csi_md5": f"{base_out}.bcf.csi.md5",
     }
     # Return
     return expected
