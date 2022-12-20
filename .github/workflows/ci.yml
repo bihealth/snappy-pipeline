@@ -78,7 +78,7 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
-          # - "3.11"
+          # - "3.11"  # no compatible pysam yet
     needs: linting
     steps:
       - name: Install Python via conda
@@ -112,8 +112,8 @@ jobs:
       - name: Run tests
         run: pytest
         env:
-          DIFF_MASTER: ${{ github.event_name == 'pull_request' }}
-          DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/master' }}
+          DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
+          DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
       - name: Create text report
         run: coverage report
       - name: Coveralls
