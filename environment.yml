@@ -28,7 +28,6 @@ dependencies:
   - samtools==1.15
   - vcfpy                   # Library for working with VCF files
   - pysam                   # Support for vcfpy
-  - pytabix                 # Support for vcfpy
 
   # Parsing of ISA-tab
   - altamisa
