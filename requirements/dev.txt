@@ -5,9 +5,3 @@ ipython
 
 # Prettier CLI for py.test
 pytest-sugar
-
-# Sphinx
-sphinx
-
-# ReadTheDocs theme for Sphinx
-sphinx_rtd_theme

@@ -23,12 +23,11 @@ dependencies:
   - jinja2                  # Jinja 2 template rendering
 
   # Bioinformatics-related libraries used by snappy
-  - htslib==1.15            # From previous environment.yml
-  - bcftools==1.15          # From previous environment.yml
-  - samtools==1.15
+  - htslib >=1.15
+  - bcftools >=1.15
+  - samtools >=1.15
   - vcfpy                   # Library for working with VCF files
   - pysam                   # Support for vcfpy
-  - pytabix                 # Support for vcfpy
 
   # Parsing of ISA-tab
   - altamisa

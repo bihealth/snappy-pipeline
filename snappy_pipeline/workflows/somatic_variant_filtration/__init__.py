@@ -34,18 +34,18 @@ Workflow
 ========
 
 * 1. Do the filtering genome wide (this file needs to be there, always)
-- dkfz-ebfilter-filterset1-genomewide
+
+    - dkfz-ebfilter-filterset1-genomewide
 
 * 2. optionally, subset to regions defined in bed file, which return
-- dkfz-ebfilter-filterset1-regions1
+
+    - dkfz-ebfilter-filterset1-regions1
 
 and so on for filterset1 to n
 
-filterset1:
-filter bPcr, bSeq flags from dkfz-bias-filter
+filterset1: filter bPcr, bSeq flags from dkfz-bias-filter
 
-filterset2:
-additionally filter variants with EBscore < x, x is configurable
+filterset2: additionally filter variants with EBscore < x, x is configurable
 """
 
 from collections import OrderedDict
