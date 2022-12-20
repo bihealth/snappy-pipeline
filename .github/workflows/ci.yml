@@ -42,12 +42,12 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v1.1.0
         with:
           message: |
-            - Please format your Python code with [black](https://black.readthedocs.io): `make black`.
-            - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`.
-            - Please organize your imports [isorts](https://isort.readthedocs.io): `make isort`.
-            - Please ensure that your code passes [flake8](https://flake8.pycqa.org/en/latest/): `make flake8`.
+            - Please format your Python code with [black](https://black.readthedocs.io): `make black`
+            - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`
+            - Please organize your imports [isorts](https://isort.readthedocs.io): `make isort`
+            - Please ensure that your code passes [flake8](https://flake8.pycqa.org/en/latest/): `make flake8`
 
-            You can trigger all lints locally by running `make lint`.
+            You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sphinx-docs:
@@ -81,7 +81,7 @@ jobs:
           - "3.11"
     needs: linting
     steps:
-      - name: Install Python via conda.
+      - name: Install Python via conda
         uses: s-weigand/setup-conda@v1
         with:
           python-version: ${{ matrix.python-version }}
@@ -91,14 +91,14 @@ jobs:
         with:
           lfs: true
           fetch-depth: 2
-      - name: Install mamba.
+      - name: Install mamba
         run: conda install -y mamba==1.0.0
-      - name: Prepare environment.yml file.
+      - name: Prepare environment.yml file
         run: >
           cp environment.yml /tmp/environment.yml && sed -i -e
           's/- python/- python=${{ matrix.python-version }}/'
           /tmp/environment.yml
-      - name: Update environment using mamba.
+      - name: Update environment using mamba
         run: mamba env update --name root --file /tmp/environment.yml
       - name: Fail early on htslib etc. problems
         run: |
