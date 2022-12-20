@@ -306,8 +306,8 @@ def main(argv=None):
         "--rerun-triggers",
         nargs="+",
         choices=RERUN_TRIGGERS,
-        default=["mtime"],  # TODO: switch to RERUN_TRIGGERS,
-        help="Expose --rerun-triggers from snakemake but set to only mtime by default.",
+        default=RERUN_TRIGGERS,
+        help=f"Expose --rerun-triggers from snakemake and set to {RERUN_TRIGGERS} by default",
     )
 
     group = parser.add_argument_group(
