@@ -60,7 +60,6 @@ if config["step_config"]["somatic_purity_ploidy_estimate"]["tool_cnv_calling"] =
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor > somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal > somatic_purity_ploidy_estimate_ascat_cnv_normal_wes
 
-
 else:
 
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes > somatic_purity_ploidy_estimate_ascat_cnv_tumor
@@ -69,8 +68,6 @@ else:
 
 # ASCAT and Supporting Steps --------------------------------------------------
 # Get B-allele frequencies from bam - steps are the same for WES and WGS ------
-
-
 rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
     input:
         unpack(wf.get_input_files("ascat", "baf_tumor")),
