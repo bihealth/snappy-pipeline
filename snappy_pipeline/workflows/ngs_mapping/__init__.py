@@ -148,7 +148,6 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 
 - (long/PacBio/Nanopore) DNA
     - ``"minimap2"``
-    - ``"ngmlr"``
     - ``"external"``
 
 =======
@@ -313,7 +312,7 @@ READ_MAPPERS_DNA = ("bwa",)
 READ_MAPPERS_RNA = ("star",)
 
 #: Available read mappers for (long/PacBio/Nanopoare) DNA-seq data
-READ_MAPPERS_DNA_LONG = ("minialign", "ngmlr", "ngmlr_chained")
+READ_MAPPERS_DNA_LONG = ("minimap2",)
 
 #: Default configuration
 DEFAULT_CONFIG = r"""
@@ -323,7 +322,7 @@ step_config:
     tools:
       dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
-      dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'ngmlr'.
+      dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'.
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
     # Whether or not to compute coverage BED file
     compute_coverage_bed: false
@@ -345,13 +344,10 @@ step_config:
       min_cov_warning: 20  # >= 20x for WARNING
       min_cov_ok: 50  # >= 50x for OK
       detailed_reporting: false  # per-exon details (cannot go into multiqc)
+    # Depth of coverage collection, mainly useful for genomes.
     bam_collect_doc:
       enabled: false
       window_length: 1000
-    # Enable Picard HS metrics by setting both paths
-    picard_hs_metrics:
-      path_targets_interval_list: null
-      path_baits_interval_list: null
     # Configuration for BWA
     bwa:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
@@ -391,18 +387,9 @@ step_config:
       out_sam_strand_field: None # or for cufflinks: intronMotif
       include_unmapped: true
       quant_mode: ''
-    # Configuration for Minialign
-    minialign:
-      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
-      path_index: REQUIRED
-      ref_gc_stats: null    # Optional
+    # Configuration for Minimap2
+    minimap2:
       mapping_threads: 16
-      num_threads_bam_view: 4
-    # Configuration for NGMLR
-    ngmlr:
-      # `path_index`: Required if listed in ngs_mapping.tools.dna_long; otherwise, can be removed.
-      path_index: REQUIRED
-      ref_gc_stats: null    # Optional
     # Select postprocessing method, only for DNA alignment
     postprocessing: null # optional, {'gatk_post_bam'}
     # Configuration for GATK BAM postprocessing
@@ -495,13 +482,14 @@ class ReadMappingStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}".format(
-            mapper=self.__class__.name
-        )
+        mapper = self.__class__.name
+        prefix = f"work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}.mapping"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
@@ -660,9 +648,9 @@ class Minimap2StepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_gb = int(3.5 * self.config["minialign"]["mapping_threads"])
+        mem_gb = int(3.5 * self.config["minimap2"]["mapping_threads"])
         return ResourceUsage(
-            threads=self.config["minialign"]["mapping_threads"],
+            threads=self.config["minimap2"]["mapping_threads"],
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
@@ -673,50 +661,6 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards):
         return {"extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]}
-
-
-class NgmlrStepPart(ReadMappingStepPart):
-    """Support for performing PacBio alignment using NGMLR without chaining"""
-
-    #: Step name
-    name = "ngmlr"
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA are present in the
-        configuration. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if not (set(self.config["tools"]["dna_long"]) & {"ngmlr", "ngmlr_chained"}):
-            return  # NGLMR not run, don't check configuration  # pragma: no cover
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "ngmlr", "path_index"),
-            msg="Path to NGMLR index is required",
-        )
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        # TODO: Add resources to DEFAULT_CONFIG instead of hard-coding.
-        return ResourceUsage(
-            threads=16,
-            time="4-00:00:00",  # 4 days
-            memory="50G",
-        )
 
 
 class ExternalStepPart(ReadMappingStepPart):
@@ -846,6 +790,8 @@ class GatkPostBamStepPart(BaseStepPart):
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
@@ -959,60 +905,6 @@ class LinkOutBamStepPart(BaseStepPart):
         }[(do_realignment, do_recalibration)]
 
 
-class PicardHsMetricsStepPart(BaseStepPart):
-    """Build target report from Picard HsMetrics"""
-
-    #: Step name
-    name = "picard_hs_metrics"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    @staticmethod
-    def get_input_files(action):
-        """Return required input files"""
-        assert action == "run", "Unsupported action"
-        return {
-            "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
-            "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
-        }
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        assert action == "run", "Unsupported action"
-        yield "txt", "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt"
-        yield "txt_md5", "work/{mapper_lib}/report/picard_hs_metrics/{mapper_lib}.txt.md5"
-
-    @staticmethod
-    def get_log_file(action):
-        _ = action
-        return "work/{mapper_lib}/log/snakemake.picard_hs_metrics.log"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=2,
-            time="04:00:00",  # 4 hours
-            memory="20G",
-        )
-
-
 class TargetCoverageReportStepPart(BaseStepPart):
     """Build target coverage report"""
 
@@ -1068,12 +960,23 @@ class TargetCoverageReportStepPart(BaseStepPart):
         yield "txt", "work/target_cov_report/out/target_cov_report.txt"
         yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
 
+    @dictify
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            return "work/{mapper_lib}/log/snakemake.target_coverage.log"
+            prefix = "work/{mapper_lib}/log/{mapper_lib}.target_cov_report"
+            key_ext = (
+                ("log", ".log"),
+                ("conda_info", ".conda_info.txt"),
+                ("conda_list", ".conda_list.txt"),
+                ("wrapper", ".wrapper.py"),
+                ("env_yaml", ".environment.yaml"),
+            )
+            for key, ext in key_ext:
+                yield key, prefix + ext
+                yield key + "_md5", prefix + ext + ".md5"
         else:
-            return "work/target_cov_report/log/snakemake.target_coverage.log"
+            yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
 
     def get_params(self, action):
         assert action == "run", "Parameters only available for action 'run'."
@@ -1254,8 +1157,19 @@ class BamCollectDocStepPart(BaseStepPart):
         yield "bw_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw.md5"
 
     @staticmethod
+    @dictify
     def get_log_file(action):
-        return "work/{mapper_lib}/log/snakemake.bam_collect_doc.log"
+        prefix = "work/{mapper_lib}/log/{mapper_lib}.bam_collect_doc"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -1301,8 +1215,6 @@ class NgsMappingWorkflow(BaseStep):
                 LinkOutBamStepPart,
                 LinkOutStepPart,
                 Minimap2StepPart,
-                NgmlrStepPart,
-                PicardHsMetricsStepPart,
                 StarStepPart,
                 TargetCoverageReportStepPart,
                 BamCollectDocStepPart,
@@ -1369,17 +1281,25 @@ class NgsMappingWorkflow(BaseStep):
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
-            ext=(
-                "log",
-                "conda_info.txt",
-                "conda_list.txt",
-                "log.md5",
-                "conda_info.txt.md5",
-                "conda_list.txt.md5",
-            ),
-        )
+        infixes = ["mapping", "target_cov_report"]
+        if self.config["bam_collect_doc"]["enabled"]:
+            infixes.append("bam_collect_doc")
+        for infix in infixes:
+            yield from self._yield_result_files(
+                os.path.join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
+                ext=(
+                    f"{infix}.log",
+                    f"{infix}.conda_info.txt",
+                    f"{infix}.conda_list.txt",
+                    f"{infix}.wrapper.py",
+                    f"{infix}.environment.yaml",
+                    f"{infix}.log.md5",
+                    f"{infix}.conda_info.txt.md5",
+                    f"{infix}.conda_list.txt.md5",
+                    f"{infix}.wrapper.py.md5",
+                    f"{infix}.environment.yaml.md5",
+                ),
+            )
         if self.config["bam_collect_doc"]["enabled"]:
             yield from self._yield_result_files(
                 os.path.join("output", name_pattern, "report", "cov", name_pattern + ".cov.{ext}"),
@@ -1428,20 +1348,6 @@ class NgsMappingWorkflow(BaseStep):
                     )
         yield "output/target_cov_report/out/target_cov_report.txt"
         yield "output/target_cov_report/out/target_cov_report.txt.md5"
-        if (
-            self.config["picard_hs_metrics"]["path_targets_interval_list"]
-            and self.config["picard_hs_metrics"]["path_baits_interval_list"]
-        ):
-            yield from self._yield_result_files(
-                os.path.join(
-                    "output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt"
-                )
-            )
-            yield from self._yield_result_files(
-                os.path.join(
-                    "output", name_pattern, "report", "picard_hs_metrics", name_pattern + ".txt.md5"
-                )
-            )
         if self.config["compute_coverage_bed"]:
             yield from self._yield_result_files(
                 os.path.join("output", name_pattern, "report", "coverage", name_pattern + "{ext}"),
@@ -1457,7 +1363,7 @@ class NgsMappingWorkflow(BaseStep):
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
-                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
+                if ngs_library.extra_infos["seqPlatform"] in ("ONT", "PacBio"):
                     suffix = "_long"
                 else:
                     suffix = ""

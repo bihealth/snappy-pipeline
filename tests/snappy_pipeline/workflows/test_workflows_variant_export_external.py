@@ -233,7 +233,7 @@ def test_bam_reports_step_part_call_get_log_file_bam_qc(
 ):
     """Tests BamReportsExternalStepPart._get_log_file_bam_qc()"""
     base_out = "work/{mapper_lib}/log/{mapper_lib}.bam_qc"
-    expected = get_expected_log_files_dict(base_out)
+    expected = get_expected_log_files_dict(base_out=base_out)
     actual = variant_export_external_workflow.get_log_file("bam_reports", "bam_qc")
     assert actual == expected
 

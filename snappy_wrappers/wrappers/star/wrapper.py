@@ -13,17 +13,20 @@ shell.executable("/bin/bash")
 reads_left = snakemake.params.args["input"]["reads_left"]
 reads_right = snakemake.params.args["input"].get("reads_right", "")
 
-this_file = __file__
-
 shell(
     r"""
 set -x
 
-# Write out information about conda installation.
+# Write out information about conda and save a copy of the wrapper with picked variables
+# as well as the environment.yaml file.
 conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+cp {__real_file__} {snakemake.log.wrapper}
+md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
+cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
+md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
 
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then
@@ -206,6 +209,29 @@ plot-bamstats \
     {snakemake.output.report_bamstats_txt} \
 || true  # ignore failure
 
+# Patch inline-html if necessary.
+cat >$TMPDIR/inline-html.diff <<EOF
+diff --git a/inline_html/inline_html.py b/inline_html/inline_html.py
+index 893086c..cbef6dd 100644
+--- a/inline_html/inline_html.py
++++ b/inline_html/inline_html.py
+@@ -20,7 +20,10 @@ def resource_to_data(path, in_file):
+     mime, _ = mimetypes.guess_type(path)
+     with open(path, 'rb') as fp:
+         data = fp.read()
+-        data64 = b''.join(base64.encodestring(data).splitlines())
++        try:
++            data64 = b''.join(base64.encodestring(data).splitlines())
++        except AttributeError:
++            data64 = b''.join(base64.encodebytes(data).splitlines())
+         return 'data:%s;base64,%s' % (mime, data64.decode('ascii'))
+EOF
+pushd $(python3 -c 'import inline_html; print(inline_html.__path__[0])')
+if ! grep encodebytes inline_html.py; then
+    patch -p2 <$TMPDIR/inline-html.diff
+fi
+popd
+
 # Convert HTML report into one file.
 inline-html \
     --in-file $TMPDIR/bamstats.d/index.html \
@@ -234,6 +260,7 @@ fi
 # Compute MD5 sums of logs.
 shell(
     r"""
+sleep 1s  # try to wait for log file flush
 md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

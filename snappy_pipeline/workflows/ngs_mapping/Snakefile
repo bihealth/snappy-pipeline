@@ -117,7 +117,7 @@ rule ngs_mapping_bwa_run:
     log:
         **wf.get_log_file("bwa", "run"),
     wrapper:
-        wf.wrapper_path("bwa")  # TODO => bwa/run
+        wf.wrapper_path("bwa")
 
 
 # Run STAR --------------------------------------------------------------------
@@ -138,7 +138,7 @@ rule ngs_mapping_star_run:
     log:
         **wf.get_log_file("star", "run"),
     wrapper:
-        wf.wrapper_path("star")  # TODO => star/run
+        wf.wrapper_path("star")
 
 
 # GATK-based BAM postprocessing -----------------------------------------------
@@ -158,7 +158,7 @@ if wf.config["postprocessing"] == "gatk_post_bam":
         log:
             **wf.get_log_file("gatk_post_bam", "run"),
         wrapper:
-            wf.wrapper_path("gatk_post_bam")  # TODO => gatk_post_bam/run
+            wf.wrapper_path("gatk_post_bam")
 
 
 # Run minimap2 ---------------------------------------------------------------
@@ -180,47 +180,7 @@ rule ngs_mapping_minimap2_run:
         wf.wrapper_path("minimap2")
 
 
-# Run NGMLR -------------------------------------------------------------------
-
-
-rule ngs_mapping_ngmlr_run:
-    input:
-        wf.get_input_files("ngmlr", "run"),
-    output:
-        **wf.get_output_files("ngmlr", "run"),
-    threads: wf.get_resource("ngmlr", "run", "threads")
-    resources:
-        time=wf.get_resource("ngmlr", "run", "time"),
-        memory=wf.get_resource("ngmlr", "run", "memory"),
-        partition=wf.get_resource("ngmlr", "run", "partition"),
-    params:
-        chained=False,
-    log:
-        **wf.get_log_file("ngmlr", "run"),
-    wrapper:
-        wf.wrapper_path("ngmlr/run")
-
-
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generate Picard Hybrid Selection Metrics Report -----------------------------
-
-
-rule ngs_mapping_picard_hs_metrics_run:
-    input:
-        **wf.get_input_files("picard_hs_metrics", "run"),
-    output:
-        **wf.get_output_files("picard_hs_metrics", "run"),
-    threads: wf.get_resource("picard_hs_metrics", "run", "threads")
-    resources:
-        time=wf.get_resource("picard_hs_metrics", "run", "time"),
-        memory=wf.get_resource("picard_hs_metrics", "run", "memory"),
-        partition=wf.get_resource("picard_hs_metrics", "run", "partition"),
-    log:
-        wf.get_log_file("picard_hs_metrics", "run"),
-    wrapper:
-        wf.wrapper_path("picard/hs_metrics")
-
 
 # Generate target region coverage report --------------------------------------
 
@@ -238,7 +198,7 @@ rule ngs_mapping_target_coverage_report_run:
     params:
         **{"args": wf.get_params("target_coverage_report", "run")},
     log:
-        wf.get_log_file("target_coverage_report", "run"),
+        **wf.get_log_file("target_coverage_report", "run"),
     wrapper:
         wf.wrapper_path("target_cov_report/run")
 
@@ -284,7 +244,7 @@ rule ngs_mapping_genome_coverage_report_run:
 # Compute depth of coverage files (VCF and bigWig) ----------------------------
 
 
-rule ngs_mapping_generate_doc_files:
+rule ngs_mapping_bam_collect_doc_run:
     input:
         **wf.get_input_files("bam_collect_doc", "run")(),
     output:
@@ -295,6 +255,6 @@ rule ngs_mapping_generate_doc_files:
         memory=wf.get_resource("bam_collect_doc", "run", "memory"),
         partition=wf.get_resource("bam_collect_doc", "run", "partition"),
     log:
-        wf.get_log_file("bam_collect_doc", "run"),
+        **wf.get_log_file("bam_collect_doc", "run"),
     wrapper:
         wf.wrapper_path("maelstrom/bam_collect_doc")
