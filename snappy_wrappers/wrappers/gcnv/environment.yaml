@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - file:///data/gpfs-1/scratch/users/holtgrem_c/art/LinuxArtifacts/packages
 dependencies:
   - gatk4 ==4.3.0.0
   - bcftools
@@ -19,7 +18,7 @@ dependencies:
   - defaults::tensorflow =1.15.0
   - conda-forge::scipy =1.0.0
   - conda-forge::pymc3 =3.1
-  - conda-forge::h5py =2.10.0 
+  - conda-forge::h5py =2.10.0
   - conda-forge::keras =2.2.4
   - defaults::intel-openmp =2019.4
   - conda-forge::scikit-learn =0.23.1
