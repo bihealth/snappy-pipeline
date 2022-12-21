@@ -986,7 +986,7 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(wgs_cnv_
             "work/gcnv_preprocess_intervals.default/out/"
             "gcnv_preprocess_intervals.default.interval_list"
         ),
-        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/write_pedigree.P001-N1-DNA1-WGS1.ped",
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "vcf": [pattern_out.format(i=i) for i in range(1, 4)],  # P001 - P003
     }
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})

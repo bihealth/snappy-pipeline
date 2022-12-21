@@ -453,7 +453,7 @@ class RunGcnvStepPart(GcnvStepPart):
         yield "interval_list", f"work/{name_pattern}/out/{name_pattern}.interval_list"
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
-        yield "ped", f"work/{name_pattern}/out/{name_pattern}.ped"
+        yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
 
     @dictify
     def _get_output_files_contig_ploidy(self):

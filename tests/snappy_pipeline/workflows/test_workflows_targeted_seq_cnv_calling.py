@@ -845,7 +845,7 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(
             "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
             "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
         ),
-        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/write_pedigree.P001-N1-DNA1-WGS1.ped",
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "vcf": [pattern_out.format(i=i) for i in range(1, 4)],  # P001 - P003
     }
     # Get actual
