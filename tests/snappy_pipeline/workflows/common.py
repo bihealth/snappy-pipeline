@@ -70,29 +70,36 @@ def get_expected_output_bcf_files_dict(base_out):
     :return: Returns dictionary with expected path for bcf related files based on the
     provided input.
     """
-    # Define expected
     expected = {
         "bcf": f"{base_out}.bcf",
         "bcf_md5": f"{base_out}.bcf.md5",
         "csi": f"{base_out}.bcf.csi",
         "csi_md5": f"{base_out}.bcf.csi.md5",
     }
-    # Return
     return expected
 
 
-def get_expected_gcnv_log_file(step_name):
+def get_expected_gcnv_log_file(step_name: str, *, extended: bool = False):
     """
     :param step_name: Step name.
-    :type step_name: str
+    :param extended: Whether to expect extended logs.
 
     :return: Returns expected log file path for basic steps in gCNV.
     """
-    expected_log = (
-        "work/{mapper}.gcnv_"
-        + step_name
-        + ".{library_kit}/log/{mapper}.gcnv_"
-        + step_name
-        + ".{library_kit}.log"
-    )
-    return expected_log
+    # TODO: eventually, all steps should generate extended log files
+    if extended:
+        return {
+            "conda_info": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
+            "conda_info_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
+            "conda_list": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
+            "conda_list_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
+            "wrapper": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py",
+            "wrapper_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py.md5",
+            "env_yaml": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml",
+            "env_yaml_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml.md5",
+        }
+    else:
+        return (
+            f"work/{{mapper}}.gcnv_{step_name}.{{library_kit}}/log/"
+            f"{{mapper}}.gcnv_{step_name}.{{library_kit}}.log"
+        )

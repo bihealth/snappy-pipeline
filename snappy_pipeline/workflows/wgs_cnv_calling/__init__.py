@@ -662,13 +662,16 @@ class WgsCnvCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the germline WGS CNV calling workflow"""
         name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
+        tools = [t for t in self.config["tools"] if t != "gcnv"]
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             index_only=True,
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=self.config["tools"],
+            caller=tools,
             ext=EXT_VALUES,
         )
+        if "gcnv" in self.config["tools"]:
+            yield from self.sub_steps["gcnv"].get_result_files()
 
     def _yield_result_files(self, tpl, index_only, **kwargs):
         """Build output paths from path template and extension list"""

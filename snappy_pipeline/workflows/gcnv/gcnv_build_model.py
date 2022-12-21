@@ -21,7 +21,6 @@ class BuildGcnvModelStepPart(GcnvStepPart):
         "contig_ploidy",
         "call_cnvs",
         "post_germline_calls",
-        "post_germline_calls",
     )
 
     def __init__(self, parent):

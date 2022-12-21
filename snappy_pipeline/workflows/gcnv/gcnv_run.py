@@ -3,19 +3,41 @@
 """
 
 import glob
+from itertools import chain
 import json
 import os
 import re
+import warnings
 
-from snakemake.io import touch
+from snakemake.io import expand, touch
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.gcnv.gcnv_common import GcnvStepPart
+from snappy_pipeline.workflows.gcnv.gcnv_common import GcnvStepPart, InconsistentLibraryKitsWarning
+
+#: Predefined file name keys and extensions for the overall results files.
+RESULT_EXTENSIONS = {
+    "vcf": ".vcf.gz",
+    "vcf_md5": ".vcf.gz.md5",
+    "tbi": ".vcf.gz.tbi",
+    "tbi_md5": ".vcf.gz.tbi.md5",
+}
+
+#: Predefined file name keys and extensions for log files.
+LOG_EXTENSIONS = {
+    "conda_info": ".conda_info.txt",
+    "conda_info_md5": ".conda_info.txt.md5",
+    "conda_list": ".conda_list.txt",
+    "conda_list_md5": ".conda_list.txt.md5",
+    "wrapper": ".wrapper.py",
+    "wrapper_md5": ".wrapper.py.md5",
+    "env_yaml": ".environment.yaml",
+    "env_yaml_md5": ".environment.yaml.md5",
+}
 
 
 class RunGcnvStepPart(GcnvStepPart):
-    """Class with methods to run GATK4 gCNV"""
+    """Class with methods to run GATK4 gCNV calling in CASE mode"""
 
     #: Class available actions
     actions = (
@@ -24,8 +46,7 @@ class RunGcnvStepPart(GcnvStepPart):
         "contig_ploidy",
         "call_cnvs",
         "post_germline_calls",
-        "merge_cohort_vcfs",
-        "extract_ped",
+        "joint_germline_cnv_segmentation",
     )
 
     def __init__(self, parent):
@@ -414,96 +435,110 @@ class RunGcnvStepPart(GcnvStepPart):
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
-    @listify
-    def _get_input_files_merge_cohort_vcfs(self, wildcards):
-        for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                yield "work/{name_pattern}/out/{name_pattern}.vcf.gz".format(
-                    name_pattern=name_pattern
-                )
-
     @dictify
-    def _get_input_files_extract_ped(self, wildcards):
-        library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        for key, ext in (("vcf", ".vcf.gz"), ("tbi", ".vcf.gz.tbi")):
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            )
-
-    def get_ped_members(self, wildcards):
+    def _get_input_files_joint_germline_cnv_segmentation(self, wildcards):
+        # Yield list of paths to input VCF files
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        return " ".join(
+        ped_ngs_library_names = [
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        )
+        ]
+        vcfs = []
+        for library_name in sorted(ped_ngs_library_names):
+            name_pattern = f"{wildcards.mapper}.gcnv_post_germline_calls.{library_name}"
+            vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
+        yield "vcf", vcfs
+        # Yield path to interval list file
+        library_kit = self.ngs_library_to_kit[wildcards.library_name]
+        name_pattern = f"gcnv_preprocess_intervals.{library_kit}"
+        yield "interval_list", f"work/{name_pattern}/out/{name_pattern}.interval_list"
+        # Yield path to pedigree file
+        name_pattern = f"write_pedigree.{wildcards.library_name}"
+        yield "ped", f"work/{name_pattern}/out/{name_pattern}.ped"
 
-    @staticmethod
     @dictify
-    def _get_output_files_contig_ploidy():
+    def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
         ext = "done"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
-        yield ext, touch(
-            "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            )
-        )
+        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-    @staticmethod
     @dictify
-    def _get_output_files_call_cnvs():
+    def _get_output_files_call_cnvs(self):
         """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
         ext = "done"
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
-        yield ext, touch(
-            "work/{name_pattern}/out/{name_pattern}/.{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            )
-        )
+        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-    @staticmethod
     @dictify
-    def _get_output_files_post_germline_calls():
+    def _get_output_files_post_germline_calls(self):
         name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
-        pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
-        for key, ext in pairs.items():
-            yield key, touch(
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                )
-            )
-
-    @staticmethod
-    @dictify
-    def _get_output_files_merge_cohort_vcfs():
-        name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-        pairs = {
-            "vcf": ".vcf.gz",
-            "vcf_md5": ".vcf.gz.md5",
-            "tbi": ".vcf.gz.tbi",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+        extensions = {
+            "ratio_tsv": ".ratio.tsv",
+            "itv_vcf": ".interval.vcf.gz",
+            "seg_vcf": ".vcf.gz",
         }
-        for key, ext in pairs.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            )
+        for key, ext in extensions.items():
+            yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")
 
-    @staticmethod
     @dictify
-    def _get_output_files_extract_ped():
+    def _get_output_files_joint_germline_cnv_segmentation(self):
         name_pattern = "{mapper}.gcnv.{library_name}"
-        kvs = (
-            ("vcf", ".vcf.gz"),
-            ("vcf_md5", ".vcf.gz.md5"),
-            ("tbi", ".vcf.gz.tbi"),
-            ("tbi_md5", ".vcf.gz.tbi.md5"),
-        )
-        for key, suffix in kvs:
-            yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
-                name_pattern=name_pattern, suffix=suffix
+        for key, suffix in RESULT_EXTENSIONS.items():
+            yield key, f"work/{name_pattern}/out/{name_pattern}{suffix}"
+
+    @dictify
+    def _get_log_file_joint_germline_cnv_segmentation(self):
+        """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
+        name_pattern = "{mapper}.gcnv.{library_name}"
+        for key, ext in LOG_EXTENSIONS.items():
+            yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
+
+    @listify
+    def get_result_files(self):
+        """Return list of **concrete** paths to result files for the given configuration and sample sheets.
+
+        The function will skip pedigrees where samples have inconsistent library kits and print a warning.
+        """
+
+        def path_work_to_output(work_path):
+            """Helper to convert a work to an output path"""
+            return re.sub(r"^work/", "output/", work_path)
+
+        # Get list with all result path template strings (output and log files).  This is done using the
+        # functions generating the output patterns of the joint germline CNV segmentation step.
+        result_path_tpls = list(
+            chain(
+                self._get_output_files_joint_germline_cnv_segmentation().values(),  # output files
+                self._get_log_file_joint_germline_cnv_segmentation().values(),  # log files
             )
+        )
+
+        # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
+        # library kits within one pedigree, raise a warning and skip this pedigree.
+        for index_library_name, pedigree in self.index_ngs_library_to_pedigree.items():
+            # Obtain all library names
+            library_names = [
+                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+            ]
+            library_kits = [self.ngs_library_to_kit[library_name] for library_name in library_names]
+            if len(set(library_kits)) != 1:
+                names_kits = list(zip(library_names, library_kits))
+                msg = (
+                    "Found inconsistent library kits (more than one kit!) for pedigree with index "
+                    f"{index_library_name}.  The library name/kit pairs are {names_kits}.  This pedigree "
+                    "will be SKIPPED in CNV call generation."
+                )
+                warnings.warn(InconsistentLibraryKitsWarning(msg))
+                continue
+            else:
+                # The library kits are consistent in the pedigree.  Yield all concrete output paths, replacing
+                # prefix "work/" by "output/".
+                for path_tpl in result_path_tpls:
+                    yield from map(
+                        path_work_to_output,
+                        expand(
+                            path_tpl,
+                            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                            library_name=[index_library_name],
+                        ),
+                    )

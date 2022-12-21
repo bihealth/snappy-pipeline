@@ -8,6 +8,23 @@ from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 
 
+class GcnvWarning(UserWarning):
+    """Base class for custom warning of the gCNV integration"""
+
+
+class InconsistentLibraryKitsWarning(GcnvWarning):
+    """Raised when library kits are not consistent within a pedigree
+
+    Models can only be trained reliably on similar data.  This implies the same library kit.
+    In the case that inconsistent library kits are used within a pedigree, this warning is
+    raised.
+    """
+
+
+class TooFewSamplesWarning(GcnvWarning):
+    """Raised when too few samples were provided"""
+
+
 class GcnvStepPart(BaseStepPart):
     """Class contains methods that are common for both gCNV model build and run."""
 
@@ -50,7 +67,7 @@ class GcnvStepPart(BaseStepPart):
         """Return input function for gCNV rule
 
         :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
-        'coverage', 'extract_ped'.
+        'coverage'.
         :type action: str
 
         :return: Returns input function for gCNV rule based on inputted action.
@@ -117,31 +134,46 @@ class GcnvStepPart(BaseStepPart):
         """Get log file.
 
         :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
-        'coverage', 'extract_ped'.
+        'coverage'.
         :type action: str
 
         :return: Returns template path to log file.
         """
+        # TODO: move out the _get_log_file* functions where they belong
         self._validate_action(action)
-        if action in ("preprocess_intervals", "annotate_gc"):
-            name_pattern = "gcnv_{action}.{{library_kit}}".format(action=action)
-            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action in (
-            "filter_intervals",
-            "contig_ploidy",
-            "scatter_intervals",
-            "merge_cohort_vcfs",
-        ):
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}".format(action=action)
-            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        elif action.startswith("call_cnvs"):
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_kit}}.{{shard}}".format(
-                action=action
-            )
-            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
-        else:
-            name_pattern = "{{mapper}}.gcnv_{action}.{{library_name}}".format(action=action)
-            return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+        return getattr(self, f"_get_log_file_{action}")()
+
+    def _get_log_file_preprocess_intervals(self):
+        name_pattern = "gcnv_preprocess_intervals.{library_kit}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_annotate_gc(self):
+        name_pattern = "gcnv_annotate_gc.{library_kit}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_filter_intervals(self):
+        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_contig_ploidy(self):
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_scatter_intervals(self):
+        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_call_cnvs(self):
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_post_germline_calls(self):
+        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
+
+    def _get_log_file_coverage(self):
+        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        return f"work/{name_pattern}/log/{name_pattern}.log"
 
     def get_resource_usage(self, action):
         """Get Resource Usage

@@ -650,7 +650,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.{index.dna_ngs_library.name}"
         callers = ("xhmm", "gcnv")
-        cnv_tools = [t for t in self.config["tools"] if t in callers]
+        cnv_tools = [t for t in self.config["tools"] if t in callers and t != "gcnv"]
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             donors,
@@ -669,15 +669,7 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
                 ext=EXT_VALUES,
             )
         if "gcnv" in self.config["tools"]:
-            name_pattern = "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > MIN_KIT_SAMPLES]
-            yield from expand(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                caller=["gcnv"],
-                library_kit=chosen_kits,
-                ext=EXT_VALUES,
-            )
+            yield from self.sub_steps["gcnv"].get_result_files()
 
     def pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a

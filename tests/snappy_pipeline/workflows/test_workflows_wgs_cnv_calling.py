@@ -629,8 +629,7 @@ def test_gcnv_get_params(wgs_cnv_calling_workflow):
         "contig_ploidy",
         "call_cnvs",
         "post_germline_calls",
-        "merge_cohort_vcfs",
-        "extract_ped",
+        "joint_germline_cnv_segmentation",
     )
     actions_w_params = ("model", "ploidy_model", "postgermline_models")
     for action in all_actions:
@@ -728,6 +727,38 @@ def test_gcnv_validate_call_model_directory(
     )
 
 
+def test_gcnv_get_result_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_result_files()"""
+    expected = [
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
+    ]
+    actual = wgs_cnv_calling_workflow.substep_getattr("gcnv", "get_result_files")()
+    assert actual == expected
+
+
 # Tests for RunGcnvWgsStepPart (preprocess_intervals) ----------------------------------------------
 
 
@@ -812,6 +843,8 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(wgs_cnv_calling_workflow):
     tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
     expected = {"tsv": tsv_list_out}
     actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
+    print(expected)
+    print(actual)
     assert actual == expected
 
 
@@ -939,66 +972,44 @@ def test_gcnv_get_params_postgermline_models(wgs_cnv_calling_workflow):
     assert actual == expected
 
 
-# Tests for RunGcnvWgsStepPart (merge_cohort_vcfs) -------------------------------------------------
+# Tests for RunGcnvWgsStepPart (joint_germline_cnv_segmentation) -----------------------------------
 
 
-def test_gcnv_merge_cohort_vcfs_step_part_get_input_files(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart._get_input_files_merge_cohort_vcfs()"""
+def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_input_files_joint_germline_cnv_segmentation()"""
     pattern_out = (
         "work/bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1/out/"
         "bwa.gcnv_post_germline_calls.P00{i}-N1-DNA1-WGS1.vcf.gz"
     )
-    expected = [pattern_out.format(i=i) for i in range(1, 7)]  # P001 - P006
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_kit": "default"})
-    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "merge_cohort_vcfs")(wildcards)
-    assert actual == expected
-
-
-def test_gcnv_merge_cohort_vcfs_step_part_get_output_files(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart._get_output_files_merge_cohort_vcfs()"""
-    pattern_out = (
-        "work/{mapper}.gcnv_merge_cohort_vcfs.{library_kit}/out/"
-        "{mapper}.gcnv_merge_cohort_vcfs.{library_kit}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
-    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "merge_cohort_vcfs")
-    assert actual == expected
-
-
-def test_gcnv_merge_cohort_vcfs_step_part_get_log_file(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart.get_log_file for 'merge_cohort_vcfs' step"""
-    expected = get_expected_gcnv_log_file(step_name="merge_cohort_vcfs")
-    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "merge_cohort_vcfs")
-    assert actual == expected
-
-
-# Tests for RunGcnvWgsStepPart (extract_ped) -------------------------------------------------------
-
-
-def test_gcnv_extract_ped_vcfs_step_part_get_input_files(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart._get_input_files_extract_ped()"""
-    pattern_out = "work/bwa.gcnv_merge_cohort_vcfs.default/out/bwa.gcnv_merge_cohort_vcfs.default"
-    expected = {"vcf": pattern_out + ".vcf.gz", "tbi": pattern_out + ".vcf.gz.tbi"}
+    expected = {
+        "interval_list": (
+            "work/gcnv_preprocess_intervals.default/out/"
+            "gcnv_preprocess_intervals.default.interval_list"
+        ),
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/write_pedigree.P001-N1-DNA1-WGS1.ped",
+        "vcf": [pattern_out.format(i=i) for i in range(1, 4)],  # P001 - P003
+    }
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "extract_ped")(wildcards)
+    actual = wgs_cnv_calling_workflow.get_input_files("gcnv", "joint_germline_cnv_segmentation")(
+        wildcards
+    )
     assert actual == expected
 
 
-def test_gcnv_extract_ped_step_part_get_output_files(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart._get_output_files_extract_ped()"""
+def test_gcnv_joint_germline_cnv_segmentation_step_part_get_output_files(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart._get_output_files_joint_germline_cnv_segmentation()"""
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
-    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "extract_ped")
+    actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "joint_germline_cnv_segmentation")
     assert actual == expected
 
 
-def test_gcnv_extract_ped_step_part_get_log_file(wgs_cnv_calling_workflow):
-    """Tests RunGcnvWgsStepPart.get_log_file for 'extract_ped' step"""
-    expected = (
-        "work/{mapper}.gcnv_extract_ped.{library_name}/log/"
-        "{mapper}.gcnv_extract_ped.{library_name}.log"
+def test_gcnv_joint_germline_cnv_segmentation_step_part_get_log_file(wgs_cnv_calling_workflow):
+    """Tests RunGcnvWgsStepPart.get_log_file for 'joint_germline_cnv_segmentation' step"""
+    expected = get_expected_gcnv_log_file(
+        step_name="joint_germline_cnv_segmentation", extended=True
     )
-    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "extract_ped")
+    actual = wgs_cnv_calling_workflow.get_log_file("gcnv", "joint_germline_cnv_segmentation")
     assert actual == expected
 
 
@@ -1020,8 +1031,41 @@ def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
         for i in (1, 4)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for cnv_caller in ("delly2", "gcnv")
+        for cnv_caller in ("delly2")
     ]
-    expected = list(sorted(expected))
-    actual = list(sorted(wgs_cnv_calling_workflow.get_result_files()))
-    assert expected == actual
+
+    # Define expected for gcnv
+    pattern_out = "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/out/bwa.{tool}.P00{i}-N1-DNA1-WGS1{ext}"
+    expected = [
+        pattern_out.format(i=i, tool=tool, ext=ext)
+        for i in (1, 4)  # only index: P001, P004
+        for tool in ("gcnv", "delly2")
+        for ext in (
+            ".vcf.gz",
+            ".vcf.gz.md5",
+            ".vcf.gz.tbi",
+            ".vcf.gz.tbi.md5",
+        )
+    ]
+    pattern_log = (
+        "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/log/"
+        "bwa.{tool}.P00{i}-N1-DNA1-WGS1.joint_germline_segmentation{ext}"
+    )
+    expected += [
+        pattern_log.format(i=i, tool=tool, ext=ext)
+        for i in (1, 4)  # only index: P001, P004
+        for tool in ("gcnv",)
+        for ext in (
+            ".conda_info.txt",
+            ".conda_info.txt.md5",
+            ".conda_list.txt",
+            ".conda_list.txt.md5",
+            ".wrapper.py",
+            ".wrapper.py.md5",
+            ".environment.yaml",
+            ".environment.yaml.md5",
+        )
+    ]
+
+    actual = wgs_cnv_calling_workflow.get_result_files()
+    assert sorted(expected) == sorted(actual)
