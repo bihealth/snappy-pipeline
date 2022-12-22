@@ -92,7 +92,7 @@ jobs:
           lfs: true
           fetch-depth: 2
       - name: Install mamba
-        run: conda install -y mamba==1.0.0
+        run: conda install -y mamba>=1.0.0
       - name: Prepare environment.yml file
         run: >
           cp environment.yml /tmp/environment.yml && sed -i -e
