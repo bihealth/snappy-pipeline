@@ -724,6 +724,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "link_out",
         "link_out_bam",
         "minimap2",
+        "ngs_chew",
         "star",
         "target_coverage_report",
     ]
@@ -742,7 +743,7 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for i in range(1, 7)
         for ext in ("bam", "bam.bai", "bam.md5", "bam.bai.md5")
     ]
-    for infix in ("bam_collect_doc", "mapping", "target_cov_report"):
+    for infix in ("bam_collect_doc", "mapping", "target_cov_report", "ngs_chew_fingerprint"):
         expected += [
             "output/bwa.P00{i}-N1-DNA1-WGS1/log/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
             for i in range(1, 7)
@@ -779,6 +780,13 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
             i=i, ext=ext
         )
         for ext in ("bw", "bw.md5", "vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for i in range(1, 7)
+    ]
+    expected += [
+        "output/bwa.P00{i}-N1-DNA1-WGS1/report/fingerprint/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
+            i=i, ext=ext
+        )
+        for ext in ("npz", "npz.md5")
         for i in range(1, 7)
     ]
     expected += [

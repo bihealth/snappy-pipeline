@@ -274,6 +274,6 @@ rule ngs_mapping_ngs_chew_fingerprint:
         memory=wf.get_resource("ngs_chew", "run", "memory"),
         partition=wf.get_resource("ngs_chew", "run", "partition"),
     log:
-        **wf.get_log_file("ngs_chew", "run"),
+        **wf.get_log_files("ngs_chew", "run"),
     wrapper:
         wf.wrapper_path("ngs_chew/fingerprint")

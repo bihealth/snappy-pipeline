@@ -348,6 +348,9 @@ step_config:
     bam_collect_doc:
       enabled: false
       window_length: 1000
+    # Compute fingerprints with ngs-chew
+    ngs_chew_fingerprint:
+      enabled: true
     # Configuration for BWA
     bwa:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
@@ -1189,6 +1192,79 @@ class BamCollectDocStepPart(BaseStepPart):
         )
 
 
+class NgsChewStepPart(BaseStepPart):
+    """Analyze BAM File with ``ngs-chew``, e.g., ``fingerprint``"""
+
+    #: Step name
+    name = "ngs_chew"
+
+    #: Class available actions
+    actions = ("fingerprint",)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_input_files(self, action):
+        """Return required input files"""
+        self._check_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    def _check_action(self, action):
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+
+    @dictify
+    def _get_input_files_run(self):
+        yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam"
+
+    def get_output_files(self, action):
+        """Return output files"""
+        self._check_action(action)
+        return getattr(self, "_get_output_files_{action}".format(action=action))()
+
+    @dictify
+    def _get_output_files_run(self):
+        yield "npz", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz"
+        yield "npz_md5", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz.md5"
+
+    def get_log_files(self, action):
+        self._check_action(action)
+        return getattr(self, "_get_log_files_{action}".format(action=action))()
+
+    @dictify
+    def _get_log_files_fingerprint(self):
+        prefix = "work/{mapper_lib}/log/{mapper_lib}.ngs_chew_fingerprint"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        self._check_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="04:00:00",
+            memory="2G",
+        )
+
+
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
@@ -1218,6 +1294,7 @@ class NgsMappingWorkflow(BaseStep):
                 StarStepPart,
                 TargetCoverageReportStepPart,
                 BamCollectDocStepPart,
+                NgsChewStepPart,
             )
         )
         self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
@@ -1281,9 +1358,14 @@ class NgsMappingWorkflow(BaseStep):
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
-        infixes = ["mapping", "target_cov_report"]
+        infixes = [
+            "mapping",
+            "target_cov_report",
+        ]
         if self.config["bam_collect_doc"]["enabled"]:
             infixes.append("bam_collect_doc")
+        if self.config["ngs_chew_fingerprint"]["enabled"]:
+            infixes.append("ngs_chew_fingerprint")
         for infix in infixes:
             yield from self._yield_result_files(
                 os.path.join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
@@ -1304,6 +1386,13 @@ class NgsMappingWorkflow(BaseStep):
             yield from self._yield_result_files(
                 os.path.join("output", name_pattern, "report", "cov", name_pattern + ".cov.{ext}"),
                 ext=("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5", "bw", "bw.md5"),
+            )
+        if self.config["ngs_chew_fingerprint"]["enabled"]:
+            yield from self._yield_result_files(
+                os.path.join(
+                    "output", name_pattern, "report", "fingerprint", name_pattern + ".{ext}"
+                ),
+                ext=("npz", "npz.md5"),
             )
         yield from self._yield_result_files(
             os.path.join(
