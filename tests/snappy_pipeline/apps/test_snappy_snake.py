@@ -50,8 +50,6 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
             "mtime",
             "params",
             "input",
-            "software-env",
-            "code",
             "-S",
             "--verbose",
             "--cores",

@@ -161,11 +161,9 @@ General Alignment Statistics (.txt)
   called by default, and are linked out into the ``output/{mapper}.{library_name}/report/bam_qc``
   directory. The file names for these reports (and their MD5s) use the following naming convention:
 
-  - ``{mapper}.{library_name}.bamstats.html``
   - ``{mapper}.{library_name}.bamstats.txt``
   - ``{mapper}.{library_name}.flagstats.txt``
   - ``{mapper}.{library_name}.idxstats.txt``
-  - ``{mapper}.{library_name}.bamstats.html.md5``
   - ``{mapper}.{library_name}.bamstats.txt.md5``
   - ``{mapper}.{library_name}.flagstats.txt.md5``
   - ``{mapper}.{library_name}.idxstats.txt.md5``
@@ -183,8 +181,6 @@ For example, it will look as follows for the example bam files shown above:
     |   |   `-- bwa.P001-N1-DNA1-WES1.bam.md5
     |   `-- report
     |       `-- bam_qc
-    |           |-- bwa.P001-N1-DNA1-WES1.bam.bamstats.html
-    |           |-- bwa.P001-N1-DNA1-WES1.bam.bamstats.html.md5
     |           |-- bwa.P001-N1-DNA1-WES1.bam.bamstats.txt
     |           |-- bwa.P001-N1-DNA1-WES1.bam.bamstats.txt.md5
     |           |-- bwa.P001-N1-DNA1-WES1.bam.flagstats.txt
@@ -462,13 +458,12 @@ class ReadMappingStepPart(BaseStepPart):
         assert action in self.actions
         for ext in self.extensions:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
-        for ext in (".bamstats.html", ".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
+        for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
             path = (
                 "work/{mapper}.{{library_name}}/report/bam_qc/" "{mapper}.{{library_name}}.bam{ext}"
             ).format(mapper=self.name, ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
         for ext in (
-            ".bamstats.html.md5",
             ".bamstats.txt.md5",
             ".flagstats.txt.md5",
             ".idxstats.txt.md5",
@@ -1316,16 +1311,6 @@ class NgsMappingWorkflow(BaseStep):
                 "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt.md5"
             ),
             report=("bamstats", "flagstats", "idxstats"),
-        )
-        yield from self._yield_result_files(
-            os.path.join(
-                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html"
-            )
-        )
-        yield from self._yield_result_files(
-            os.path.join(
-                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.bamstats.html.md5"
-            )
         )
 
         for sheet in self.shortcut_sheets:
