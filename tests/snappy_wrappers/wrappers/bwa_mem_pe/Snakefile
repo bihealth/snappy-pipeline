@@ -21,8 +21,6 @@ rule run_bwa_mem_paired_end:
     output:
         bam="output/out.bam",
         bam_bai="output/out.bam.bai",
-        report_bamstats_html="output/out.bamstats.html",
-        report_bamstats_html_md5="output/out.bamstats.html.md5",
         report_bamstats_txt="output/out.bamstats.txt",
         report_bamstats_txt_md5="output/out.bamstats.txt.md5",
         report_flagstats_txt="output/out.flagstats.txt",

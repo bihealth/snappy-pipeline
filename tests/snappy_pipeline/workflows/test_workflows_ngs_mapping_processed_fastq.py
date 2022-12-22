@@ -95,7 +95,7 @@ def get_expected_output_files_dict(bam_base_out, report_base_out):
     :type bam_base_out: str
 
     :param report_base_out: Expected name pattern of report associated files without extension.
-    For example if the full path would be '/path/to/step_report.bam.bamstats.html', argument should
+    For example if the full path would be '/path/to/step_report.bam.bamstats.txt', argument should
     be '/path/to/step_report'.
 
     :return: Returns dictionary with expected path for BAM and report associated files based on the
@@ -107,8 +107,6 @@ def get_expected_output_files_dict(bam_base_out, report_base_out):
         "bam_bai": bam_base_out + ".bam.bai",
         "bam_bai_md5": bam_base_out + ".bam.bai.md5",
         "bam_md5": bam_base_out + ".bam.md5",
-        "report_bamstats_html": report_base_out + ".bam.bamstats.html",
-        "report_bamstats_html_md5": report_base_out + ".bam.bamstats.html.md5",
         "report_bamstats_txt": report_base_out + ".bam.bamstats.txt",
         "report_bamstats_txt_md5": report_base_out + ".bam.bamstats.txt.md5",
         "report_flagstats_txt": report_base_out + ".bam.flagstats.txt",
@@ -767,12 +765,6 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for ext in ("txt", "txt.md5")
         for i in range(1, 7)
         for stats in ("bamstats", "flagstats", "idxstats")
-    ]
-    bam_stats_html_out = (
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.bamstats.{ext}"
-    )
-    expected += [
-        bam_stats_html_out.format(i=i, ext=ext) for ext in ("html", "html.md5") for i in range(1, 7)
     ]
     expected += [
         "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.cov.{ext}".format(

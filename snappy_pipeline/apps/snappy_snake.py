@@ -302,12 +302,13 @@ def main(argv=None):
             "not yet exist."
         ),
     )
+    rerun_triggers_default = ["mtime", "params", "input"]
     group.add_argument(
         "--rerun-triggers",
         nargs="+",
         choices=RERUN_TRIGGERS,
-        default=RERUN_TRIGGERS,
-        help=f"Expose --rerun-triggers from snakemake and set to {RERUN_TRIGGERS} by default",
+        default=rerun_triggers_default,
+        help=f"Expose --rerun-triggers from snakemake and set to {rerun_triggers_default} by default",
     )
 
     group = parser.add_argument_group(

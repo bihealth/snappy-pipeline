@@ -63,21 +63,7 @@ samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 
-# call plot-bamstats
-mkdir $TMPDIR/bamstats.d
-plot-bamstats \
-    -p $TMPDIR/bamstats.d/ \
-    {snakemake.output.report_bamstats_txt} \
-|| true  # ignore failure
-
-# Convert HTML report into one file.
-inline-html \
-    --in-file $TMPDIR/bamstats.d/index.html \
-    --out-file {snakemake.output.report_bamstats_html} \
-|| touch {snakemake.output.report_bamstats_html}
-
 # Build MD5 files for the reports
-md5sum {snakemake.output.report_bamstats_html} > {snakemake.output.report_bamstats_html_md5}
 md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
 md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
 md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
