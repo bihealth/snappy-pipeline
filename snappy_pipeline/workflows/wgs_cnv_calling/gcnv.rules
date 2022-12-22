@@ -46,7 +46,7 @@ rule wgs_cnv_calling_gcnv_contig_ploidy:
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
-        args=wf.get_params("gcnv", "ploidy_model"),
+        args=wf.get_params("gcnv", "contig_ploidy"),
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 
@@ -64,7 +64,7 @@ rule wgs_cnv_calling_gcnv_call_cnvs:
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
     params:
-        args=wf.get_params("gcnv", "model"),
+        args=wf.get_params("gcnv", "call_cnvs"),
     wrapper:
         wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
@@ -82,7 +82,7 @@ rule wgs_cnv_calling_gcnv_post_germline_calls:
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     params:
-        args=wf.get_params("gcnv", "postgermline_models"),
+        args=wf.get_params("gcnv", "post_germline_calls"),
     wrapper:
         wf.wrapper_path("gcnv/post_germline_calls_case_mode")
 
@@ -100,6 +100,6 @@ rule wgs_cnv_calling_gcnv_joint_germline_cnv_segmentation:
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
     params:
-        args=wf.get_params("gcnv", "postgermline_models"),
+        args=wf.get_params("gcnv", "post_germline_calls"),
     wrapper:
         wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")
