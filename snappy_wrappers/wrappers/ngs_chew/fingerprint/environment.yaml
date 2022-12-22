@@ -3,4 +3,4 @@ channels:
   - bioconda
   - file:///data/gpfs-1/users/holtgrem_c/scratch/art/LinuxArtifacts/packages
 dependencies:
-  - ngs-chew ==0.5.0
+  - ngs-chew >=0.5.0,<0.6.0
