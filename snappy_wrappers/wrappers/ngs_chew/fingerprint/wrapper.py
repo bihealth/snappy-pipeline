@@ -60,62 +60,8 @@ ngs-chew fingerprint \
     --input-bam {snakemake.input.bam}
     --genome-release {genome_release}
 
-
-# Compute MD5 sums
-pushd $(dirname $out_bam)
-md5sum $(basename $out_bam) >$(basename $out_bam).md5
-md5sum $(basename $out_bam).bai >$(basename $out_bam).bai.md5
-popd
-
-# QC Report ---------------------------------------------------------------------------------------
-
-# gather statistics from BAM file
-# TODO: use pipes for only reading once from disk?
-samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
-samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
-samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
-
-# call plot-bamstats
-mkdir $TMPDIR/bamstats.d
-plot-bamstats \
-    -p $TMPDIR/bamstats.d/ \
-    {snakemake.output.report_bamstats_txt} \
-|| true  # ignore failure
-
-# Patch inline-html if necessary.
-cat >$TMPDIR/inline-html.diff <<EOF
-diff --git a/inline_html/inline_html.py b/inline_html/inline_html.py
-index 893086c..cbef6dd 100644
---- a/inline_html/inline_html.py
-+++ b/inline_html/inline_html.py
-@@ -20,7 +20,10 @@ def resource_to_data(path, in_file):
-     mime, _ = mimetypes.guess_type(path)
-     with open(path, 'rb') as fp:
-         data = fp.read()
--        data64 = b''.join(base64.encodestring(data).splitlines())
-+        try:
-+            data64 = b''.join(base64.encodestring(data).splitlines())
-+        except AttributeError:
-+            data64 = b''.join(base64.encodebytes(data).splitlines())
-         return 'data:%s;base64,%s' % (mime, data64.decode('ascii'))
-EOF
-pushd $(python3 -c 'import inline_html; print(inline_html.__path__[0])')
-if ! grep encodebytes inline_html.py; then
-    patch -p2 <$TMPDIR/inline-html.diff
-fi
-popd
-
-# Convert HTML report into one file.
-inline-html \
-    --in-file $TMPDIR/bamstats.d/index.html \
-    --out-file {snakemake.output.report_bamstats_html} \
-|| touch {snakemake.output.report_bamstats_html}
-
-# Build MD5 files for the reports
-md5sum {snakemake.output.report_bamstats_html} > {snakemake.output.report_bamstats_html_md5}
-md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
-md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
-md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
+pushd $(dirname {snakemake.output.npz})
+md5sum $(basename {snakemake.output.npz}) >$(basename {snakemake.output.npz_md5})
 """
 )
 
