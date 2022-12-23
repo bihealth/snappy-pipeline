@@ -34,10 +34,10 @@ if sys.version_info < (3, 7):
     print("At least Python 3.7 is required.\n", file=sys.stderr)
     sys.exit(1)
 
-with open("README.rst") as readme_file:
+with open("README.md") as readme_file:
     readme = readme_file.read()
 
-with open("HISTORY.rst") as history_file:
+with open("CHANGELOG.md") as history_file:
     history = history_file.read()
 
 # Get requirements

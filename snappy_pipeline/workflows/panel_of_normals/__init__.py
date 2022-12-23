@@ -133,7 +133,7 @@ class PanelOfNormalsStepPart(BaseStepPart):
                     if bio_sample.is_tumor:
                         continue
                     for _, test_sample in bio_sample.test_samples.items():
-                        extraction_type = test_sample.extra_infos["extractionType"]
+                        extraction_type = test_sample.extra_infos.get("extractionType", "DNA")
                         if extraction_type.lower() == "dna":
                             for _, ngs_library in test_sample.ngs_libraries.items():
                                 yield ngs_library.name

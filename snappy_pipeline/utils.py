@@ -3,6 +3,8 @@
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+import typing
+
 
 def listify(gen):
     """Decorator that converts a generator into a function which returns a list
@@ -42,6 +44,19 @@ def dictify(gen):
         return dict(gen(*args, **kwargs))
 
     return patched
+
+
+def flatten(coll: typing.List[typing.Union[str, typing.List[str]]]) -> typing.List[str]:
+    """Flatten collection of strings or list of strings.
+
+    Source: https://stackoverflow.com/a/17865033
+    """
+    for i in coll:
+        if isinstance(i, typing.Iterable) and not isinstance(i, str):
+            for subc in flatten(i):
+                yield subc
+        else:
+            yield i
 
 
 def try_or_none(func, exceptions):

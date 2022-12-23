@@ -8,8 +8,6 @@ __author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-this_file = __file__
-
 input = snakemake.params.args["input"]
 if not input:
     raise Exception("No bam found")
@@ -69,9 +67,25 @@ md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstat
 
 # Additional logging for transparency & reproducibility
 # Logging: Save a copy this wrapper (with the pickle details in the header)
-cp {this_file} $(dirname {snakemake.log.log})/wrapper.py
+cp {__real_file__} $(dirname {snakemake.log.log})/wrapper.py
 
 # Logging: Save a permanent copy of the environment file used
-cp $(dirname {this_file})/environment.yaml $(dirname {snakemake.log.log})/environment_wrapper.yaml
+cp $(dirname {__file__})/environment.yaml $(dirname {snakemake.log.log})/environment_wrapper.yaml
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+sleep 1s  # try to wait for log file flush
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

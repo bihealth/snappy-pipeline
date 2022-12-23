@@ -186,7 +186,7 @@ class OptiTypeStepPart(BaseStepPart):
     def _get_seq_type(self, wildcards):
         """Return sequence type for the library name in wildcards"""
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
-        return library.test_sample.extra_infos["extractionType"].lower()
+        return library.test_sample.extra_infos.get("extractionType", "DNA").lower()
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -329,7 +329,9 @@ class HlaTypingWorkflow(BaseStep):
             for ngs_library in sheet.all_ngs_libraries:
                 for tool in self.config["tools"]:
                     supported = self.sub_steps[tool].supported_extraction_types
-                    extraction_type = ngs_library.test_sample.extra_infos["extractionType"].lower()
+                    extraction_type = ngs_library.test_sample.extra_infos.get(
+                        "extractionType", "DNA"
+                    ).lower()
                     if extraction_type in supported:
                         yield from expand(
                             tpl,

@@ -65,6 +65,14 @@ bedtools coverage \
 > {snakemake.output.txt}
 
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

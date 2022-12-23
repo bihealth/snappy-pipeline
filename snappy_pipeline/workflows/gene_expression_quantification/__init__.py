@@ -530,7 +530,9 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         for tool in self.config["tools"]:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for ngs_library in sheet.all_ngs_libraries:
-                    extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
+                    extraction_type = ngs_library.test_sample.extra_infos.get(
+                        "extractionType", "DNA"
+                    )
                     if extraction_type.lower() == "rna":
                         if tool == "salmon":
                             fns = expand(

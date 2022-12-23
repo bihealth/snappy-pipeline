@@ -267,23 +267,21 @@ Bamstats Plots (.gp .png)
 
 """
 
+from itertools import chain
 import os
 import re
 import sys
-import textwrap
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
-    STDERR_TO_LOG_FILE,
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
     LinkInStep,
-    LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
 )
@@ -297,9 +295,6 @@ EXT_VALUES = (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5")
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("bam", "bai", "bam_md5", "bai_md5")
-
-#: Value for GATK BAM postprocessing
-POSTPROC_GATK_POST_BAM = "gatk_post_bam"
 
 #: Available read mappers for (short/Illumina) DNA-seq data
 READ_MAPPERS_DNA = ("bwa",)
@@ -320,8 +315,6 @@ step_config:
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
       dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'.
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    # Whether or not to compute coverage BED file
-    compute_coverage_bed: false
     # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
     # the path_arget_regions setting above
     target_coverage_report:
@@ -389,20 +382,108 @@ step_config:
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
-    # Select postprocessing method, only for DNA alignment
-    postprocessing: null # optional, {'gatk_post_bam'}
-    # Configuration for GATK BAM postprocessing
-    gatk_post_bam:
-      do_realignment: true
-      do_recalibration: true
-      realigned_infix: realigned
-      recalibrated_infix: recalibrated
-      path_known_sites_vcf: REQUIRED # is list
-      time_multiplicator_wgs: 4
 """
 
 
-class ReadMappingStepPart(BaseStepPart):
+class MappingGetResultFilesMixin:
+    """Mixin that provides ``get_result_files()`` for mapping steps"""
+
+    tool_category = None
+
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        """Override function such that the mapper is applicable to the library"""
+        extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
+        extraction_type = extra_infos.get("extractionType", "DNA").lower()
+        if extra_infos["seqPlatform"] in ("ONT", "PacBio"):
+            suffix = "_long"
+        else:
+            suffix = ""
+        library_tool_category = f"{extraction_type}{suffix}"
+        if self.tool_category not in ("__any__", library_tool_category):
+            return True
+        else:
+            return self.name not in self.config["tools"][library_tool_category]
+
+    @listify
+    def get_result_files(self):
+        """Return list of concrete output paths in ``output/``.
+
+        The implementation will return a list of all paths with prefix ``output/` that are
+        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
+
+        You can override the ``skip_result_files_for_library()`` method to skip result files for
+        a library.
+        """
+        # Skip if step part has a tool category and it is not enabled
+        if (
+            self.tool_category != "__any__"
+            and self.name not in self.config["tools"][self.tool_category]
+        ):
+            return
+
+        for action in self.actions:
+            # Get list of result path templates.
+            output_files_tmp = self.get_output_files(action)
+            if isinstance(output_files_tmp, dict):
+                output_files = output_files_tmp.values()
+            else:
+                output_files = output_files_tmp
+            result_paths_tpls = list(
+                filter(
+                    lambda p: p.startswith("output/"),
+                    flatten(output_files),
+                )
+            )
+            #: Generate all concrete output paths.
+            for path_tpl in result_paths_tpls:
+                for library_name in self.parent.ngs_library_to_extra_infos.keys():
+                    if not self.skip_result_files_for_library(library_name):
+                        yield from expand(path_tpl, mapper=[self.name], library_name=library_name)
+
+
+class ReportGetResultFilesMixin:
+    """Mixin that provides ``get_result_files()`` for report generation steps"""
+
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        return False
+
+    @listify
+    def get_result_files(self):
+        """Return list of concrete output paths in ``output/``.
+
+        The implementation will return a list of all paths with prefix ``output/` that are
+        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
+
+        You can override the ``skip_result_files_for_library()`` method to skip result files for
+        a library.
+        """
+        # Skip if step part has a tool category and it is not enabled
+        for action in self.actions:
+            # Get list of result path templates.
+            output_files_tmp = self.get_output_files(action)
+            if isinstance(output_files_tmp, dict):
+                output_files = output_files_tmp.values()
+            else:
+                output_files = output_files_tmp
+            result_paths_tpls = list(
+                filter(
+                    lambda p: p.startswith("output/"),
+                    flatten(output_files),
+                )
+            )
+            #: Generate all concrete output paths.
+            for library_name in self.parent.ngs_library_to_extra_infos.keys():
+                for sub_step in self.parent.sub_steps.values():
+                    if isinstance(
+                        sub_step, ReadMappingStepPart
+                    ) and not sub_step.skip_result_files_for_library(library_name):
+                        for path_tpl in result_paths_tpls:
+                            yield path_tpl.format(mapper=sub_step.name, library_name=library_name)
+                if action == "collect":
+                    break  # only once
+
+
+class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     """Base class for read mapping step parts"""
 
     #: Class available actions. Read mapping step parts only support action "run".
@@ -444,8 +525,7 @@ class ReadMappingStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    @staticmethod
-    def get_input_files(action):
+    def get_input_files(self, action):
         def input_function(wildcards):
             """Helper wrapper function"""
             return "work/input_links/{library_name}/.done".format(**wildcards)
@@ -455,10 +535,20 @@ class ReadMappingStepPart(BaseStepPart):
 
     @dictify
     def get_output_files(self, action):
-        """Return output files that all read mapping sub steps must return
-        (BAM + BAI file)
-        """
+        """Return concrete output files that all read mapping sub steps will write"""
         assert action in self.actions
+        # Obtain and yield the paths in the ``work/`` directory
+        paths_work = self._get_output_files_run_work()
+        yield from paths_work.items()
+        # Return list of paths to the links that will be created in ``output/``
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+        ]
+
+    @dictify
+    def _get_output_files_run_work(self):
+        """Return dict of output files to write to the ``work/`` directory."""
         for ext in self.extensions:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
         for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
@@ -477,8 +567,8 @@ class ReadMappingStepPart(BaseStepPart):
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
-    def _get_log_file(self, action):
-        """Return dict of log files."""
+    def get_log_file(self, action):
+        """Return dict of log files in the "log" directory."""
         _ = action
         mapper = self.__class__.name
         prefix = f"work/{mapper}.{{library_name}}/log/{mapper}.{{library_name}}.mapping"
@@ -517,6 +607,9 @@ class BwaStepPart(ReadMappingStepPart):
 
     #: Step name
     name = "bwa"
+
+    #: Tool category
+    tool_category = "dna"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -571,6 +664,9 @@ class StarStepPart(ReadMappingStepPart):
 
     #: Step name
     name = "star"
+
+    #: Tool category
+    tool_category = "rna"
 
     def check_config(self):
         """Check parameters in configuration.
@@ -632,6 +728,9 @@ class Minimap2StepPart(ReadMappingStepPart):
     #: Step name
     name = "minimap2"
 
+    #: Tool category
+    tool_category = "dna_long"
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -666,6 +765,9 @@ class ExternalStepPart(ReadMappingStepPart):
 
     #: Step name
     name = "external"
+
+    #: Use wildcard for tool library
+    tool_category = "__any__"
 
     def check_config(self):
         """Check parameters in configuration.
@@ -719,191 +821,7 @@ class ExternalStepPart(ReadMappingStepPart):
         )
 
 
-class GatkPostBamStepPart(BaseStepPart):
-    """Support for supporting BAM postprocessing with GATK
-
-    This uses the snappy-gatk_post_bam wrapper that performs read realignment and base
-    recalibration. Note that in particular the base recalibration step takes quite a long time
-    for large files.
-    """
-
-    #: Step name
-    name = "gatk_post_bam"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.path_tpl = (
-            "work/{{mapper}}.{{library_name}}/out/{{mapper}}.{{library_name}}{infix}{ext}"
-        )
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA are present in the
-        configuration. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if "gatk_post_bam" not in (self.config["postprocessing"] or []):  # pylint: disable=C0325
-            return  # GATK BAM postprocessing not enabled, skip
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "gatk_post_bam", "paths_known_sites"),
-            msg="Known sites list cannot be empty for GATK BAM postprocessing",
-        )
-        self.parent.ensure_w_config(
-            config_keys=("static_data_config", "reference", "path"),
-            msg="Path to reference FASTA required for GATK BAM postprocessing",
-        )
-
-    def get_input_files(self, action):
-        """Return required input files"""
-        assert action == "run", "Unsupported action"
-        return self.path_tpl.format(infix="", ext=".bam")
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files that are generated by snappy-gatk_post_bam"""
-        assert action == "run", "Unsupported action"
-        realigned_infix = "." + self.config["gatk_post_bam"]["realigned_infix"]
-        recalibrated_infix = "." + self.config["gatk_post_bam"]["recalibrated_infix"]
-        if self.config["gatk_post_bam"]["do_realignment"]:
-            for ext_name, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield ext_name + "_realigned", self.path_tpl.format(infix=realigned_infix, ext=ext)
-            recalibrated_infix = realigned_infix + recalibrated_infix
-        if self.config["gatk_post_bam"]["do_recalibration"]:
-            for ext_name, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield ext_name + "_recalibrated", self.path_tpl.format(
-                    infix=recalibrated_infix, ext=ext
-                )
-
-    @dictify
-    def get_log_file(self, action):
-        _ = action
-        prefix = "work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=2,
-            time="2-00:00:00",  # 2 days
-            memory="52G",
-        )
-
-
-class LinkOutBamStepPart(BaseStepPart):
-    """Link out the read mapping results
-
-    Depending on the configuration, the files are linked out after
-    postprocessing
-    """
-
-    # TODO: do not attempt realignment of RNA-seq data
-
-    name = "link_out_bam"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_in = (
-            "work/{wildcards.mapper}.{wildcards.library_name}/out/"
-            "{wildcards.mapper}.{wildcards.library_name}{{postproc}}{{ext}}"
-        )
-        self.base_pattern_out = (
-            "output/{{mapper}}.{{library_name}}/out/{{mapper}}.{{library_name}}{ext}"
-        )
-        self.base_path_out = self.base_pattern_out.replace(",[^.]", "")
-        self.extensions = EXT_VALUES
-
-    def get_input_files(self, action):
-        """Return required input files"""
-
-        def input_function(wildcards):
-            """Helper rapper function"""
-            postproc = [""]
-            if wildcards["mapper"] in self.config["tools"]["dna"]:
-                postproc = [self._get_postproc_token()]
-            return expand(
-                self.base_path_in.format(wildcards=wildcards),
-                postproc=postproc,
-                ext=self.extensions,
-            )
-
-        assert action == "run", "Unsupported action"
-        return input_function
-
-    def get_output_files(self, action):
-        """Return output files that are generated by snappy-gatk_post_bam"""
-        assert action == "run", "Unsupported action"
-        return expand(self.base_pattern_out, ext=self.extensions)
-
-    def get_shell_cmd(self, action, wildcards):
-        """Return call for linking out postprocessed (or not) files"""
-        assert action == "run", "Unsupported action"
-        postproc = [""]
-        if wildcards["mapper"] in self.config["tools"]["dna"]:
-            postproc = [self._get_postproc_token()]
-        ins = expand(
-            self.base_path_in.format(wildcards=wildcards),
-            postproc=postproc,
-            ext=self.extensions,
-        )
-        outs = [s.format(**wildcards) for s in expand(self.base_path_out, ext=self.extensions)]
-        assert len(ins) == len(outs)
-        return "\n".join(
-            (
-                "test -L {out} || ln -sr {in_} {out}".format(in_=in_, out=out)
-                for in_, out in zip(ins, outs)
-            )
-        )
-
-    def _get_postproc_token(self):
-        """Return file name token for result files for the postprocessing
-
-        The value depends on the configuration.  This way, the workflow
-        controls whether to execute postprocessing or not (and which
-        postprocessing if there was more than one option).
-        """
-        if self.config["postprocessing"] == "gatk_post_bam":
-            do_realignment = self.config["gatk_post_bam"]["do_realignment"]
-            do_recalibration = self.config["gatk_post_bam"]["do_recalibration"]
-        else:
-            do_realignment, do_recalibration = False, False
-        realigned_infix = self.config["gatk_post_bam"]["realigned_infix"]
-        recalibrated_infix = self.config["gatk_post_bam"]["recalibrated_infix"]
-        return {
-            (False, False): "",
-            (False, True): "." + recalibrated_infix,
-            (True, False): "." + realigned_infix,
-            (True, True): "." + realigned_infix + "." + recalibrated_infix,
-        }[(do_realignment, do_recalibration)]
-
-
-class TargetCoverageReportStepPart(BaseStepPart):
+class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Build target coverage report"""
 
     #: Step name
@@ -922,15 +840,16 @@ class TargetCoverageReportStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam".format(**wildcards)
-        yield "bai", "work/{mapper_lib}/out/{mapper_lib}.bam.bai".format(**wildcards)
+        mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
+        yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
+        yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
 
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
         for sheet in self.parent.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
+                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
                 if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
                     suffix = "_long"
                 else:
@@ -940,21 +859,30 @@ class TargetCoverageReportStepPart(BaseStepPart):
                         self.parent.default_kit_configured
                         or ngs_library.name in self.parent.ngs_library_to_kit
                     ):
-                        kv = {"mapper_lib": "{}.{}".format(mapper, ngs_library.name)}
-                        yield self._get_output_files_run()["txt"].format(**kv)
+                        yield self._get_output_files_run_work()["txt"].format(
+                            mapper=mapper, library_name=ngs_library.name
+                        )
 
+    @dictify
     def get_output_files(self, action):
         """Return output files"""
         self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
+        # Obtain and yield the paths in the ``work/`` directory
+        paths_work = getattr(self, f"_get_output_files_{action}_work")()
+        yield from paths_work.items()
+        # Return list of paths to the links that will be created in ``output/``
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+        ]
 
     @dictify
-    def _get_output_files_run(self):
-        yield "txt", "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
-        yield "txt_md5", "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt.md5"
+    def _get_output_files_run_work(self):
+        yield "txt", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"
+        yield "txt_md5", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5"
 
     @dictify
-    def _get_output_files_collect(self):
+    def _get_output_files_collect_work(self):
         yield "txt", "work/target_cov_report/out/target_cov_report.txt"
         yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
 
@@ -962,7 +890,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            prefix = "work/{mapper_lib}/log/{mapper_lib}.target_cov_report"
+            prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report"
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
@@ -982,7 +910,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
 
     def _get_params_run(self, wildcards):
         # Find bed file associated with library kit
-        library_name = wildcards.mapper_lib.split(".")[1]
+        library_name = wildcards.library_name
         path_targets_bed = ""
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
         for item in self.config["target_coverage_report"]["path_target_interval_list_mapping"]:
@@ -1016,103 +944,7 @@ class TargetCoverageReportStepPart(BaseStepPart):
         )
 
 
-class GenomeCoverageReportStepPart(BaseStepPart):
-    """Build genome-wide per-base coverage report"""
-
-    #: Step name
-    name = "genome_coverage_report"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    @staticmethod
-    def get_input_files(action):
-        """Return required input files"""
-        assert action == "run", "Unsupported action"
-        return {
-            "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
-            "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
-        }
-
-    @staticmethod
-    def get_output_files(action):
-        """Return output files"""
-        assert action == "run", "Unsupported action"
-        return {
-            "bed": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz",
-            "tbi": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz.tbi",
-        }
-
-    @staticmethod
-    def get_log_file(action):
-        _ = action
-        return "work/{mapper_lib}/log/snakemake.genome_coverage.log"
-
-    # TODO(holtgrewe): can this be removed?
-    @staticmethod
-    def get_shell_cmd(action, wildcards):
-        """Return bash script to execute"""
-        _ = wildcards
-        assert action == "run", "Unsupported action"
-        return (
-            STDERR_TO_LOG_FILE
-            + textwrap.dedent(
-                r"""
-            module load SAMtools/1.2-foss-2015a
-            module load HTSlib/1.2.1-foss-2015a
-
-            samtools depth {input.bam} \
-            | awk -F $'\t' 'BEGIN {{ OFS=FS; }} {{ print $1, $2-1, $2, $3; }}' \
-            | awk -F $'\t' '
-                    BEGIN {{ OFS=FS; pr = -1; pb = -1; pe = -1; pc = -1; }}
-                    {{
-                        if (pr == $1 && $2 == pe && $4 == pc) {{
-                            pe = $3;
-                        }} else {{
-                            if (pr != -1)
-                                print pr, pb, pe, pc;
-                            pr = $1;
-                            pb = $2;
-                            pe = $3;
-                            pc = $4;
-                        }}
-                    }}
-                    END {{ if (pr != -1) {{
-                        print pr, pb, pe, pc;
-                    }} }}' \
-            | bgzip -c \
-            > {output.bed}
-
-            tabix {output.bed}
-            """
-            ).lstrip()
-        )
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=1,
-            time="04:00:00",  # 4 hours
-            memory="4G",
-        )
-
-
-class BamCollectDocStepPart(BaseStepPart):
+class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Generate depth of coverage files."""
 
     #: Step name
@@ -1120,6 +952,9 @@ class BamCollectDocStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        return not self.config["bam_collect_doc"]["enabled"]
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1137,27 +972,35 @@ class BamCollectDocStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self):
-        yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam"
-        yield "bai", "work/{mapper_lib}/out/{mapper_lib}.bam.bai"
+        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+        yield "bai", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai"
 
+    @dictify
     def get_output_files(self, action):
         """Return output files"""
         self._check_action(action)
-        return getattr(self, "_get_output_files_{action}".format(action=action))()
+        # Obtain and yield the paths in the ``work/`` directory
+        paths_work = self._get_output_files_run_work()
+        yield from paths_work.items()
+        # Return list of paths to the links that will be created in ``output/``
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+        ]
 
     @dictify
-    def _get_output_files_run(self):
-        yield "vcf", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz"
-        yield "vcf_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.md5"
-        yield "tbi", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi"
-        yield "tbi_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.vcf.gz.tbi.md5"
-        yield "bw", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw"
-        yield "bw_md5", "work/{mapper_lib}/report/cov/{mapper_lib}.cov.bw.md5"
+    def _get_output_files_run_work(self):
+        yield "vcf", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
+        yield "vcf_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5"
+        yield "tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
+        yield "tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
+        yield "bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
+        yield "bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
 
-    @staticmethod
     @dictify
-    def get_log_file(action):
-        prefix = "work/{mapper_lib}/log/{mapper_lib}.bam_collect_doc"
+    def get_log_file(self, action):
+        _ = action
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1187,7 +1030,7 @@ class BamCollectDocStepPart(BaseStepPart):
         )
 
 
-class NgsChewStepPart(BaseStepPart):
+class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Analyze BAM File with ``ngs-chew``, e.g., ``fingerprint``"""
 
     #: Step name
@@ -1198,6 +1041,9 @@ class NgsChewStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        return not self.config["ngs_chew_fingerprint"]["enabled"]
 
     def get_input_files(self, action):
         """Return required input files"""
@@ -1212,17 +1058,25 @@ class NgsChewStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_fingerprint(self):
-        yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam"
+        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
 
+    @dictify
     def get_output_files(self, action):
         """Return output files"""
         self._check_action(action)
-        return getattr(self, "_get_output_files_{action}".format(action=action))()
+        # Obtain and yield the paths in the ``work/`` directory
+        paths_work = self._get_output_files_fingerprint_work()
+        yield from paths_work.items()
+        # Return list of paths to the links that will be created in ``output/``
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+        ]
 
     @dictify
-    def _get_output_files_fingerprint(self):
-        yield "npz", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz"
-        yield "npz_md5", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz.md5"
+    def _get_output_files_fingerprint_work(self):
+        yield "npz", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz"
+        yield "npz_md5", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5"
 
     def get_log_file(self, action):
         self._check_action(action)
@@ -1230,7 +1084,7 @@ class NgsChewStepPart(BaseStepPart):
 
     @dictify
     def _get_log_files_fingerprint(self):
-        prefix = "work/{mapper_lib}/log/{mapper_lib}.ngs_chew_fingerprint"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.ngs_chew_fingerprint"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1280,11 +1134,7 @@ class NgsMappingWorkflow(BaseStep):
             (
                 BwaStepPart,
                 ExternalStepPart,
-                GatkPostBamStepPart,
-                GenomeCoverageReportStepPart,
                 LinkInStep,
-                LinkOutBamStepPart,
-                LinkOutStepPart,
                 Minimap2StepPart,
                 StarStepPart,
                 TargetCoverageReportStepPart,
@@ -1292,7 +1142,6 @@ class NgsMappingWorkflow(BaseStep):
                 NgsChewStepPart,
             )
         )
-        self.sub_steps["link_out"].disable_patterns = expand("**/*{ext}", ext=EXT_VALUES)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit, self.default_kit_configured = self._build_ngs_library_to_kit()
         # Create shortcut from library to all extra infos.
@@ -1346,107 +1195,11 @@ class NgsMappingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the NGS mapping workflow
 
-        We will process all NGS libraries of all test samples in all sample
-        sheets.
+        We will process all NGS libraries of all test samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{ngs_library.name}"
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
-        )
-        infixes = [
-            "mapping",
-            "target_cov_report",
-        ]
-        if self.config["bam_collect_doc"]["enabled"]:
-            infixes.append("bam_collect_doc")
-        if self.config["ngs_chew_fingerprint"]["enabled"]:
-            infixes.append("ngs_chew_fingerprint")
-        for infix in infixes:
-            yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "log", "{mapper}.{ngs_library.name}.{ext}"),
-                ext=(
-                    f"{infix}.log",
-                    f"{infix}.conda_info.txt",
-                    f"{infix}.conda_list.txt",
-                    f"{infix}.wrapper.py",
-                    f"{infix}.environment.yaml",
-                    f"{infix}.log.md5",
-                    f"{infix}.conda_info.txt.md5",
-                    f"{infix}.conda_list.txt.md5",
-                    f"{infix}.wrapper.py.md5",
-                    f"{infix}.environment.yaml.md5",
-                ),
-            )
-        if self.config["bam_collect_doc"]["enabled"]:
-            yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "report", "cov", name_pattern + ".cov.{ext}"),
-                ext=("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5", "bw", "bw.md5"),
-            )
-        if self.config["ngs_chew_fingerprint"]["enabled"]:
-            yield from self._yield_result_files(
-                os.path.join(
-                    "output", name_pattern, "report", "fingerprint", name_pattern + ".{ext}"
-                ),
-                ext=("npz", "npz.md5"),
-            )
-        yield from self._yield_result_files(
-            os.path.join(
-                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt"
-            ),
-            report=("bamstats", "flagstats", "idxstats"),
-        )
-        yield from self._yield_result_files(
-            os.path.join(
-                "output", name_pattern, "report", "bam_qc", name_pattern + ".bam.{report}.txt.md5"
-            ),
-            report=("bamstats", "flagstats", "idxstats"),
-        )
-
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                if ngs_library.name in self.ngs_library_to_kit:
-                    extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
-                    suffix = (
-                        "_long"
-                        if ngs_library.extra_infos["seqPlatform"] in ("PacBio", "ONP")
-                        else ""
-                    )
-                    # Per-sample target coverage report.
-                    yield from expand(
-                        os.path.join(
-                            "output", name_pattern, "report", "cov_qc", name_pattern + ".{ext}"
-                        ),
-                        mapper=self.config["tools"][extraction_type.lower() + suffix],
-                        ngs_library=[ngs_library],
-                        ext=["txt", "txt.md5"],
-                    )
-        yield "output/target_cov_report/out/target_cov_report.txt"
-        yield "output/target_cov_report/out/target_cov_report.txt.md5"
-        if self.config["compute_coverage_bed"]:
-            yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "report", "coverage", name_pattern + "{ext}"),
-                ext=(".bed.gz", ".bed.gz.tbi"),
-            )
-        else:
-            print(
-                "Genome-wide coverage BED generation disabled", file=sys.stderr
-            )  # pragma: no cover
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
-                if ngs_library.extra_infos["seqPlatform"] in ("ONT", "PacBio"):
-                    suffix = "_long"
-                else:
-                    suffix = ""
-                yield from expand(
-                    tpl,
-                    mapper=self.config["tools"][extraction_type.lower() + suffix],
-                    ngs_library=[ngs_library],
-                    **kwargs,
-                )
+        for sub_step in self.sub_steps.values():
+            if sub_step.name not in (LinkInStep.name,):
+                yield from sub_step.get_result_files()
 
     def validate_project(self, config_dict, sample_sheets_list):
         """Validates project.

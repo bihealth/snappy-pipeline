@@ -86,34 +86,66 @@ def ngs_mapping_workflow(
     )
 
 
-def get_expected_output_files_dict(bam_base_out, report_base_out):
-    """Helper method.
+def get_expected_output_files_dict(bam_base_out: str, report_base_out: str, log_base_out: str):
+    """Helper function.
 
     :param bam_base_out: Expected name pattern of BAM associated files without extension.
     For example if the full path would be '/path/to/step_part.bam', argument should be
     '/path/to/step_part'.
-    :type bam_base_out: str
 
     :param report_base_out: Expected name pattern of report associated files without extension.
     For example if the full path would be '/path/to/step_report.bam.bamstats.txt', argument should
     be '/path/to/step_report'.
 
+    :param log_base_out: Expected name pattern for log file.
+
     :return: Returns dictionary with expected path for BAM and report associated files based on the
     provided input.
     """
-    # Define expected
+
+    def work_to_out(s: str) -> str:
+        return s.replace("work/", "output/")
+
     expected = {
-        "bam": bam_base_out + ".bam",
-        "bam_bai": bam_base_out + ".bam.bai",
-        "bam_bai_md5": bam_base_out + ".bam.bai.md5",
-        "bam_md5": bam_base_out + ".bam.md5",
-        "report_bamstats_txt": report_base_out + ".bam.bamstats.txt",
-        "report_bamstats_txt_md5": report_base_out + ".bam.bamstats.txt.md5",
-        "report_flagstats_txt": report_base_out + ".bam.flagstats.txt",
-        "report_flagstats_txt_md5": report_base_out + ".bam.flagstats.txt.md5",
-        "report_idxstats_txt": report_base_out + ".bam.idxstats.txt",
-        "report_idxstats_txt_md5": report_base_out + ".bam.idxstats.txt.md5",
+        "bam": f"{bam_base_out}.bam",
+        "bam_md5": f"{bam_base_out}.bam.md5",
+        "bam_bai": f"{bam_base_out}.bam.bai",
+        "bam_bai_md5": f"{bam_base_out}.bam.bai.md5",
+        "output_links": list(
+            map(
+                work_to_out,
+                [
+                    f"{bam_base_out}.bam",
+                    f"{bam_base_out}.bam.bai",
+                    f"{bam_base_out}.bam.md5",
+                    f"{bam_base_out}.bam.bai.md5",
+                    f"{report_base_out}.bam.bamstats.txt",
+                    f"{report_base_out}.bam.flagstats.txt",
+                    f"{report_base_out}.bam.idxstats.txt",
+                    f"{report_base_out}.bam.bamstats.txt.md5",
+                    f"{report_base_out}.bam.flagstats.txt.md5",
+                    f"{report_base_out}.bam.idxstats.txt.md5",
+                    f"{log_base_out}.mapping.log",
+                    f"{log_base_out}.mapping.log.md5",
+                    f"{log_base_out}.mapping.conda_info.txt",
+                    f"{log_base_out}.mapping.conda_info.txt.md5",
+                    f"{log_base_out}.mapping.conda_list.txt",
+                    f"{log_base_out}.mapping.conda_list.txt.md5",
+                    f"{log_base_out}.mapping.wrapper.py",
+                    f"{log_base_out}.mapping.wrapper.py.md5",
+                    f"{log_base_out}.mapping.environment.yaml",
+                    f"{log_base_out}.mapping.environment.yaml.md5",
+                ],
+            )
+        ),
+        "report_bamstats_txt": f"{report_base_out}.bam.bamstats.txt",
+        "report_bamstats_txt_md5": f"{report_base_out}.bam.bamstats.txt.md5",
+        "report_flagstats_txt": f"{report_base_out}.bam.flagstats.txt",
+        "report_flagstats_txt_md5": f"{report_base_out}.bam.flagstats.txt.md5",
+        "report_idxstats_txt": f"{report_base_out}.bam.idxstats.txt",
+        "report_idxstats_txt_md5": f"{report_base_out}.bam.idxstats.txt.md5",
     }
+
     # Return
     return expected
 
@@ -259,7 +291,8 @@ def test_bwa_step_part_get_output_files(ngs_mapping_workflow):
     # Define expected
     bam_base_out = "work/bwa.{library_name}/out/bwa.{library_name}"
     report_base_out = "work/bwa.{library_name}/report/bam_qc/bwa.{library_name}"
-    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    log_base_out = "work/bwa.{library_name}/log/bwa.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("bwa", "run")
     assert actual == expected
@@ -326,7 +359,8 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
     # Define expected
     bam_base_out = "work/star.{library_name}/out/star.{library_name}"
     report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
-    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    log_base_out = "work/star.{library_name}/log/star.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("star", "run")
     assert actual == expected
@@ -393,7 +427,8 @@ def test_minimap2_step_part_get_output_files(ngs_mapping_workflow):
     # Define expected
     bam_base_out = "work/minimap2.{library_name}/out/minimap2.{library_name}"
     report_base_out = "work/minimap2.{library_name}/report/bam_qc/minimap2.{library_name}"
-    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    log_base_out = "work/minimap2.{library_name}/log/minimap2.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("minimap2", "run")
     assert actual == expected
@@ -452,7 +487,8 @@ def test_external_step_part_get_output_files(ngs_mapping_workflow):
     # Define expected
     bam_base_out = "work/external.{library_name}/out/external.{library_name}"
     report_base_out = "work/external.{library_name}/report/bam_qc/external.{library_name}"
-    expected = get_expected_output_files_dict(bam_base_out, report_base_out)
+    log_base_out = "work/external.{library_name}/log/external.{library_name}"
+    expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("external", "run")
     assert actual == expected
@@ -469,106 +505,6 @@ def test_external_step_part_get_resource(ngs_mapping_workflow):
         assert actual == expected, msg_error
 
 
-# Tests for GatkPostBamStepPart -------------------------------------------------------------------
-
-
-def test_gatk_post_bam_step_part_get_input_files(ngs_mapping_workflow):
-    """Tests GatkPostBamStepPart.get_input_files()"""
-    expected = "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-    actual = ngs_mapping_workflow.get_input_files("gatk_post_bam", "run")
-    assert actual == expected
-
-
-def test_gatk_post_bam_step_part_get_output_files(ngs_mapping_workflow):
-    """Tests GatkPostBamStepPart.get_output_files()"""
-    # Define expected
-    base_name_out = "work/{mapper}.{library_name}/out/{mapper}.{library_name}"
-    expected = {
-        "bai_md5_realigned": base_name_out + ".realigned.bam.bai.md5",
-        "bai_md5_recalibrated": base_name_out + ".realigned.recalibrated.bam.bai.md5",
-        "bai_realigned": base_name_out + ".realigned.bam.bai",
-        "bai_recalibrated": base_name_out + ".realigned.recalibrated.bam.bai",
-        "bam_md5_realigned": base_name_out + ".realigned.bam.md5",
-        "bam_md5_recalibrated": base_name_out + ".realigned.recalibrated.bam.md5",
-        "bam_realigned": base_name_out + ".realigned.bam",
-        "bam_recalibrated": base_name_out + ".realigned.recalibrated.bam",
-    }
-    # Get actual
-    actual = ngs_mapping_workflow.get_output_files("gatk_post_bam", "run")
-    assert actual == expected
-
-
-def test_gatk_post_bam_step_part_get_log_file(ngs_mapping_workflow):
-    """Tests GatkPostBamStepPart.get_log_file()"""
-    expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.{library_name}/log/gatk_post_bam.{library_name}",
-        extended=True,
-    )
-    actual = ngs_mapping_workflow.get_log_file("gatk_post_bam", "run")
-    assert actual == expected
-
-
-def test_gatk_post_bam_step_part_get_resource(ngs_mapping_workflow):
-    """Tests GatkPostBamStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 2, "time": "2-00:00:00", "memory": "52G", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("gatk_post_bam", "run", resource)
-        assert actual == expected, msg_error
-
-
-# Tests for LinkOutBamStepPart --------------------------------------------------------------------
-
-
-def test_link_out_bam_step_part_get_input_files(ngs_mapping_workflow):
-    """Tests LinkOutBamStepPart.get_input_files()"""
-    # Define expected
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
-    expected = [
-        "work/bwa.library/out/bwa.library.bam",
-        "work/bwa.library/out/bwa.library.bam.bai",
-        "work/bwa.library/out/bwa.library.bam.md5",
-        "work/bwa.library/out/bwa.library.bam.bai.md5",
-    ]
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_input_files("link_out_bam", "run")(wildcards)
-    assert actual == expected
-
-
-def test_link_out_bam_step_part_get_output_files(ngs_mapping_workflow):
-    """Tests LinkOutBamStepPart.get_output_files()"""
-    # Define expected
-    expected = [
-        "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam",
-        "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai",
-        "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.md5",
-        "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai.md5",
-    ]
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_output_files("link_out_bam", "run")
-    assert actual == expected
-
-
-def test_link_out_bam_step_part_get_shell_cmd(ngs_mapping_workflow):
-    """Tests LinkOutBamStepPart.get_shell_cmd()"""
-    # Define expected
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
-    b_name = "bwa.library/out/bwa.library.bam"
-    expected = textwrap.dedent(
-        rf"""
-       test -L output/{b_name} || ln -sr work/{b_name} output/{b_name}
-       test -L output/{b_name}.bai || ln -sr work/{b_name}.bai output/{b_name}.bai
-       test -L output/{b_name}.md5 || ln -sr work/{b_name}.md5 output/{b_name}.md5
-       test -L output/{b_name}.bai.md5 || ln -sr work/{b_name}.bai.md5 output/{b_name}.bai.md5
-       """
-    ).strip()
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_shell_cmd("link_out_bam", "run", wildcards)
-    assert actual == expected
-
-
 # Tests for TargetCoverageReportStepPart ----------------------------------------------------------
 
 
@@ -580,7 +516,7 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
     }
     # Get actual
-    wildcards = Wildcards(fromdict={"mapper_lib": "bwa.library"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
     actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "run")(wildcards)
     assert actual == expected
 
@@ -597,7 +533,7 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
         "work/bwa.P006-N1-DNA1-WGS1/report/cov_qc/bwa.P006-N1-DNA1-WGS1.txt",
     ]
     # Get actual
-    wildcards = Wildcards(fromdict={"mapper_lib": "bwa"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
     actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards)
     assert actual == expected
 
@@ -605,26 +541,40 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
 def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_output_files() - run"""
     expected = {
-        "txt": "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt",
-        "txt_md5": "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt.md5",
+        "txt": "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt",
+        "txt_md5": "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5",
+        "output_links": [
+            "output/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt",
+            "output/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_info.txt",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_info.txt.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_list.txt",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_list.txt.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.wrapper.py",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.wrapper.py.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.environment.yaml",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.environment.yaml.md5",
+        ],
     }
     assert ngs_mapping_workflow.get_output_files("target_coverage_report", "run") == expected
 
 
 def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_log_file() - run"""
-    expected = "work/{mapper_lib}/log/snakemake.target_coverage.log"
+    expected = "work/{mapper}.{library_name}/log/snakemake.target_coverage.log"
     expected = {
-        "log": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.log",
-        "log_md5": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.log.md5",
-        "conda_info": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.conda_info.txt",
-        "conda_info_md5": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.conda_info.txt.md5",
-        "conda_list": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.conda_list.txt",
-        "conda_list_md5": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.conda_list.txt.md5",
-        "wrapper": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.wrapper.py",
-        "wrapper_md5": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.wrapper.py.md5",
-        "env_yaml": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.environment.yaml",
-        "env_yaml_md5": "work/{mapper_lib}/log/{mapper_lib}.target_cov_report.environment.yaml.md5",
+        "log": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log",
+        "log_md5": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log.md5",
+        "conda_info": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_info.txt",
+        "conda_info_md5": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_info.txt.md5",
+        "conda_list": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_list.txt",
+        "conda_list_md5": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_list.txt.md5",
+        "wrapper": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.wrapper.py",
+        "wrapper_md5": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.wrapper.py.md5",
+        "env_yaml": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.environment.yaml",
+        "env_yaml_md5": "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.environment.yaml.md5",
     }
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
@@ -648,63 +598,6 @@ def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
             assert actual == expected, msg_error
 
 
-# Tests for GenomeCoverageReportStepPart ----------------------------------------------------------
-
-
-def test_genome_coverage_report_step_part_get_input_files(ngs_mapping_workflow):
-    """Tests GenomeCoverageReportStepPart.get_input_files()"""
-    # Define expected
-    expected = {
-        "bam": "work/{mapper_lib}/out/{mapper_lib}.bam",
-        "bai": "work/{mapper_lib}/out/{mapper_lib}.bam.bai",
-    }
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_input_files("genome_coverage_report", "run")
-    assert actual == expected
-
-
-def test_genome_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
-    """Tests GenomeCoverageReportStepPart.get_output_files()"""
-    # Define expected
-    expected = {
-        "bed": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz",
-        "tbi": "work/{mapper_lib}/report/coverage/{mapper_lib}.bed.gz.tbi",
-    }
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_output_files("genome_coverage_report", "run")
-    assert actual == expected
-
-
-def test_genome_coverage_report_step_part_get_log_file(ngs_mapping_workflow):
-    """Tests GenomeCoverageReportStepPart.get_log_file()"""
-    # Define expected
-    expected = "work/{mapper_lib}/log/snakemake.genome_coverage.log"
-    # Get actual and assert
-    actual = ngs_mapping_workflow.get_log_file("genome_coverage_report", "run")
-    assert actual == expected
-
-
-def test_genome_coverage_report_step_part_get_shell_cmd(ngs_mapping_workflow):
-    """Tests GenomeCoverageReportStepPart.get_shell_cmd()"""
-    cmd = ngs_mapping_workflow.get_shell_cmd("genome_coverage_report", "run", None)
-    # The shell command returns a static blob and thus we only check for some important keywords.
-    # The actual functionality has to be tested in an integration/system test.
-    assert "samtools depth" in cmd
-    assert "bgzip -c" in cmd
-    assert "tabix {output.bed}" in cmd
-
-
-def test_genome_coverage_report_step_part_get_resource(ngs_mapping_workflow):
-    """Tests GenomeCoverageReportStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "4G", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("genome_coverage_report", "run", resource)
-        assert actual == expected, msg_error
-
-
 # Tests for NgsMappingWorkflow --------------------------------------------------------------------
 
 
@@ -716,11 +609,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "bam_collect_doc",
         "bwa",
         "external",
-        "gatk_post_bam",
-        "genome_coverage_report",
         "link_in",
-        "link_out",
-        "link_out_bam",
         "minimap2",
         "ngs_chew",
         "star",
@@ -732,8 +621,8 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
 
 def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     """Tests simple functionality of the workflow: checks if file structure is created according
-    to the expected results from the tools, namely: bwa, external, gatk_post_bam,
-    genome_coverage_report, link_in, link_out, link_out_bam, minimap2, star, target_coverage_report.
+    to the expected results from the tools, namely: bwa, external, link_in, minimap2, star,
+    target_coverage_report.
     """
     # Check result file construction
     expected = [
@@ -789,14 +678,8 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for i in range(1, 7)
     ]
     expected += [
+        "output/target_cov_report/log/snakemake.target_coverage.log",
         "output/target_cov_report/out/target_cov_report.txt",
         "output/target_cov_report/out/target_cov_report.txt.md5",
-    ]
-    expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/coverage/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
-            i=i, ext=ext
-        )
-        for i in range(1, 7)
-        for ext in ("bed.gz", "bed.gz.tbi")
     ]
     assert sorted(ngs_mapping_workflow.get_result_files()) == sorted(expected)

@@ -163,12 +163,13 @@ class ValidationMixin:
             values_pass = all(isinstance(value, str) for value in model.values())
             # Validate
             if not (n_keys_pass and keys_pass and values_pass):
-                msg_tpl = (
-                    "Provided configuration not as expected...\n"
-                    "Expected:\n{e_}\nObserved:\n{o_}\n"
-                )
                 pretty_model = self._pretty_print_config(config=model)
-                raise InvalidConfiguration(msg_tpl.format(e_=expected_format, o_=pretty_model))
+                msg = (
+                    "Provided configuration not as expected...\n"
+                    f"\nn_keys_pass={n_keys_pass}, keys_pass={keys_pass}, values_pass={values_pass}\n"
+                    f"Expected:\n{expected_format}\nObserved:\n{pretty_model}\n"
+                )
+                raise InvalidConfiguration(msg)
 
     def _pretty_print_config(self, config):
         """Pretty format configuration.
