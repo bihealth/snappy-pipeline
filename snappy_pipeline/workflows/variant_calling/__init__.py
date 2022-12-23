@@ -134,8 +134,10 @@ in the temporary directory with the command line written to the file ``snakemake
 """
 
 from collections import OrderedDict
+from itertools import chain
 import os
 import os.path
+import re
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -164,6 +166,8 @@ VARIANT_CALLERS = (
     "bcftools",
     "gatk_hc",
     "gatk_ug",
+    "gatk4_hc_gvcf",
+    "gatk4_hc_joint",
 )
 
 #: Default configuration for the variant_calling step
@@ -404,17 +408,210 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
 
 
 class GatkHaplotypeCallerStepPart(GatkCallerStepPartBase):
-    """Germline variant calling with GATK HaplotypeCaller"""
+    """Germline variant calling with GATK HaplotypeCaller
+
+    This triggers the cluster-parallel variant calling with gatk_ug, GATK3.
+    """
 
     #: Step name
     name = "gatk_hc"
 
 
 class GatkUnifiedGenotyperStepPart(GatkCallerStepPartBase):
-    """Germline variant calling with GATK UnifiedGenotyper"""
+    """Germline variant calling with GATK UnifiedGenotyper
+
+    This triggers the cluster-parallel variant calling with gatk_ug, GATK3.
+    """
 
     #: Step name
     name = "gatk_ug"
+
+
+class Gatk4CallerStepPartBase(VariantCallingStepPart):
+    """Germlin variant calling with GATK4"""
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return  # caller not enabled, skip  # pragma: no cover
+        self.parent.ensure_w_config(
+            ("static_data_config", "dbsnp", "path"),
+            "dbSNP not configured but required for {}".format(self.__class__.name),
+        )
+
+    def get_input_files(self, action):
+        """Return required input files"""
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    def get_output_files(self, action):
+        """Return step part output files"""
+        self._validate_action(action)
+        return getattr(self, f"_get_get_output_files_{action}")
+
+    # TODO: get_result_files()!
+
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files in the "log" directory."""
+        _ = action
+        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        prefix = f"work/{token}/log/{token}.{self.name}_{action}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="2-00:00:00",
+            memory=f"4G",
+        )
+
+
+class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
+    """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree.
+
+    In contrast to our GATK 3 wrappers, we do not perform parallelization of the variant calling.
+    Note that this step will generate both GVCF and VCF files for the pedigree.
+    """
+
+    name = "gatk4_hc_joint"
+
+    actions = ("run",)
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+
+        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
+            msg = "INFO: pedigree without index (names: {})"
+            donor_names = list(sorted(d.name for d in pedigree.donors))
+            print(msg.format(donor_names), file=sys.stderr)
+            yield "bam", []
+            yield "ped", None
+        else:
+            library_name = pedigree.index.dna_ngs_library.name
+            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+
+            bams = []
+            for donor in pedigree.donors:
+                if not donor.dna_ngs_library:
+                    continue  # skip
+                infix = f"{wildcards.mapper}.{donor.dna_ngs_library}"
+                bams.append(ngs_mapping(f"output/{infix}/out/{infix}.bam"))
+            yield "bam", bams
+
+    @dictify
+    def _get_output_files_run(self):
+        work_files = {
+            "gvcf": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.g.vcf.gz",
+            "gvcf_md5": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.g.vcf.gz.md5",
+            "gvcf_tbi": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.g.vcf.gz.tbi",
+            "gvcf_tbi_md5": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.g.vcf.gz.tbi.md5",
+            "vcf": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.vcf.gz",
+            "vcf_md5": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.vcf.gz.md5",
+            "vcf_tbi": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"{{mapper}}.{self.name}/out/{{mapper}}.{self.name}.vcf.gz.tbi.md5",
+        }
+        yield from work_files.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(work_files.values(), self.get_log_file("run").values())
+        ]
+
+
+class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
+    """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow.
+
+    In contrast to our GATK 3 wrappers, we do not perform parallelization of the variant calling.
+    This will generate GVCF files for each individual and a joint GVCF file as a VCF file for the
+    whole pedigree.
+    """
+
+    name = "gatk4_hc_gvcf"
+
+    actions = ("discover", "combine_gvcfs", "genotype")
+
+    @dictify
+    def _get_input_files_discover(self, wildcards):
+        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        bam_path = f"output/{infix}/out/{infix}.bam"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        yield "bam", ngs_mapping(bam_path)
+
+    def _get_input_files_combine_gvcfs(self, wildcards):
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+
+        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
+            msg = "INFO: pedigree without index (names: {})"
+            donor_names = list(sorted(d.name for d in pedigree.donors))
+            print(msg.format(donor_names), file=sys.stderr)
+            yield "ped", None
+            yield "gvcf", []
+        else:
+            library_name = pedigree.index.dna_ngs_library.name
+            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+
+            for donor in pedigree.donors:
+                if not donor.dna_ngs_library:
+                    continue  # skip
+                infix = f"{wildcards.mapper}.gatk4_hc_gvcf_discover.{donor.dna_ngs_library.name}"
+                yield "gvcf", f"output/{infix}/out/{infix}.g.vcf.gz"
+
+    def _get_input_files_genotype(self, wildcards):
+        infix = f"{wildcards.mapper}.gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
+        yield "gvcf", f"output/{infix}/out/{infix}.g.vcf.gz"
+        yield "gvcf_md5", f"output/{infix}/out/{infix}.g.vcf.gz.md5"
+        yield "gvcf_tbi", f"output/{infix}/out/{infix}.g.vcf.gz.tbi"
+        yield "gvcf_tbi_md5", f"output/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
+
+    def _get_output_files_discover(self):
+        infix = "{mapper}.gatk4_hc_gvcf_discover.{library_name}"
+        yield "gvcf", f"output/{infix}/out/{infix}.g.vcf.gz"
+        yield "gvcf_md5", f"output/{infix}/out/{infix}.g.vcf.gz.md5"
+        yield "gvcf_tbi", f"output/{infix}/out/{infix}.g.vcf.gz.tbi"
+        yield "gvcf_tbi_md5", f"output/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
+
+    def _get_output_files_combine_gvcfs(self):
+        infix = "{mapper}.gatk4_hc_gvcf_combine_gvcfs.{library_name}"
+        yield "gvcf", f"output/{infix}/out/{infix}.g.vcf.gz"
+        yield "gvcf_md5", f"output/{infix}/out/{infix}.g.vcf.gz.md5"
+        yield "gvcf_tbi", f"output/{infix}/out/{infix}.g.vcf.gz.tbi"
+        yield "gvcf_tbi_md5", f"output/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
+
+    def _get_output_files_genotype(self):
+        infix = "{mapper}.gatk4_hc_gvcf.{library_name}"
+        result = {
+            "gvcf": f"output/{infix}/out/{infix}.g.vcf.gz",
+            "gvcf_md5": f"output/{infix}/out/{infix}.g.vcf.gz.md5",
+            "gvcf_tbi": f"output/{infix}/out/{infix}.g.vcf.gz.tbi",
+            "gvcf_tbi_md5": f"output/{infix}/out/{infix}.g.vcf.gz.tbi.md5",
+            "vcf": f"output/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"output/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"output/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"output/{infix}/out/{infix}.vcf.gz.tbi.md5",
+        }
+        yield from result.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(result.values(), self.get_log_file("genotype").values())
+        ]
 
 
 class BcftoolsStatsStepPart(BaseStepPart):
@@ -665,6 +862,8 @@ class VariantCallingWorkflow(BaseStep):
                 BcftoolsStepPart,
                 GatkHaplotypeCallerStepPart,
                 GatkUnifiedGenotyperStepPart,
+                Gatk4HaplotypeCallerJointStepPart,
+                Gatk4HaplotypeCallerGvcfStepPart,
                 BcftoolsStatsStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
