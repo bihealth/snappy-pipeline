@@ -42,12 +42,12 @@ For example, it might look as follows for the example from above:
 ::
 
     output/
-    +-- bwa.freebayes.P001-N1-DNA1-WES1
+    +-- bwa.gatk_hc.P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.freebayes.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.freebayes.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.freebayes.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       `-- bwa.freebayes.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       `-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
     [...]
 
 Generally, these files will be unfiltered, i.e., contain low-quality variants.
@@ -75,11 +75,8 @@ Available Germline Variant Callers
 The following germline variant callers are currently available
 
 - ``"bcftools"``  -- samtools mpileup plus bcftools
-- ``"freebayes"``
 - ``"gatk_hc"`` -- GATK HaplotypeCaller
-- ``"gatk_hc_gvcf"`` -- GATK HaplotypeCaller via GVCF files
 - ``"gatk_ug"`` -- GATK UnifiedGenotyper
-- ``"platypus"``
 
 =======
 Reports
@@ -144,7 +141,6 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -154,7 +150,6 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -167,16 +162,9 @@ EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
 #: Available germline variant callers
 VARIANT_CALLERS = (
     "bcftools",
-    "freebayes",
     "gatk_hc",
-    "gatk_hc_gvcf",
     "gatk_ug",
-    "platypus",
-    "varscan",
 )
-
-#: Callers that support cohort-wide calling.
-COHORT_WIDE_CALLERS = ("gatk_hc_gvcf", "varscan")
 
 #: Default configuration for the variant_calling step
 DEFAULT_CONFIG = r"""
@@ -187,36 +175,14 @@ step_config:
       min_dp: 10  # minimal DP of variant, must be >=1
       enabled: false
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    tools: ['gatk_ug']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug', and 'freebayes'.
+    tools: ['gatk_ug']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug'
     jannovar_statistics:
       path_ser: REQUIRED  # REQUIRED
-    platypus:
-      num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
     bcftools:
       max_depth: 4000
       max_indel_depth: 4000
       window_length: 10000000
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
-    freebayes:
-      use_standard_filters: true
-      window_length: 10000000
-      num_threads: 16
-      min_alternate_fraction: 0.05  # FreeBayes default
-      min_mapping_quality: 1        # FreeBayes default
-      min_repeat_entropy: 1         # FreeBayes default
-      haplotype_length: 3           # FreeBayes default
       ignore_chroms:            # patterns of chromosome names to ignore
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
@@ -238,44 +204,6 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
-      # GATK HC--specific configuration
-      allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    gatk_hc_gvcf:
-      # Enable cohort-wide calling
-      cohort_wide: true
-      # Enable pedigree-wise calling
-      pedigree_wise: true
-      # Parallelization configuration
-      num_threads: 2            # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      num_jobs_combine_gvcf_cort: 0
-      num_jobs_genotype_cohort: 0
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 10         # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10  # throttling of status jobs
       ignore_chroms:            # patterns of chromosome names to ignore
       - NC_007605  # herpes virus
       - hs37d5     # GRCh37 decoy
@@ -338,48 +266,6 @@ step_config:
       - Coverage
       - ClippingRankSumTest
       - DepthPerSampleHC
-    # Configuration for cohort-wide variant calling using Varscan.
-    varscan:
-      # TODO: only cohort wide used and tested so far, settings should probably
-      #       be switched around
-      # Enable cohort-wide calling
-      cohort_wide: true
-      # Enable pedigree-wise calling
-      pedigree_wise: false
-      # Divisor for window length in case of cohort-wide
-      cohort_window_divisor: 50
-      # Parallelization configuration
-      num_threads: 2            # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 0          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10  # throttling of status jobs
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - nc_007605  # herpes virus
-      - hs37d5     # grch37 decoy
-      - chrebv     # eppstein-barr virus
-      - '*_decoy'  # decoy contig
-      - 'hla-*'    # hla genes
-      # Configuration for samtools mpileup
-      max_depth: 4000
-      max_indel_depth: 4000
-      min_bq: 13
-      no_baq: True
-      # Configuration for Varscan
-      min_coverage: 8
-      min_reads2: 2
-      min_avg_qual: 15
-      min_var_freq: 0.01
-      min_freq_for_hom: 0.75
-      p_value: 99e-02
 """
 
 
@@ -489,62 +375,6 @@ class BcftoolsStepPart(VariantCallingStepPart):
         )
 
 
-class FreebayesStepPart(VariantCallingStepPart):
-    """Germline variant calling with freebayes"""
-
-    #: Step name
-    name = "freebayes"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            time="2-00:00:00",  # 2 days
-            memory=f"{int(3.75 * 1024 * 16)}M",
-        )
-
-    def get_params(self, action):
-        """
-        :param action: Action (i.e., step) in the workflow. Currently only available for 'run'.
-        :type action: str
-
-        :return: Returns get parameters function.
-
-        :raises UnsupportedActionException: if action not 'run'.
-        """
-        # Validate inputted action
-        if action != "run":
-            error_message = "Action '{action}' is not supported. Valid option: 'run'.".format(
-                action=action
-            )
-            raise UnsupportedActionException(error_message)
-
-        # Return requested function
-        return getattr(self, "_get_params_{}".format(action))
-
-    def _get_params_run(self):
-        """Get FreeBayes parameters
-
-        :returns: Returns FreeBayes parameters dictionary.
-        """
-        parameters_key_list = [
-            "window_length",
-            "min_alternate_fraction",
-            "min_mapping_quality",
-            "min_repeat_entropy",
-            "haplotype_length",
-        ]
-        return {key: self.config["freebayes"][key] for key in parameters_key_list}
-
-
 class GatkCallerStepPartBase(VariantCallingStepPart):
     """Germlin variant calling with GATK caller"""
 
@@ -585,302 +415,6 @@ class GatkUnifiedGenotyperStepPart(GatkCallerStepPartBase):
 
     #: Step name
     name = "gatk_ug"
-
-
-class PlatypusStepPart(VariantCallingStepPart):
-    """Germline variant calling with Platypus"""
-
-    #: Step name
-    name = "platypus"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            time="20:00:00",  # 20 hours
-            memory=f"{int(3.75 * 1024 * 16)}M",
-        )
-
-
-class GatkHaplotypeCallerGvcfStepPart(BaseStepPart):
-    """Base class for germline variant calling step parts
-
-    Variant calling is performed on a per-pedigree level.  The (one) index individual is used
-    for naming the output file.
-    """
-
-    #: Step name
-    name = "gatk_hc_gvcf"
-
-    #: Actions in GATK HC GVCF workflow
-    actions = ("discover", "genotype_pedigree", "combine_gvcf", "genotype_cohort")
-
-    #: Directory infixes
-    dir_infixes = {
-        "discover": "{mapper}.gatk_hc_gvcf.discover.{library_name}",
-        "genotype_pedigree": r"{mapper}.gatk_hc_gvcf.{index_library_name,[^\.]+}",
-        "combine_gvcf": "{mapper}.gatk_hc_gvcf.combine_gvcf",
-        "genotype_cohort": "{mapper}.gatk_hc_gvcf.whole_cohort",
-    }
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "combine_gvcf": ResourceUsage(
-            threads=1,
-            time="10-00:00:00",  # 10 days
-            memory=f"{10 * 1024}M",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            time="3-08:00:00",  # 3 days and 8 hours
-            memory=f"{10 * 1024}M",
-        ),
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{ngs_library}}/out/"
-            "{{mapper}}.{var_caller}.{{ngs_library}}{ext}"
-        )
-        self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    def get_input_files(self, action):
-        """Return appropriate input function for the given action"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "discover": self._get_input_files_discover,
-            "genotype_pedigree": self._get_input_files_genotype_pedigree,
-            "combine_gvcf": self._get_input_files_combine_gvcf,
-            "genotype_cohort": self._get_input_files_genotype_cohort,
-        }
-        return mapping[action]
-
-    @listify
-    def _get_input_files_discover(self, wildcards):
-        """Return input files for "discover" action"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        for ext in (".bam", ".bam.bai"):
-            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-            yield ngs_mapping(tpl.format(ext=ext, **wildcards))
-
-    @listify
-    def _get_input_files_genotype_pedigree(self, wildcards):
-        """Return input files for "genotype_pedigree" action"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
-        for donor in pedigree.donors:
-            paths = self.get_output_files("discover")
-            yield paths["vcf"].format(library_name=donor.dna_ngs_library.name, **wildcards)
-
-    @listify
-    def _get_input_files_combine_gvcf(self, wildcards):
-        """Return input files for "combine_gvcf" action"""
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                paths = self.get_output_files("discover")
-                yield paths["vcf"].format(library_name=donor.dna_ngs_library.name, **wildcards)
-
-    @listify
-    def _get_input_files_genotype_cohort(self, wildcards):
-        """Return input files for "genotype_cohort" action"""
-        for path in self.get_output_files("combine_gvcf")["vcf"]:
-            yield path.format(**wildcards)
-
-    def get_args(self, action):
-        """Return function that maps wildcards to dict for input files"""
-        assert action == "combine_gvcf", "Unsupported actions"
-        return {"genome_regions": self._get_args_gvcf_regions()}
-
-    def _get_args_gvcf_regions(self):
-        """Return list of regions to use for GVCF parallelization
-
-        Returns ``OrderedDict`` with grouping by chromsome name.
-        """
-        fai_path = self.w_config["static_data_config"]["reference"]["path"] + ".fai"
-        window_length = max(
-            10 * 1000 * 1000, self.parent.config["gatk_hc_gvcf"]["window_length"] // 10
-        )
-        ignore_chroms = self.parent.config["gatk_hc_gvcf"]["ignore_chroms"]
-        result = OrderedDict()
-        with open(fai_path, "rt") as fai_file:
-            for region in yield_regions(fai_file, window_length, ignore_chroms=ignore_chroms):
-                # Note that we have to convert GenomeRegion to dict here via vars
-                result.setdefault(region.chrom, []).append(vars(region))
-        return result
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files that all germline variant calling sub steps must
-        return (VCF + TBI file)
-        """
-        # Validate action
-        self._validate_action(action)
-        if action != "combine_gvcf":
-            for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
-                if action == "discover":
-                    ext = ".g" + ext
-                infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-                yield name, "work/" + infix + "/out/" + infix + ext
-                yield name + "_md5", "work/" + infix + "/out/" + infix + ext + ".md5"
-        else:
-            result = OrderedDict()
-            for chrom, _ in self._get_args_gvcf_regions().items():
-                chrom = chrom.replace(".", "_")
-                for name, ext in {"vcf": ".g.vcf.gz", "tbi": ".g.vcf.gz.tbi"}.items():
-                    infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-                    result.setdefault(name, []).append(
-                        "work/" + infix + "/out/" + infix + "." + chrom + ext
-                    )
-                    result.setdefault(name + "_md5", []).append(
-                        "work/" + infix + "/out/" + infix + "." + chrom + ext + ".md5"
-                    )
-            yield from result.items()
-
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-        return "work/" + infix + "/log/snakemake.log"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        if action == "combine_gvcf":
-            return self.resource_usage_dict.get("combine_gvcf")
-        else:
-            return self.resource_usage_dict.get("default")
-
-
-class VarscanStepPart(BaseStepPart):
-    """Variant calling using Varscan.
-
-    Variants are called in a whole-pedigree or whole-cohort fashion.
-    """
-
-    #: Step name
-    name = "varscan"
-
-    #: Actions in GATK HC GVCF workflow
-    actions = ("call_pedigree", "call_cohort")
-
-    #: Directory infixes
-    dir_infixes = {
-        "call_pedigree": r"{mapper}.varscan.{index_library_name,[^\.]+}",
-        "call_cohort": "{mapper}.varscan.whole_cohort",
-    }
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "call_pedigree": ResourceUsage(
-            threads=1,
-            time="7-00:00:00",  # 7 days
-            memory=f"{4 * 1024}M",
-        ),
-        "call_cohort": ResourceUsage(
-            threads=1,
-            time="7-00:00:00",  # 7 days
-            memory=f"{16 * 1024}M",
-        ),
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{ngs_library}}/out/"
-            "{{mapper}}.{var_caller}.{{ngs_library}}{ext}"
-        )
-        self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    def get_input_files(self, action):
-        """Return appropriate input function for the given action"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "call_pedigree": self._get_input_files_call_pedigree,
-            "call_cohort": self._get_input_files_call_cohort,
-        }
-        return mapping[action]
-
-    @listify
-    def _get_input_files_call_pedigree(self, wildcards):
-        """Return input files for "call_pedigree" action"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
-        for donor in pedigree.donors:
-            for ext in (".bam", ".bam.bai"):
-                tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-                library_name = donor.dna_ngs_library.name
-                yield ngs_mapping(tpl.format(ext=ext, library_name=library_name, **wildcards))
-
-    @listify
-    def _get_input_files_call_cohort(self, wildcards):
-        """Return input files for "combine_gvcf" action"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        for library_name in sorted(self.index_ngs_library_to_pedigree.keys()):
-            for ext in (".bam", ".bam.bai"):
-                tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-                yield ngs_mapping(tpl.format(ext=ext, library_name=library_name, **wildcards))
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files that all germline variant calling sub steps must
-        return (VCF + TBI file)
-        """
-        # Validate action
-        self._validate_action(action)
-        for name, ext in {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}.items():
-            infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-            yield name, "work/" + infix + "/out/" + infix + ext
-            yield name + "_md5", "work/" + infix + "/out/" + infix + ext + ".md5"
-
-    @dictify
-    def _get_log_file(self, action):
-        """Return dict of log files."""
-        infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-        prefix = os.path.join("work", infix, "log", infix)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
 
 
 class BcftoolsStatsStepPart(BaseStepPart):
@@ -1129,12 +663,8 @@ class VariantCallingWorkflow(BaseStep):
             (
                 WritePedigreeStepPart,
                 BcftoolsStepPart,
-                FreebayesStepPart,
                 GatkHaplotypeCallerStepPart,
-                GatkHaplotypeCallerGvcfStepPart,
                 GatkUnifiedGenotyperStepPart,
-                PlatypusStepPart,
-                VarscanStepPart,
                 BcftoolsStatsStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
@@ -1171,16 +701,6 @@ class VariantCallingWorkflow(BaseStep):
                         "conda_list.txt",
                         "conda_list.txt.md5",
                     ),
-                )
-        # Yield result files of whole-cohort genotyping
-        for caller in COHORT_WIDE_CALLERS:
-            if caller in self.config["tools"] and self.config[caller]["cohort_wide"]:
-                name_pattern = "{mapper}.%s.whole_cohort" % caller
-                yield from expand(
-                    os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                    caller=[caller],
-                    ext=EXT_VALUES,
                 )
         # Yield report files
         yield from self._yield_bcftools_report_files()
@@ -1332,22 +852,6 @@ class VariantCallingWorkflow(BaseStep):
                             index_library=[pedigree.index.dna_ngs_library],
                             ext=["txt", "txt.md5"],
                         )
-        # Statistics for whole-cohort files
-        for caller in COHORT_WIDE_CALLERS:
-            if caller in self.config["tools"] and self.config[caller]["cohort_wide"]:
-                name_pattern = "{mapper}.%s.whole_cohort" % caller
-                tpl = (
-                    "output/"
-                    + name_pattern
-                    + "/report/jannovar_statistics/"
-                    + name_pattern
-                    + ".{ext}"
-                )
-                yield from expand(
-                    tpl,
-                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                    ext=["txt", "txt.md5"],
-                )
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""

@@ -212,14 +212,6 @@ class VariantCheckingWorkflow(BaseStep):
                         var_caller=self.config["tools_variant_calling"],
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )
-        if "gatk_hc_gvcf" in self.config["tools_variant_calling"]:
-            for path in self.sub_steps["peddy"].get_output_files("run").values():
-                yield from expand(
-                    path,
-                    mapper=self.config["tools_ngs_mapping"],
-                    var_caller=["gatk_hc_gvcf"],
-                    index_ngs_library=["whole_cohort"],
-                )
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""

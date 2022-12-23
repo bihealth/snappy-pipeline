@@ -618,16 +618,10 @@ class BesenbacherFilterAnnotationStep:
                 self._fix_gatk_record(record)
                 if not self.annotate_gatk(record, gt_child, gt_father, gt_mother):
                     break  # added Besenbacher filter
-            elif "NV" not in gt_child.data:  # looks like Platypus
-                if not self.annotate_platypus(record, gt_child, gt_father, gt_mother):
-                    break  # added Besenbacher filter
             else:
                 if not self.warned:
                     self.warned = True
-                    logging.warning(
-                        "WARNING: missing AD or NV FORMAT, neither Platypus nor GATK; "
-                        "warning only shown once"
-                    )
+                    logging.warning("WARNING: missing AD is not GATK; warning only shown once")
                     logging.warning("%s", gt_child.data)
 
     def _fix_gatk_record(self, record):
@@ -662,49 +656,6 @@ class BesenbacherFilterAnnotationStep:
             )
         )
         return header
-
-    def annotate_platypus(self, record, gt_child, gt_father, gt_mother):
-        besenbacher = False
-        # perform Besenbacher filtering
-        if not gt_child.data["NR"] or gt_child.data["GQ"] is None:
-            return False
-        if (
-            gt_child.data["NR"] < self.args.min_dp
-            or gt_child.data["NR"] > self.args.max_dp
-            or gt_child.data["GQ"] < self.args.min_gq
-        ):
-            record.add_filter("Besenbacher")
-            besenbacher = True
-        assert gt_child.data["NR"] > 0  # the following might otherwise fail
-        ab_child = gt_child.data["NV"] / gt_child.data["NR"]
-        if ab_child < self.args.min_ab or ab_child > self.args.max_ab:
-            if not besenbacher:
-                record.add_filter("Besenbacher")
-                besenbacher = True
-        for gt in record.calls:
-            if gt.sample != gt_child.sample:
-                if gt.data["NV"] and gt.data["NV"] > 0:
-                    if record.FILTER and "InFamily" not in record.FILTER:
-                        record.add_filter("InFamily")
-                    break
-        for gt in [gt_father, gt_mother]:
-            if gt.data["NV"] and gt.data["NV"] > 0:
-                if record.FILTER and "InParent" not in record.FILTER:
-                    record.add_filter("InParent")
-            if any(gt.data[key] is None for key in ("NR", "NV", "GQ")):
-                if not besenbacher:
-                    record.add_filter("Besenbacher")
-                return False
-            if (
-                gt.data["NR"] < self.args.min_dp
-                or gt.data["NR"] > self.args.max_dp
-                or gt.data["GQ"] < self.args.min_gq
-                or gt.data["NV"] > self.args.max_ad2
-            ):
-                if not besenbacher:
-                    record.add_filter("Besenbacher")
-                    besenbacher = True
-        return not besenbacher
 
     def annotate_gatk(self, record, gt_child, gt_father, gt_mother):
         besenbacher = False
