@@ -42,22 +42,10 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
-if [[ "{library_kit}" == "PacBio HiFi" ]]; then
-    preset=map-hifi
-elif [[ "{library_kit}" == "PacBio CLR" ]]; then
-    preset=map-pb
-elif [[ "{library_kit}" == ONT* ]]; then
-    preset=map-ont
-else
-    >&2 echo "Unknown library kit {library_kit}"
-    exit 1
-fi
-
 ngs-chew fingerprint \
-    --min-coverage 5 \
     --reference {snakemake.config[static_data_config][reference][path]} \
-    --output-fingerprint {snakemake.ouput.npz} \
-    --input-bam {snakemake.input.bam}
+    --output-fingerprint {snakemake.output.npz} \
+    --input-bam {snakemake.input.bam} \
     --genome-release {genome_release}
 
 pushd $(dirname {snakemake.output.npz})
