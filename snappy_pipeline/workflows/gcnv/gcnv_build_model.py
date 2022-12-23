@@ -2,9 +2,11 @@
 """Implementation of the gCNV COHORT mode methods - used to build models.
 """
 
-from snakemake.io import touch
+import re
 
-from snappy_pipeline.utils import dictify
+from snakemake.io import expand, touch
+
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.gcnv.gcnv_common import GcnvCommonStepPart
 
 
@@ -176,3 +178,30 @@ class BuildGcnvModelStepPart(
         "call_cnvs",
         "post_germline_calls",
     )
+
+    @listify
+    def get_result_files(self):
+        """Return list of concrete output paths"""
+
+        def path_work_to_output(work_path):
+            """Helper to convert a work to an output path"""
+            return re.sub(r"^work/", "output/", work_path)
+
+        # Get list with all result path template strings.  This is done using the function generating
+        # the output files for the post germline calls step (will create coverage and ploidy models).
+        result_path_tpls = list(self._get_output_files_post_germline_calls().values())
+
+        # Generate output files for all mappers and library names.
+        for _, pedigree in self.index_ngs_library_to_pedigree.items():
+            library_names = [
+                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+            ]
+            for path_tpl in result_path_tpls:
+                yield from map(
+                    path_work_to_output,
+                    expand(
+                        path_tpl,
+                        mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        library_name=library_names,
+                    ),
+                )
