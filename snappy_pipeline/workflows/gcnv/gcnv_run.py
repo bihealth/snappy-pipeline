@@ -9,11 +9,14 @@ import os
 import re
 import warnings
 
-from snakemake.io import expand, touch
+from snakemake.io import Wildcards, expand, touch
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.gcnv.gcnv_common import GcnvStepPart, InconsistentLibraryKitsWarning
+from snappy_pipeline.workflows.gcnv.gcnv_common import (
+    GcnvCommonStepPart,
+    InconsistentLibraryKitsWarning,
+)
 
 #: Predefined file name keys and extensions for the overall results files.
 RESULT_EXTENSIONS = {
@@ -36,23 +39,47 @@ LOG_EXTENSIONS = {
 }
 
 
-class RunGcnvStepPart(GcnvStepPart):
-    """Class with methods to run GATK4 gCNV calling in CASE mode"""
+def get_model_dir_list(pattern):
+    """Get model directories.
 
-    #: Class available actions
-    actions = (
-        "preprocess_intervals",
-        "coverage",
-        "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
-        "joint_germline_cnv_segmentation",
-    )
+    :param pattern: Pattern of model directory paths. Expects models to be based on scattered
+    step: ``gatk IntervalListTools``.
+    :type pattern: str
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Validate configuration, precomputed models must be present
-        self.validate_request()
+    :return: Returns list with all directories that match the inputted pattern.
+    """
+    return [path_ for path_ in glob.glob(pattern) if os.path.isdir(path_)]
+
+
+def get_model_dir_to_dict(pattern):
+    """Get model directories dictionary.
+
+    :param pattern: Pattern of model directory paths. Expects models to be based on scattered
+    step: ``gatk IntervalListTools``.
+    :type pattern: str
+
+    :return: Returns dictionary with model directories' information.
+    Key: shard (e.g., '01_of_42'); Value: directory path (e.g., '/path/to/model_01_of_42').
+    """
+    # Initialise variables
+    out_dict = {}
+    default_key = "001"
+    re_pattern = pattern.replace("*", "(.*)")
+    # Get all model directories
+    path_list = get_model_dir_list(pattern)
+    # Populate dictionary
+    # Assumption: if no group, a single path was provided instead of a pattern.
+    for path in path_list:
+        try:
+            key = re.search(re_pattern, path).group(1)
+            out_dict[key] = path
+        except IndexError:
+            out_dict[default_key] = path
+    return out_dict
+
+
+class ValidationMixin:
+    """Mixin that provides validation methods for input model"""
 
     def validate_request(self):
         """Validate request.
@@ -91,7 +118,7 @@ class RunGcnvStepPart(GcnvStepPart):
                     raise InvalidConfiguration(msg_tpl.format(str(model)))
                 # Find all model directories
                 model_pattern = model.get("model_pattern")
-                path_list = self.get_model_dir_list(pattern=model_pattern)
+                path_list = get_model_dir_list(pattern=model_pattern)
                 if len(path_list) == 0:
                     msg_tpl = "Could not find any directory path with the provided pattern: '{0}' "
                     raise InvalidConfiguration(msg_tpl.format(model_pattern))
@@ -143,8 +170,7 @@ class RunGcnvStepPart(GcnvStepPart):
                 pretty_model = self._pretty_print_config(config=model)
                 raise InvalidConfiguration(msg_tpl.format(e_=expected_format, o_=pretty_model))
 
-    @staticmethod
-    def _pretty_print_config(config):
+    def _pretty_print_config(self, config):
         """Pretty format configuration.
 
         :param config: Configuration dictionary to be formatted.
@@ -154,8 +180,7 @@ class RunGcnvStepPart(GcnvStepPart):
         """
         return str(json.dumps(config, sort_keys=False, indent=4))
 
-    @staticmethod
-    def validate_ploidy_model_directory(path):
+    def validate_ploidy_model_directory(self, path):
         """Validate gCNV ploidy-model directory.
 
         :param path: Path to gCNV ploidy-model directory.
@@ -181,8 +206,7 @@ class RunGcnvStepPart(GcnvStepPart):
             return False
         return True
 
-    @staticmethod
-    def validate_call_model_directory(path):
+    def validate_call_model_directory(self, path):
         """Validate gCNV call-model directory.
 
         :param path: Path to gCNV call-model directory. Files created using COHORT mode.
@@ -213,41 +237,33 @@ class RunGcnvStepPart(GcnvStepPart):
             return False
         return True
 
-    @staticmethod
-    def get_model_dir_list(pattern):
-        """Get model directories.
 
-        :param pattern: Pattern of model directory paths. Expects models to be based on scattered
-        step: ``gatk IntervalListTools``.
-        :type pattern: str
+class ContigPloidyMixin:
+    """Methods for ``contig_ploidy``."""
 
-        :return: Returns list with all directories that match the inputted pattern.
+    @dictify
+    def _get_input_files_contig_ploidy(self, wildcards: Wildcards):
+        """Yield input files for ``contig_ploidy`` rule  in CASE MODE using precomputed model.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         """
-        return [path_ for path_ in glob.glob(pattern) if os.path.isdir(path_)]
+        ext = "tsv"
+        tsvs = []
+        for lib in sorted(self.index_ngs_library_to_donor):
+            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
+                name_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
+                tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
+        yield ext, tsvs
 
-    def get_params(self, action):
-        """
-        :param action: Action (i.e., step) in the workflow. Currently available for:
-        'ploidy-model', 'model', and 'postgermline_models'.
-        :type action: str
+    @dictify
+    def _get_output_files_contig_ploidy(self):
+        """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
+        ext = "done"
+        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-        :return: Returns input function for gCNV rule based on inputted action.
-
-        :raises UnsupportedActionException: if invalid action.
-        """
-        # Actions with parameters
-        valid_actions = ("model", "ploidy_model", "postgermline_models")
-        # Validate inputted action
-        if action not in valid_actions:
-            error_message = "Action '{action}' is not supported. Valid options: {options}.".format(
-                action=action, options=", ".join(valid_actions)
-            )
-            raise UnsupportedActionException(error_message)
-
-        # Return requested function
-        return getattr(self, "_get_params_{}".format(action))
-
-    def _get_params_ploidy_model(self, wildcards):
+    def _get_params_contig_ploidy(self, wildcards: Wildcards):
         """Get ploidy-model parameters.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
@@ -266,101 +282,12 @@ class RunGcnvStepPart(GcnvStepPart):
                 path = model.get("contig_ploidy")
         return {"model": path}
 
-    def _get_params_model(self, wildcards):
-        """Get model parameters.
 
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
-        (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns model parameters dictionary if analysis type is 'case_mode';
-        otherwise, returns empty dictionary. Step: Calling copy number variants with
-        `GermlineCNVCaller`.
-        """
-        path = "__no_model_for_library_in_config__"
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == wildcards.library_kit:
-                pattern = model.get("model_pattern")
-                model_dir_dict = self._get_model_dir_to_dict(pattern)
-                path = model_dir_dict.get(wildcards.shard)
-        return {"model": path}
-
-    def _get_params_postgermline_models(self, wildcards):
-        """Get post germline model parameters.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
-        (e.g., 'P001-N1-DNA1-WGS1').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns model parameters dictionary if analysis type is 'case_mode';
-        otherwise, returns empty dictionary. Step: consolidating the scattered
-        `GermlineCNVCaller` results, performs segmentation and calls copy number states with
-        `PostprocessGermlineCNVCalls `.
-        """
-        paths = ["__no_model_available_for_library__"]
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            # Get library kit associated with library name
-            library_kit = self.ngs_library_to_kit[wildcards.library_name]
-            if library_to_wildcard == library_kit:
-                pattern = model.get("model_pattern")
-                model_dir_dict = self._get_model_dir_to_dict(pattern)
-                paths = list(model_dir_dict.values())
-        return {"model": paths}
-
-    def _get_model_dir_to_dict(self, pattern):
-        """Get model directories dictionary.
-
-        :param pattern: Pattern of model directory paths. Expects models to be based on scattered
-        step: ``gatk IntervalListTools``.
-        :type pattern: str
-
-        :return: Returns dictionary with model directories' information.
-        Key: shard (e.g., '01_of_42'); Value: directory path (e.g., '/path/to/model_01_of_42').
-        """
-        # Initialise variables
-        out_dict = {}
-        default_key = "001"
-        re_pattern = pattern.replace("*", "(.*)")
-        # Get all model directories
-        path_list = self.get_model_dir_list(pattern)
-        # Populate dictionary
-        # Assumption: if no group, a single path was provided instead of a pattern.
-        for path in path_list:
-            try:
-                key = re.search(re_pattern, path).group(1)
-                out_dict[key] = path
-            except IndexError:
-                out_dict[default_key] = path
-        return out_dict
+class CallCnvsMixin:
+    """Methods for ``call_cnvs``."""
 
     @dictify
-    def _get_input_files_contig_ploidy(self, wildcards):
-        """Yield input files for ``contig_ploidy`` rule  in CASE MODE using precomputed model.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
-        and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
-        :type wildcards: snakemake.io.Wildcards
-        """
-        ext = "tsv"
-        tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
-                    mapper=wildcards.mapper, library_name=lib
-                )
-                tsvs.append(
-                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                        name_pattern=name_pattern, ext=ext
-                    )
-                )
-        yield ext, tsvs
-
-    @dictify
-    def _get_input_files_call_cnvs(self, wildcards):
+    def _get_input_files_call_cnvs(self, wildcards: Wildcards):
         """Yield input files for ``call_cnvs`` in CASE mode.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
@@ -377,19 +304,56 @@ class RunGcnvStepPart(GcnvStepPart):
         coverage_files = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                path_pattern = tsv_path_pattern.format(mapper=wildcards.mapper, library_name=lib)
-                coverage_files.append(
-                    "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                        name_pattern=path_pattern, ext=tsv_ext
-                    )
-                )
+                name_pattern = tsv_path_pattern.format(mapper=wildcards.mapper, library_name=lib)
+                coverage_files.append(f"work/{name_pattern}/out/{name_pattern}.{tsv_ext}")
         yield tsv_ext, coverage_files
 
         # Yield ploidy files
-        path_pattern = ploidy_path_pattern.format(**wildcards)
-        yield ploidy_ext, "work/{name_pattern}/out/{name_pattern}/.done".format(
-            name_pattern=path_pattern
-        )
+        name_pattern = ploidy_path_pattern.format(**wildcards)
+        yield ploidy_ext, f"work/{name_pattern}/out/{name_pattern}/.done"
+
+    @dictify
+    def _get_output_files_call_cnvs(self):
+        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
+        ext = "done"
+        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+
+    def _get_params_call_cnvs(self, wildcards):
+        """Get model parameters.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
+        (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns model parameters dictionary if analysis type is 'case_mode';
+        otherwise, returns empty dictionary. Step: Calling copy number variants with
+        `GermlineCNVCaller`.
+        """
+        path = "__no_model_for_library_in_config__"
+        for model in self.config["gcnv"]["precomputed_model_paths"]:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            if library_to_wildcard == wildcards.library_kit:
+                pattern = model.get("model_pattern")
+                model_dir_dict = get_model_dir_to_dict(pattern)
+                path = model_dir_dict.get(wildcards.shard)
+        return {"model": path}
+
+
+class PostGermlineCallsMixin:
+    """Methods for ``post_germline_calls``."""
+
+    @dictify
+    def _get_output_files_post_germline_calls(self):
+        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        extensions = {
+            "ratio_tsv": ".ratio.tsv",
+            "itv_vcf": ".interval.vcf.gz",
+            "seg_vcf": ".vcf.gz",
+        }
+        for key, ext in extensions.items():
+            yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards):
@@ -409,7 +373,7 @@ class RunGcnvStepPart(GcnvStepPart):
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == library_kit:
                 pattern = model.get("model_pattern")
-                model_dir_dict = self._get_model_dir_to_dict(pattern)
+                model_dir_dict = get_model_dir_to_dict(pattern)
                 break
 
         # Validate model
@@ -418,22 +382,57 @@ class RunGcnvStepPart(GcnvStepPart):
             raise InvalidConfiguration(msg_error)
 
         # Yield cnv calls output
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
+        name_pattern = f"{wildcards.mapper}.gcnv_call_cnvs.{library_kit}"
         yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
+            f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
             for shard in model_dir_dict
         ]
 
         # Yield contig-ploidy output
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+        name_pattern = f"{wildcards.mapper}.gcnv_contig_ploidy.{library_kit}"
+        yield ext, f"work/{name_pattern}/out/{name_pattern}/.done"
+
+    def _get_params_post_germline_calls(self, wildcards):
+        """Get post germline model parameters.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
+        (e.g., 'P001-N1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns model parameters dictionary if analysis type is 'case_mode';
+        otherwise, returns empty dictionary. Step: consolidating the scattered
+        `GermlineCNVCaller` results, performs segmentation and calls copy number states with
+        `PostprocessGermlineCNVCalls `.
+        """
+        paths = ["__no_model_available_for_library__"]
+        for model in self.config["gcnv"]["precomputed_model_paths"]:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            # Get library kit associated with library name
+            library_kit = self.ngs_library_to_kit[wildcards.library_name]
+            if library_to_wildcard == library_kit:
+                pattern = model.get("model_pattern")
+                model_dir_dict = get_model_dir_to_dict(pattern)
+                paths = list(model_dir_dict.values())
+        return {"model": paths}
+
+
+class JointGermlineCnvSegmentationMixin:
+    """Methods for ``post_germline_calls``."""
+
+    @dictify
+    def _get_output_files_joint_germline_cnv_segmentation(self):
+        name_pattern = "{mapper}.gcnv.{library_name}"
+        for key, suffix in RESULT_EXTENSIONS.items():
+            yield key, f"work/{name_pattern}/out/{name_pattern}{suffix}"
+
+    @dictify
+    def _get_log_file_joint_germline_cnv_segmentation(self):
+        """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
+        name_pattern = "{mapper}.gcnv.{library_name}"
+        for key, ext in LOG_EXTENSIONS.items():
+            yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
 
     @dictify
     def _get_input_files_joint_germline_cnv_segmentation(self, wildcards):
@@ -455,43 +454,50 @@ class RunGcnvStepPart(GcnvStepPart):
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
 
-    @dictify
-    def _get_output_files_contig_ploidy(self):
-        """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
-        ext = "done"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-    @dictify
-    def _get_output_files_call_cnvs(self):
-        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
-        ext = "done"
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+class RunGcnvStepPart(
+    ValidationMixin,
+    ContigPloidyMixin,
+    CallCnvsMixin,
+    PostGermlineCallsMixin,
+    JointGermlineCnvSegmentationMixin,
+    GcnvCommonStepPart,
+):
+    """Class with methods to run GATK4 gCNV calling in CASE mode"""
 
-    @dictify
-    def _get_output_files_post_germline_calls(self):
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
-        extensions = {
-            "ratio_tsv": ".ratio.tsv",
-            "itv_vcf": ".interval.vcf.gz",
-            "seg_vcf": ".vcf.gz",
-        }
-        for key, ext in extensions.items():
-            yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")
+    #: Class available actions
+    actions = (
+        "preprocess_intervals",
+        "coverage",
+        "contig_ploidy",
+        "call_cnvs",
+        "post_germline_calls",
+        "joint_germline_cnv_segmentation",
+    )
 
-    @dictify
-    def _get_output_files_joint_germline_cnv_segmentation(self):
-        name_pattern = "{mapper}.gcnv.{library_name}"
-        for key, suffix in RESULT_EXTENSIONS.items():
-            yield key, f"work/{name_pattern}/out/{name_pattern}{suffix}"
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Validate configuration, precomputed models must be present
+        self.validate_request()
 
-    @dictify
-    def _get_log_file_joint_germline_cnv_segmentation(self):
-        """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
-        name_pattern = "{mapper}.gcnv.{library_name}"
-        for key, ext in LOG_EXTENSIONS.items():
-            yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
+    def get_params(self, action: str):
+        """
+        :param action: Action (i.e., step) in the workflow. Currently available for:
+        'ploidy-model', 'model', and 'post_germline_calls'.
+
+        :return: Returns input function for gCNV rule based on inputted action.
+
+        :raises UnsupportedActionException: if invalid action.
+        """
+        # Actions with parameters
+        valid_actions = ("call_cnvs", "contig_ploidy", "post_germline_calls")
+        # Validate inputted action
+        if action not in valid_actions:
+            error_message = f"Action '{action}' is not supported. Valid options: {valid_actions}."
+            raise UnsupportedActionException(error_message)
+
+        # Return requested function
+        return getattr(self, f"_get_params_{action}")
 
     @listify
     def get_result_files(self):

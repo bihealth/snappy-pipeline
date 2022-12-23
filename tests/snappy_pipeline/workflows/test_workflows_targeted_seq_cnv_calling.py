@@ -450,7 +450,7 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
         "merge_cohort_vcfs",
         "joint_germline_cnv_segmentation",
     )
-    actions_w_params = ("model", "ploidy_model", "postgermline_models")
+    actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
     for action in all_actions:
         if action in actions_w_params:
             targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
@@ -699,11 +699,11 @@ def test_gcnv_get_params_ploidy_model(targeted_seq_cnv_calling_workflow):
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config
     expected = {"model": "/path/to/ploidy-model"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "ploidy_model")(wildcards_fake)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
     assert actual == expected
 
 
@@ -767,15 +767,15 @@ def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config - shard 01
     expected = {"model": "/data/model_01"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_01)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
     assert actual == expected
     # Test large cohort - model defined in config - shard 02
     expected = {"model": "/data/model_02"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_02)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "model")(wildcards_fake)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
     assert actual == expected
 
 
@@ -820,11 +820,11 @@ def test_gcnv_post_germline_calls_step_part_get_input_files(
     assert actual == expected
 
 
-def test_gcnv_get_params_postgermline_models(targeted_seq_cnv_calling_workflow):
-    """Tests RunGcnvTargetSeqStepPart._get_params_postgermline_models()"""
+def test_gcnv_get_params_post_germline_calls(targeted_seq_cnv_calling_workflow):
+    """Tests RunGcnvTargetSeqStepPart._get_params_post_germline_calls()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "postgermline_models")(wildcards)
+    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
     assert actual == expected
 
 
