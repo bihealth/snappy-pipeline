@@ -5,7 +5,6 @@ import os
 
 from snakemake.shell import shell
 
-
 # Pick the target BED file to use.  If it goes by the name "default" then we
 # simply take the one at xhmm/path_target_interval_list.  Otherwise, we
 # have to go through the list in xhmm/path_target_interval_list_mapping.
@@ -31,8 +30,8 @@ set -x
 gatk AnnotateIntervals \
     --interval-merging-rule OVERLAPPING_ONLY \
     --mappability-track {map_bed} \
-    -R {snakemake.config[static_data_config][reference][path]} \
-    -L {snakemake.input.interval_list} \
-    -O {snakemake.output.tsv}
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --intervals {snakemake.input.interval_list} \
+    --output {snakemake.output.tsv}
 """
 )

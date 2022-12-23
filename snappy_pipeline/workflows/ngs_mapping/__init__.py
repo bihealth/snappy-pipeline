@@ -1211,7 +1211,7 @@ class NgsChewStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
 
     @dictify
-    def _get_input_files_run(self):
+    def _get_input_files_fingerprint(self):
         yield "bam", "work/{mapper_lib}/out/{mapper_lib}.bam"
 
     def get_output_files(self, action):
@@ -1220,11 +1220,11 @@ class NgsChewStepPart(BaseStepPart):
         return getattr(self, "_get_output_files_{action}".format(action=action))()
 
     @dictify
-    def _get_output_files_run(self):
+    def _get_output_files_fingerprint(self):
         yield "npz", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz"
         yield "npz_md5", "work/{mapper_lib}/report/fingerprint/{mapper_lib}.npz.md5"
 
-    def get_log_files(self, action):
+    def get_log_file(self, action):
         self._check_action(action)
         return getattr(self, "_get_log_files_{action}".format(action=action))()
 

@@ -21,8 +21,6 @@ shell(
     r"""
 set -x
 
-
-
 gatk --java-options "-Xmx{mem_jvm}m" \
     FilterIntervals \
     --intervals {snakemake.input.interval_list} \

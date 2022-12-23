@@ -9,6 +9,8 @@ shell(
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" ERR EXIT
 
+export MKL_NUM_THREADS={snakemake.threads}
+export OMP_NUM_THREADS={snakemake.threads}
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
 PRIORS=$TMPDIR/ploidy_priors.tsv

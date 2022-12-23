@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running ``ngs-chew fingerprint``."""
+
+import os
 
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
-
-path_ref = snakemake.config["static_data_config"]["reference"]["path"]
-if "hg19" in path_ref or "37" in path_ref:
-    genome_release = "GRCh37"
-else:
-    genome_release = "GRCh38"
+from snappy_pipeline.utils import DictQuery
 
 shell(
     r"""
@@ -38,18 +32,17 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
-
-ngs-chew fingerprint \
+gatk JointGermlineCNVSegmentation \
     --reference {snakemake.config[static_data_config][reference][path]} \
-    --output-fingerprint {snakemake.output.npz} \
-    --input-bam {snakemake.input.bam} \
-    --genome-release {genome_release}
+    $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
+    --model {snakemake.params.args[model]} \
+    --model-call-intervals {snakemake.input.interval_list} \
+    --pedigree {snakemake.input.ped} \
+    --output {snakemake.output.vcf}
 
-pushd $(dirname {snakemake.output.npz})
-md5sum $(basename {snakemake.output.npz}) >$(basename {snakemake.output.npz_md5})
+pushd $(dirname {snakemake.output.vcf})
+md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf_md5})
+md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi_md5})
 """
 )
 

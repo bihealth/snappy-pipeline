@@ -87,35 +87,19 @@ rule wgs_cnv_calling_gcnv_post_germline_calls:
         wf.wrapper_path("gcnv/post_germline_calls_case_mode")
 
 
-rule wgs_cnv_calling_gcnv_merge_cohort_vcfs:
+rule wgs_cnv_calling_gcnv_joint_germline_cnv_segmentation:
     input:
-        wf.get_input_files("gcnv", "merge_cohort_vcfs"),
+        unpack(wf.get_input_files("gcnv", "joint_germline_cnv_segmentation")),
     output:
-        **wf.get_output_files("gcnv", "merge_cohort_vcfs"),
-    threads: wf.get_resource("gcnv", "merge_cohort_vcfs", "threads")
+        **wf.get_output_files("gcnv", "joint_germline_cnv_segmentation"),
+    threads: wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "threads")
     resources:
-        time=wf.get_resource("gcnv", "merge_cohort_vcfs", "time"),
-        memory=wf.get_resource("gcnv", "merge_cohort_vcfs", "memory"),
-        partition=wf.get_resource("gcnv", "merge_cohort_vcfs", "partition"),
+        time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
+        memory=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "memory"),
+        partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
     log:
-        wf.get_log_file("gcnv", "merge_cohort_vcfs"),
-    wrapper:
-        wf.wrapper_path("gcnv/merge_cohort_vcfs")
-
-
-rule wgs_cnv_calling_gcnv_extract_ped:
-    input:
-        unpack(wf.get_input_files("gcnv", "extract_ped")),
-    output:
-        **(wf.get_output_files("gcnv", "extract_ped")),
-    threads: wf.get_resource("gcnv", "extract_ped", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "extract_ped", "time"),
-        memory=wf.get_resource("gcnv", "extract_ped", "memory"),
-        partition=wf.get_resource("gcnv", "extract_ped", "partition"),
-    log:
-        wf.get_log_file("gcnv", "extract_ped"),
+        **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
     params:
-        ped_members=wf.substep_getattr("gcnv", "get_ped_members"),
+        args=wf.get_params("gcnv", "postgermline_models"),
     wrapper:
-        wf.wrapper_path("gcnv/extract_ped")
+        wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")

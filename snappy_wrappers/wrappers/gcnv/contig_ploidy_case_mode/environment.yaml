@@ -1,8 +1,1 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - gatk4 ==4.1.7.0
-  - gcnvkernel ==0.7
-  - bcftools
-  - htslib
+../environment.yaml

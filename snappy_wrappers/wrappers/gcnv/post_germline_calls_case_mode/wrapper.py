@@ -24,6 +24,10 @@ for path in $(dirname {snakemake.input.calls[0]})/cnv_calls-calls/SAMPLE_*; do
         break
     fi
 done
+if [[ $sample_index == -1 ]]; then
+    >&2 echo "Could not determine sample index."
+    exit 1
+fi
 
 gatk PostprocessGermlineCNVCalls \
     $(for x in {paths_calls}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
