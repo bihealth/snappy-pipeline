@@ -41,11 +41,8 @@ def minimal_config():
           variant_calling:
             tools:
             - bcftools
-            - freebayes
             - gatk_hc
-            - gatk_hc_gvcf
             - gatk_ug
-            - platypus
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
           variant_phasing:
@@ -376,7 +373,7 @@ def test_variant_phasing_workflow(variant_phasing_workflow):
     )
     base_out_list = [
         base_out.format(tool=tool, i=i)
-        for tool in ("bcftools", "freebayes", "gatk_hc", "gatk_hc_gvcf", "gatk_ug", "platypus")
+        for tool in ("bcftools", "gatk_hc", "gatk_ug")
         for i in ("1", "4")
     ]
     expected = []

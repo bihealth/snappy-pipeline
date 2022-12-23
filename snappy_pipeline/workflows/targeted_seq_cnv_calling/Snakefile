@@ -28,6 +28,8 @@ wf = TargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths,
 localrules:
     # Linking files from work/ to output/ should be done locally
     targeteq_seq_cnv_calling_link_out_run,
+    # Writing out pedigrees can be done locally
+    wgs_cnv_calling_write_pedigree_run,
 
 
 rule all:
@@ -50,6 +52,16 @@ rule targeteq_seq_cnv_calling_link_out_run:
 
 
 # Germline CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule wgs_cnv_calling_write_pedigree_run:
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
 
 # XHMM ------------------------------------------------------------------------
 

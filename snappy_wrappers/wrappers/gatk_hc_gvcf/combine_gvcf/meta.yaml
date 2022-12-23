@@ -1,4 +1,0 @@
-name: gatk_hc_gvcf_combine_gvcf
-description: (Germline) variant calling calling using GATK HaplotypeCaller CombineGVCF step
-authors:
-  - Manuel Holtgrewe

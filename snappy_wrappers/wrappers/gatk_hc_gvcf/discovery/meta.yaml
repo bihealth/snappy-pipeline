@@ -1,4 +1,0 @@
-name: gatk_hc_gvcf_par
-description: (Germline) variant calling calling using GATK HaplotypeCaller GVCF Calling
-authors:
-  - Manuel Holtgrewe

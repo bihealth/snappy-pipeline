@@ -43,11 +43,8 @@ def minimal_config():
               enabled: true
             tools:
             - bcftools
-            - freebayes
             - gatk_hc
-            - gatk_hc_gvcf
             - gatk_ug
-            - platypus
 
         data_sets:
           first_batch:
@@ -143,72 +140,6 @@ def test_bcftools_step_part_get_resource(variant_calling_workflow):
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_calling_workflow.get_resource("bcftools", "run", resource)
         assert actual == expected, msg_error
-
-
-# Tests for FreebayesStepPart ---------------------------------------------------------------------
-
-
-def test_freebayes_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("freebayes", "run")(wildcards)
-    expected = [
-        "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
-    assert actual == expected
-
-
-def test_freebayes_step_part_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.freebayes.{index_library_name}/out/{mapper}.freebayes.{index_library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("freebayes", "run")
-    assert actual == expected
-
-
-def test_freebayes_step_part_get_log_file(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.freebayes.{index_library_name}/log/{mapper}.freebayes.{index_library_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_log_file("freebayes", "run")
-    assert actual == expected
-
-
-def test_freebayes_step_part_get_resource(variant_calling_workflow):
-    """Tests FreebayesStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("freebayes", "run", resource)
-        assert actual == expected, msg_error
-
-
-def test_freebayes_step_part_get_params(variant_calling_workflow):
-    """Tests FreebayesStepPart._get_params_run()"""
-    # Define expected
-    expected = {
-        "window_length": 10000000,
-        "min_alternate_fraction": 0.05,
-        "min_mapping_quality": 1,
-        "min_repeat_entropy": 1,
-        "haplotype_length": 3,
-    }
-    # Get actual
-    actual = variant_calling_workflow.get_params("freebayes", "run")()
-    assert actual == expected
 
 
 # Tests for GatkHaplotypeCallerStepPart -----------------------------------------------------------
@@ -310,285 +241,6 @@ def test_gatk_ug_step_part_get_resource(variant_calling_workflow):
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_calling_workflow.get_resource("gatk_ug", "run", resource)
-        assert actual == expected, msg_error
-
-
-# Tests for GatkHaplotypeCallerGvcfStepPart -------------------------------------------------------
-
-
-def test_gatk_hc_gvcf_step_part_discover_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "discover")(wildcards)
-    expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-    ]
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_discover_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/out/"
-        "{mapper}.gatk_hc_gvcf.discover.{library_name}.g"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "discover")
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_discover_get_log_file(variant_calling_workflow):
-    expected = "work/{mapper}.gatk_hc_gvcf.discover.{library_name}/log/snakemake.log"
-    assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "discover") == expected
-
-
-def test_gatk_hc_gvcf_step_part_combine_gvcf_get_input_files(variant_calling_workflow):
-    # Define expected
-    base_out = (
-        "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
-    )
-    expected = [base_out.format(i=i) for i in range(1, 7)]
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "combine_gvcf")(wildcards)
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_combine_gvcf_get_args(variant_calling_workflow):
-    actual = variant_calling_workflow.get_args("gatk_hc_gvcf", "combine_gvcf")
-    assert len(actual) == 1
-    assert set(actual["genome_regions"].keys()) == {"1", "2"}
-
-
-def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_input_files(variant_calling_workflow):
-    # Define expected
-    base_out = (
-        "work/bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc_gvcf.discover.P00{i}-N1-DNA1-WGS1.g.vcf.gz"
-    )
-    expected = [base_out.format(i=i) for i in range(1, 4)]
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "genotype_pedigree")(
-        wildcards
-    )
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.gatk_hc_gvcf.{index_library_name}/out/"
-        "{mapper}.gatk_hc_gvcf.{index_library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_pedigree")
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_genotype_pedigree_get_log_file(variant_calling_workflow):
-    expected = "work/{mapper}.gatk_hc_gvcf.{index_library_name}/log/snakemake.log"
-    assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "genotype_pedigree") == expected
-
-
-def test_gatk_hc_gvcf_step_part_genotype_cohort_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    actual = variant_calling_workflow.get_input_files("gatk_hc_gvcf", "genotype_cohort")(wildcards)
-    expected = [
-        "work/bwa.gatk_hc_gvcf.combine_gvcf/out/bwa.gatk_hc_gvcf.combine_gvcf.1.g.vcf.gz",
-        "work/bwa.gatk_hc_gvcf.combine_gvcf/out/bwa.gatk_hc_gvcf.combine_gvcf.2.g.vcf.gz",
-    ]
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_whole_cohort_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = "work/{mapper}.gatk_hc_gvcf.whole_cohort/out/{mapper}.gatk_hc_gvcf.whole_cohort"
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("gatk_hc_gvcf", "genotype_cohort")
-    assert actual == expected
-
-
-def test_gatk_hc_gvcf_step_part_genotype_cohort_get_log_file(variant_calling_workflow):
-    expected = "work/{mapper}.gatk_hc_gvcf.whole_cohort/log/snakemake.log"
-    assert variant_calling_workflow.get_log_file("gatk_hc_gvcf", "genotype_cohort") == expected
-
-
-def test_gatk_hc_gvcf_step_part_get_resource(variant_calling_workflow):
-    """Tests GatkHaplotypeCallerGvcfStepPart.get_resource()"""
-    # Define expected
-    default_expected_dict = {
-        "threads": 1,
-        "time": "3-08:00:00",
-        "memory": "10240M",
-        "partition": "medium",
-    }
-    combine_gvcf_expected_dict = {
-        "threads": 1,
-        "time": "10-00:00:00",
-        "memory": "10240M",
-        "partition": "medium",
-    }
-
-    # Evaluate - default actions
-    all_actions = variant_calling_workflow.substep_getattr("gatk_hc_gvcf", "actions")
-    default_actions = [action for action in all_actions if action != "combine_gvcf"]
-    for action in default_actions:
-        for resource, expected in default_expected_dict.items():
-            msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = variant_calling_workflow.get_resource("gatk_hc_gvcf", action, resource)
-            assert actual == expected, msg_error
-
-    # Evaluate - action 'combine_gvcf'
-    for resource, expected in combine_gvcf_expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk_hc_gvcf", "combine_gvcf", resource)
-        assert actual == expected, msg_error
-
-
-# Tests for PlatypusStepPart ----------------------------------------------------------------------
-
-
-def test_platypus_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("platypus", "run")(wildcards)
-    expected = [
-        "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
-    assert actual == expected
-
-
-def test_platypus_step_part_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.platypus.{index_library_name}/out/{mapper}.platypus.{index_library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("platypus", "run")
-    assert actual == expected
-
-
-def test_platypus_step_part_get_log_file(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.platypus.{index_library_name}/log/{mapper}.platypus.{index_library_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_log_file("platypus", "run")
-    assert actual == expected
-
-
-def test_platypus_step_part_get_resource(variant_calling_workflow):
-    """Tests PlatypusStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 16, "time": "20:00:00", "memory": "61440M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("platypus", "run", resource)
-        assert actual == expected, msg_error
-
-
-# Tests for VarscanStepPart ------------------------------------------------------------------------
-
-
-def test_varscan_step_part_call_pedigree_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("varscan", "call_pedigree")(wildcards)
-    expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
-    assert expected == actual
-
-
-def test_varscan_step_part_call_pedigree_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.varscan.{index_library_name}/out/{mapper}.varscan.{index_library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("varscan", "call_pedigree")
-    assert actual == expected
-
-
-def test_varscan_step_part_call_pedigree_get_log_file(variant_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.varscan.{index_library_name}/log/{mapper}.varscan.{index_library_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_log_file("varscan", "call_pedigree")
-    assert actual == expected
-
-
-def test_varscan_step_part_call_pedigree_get_resource(variant_calling_workflow):
-    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "4096M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("varscan", "call_pedigree", resource)
-        assert actual == expected, msg_error
-
-
-def test_varscan_step_part_call_cohort_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("varscan", "call_cohort")(wildcards)
-    expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P004-N1-DNA1-WGS1/out/bwa.P004-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P004-N1-DNA1-WGS1/out/bwa.P004-N1-DNA1-WGS1.bam.bai",
-    ]
-    assert expected == actual
-
-
-def test_varscan_step_part_call_cohort_get_output_files(variant_calling_workflow):
-    # Define expected
-    base_name_out = "work/{mapper}.varscan.whole_cohort/out/{mapper}.varscan.whole_cohort"
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_output_files("varscan", "call_cohort")
-    assert actual == expected
-
-
-def test_varscan_step_part_call_cohort_get_log_file(variant_calling_workflow):
-    # Define expected
-    base_name_out = "work/{mapper}.varscan.whole_cohort/log/{mapper}.varscan.whole_cohort"
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = variant_calling_workflow.get_log_file("varscan", "call_cohort")
-    assert actual == expected
-
-
-def test_varscan_step_part_call_cohort_get_resource(variant_calling_workflow):
-    """Tests VarscanStepPart.get_resource() - action 'call_pedigree'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "7-00:00:00", "memory": "16384M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("varscan", "call_cohort", resource)
         assert actual == expected, msg_error
 
 
@@ -766,14 +418,10 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "baf_file_generation",
         "bcftools",
         "bcftools_stats",
-        "freebayes",
         "gatk_hc",
-        "gatk_hc_gvcf",
         "gatk_ug",
         "jannovar_statistics",
         "link_out",
-        "platypus",
-        "varscan",
         "write_pedigree",
     ]
     assert list(sorted(variant_calling_workflow.sub_steps.keys())) == expected
@@ -789,11 +437,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "freebayes",
             "gatk_hc",
-            "gatk_hc_gvcf",
             "gatk_ug",
-            "platypus",
         )
     ]
     base_out = (
@@ -814,11 +459,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "freebayes",
             "gatk_hc",
-            "gatk_hc_gvcf",
             "gatk_ug",
-            "platypus",
         )
     ]
     tpl = (
@@ -831,11 +473,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "freebayes",
             "gatk_hc",
-            "gatk_hc_gvcf",
             "gatk_ug",
-            "platypus",
         )
         for ext in ("txt", "txt.md5")
     ]
@@ -849,11 +488,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "freebayes",
             "gatk_hc",
-            "gatk_hc_gvcf",
             "gatk_ug",
-            "platypus",
         )
         for ext in ("txt", "txt.md5")
     ]
@@ -867,30 +503,10 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "freebayes",
             "gatk_hc",
-            "gatk_hc_gvcf",
             "gatk_ug",
-            "platypus",
         )
         for ext in ("bw", "bw.md5")
-    ]
-    tpl = "output/{mapper}.{var_caller}.whole_cohort/out/{mapper}.{var_caller}.whole_cohort.{ext}"
-    expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, ext=ext)
-        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
-        for mapper in ("bwa",)
-        for var_caller in ("gatk_hc_gvcf",)
-    ]
-    tpl = (
-        "output/{mapper}.{var_caller}.whole_cohort/report/"
-        "jannovar_statistics/{mapper}.{var_caller}.whole_cohort.{ext}"
-    )
-    expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, ext=ext)
-        for mapper in ("bwa",)
-        for var_caller in ("gatk_hc_gvcf",)
-        for ext in ("txt", "txt.md5")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(variant_calling_workflow.get_result_files()))
