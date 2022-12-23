@@ -183,13 +183,11 @@ class BuildGcnvModelStepPart(
     def get_result_files(self):
         """Return list of concrete output paths"""
 
-        def path_work_to_output(work_path):
-            """Helper to convert a work to an output path"""
-            return re.sub(r"^work/", "output/", work_path)
-
         # Get list with all result path template strings.  This is done using the function generating
         # the output files for the post germline calls step (will create coverage and ploidy models).
-        result_path_tpls = list(self._get_output_files_post_germline_calls().values())
+        #
+        # NB: the conversion to ``str`` is necessary here as we use ``touch()`` above.
+        result_path_tpls = list(map(str, self._get_output_files_post_germline_calls().values()))
 
         # Generate output files for all mappers and library names.
         for _, pedigree in self.index_ngs_library_to_pedigree.items():
@@ -197,11 +195,8 @@ class BuildGcnvModelStepPart(
                 donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
             ]
             for path_tpl in result_path_tpls:
-                yield from map(
-                    path_work_to_output,
-                    expand(
-                        path_tpl,
-                        mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                        library_name=library_names,
-                    ),
+                yield from expand(
+                    path_tpl,
+                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                    library_name=library_names,
                 )

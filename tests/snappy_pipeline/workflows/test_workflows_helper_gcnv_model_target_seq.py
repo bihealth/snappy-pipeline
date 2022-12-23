@@ -467,7 +467,7 @@ def test_helper_gcnv_model_workflow(helper_gcnv_model_workflow):
     )
     expected = [
         pattern_out.format(i=i, ext=ext)
-        for i in (1, 4)  # only index: P001, P004
+        for i in range(1, 7)
         for ext in (
             "interval.vcf.gz",
             "ratio.tsv",

@@ -237,26 +237,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the gCNV build model workflow."""
-        ext_values = (".ratio.tsv", ".interval.vcf.gz", ".vcf.gz")
-        donors = {donor.name for donor in self.all_donors() if donor.dna_ngs_library}
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{index.dna_ngs_library.name}"
-        yield from self._yield_result_files(
-            os.path.join("work", name_pattern, "out", name_pattern + "{ext}"),
-            donors,
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            ext=ext_values,
-        )
-
-    def _yield_result_files(self, tpl, donors, **kwargs):
-        """Build output paths from path template and extension list.
-
-        Will only yield the result files for pedigrees where the index is in ``donors``.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if pedigree.index.name in donors:
-                    yield from expand(tpl, index=[pedigree.index], **kwargs)
+        """Return list of result files for the gCNV build model workflow"""
+        yield from self.sub_steps["gcnv"].get_result_files()
 
     @listify
     def all_donors(self, include_background=True):
