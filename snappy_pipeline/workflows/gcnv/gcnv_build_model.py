@@ -2,8 +2,6 @@
 """Implementation of the gCNV COHORT mode methods - used to build models.
 """
 
-import re
-
 from snakemake.io import expand, touch
 
 from snappy_pipeline.utils import dictify, listify

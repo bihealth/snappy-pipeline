@@ -86,7 +86,7 @@ import os
 import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand, glob_wildcards
+from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep
