@@ -29,8 +29,6 @@ localrules:
     # Linking the FASTQ files in and linking out the alignments should
     # be done locally by the Snakemake master process
     ngs_mapping_link_in_run,
-    ngs_mapping_link_out_bam_run,
-    ngs_mapping_link_out_run,
 
 
 rule all:
@@ -50,30 +48,6 @@ rule ngs_mapping_link_in_run:  # localrule
         wf.get_output_files("link_in", "run"),
     run:
         shell(wf.get_shell_cmd("link_in", "run", wildcards))
-
-
-# Link out BAM files ----------------------------------------------------------
-
-
-rule ngs_mapping_link_out_bam_run:  # localrule
-    input:
-        wf.get_input_files("link_out_bam", "run"),
-    output:
-        wf.get_output_files("link_out_bam", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out_bam", "run", wildcards))
-
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule ngs_mapping_link_out_run:  # localrule
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
 # Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,26 +115,6 @@ rule ngs_mapping_star_run:
         wf.wrapper_path("star")
 
 
-# GATK-based BAM postprocessing -----------------------------------------------
-
-if wf.config["postprocessing"] == "gatk_post_bam":
-
-    rule ngs_mapping_gatk_post_bam_run:
-        input:
-            wf.get_input_files("gatk_post_bam", "run"),
-        output:
-            **wf.get_output_files("gatk_post_bam", "run"),
-        threads: wf.get_resource("gatk_post_bam", "run", "threads")
-        resources:
-            time=wf.get_resource("gatk_post_bam", "run", "time"),
-            memory=wf.get_resource("gatk_post_bam", "run", "memory"),
-            partition=wf.get_resource("gatk_post_bam", "run", "partition"),
-        log:
-            **wf.get_log_file("gatk_post_bam", "run"),
-        wrapper:
-            wf.wrapper_path("gatk_post_bam")
-
-
 # Run minimap2 ---------------------------------------------------------------
 
 
@@ -217,28 +171,9 @@ rule ngs_mapping_target_coverage_report_collect:
         memory=wf.get_resource("target_coverage_report", "run", "memory"),
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
     log:
-        wf.get_log_file("target_coverage_report", "collect"),
+        **wf.get_log_file("target_coverage_report", "collect"),
     wrapper:
         wf.wrapper_path("target_cov_report/collect")
-
-
-# Compute and link out per-base coverage report -------------------------------
-
-
-rule ngs_mapping_genome_coverage_report_run:
-    input:
-        **wf.get_input_files("genome_coverage_report", "run"),
-    output:
-        **wf.get_output_files("genome_coverage_report", "run"),
-    threads: wf.get_resource("genome_coverage_report", "run", "threads")
-    resources:
-        time=wf.get_resource("genome_coverage_report", "run", "time"),
-        memory=wf.get_resource("genome_coverage_report", "run", "memory"),
-        partition=wf.get_resource("genome_coverage_report", "run", "partition"),
-    log:
-        wf.get_log_file("genome_coverage_report", "run"),
-    run:
-        shell(wf.get_shell_cmd("genome_coverage_report", "run", wildcards))
 
 
 # Compute depth of coverage files (VCF and bigWig) ----------------------------

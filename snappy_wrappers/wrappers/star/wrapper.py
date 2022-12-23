@@ -218,6 +218,14 @@ if [[ ! -z "{snakemake.log.log}" ]]; then
     # Logging: STAR alignment summary
     cp $TMPDIR/pre.d/out.Log.final.out $(dirname {snakemake.log.log})/Log.final.out
 fi
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

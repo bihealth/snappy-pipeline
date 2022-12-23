@@ -201,7 +201,7 @@ def test_bam_reports_step_part_call_get_input_files_bam_qc(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_input_files_bam_qc()"""
-    wildcards = Wildcards(fromdict={"mapper_lib": "dragen.P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     expected = [
         "work/input_links/P001-N1-DNA1-WGS1/.done_bai_external",
         "work/input_links/P001-N1-DNA1-WGS1/.done_bam_external",
@@ -217,12 +217,26 @@ def test_bam_reports_step_part_call_get_output_files_bam_qc(
 ):
     """Tests BamReportsExternalStepPart._get_output_files_bam_qc()"""
     expected = {
-        "bamstats": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.bamstats.txt",
-        "bamstats_md5": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.bamstats.txt.md5",
-        "flagstats": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.flagstats.txt",
-        "flagstats_md5": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.flagstats.txt.md5",
-        "idxstats": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.idxstats.txt",
-        "idxstats_md5": "work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.idxstats.txt.md5",
+        "bamstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt",
+        "bamstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt.md5",
+        "flagstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt",
+        "flagstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt.md5",
+        "idxstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt",
+        "idxstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt.md5",
+        "output_links": [
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt",
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt.md5",
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt",
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt.md5",
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt",
+            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.log",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.log.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_info.txt",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_info.txt.md5",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_list.txt",
+            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_list.txt.md5",
+        ],
     }
     actual = variant_export_external_workflow.get_output_files("bam_reports", "bam_qc")
     assert actual == expected
@@ -232,7 +246,7 @@ def test_bam_reports_step_part_call_get_log_file_bam_qc(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_log_file_bam_qc()"""
-    base_out = "work/{mapper_lib}/log/{mapper_lib}.bam_qc"
+    base_out = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc"
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = variant_export_external_workflow.get_log_file("bam_reports", "bam_qc")
     assert actual == expected
@@ -242,7 +256,7 @@ def test_bam_reports_step_part_call_get_params_bam_qc(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_params_bam_qc()"""
-    wildcards = Wildcards(fromdict={"mapper_lib": "dragen.P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "dragen", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {"bam": [], "bam_count": 0}
     actual = variant_export_external_workflow.get_params("bam_reports", "bam_qc")(wildcards)
     assert actual == expected
@@ -255,7 +269,7 @@ def test_bam_reports_step_part_call_get_input_files_collect(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_input_files_collect()"""
-    expected = ["work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"]
+    expected = ["work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"]
     actual = variant_export_external_workflow.get_input_files("bam_reports", "collect")(None)
     assert actual == expected
 
@@ -267,7 +281,7 @@ def test_bam_reports_step_part_call_get_input_files_run(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_input_files_run()"""
-    wildcards = Wildcards(fromdict={"mapper_lib": "dragen.P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "dragen", "library_name": "P001-N1-DNA1-WGS1"})
     expected = [
         "work/input_links/P001-N1-DNA1-WGS1/.done_bai_external",
         "work/input_links/P001-N1-DNA1-WGS1/.done_bam_external",
@@ -282,7 +296,7 @@ def test_bam_reports_step_part_call_get_params_run(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_params_run()"""
-    wildcards = Wildcards(fromdict={"mapper_lib": "dragen.P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "dragen", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "bam": [],
         "bam_count": 0,

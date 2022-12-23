@@ -50,6 +50,15 @@ ngs-chew fingerprint \
 
 pushd $(dirname {snakemake.output.npz})
 md5sum $(basename {snakemake.output.npz}) >$(basename {snakemake.output.npz_md5})
+popd
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

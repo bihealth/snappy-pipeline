@@ -147,30 +147,33 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
 
     @staticmethod
     def _get_input_files_bam_qc(wildcards):
-        library_name = wildcards.mapper_lib.split(".")[-1]
-        yield f"work/input_links/{library_name}/.done_bam_external"
-        yield f"work/input_links/{library_name}/.done_bai_external"
+        yield f"work/input_links/{wildcards.library_name}/.done_bam_external"
+        yield f"work/input_links/{wildcards.library_name}/.done_bai_external"
 
     def _get_input_files_run(self, wildcards):
-        library_name = wildcards.mapper_lib.split(".")[-1]
-        yield f"work/input_links/{library_name}/.done_bam_external"
-        yield f"work/input_links/{library_name}/.done_bai_external"
+        yield f"work/input_links/{wildcards.library_name}/.done_bam_external"
+        yield f"work/input_links/{wildcards.library_name}/.done_bai_external"
 
     @listify
-    def _get_input_files_collect(self, _wildcards):
-        yield "work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
+    def _get_input_files_collect(self, wildcards):
+        _ = wildcards
+        mapper_lib = "{mapper}.{library_name}"
+        yield f"work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
 
     @dictify
-    def _get_output_files_bam_qc(self):
+    def _get_output_files_bam_qc_work(self):
         for report in ("bamstats", "flagstats", "idxstats"):
-            report_path = f"work/{{mapper_lib}}/report/bam_qc/{{mapper_lib}}.bam.{report}.txt"
+            report_path = (
+                f"work/{{mapper}}.{{library_name}}/report/bam_qc/"
+                f"{{mapper}}.{{library_name}}.bam.{report}.txt"
+            )
             yield report, report_path
             yield report + "_md5", report_path + ".md5"
 
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            return "work/{mapper_lib}/log/snakemake.target_coverage.log"
+            return "work/{mapper}.{library_name}/log/snakemake.target_coverage.log"
         elif action == "bam_qc":
             return self._get_log_file_bam_qc()
         else:
@@ -186,7 +189,7 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
     @staticmethod
     @dictify
     def _get_log_file_bam_qc():
-        prefix = "work/{mapper_lib}/log/{mapper_lib}.bam_qc"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc"
         key_ext = (
             ("log", ".log"),
             ("log_md5", ".log.md5"),
@@ -220,7 +223,7 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
         # Initialise variables
         seen = []  # seen paths list
         base_path_in = "work/input_links/{library_name}"
-        library_name = wildcards.mapper_lib.split(".")[-1]
+        library_name = wildcards.library_name
         folder_name = library_name
 
         for _, path_infix, filename in self.path_gen.run(
@@ -315,15 +318,16 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
         for donor in pedigree.donors:
-            mapper_lib = self.external_tool_prefix + donor.dna_ngs_library.name
+            mapper = self.external_tool_prefix[:-1]  # strip trailing dot
+            library_name = donor.dna_ngs_library.name
             if not donor.dna_ngs_library:
                 continue
-            tpl = f"work/{mapper_lib}/report/bam_qc/{mapper_lib}.bam.%s.txt"
+            tpl = f"work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
             if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
-            path = f"work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
+            path = f"work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"
             result["cov_qc"].append(path)
 
         return result

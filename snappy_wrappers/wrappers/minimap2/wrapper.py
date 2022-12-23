@@ -111,6 +111,14 @@ samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt
 md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
 md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
 md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

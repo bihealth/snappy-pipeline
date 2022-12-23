@@ -42,6 +42,8 @@ maelstrom-core \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --window-length $WINDOW
 
+find $(dirname $(dirname {snakemake.output.vcf}))
+
 pushd $(dirname {snakemake.output.vcf})
 tabix -f $(basename {snakemake.output.vcf})
 
@@ -67,6 +69,15 @@ cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
 
 wigToBigWig $TMPDIR/out.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.bw})
 md5sum $(basename {snakemake.output.bw}) >$(basename {snakemake.output.bw_md5})
+popd
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

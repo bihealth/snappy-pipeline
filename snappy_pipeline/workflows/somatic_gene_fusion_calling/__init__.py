@@ -571,7 +571,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             for donor in sheet.donors:
                 for _, bio_sample in donor.bio_samples.items():
                     for _, test_sample in bio_sample.test_samples.items():
-                        extraction_type = test_sample.extra_infos["extractionType"]
+                        extraction_type = test_sample.extra_infos.get("extractionType", "DNA")
                         if extraction_type.lower() == "rna":
                             for _, ngs_library in test_sample.ngs_libraries.items():
                                 yield ngs_library.name
