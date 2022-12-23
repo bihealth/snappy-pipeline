@@ -581,7 +581,9 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WritePedigreeStepPart, XhmmStepPart, RunGcnvTargetSeqStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (WritePedigreeStepPart, XhmmStepPart, RunGcnvTargetSeqStepPart, LinkOutStepPart)
+        )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Build mapping from NGS DNA library to library kit.
