@@ -133,6 +133,7 @@ rule variant_calling_gatk4_hc_gvcf_discover:
     wrapper:
         wf.wrapper_path("gatk4_hc/discover")
 
+
 # Combine the gVCF files from the pedigree with CombineGVCFs
 rule variant_calling_gatk4_hc_gvcf_combine_gvcfs:
     input:
@@ -151,6 +152,7 @@ rule variant_calling_gatk4_hc_gvcf_combine_gvcfs:
         **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
     wrapper:
         wf.wrapper_path("gatk4_hc/combine_gvcfs")
+
 
 # Perform GenotypeGVCFs genotyping of all samples in each pedigree
 rule variant_calling_gatk4_hc_gvcf_genotype:

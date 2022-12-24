@@ -135,8 +135,6 @@ in the temporary directory with the command line written to the file ``snakemake
 
 from collections import OrderedDict
 from itertools import chain
-import os
-import os.path
 import re
 import sys
 import warnings
@@ -144,7 +142,7 @@ import warnings
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.utils import flatten, dictify, listify
+from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -176,10 +174,10 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_calling
 step_config:
   variant_calling:
-	# common configuration
+    # common configuration
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
 
-	# report generation
+    # report generation
     baf_file_generation:
       enabled: true
       min_dp: 10  # minimal DP of variant, must be >=1
@@ -189,7 +187,7 @@ step_config:
       enabled: true
       path_ser: REQUIRED  # REQUIRED
 
-	# variant calling tools and their configuration
+    # variant calling tools and their configuration
     tools: ['gatk4_hc_gvcf']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug'
     ignore_chroms:
     - NC_007605  # herpes virus
@@ -303,29 +301,28 @@ class GetResultFilesMixin:
         """Return concrete result file paths"""
 
         def strip_tpl(tpl):
-            return tpl.replace(",[^\.]+", "")
+            return tpl.replace(r",[^\.]+", "")
 
         index_dna_ngs_libraries = self._get_index_dna_ngs_libraries()
         for action in self.actions:
             output_files = self.get_output_files(action).values()
             result_paths_tpls = [
-                strip_tpl(p) for p in flatten(output_files)
-                if p.startswith("output/")
+                strip_tpl(p) for p in flatten(output_files) if p.startswith("output/")
             ]
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        'mapper': self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                     }
-                    if 'index_ngs_library' in path_tpl:
-                        kwargs['index_ngs_library'] = [index_library_name]
-                        kwargs['donor_ngs_library'] = [member_library_names]
+                    if "index_ngs_library" in path_tpl:
+                        kwargs["index_ngs_library"] = [index_library_name]
+                        kwargs["donor_ngs_library"] = [member_library_names]
                     else:
-                        kwargs['library_name'] = [index_library_name]
-                    if '{var_caller}' in path_tpl:
-                        kwargs['var_caller'] = self.parent.config['tools']
+                        kwargs["library_name"] = [index_library_name]
+                    if "{var_caller}" in path_tpl:
+                        kwargs["var_caller"] = self.parent.config["tools"]
                     yield from expand(
-                        path_tpl, 
+                        path_tpl,
                         **kwargs,
                     )
 
@@ -352,12 +349,12 @@ class GetResultFilesMixin:
         """
         msg = None
         donor_names = list(sorted(d.name for d in pedigree.donors))
-        if not pedigree.index: # pragma: no cover
+        if not pedigree.index:  # pragma: no cover
             msg = f"INFO: pedigree without index (name: {donor_names})"
         elif not pedigree.index.dna_ngs_library:  # pragma: no cover
             msg = f"INFO: pedigree index without DNA NGS library (names: {donor_names})"
         if msg:
-            warning.warn(InconsistentPedigreeWarning(msg))
+            warnings.warn(InconsistentPedigreeWarning(msg))
         return not msg
 
 
@@ -551,13 +548,12 @@ class Gatk4CallerStepPartBase(VariantCallingStepPart):
         return ResourceUsage(
             threads=1,
             time="2-00:00:00",
-            memory=f"4G",
+            memory="4G",
         )
 
 
 class Gatk4HaplotypeCallerJointStepPart(Gatk4CallerStepPartBase):
-    """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree.
-    """
+    """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree."""
 
     name = "gatk4_hc_joint"
 
@@ -682,21 +678,18 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, GetLogFileMixin, BaseStepPart):
     @dictify
     def _get_output_files_run(self):
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        work_files = {
-            key: f"{self.base_path_out}{ext}"
-            for key, ext in ext_names.items()
-        }
+        work_files = {key: f"{self.base_path_out}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
             for work_path in chain(work_files.values(), [self.get_log_file("run").values()])
         ]
 
-	def get_log_file(self, action):
+    def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
         token = f"{{mapper}}.{self.name}.{{index_library_name}}"
-        prefix = f"work/{token}/log/{token}.{donor_ngs_library}.{self.name}_{action}"
+        prefix = f"work/{token}/log/{token}.{{donor_ngs_library}}.{self.name}_{action}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -896,10 +889,9 @@ class VariantCallingWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        name_pattern = "{mapper}.{caller}.{index_library.name}"
         for tool in self.config["tools"]:
             yield from self.sub_steps[tool].get_result_files()
-        for name in ('baf_file_generation', 'bcftools_stats', 'jannovar_stats')):
+        for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats"):
             if self.w_config["step_config"]["variant_calling"][name]["enabled"]:
                 yield from self.sub_steps[name].get_result_files()
 
