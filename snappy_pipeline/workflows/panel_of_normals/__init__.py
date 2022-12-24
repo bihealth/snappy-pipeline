@@ -81,6 +81,13 @@ step_config:
   panel_of_normals:
     tools: ['mutect2']  # REQUIRED - available: 'mutect2'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
+    ignore_chroms:             # patterns of chromosome names to ignore
+    - NC_007605    # herpes virus
+    - hs37d5       # GRCh37 decoy
+    - chrEBV       # Eppstein-Barr Virus
+    - '*_decoy'    # decoy contig
+    - 'HLA-*'      # HLA genes
+    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for mutect2
     mutect2:
       path_normals_list: null    # Optional file listing libraries to include in panel
@@ -101,13 +108,6 @@ step_config:
       job_mult_time: 1           # running time multiplier
       merge_mult_memory: 1       # memory multiplier for merging
       merge_mult_time: 1         # running time multiplier for merging
-      ignore_chroms:             # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
 """
 
 

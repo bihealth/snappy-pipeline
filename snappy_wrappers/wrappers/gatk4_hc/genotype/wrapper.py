@@ -33,6 +33,25 @@ fi
 
 # Run actual tools --------------------------------------------------------------------------------
 
+# Call GATK's GenotypeGVCFs
+gatk \
+    GenotypeGVCFs \
+    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --tmp-dir $TMPDIR \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --output {snakemake.output.vcf} \
+    --variant {snakemake.input.gvcf}
+
+# Link input gVCF files to output gVCF files
+ln -sr {snakemake.input.gvcf} {snakemake.output.gvcf}
+ln -sr {snakemake.input.gvcf_md5} {snakemake.output.gvcf_md5}
+ln -sr {snakemake.input.gvcf_tbi} {snakemake.output.gvcf_tbi}
+ln -sr {snakemake.input.gvcf_tbi_md5} {snakemake.output.gvcf_tbi_md5}
+
+# Compute MD5 sums on output files
+md5sum {snakemake.output.vcf} >{snakemake.output.vcf_md5}
+md5sum {snakemake.output.vcf_tbi} >{snakemake.output.vcf_tbi_md5}
+
 # Create output links -----------------------------------------------------------------------------
 
 for path in {snakemake.output.output_links}; do

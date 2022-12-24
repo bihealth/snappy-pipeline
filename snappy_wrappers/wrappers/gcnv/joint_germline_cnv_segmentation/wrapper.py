@@ -35,7 +35,6 @@ fi
 gatk JointGermlineCNVSegmentation \
     --reference {snakemake.config[static_data_config][reference][path]} \
     $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
-    --model {snakemake.params.args[model]} \
     --model-call-intervals {snakemake.input.interval_list} \
     --pedigree {snakemake.input.ped} \
     --output {snakemake.output.vcf}

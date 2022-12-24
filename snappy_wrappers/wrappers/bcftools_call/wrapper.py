@@ -6,8 +6,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-ignore_chroms = snakemake.config["step_config"]["variant_calling"]["bcftools"].get(
-    "ignore_chroms", ""
+ignore_chroms = snakemake.config["step_config"]["variant_calling"].get(
+    "ignore_chroms", []
 )
 if ignore_chroms:
     arg_ignore_chroms = "--ignore-chroms " + " ".join(map(repr, ignore_chroms))

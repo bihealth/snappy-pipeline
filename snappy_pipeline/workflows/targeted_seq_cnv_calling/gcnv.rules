@@ -99,7 +99,5 @@ rule targeted_seq_cnv_calling_gcnv_joint_germline_cnv_segmentation:
         partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
-    params:
-        args=wf.get_params("gcnv", "post_germline_calls"),
     wrapper:
         wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")

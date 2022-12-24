@@ -516,7 +516,7 @@ class ParallelBaseWrapper:
         :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
         If not defined, the default is an empty list.
         """
-        return self._get_config().get("ignore_chroms", [])
+        return self._get_step_config().get("ignore_chroms", [])
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):

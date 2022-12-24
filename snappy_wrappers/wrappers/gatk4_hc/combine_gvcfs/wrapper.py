@@ -31,7 +31,31 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
 # Run actual tools --------------------------------------------------------------------------------
+
+gatk \
+    CombineGVCFs \
+    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --tmp-dir $TMPDIR \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --output {snakemake.output.gvcf} \
+    $(for annotation in {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][annotations]}; do \
+        echo --annotation $annotation; \
+    done) \
+    $(for annotation_group in {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][annotation_groups]}; do \
+        echo --annotation-group $annotation_group; \
+    done) \
+    $(for path in {snakemake.input.gvcf}; do \
+        echo --variant $path; \
+    done)
+
+# Compute MD5 sums on output files
+md5sum {snakemake.output.gvcf} >{snakemake.output.gvcf_md5}
+md5sum {snakemake.output.gvcf_tbi} >{snakemake.output.gvcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

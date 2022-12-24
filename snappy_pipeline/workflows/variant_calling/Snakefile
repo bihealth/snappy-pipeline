@@ -26,8 +26,6 @@ wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.get
 
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
-    variant_calling_link_out_run,
     # Writing pedigrees should be done locally as well
     variant_calling_write_pedigree_run,
 
@@ -38,18 +36,6 @@ rule all:
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule variant_calling_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
 
 # Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,9 +105,6 @@ rule variant_calling_gatk4_hc_joint_run:
         time=wf.get_resource("gatk4_hc_joint", "run", "time"),
         memory=wf.get_resource("gatk4_hc_joint", "run", "memory"),
         partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
-    params:
-        step_key="variant_calling",
-        caller_key="gatk4_hc_joint",
     log:
         **wf.get_log_file("gatk4_hc_joint", "run"),
     wrapper:
@@ -227,7 +210,7 @@ rule variant_calling_bcftools_stats_report:
         memory=wf.get_resource("bcftools_stats", "run", "memory"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
     log:
-        wf.get_log_file("bcftools_stats", "run"),
+        **wf.get_log_file("bcftools_stats", "run"),
     wrapper:
         wf.wrapper_path("bcftools_stats/run")
 
@@ -235,18 +218,18 @@ rule variant_calling_bcftools_stats_report:
 # Generate Jannovar statistics report -----------------------------------------
 
 
-rule variant_calling_jannovar_statistics_report:
+rule variant_calling_jannovar_stats_report:
     input:
-        **wf.get_input_files("jannovar_statistics", "run"),
+        **wf.get_input_files("jannovar_stats", "run"),
     output:
-        **wf.get_output_files("jannovar_statistics", "run"),
-    threads: wf.get_resource("jannovar_statistics", "run", "threads")
+        **wf.get_output_files("jannovar_stats", "run"),
+    threads: wf.get_resource("jannovar_stats", "run", "threads")
     resources:
-        time=wf.get_resource("jannovar_statistics", "run", "time"),
-        memory=wf.get_resource("jannovar_statistics", "run", "memory"),
-        partition=wf.get_resource("jannovar_statistics", "run", "partition"),
+        time=wf.get_resource("jannovar_stats", "run", "time"),
+        memory=wf.get_resource("jannovar_stats", "run", "memory"),
+        partition=wf.get_resource("jannovar_stats", "run", "partition"),
     log:
-        wf.get_log_file("jannovar_statistics", "run"),
+        **wf.get_log_file("jannovar_stats", "run"),
     wrapper:
         wf.wrapper_path("jannovar/statistics")
 

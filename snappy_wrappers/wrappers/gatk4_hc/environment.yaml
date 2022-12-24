@@ -3,6 +3,6 @@ channels:
   - bioconda
 dependencies:
   - gatk4
-  - bcftools ==1.16
-  - samtools ==1.16
-  - htslib ==1.16
+  - bcftools =1.16
+  - samtools =1.16
+  - htslib =1.16

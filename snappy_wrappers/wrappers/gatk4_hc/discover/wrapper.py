@@ -31,7 +31,41 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
 # Run actual tools --------------------------------------------------------------------------------
+
+# Create per-sample gVCF file
+gatk \
+    HaplotypeCaller \
+    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --tmp-dir $TMPDIR \
+    --output {snakemake.output.gvcf} \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
+    $(for path in {snakemake.input.bam}; do \
+        echo --input $path; \
+    done) \
+    $(for annotation in {snakemake.config[step_config][variant_calling][gatk4_hc_joint][annotations]}; do \
+        echo --annotation $annotation; \
+    done) \
+    $(for annotation_group in {snakemake.config[step_config][variant_calling][gatk4_hc_joint][annotation_groups]}; do \
+        echo --annotation-group $annotation_group; \
+    done) \
+    $(if [[ {snakemake.config[step_config][variant_calling][gatk4_hc_joint][allow_seq_dict_incompatibility]} == "True" ]]; then \
+        echo --disable-sequence-dictionary-validation true; \
+    fi) \
+    $(for ignore_chrom in {snakemake.config[step_config][variant_calling][ignore_chroms]}; do \
+        awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
+            {snakemake.config[static_data_config][reference][path]}.fai; \
+    done) \
+    -ERC GVCF
+
+# Compute MD5 sums on output files
+md5sum {snakemake.output.gvcf} >{snakemake.output.gvcf_md5}
+md5sum {snakemake.output.gvcf_tbi} >{snakemake.output.gvcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 
