@@ -1056,6 +1056,8 @@ def test_wgs_cnv_calling_workflow(wgs_cnv_calling_workflow):
         for i in (1, 4)  # only index: P001, P004
         for tool in ("gcnv",)
         for ext in (
+            ".log",
+            ".log.md5",
             ".conda_info.txt",
             ".conda_info.txt.md5",
             ".conda_list.txt",

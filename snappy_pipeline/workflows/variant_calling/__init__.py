@@ -285,7 +285,7 @@ step_config:
 """
 
 
-class InconsistentPedigreeWarning(warnings.UserWarning):
+class InconsistentPedigreeWarning(UserWarning):
     """Raised on inconsistencies with pedigree."""
 
 

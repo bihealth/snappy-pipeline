@@ -95,7 +95,7 @@ def variant_calling_workflow(
 
 
 def test_bcftools_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("bcftools", "run")(wildcards)
     expected = [
         "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
@@ -112,7 +112,7 @@ def test_bcftools_step_part_get_input_files(variant_calling_workflow):
 def test_bcftools_step_part_get_output_files(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}"
+        "work/{mapper}.bcftools.{library_name}/out/{mapper}.bcftools.{library_name}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     # Get actual

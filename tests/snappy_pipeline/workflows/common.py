@@ -39,7 +39,7 @@ def get_expected_log_files_dict(
     return expected
 
 
-def get_expected_output_vcf_files_dict(base_out):
+def get_expected_output_vcf_files_dict(base_out, log_base_out: str):
     """
     :param base_out: Base path structure for vcf files. For example, if the expected path for
     the log is 'work/step.path/log/step.vcf.gz', the argument should be
@@ -55,6 +55,7 @@ def get_expected_output_vcf_files_dict(base_out):
         "vcf_md5": f"{base_out}.vcf.gz.md5",
         "tbi": f"{base_out}.vcf.gz.tbi",
         "tbi_md5": f"{base_out}.vcf.gz.tbi.md5",
+        "output_links": [],
     }
     # Return
     return expected
@@ -89,6 +90,8 @@ def get_expected_gcnv_log_file(step_name: str, *, extended: bool = False):
     # TODO: eventually, all steps should generate extended log files
     if extended:
         return {
+            "log": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log",
+            "log_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log.md5",
             "conda_info": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
             "conda_info_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
             "conda_list": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
