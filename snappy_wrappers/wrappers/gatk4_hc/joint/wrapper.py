@@ -31,7 +31,57 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+# trap "rm -rf $TMPDIR" EXIT
+
 # Run actual tools --------------------------------------------------------------------------------
+
+# Prepare arguments
+if [[ "{allow_seq_dict_incompatibility}" == "True" ]]; then
+    arg_seq_dict="-U ALLOW_SEQ_DICT_INCOMPATIBILITY"
+else
+    arg_seq_dict=
+fi
+
+# Create joint gVCF file
+gatk \
+    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --tmp-dir $TMPDIR \
+    HaplotypeCaller \
+    --output {snakemake.output.gvcf} \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
+    $(for path in {snakemake.input.bam}; do \
+        echo --input $path \
+    done) \
+    $(for annotation in {snakemake.config[step_config][variant_calling][gatk4_hc_joint][annotations]}; do \
+        echo --annotation $annotation \
+    done) \
+    $(for annotation_group in {snakemake.config[step_config][variant_calling][gatk4_hc_joint][annotation_groups]}; do \
+        echo --annotation-group $annotation_group \
+    done) \
+    $(if [[ {snakemake.config[step_config][variant_calling][gatk4_hc_joint][allow_seq_dict_incompatibility]} == "True"; then \
+        --disable-sequence-dictionary-validation true
+    fi) \
+    -ERC GVCF \
+    -L 1:100000000-110000000
+
+# Perform gVCF genotyping
+gatk \
+    --java-options "-Xmx4g" \
+    --tmp-dir $TMPDIR \
+    GenotypeGVCFs \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --variant {snakemake.output.gvcf} \
+    --output {{snakemake.output.vcf}}
+tabix -f {snakemake.output.vcf}
+
+# Compute MD5 sums on output files
+md5sum {snakemake.output.vcf} >{snakemake.output.vcf_md5}
+md5sum {snakemake.output.vcf_tbi} >{snakemake.output.vcf_tbi_md5}
+md5sum {snakemake.output.gvcf} >{snakemake.output.gvcf_md5}
+md5sum {snakemake.output.gvcf_tbi} >{snakemake.output.gvcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

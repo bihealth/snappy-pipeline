@@ -477,7 +477,7 @@ class Gatk4CallerStepPartBase(VariantCallingStepPart):
         """
         self._validate_action(action)
         return ResourceUsage(
-            threads=1,
+            threads=4,
             time="2-00:00:00",
             memory=f"4G",
         )
