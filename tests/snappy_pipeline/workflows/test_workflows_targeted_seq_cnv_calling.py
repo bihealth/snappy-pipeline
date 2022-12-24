@@ -293,6 +293,8 @@ def test_target_seq_cnv_calling_workflow_get_result_files(targeted_seq_cnv_calli
         for i in (1, 4)  # only index: P001, P004
         for tool in ("gcnv",)
         for ext in (
+            ".log",
+            ".log.md5",
             ".conda_info.txt",
             ".conda_info.txt.md5",
             ".conda_list.txt",

@@ -49,7 +49,7 @@ jannovar \
     -XX:CompressedClassSpaceSize=1024m \
     -i {snakemake.input.vcf} \
     -o {snakemake.output.report} \
-    -d {snakemake.config[step_config][variant_calling][jannovar_statistics][path_ser]}
+    -d {snakemake.config[step_config][variant_calling][jannovar_stats][path_ser]}
 
 md5sum {snakemake.output.report} >{snakemake.output.report_md5}
 
