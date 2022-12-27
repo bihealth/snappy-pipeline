@@ -79,7 +79,8 @@ def snakemake_obj(minimal_config):
     script_dir = "/work"
     input_dict = {
         "vcf": "VAR_CALLING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.vcf.gz",
-        "" "tbi": "VAR_CALLING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.vcf.gz.tbi",
+        ""
+        "vcf_tbi": "VAR_CALLING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.vcf.gz.tbi",
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
     output_base_name = (
@@ -87,8 +88,8 @@ def snakemake_obj(minimal_config):
         "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     output_dict = {
-        "tbi": output_base_name + ".vcf.gz.tbi",
-        "tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": output_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
         "vcf": output_base_name + ".vcf.gz",
         "vcf_md5": output_base_name + ".vcf.gz.md5",
     }

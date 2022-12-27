@@ -173,7 +173,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
         r"{mapper}.{caller}.de_novos.{index_library}"
     )
     expected = {
-        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf": base_name_out + ".vcf.gz",
     }
     # Get actual

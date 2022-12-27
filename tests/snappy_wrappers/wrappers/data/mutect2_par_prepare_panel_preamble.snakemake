@@ -1,6 +1,6 @@
 rule merge_all:
     input: ['job_out.0.d/out/tmp_0.vcf.gz', 'job_out.1.d/out/tmp_1.vcf.gz', 'job_out.2.d/out/tmp_2.vcf.gz', 'job_out.3.d/out/tmp_3.vcf.gz', 'job_out.4.d/out/tmp_4.vcf.gz']
-    output: **{'vcf': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.md5', 'tbi': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.tbi.gz', 'tbi_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
+    output: **{'vcf': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.tbi.gz', 'vcf_tbi_md5': '/work/bwa.mutect2.prepare_panel/out/P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     threads: resource_merge_threads
     resources:
         time=resource_merge_time,
@@ -35,8 +35,8 @@ rule merge_all:
         mkdir -p $(dirname {output.vcf})
         mv output/out.vcf.gz {output.vcf}
         mv output/out.vcf.gz.md5 {output.vcf_md5}
-        mv output/out.vcf.gz.tbi {output.tbi}
-        mv output/out.vcf.gz.tbi.md5 {output.tbi_md5}
+        mv output/out.vcf.gz.tbi {output.vcf_tbi}
+        mv output/out.vcf.gz.tbi.md5 {output.vcf_tbi_md5}
 
         # Write out information about conda installation.
         conda list >{log.conda_list}

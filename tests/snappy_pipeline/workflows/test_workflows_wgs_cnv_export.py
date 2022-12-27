@@ -101,7 +101,7 @@ def test_varfish_annotator_step_part_get_input_files(wgs_cnv_export_workflow):
     expected = {
         "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
         "vcf": wgs_cnv_annotation_path + ".vcf.gz",
-        "tbi": wgs_cnv_annotation_path + ".vcf.gz.tbi",
+        "vcf_tbi": wgs_cnv_annotation_path + ".vcf.gz.tbi",
     }
     actual = wgs_cnv_export_workflow.get_input_files("varfish_annotator", "annotate")
     assert actual == expected

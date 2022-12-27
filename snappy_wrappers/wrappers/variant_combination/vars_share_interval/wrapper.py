@@ -60,7 +60,7 @@ if [[ -z "$left_father_no" ]] || [[ -z "$left_mother_no" ]] || \
         {snakemake.output.vcf}.tbi
     pushd $(dirname {snakemake.output.vcf})
     md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-    md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi}).md5
+    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
     exit 0
 fi
 
@@ -173,6 +173,6 @@ tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi}).md5
+md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )

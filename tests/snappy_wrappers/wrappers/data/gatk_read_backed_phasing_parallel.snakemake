@@ -1,9 +1,9 @@
 rule chunk_0:
     input:
-        **{'vcf': '/VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz', 'tbi': '/VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'bam': "/['NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam', 'NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam', 'NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam']"},
+        **{'vcf': '/VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_tbi': '/VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'bam': "/['NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam', 'NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam', 'NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam']"},
     output:
         touch("job_out.0.d/.done"),
-        **{'vcf': 'job_out.0.d/out/tmp_0.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.vcf.gz.md5', 'tbi': 'job_out.0.d/out/tmp_0.vcf.gz.tbi', 'tbi_md5': 'job_out.0.d/out/tmp_0.vcf.gz.tbi.md5'}
+        **{'vcf': 'job_out.0.d/out/tmp_0.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.vcf.gz.md5', 'vcf_tbi': 'job_out.0.d/out/tmp_0.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.0.d/out/tmp_0.vcf.gz.tbi.md5'}
     threads: resource_merge_threads
     resources:
         time=resource_merge_time,

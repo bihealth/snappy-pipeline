@@ -871,8 +871,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     mkdir -p $(dirname {{output.vcf}})
                     mv output/out.vcf.gz {{output.vcf}}
                     mv output/out.vcf.gz.md5 {{output.vcf_md5}}
-                    mv output/out.vcf.gz.tbi {{output.tbi}}
-                    mv output/out.vcf.gz.tbi.md5 {{output.tbi_md5}}
+                    mv output/out.vcf.gz.tbi {{output.vcf_tbi}}
+                    mv output/out.vcf.gz.tbi.md5 {{output.vcf_tbi_md5}}
 
                     # Write out information about conda installation.
                     conda list >{{log.conda_list}}
@@ -957,7 +957,7 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         key: os.path.realpath(
                             os.path.join(self.main_cwd, getattr(self.snakemake.input, key))
                         )
-                        for key in ("vcf", "tbi", "ped")
+                        for key in ("vcf", "vcf_tbi", "ped")
                     }
                 ),
                 "jobno": jobno,
@@ -1058,7 +1058,7 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         key: os.path.realpath(
                             os.path.join(self.main_cwd, getattr(self.snakemake.input, key))
                         )
-                        for key in ("vcf", "tbi")
+                        for key in ("vcf", "vcf_tbi")
                     }
                 ),
                 "jobno": jobno,

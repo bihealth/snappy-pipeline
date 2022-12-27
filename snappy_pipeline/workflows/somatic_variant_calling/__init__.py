@@ -100,18 +100,18 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 EXTS_MATCHED = {
     "mutect": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "txt": ".txt",
         "txt_md5": ".txt.md5",
         "wig": ".wig",
@@ -120,23 +120,23 @@ EXTS_MATCHED = {
     "scalpel": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "tar": ".tar.gz",
     },
     "mutect2": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "stats": ".vcf.stats",
         "stats_md5": ".vcf.stats.md5",
         "f1r2": ".f1r2_tar.tar.gz",
@@ -670,12 +670,12 @@ class Mutect2StepPart(MutectBaseStepPart):
             exts = {
                 "full": ".full.vcf.gz",
                 "full_md5": ".full.vcf.gz.md5",
-                "full_tbi": ".full.vcf.gz.tbi",
-                "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+                "full_vcf_tbi": ".full.vcf.gz.tbi",
+                "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
                 "vcf": ".vcf.gz",
                 "vcf_md5": ".vcf.gz.md5",
-                "tbi": ".vcf.gz.tbi",
-                "tbi_md5": ".vcf.gz.tbi.md5",
+                "vcf_tbi": ".vcf.gz.tbi",
+                "vcf_tbi_md5": ".vcf.gz.tbi.md5",
             }
         if action == "contamination":
             exts = {
@@ -808,12 +808,12 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
     extensions = {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "stats": ".tsv",
         "stats_md5": ".tsv.md5",
         "report": ".xml",

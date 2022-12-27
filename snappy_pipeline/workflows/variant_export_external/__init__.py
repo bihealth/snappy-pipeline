@@ -252,8 +252,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     vcf_key_ext_dict = {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
     }
 
     def __init__(self, parent):

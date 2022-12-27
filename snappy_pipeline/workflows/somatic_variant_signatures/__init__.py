@@ -90,7 +90,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)

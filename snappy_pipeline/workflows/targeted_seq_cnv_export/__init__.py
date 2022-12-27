@@ -158,7 +158,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.annotated.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.annotated.{index_ngs_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         targeted_seq_cnv_annotation = self.parent.sub_workflows["targeted_seq_cnv_annotation"]
         for key, ext in key_ext.items():
             yield key, targeted_seq_cnv_annotation(tpl + ext)

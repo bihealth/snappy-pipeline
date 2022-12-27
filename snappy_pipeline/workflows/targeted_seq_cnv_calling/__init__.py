@@ -91,7 +91,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available WGS CNV callers
 TARGETED_SEQ_CNV_CALLERS = ("xhmm", "gcnv")
@@ -366,7 +366,7 @@ class XhmmStepPart(BaseStepPart):
         name_pattern = "{mapper}.xhmm_genotype.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        for key, ext in (("vcf", ".vcf.gz"), ("tbi", ".vcf.gz.tbi")):
+        for key, ext in (("vcf", ".vcf.gz"), ("vcf_tbi", ".vcf.gz.tbi")):
             yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
                 name_pattern=name_pattern, ext=ext
             )
@@ -476,8 +476,8 @@ class XhmmStepPart(BaseStepPart):
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
-            ("tbi", ".vcf.gz.tbi"),
-            ("tbi_md5", ".vcf.gz.tbi.md5"),
+            ("vcf_tbi", ".vcf.gz.tbi"),
+            ("vcf_tbi_md5", ".vcf.gz.tbi.md5"),
         )
         for key, suffix in kvs:
             yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(
@@ -491,8 +491,8 @@ class XhmmStepPart(BaseStepPart):
         kvs = (
             ("vcf", ".vcf.gz"),
             ("vcf_md5", ".vcf.gz.md5"),
-            ("tbi", ".vcf.gz.tbi"),
-            ("tbi_md5", ".vcf.gz.tbi.md5"),
+            ("vcf_tbi", ".vcf.gz.tbi"),
+            ("vcf_tbi_md5", ".vcf.gz.tbi.md5"),
         )
         for key, suffix in kvs:
             yield key, "work/{name_pattern}/out/{name_pattern}{suffix}".format(

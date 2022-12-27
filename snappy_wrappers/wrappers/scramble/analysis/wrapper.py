@@ -57,6 +57,6 @@ shell(
 md5sum {snakemake.log} > {snakemake.log}.md5
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
 md5sum {snakemake.output.vcf_gz} > {snakemake.output.vcf_gz_md5}
-md5sum {snakemake.output.tbi} > {snakemake.output.tbi_md5}
+md5sum {snakemake.output.vcf_tbi} > {snakemake.output.vcf_tbi_md5}
 """
 )

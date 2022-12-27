@@ -111,9 +111,9 @@ def test_vcf_sv_filter_step_part_call_get_input_files_delly2(wgs_sv_annotation_w
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "sv_bcf": sv_base_name + ".vcf.gz",
-        "sv_csi": sv_base_name + ".vcf.gz.tbi",
+        "sv_bcf_csi": sv_base_name + ".vcf.gz.tbi",
         "var_vcf": v_base_name + ".vcf.gz",
-        "var_tbi": v_base_name + ".vcf.gz.tbi",
+        "var_vcf_tbi": v_base_name + ".vcf.gz.tbi",
     }
     # Get actual
     actual = wgs_sv_annotation_workflow.get_input_files("vcf_sv_filter", "run")(wildcards)
@@ -133,9 +133,9 @@ def test_vcf_sv_filter_step_part_call_get_input_files_popdel(wgs_sv_annotation_w
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "sv_bcf": sv_base_name + ".vcf.gz",
-        "sv_csi": sv_base_name + ".vcf.gz.tbi",
+        "sv_bcf_csi": sv_base_name + ".vcf.gz.tbi",
         "var_vcf": v_base_name + ".vcf.gz",
-        "var_tbi": v_base_name + ".vcf.gz.tbi",
+        "var_vcf_tbi": v_base_name + ".vcf.gz.tbi",
     }
     # Get actual
     actual = wgs_sv_annotation_workflow.get_input_files("vcf_sv_filter", "run")(wildcards)

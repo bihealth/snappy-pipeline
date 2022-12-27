@@ -166,8 +166,8 @@ def test_cnvetti_step_part_get_input_files_merge_segments(wgs_cnv_calling_workfl
     expected = {
         "bcf": [base_name.format(i=i, ext="bcf") for i in patient_ids],
         "bcf_md5": [base_name.format(i=i, ext="bcf.md5") for i in patient_ids],
-        "csi": [base_name.format(i=i, ext="bcf.csi") for i in patient_ids],
-        "csi_md5": [base_name.format(i=i, ext="bcf.csi.md5") for i in patient_ids],
+        "bcf_csi": [base_name.format(i=i, ext="bcf.csi") for i in patient_ids],
+        "bcf_csi_md5": [base_name.format(i=i, ext="bcf.csi.md5") for i in patient_ids],
     }
     # Get actual
     actual = wgs_cnv_calling_workflow.get_input_files("cnvetti", "merge_segments")(wildcards)
@@ -185,12 +185,12 @@ def test_cnvetti_step_part_get_input_files_genotype(wgs_cnv_calling_workflow):
     expected = {
         "sites_bcf": f"{merge_base_name}.bcf",
         "sites_bcf_md5": f"{merge_base_name}.bcf.md5",
-        "sites_csi": f"{merge_base_name}.bcf.csi",
-        "sites_csi_md5": f"{merge_base_name}.bcf.csi.md5",
+        "sites_bcf_csi": f"{merge_base_name}.bcf.csi",
+        "sites_bcf_csi_md5": f"{merge_base_name}.bcf.csi.md5",
         "coverage_bcf": f"{cov_base_name}.bcf",
         "coverage_bcf_md5": f"{cov_base_name}.bcf.md5",
-        "coverage_csi": f"{cov_base_name}.bcf.csi",
-        "coverage_csi_md5": f"{cov_base_name}.bcf.csi.md5",
+        "coverage_bcf_csi": f"{cov_base_name}.bcf.csi",
+        "coverage_bcf_csi_md5": f"{cov_base_name}.bcf.csi.md5",
     }
     # Get actual
     actual = wgs_cnv_calling_workflow.get_input_files("cnvetti", "genotype")(wildcards)
@@ -209,8 +209,8 @@ def test_cnvetti_step_part_get_input_files_merge_genotypes(wgs_cnv_calling_workf
     expected = {
         "bcf": [base_name.format(i=i, ext="bcf") for i in patient_ids],
         "bcf_md5": [base_name.format(i=i, ext="bcf.md5") for i in patient_ids],
-        "csi": [base_name.format(i=i, ext="bcf.csi") for i in patient_ids],
-        "csi_md5": [base_name.format(i=i, ext="bcf.csi.md5") for i in patient_ids],
+        "bcf_csi": [base_name.format(i=i, ext="bcf.csi") for i in patient_ids],
+        "bcf_csi_md5": [base_name.format(i=i, ext="bcf.csi.md5") for i in patient_ids],
     }
     # Get actual
     actual = wgs_cnv_calling_workflow.get_input_files("cnvetti", "merge_genotypes")(wildcards)
@@ -255,12 +255,12 @@ def test_cnvetti_step_part_get_output_files_segment(wgs_cnv_calling_workflow):
     expected = {
         "segments_bcf": f"{seg_base_name}.bcf",
         "segments_bcf_md5": f"{seg_base_name}.bcf.md5",
-        "segments_csi": f"{seg_base_name}.bcf.csi",
-        "segments_csi_md5": f"{seg_base_name}.bcf.csi.md5",
+        "segments_bcf_csi": f"{seg_base_name}.bcf.csi",
+        "segments_bcf_csi_md5": f"{seg_base_name}.bcf.csi.md5",
         "windows_bcf": f"{win_base_name}.bcf",
         "windows_bcf_md5": f"{win_base_name}.bcf.md5",
-        "windows_csi": f"{win_base_name}.bcf.csi",
-        "windows_csi_md5": f"{win_base_name}.bcf.csi.md5",
+        "windows_bcf_csi": f"{win_base_name}.bcf.csi",
+        "windows_bcf_csi_md5": f"{win_base_name}.bcf.csi.md5",
     }
     # Get actual
     actual = wgs_cnv_calling_workflow.get_output_files("cnvetti", "segment")

@@ -94,8 +94,8 @@ INFIXES = ("gts", "feature-effects", "db-infos")
 KEY_EXT = {
     "vcf": ".vcf.gz",
     "vcf_md5": ".vcf.gz.md5",
-    "tbi": ".vcf.gz.tbi",
-    "tbi_md5": ".vcf.gz.tbi.md5",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
 #: Default configuration for the wgs_sv_export_external step

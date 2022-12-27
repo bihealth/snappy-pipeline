@@ -41,7 +41,7 @@ gatk JointGermlineCNVSegmentation \
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf_md5})
-md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi_md5})
+md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi_md5})
 """
 )
 

@@ -109,13 +109,18 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Name/extension pairs for VCF files.
 VCF_KEY_EXTS = dict(zip(EXT_NAMES, EXT_VALUES))
 
 #: Name/extension pairs for BCF files.
-BCF_KEY_EXTS = {"bcf": ".bcf", "bcf_md5": ".bcf.md5", "csi": ".bcf.csi", "csi_md5": ".bcf.csi.md5"}
+BCF_KEY_EXTS = {
+    "bcf": ".bcf",
+    "bcf_md5": ".bcf.md5",
+    "bcf_csi": ".bcf.csi",
+    "bcf_csi_md5": ".bcf.csi.md5",
+}
 
 #: Available WGS CNV callers
 WGS_CNV_CALLERS = ("cnvetti", "delly2", "gcnv")

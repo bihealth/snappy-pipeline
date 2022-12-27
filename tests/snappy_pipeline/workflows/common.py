@@ -53,8 +53,8 @@ def get_expected_output_vcf_files_dict(base_out, log_base_out: typing.Optional[s
     expected = {
         "vcf": f"{base_out}.vcf.gz",
         "vcf_md5": f"{base_out}.vcf.gz.md5",
-        "tbi": f"{base_out}.vcf.gz.tbi",
-        "tbi_md5": f"{base_out}.vcf.gz.tbi.md5",
+        "vcf_tbi": f"{base_out}.vcf.gz.tbi",
+        "vcf_tbi_md5": f"{base_out}.vcf.gz.tbi.md5",
     }
     # Return
     return expected
@@ -73,8 +73,8 @@ def get_expected_output_bcf_files_dict(base_out):
     expected = {
         "bcf": f"{base_out}.bcf",
         "bcf_md5": f"{base_out}.bcf.md5",
-        "csi": f"{base_out}.bcf.csi",
-        "csi_md5": f"{base_out}.bcf.csi.md5",
+        "bcf_csi": f"{base_out}.bcf.csi",
+        "bcf_csi_md5": f"{base_out}.bcf.csi.md5",
     }
     return expected
 

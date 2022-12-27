@@ -726,8 +726,8 @@ def test_sniffles2_step_part_get_output_files_bam_to_snf(wgs_sv_calling_workflow
     expected = {
         "snf": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.snf",
         "snf_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.snf.md5",
-        "tbi": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi.md5",
+        "vcf_tbi": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.tbi.md5",
         "vcf": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz",
         "vcf_md5": "work/{mapper,[^\\.]+}.sniffles2.bam_to_snf.{library_name,[^\\.]+}/out/{mapper}.sniffles2.bam_to_snf.{library_name}.vcf.gz.md5",
     }  # Get actual
@@ -742,8 +742,8 @@ def test_sniffles2_step_part_get_output_files_snf_to_vf(wgs_sv_calling_workflow)
         "work/{mapper}.sniffles2.{index_ngs_library}/out/{mapper}.sniffles2.{index_ngs_library}"
     )
     expected = {
-        "tbi": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi.md5",
+        "vcf_tbi": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.tbi.md5",
         "vcf": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz",
         "vcf_md5": "work/{mapper,[^\\.]+}.sniffles2.{index_ngs_library,[^\\.]+}/out/{mapper}.sniffles2.{index_ngs_library}.vcf.gz.md5",
     }

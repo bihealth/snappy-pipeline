@@ -130,12 +130,12 @@ def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
     # Define expected
     base_name_out = "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}"
     expected = {
-        "tbi": base_name_out + ".vcf.gz.tbi",
-        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "vcf": base_name_out + ".vcf.gz",
         "vcf_md5": base_name_out + ".vcf.gz.md5",
-        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
         "full": base_name_out + ".full.vcf.gz",
         "full_md5": base_name_out + ".full.vcf.gz.md5",
         "txt": base_name_out + ".txt",
@@ -281,12 +281,12 @@ def test_mutect2_step_part_get_output_files_filter(
     expected = {
         "full": mutect2_output_base_name + ".full.vcf.gz",
         "full_md5": mutect2_output_base_name + ".full.vcf.gz.md5",
-        "full_tbi": mutect2_output_base_name + ".full.vcf.gz.tbi",
-        "full_tbi_md5": mutect2_output_base_name + ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": mutect2_output_base_name + ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": mutect2_output_base_name + ".full.vcf.gz.tbi.md5",
         "vcf": mutect2_output_base_name + ".vcf.gz",
         "vcf_md5": mutect2_output_base_name + ".vcf.gz.md5",
-        "tbi": mutect2_output_base_name + ".vcf.gz.tbi",
-        "tbi_md5": mutect2_output_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": mutect2_output_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": mutect2_output_base_name + ".vcf.gz.tbi.md5",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_output_files("mutect2", "filter")
@@ -496,13 +496,13 @@ def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
     # Define expected
     base_name_out = "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}"
     expected = {
-        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
         "full_vcf": base_name_out + ".full.vcf.gz",
         "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
         "tar": base_name_out + ".tar.gz",
-        "tbi": base_name_out + ".vcf.gz.tbi",
-        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "vcf": base_name_out + ".vcf.gz",
         "vcf_md5": base_name_out + ".vcf.gz.md5",
     }
@@ -556,12 +556,12 @@ def test_strelka2_step_part_get_output_files(somatic_variant_calling_workflow):
     expected = {
         "vcf": base_name_out + ".vcf.gz",
         "vcf_md5": base_name_out + ".vcf.gz.md5",
-        "tbi": base_name_out + ".vcf.gz.tbi",
-        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "full": base_name_out + ".full.vcf.gz",
         "full_md5": base_name_out + ".full.vcf.gz.md5",
-        "full_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
         "stats": base_name_out + ".tsv",
         "stats_md5": base_name_out + ".tsv.md5",
         "report": base_name_out + ".xml",

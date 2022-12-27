@@ -69,7 +69,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the tools that might use panel of normals
 TOOLS = ["mutect2"]
@@ -220,8 +220,8 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ext_dict = {
             "vcf": "vcf.gz",
             "vcf_md5": "vcf.gz.md5",
-            "tbi": "vcf.gz.tbi",
-            "tbi_md5": "vcf.gz.tbi.md5",
+            "vcf_tbi": "vcf.gz.tbi",
+            "vcf_tbi_md5": "vcf.gz.tbi.md5",
         }
         tpls = {
             "prepare_panel": "work/{{mapper}}.{tool}.prepare_panel/out/{{normal_library}}.{ext}",

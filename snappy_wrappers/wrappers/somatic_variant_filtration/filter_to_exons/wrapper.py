@@ -17,7 +17,7 @@ if snakemake.wildcards.exon_list == "genome_wide":
     set -x
 
     cp {snakemake.input.vcf} {snakemake.output.vcf}
-    cp {snakemake.input.tbi} {snakemake.output.tbi}
+    cp {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
     """
         )
     )
@@ -50,7 +50,7 @@ else:
 shell(
     r"""
 md5sum {snakemake.output.vcf} > {snakemake.output.vcf}.md5
-md5sum {snakemake.output.tbi} > {snakemake.output.tbi}.md5
+md5sum {snakemake.output.vcf_tbi} > {snakemake.output.vcf_tbi}.md5
 md5sum {snakemake.log} >{snakemake.log}.md5
 """
 )

@@ -76,7 +76,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
@@ -216,7 +216,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
             "output/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
         for key, ext in key_ext.items():
             yield key, variant_annotation(tpl + ext)
@@ -239,9 +239,9 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         )
         key_ext = {
             "vcf": ".vcf.gz",
-            "tbi": ".vcf.gz.tbi",
+            "vcf_tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in key_ext.items():
             yield key, prefix + ext
@@ -293,7 +293,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             "jannovar_annotate_somatic_vcf.dkfz_bias_filter."
             "{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, tpl.format(**wildcards) + ext
         # BAM file and index
@@ -325,9 +325,9 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         )
         key_ext = {
             "vcf": ".vcf.gz",
-            "tbi": ".vcf.gz.tbi",
+            "vcf_tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in key_ext.items():
             yield key, prefix + ext
@@ -445,7 +445,7 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
             "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
             "{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, tpl + ext
 

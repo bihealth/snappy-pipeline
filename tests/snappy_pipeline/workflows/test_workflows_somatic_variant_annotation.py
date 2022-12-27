@@ -97,7 +97,7 @@ def test_jannovar_step_part_get_input_files(somatic_variant_annotation_workflow)
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
-        "tbi": base_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
     }
     actual = somatic_variant_annotation_workflow.get_input_files("jannovar", "annotate_somatic_vcf")
     assert actual == expected

@@ -1374,7 +1374,7 @@ def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_wor
     expected = {
         "filtered_samples": filtered_samples_out,
         "vcf": vcf_pattern_out,
-        "tbi": vcf_pattern_out + ".tbi",
+        "vcf_tbi": vcf_pattern_out + ".tbi",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})

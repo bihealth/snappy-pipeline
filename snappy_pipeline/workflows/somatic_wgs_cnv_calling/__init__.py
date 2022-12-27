@@ -97,7 +97,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 BCF_EXT_VALUES = (".bcf", ".bcf.csi", ".bcf.md5", ".bcf.csi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available somatic WGS CNV callers
 SOMATIC_WGS_CNV_CALLERS = ("canvas", "cnvetti", "control_freec")
@@ -287,7 +287,12 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     actions = ("coverage", "tumor_normal_ratio", "segment")
 
     #: Extension file dictionary. Key: file type (string); Value: file extension (string)
-    bcf_dict = {"bcf": ".bcf", "csi": ".bcf.csi", "bcf_md5": ".bcf.md5", "csi_md5": ".bcf.csi.md5"}
+    bcf_dict = {
+        "bcf": ".bcf",
+        "bcf_csi": ".bcf.csi",
+        "bcf_md5": ".bcf.md5",
+        "bcf_csi_md5": ".bcf.csi.md5",
+    }
 
     def get_input_files(self, action):
         """Return input function for CNVetti rule"""

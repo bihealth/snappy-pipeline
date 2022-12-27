@@ -124,8 +124,8 @@ def test_mutect2_step_part_get_output_files_prepare_panel(panel_of_normals_workf
     expected = {
         "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
         "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
-        "tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
+        "vcf_tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "prepare_panel")
     assert actual == expected

@@ -133,9 +133,9 @@ step_config:
 #: Key => extension mapping for BED file.
 BED_EXTENSIONS = {
     "bed": ".bed.gz",
-    "tbi": ".bed.gz.tbi",
+    "vcf_tbi": ".bed.gz.tbi",
     "bed_md5": ".bed.gz.md5",
-    "tbi_md5": ".bed.gz.tbi.md5",
+    "tbi_vcf_md5": ".bed.gz.tbi.md5",
 }
 
 
@@ -168,7 +168,7 @@ class BcftoolsRohStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["variant_calling"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl.format(**wildcards) + ext)

@@ -88,8 +88,8 @@ def snakemake_obj(minimal_config):
         "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}"
     )
     output_dict = {
-        "tbi": output_base_name + ".vcf.gz.tbi",
-        "tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": output_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
         "vcf": output_base_name + ".vcf.gz",
         "vcf_md5": output_base_name + ".vcf.gz.md5",
     }

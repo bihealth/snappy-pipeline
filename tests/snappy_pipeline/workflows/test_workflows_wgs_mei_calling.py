@@ -257,7 +257,7 @@ def test_melt_step_part_get_output_files_make_vcf(wgs_mei_calling_workflow):
     expected = {
         "done": "work/{mapper}.melt.make_vcf.{me_type}/out/.done",
         "list_txt": "work/{mapper}.melt.genotype.{me_type}/out/list.txt",
-        "tbi": "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi",
+        "vcf_tbi": "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi",
         "vcf": "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz",
     }
     actual = wgs_mei_calling_workflow.get_output_files("melt", "make_vcf")
@@ -311,7 +311,7 @@ def test_melt_step_part_get_input_files_reorder_vcf(wgs_mei_calling_workflow):
     """Tests MeltStepPart._get_input_files_reorder_vcf()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
-        "tbi": "work/bwa.melt.merge_vcf/out/bwa.melt.merge_vcf.vcf.gz.tbi",
+        "vcf_tbi": "work/bwa.melt.merge_vcf/out/bwa.melt.merge_vcf.vcf.gz.tbi",
         "vcf": "work/bwa.melt.merge_vcf/out/bwa.melt.merge_vcf.vcf.gz",
     }
     actual = wgs_mei_calling_workflow.get_input_files("melt", "reorder_vcf")(wildcards)

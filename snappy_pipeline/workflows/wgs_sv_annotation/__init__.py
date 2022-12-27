@@ -76,7 +76,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration of the wgs_sv_filtration step
 DEFAULT_CONFIG = r"""
@@ -125,7 +125,7 @@ class VcfSvFilterStepPart(BaseStepPart):
 
             # SVs
             # TODO: Align key names with content and wrapper ``vcf_sv_filter``
-            key_ext = {"bcf": ".vcf.gz", "csi": ".vcf.gz.tbi"}
+            key_ext = {"bcf": ".vcf.gz", "bcf_csi": ".vcf.gz.tbi"}
             tpl_sv = (
                 "output/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
@@ -143,7 +143,7 @@ class VcfSvFilterStepPart(BaseStepPart):
                 "work/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
             )
-            key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+            key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
             variant_calling = self.parent.sub_workflows["variant_calling"]
             for key, ext in key_ext.items():
                 path = tpl.replace("{caller}", self.parent.config["tool_variant_calling"])
@@ -161,9 +161,9 @@ class VcfSvFilterStepPart(BaseStepPart):
         )
         key_ext = {
             "vcf": ".vcf.gz",
-            "tbi": ".vcf.gz.tbi",
+            "vcf_tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in key_ext.items():
             yield key, prefix + ext

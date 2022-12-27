@@ -134,12 +134,12 @@ def test_cnvetti_on_target_step_part_get_input_files_postprocess(
     expected = {
         "targets_bcf": base_name + ".targets.bcf",
         "targets_bcf_md5": base_name + ".targets.bcf.md5",
-        "targets_csi": base_name + ".targets.bcf.csi",
-        "targets_csi_md5": base_name + ".targets.bcf.csi.md5",
+        "targets_bcf_csi": base_name + ".targets.bcf.csi",
+        "targets_bcf_csi_md5": base_name + ".targets.bcf.csi.md5",
         "segments_bcf": base_name + ".segments.bcf",
         "segments_bcf_md5": base_name + ".segments.bcf.md5",
-        "segments_csi": base_name + ".segments.bcf.csi",
-        "segments_csi_md5": base_name + ".segments.bcf.csi.md5",
+        "segments_bcf_csi": base_name + ".segments.bcf.csi",
+        "segments_bcf_csi_md5": base_name + ".segments.bcf.csi.md5",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files(
         "cnvetti_on_target", "postprocess"
@@ -173,12 +173,12 @@ def test_cnvetti_on_target_step_part_get_output_files_segment(
     expected = {
         "targets_bcf": base_name + ".targets.bcf",
         "targets_bcf_md5": base_name + ".targets.bcf.md5",
-        "targets_csi": base_name + ".targets.bcf.csi",
-        "targets_csi_md5": base_name + ".targets.bcf.csi.md5",
+        "targets_bcf_csi": base_name + ".targets.bcf.csi",
+        "targets_bcf_csi_md5": base_name + ".targets.bcf.csi.md5",
         "segments_bcf": base_name + ".segments.bcf",
         "segments_bcf_md5": base_name + ".segments.bcf.md5",
-        "segments_csi": base_name + ".segments.bcf.csi",
-        "segments_csi_md5": base_name + ".segments.bcf.csi.md5",
+        "segments_bcf_csi": base_name + ".segments.bcf.csi",
+        "segments_bcf_csi_md5": base_name + ".segments.bcf.csi.md5",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files(
         "cnvetti_on_target", "segment"
@@ -708,7 +708,7 @@ def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calli
     expected = {
         "bed": base_name_out + ".bed",
         "seg": base_name_out + ".seg",
-        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf": base_name_out + ".vcf.gz",
     }
     # Get actual

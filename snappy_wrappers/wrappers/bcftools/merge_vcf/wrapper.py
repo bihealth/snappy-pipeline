@@ -77,7 +77,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         done < <(echo {snakemake.params.args[sample_names]})
         # Copy
         cp $TMPDIR/cwd/1.vcf.gz {snakemake.output.vcf}
-        cp $TMPDIR/cwd/1.vcf.gz.tbi {snakemake.output.tbi}
+        cp $TMPDIR/cwd/1.vcf.gz.tbi {snakemake.output.vcf_tbi}
     else
         out=$(realpath {snakemake.output.vcf})
         pushd $TMPDIR/cwd
@@ -93,7 +93,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
 
     pushd $(dirname {snakemake.output.vcf})
     md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf_md5})
-    md5sum $(basename {snakemake.output.tbi}) > $(basename {snakemake.output.tbi_md5})
+    md5sum $(basename {snakemake.output.vcf_tbi}) > $(basename {snakemake.output.vcf_tbi_md5})
     """
     )
 
