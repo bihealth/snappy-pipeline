@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py coverage
+"""Wrapper vor cnvkit.py genome2access
 """
 
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
-
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
 
 shell(
     r"""
@@ -30,17 +27,6 @@ md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # Function definitions ---------------------------------------------------------
-
-coverage()
-{{
-    cnvkit.py coverage \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
-        --min-mapq {config[min_mapq]} \
-        --processes {snakemake.threads} \
-        {snakemake.input.bam} \
-        --output $2 $1
-}}
-
 md5()
 {{
     set -x
@@ -55,17 +41,20 @@ md5()
 
 # -----------------------------------------------------------------------------
 
-coverage {snakemake.input.target} {snakemake.output.target}
+cnvkit.py autobin --method "hybrid" \
+    --fasta {snakemake.config[static_data_config][reference][path] \
+    --access {snakemake.input.access} \
+    --targets {config[targets]} \
+    --bp-per-bin {config[bp_per_bin]} \
+    --target-min-size {config[target_min_size]} --target-max-size {config[target_max_size]} \
+    --antitarget-min-size {config[antitarget_min_size]} --antitarget-max-size {config[antitarget_max_size]} \
+    $(if [[ -n "{config[annotate]}" ]] ; then \
+        echo --annotate {config[annotate]} --short-names
+    fi) \
+    --target-output-bed {snakemake.output.target} --antitarger-output-bed {snakemake.output.antitarget} \
+    {snakemake.input.bams}
+
 md5 {snakemake.output.target}
-
-coverage {snakemake.input.antitarget} {snakemake.output.antitarget}
 md5 {snakemake.output.antitarget}
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

@@ -7,6 +7,10 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["cnvkit"]
+
+exclude = " -- exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
+
 shell(
     r"""
 # Also pipe everything to log file
@@ -30,6 +34,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 cnvkit.py access \
     -o {snakemake.output} \
+    --min-gap-size config[min_gap_size] {exclude} \
     {snakemake.config[static_data_config][reference][path]}
 
 

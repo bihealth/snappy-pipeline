@@ -97,3 +97,73 @@ rule panel_of_normals_mutect2_create_panel:
         **wf.get_log_file("mutect2", "create_panel"),
     wrapper:
         wf.wrapper_path("mutect2/create_panel")
+
+
+# Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out the tumor-only results for the normals ----------------------------
+
+
+rule panel_of_normals_cnvkit_access:
+    output:
+        **wf.get_output_files("cnvkit", "access"),
+    threads: wf.get_resource("cnvkit", "access", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "access", "time"),
+        memory=wf.get_resource("cnvkit", "access", "memory"),
+        partition=wf.get_resource("cnvkit", "access", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "access"),
+    wrapper:
+        wf.wrapper_path("cnvkit/access")
+
+
+rule panel_of_normals_cnvkit_autobin:
+    input:
+        unpack(wf.get_input_files("cnvkit", "autobin")),
+    output:
+        **wf.get_output_files("cnvkit", "autobin"),
+    threads: wf.get_resource("cnvkit", "autobin", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "autobin", "time"),
+        memory=wf.get_resource("cnvkit", "autobin", "memory"),
+        partition=wf.get_resource("cnvkit", "autobin", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "autobin"),
+    wrapper:
+        wf.wrapper_path("cnvkit/autobin")
+
+
+rule panel_of_normals_cnvkit_coverage:
+    input:
+        unpack(wf.get_input_files("cnvkit", "coverage")),
+    output:
+        **wf.get_output_files("cnvkit", "coverage"),
+    threads: wf.get_resource("cnvkit", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "coverage", "time"),
+        memory=wf.get_resource("cnvkit", "coverage", "memory"),
+        partition=wf.get_resource("cnvkit", "coverage", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "coverage"),
+    wrapper:
+        wf.wrapper_path("cnvkit/coverage")
+
+
+# Create the panel of normals -------------------------------------------------
+
+
+rule panel_of_normals_cnvkit_create_panel:
+    input:
+        unpack(wf.get_input_files("cnvkit", "create_panel")),
+    output:
+        **wf.get_output_files("cnvkit", "create_panel"),
+    threads: wf.get_resource("cnvkit", "create_panel", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "create_panel", "time"),
+        memory=wf.get_resource("cnvkit", "create_panel", "memory"),
+        partition=wf.get_resource("cnvkit", "create_panel", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "create_panel"),
+    wrapper:
+        wf.wrapper_path("cnvkit/reference")

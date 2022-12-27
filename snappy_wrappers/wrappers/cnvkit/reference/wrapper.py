@@ -10,6 +10,17 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["cnvkit"]
 
+cluster = (
+    " --cluster --min-cluster-size {}".format(config["min_cluster_size"])
+    if config["min_cluster_size"] > 0
+    else ""
+)
+gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
+male = " --male-reference" if config["male_reference"] else ""
+no_gc = " --no-gc" if not config["gc_correction"] else ""
+no_edge = " --no-edge" if not config["edge_correction"] else ""
+no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
+
 shell(
     r"""
 # Also pipe everything to log file
@@ -31,38 +42,23 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # -----------------------------------------------------------------------------
 
-if [[ "{config[normals_reference]}" == "" ]]
-then
-    export TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-    mkdir $TMPDIR/out
+cnvkit reference \
+    --output {snakemake.output.panel} \
+    --fasta {snakemake.config[static_data_config][reference][path]} \
+    {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+    {snakemake.input.target} {snakemake.input.antitarget} 
 
-    cnvkit.py coverage \
-        -o $TMPDIR/out/target.cnn \
-        {snakemake.input.bam} \
-        {snakemake.input.target}
-
-    cnvkit.py coverage \
-        -o $TMPDIR/out/antitarget.cnn \
-        {snakemake.input.bam} \
-        {snakemake.input.antitarget}
-
-    cnvkit.py reference \
-        -o {snakemake.output} \
-        -f {snakemake.config[static_data_config][reference][path]} \
-        -t $TMPDIR/out/target.cnn \
-        -a $TMPDIR/out/antitarget.cnn
-
-    rm -rf $TMPDIR
-else
-    r=$(realpath --relative-to=$d {config[normals_reference]})
-    ln -s $r {snakemake.output}
-fi
-
-fn=$(basename "{snakemake.output}")
-d=$(dirname "{snakemake.output}")
+fn=$(basename "{snakemake.output.panel}")
+d=$(dirname "{snakemake.output.panel}")
 pushd $d
 md5sum $fn > $fn.md5
 popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
