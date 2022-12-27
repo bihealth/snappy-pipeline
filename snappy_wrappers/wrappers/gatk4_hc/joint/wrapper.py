@@ -112,7 +112,7 @@ export -f run-shard
 
 # Perform parallel execution
 num_threads={snakemake.config[step_config][variant_calling][gatk4_hc_joint][num_threads]}
-head -n 10 $TMPDIR/final_intervals.txt \
+cat $TMPDIR/final_intervals.txt \
 | parallel -j $num_threads 'run-shard {{#}} {{}}'
 
 # Merge the individual shards' output VCF

@@ -45,11 +45,13 @@ bcftools query \
         {{ if (prev != $1) {{
             printf("variableStep chrom=%s\n", $1, span);
         }} else {{
-            dp = old3;
-            split(old4, a, ",");
-            rd = a[1];
-            if (dp >= {snakemake.config[step_config][variant_calling][baf_file_generation][min_dp]}) {{
-                printf("%s\t%f\n", old2, (dp - rd) / dp);
+            if (old2 < $2) {{
+                dp = old3;
+                split(old4, a, ",");
+                rd = a[1];
+                if (dp >= {snakemake.config[step_config][variant_calling][baf_file_generation][min_dp]}) {{
+                    printf("%s\t%f\n", old2, (dp - rd) / dp);
+                }}
             }}
         }}
         old2=$2;
