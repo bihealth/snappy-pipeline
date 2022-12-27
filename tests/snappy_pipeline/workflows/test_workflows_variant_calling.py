@@ -385,10 +385,10 @@ def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow
         "bw": base_name_out + ".bw",
         "bw_md5": base_name_out + ".bw.md5",
     }
-    expected["output_links"] = {
-        key: value.replace("work/", "output/")
-        for key, value in expected.items()
-    }
+    expected["output_links"] = [
+        value.replace("work/", "output/")
+        for value in expected.values()
+    ]
     for ext in ("log", "conda_info", "conda_list", "wrapper.py", "environment.yaml"):
         token = '{mapper}.{var_caller}.{index_library_name}'
         line =f'output/{token}/log/{token}.{{donor_library_name}}.baf_file_generation_run.{ext}'
