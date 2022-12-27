@@ -202,14 +202,12 @@ step_config:
       window_length: 10000000
       num_threads: 16
     gatk4_hc_joint:
-     #window_length: 10000000
-      window_length: 100000
+      window_length: 10000000
       num_threads: 16
       allow_seq_dict_incompatibility: false  # REQUIRED
       annotations: []  # REQUIRED
     gatk4_hc_gvcf:
-     #window_length: 10000000
-      window_length: 100000
+      window_length: 10000000
       num_threads: 16
       allow_seq_dict_incompatibility: false  # REQUIRED
       annotations: []  # REQUIRED

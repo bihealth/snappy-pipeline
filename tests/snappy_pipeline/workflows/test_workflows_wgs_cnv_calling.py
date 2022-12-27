@@ -742,6 +742,8 @@ def test_gcnv_get_result_files(wgs_cnv_calling_workflow):
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.log",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.log.md5",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.md5",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi",
@@ -754,6 +756,8 @@ def test_gcnv_get_result_files(wgs_cnv_calling_workflow):
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log.md5",
     ]
     actual = wgs_cnv_calling_workflow.substep_getattr("gcnv", "get_result_files")()
     assert actual == expected
