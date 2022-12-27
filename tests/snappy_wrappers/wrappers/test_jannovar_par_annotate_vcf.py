@@ -84,8 +84,8 @@ def snakemake_obj(minimal_config):
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
     output_base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     output_dict = {
         "vcf_tbi": output_base_name + ".vcf.gz.tbi",
@@ -94,8 +94,8 @@ def snakemake_obj(minimal_config):
         "vcf_md5": output_base_name + ".vcf.gz.md5",
     }
     log_base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.P001-T1-DNA1-WGS1/log/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-T1-DNA1-WGS1"
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.P001-T1-DNA1-WGS1/log/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-T1-DNA1-WGS1"
     )
     log_dict = {
         "conda_info": log_base_name + ".conda_info.txt",

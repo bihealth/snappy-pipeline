@@ -40,7 +40,7 @@ def minimal_config():
             path_variant_calling: ../VAR_CALLING
             path_wgs_sv_calling: ../WGS_SV_CALLING
             tool_ngs_mapping_variant_calling: bwa
-            tool_variant_calling: gatk_hc
+            tool_variant_calling: gatk3_hc
             tools_ngs_mapping: [bwa]
             tools_wgs_sv_calling: [delly2]
 
@@ -107,7 +107,9 @@ def test_vcf_sv_filter_step_part_call_get_input_files_delly2(wgs_sv_annotation_w
     sv_base_name = (
         "WGS_SV_CALLING/output/bwa.delly2.P001-N1-DNA1-WGS1/out/bwa.delly2.P001-N1-DNA1-WGS1"
     )
-    v_base_name = "VAR_CALLING/work/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+    v_base_name = (
+        "VAR_CALLING/work/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
+    )
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "sv_bcf": sv_base_name + ".vcf.gz",
@@ -129,7 +131,9 @@ def test_vcf_sv_filter_step_part_call_get_input_files_popdel(wgs_sv_annotation_w
     sv_base_name = (
         "WGS_SV_CALLING/work/bwa.popdel.internal.concat_calls/out/bwa.popdel.internal.concat_calls"
     )
-    v_base_name = "VAR_CALLING/work/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+    v_base_name = (
+        "VAR_CALLING/work/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
+    )
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "sv_bcf": sv_base_name + ".vcf.gz",

@@ -11,18 +11,18 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-assert len(snakemake.input.gatk_hc) == len(snakemake.input.gatk_ug)
+assert len(snakemake.input.gatk3_hc) == len(snakemake.input.gatk3_ug)
 
 with tempfile.TemporaryDirectory() as tmpdir:
     # Write paths to input files into temporary directory.
     #
     # cf. https://bitbucket.org/snakemake/snakemake/issues/878
-    path_gatk_hc = os.path.join(tmpdir, "gatk_hc")
-    with open(path_gatk_hc, "wt") as tmpf:
-        print("\n".join(snakemake.input.gatk_hc), file=tmpf)
-    path_gatk_ug = os.path.join(tmpdir, "gatk_ug")
-    with open(path_gatk_ug, "wt") as tmpf:
-        print("\n".join(snakemake.input.gatk_ug), file=tmpf)
+    path_gatk3_hc = os.path.join(tmpdir, "gatk3_hc")
+    with open(path_gatk3_hc, "wt") as tmpf:
+        print("\n".join(snakemake.input.gatk3_hc), file=tmpf)
+    path_gatk3_ug = os.path.join(tmpdir, "gatk3_ug")
+    with open(path_gatk3_ug, "wt") as tmpf:
+        print("\n".join(snakemake.input.gatk3_ug), file=tmpf)
 
     shell(
         r"""
@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
     TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" EXIT
 
-    pairs=$(paste {path_gatk_hc} {path_gatk_ug})
+    pairs=$(paste {path_gatk3_hc} {path_gatk3_ug})
 
     get_sample()
     {{

@@ -47,3 +47,53 @@ See [user installation](docs/quickstart.rst) if you just want to use the pipelin
 
 See [developer installation)[docs/installation.rst) for getting started with working on the pipeline code and also building the documentation.
 
+## Using GATK3
+
+Some wrappers rely on GATK 3.
+GATK v3 is not free software and cannot be redistributed.
+Earlier, we had an internal CUBI conda server but this limits use of the wrapper for the general public.
+Now, the using pipeline steps must be activated as follows.
+
+If you are a member of CUBI, you can use the central GATK download.
+Alternatively, you can download the tarball [from the Broad archive](https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2).
+
+```bash
+$ ls -lh /fast/groups/cubi/work/projects/biotools/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
+-rw-rw---- 1 holtgrem_c hpc-ag-cubi 14M Dec 19  2019 /fast/groups/cubi/work/projects/biotools/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
+```
+
+First, go to the pipeline directory where you want to run:
+
+```bash
+$ cd variant_calling
+```
+
+Explicitely create any missing conda environment
+
+```bash
+$ snappy-snake --conda-create-envs-only
+[...]
+12-27 17:18 snakemake.logging WARNING  Downloading and installing remote packages.
+[...]
+```
+
+Find out which conda environments use GATK v3
+
+```bash
+$ grep 'gatk.*3' .snakemake/conda/*.yaml
+.snakemake/conda/d76b719b718c942f8e49e55059e956a6.yaml:  - gatk =3
+```
+
+Activate each conda environment and register
+
+```bash
+$ for yaml in $(grep -l 'gatk.*3' .snakemake/conda/*.yaml); do
+        environ=${yaml%.yaml};
+        conda activate $environ
+        gatk3-register /fast/groups/cubi/work/projects/biotools/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
+        conda deactivate
+    done
+Moving GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2 to /home/holtgrem_c/miniconda3/envs/gatk3/opt/gatk-3.8
+```
+
+You are now ready to run GATK v3 from this environment.

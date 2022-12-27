@@ -35,17 +35,17 @@ the following files will be generated:
 - ``{mapper}.{var_caller}.{var_annotator}.{lib_name}.vcf.gz.tbi.md5``
 
 
-For example, annotation of gatk_hc variant calls could look like this:
+For example, annotation of gatk3_hc variant calls could look like this:
 
 ::
 
     output/
-    +-- bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1
+    +-- bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       `-- bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       `-- bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
     [...]
 
 ====================

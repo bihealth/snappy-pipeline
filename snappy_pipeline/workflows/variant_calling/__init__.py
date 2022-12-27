@@ -42,12 +42,12 @@ For example, it might look as follows for the example from above:
 ::
 
     output/
-    +-- bwa.gatk_hc.P001-N1-DNA1-WES1
+    +-- bwa.gatk3_hc.P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       `-- bwa.gatk_hc.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.gatk3_hc.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk3_hc.P001-N1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.gatk3_hc.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       `-- bwa.gatk3_hc.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
     [...]
 
 Generally, these files will be unfiltered, i.e., contain low-quality variants.
@@ -75,8 +75,13 @@ Available Germline Variant Callers
 The following germline variant callers are currently available
 
 - ``"bcftools"``  -- samtools mpileup plus bcftools
-- ``"gatk_hc"`` -- GATK HaplotypeCaller
-- ``"gatk_ug"`` -- GATK UnifiedGenotyper
+- ``"gatk3_hc"`` -- GATK v3 HaplotypeCaller
+- ``"gatk3_ug"`` -- GATK v3 UnifiedGenotyper
+<<<<<<< HEAD
+=======
+- ``"gatk4_hc_gvcf"`` -- GATK v4 HaplotypeCaller gVCF Workflow
+- ``"gatk4_hc_joint"`` -- GATK v4 HaplotypeCaller Joint Workflow
+>>>>>>> faefbc4 (wip)
 
 =======
 Reports
@@ -146,7 +151,6 @@ from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -163,8 +167,8 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 #: Available germline variant callers
 VARIANT_CALLERS = (
     "bcftools",
-    "gatk_hc",
-    "gatk_ug",
+    "gatk3_hc",
+    "gatk3_ug",
     "gatk4_hc_gvcf",
     "gatk4_hc_joint",
 )
@@ -188,7 +192,7 @@ step_config:
       path_ser: REQUIRED  # REQUIRED
 
     # variant calling tools and their configuration
-    tools: ['gatk4_hc_gvcf']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug'
+    tools: ['gatk4_hc_gvcf']  # REQUIRED
     ignore_chroms:
     - '^NC_007605$' # herpes virus
     - '^hs37d5$'    # GRCh37 decoy
@@ -201,81 +205,23 @@ step_config:
       max_indel_depth: 250
       window_length: 10000000
       num_threads: 16
+    gatk3_hc:
+      num_threads: 16
+      window_length: 10000000
+      allow_seq_dict_incompatibility: false
+    gatk3_ug:
+      num_threads: 16
+      window_length: 10000000
+      allow_seq_dict_incompatibility: false
+      downsample_to_coverage: 250
     gatk4_hc_joint:
       window_length: 10000000
       num_threads: 16
-      allow_seq_dict_incompatibility: false  # REQUIRED
-      annotations: []  # REQUIRED
+      allow_seq_dict_incompatibility: false
     gatk4_hc_gvcf:
       window_length: 10000000
       num_threads: 16
-      allow_seq_dict_incompatibility: false  # REQUIRED
-      annotations: []  # REQUIRED
-    gatk_hc:
-      # Parallelization configuration
-      num_threads: 2            # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 0          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10  # throttling of status jobs
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK HC--specific configuration
       allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    gatk_ug:
-      # Parallelization configuration
-      num_threads: 2            # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 0          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10  # throttling of status jobs
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK UG--specific configuration
-      allow_seq_dict_incompatibility: false
-      downsample_to_coverage: 250
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
 """
 
 
@@ -467,8 +413,8 @@ class BcftoolsStepPart(VariantCallingStepPart):
         )
 
 
-class GatkCallerStepPartBase(VariantCallingStepPart):
-    """Germlin variant calling with GATK caller"""
+class Gatk3CallerStepPartBase(VariantCallingStepPart):
+    """Germlin variant calling with GATK v3 caller"""
 
     def check_config(self):
         if self.__class__.name not in self.config["tools"]:
@@ -495,24 +441,24 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         )
 
 
-class GatkHaplotypeCallerStepPart(GatkCallerStepPartBase):
+class Gatk3HaplotypeCallerStepPart(Gatk3CallerStepPartBase):
     """Germline variant calling with GATK HaplotypeCaller
 
-    This triggers the cluster-parallel variant calling with gatk_ug, GATK3.
+    This triggers the cluster-parallel variant calling with gatk3_hc, GATK3.
     """
 
     #: Step name
-    name = "gatk_hc"
+    name = "gatk3_hc"
 
 
-class GatkUnifiedGenotyperStepPart(GatkCallerStepPartBase):
+class Gatk3UnifiedGenotyperStepPart(Gatk3CallerStepPartBase):
     """Germline variant calling with GATK UnifiedGenotyper
 
-    This triggers the cluster-parallel variant calling with gatk_ug, GATK3.
+    This triggers the cluster-parallel variant calling with gatk3_ug, GATK3.
     """
 
     #: Step name
-    name = "gatk_ug"
+    name = "gatk3_ug"
 
 
 class Gatk4CallerStepPartBase(VariantCallingStepPart):
@@ -900,14 +846,13 @@ class VariantCallingWorkflow(BaseStep):
             (
                 WritePedigreeStepPart,
                 BcftoolsStepPart,
-                GatkHaplotypeCallerStepPart,
-                GatkUnifiedGenotyperStepPart,
+                Gatk3HaplotypeCallerStepPart,
+                Gatk3UnifiedGenotyperStepPart,
                 Gatk4HaplotypeCallerJointStepPart,
                 Gatk4HaplotypeCallerGvcfStepPart,
                 BcftoolsStatsStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
-                LinkOutStepPart,
             )
         )
         # Register sub workflows

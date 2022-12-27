@@ -40,7 +40,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
           variant_denovo_filtration:
             path_variant_annotation: ../variant_annotation
 
@@ -112,14 +112,14 @@ def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
     variant_annotation_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=variant_annotation_name_out)
     expected = {**bam_ped_dict, **vcf_dict}
     # Get actual
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+        fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = variant_de_novo_filtration_workflow.get_input_files("filter_denovo", "run")(wildcards)
     assert actual == expected
@@ -256,8 +256,8 @@ def test_de_novo_filtration_workflow(variant_de_novo_filtration_workflow):
         "output/bwa.multisite_de_novo/out/bwa.multisite_de_novo.txt.md5",
     ]
     base_name_out = (
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1{ext}"
+        "output/bwa.gatk3_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.de_novos_hard.P00{i}-N1-DNA1-WGS1{ext}"
     )
     expected += [
         base_name_out.format(i=i, ext=ext)

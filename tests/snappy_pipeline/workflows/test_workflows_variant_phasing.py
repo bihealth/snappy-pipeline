@@ -41,8 +41,8 @@ def minimal_config():
           variant_calling:
             tools:
             - bcftools
-            - gatk_hc
-            - gatk_ug
+            - gatk3_hc
+            - gatk3_ug
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
           variant_phasing:
@@ -172,15 +172,15 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
     """Tests PhaseByTransmissionStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
     ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     expected = {**vcf_dict, **ped_dict}
     # Get actual
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+        fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = variant_phasing_workflow.get_input_files("gatk_phase_by_transmission", "run")(
         wildcards
@@ -234,15 +234,15 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
     """Tests ReadBackedPhasingOnlyStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
     bam_dict = get_expected_bam_output_file()
     expected = {**bam_dict, **vcf_dict}
     # Get actual
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+        fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_only", "run")(
         wildcards
@@ -296,15 +296,15 @@ def test_gatk_read_backed_phasing_also_step_part_get_input_files(variant_phasing
     """Tests ReadBackedPhasingAlsoStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1"
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.gatk_pbt.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
     bam_dict = get_expected_bam_output_file()
     expected = {**bam_dict, **vcf_dict}
     # Get actual
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+        fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = variant_phasing_workflow.get_input_files("gatk_read_backed_phasing_also", "run")(
         wildcards
@@ -373,7 +373,7 @@ def test_variant_phasing_workflow(variant_phasing_workflow):
     )
     base_out_list = [
         base_out.format(tool=tool, i=i)
-        for tool in ("bcftools", "gatk_hc", "gatk_ug")
+        for tool in ("bcftools", "gatk3_hc", "gatk3_ug")
         for i in ("1", "4")
     ]
     expected = []

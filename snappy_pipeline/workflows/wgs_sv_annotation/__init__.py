@@ -87,7 +87,7 @@ step_config:
     path_variant_calling: ../variant_calling
     path_wgs_sv_calling: ../wgs_sv_calling
     tool_ngs_mapping_variant_calling: bwa  # REQUIRED
-    tool_variant_calling: gatk_hc          # REQUIRED
+    tool_variant_calling: gatk3_hc          # REQUIRED
     tools_ngs_mapping: [bwa]               # REQUIRED
     tools_wgs_sv_calling: [delly2]         # REQUIRED
     path_alu_bed: ''

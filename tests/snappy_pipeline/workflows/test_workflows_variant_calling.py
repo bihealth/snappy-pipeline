@@ -43,8 +43,8 @@ def minimal_config():
               enabled: true
             tools:
             - bcftools
-            - gatk_hc
-            - gatk_ug
+            - gatk3_hc
+            - gatk3_ug
 
         data_sets:
           first_batch:
@@ -147,9 +147,9 @@ def test_bcftools_step_part_get_resource(variant_calling_workflow):
 # Tests for GatkHaplotypeCallerStepPart -----------------------------------------------------------
 
 
-def test_gatk_hc_step_part_get_input_files(variant_calling_workflow):
+def test_gatk3_hc_step_part_get_input_files(variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("gatk_hc", "run")(wildcards)
+    actual = variant_calling_workflow.get_input_files("gatk3_hc", "run")(wildcards)
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "bam": [
@@ -161,59 +161,59 @@ def test_gatk_hc_step_part_get_input_files(variant_calling_workflow):
     assert actual == expected
 
 
-def test_gatk_hc_step_part_get_output_files(variant_calling_workflow):
+def test_gatk3_hc_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = "work/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}"
+    base_name_out = "work/{mapper}.gatk3_hc.{library_name}/out/{mapper}.gatk3_hc.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     expected["output_links"] = [
-        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz",
-        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.md5",
-        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.tbi",
-        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.tbi.md5",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.log",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.log.md5",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_info.txt",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_info.txt.md5",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_list.txt",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_list.txt.md5",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.wrapper.py",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.wrapper.py.md5",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.environment.yaml",
-        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.environment.yaml.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/out/{mapper}.gatk3_hc.{library_name}.vcf.gz",
+        "output/{mapper}.gatk3_hc.{library_name}/out/{mapper}.gatk3_hc.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/out/{mapper}.gatk3_hc.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gatk3_hc.{library_name}/out/{mapper}.gatk3_hc.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.log",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.log.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.conda_info.txt",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.conda_info.txt.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.conda_list.txt",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.conda_list.txt.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.wrapper.py",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.wrapper.py.md5",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.environment.yaml",
+        "output/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run.environment.yaml.md5",
     ]
     # Get actual
-    actual = variant_calling_workflow.get_output_files("gatk_hc", "run")
+    actual = variant_calling_workflow.get_output_files("gatk3_hc", "run")
     assert actual == expected
 
 
-def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
+def test_gatk3_hc_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run"
+        "work/{mapper}.gatk3_hc.{library_name}/log/{mapper}.gatk3_hc.{library_name}.gatk3_hc_run"
     )
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
-    actual = variant_calling_workflow.get_log_file("gatk_hc", "run")
+    actual = variant_calling_workflow.get_log_file("gatk3_hc", "run")
     assert actual == expected
 
 
-def test_gatk_hc_step_part_get_resource(variant_calling_workflow):
+def test_gatk3_hc_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk_hc", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_hc", "run", resource)
         assert actual == expected, msg_error
 
 
 # Tests for GatkUnifiedGenotyperStepPart ----------------------------------------------------------
 
 
-def test_gatk_ug_step_part_get_input_files(variant_calling_workflow):
+def test_gatk3_ug_step_part_get_input_files(variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("gatk_ug", "run")(wildcards)
+    actual = variant_calling_workflow.get_input_files("gatk3_ug", "run")(wildcards)
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "bam": [
@@ -225,50 +225,50 @@ def test_gatk_ug_step_part_get_input_files(variant_calling_workflow):
     assert actual == expected
 
 
-def test_gatk_ug_step_part_get_output_files(variant_calling_workflow):
+def test_gatk3_ug_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = "work/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}"
+    base_name_out = "work/{mapper}.gatk3_ug.{library_name}/out/{mapper}.gatk3_ug.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     expected["output_links"] = [
-        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz",
-        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.md5",
-        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.tbi",
-        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.tbi.md5",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.log",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.log.md5",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_info.txt",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_info.txt.md5",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_list.txt",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_list.txt.md5",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.wrapper.py",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.wrapper.py.md5",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.environment.yaml",
-        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.environment.yaml.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/out/{mapper}.gatk3_ug.{library_name}.vcf.gz",
+        "output/{mapper}.gatk3_ug.{library_name}/out/{mapper}.gatk3_ug.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/out/{mapper}.gatk3_ug.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gatk3_ug.{library_name}/out/{mapper}.gatk3_ug.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.log",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.log.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.conda_info.txt",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.conda_info.txt.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.conda_list.txt",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.conda_list.txt.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.wrapper.py",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.wrapper.py.md5",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.environment.yaml",
+        "output/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run.environment.yaml.md5",
     ]
     # Get actual
-    actual = variant_calling_workflow.get_output_files("gatk_ug", "run")
+    actual = variant_calling_workflow.get_output_files("gatk3_ug", "run")
     assert actual == expected
 
 
-def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
+def test_gatk3_ug_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run"
+        "work/{mapper}.gatk3_ug.{library_name}/log/{mapper}.gatk3_ug.{library_name}.gatk3_ug_run"
     )
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
-    actual = variant_calling_workflow.get_log_file("gatk_ug", "run")
+    actual = variant_calling_workflow.get_log_file("gatk3_ug", "run")
     assert actual == expected
 
 
-def test_gatk_ug_step_part_get_resource(variant_calling_workflow):
+def test_gatk3_ug_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk_ug", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_ug", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -483,12 +483,11 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "baf_file_generation",
         "bcftools",
         "bcftools_stats",
-        "gatk_hc",
-        "gatk_ug",
+        "gatk3_hc",
+        "gatk3_ug",
         "gatk4_hc_gvcf",
         "gatk4_hc_joint",
         "jannovar_stats",
-        "link_out",
         "write_pedigree",
     ]
     assert sorted(variant_calling_workflow.sub_steps.keys()) == sorted(expected)
@@ -504,8 +503,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
     ]
     base_out = (
@@ -530,8 +529,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
         for step in (
             f"{var_caller}_run",
@@ -561,8 +560,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
         for step in (
             "bcftools_stats_run",
@@ -579,8 +578,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
         for ext in ("txt", "txt.md5")
     ]
@@ -594,8 +593,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
         for ext in ("txt", "txt.md5")
     ]
@@ -609,8 +608,8 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
-            "gatk_hc",
-            "gatk_ug",
+            "gatk3_hc",
+            "gatk3_ug",
         )
         for ext in ("bw", "bw.md5")
     ]

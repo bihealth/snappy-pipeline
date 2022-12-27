@@ -36,12 +36,12 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
 
           igv_session_generation:
             path_ngs_mapping: ../ngs_mapping
             path_variant_calling: ../variant_calling
-            tools_variant_calling: ['gatk_hc']
+            tools_variant_calling: ['gatk3_hc']
 
         data_sets:
           first_batch:
@@ -99,7 +99,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_input_files(
     # Define expected
     ngs_mapping_base_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
     variant_calling_base_out = (
-        "VARIANT_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+        "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     )
     expected = {
         # TODO: underline method is probably wrong, hence the weirdness of this test (`[n] * 3`)
@@ -108,7 +108,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_input_files(
     }
     # Get actual
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "gatk_hc", "index_library": "P001-N1-DNA1-WGS1"}
+        fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     actual = igv_session_generation.get_input_files("write_igv_session_file", "run")(wildcards)
     assert actual == expected
@@ -156,8 +156,8 @@ def test_igv_session_generation_workflow(igv_session_generation):
 
     # Check result file construction
     base_name_out = (
-        "output/bwa.gatk_hc.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.P00{i}-N1-DNA1-WGS1.igv_session{ext}"
+        "output/bwa.gatk3_hc.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.P00{i}-N1-DNA1-WGS1.igv_session{ext}"
     )
     expected = [
         base_name_out.format(i=i, ext=ext)

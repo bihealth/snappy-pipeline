@@ -73,23 +73,39 @@ rule variant_calling_bcftools_run:
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 
-rule variant_calling_gatk_hc_run:
+rule variant_calling_gatk3_hc_run:
     input:
-        unpack(wf.get_input_files("gatk_hc", "run")),
+        unpack(wf.get_input_files("gatk3_hc", "run")),
     output:
-        **wf.get_output_files("gatk_hc", "run"),
-    threads: wf.get_resource("gatk_hc", "run", "threads")
+        **wf.get_output_files("gatk3_hc", "run"),
+    threads: wf.get_resource("gatk3_hc", "run", "threads")
     resources:
-        time=wf.get_resource("gatk_hc", "run", "time"),
-        memory=wf.get_resource("gatk_hc", "run", "memory"),
-        partition=wf.get_resource("gatk_hc", "run", "partition"),
-    params:
-        step_key="variant_calling",
-        caller_key="gatk_hc",
+        time=wf.get_resource("gatk3_hc", "run", "time"),
+        memory=wf.get_resource("gatk3_hc", "run", "memory"),
+        partition=wf.get_resource("gatk3_hc", "run", "partition"),
     log:
-        **wf.get_log_file("gatk_hc", "run"),
+        **wf.get_log_file("gatk3_hc", "run"),
     wrapper:
-        wf.wrapper_path("gatk_hc_par")
+        wf.wrapper_path("gatk3_hc")
+
+
+# Run GATK UnifiedGenotyper ---------------------------------------------------
+
+
+rule variant_calling_gatk3_ug_run:
+    input:
+        unpack(wf.get_input_files("gatk3_ug", "run")),
+    output:
+        **wf.get_output_files("gatk3_ug", "run"),
+    threads: wf.get_resource("gatk3_ug", "run", "threads")
+    resources:
+        time=wf.get_resource("gatk3_ug", "run", "time"),
+        memory=wf.get_resource("gatk3_ug", "run", "memory"),
+        partition=wf.get_resource("gatk3_ug", "run", "partition"),
+    log:
+        **wf.get_log_file("gatk3_ug", "run"),
+    wrapper:
+        wf.wrapper_path("gatk3_ug")
 
 
 # Run GATK 4 HaplotypeCaller Joint (direct, pedigree/multi-sample) ------------
@@ -172,28 +188,6 @@ rule variant_calling_gatk4_hc_gvcf_genotype:
         **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
     wrapper:
         wf.wrapper_path("gatk4_hc/genotype")
-
-
-# Run GATK UnifiedGenotyper ---------------------------------------------------
-
-
-rule variant_calling_gatk_ug_run:
-    input:
-        unpack(wf.get_input_files("gatk_ug", "run")),
-    output:
-        **wf.get_output_files("gatk_ug", "run"),
-    threads: wf.get_resource("gatk_ug", "run", "threads")
-    resources:
-        time=wf.get_resource("gatk_ug", "run", "time"),
-        memory=wf.get_resource("gatk_ug", "run", "memory"),
-        partition=wf.get_resource("gatk_ug", "run", "partition"),
-    params:
-        step_key="variant_calling",
-        caller_key="gatk_ug",
-    log:
-        **wf.get_log_file("gatk_ug", "run"),
-    wrapper:
-        wf.wrapper_path("gatk_ug_par")
 
 
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
