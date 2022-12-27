@@ -746,14 +746,14 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
     inner_wrapper = None
 
     #: Wrappers generating VCF output want to call ``realpath`` on these keys.
-    realpath_output_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5")
+    realpath_output_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
 
     #: Extensions to generate
     key_ext = {
         "vcf": "vcf.gz",
         "vcf_md5": "vcf.gz.md5",
-        "tbi": "vcf.gz.tbi",
-        "tbi_md5": "vcf.gz.tbi.md5",
+        "vcf_tbi": "vcf.gz.tbi",
+        "vcf_tbi_md5": "vcf.gz.tbi.md5",
     }
 
     def get_all_output(self):
