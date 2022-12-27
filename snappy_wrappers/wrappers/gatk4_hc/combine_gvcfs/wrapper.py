@@ -37,18 +37,17 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
+GATK_JAVA_MEMORY=4g
 gatk \
     CombineGVCFs \
-    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --java-options "-Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR" \
     --tmp-dir $TMPDIR \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --output {snakemake.output.gvcf} \
-    $(for annotation in {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][annotations]}; do \
-        echo --annotation $annotation; \
-    done) \
-    $(for annotation_group in {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][annotation_groups]}; do \
-        echo --annotation-group $annotation_group; \
-    done) \
+    -G StandardAnnotation \
+    -G AS_StandardAnnotation \
+    -G StandardHCAnnotation \
+    -G AlleleSpecificAnnotation \
     $(for path in {snakemake.input.gvcf}; do \
         echo --variant $path; \
     done)

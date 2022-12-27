@@ -34,12 +34,16 @@ fi
 # Run actual tools --------------------------------------------------------------------------------
 
 # Call GATK's GenotypeGVCFs
+GATK_JAVA_MEMORY=4g
 gatk \
     GenotypeGVCFs \
-    --java-options '-Xmx6g -Djava.io.tmpdir=$TMPDIR' \
+    --java-options "-Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR" \
     --tmp-dir $TMPDIR \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --output {snakemake.output.vcf} \
+    -G StandardAnnotation \
+    -G AS_StandardAnnotation \
+    -G StandardHCAnnotation \
     --variant {snakemake.input.gvcf}
 
 # Link input gVCF files to output gVCF files

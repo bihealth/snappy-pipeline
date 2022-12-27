@@ -40,7 +40,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run "bcftools stats"
 bcftools stats \
     --split-by-ID \
-    -s {snakemake.wildcards.donor_ngs_library} \
+    -s {snakemake.wildcards.donor_library_name} \
     {snakemake.input.vcf} \
 > {snakemake.output.txt}
 

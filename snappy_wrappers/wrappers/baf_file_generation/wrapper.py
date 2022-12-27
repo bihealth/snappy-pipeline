@@ -38,7 +38,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 bcftools query \
-    -s {snakemake.wildcards.donor_ngs_library} \
+    -s {snakemake.wildcards.donor_library_name} \
     -f '%CHROM\t%POS[\t%DP\t%AD]\n' \
     {snakemake.input.vcf} \
 | awk -F $'\t' 'BEGIN {{ OFS=FS; prev=0; }}

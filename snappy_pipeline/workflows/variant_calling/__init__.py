@@ -190,11 +190,11 @@ step_config:
     # variant calling tools and their configuration
     tools: ['gatk4_hc_gvcf']  # REQUIRED, examples: 'gatk_hc', 'gatk_ug'
     ignore_chroms:
-    - NC_007605  # herpes virus
-    - hs37d5     # GRCh37 decoy
-    - chrEBV     # Eppstein-Barr Virus
-    - '*_decoy'  # decoy contig
-    - 'HLA-*'    # HLA genes
+    - '^NC_007605$' # herpes virus
+    - '^hs37d5$'    # GRCh37 decoy
+    - '^chrEBV$'    # Eppstein-Barr Virus
+    - '_decoy$'     # decoy contig
+    - '^HLA-'       # HLA genes
 
     bcftools:
       max_depth: 250
@@ -202,21 +202,17 @@ step_config:
       window_length: 10000000
       num_threads: 16
     gatk4_hc_joint:
+     #window_length: 10000000
+      window_length: 100000
+      num_threads: 16
       allow_seq_dict_incompatibility: false  # REQUIRED
       annotations: []  # REQUIRED
-      annotation_groups:  # REQUIRED
-      - StandardAnnotation
-      - StandardHCAnnotation
     gatk4_hc_gvcf:
+     #window_length: 10000000
+      window_length: 100000
+      num_threads: 16
       allow_seq_dict_incompatibility: false  # REQUIRED
       annotations: []  # REQUIRED
-      annotation_groups:  # REQUIRED
-      - AlleleSpecificAnnotation
-      - GenotypeAnnotation
-      - InfoFieldAnnotation
-      - StandardAnnotation
-      - StandardHCAnnotation
-      - StandardFlowBasedAnnotation
     gatk_hc:
       # Parallelization configuration
       num_threads: 2            # number of cores to use locally
@@ -314,9 +310,9 @@ class GetResultFilesMixin:
                     kwargs = {
                         "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                     }
-                    if "index_ngs_library" in path_tpl:
-                        kwargs["index_ngs_library"] = [index_library_name]
-                        kwargs["donor_ngs_library"] = [member_library_names]
+                    if "index_library_name" in path_tpl:
+                        kwargs["index_library_name"] = [index_library_name]
+                        kwargs["donor_library_name"] = member_library_names
                     else:
                         kwargs["library_name"] = [index_library_name]
                     if "{var_caller}" in path_tpl:
@@ -545,10 +541,13 @@ class Gatk4CallerStepPartBase(VariantCallingStepPart):
         :return: Returns ResourceUsage for step.
         """
         self._validate_action(action)
+        num_threads = self.config[self.name]["num_threads"]
+        mem_per_thread = 4.5
+        mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
-            threads=1,
+            threads=num_threads,
             time="2-00:00:00",
-            memory="4G",
+            memory=f"{mem_total}G",
         )
 
 
@@ -650,12 +649,18 @@ class Gatk4HaplotypeCallerGvcfStepPart(Gatk4CallerStepPartBase):
 class ReportGetLogFileMixin:
     """Log file generation for reports"""
 
+    #: Whether we generate per-donor files.
+    report_per_donor = None
+
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
-        token = f"{{mapper}}.{self.name}.{{index_library_name}}"
-        prefix = f"work/{token}/log/{token}.{{donor_ngs_library}}.{self.name}_{action}"
+        assert self.report_per_donor is not None
+        token = "{mapper}.{var_caller}.{index_library_name}"
+        prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
+        if not self.report_per_donor:
+            prefix = prefix.replace("{donor_library_name}.", "")
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -682,19 +687,32 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     #: Class available actions
     actions = ("run",)
 
+    #: Whether we generate per-donor files.
+    report_per_donor = True
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/report/bcftools_stats/"
-            "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+            "work/{mapper}.{var_caller}.{index_library_name}/report/bcftools_stats/"
+            "{mapper}.{var_caller}.{index_library_name}.{donor_library_name}"
         )
+
+    def get_input_files(self, action):
+        """Return required input files"""
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")()
 
     @dictify
     def _get_input_files_run(self):
         yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+            "work/{mapper}.{var_caller}.{index_library_name}/out/"
+            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
         )
+
+    def get_output_files(self, action):
+        """Return step part output files"""
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
     def _get_output_files_run(self):
@@ -703,7 +721,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), [self.get_log_file("run").values()])
+            for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
     def get_resource_usage(self, action):
@@ -734,11 +752,14 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
     #: Class available actions
     actions = ("run",)
 
+    #: Whether we generate per-donor files.
+    report_per_donor = False
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/report/jannovar_stats/"
-            "{mapper}.{var_caller}.{index_ngs_library}"
+            "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
+            "{mapper}.{var_caller}.{index_library_name}"
         )
 
     @dictify
@@ -748,17 +769,20 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+            "work/{mapper}.{var_caller}.{index_library_name}/out/"
+            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
         )
 
-    @dictify
     def get_output_files(self, action):
+        """Return step part output files"""
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
+
+    @dictify
+    def _get_output_files_run(self):
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        # Validate action
-        self._validate_action(action)
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         work_files = {}
         for key, ext in ext_names.items():
@@ -766,7 +790,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), [self.get_log_file("run")])
+            for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
     def get_resource_usage(self, action):
@@ -798,11 +822,14 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     #: Class available actions
     actions = ("run",)
 
+    #: Whether to report results per donor
+    report_per_donor = True
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/report/baf/"
-            r"{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library,[^\.]+}.baf"
+            "work/{mapper}.{var_caller}.{index_library_name}/report/baf/"
+            r"{mapper}.{var_caller}.{index_library_name}.{donor_library_name,[^\.]+}.baf"
         )
 
     @dictify
@@ -812,8 +839,8 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         # Return path to input VCF file
         yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+            "work/{mapper}.{var_caller}.{index_library_name}/out/"
+            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
         )
 
     @dictify
