@@ -105,7 +105,7 @@ def test_vcf_mei_filter_step_part_get_input_files(wgs_mei_annotation_workflow):
     expected = {
         "ped": root + "/work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
         "vcf": wgs_mei_base_name + ".vcf.gz",
-        "tbi": wgs_mei_base_name + ".vcf.gz.tbi",
+        "vcf_tbi": wgs_mei_base_name + ".vcf.gz.tbi",
     }
     # Get actual
     actual = wgs_mei_annotation_workflow.get_input_files("vcf_mei_filter", "run")

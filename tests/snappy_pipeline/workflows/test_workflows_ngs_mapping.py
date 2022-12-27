@@ -636,8 +636,8 @@ def test_generate_doc_files_step_part_get_output_files(ngs_mapping_workflow):
         "bw_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5",
         "vcf": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz",
         "vcf_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5",
-        "tbi": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5",
+        "vcf_tbi": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5",
         "output_links": [
             "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz",
             "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5",

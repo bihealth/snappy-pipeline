@@ -3,7 +3,7 @@ rule chunk_0:
         'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam',
     output:
         touch("job_out.0.d/.done"),
-        **{'vcf': 'job_out.0.d/out/tmp_0.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.vcf.gz.md5', 'tbi': 'job_out.0.d/out/tmp_0.vcf.gz.tbi', 'tbi_md5': 'job_out.0.d/out/tmp_0.vcf.gz.tbi.md5'}
+        **{'vcf': 'job_out.0.d/out/tmp_0.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.vcf.gz.md5', 'vcf_tbi': 'job_out.0.d/out/tmp_0.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.0.d/out/tmp_0.vcf.gz.tbi.md5'}
     threads: resource_chunk_threads
     resources:
         time=resource_chunk_time,

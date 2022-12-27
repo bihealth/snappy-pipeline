@@ -22,8 +22,8 @@ from snappy_pipeline.workflows.gcnv.gcnv_common import (
 RESULT_EXTENSIONS = {
     "vcf": ".vcf.gz",
     "vcf_md5": ".vcf.gz.md5",
-    "tbi": ".vcf.gz.tbi",
-    "tbi_md5": ".vcf.gz.tbi.md5",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
 #: Predefined file name keys and extensions for log files.
@@ -36,6 +36,8 @@ LOG_EXTENSIONS = {
     "wrapper_md5": ".wrapper.py.md5",
     "env_yaml": ".environment.yaml",
     "env_yaml_md5": ".environment.yaml.md5",
+    "log": ".log",
+    "log_md5": ".log.md5",
 }
 
 

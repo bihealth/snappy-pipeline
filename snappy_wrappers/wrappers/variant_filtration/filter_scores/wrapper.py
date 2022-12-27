@@ -24,8 +24,8 @@ if snakemake.wildcards.scores == "score_all":
     # Scores set to "score_all", just link out the data.
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
     ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
-    ln -sr {snakemake.input.tbi} {snakemake.output.tbi}
-    ln -sr {snakemake.input.tbi_md5} {snakemake.output.tbi_md5}
+    ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
+    ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
     """
     )
     sys.exit(0)  # everything went well!
@@ -94,6 +94,6 @@ tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi}).md5
+md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )

@@ -184,7 +184,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_input_files(
         r"de_novos.{index_library}"
     )
     expected = {
-        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf": base_name_out + ".vcf.gz",
     }
     # Get actual
@@ -205,8 +205,8 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_output_files(
     expected = {
         "summary": base_name_out + ".summary.txt",
         "summary_md5": base_name_out + ".summary.txt.md5",
-        "tbi": base_name_out + ".vcf.gz.tbi",
-        "tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "vcf": base_name_out + ".vcf.gz",
         "vcf_md5": base_name_out + ".vcf.gz.md5",
     }

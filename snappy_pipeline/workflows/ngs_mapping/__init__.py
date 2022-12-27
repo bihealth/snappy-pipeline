@@ -992,8 +992,8 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_output_files_run_work(self):
         yield "vcf", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
         yield "vcf_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5"
-        yield "tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
-        yield "tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
+        yield "vcf_tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
+        yield "vcf_tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
         yield "bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
         yield "bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
 

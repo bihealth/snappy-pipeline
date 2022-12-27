@@ -95,26 +95,28 @@ def variant_calling_workflow(
 
 
 def test_bcftools_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("bcftools", "run")(wildcards)
-    expected = [
-        "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
+    expected = {
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        ],
+    }
     assert actual == expected
 
 
 def test_bcftools_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.bcftools.{index_library_name}/out/{mapper}.bcftools.{index_library_name}"
-    )
+    base_name_out = "work/{mapper}.bcftools.{library_name}/out/{mapper}.bcftools.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    expected["output_links"] = [path.replace("work/", "output/") for path in expected.values()]
+    for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
+        for full_ext in (ext, f"{ext}.md5"):
+            base = "output/{mapper}.bcftools.{library_name}/log/{mapper}.bcftools.{library_name}.bcftools_run"
+            expected["output_links"].append(f"{base}.{full_ext}")
     # Get actual
     actual = variant_calling_workflow.get_output_files("bcftools", "run")
     assert actual == expected
@@ -123,9 +125,9 @@ def test_bcftools_step_part_get_output_files(variant_calling_workflow):
 def test_bcftools_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.bcftools.{index_library_name}/log/{mapper}.bcftools.{index_library_name}"
+        "work/{mapper}.bcftools.{library_name}/log/{mapper}.bcftools.{library_name}.bcftools_run"
     )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
+    expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
     actual = variant_calling_workflow.get_log_file("bcftools", "run")
     assert actual == expected
@@ -146,26 +148,39 @@ def test_bcftools_step_part_get_resource(variant_calling_workflow):
 
 
 def test_gatk_hc_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("gatk_hc", "run")(wildcards)
-    expected = [
-        "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
+    expected = {
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        ],
+    }
     assert actual == expected
 
 
 def test_gatk_hc_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.gatk_hc.{index_library_name}/out/{mapper}.gatk_hc.{index_library_name}"
-    )
+    base_name_out = "work/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    expected["output_links"] = [
+        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz",
+        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gatk_hc.{library_name}/out/{mapper}.gatk_hc.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.log",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.log.md5",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_info.txt",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_info.txt.md5",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_list.txt",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.conda_list.txt.md5",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.wrapper.py",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.wrapper.py.md5",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.environment.yaml",
+        "output/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run.environment.yaml.md5",
+    ]
     # Get actual
     actual = variant_calling_workflow.get_output_files("gatk_hc", "run")
     assert actual == expected
@@ -174,9 +189,9 @@ def test_gatk_hc_step_part_get_output_files(variant_calling_workflow):
 def test_gatk_hc_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.gatk_hc.{index_library_name}/log/{mapper}.gatk_hc.{index_library_name}"
+        "work/{mapper}.gatk_hc.{library_name}/log/{mapper}.gatk_hc.{library_name}.gatk_hc_run"
     )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
+    expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
     actual = variant_calling_workflow.get_log_file("gatk_hc", "run")
     assert actual == expected
@@ -197,26 +212,39 @@ def test_gatk_hc_step_part_get_resource(variant_calling_workflow):
 
 
 def test_gatk_ug_step_part_get_input_files(variant_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = variant_calling_workflow.get_input_files("gatk_ug", "run")(wildcards)
-    expected = [
-        "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
-    ]
+    expected = {
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "bam": [
+            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        ],
+    }
     assert actual == expected
 
 
 def test_gatk_ug_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.gatk_ug.{index_library_name}/out/{mapper}.gatk_ug.{index_library_name}"
-    )
+    base_name_out = "work/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    expected["output_links"] = [
+        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz",
+        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gatk_ug.{library_name}/out/{mapper}.gatk_ug.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.log",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.log.md5",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_info.txt",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_info.txt.md5",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_list.txt",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.conda_list.txt.md5",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.wrapper.py",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.wrapper.py.md5",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.environment.yaml",
+        "output/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run.environment.yaml.md5",
+    ]
     # Get actual
     actual = variant_calling_workflow.get_output_files("gatk_ug", "run")
     assert actual == expected
@@ -225,9 +253,9 @@ def test_gatk_ug_step_part_get_output_files(variant_calling_workflow):
 def test_gatk_ug_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.gatk_ug.{index_library_name}/log/{mapper}.gatk_ug.{index_library_name}"
+        "work/{mapper}.gatk_ug.{library_name}/log/{mapper}.gatk_ug.{library_name}.gatk_ug_run"
     )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
+    expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
     actual = variant_calling_workflow.get_log_file("gatk_ug", "run")
     assert actual == expected
@@ -250,8 +278,8 @@ def test_gatk_ug_step_part_get_resource(variant_calling_workflow):
 def test_bcftools_stats_step_part_get_input_files(variant_calling_workflow):
     # Define expected
     vcf_file = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+        "work/{mapper}.{var_caller}.{index_library_name}/out/"
+        "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
     )
     expected = {"vcf": vcf_file}
     # Get actual
@@ -262,13 +290,19 @@ def test_bcftools_stats_step_part_get_input_files(variant_calling_workflow):
 def test_bcftools_stats_step_part_get_output_files(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/report/bcftools_stats/"
-        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+        "work/{mapper}.{var_caller}.{index_library_name}/report/bcftools_stats/"
+        "{mapper}.{var_caller}.{index_library_name}.{donor_library_name}"
     )
     expected = {
         "txt": base_name_out + ".txt",
         "txt_md5": base_name_out + ".txt.md5",
     }
+    expected["output_links"] = [value.replace("work/", "output/") for value in expected.values()]
+    for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
+        token = "{mapper}.{var_caller}.{index_library_name}"
+        line = f"output/{token}/log/{token}.{{donor_library_name}}.bcftools_stats_run.{ext}"
+        expected["output_links"].append(line)
+        expected["output_links"].append(f"{line}.md5")
     # Get actual
     actual = variant_calling_workflow.get_output_files("bcftools_stats", "run")
     assert actual == expected
@@ -276,10 +310,18 @@ def test_bcftools_stats_step_part_get_output_files(variant_calling_workflow):
 
 def test_bcftools_stats_step_part_get_log_file(variant_calling_workflow):
     # Define expected
-    expected = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/log/bcftools_stats/"
-        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}.log"
-    )
+    expected = {
+        "conda_info": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.conda_info.txt",
+        "conda_info_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.conda_info.txt.md5",
+        "conda_list": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.conda_list.txt",
+        "conda_list_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.conda_list.txt.md5",
+        "env_yaml": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.environment.yaml",
+        "env_yaml_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.environment.yaml.md5",
+        "log": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.log",
+        "log_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.log.md5",
+        "wrapper": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.wrapper.py",
+        "wrapper_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.bcftools_stats_run.wrapper.py.md5",
+    }
     # Get actual
     actual = variant_calling_workflow.get_log_file("bcftools_stats", "run")
     assert actual == expected
@@ -299,52 +341,64 @@ def test_bcftools_stats_step_part_get_resource(variant_calling_workflow):
 # Tests for JannovarStatisticsStepPart -------------------------------------------------------------
 
 
-def test_jannovar_statistics_step_part_get_input_files(variant_calling_workflow):
+def test_jannovar_stats_step_part_get_input_files(variant_calling_workflow):
     # Define expected
     vcf_file = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+        "work/{mapper}.{var_caller}.{index_library_name}/out/"
+        "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
     )
     expected = {"vcf": vcf_file}
     # Get actual
-    actual = variant_calling_workflow.get_input_files("jannovar_statistics", "run")
+    actual = variant_calling_workflow.get_input_files("jannovar_stats", "run")
     assert actual == expected
 
 
-def test_jannovar_statistics_step_part_get_output_files(variant_calling_workflow):
+def test_jannovar_stats_step_part_get_output_files(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/report/jannovar_statistics/"
-        "{mapper}.{var_caller}.{index_ngs_library}"
+        "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
+        "{mapper}.{var_caller}.{index_library_name}"
     )
     expected = {
         "report": base_name_out + ".txt",
         "report_md5": base_name_out + ".txt.md5",
     }
+    expected["output_links"] = [value.replace("work/", "output/") for value in expected.values()]
+    for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
+        token = "{mapper}.{var_caller}.{index_library_name}"
+        line = f"output/{token}/log/{token}.jannovar_stats_run.{ext}"
+        expected["output_links"].append(line)
+        expected["output_links"].append(f"{line}.md5")
     # Get actual
-    actual = variant_calling_workflow.get_output_files("jannovar_statistics", "run")
+    actual = variant_calling_workflow.get_output_files("jannovar_stats", "run")
     assert actual == expected
 
 
-def test_jannovar_statistics_step_part_get_log_file(variant_calling_workflow):
-    # Define expected
-    expected = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/log/"
-        "jannovar_statistics/{mapper}.{var_caller}.{index_ngs_library}.log"
-    )
-    # Get actual
-    actual = variant_calling_workflow.get_log_file("jannovar_statistics", "run")
+def test_jannovar_stats_step_part_get_log_file(variant_calling_workflow):
+    expected = {
+        "conda_info": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.conda_info.txt",
+        "conda_info_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.conda_info.txt.md5",
+        "conda_list": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.conda_list.txt",
+        "conda_list_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.conda_list.txt.md5",
+        "env_yaml": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.environment.yaml",
+        "env_yaml_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.environment.yaml.md5",
+        "log": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.log",
+        "log_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.log.md5",
+        "wrapper": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.wrapper.py",
+        "wrapper_md5": "work/{mapper}.{var_caller}.{index_library_name}/log/{mapper}.{var_caller}.{index_library_name}.jannovar_stats_run.wrapper.py.md5",
+    }
+    actual = variant_calling_workflow.get_log_file("jannovar_stats", "run")
     assert actual == expected
 
 
-def test_jannovar_statistics_stats_step_part_get_resource(variant_calling_workflow):
+def test_jannovar_stats_stats_step_part_get_resource(variant_calling_workflow):
     """Tests JannovarStatisticsStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 2, "time": "04:00:00", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("jannovar_statistics", "run", resource)
+        actual = variant_calling_workflow.get_resource("jannovar_stats", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -354,8 +408,8 @@ def test_jannovar_statistics_stats_step_part_get_resource(variant_calling_workfl
 def test_baf_file_generation_step_part_get_input_files(variant_calling_workflow):
     # Define expected
     vcf_file = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/out/"
-        "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+        "work/{mapper}.{var_caller}.{index_library_name}/out/"
+        "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
     )
     expected = {"vcf": vcf_file}
     # Get actual
@@ -366,13 +420,19 @@ def test_baf_file_generation_step_part_get_input_files(variant_calling_workflow)
 def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow):
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/report/baf/"
-        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library,[^\\.]+}.baf"
+        "work/{mapper}.{var_caller}.{index_library_name}/report/baf/"
+        "{mapper}.{var_caller}.{index_library_name}.{donor_library_name,[^\\.]+}.baf"
     )
     expected = {
         "bw": base_name_out + ".bw",
         "bw_md5": base_name_out + ".bw.md5",
     }
+    expected["output_links"] = [value.replace("work/", "output/") for value in expected.values()]
+    for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
+        token = "{mapper}.{var_caller}.{index_library_name}"
+        line = f"output/{token}/log/{token}.{{donor_library_name}}.baf_file_generation_run.{ext}"
+        expected["output_links"].append(line)
+        expected["output_links"].append(f"{line}.md5")
     # Get actual
     actual = variant_calling_workflow.get_output_files("baf_file_generation", "run")
     assert actual == expected
@@ -381,15 +441,20 @@ def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow
 def test_baf_file_generation_step_part_get_log_file(variant_calling_workflow):
     # Define expected
     tpl = (
-        "work/{mapper}.{var_caller}.{index_ngs_library}/log/baf/"
-        "{mapper}.{var_caller}.{index_ngs_library}.{donor_ngs_library}"
+        "work/{mapper}.{var_caller}.{index_library_name}/log/"
+        "{mapper}.{var_caller}.{index_library_name}.{donor_library_name}.baf_file_generation_run"
     )
     key_ext = {
         "log": ".log",
+        "log_md5": ".log.md5",
         "conda_info": ".conda_info.txt",
         "conda_info_md5": ".conda_info.txt.md5",
         "conda_list": ".conda_list.txt",
         "conda_list_md5": ".conda_list.txt.md5",
+        "env_yaml": ".environment.yaml",
+        "env_yaml_md5": ".environment.yaml.md5",
+        "wrapper": ".wrapper.py",
+        "wrapper_md5": ".wrapper.py.md5",
     }
     expected = {key: tpl + ext for key, ext in key_ext.items()}
     # Get actual
@@ -420,11 +485,13 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "bcftools_stats",
         "gatk_hc",
         "gatk_ug",
-        "jannovar_statistics",
+        "gatk4_hc_gvcf",
+        "gatk4_hc_joint",
+        "jannovar_stats",
         "link_out",
         "write_pedigree",
     ]
-    assert list(sorted(variant_calling_workflow.sub_steps.keys())) == expected
+    assert sorted(variant_calling_workflow.sub_steps.keys()) == sorted(expected)
     # Check result file construction
     tpl = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/out/"
@@ -443,24 +510,63 @@ def test_variant_calling_workflow(variant_calling_workflow):
     ]
     base_out = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
-        "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
+        "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{step}.{ext}"
     )
     expected += [
-        base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller)
+        base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller, step=step)
         for i in (1, 4)  # only for indices
         for ext in (
             "log",
-            "conda_info.txt",
-            "conda_list.txt",
             "log.md5",
+            "conda_info.txt",
             "conda_info.txt.md5",
+            "conda_list.txt",
             "conda_list.txt.md5",
+            "environment.yaml",
+            "environment.yaml.md5",
+            "wrapper.py",
+            "wrapper.py.md5",
         )
         for mapper in ("bwa",)
         for var_caller in (
             "bcftools",
             "gatk_hc",
             "gatk_ug",
+        )
+        for step in (
+            f"{var_caller}_run",
+            "jannovar_stats_run",
+        )
+    ]
+    base_out = (
+        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
+        "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.P00{k}-N1-DNA1-WGS1.{step}.{ext}"
+    )
+    expected += [
+        base_out.format(i=i, k=i + j, ext=ext, mapper=mapper, var_caller=var_caller, step=step)
+        for i in (1, 4)  # only for indices
+        for j in (0, 1, 2)  # all donors
+        for ext in (
+            "log",
+            "log.md5",
+            "conda_info.txt",
+            "conda_info.txt.md5",
+            "conda_list.txt",
+            "conda_list.txt.md5",
+            "environment.yaml",
+            "environment.yaml.md5",
+            "wrapper.py",
+            "wrapper.py.md5",
+        )
+        for mapper in ("bwa",)
+        for var_caller in (
+            "bcftools",
+            "gatk_hc",
+            "gatk_ug",
+        )
+        for step in (
+            "bcftools_stats_run",
+            "baf_file_generation_run",
         )
     ]
     tpl = (
@@ -480,7 +586,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
     ]
     tpl = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
-        "jannovar_statistics/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
+        "jannovar_stats/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     expected += [
         tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)

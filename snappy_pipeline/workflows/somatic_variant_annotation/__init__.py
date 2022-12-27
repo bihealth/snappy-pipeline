@@ -71,7 +71,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
@@ -144,7 +144,7 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
@@ -158,7 +158,7 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
             "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
             "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
         )
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"

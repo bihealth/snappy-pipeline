@@ -78,7 +78,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration of the targeted_seq_cnv_filtration step
 DEFAULT_CONFIG = r"""
@@ -155,7 +155,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 "output/{mapper}.{caller}.{index_ngs_library}/out/"
                 "{mapper}.{caller}.{index_ngs_library}"
             )
-            key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+            key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
             # SVs
             targeted_seq_cnv_calling = self.parent.sub_workflows["targeted_seq_cnv_calling"]
             if wildcards.caller == "xhmm":
@@ -184,9 +184,9 @@ class VcfCnvFilterStepPart(BaseStepPart):
         )
         key_ext = {
             "vcf": ".vcf.gz",
-            "tbi": ".vcf.gz.tbi",
+            "vcf_tbi": ".vcf.gz.tbi",
             "vcf_md5": ".vcf.gz.md5",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in key_ext.items():
             yield key, prefix + ext

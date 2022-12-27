@@ -113,7 +113,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the variant_denovo_filtration step
 DEFAULT_CONFIG = r"""
@@ -287,7 +287,7 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
         yield "vcf", self.base_path_in + ".vcf.gz"
-        yield "tbi", self.base_path_in + ".vcf.gz.tbi"
+        yield "vcf_tbi", self.base_path_in + ".vcf.gz.tbi"
 
     @dictify
     def get_output_files(self, action):

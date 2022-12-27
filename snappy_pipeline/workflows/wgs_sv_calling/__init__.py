@@ -131,7 +131,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available (short) DNA WGS SV callers
 DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel")
@@ -157,16 +157,16 @@ step_config:
       mad_cutoff: 9
     manta:
       max_threads: 16
+    ignore_chroms:
+    - NC_007605  # herpes virus
+    - hs37d5     # GRCh37 decoy
+    - chrEBV     # Eppstein-Barr Virus
+    - '*_decoy'  # decoy contig
+    - 'HLA-*'    # HLA genes
+    - 'chrUn_*'  # unplaced contigs
     popdel:
       window_size: 10000000
       max_sv_size: 20000  # == padding
-      ignore_chroms:
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
-      - 'chrUn_*'  # unplaced contigs
     pb_honey_spots:
       num_threads: 16
     sniffles:
@@ -631,7 +631,7 @@ class PopDelStepPart(BaseStepPart):
         return self.w_config["static_data_config"]["reference"]["path"] + ".fai"
 
     def get_ignore_chroms(self):
-        return self.config["popdel"]["ignore_chroms"]
+        return self.config["ignore_chroms"]
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):

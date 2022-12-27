@@ -35,14 +35,13 @@ fi
 gatk JointGermlineCNVSegmentation \
     --reference {snakemake.config[static_data_config][reference][path]} \
     $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
-    --model {snakemake.params.args[model]} \
     --model-call-intervals {snakemake.input.interval_list} \
     --pedigree {snakemake.input.ped} \
     --output {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf_md5})
-md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi_md5})
+md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi_md5})
 """
 )
 

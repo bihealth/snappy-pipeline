@@ -86,8 +86,8 @@ def snakemake_obj(minimal_config):
     }
     output_base_name = "work/bwa.gatk_ug.P001-N1-DNA1-WGS1/out/bwa.gatk_ug.P001-N1-DNA1-WGS1"
     output_dict = {
-        "tbi": output_base_name + ".vcf.gz.tbi",
-        "tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": output_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
         "vcf": output_base_name + ".vcf.gz",
         "vcf_md5": output_base_name + ".vcf.gz.md5",
     }

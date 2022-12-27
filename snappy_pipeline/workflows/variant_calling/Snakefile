@@ -26,8 +26,6 @@ wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.get
 
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
-    variant_calling_link_out_run,
     # Writing pedigrees should be done locally as well
     variant_calling_write_pedigree_run,
 
@@ -38,18 +36,6 @@ rule all:
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule variant_calling_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
 
 # Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -106,6 +92,88 @@ rule variant_calling_gatk_hc_run:
         wf.wrapper_path("gatk_hc_par")
 
 
+# Run GATK 4 HaplotypeCaller Joint (direct, pedigree/multi-sample) ------------
+
+
+rule variant_calling_gatk4_hc_joint_run:
+    input:
+        unpack(wf.get_input_files("gatk4_hc_joint", "run")),
+    output:
+        **wf.get_output_files("gatk4_hc_joint", "run"),
+    threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
+    resources:
+        time=wf.get_resource("gatk4_hc_joint", "run", "time"),
+        memory=wf.get_resource("gatk4_hc_joint", "run", "memory"),
+        partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
+    log:
+        **wf.get_log_file("gatk4_hc_joint", "run"),
+    wrapper:
+        wf.wrapper_path("gatk4_hc/joint")
+
+
+# Run GATK 4 HaplotypeCaller gVCF (going via per-sample gVCF files) -----------
+
+
+# Discover variants with GATK HaplotypeCaller, create per-sample gVCF file
+rule variant_calling_gatk4_hc_gvcf_discover:
+    input:
+        unpack(wf.get_input_files("gatk4_hc_gvcf", "discover")),
+    output:
+        **wf.get_output_files("gatk4_hc_gvcf", "discover"),
+    threads: wf.get_resource("gatk4_hc_gvcf", "discover", "threads")
+    resources:
+        time=wf.get_resource("gatk4_hc_gvcf", "discover", "time"),
+        memory=wf.get_resource("gatk4_hc_gvcf", "discover", "memory"),
+        partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk4_hc_gvcf",
+    log:
+        **wf.get_log_file("gatk4_hc_gvcf", "discover"),
+    wrapper:
+        wf.wrapper_path("gatk4_hc/discover")
+
+
+# Combine the gVCF files from the pedigree with CombineGVCFs
+rule variant_calling_gatk4_hc_gvcf_combine_gvcfs:
+    input:
+        unpack(wf.get_input_files("gatk4_hc_gvcf", "combine_gvcfs")),
+    output:
+        **wf.get_output_files("gatk4_hc_gvcf", "combine_gvcfs"),
+    threads: wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "threads")
+    resources:
+        time=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "time"),
+        memory=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "memory"),
+        partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk4_hc_gvcf",
+    log:
+        **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
+    wrapper:
+        wf.wrapper_path("gatk4_hc/combine_gvcfs")
+
+
+# Perform GenotypeGVCFs genotyping of all samples in each pedigree
+rule variant_calling_gatk4_hc_gvcf_genotype:
+    input:
+        unpack(wf.get_input_files("gatk4_hc_gvcf", "genotype")),
+    output:
+        **wf.get_output_files("gatk4_hc_gvcf", "genotype"),
+    threads: wf.get_resource("gatk4_hc_gvcf", "genotype", "threads")
+    resources:
+        time=wf.get_resource("gatk4_hc_gvcf", "genotype", "time"),
+        memory=wf.get_resource("gatk4_hc_gvcf", "genotype", "memory"),
+        partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
+    params:
+        step_key="variant_calling",
+        caller_key="gatk4_hc_gvcf",
+    log:
+        **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
+    wrapper:
+        wf.wrapper_path("gatk4_hc/genotype")
+
+
 # Run GATK UnifiedGenotyper ---------------------------------------------------
 
 
@@ -144,7 +212,7 @@ rule variant_calling_bcftools_stats_report:
         memory=wf.get_resource("bcftools_stats", "run", "memory"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
     log:
-        wf.get_log_file("bcftools_stats", "run"),
+        **wf.get_log_file("bcftools_stats", "run"),
     wrapper:
         wf.wrapper_path("bcftools_stats/run")
 
@@ -152,18 +220,18 @@ rule variant_calling_bcftools_stats_report:
 # Generate Jannovar statistics report -----------------------------------------
 
 
-rule variant_calling_jannovar_statistics_report:
+rule variant_calling_jannovar_stats_report:
     input:
-        **wf.get_input_files("jannovar_statistics", "run"),
+        **wf.get_input_files("jannovar_stats", "run"),
     output:
-        **wf.get_output_files("jannovar_statistics", "run"),
-    threads: wf.get_resource("jannovar_statistics", "run", "threads")
+        **wf.get_output_files("jannovar_stats", "run"),
+    threads: wf.get_resource("jannovar_stats", "run", "threads")
     resources:
-        time=wf.get_resource("jannovar_statistics", "run", "time"),
-        memory=wf.get_resource("jannovar_statistics", "run", "memory"),
-        partition=wf.get_resource("jannovar_statistics", "run", "partition"),
+        time=wf.get_resource("jannovar_stats", "run", "time"),
+        memory=wf.get_resource("jannovar_stats", "run", "memory"),
+        partition=wf.get_resource("jannovar_stats", "run", "partition"),
     log:
-        wf.get_log_file("jannovar_statistics", "run"),
+        **wf.get_log_file("jannovar_stats", "run"),
     wrapper:
         wf.wrapper_path("jannovar/statistics")
 

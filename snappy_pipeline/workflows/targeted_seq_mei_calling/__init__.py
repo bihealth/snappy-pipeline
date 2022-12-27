@@ -235,8 +235,8 @@ class ScrambleStepPart(BaseStepPart):
             "vcf": ".vcf",
             "vcf_gz": ".vcf.gz",
             "vcf_gz_md5": ".vcf.gz.md5",
-            "tbi": ".vcf.gz.tbi",
-            "tbi_md5": ".vcf.gz.tbi.md5",
+            "vcf_tbi": ".vcf.gz.tbi",
+            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in ext_dict.items():
             yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(

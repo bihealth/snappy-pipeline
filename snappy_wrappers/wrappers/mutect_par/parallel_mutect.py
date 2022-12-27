@@ -27,13 +27,13 @@ class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
     realpath_output_keys = (
         "vcf",
         "vcf_md5",
-        "tbi",
-        "tbi_md5",
+        "vcf_tbi",
+        "vcf_tbi_md5",
         "full_vcf",
         "full_vcf_md5",
-        "full_tbi",
-        "full_tbi",
-        "full_tbi_md5",
+        "full_vcf_tbi",
+        "full_vcf_tbi",
+        "full_vcf_tbi_md5",
         "txt",
         "txt_md5",
         "wig",
@@ -45,12 +45,12 @@ class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
         "txt_md5": "full.out.txt.gz.md5",
         "vcf": "vcf.gz",
         "vcf_md5": "vcf.gz.md5",
-        "tbi": "vcf.gz.tbi",
-        "tbi_md5": "vcf.gz.tbi.md5",
+        "vcf_tbi": "vcf.gz.tbi",
+        "vcf_tbi_md5": "vcf.gz.tbi.md5",
         "full_vcf": "full.vcf.gz",
         "full_vcf_md5": "full.vcf.gz.md5",
-        "full_tbi": "full.vcf.gz.tbi",
-        "full_tbi_md5": "full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": "full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": "full.vcf.gz.tbi.md5",
         "wig": "full.wig.txt.gz",
         "wig_md5": "full.wig.txt.gz.md5",
     }
@@ -136,12 +136,12 @@ class ParallelMutectWrapper(ParallelSomaticVariantCallingBaseWrapper):
                     mv output/result.full.out.txt.gz.md5 {{output.txt_md5}}
                     mv output/result.full.vcf.gz {{output.full_vcf}}
                     mv output/result.full.vcf.gz.md5 {{output.full_vcf_md5}}
-                    mv output/result.full.vcf.gz.tbi {{output.full_tbi}}
-                    mv output/result.full.vcf.gz.tbi.md5 {{output.full_tbi_md5}}
+                    mv output/result.full.vcf.gz.tbi {{output.full_vcf_tbi}}
+                    mv output/result.full.vcf.gz.tbi.md5 {{output.full_vcf_tbi_md5}}
                     mv output/result.vcf.gz {{output.vcf}}
                     mv output/result.vcf.gz.md5 {{output.vcf_md5}}
-                    mv output/result.vcf.gz.tbi {{output.tbi}}
-                    mv output/result.vcf.gz.tbi.md5 {{output.tbi_md5}}
+                    mv output/result.vcf.gz.tbi {{output.vcf_tbi}}
+                    mv output/result.vcf.gz.tbi.md5 {{output.vcf_tbi_md5}}
                     mv output/result.full.wig.txt.gz {{output.wig}}
                     mv output/result.full.wig.txt.gz.md5 {{output.wig_md5}}
 

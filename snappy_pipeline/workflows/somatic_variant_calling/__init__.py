@@ -100,18 +100,18 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 EXTS_MATCHED = {
     "mutect": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "txt": ".txt",
         "txt_md5": ".txt.md5",
         "wig": ".wig",
@@ -120,23 +120,23 @@ EXTS_MATCHED = {
     "scalpel": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "tar": ".tar.gz",
     },
     "mutect2": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "stats": ".vcf.stats",
         "stats_md5": ".vcf.stats.md5",
         "f1r2": ".f1r2_tar.tar.gz",
@@ -180,30 +180,23 @@ step_config:
   somatic_variant_calling:
     tools: ['mutect', 'scalpel']  # REQUIRED, examples: 'mutect' and 'scalpel'.
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
+    ignore_chroms:            # patterns of chromosome names to ignore
+    - NC_007605    # herpes virus
+    - hs37d5       # GRCh37 decoy
+    - chrEBV       # Eppstein-Barr Virus
+    - '*_decoy'    # decoy contig
+    - 'HLA-*'      # HLA genes
+    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for joint calling with samtools+bcftools.
     bcftools_joint:
       max_depth: 4000
       max_indel_depth: 4000
       window_length: 10000000
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for joint calling with Platypus.
     platypus_joint:
       split_complex_mnvs: true  # whether or not to split complex and MNV variants
       num_threads: 16
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # VCF annotation databases are given as mapping from name to
     #   {'file': '/path.vcf.gz',
     #    'info_tag': 'VCF_TAG',
@@ -224,13 +217,6 @@ step_config:
       job_mult_time: 1           # running time multiplier
       merge_mult_memory: 1       # memory multiplier for merging
       merge_mult_time: 1         # running time multiplier for merging
-      ignore_chroms:             # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for MuTect 2
     mutect2:
       panel_of_normals: ''      # Set path to panel of normals vcf if required
@@ -250,13 +236,6 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     # Configuration for Scalpel
     scalpel:
       path_target_regions: REQUIRED  # REQUIRED
@@ -278,13 +257,6 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
       # GATK HC--specific configuration
       allow_seq_dict_incompatibility: false
       annotations:
@@ -317,13 +289,6 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
       # GATK UG--specific configuration
       downsample_to_coverage: 250
       allow_seq_dict_incompatibility: false
@@ -351,13 +316,6 @@ step_config:
       restart_times: 5          # number of times to re-launch jobs in case of failure
       max_jobs_per_second: 2    # throttling of job creation
       max_status_checks_per_second: 10   # throttling of status checks
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
       # Configuration for samtools mpileup
       max_depth: 4000
       max_indel_depth: 4000
@@ -712,12 +670,12 @@ class Mutect2StepPart(MutectBaseStepPart):
             exts = {
                 "full": ".full.vcf.gz",
                 "full_md5": ".full.vcf.gz.md5",
-                "full_tbi": ".full.vcf.gz.tbi",
-                "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+                "full_vcf_tbi": ".full.vcf.gz.tbi",
+                "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
                 "vcf": ".vcf.gz",
                 "vcf_md5": ".vcf.gz.md5",
-                "tbi": ".vcf.gz.tbi",
-                "tbi_md5": ".vcf.gz.tbi.md5",
+                "vcf_tbi": ".vcf.gz.tbi",
+                "vcf_tbi_md5": ".vcf.gz.tbi.md5",
             }
         if action == "contamination":
             exts = {
@@ -850,12 +808,12 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
     extensions = {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
-        "tbi": ".vcf.gz.tbi",
-        "tbi_md5": ".vcf.gz.tbi.md5",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         "full": ".full.vcf.gz",
         "full_md5": ".full.vcf.gz.md5",
-        "full_tbi": ".full.vcf.gz.tbi",
-        "full_tbi_md5": ".full.vcf.gz.tbi.md5",
+        "full_vcf_tbi": ".full.vcf.gz.tbi",
+        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "stats": ".tsv",
         "stats_md5": ".tsv.md5",
         "report": ".xml",
@@ -976,8 +934,8 @@ class JointCallingStepPart(BaseStepPart):
                     for ngs_library in test_sample.ngs_libraries.values()
                 ]
             }
-            if "ignore_chroms" in self.parent.config[self.name]:
-                ignore_chroms = self.parent.config[self.name]["ignore_chroms"]
+            if "ignore_chroms" in self.parent.config:
+                ignore_chroms = self.parent.config["ignore_chroms"]
                 result["ignore_chroms"] = ignore_chroms
             return result
 

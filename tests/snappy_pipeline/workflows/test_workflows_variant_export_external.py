@@ -452,8 +452,8 @@ def test_varfish_annotator_step_part_get_input_files_annotate(variant_export_ext
         "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
         "vcf": base_name + ".vcf.gz",
         "vcf_md5": base_name + ".vcf.gz.md5",
-        "tbi": base_name + ".vcf.gz.tbi",
-        "tbi_md5": base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": base_name + ".vcf.gz.tbi.md5",
     }
     actual = variant_export_external_workflow.get_input_files(
         "varfish_annotator_external", "annotate"

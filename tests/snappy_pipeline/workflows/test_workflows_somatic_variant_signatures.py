@@ -84,7 +84,7 @@ def test_tabulate_vcf_step_part_get_input_files(somatic_variant_signatures_workf
     )
     expected = {
         "vcf": base_name + ".vcf.gz",
-        "tbi": base_name + ".vcf.gz.tbi",
+        "vcf_tbi": base_name + ".vcf.gz.tbi",
     }
     actual = somatic_variant_signatures_workflow.get_input_files("tabulate_vcf", "run")
     assert actual == expected

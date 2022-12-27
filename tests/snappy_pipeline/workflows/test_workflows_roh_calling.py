@@ -101,7 +101,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_run(roh_calling_work
         "VAR_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
     )
     expected = {
-        "tbi": base_name_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf": base_name_out + ".vcf.gz",
     }
     # Get actual

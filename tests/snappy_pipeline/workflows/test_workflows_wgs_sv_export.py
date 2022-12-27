@@ -104,8 +104,8 @@ def test_varfish_annotator_step_part_call_get_input_files_delly2(wgs_sv_export_w
         "ped": "work/write_pedigree.INDEX_NGS_LIBRARY/out/INDEX_NGS_LIBRARY.ped",
         "vcf": wgs_base_name + ".vcf.gz",
         "vcf_md5": wgs_base_name + ".vcf.gz.md5",
-        "tbi": wgs_base_name + ".vcf.gz.tbi",
-        "tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": wgs_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
     }
     actual = wgs_sv_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
@@ -146,8 +146,8 @@ def test_varfish_annotator_step_part_call_get_input_files_popdel(wgs_sv_export_w
         "ped": "work/write_pedigree.INDEX_NGS_LIBRARY/out/INDEX_NGS_LIBRARY.ped",
         "vcf": wgs_base_name + ".vcf.gz",
         "vcf_md5": wgs_base_name + ".vcf.gz.md5",
-        "tbi": wgs_base_name + ".vcf.gz.tbi",
-        "tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": wgs_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": wgs_base_name + ".vcf.gz.tbi.md5",
     }
     actual = wgs_sv_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
     assert actual == expected

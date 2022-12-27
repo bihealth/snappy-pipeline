@@ -97,14 +97,14 @@ def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_work
     )
     expected_vcf = base_name_out + ".vcf.gz"
     expected_tbi = base_name_out + ".vcf.gz.tbi"
-    expected_keys = {"ped", "vcf", "tbi"}
+    expected_keys = {"ped", "vcf", "vcf_tbi"}
     # Get actual
     result = variant_annotation_workflow.get_input_files("jannovar", "annotate_vcf")
     # Assert if all keys present
     assert set(result.keys()) == expected_keys
     # Assert vcf and tbi
     assert result["vcf"] == expected_vcf
-    assert result["tbi"] == expected_tbi
+    assert result["vcf_tbi"] == expected_tbi
 
 
 def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_workflow):

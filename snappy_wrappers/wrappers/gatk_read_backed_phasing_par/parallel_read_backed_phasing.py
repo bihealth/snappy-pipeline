@@ -28,7 +28,7 @@ class ParallelGaktReadBackedPhasingWrapper(ParallelVariantAnnotationBaseWrapper)
     inner_wrapper = "gatk_read_backed_phasing"
     step_name = "variant_phasing"
     tool_name = "gatk_read_backed_phasing"
-    forward_input_keys = ("vcf", "tbi", "bam")
+    forward_input_keys = ("vcf", "vcf_tbi", "bam")
 
     def __init__(self, snakemake):
         super().__init__(snakemake)
@@ -66,7 +66,7 @@ class ParallelGaktReadBackedPhasingWrapper(ParallelVariantAnnotationBaseWrapper)
                 "input_": repr(
                     {
                         key: self._abs_path(getattr(self.snakemake.input, key))
-                        for key in ("vcf", "tbi", "bam")
+                        for key in ("vcf", "vcf_tbi", "bam")
                     }
                 ),
                 "jobno": jobno,

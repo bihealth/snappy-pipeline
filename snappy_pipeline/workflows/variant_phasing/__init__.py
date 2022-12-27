@@ -81,7 +81,7 @@ from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkfl
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Translate name in configuration to token.
 CONFIG_TO_TOKEN = {
@@ -101,6 +101,12 @@ step_config:
     tools_variant_calling: []   # expected tools for variant calling
     phasings:
     - gatk_phasing_both
+    ignore_chroms:            # patterns of chromosome names to ignore
+    - NC_007605               # herpes virus
+    - hs37d5                  # GRCh37 decoy
+    - chrEBV                  # Eppstein-Barr Virus
+    - '*_decoy'               # decoy contig
+    - 'HLA-*'                 # HLA genes
     gatk_read_backed_phasing:
       phase_quality_threshold: 20.0  # quality threshold for phasing
       window_length: 5000000    # split input into windows of this size, each triggers a job
@@ -115,12 +121,6 @@ step_config:
       job_mult_time: 1          # running time multiplier
       merge_mult_memory: 1      # memory multiplier for merging
       merge_mult_time: 1        # running time multiplier for merging
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605               # herpes virus
-      - hs37d5                  # GRCh37 decoy
-      - chrEBV                  # Eppstein-Barr Virus
-      - '*_decoy'               # decoy contig
-      - 'HLA-*'                 # HLA genes
     gatk_phase_by_transmission:
       de_novo_prior: 1e-8       # default, use 1e-6 when interested in phasing de novos
 """

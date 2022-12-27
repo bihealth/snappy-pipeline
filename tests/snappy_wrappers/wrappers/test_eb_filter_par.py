@@ -89,8 +89,8 @@ def snakemake_output_dict():
     return {
         "vcf": output_base_name + "vcf.gz",
         "vcf_md5": output_base_name + "vcf.gz.md5",
-        "tbi": output_base_name + "vcf.gz.tbi",
-        "tbi_md5": output_base_name + "vcf.gz.tbi.md5",
+        "vcf_tbi": output_base_name + "vcf.gz.tbi",
+        "vcf_tbi_md5": output_base_name + "vcf.gz.tbi.md5",
     }
 
 
@@ -108,7 +108,7 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
     )
     input_dict = {
         "vcf": base_out + ".vcf.gz",
-        "tbi": base_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",

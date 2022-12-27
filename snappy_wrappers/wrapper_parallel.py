@@ -516,7 +516,7 @@ class ParallelBaseWrapper:
         :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
         If not defined, the default is an empty list.
         """
-        return self._get_config().get("ignore_chroms", [])
+        return self._get_step_config().get("ignore_chroms", [])
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
@@ -746,14 +746,14 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
     inner_wrapper = None
 
     #: Wrappers generating VCF output want to call ``realpath`` on these keys.
-    realpath_output_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5")
+    realpath_output_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
 
     #: Extensions to generate
     key_ext = {
         "vcf": "vcf.gz",
         "vcf_md5": "vcf.gz.md5",
-        "tbi": "vcf.gz.tbi",
-        "tbi_md5": "vcf.gz.tbi.md5",
+        "vcf_tbi": "vcf.gz.tbi",
+        "vcf_tbi_md5": "vcf.gz.tbi.md5",
     }
 
     def get_all_output(self):
@@ -871,8 +871,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     mkdir -p $(dirname {{output.vcf}})
                     mv output/out.vcf.gz {{output.vcf}}
                     mv output/out.vcf.gz.md5 {{output.vcf_md5}}
-                    mv output/out.vcf.gz.tbi {{output.tbi}}
-                    mv output/out.vcf.gz.tbi.md5 {{output.tbi_md5}}
+                    mv output/out.vcf.gz.tbi {{output.vcf_tbi}}
+                    mv output/out.vcf.gz.tbi.md5 {{output.vcf_tbi_md5}}
 
                     # Write out information about conda installation.
                     conda list >{{log.conda_list}}
@@ -957,7 +957,7 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         key: os.path.realpath(
                             os.path.join(self.main_cwd, getattr(self.snakemake.input, key))
                         )
-                        for key in ("vcf", "tbi", "ped")
+                        for key in ("vcf", "vcf_tbi", "ped")
                     }
                 ),
                 "jobno": jobno,
@@ -1058,7 +1058,7 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         key: os.path.realpath(
                             os.path.join(self.main_cwd, getattr(self.snakemake.input, key))
                         )
-                        for key in ("vcf", "tbi")
+                        for key in ("vcf", "vcf_tbi")
                     }
                 ),
                 "jobno": jobno,

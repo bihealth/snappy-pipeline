@@ -132,8 +132,8 @@ def test_scramble_analysis_step_part_get_output_files(mei_workflow):
         "vcf": pattern_out + ".vcf",
         "vcf_gz": pattern_out + ".vcf.gz",
         "vcf_gz_md5": pattern_out + ".vcf.gz.md5",
-        "tbi": pattern_out + ".vcf.gz.tbi",
-        "tbi_md5": pattern_out + ".vcf.gz.tbi.md5",
+        "vcf_tbi": pattern_out + ".vcf.gz.tbi",
+        "vcf_tbi_md5": pattern_out + ".vcf.gz.tbi.md5",
     }
     actual = mei_workflow.get_output_files("scramble", "analysis")
     assert actual == expected

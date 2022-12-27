@@ -87,7 +87,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "tbi", "vcf_md5", "tbi_md5")
+EXT_NAMES = ("vcf", "tbivcf_", "vcf_md5", "vcf_tbi_md5")
 
 #: Available somatic variant callers
 MEI_CALLERS = ("melt",)
@@ -219,7 +219,7 @@ class MeltStepPart(BaseStepPart):
         yield "vcf", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz".format(
             **wildcards
         )
-        yield "tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi".format(
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi".format(
             **wildcards
         )
 
@@ -271,19 +271,19 @@ class MeltStepPart(BaseStepPart):
         yield "list_txt", "work/{mapper}.melt.genotype.{me_type}/out/list.txt"
         yield "done", touch("work/{mapper}.melt.make_vcf.{me_type}/out/.done")
         yield "vcf", "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz"
-        yield "tbi", "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi"
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi"
 
     @dictify
     def _get_output_files_merge_vcf(self):
         yield "vcf", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz"
-        yield "tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi"
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi"
         yield "vcf_md5", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.md5"
-        yield "tbi_md5", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi.md5"
+        yield "vcf_tbi_md5", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi.md5"
 
     @dictify
     def _get_output_files_reorder_vcf(self):
         tpl = "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.%s%s"
-        key_ext = {"vcf": "vcf.gz", "tbi": "vcf.gz.tbi"}
+        key_ext = {"vcf": "vcf.gz", "vcf_tbi": "vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, tpl % (ext, "")
             yield key + "_md5", tpl % (ext, ".md5")

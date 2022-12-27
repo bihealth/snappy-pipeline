@@ -159,8 +159,8 @@ VALUES_TARGETED_SEQ = (VALUE_WES, VALUE_PANEL)
 BCF_KEY_EXTS = (
     ("bcf", ".bcf"),
     ("bcf_md5", ".bcf.md5"),
-    ("csi", ".bcf.csi"),
-    ("csi_md5", ".bcf.csi.md5"),
+    ("bcf_csi", ".bcf.csi"),
+    ("bcf_csi_md5", ".bcf.csi.md5"),
 )
 
 
@@ -635,7 +635,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_export():
-        keys = ("bed", "seg", "vcf", "tbi")
+        keys = ("bed", "seg", "vcf", "vcf_tbi")
         exts = ("bed", "seg", "vcf.gz", "vcf.gz.tbi")
         name_pattern = "{mapper}.cnvkit.export.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".{ext}")

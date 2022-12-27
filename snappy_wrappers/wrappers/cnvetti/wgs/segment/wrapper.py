@@ -51,8 +51,8 @@ cnvetti cmd segment \
 
 pushd $(dirname "{snakemake.output.windows_bcf}")
 md5sum $(basename "{snakemake.output.windows_bcf}") >$(basename "{snakemake.output.windows_bcf}").md5
-md5sum $(basename "{snakemake.output.windows_csi}") >$(basename "{snakemake.output.windows_csi}").md5
+md5sum $(basename "{snakemake.output.windows_bcf_csi}") >$(basename "{snakemake.output.windows_bcf_csi}").md5
 md5sum $(basename "{snakemake.output.segments_bcf}") >$(basename "{snakemake.output.segments_bcf}").md5
-md5sum $(basename "{snakemake.output.segments_csi}") >$(basename "{snakemake.output.segments_csi}").md5
+md5sum $(basename "{snakemake.output.segments_bcf_csi}") >$(basename "{snakemake.output.segments_bcf_csi}").md5
 """
 )

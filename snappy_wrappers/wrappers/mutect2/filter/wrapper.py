@@ -84,11 +84,11 @@ tabix -f {snakemake.output.vcf}
 pushd $(dirname {snakemake.output.vcf})
 fn=$(basename {snakemake.output.vcf})
 md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.tbi})
+fn=$(basename {snakemake.output.vcf_tbi})
 md5sum $fn > $fn.md5
 fn=$(basename {snakemake.output.full})
 md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.full_tbi})
+fn=$(basename {snakemake.output.full_vcf_tbi})
 md5sum $fn > $fn.md5
 popd
 """

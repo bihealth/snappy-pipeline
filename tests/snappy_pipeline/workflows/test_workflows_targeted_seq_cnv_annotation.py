@@ -109,7 +109,7 @@ def test_vcf_cnv_filter_step_part_get_input_files(targeted_seq_cnv_annotation_wo
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "vcf": cnv_base_name + ".vcf.gz",
-        "tbi": cnv_base_name + ".vcf.gz.tbi",
+        "vcf_tbi": cnv_base_name + ".vcf.gz.tbi",
     }
     # Get actual
     actual = targeted_seq_cnv_annotation_workflow.get_input_files("vcf_cnv_filter", "run")(

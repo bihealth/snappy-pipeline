@@ -103,7 +103,7 @@ def test_vcf_cnv_filter_step_part_get_input_files(wgs_cnv_annotation_workflow):
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "vcf": wgs_cnv_calling_path + ".vcf.gz",
-        "tbi": wgs_cnv_calling_path + ".vcf.gz.tbi",
+        "vcf_tbi": wgs_cnv_calling_path + ".vcf.gz.tbi",
     }
     # Get actual
     actual = wgs_cnv_annotation_workflow.get_input_files("vcf_cnv_filter", "run")(wildcards)

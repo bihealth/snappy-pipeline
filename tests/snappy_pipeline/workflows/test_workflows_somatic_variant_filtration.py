@@ -87,7 +87,7 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
     )
     expected = {
         "vcf": somatic_base_out + ".vcf.gz",
-        "tbi": somatic_base_out + ".vcf.gz.tbi",
+        "vcf_tbi": somatic_base_out + ".vcf.gz.tbi",
         "bam": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
         "bai": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
     }
@@ -145,7 +145,7 @@ def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_work
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
-        "tbi": base_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
@@ -242,7 +242,7 @@ def test_apply_filters_step_part_get_input_files(somatic_variant_filtration_work
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
-        "tbi": base_out + ".vcf.gz.tbi",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
     }
     actual = somatic_variant_filtration_workflow.get_input_files("apply_filters", "run")
     assert actual == expected
@@ -305,7 +305,7 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 #     )
 #     expected = {
 #         "vcf": base_out + ".vcf.gz",
-#         "tbi": base_out + ".vcf.gz.tbi",
+#         "vcf_tbi": base_out + ".vcf.gz.tbi",
 #     }
 #     # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
 #     _ = expected

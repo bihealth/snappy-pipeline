@@ -6,9 +6,7 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-ignore_chroms = snakemake.config["step_config"]["variant_calling"]["bcftools"].get(
-    "ignore_chroms", ""
-)
+ignore_chroms = snakemake.config["step_config"]["variant_calling"].get("ignore_chroms", [])
 if ignore_chroms:
     arg_ignore_chroms = "--ignore-chroms " + " ".join(map(repr, ignore_chroms))
 else:
@@ -96,7 +94,7 @@ tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \
     md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
-    md5sum $(basename {snakemake.output.tbi}) >$(basename {snakemake.output.tbi}).md5
+    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )
 

@@ -85,8 +85,8 @@ def snakemake_obj(minimal_config):
     input_dict = {
         "vcf": input_base_name + ".vcf.gz",
         "vcf_md5": input_base_name + ".vcf.gz.md5",
-        "tbi": input_base_name + ".vcf.gz.tbi",
-        "tbi_md5": input_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": input_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": input_base_name + ".vcf.gz.tbi.md5",
         "bai": [
             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
@@ -103,8 +103,8 @@ def snakemake_obj(minimal_config):
         "bwa.gatk_hc.jannovar_annotate_vcf.gatk_rbp.P001-N1-DNA1-WGS1"
     )
     output_dict = {
-        "tbi": output_base_name + ".vcf.gz.tbi",
-        "tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
+        "vcf_tbi": output_base_name + ".vcf.gz.tbi",
+        "vcf_tbi_md5": output_base_name + ".vcf.gz.tbi.md5",
         "vcf": output_base_name + ".vcf.gz",
         "vcf_md5": output_base_name + ".vcf.gz.md5",
     }

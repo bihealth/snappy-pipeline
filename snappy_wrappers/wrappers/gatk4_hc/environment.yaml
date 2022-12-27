@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - gatk4
+  - bcftools =1.16
+  - samtools =1.16
+  - htslib =1.16
+  - parallel =20221122
+  - picard-slim =2.27

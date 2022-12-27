@@ -85,7 +85,7 @@ shell(
 
     pushd $(dirname {snakemake.output.vcf})
     md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf}).md5
-    md5sum $(basename {snakemake.output.tbi}) > $(basename {snakemake.output.tbi}).md5
+    md5sum $(basename {snakemake.output.vcf_tbi}) > $(basename {snakemake.output.vcf_tbi}).md5
         """
     )
 )
