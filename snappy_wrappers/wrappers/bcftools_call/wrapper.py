@@ -103,6 +103,7 @@ run-shard()
 
     bcftools mpileup \
         -Ou \
+        --annotate FORMAT/AD,FORMAT/DP \
         -f {snakemake.config[static_data_config][reference][path]} \
         --per-sample-mF \
         --max-depth {snakemake.config[step_config][variant_calling][bcftools][max_depth]} \

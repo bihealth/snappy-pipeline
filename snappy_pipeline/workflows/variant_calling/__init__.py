@@ -432,12 +432,14 @@ class Gatk3CallerStepPartBase(VariantCallingStepPart):
 
         :return: Returns ResourceUsage for step.
         """
-        # Validate action
         self._validate_action(action)
+        num_threads = self.config[self.name]["num_threads"]
+        mem_per_thread = 5.5
+        mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
-            threads=1,
-            time="3-08:00:00",  # 3 days and 8 hours
-            memory=f"{14 * 1024}M",
+            threads=num_threads,
+            time="2-00:00:00",
+            memory=f"{mem_total}G",
         )
 
 
@@ -486,7 +488,7 @@ class Gatk4CallerStepPartBase(VariantCallingStepPart):
         """
         self._validate_action(action)
         num_threads = self.config[self.name]["num_threads"]
-        mem_per_thread = 4.5
+        mem_per_thread = 5.5
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
             threads=num_threads,
