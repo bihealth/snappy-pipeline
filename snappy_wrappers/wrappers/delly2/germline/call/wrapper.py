@@ -8,9 +8,12 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 exclude_str = ""
-s = snakemake.config["step_config"]["wgs_sv_calling"]["delly2"]["path_exclude_tsv"]
-if s is not None:
-    exclude_str = "--exclude {}".format(s)
+if "wgs_sv_calling" in snakemake.config["step_config"]:
+    s = snakemake.config["step_config"]["wgs_sv_calling"]["delly2"]["path_exclude_tsv"]
+else:
+    s = snakemake.config["step_config"]["sv_calling_targeted"]["delly2"]["path_exclude_tsv"]
+if s:
+    exclude_str = f"--exclude {s}"
 
 shell(
     r"""
