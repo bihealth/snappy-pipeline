@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline targeted_seq_cnv_calling step Snakefile"""
+"""CUBI Pipeline sv_calling_targeted step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
+from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,7 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = TargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = SvCallingTargetedWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 

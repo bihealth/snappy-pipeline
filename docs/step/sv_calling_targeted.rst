@@ -1,7 +1,7 @@
-.. _step_targeted_seq_cnv_calling:
+.. _step_sv_calling_targeted:
 
 ==================================
 Germline Targeted Seq. CNV Calling
 ==================================
 
-.. automodule:: snappy_pipeline.workflows.targeted_seq_cnv_calling
+.. automodule:: snappy_pipeline.workflows.sv_calling_targeted

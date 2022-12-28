@@ -1,7 +1,7 @@
 # CNVetti homdel needs many rules, thus they are in their own files.
 
 
-rule targeted_seq_cnv_calling_cnvetti_homdel_coverage:
+rule sv_calling_targeted_cnvetti_homdel_coverage:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "coverage")),
     output:
@@ -14,7 +14,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_coverage:
         wf.wrapper_path("cnvetti/targeted_germline_hom/coverage")
 
 
-rule targeted_seq_cnv_calling_cnvetti_homdel_merge_neighbors:
+rule sv_calling_targeted_cnvetti_homdel_merge_neighbors:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "merge_neighbors")),
     output:
@@ -25,7 +25,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_merge_neighbors:
         wf.wrapper_path("cnvetti/targeted_germline_hom/merge_neighbors")
 
 
-rule targeted_seq_cnv_calling_cnvetti_homdel_merge_cohort_vcfs:
+rule sv_calling_targeted_cnvetti_homdel_merge_cohort_vcfs:
     input:
         wf.get_input_files("cnvetti_homdel", "merge_cohort_vcfs"),
     output:
@@ -36,7 +36,7 @@ rule targeted_seq_cnv_calling_cnvetti_homdel_merge_cohort_vcfs:
         wf.wrapper_path("cnvetti/targeted_germline_hom/merge_cohort_vcfs")
 
 
-rule targeted_seq_cnv_calling_cnvetti_homdel_extract_ped:
+rule sv_calling_targeted_cnvetti_homdel_extract_ped:
     input:
         unpack(wf.get_input_files("cnvetti_homdel", "extract_ped")),
     output:

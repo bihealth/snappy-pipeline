@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``targeted_seq_cnv_calling`` step
+"""Implementation of the ``sv_calling_targeted`` step
 
 This step allows for the detection of CNV events for germline samples from targeted sequenced
 (e.g., exomes or large panels).  The wrapped tools start from the aligned reads (thus off
@@ -54,7 +54,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_targeted_seq_cnv_calling.rst
+.. include:: DEFAULT_CONFIG_sv_calling_targeted.rst
 
 =====================
 Available CNV Callers
@@ -99,11 +99,11 @@ TARGETED_SEQ_CNV_CALLERS = ("xhmm", "gcnv")
 #: Minimum number of samples using kit - criteria to be analyzed
 MIN_KIT_SAMPLES = 10
 
-#: Default configuration for the targeted_seq_cnv_calling step
+#: Default configuration for the sv_calling_targeted step
 DEFAULT_CONFIG = r"""
-# Default configuration targeted_seq_cnv_calling
+# Default configuration sv_calling_targeted
 step_config:
-  targeted_seq_cnv_calling:
+  sv_calling_targeted:
     # Path to the ngs_mapping step.
     path_ngs_mapping: ../ngs_mapping
 
@@ -223,7 +223,7 @@ class XhmmStepPart(BaseStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        xhmm_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
+        xhmm_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/xhmm")
         if not xhmm_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
@@ -505,14 +505,14 @@ class XhmmStepPart(BaseStepPart):
         if action == "coverage":
             return (
                 "work/{{mapper}}.xhmm_{action}.{{library_name}}/log/"
-                "snakemake.targeted_seq_cnv_calling.log"
+                "snakemake.sv_calling_targeted.log"
             ).format(action=action)
         elif action == "extract_ped":
-            return "work/{mapper}.xhmm.{library_name}/log/" "snakemake.targeted_seq_cnv_calling.log"
+            return "work/{mapper}.xhmm.{library_name}/log/" "snakemake.sv_calling_targeted.log"
         else:
             return (
                 "work/{{mapper}}.xhmm_{action}.{{library_kit}}/log/"
-                "snakemake.targeted_seq_cnv_calling.log"
+                "snakemake.sv_calling_targeted.log"
             ).format(action=action)
 
     def get_resource_usage(self, action):
@@ -541,7 +541,7 @@ class RunGcnvTargetSeqStepPart(RunGcnvStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
+        gcnv_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
         if not gcnv_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
@@ -563,11 +563,11 @@ class RunGcnvTargetSeqStepPart(RunGcnvStepPart):
         return result
 
 
-class TargetedSeqCnvCallingWorkflow(BaseStep):
+class SvCallingTargetedWorkflow(BaseStep):
     """Perform germline targeted sequencing CNV calling"""
 
     #: Workflow name
-    name = "targeted_seq_cnv_calling"
+    name = "sv_calling_targeted"
 
     sheet_shortcut_class = GermlineCaseSheet
 
@@ -702,6 +702,6 @@ class TargetedSeqCnvCallingWorkflow(BaseStep):
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
-            config_keys=("step_config", "targeted_seq_cnv_calling", "path_ngs_mapping"),
+            config_keys=("step_config", "sv_calling_targeted", "path_ngs_mapping"),
             msg="Path to NGS mapping not configured but required for targeted seq. CNV calling",
         )

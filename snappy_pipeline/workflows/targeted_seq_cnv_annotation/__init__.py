@@ -2,7 +2,7 @@
 """Implementation of the ``targeted_seq_cnv_annotation`` step
 
 The ``targeted_seq_cnv_annotation`` step takes as the input the results of the
-``targeted_seq_cnv_calling`` step (called germline CNVs) and
+``sv_calling_targeted`` step (called germline CNVs) and
 ``variant_calling`` (called small germline variants) and performs annotation
 and filtration of the structural variants.
 
@@ -24,7 +24,7 @@ Step Input
 
 The variant annotation step uses the output of the following CUBI pipeline steps:
 
-- ``targeted_seq_cnv_calling``
+- ``sv_calling_targeted``
 - ``variant_annotation``
 
 ===========
@@ -70,7 +70,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
+from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -86,10 +86,10 @@ DEFAULT_CONFIG = r"""
 step_config:
   targeted_seq_cnv_annotation:
     path_ngs_mapping: ../ngs_mapping
-    path_targeted_seq_cnv_calling: ../targeted_seq_cnv_calling
+    path_sv_calling_targeted: ../sv_calling_targeted
     tools_ngs_mapping:
     - bwa
-    tools_targeted_seq_cnv_calling:
+    tools_sv_calling_targeted:
     - xhmm
     bed_files: []
 """
@@ -117,10 +117,10 @@ class VcfCnvFilterStepPart(BaseStepPart):
     @dictify
     def _build_ngs_library_to_kit(self):
         # Get XHMM or gCNV configuration
-        if "xhmm" in DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/tools"):
-            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
+        if "xhmm" in DictQuery(self.w_config).get("step_config/sv_calling_targeted/tools"):
+            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/xhmm")
         else:  # assume gCNV
-            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
+            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
 
         if not tool_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
@@ -157,7 +157,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
             )
             key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
             # SVs
-            targeted_seq_cnv_calling = self.parent.sub_workflows["targeted_seq_cnv_calling"]
+            sv_calling_targeted = self.parent.sub_workflows["sv_calling_targeted"]
             if wildcards.caller == "xhmm":
                 library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
                 tpl = tpl.replace(".{index_ngs_library}", "_genotype.%s" % library_kit)
@@ -168,7 +168,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
                 library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
                 tpl = tpl.replace(".{index_ngs_library}", "_merge_cohort_vcfs.%s" % library_kit)
             for key, ext in key_ext.items():
-                yield key, targeted_seq_cnv_calling(tpl + ext).format(**wildcards)
+                yield key, sv_calling_targeted(tpl + ext).format(**wildcards)
             return
 
         return input_function
@@ -247,24 +247,22 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (TargetedSeqCnvCallingWorkflow, NgsMappingWorkflow),
+            (SvCallingTargetedWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (WritePedigreeStepPart, VcfCnvFilterStepPart, LinkOutStepPart)
         )
         # Register sub workflows
-        self.register_sub_workflow(
-            "targeted_seq_cnv_calling", self.config["path_targeted_seq_cnv_calling"]
-        )
+        self.register_sub_workflow("sv_calling_targeted", self.config["path_sv_calling_targeted"])
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        # Copy over "tools" setting from targeted_seq_cnv_calling/ngs_mapping if not set here
+        # Copy over "tools" setting from sv_calling_targeted/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
                 "dna"
             ]
-        if not self.config["tools_targeted_seq_cnv_calling"]:
-            self.config["tools_targeted_seq_cnv_calling"] = self.w_config["step_config"][
+        if not self.config["tools_sv_calling_targeted"]:
+            self.config["tools_sv_calling_targeted"] = self.w_config["step_config"][
                 "variant_calling"
             ]["tools"]
         # Build mapping from NGS DNA library to library kit.
@@ -304,7 +302,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
-        if "xhmm" in self.config["tools_targeted_seq_cnv_calling"]:
+        if "xhmm" in self.config["tools_sv_calling_targeted"]:
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
             chosen_donors = [
@@ -326,7 +324,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
                     ".conda_list.txt.md5",
                 ),
             )
-        if "gcnv" in self.config["tools_targeted_seq_cnv_calling"]:
+        if "gcnv" in self.config["tools_sv_calling_targeted"]:
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
             chosen_donors = [
@@ -378,7 +376,7 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
             ),
         )
         self.ensure_w_config(
-            ("step_config", "targeted_seq_cnv_annotation", "tools_targeted_seq_cnv_calling"),
+            ("step_config", "targeted_seq_cnv_annotation", "tools_sv_calling_targeted"),
             (
                 "targeted sequencing CNV calling tools not configured but required for targeted "
                 "sequencing CNV annotation"

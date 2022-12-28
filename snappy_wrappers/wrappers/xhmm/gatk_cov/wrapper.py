@@ -13,7 +13,7 @@ from snakemake.shell import shell
 # Pick the target BED file to use.  If it goes by the name "default" then we
 # simply take the one at xhmm/path_target_interval_list.  Otherwise, we
 # have to go through the list in xhmm/path_target_interval_list_mapping.
-xhmm_config = DictQuery(snakemake.config).get("step_config/targeted_seq_cnv_calling/xhmm")
+xhmm_config = DictQuery(snakemake.config).get("step_config/sv_calling_targeted/xhmm")
 if snakemake.params.args["library_kit"] == "default":
     target_interval_bed = xhmm_config["path_target_interval_list"]
 else:

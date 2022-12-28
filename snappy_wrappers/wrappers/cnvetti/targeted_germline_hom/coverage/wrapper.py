@@ -10,7 +10,7 @@ from snakemake.shell import shell
 # simply take the one at cnvetti_homdel/path_target_interval_list.  Otherwise, we
 # have to go through the list in cnvetti_homdel/path_target_interval_list_mapping.
 cnvetti_homdel_config = DictQuery(snakemake.config).get(
-    "step_config/targeted_seq_cnv_calling/cnvetti_homdel"
+    "step_config/sv_calling_targeted/cnvetti_homdel"
 )
 if snakemake.params.args["library_kit"] == "default":
     target_interval_bed = cnvetti_homdel_config["path_target_interval_list"]

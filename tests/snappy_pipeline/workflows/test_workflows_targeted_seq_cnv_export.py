@@ -33,7 +33,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          targeted_seq_cnv_calling:
+          sv_calling_targeted:
             tools:
               - gcnv
             gcnv:
