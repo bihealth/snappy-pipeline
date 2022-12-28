@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline helper_gcnv_model_target_seq step Snakefile"""
+"""CUBI Pipeline helper_gcnv_model_targeted step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.helper_gcnv_model_target_seq import (
+from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
     HelperBuildTargetSeqGcnvModelWorkflow,
 )
 

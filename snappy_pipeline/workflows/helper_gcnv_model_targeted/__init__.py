@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``helper_gcnv_model_target_seq`` step
+"""Implementation of the ``helper_gcnv_model_targeted`` step
 
-The ``helper_gcnv_model_target_seq`` step takes as the input the results of the ``ngs_mapping``
+The ``helper_gcnv_model_targeted`` step takes as the input the results of the ``ngs_mapping``
 step (aligned germline reads) and builds a model that can be used by GATK4 gCNV for a particular
 library kit.
 
@@ -79,7 +79,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_helper_gcnv_model_target_seq.rst
+.. include:: DEFAULT_CONFIG_helper_gcnv_model_targeted.rst
 
 """
 import os
@@ -93,12 +93,12 @@ from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-#: Default configuration for the helper_gcnv_model_target_seq schema
+#: Default configuration for the helper_gcnv_model_targeted schema
 DEFAULT_CONFIG = r"""
-# Default configuration helper_gcnv_model_target_seq
+# Default configuration helper_gcnv_model_targeted
 step_config:
 
-  helper_gcnv_model_target_seq:
+  helper_gcnv_model_targeted:
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
 
     gcnv:
@@ -123,7 +123,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = DictQuery(self.w_config).get("step_config/helper_gcnv_model_target_seq/gcnv")
+        gcnv_config = DictQuery(self.w_config).get("step_config/helper_gcnv_model_targeted/gcnv")
         if not gcnv_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
@@ -175,7 +175,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
     """Perform gCNV model building for WES samples by library kit"""
 
     #: Workflow name
-    name = "helper_gcnv_model_target_seq"
+    name = "helper_gcnv_model_targeted"
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -239,6 +239,6 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
-            ("step_config", "helper_gcnv_model_target_seq", "path_ngs_mapping"),
+            ("step_config", "helper_gcnv_model_targeted", "path_ngs_mapping"),
             "Path to NGS mapping not configured but required for gCNV model building.",
         )

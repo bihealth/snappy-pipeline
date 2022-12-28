@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the helper_gcnv_model_target_seq workflow module code"""
+"""Tests for the helper_gcnv_model_targeted workflow module code"""
 
 import textwrap
 import unittest.mock as mock
@@ -8,7 +8,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.helper_gcnv_model_target_seq import (
+from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
     HelperBuildTargetSeqGcnvModelWorkflow,
 )
 
@@ -56,7 +56,7 @@ def minimal_config():
             path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
-          helper_gcnv_model_target_seq:
+          helper_gcnv_model_targeted:
             gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
