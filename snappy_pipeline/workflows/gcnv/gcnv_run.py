@@ -427,8 +427,16 @@ class JointGermlineCnvSegmentationMixin:
     @dictify
     def _get_output_files_joint_germline_cnv_segmentation(self):
         name_pattern = "{mapper}.gcnv.{library_name}"
+        work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
-            yield key, f"work/{name_pattern}/out/{name_pattern}{suffix}"
+            work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
+        yield from work_files.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(
+                work_files.values(), self.get_log_file("joint_germline_cnv_segmentation").values()
+            )
+        ]
 
     @dictify
     def _get_log_file_joint_germline_cnv_segmentation(self):

@@ -58,5 +58,5 @@ class ForwardResourceUsageMixin:
     def get_resource_usage(self, action: str) -> ResourceUsage:
         self._validate_action(action)
         assert self.resource_usage_dict is not None, "resource_usage_dict not set!"
-        assert action in self.get_resource_usage, f"No resource usage entry for {action}"
+        assert action in self.resource_usage_dict, f"No resource usage entry for {action}"
         return self.resource_usage_dict[action]

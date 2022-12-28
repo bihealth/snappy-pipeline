@@ -107,15 +107,10 @@ class SvCallingTargetedGetResultFilesMixin:
             )
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
-                for index_library_name in self.index_ngs_library_to_pedigree.keys():
-                    if "{library_name}" in path_tpl:
-                        yield from expand(
-                            path_tpl, mapper=[mapper], library_name=index_library_name
-                        )
-                    else:
-                        yield from expand(
-                            path_tpl, mapper=[mapper], index_library_name=index_library_name
-                        )
+                for library_name in self.index_ngs_library_to_pedigree.keys():
+                    yield from expand(
+                        path_tpl, mapper=[mapper], library_name=library_name
+                    )
 
 
 class Delly2StepPart(
@@ -129,8 +124,16 @@ class Delly2StepPart(
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
-    _cheap_resource_usage = None
-    _normal_resource_usage = None
+    _cheap_resource_usage = ResourceUsage(
+        threads=2,
+        time="4-00:00:00",
+        memory=f"{7 * 1024 * 2}M",
+    )
+    _normal_resource_usage = ResourceUsage(
+        threads=2,
+        time="7-00:00:00",  # 7 days
+        memory=f"{20 * 1024 * 2}M",
+    )
     resource_usage_dict = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,
@@ -166,7 +169,7 @@ class Delly2StepPart(
     @dictify
     def _get_input_files_merge_calls(self, wildcards):
         bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
                 infix = f"{wildcards.mapper}.delly2_call.{donor.dna_ngs_library.name}"
@@ -212,7 +215,7 @@ class Delly2StepPart(
     def _get_input_files_merge_genotypes(self, wildcards):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
                 token = f"{wildcards.mapper}.delly2_genotype.{donor.dna_ngs_library.name}"
@@ -221,7 +224,7 @@ class Delly2StepPart(
 
     @dictify
     def _get_output_files_merge_genotypes(self):
-        infix = "{mapper}.delly2.{index_library_name}"
+        infix = "{mapper}.delly2.{library_name}"
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
         yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
@@ -278,7 +281,7 @@ class MantaStepPart(
     def _get_input_files_run(self, wildcards):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         bams = []
-        for donor in self.index_ngs_library_to_pedigree[wildcards.index_library_name].donors:
+        for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
             if donor.dna_ngs_library:
                 token = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
                 bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
@@ -288,7 +291,7 @@ class MantaStepPart(
     def _get_output_files_run(self):
         work_files = {}
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            infix = "{mapper}.manta.{index_library_name}"
+            infix = "{mapper}.manta.{library_name}"
             work_files[name] = f"work/{infix}/out/{infix}{ext}"
         yield from work_files.items()
         yield "output_links", [
