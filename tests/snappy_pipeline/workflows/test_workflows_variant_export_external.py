@@ -531,7 +531,7 @@ def test_varfish_annotator_step_part_get_input_files_bam_qc(variant_export_exter
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "var_caller": "gatk_hc",
+            "var_caller": "gatk3_hc",
             "index_ngs_library": "P001-N1-DNA1-WGS1",
         }
     )

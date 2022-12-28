@@ -73,7 +73,7 @@ step_config:
     tools_ngs_mapping:
     - bwa
     tools_variant_calling:
-    - gatk_hc
+    - gatk3_hc
     tools_wgs_sv_calling:
     - delly2
     tools_wgs_cnv_calling:

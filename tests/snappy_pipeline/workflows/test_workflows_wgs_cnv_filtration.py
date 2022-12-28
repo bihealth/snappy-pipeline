@@ -95,14 +95,14 @@ def test_filter_quality_step_part_get_input_files(wgs_cnv_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
         }
     )
     # Define expected
     var_base_name = (
-        "WGS_CNV_ANNOTATION/output/bwa.gatk_hc.annotated.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.annotated.P001-N1-DNA1-WGS1"
+        "WGS_CNV_ANNOTATION/output/bwa.gatk3_hc.annotated.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.annotated.P001-N1-DNA1-WGS1"
     )
     pedigree_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=var_base_name)
@@ -153,15 +153,15 @@ def test_filter_inheritance_step_part_get_input_files(wgs_cnv_filtration_workflo
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
         }
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative/out/"
-        "bwa.gatk_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative"
+        "work/bwa.gatk3_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative/out/"
+        "bwa.gatk3_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -213,7 +213,7 @@ def test_filter_regions_step_part_get_input_files(wgs_cnv_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
             "inheritance": "dominant",
@@ -222,8 +222,8 @@ def test_filter_regions_step_part_get_input_files(wgs_cnv_filtration_workflow):
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative.dominant/out/"
-        "bwa.gatk_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative.dominant"
+        "work/bwa.gatk3_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative.dominant/out/"
+        "bwa.gatk3_hc.annotated.filtered.P001-N1-DNA1-WGS1.conservative.dominant"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)

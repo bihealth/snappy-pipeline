@@ -15,15 +15,6 @@ compute-md5()
 }
 """
 
-ref_path = snakemake.config["static_data_config"]["reference"]["path"]
-if "GRCh37" in ref_path or "hg19" in ref_path:
-    assembly = "GRCh37"
-elif "GRCh38" in ref_path or "hg38" in ref_path:
-    assembly = "GRCh38"
-else:
-    assembly = "unknown"
-
-
 shell(
     r"""
 set -x
@@ -57,7 +48,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
@@ -93,39 +84,32 @@ wc -l $TMPDIR/final_intervals.txt
 # Create per-shard output directory
 mkdir -p $TMPDIR/shards-output
 
-# Function to run "bcftools call"
+# Function to run HaplotypeCaller in "joint" mode - cannot generate gVCF
 run-shard()
 {{
-    set -x
-
     job_no=$1
     interval=$2
 
-    bcftools mpileup \
-        -Ou \
-        --annotate FORMAT/AD,FORMAT/DP \
-        -f {snakemake.config[static_data_config][reference][path]} \
-        --per-sample-mF \
-        --max-depth {snakemake.config[step_config][variant_calling][bcftools_call][max_depth]} \
-        --max-idepth {snakemake.config[step_config][variant_calling][bcftools_call][max_indel_depth]} \
-        --redo-BAQ \
-        --regions $2 \
-        {snakemake.input.bam} \
-    | bcftools call \
-        --multiallelic-caller \
-        $(if [[ "{assembly}" != "unknown" ]]; then \
-            echo --ploidy={assembly}; \
-            echo --samples-file {snakemake.input.ped}; \
-        fi) \
-        --variants-only \
-        -Oz \
-        -o $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz
-    tabix -f $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz
+    GATK_JAVA_MEMORY=3750m
+    gatk3 -Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR \
+        --analysis_type UnifiedGenotyper \
+        --out $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz \
+        --reference_sequence {snakemake.config[static_data_config][reference][path]} \
+        --sample_ploidy 2 \
+        --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
+        --downsample_to_coverage {snakemake.config[step_config][variant_calling][gatk3_ug][downsample_to_coverage]} \
+        --intervals $interval \
+        $(for path in {snakemake.input.bam}; do \
+            echo --input_file $path; \
+        done) \
+        $(if [[ {snakemake.config[step_config][variant_calling][gatk3_ug][allow_seq_dict_incompatibility]} == "True" ]]; then \
+            echo --disable-sequence-dictionary-validation true; \
+        fi)
 }}
 export -f run-shard
 
 # Perform parallel execution
-num_threads={snakemake.config[step_config][variant_calling][gatk4_hc_joint][num_threads]}
+num_threads={snakemake.config[step_config][variant_calling][gatk3_ug][num_threads]}
 cat $TMPDIR/final_intervals.txt \
 | parallel -j $num_threads 'run-shard {{#}} {{}}'
 
@@ -148,6 +132,7 @@ tabix {snakemake.output.vcf}
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
+compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 
@@ -156,7 +141,6 @@ for path in {snakemake.output.output_links}; do
   src=work/${{dst#output/}}
   ln -sr $src $dst
 done
-compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 """
 )
 

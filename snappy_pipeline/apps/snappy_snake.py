@@ -210,6 +210,9 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--reason")
     if not wrapper_args.snappy_pipeline_use_profile:
         snakemake_argv += ["--cores", str(wrapper_args.cores or 1)]
+    if wrapper_args.conda_create_envs_only:
+        snakemake_argv.append("--conda-create-envs-only")
+        wrapper_args.use_conda = True
     if wrapper_args.use_conda:
         snakemake_argv.append("--use-conda")
         if mamba_available and wrapper_args.use_mamba:
@@ -402,6 +405,13 @@ def main(argv=None):
         action="store_false",
         default=True,
         help="Disable usage of conda",
+    )
+    group.add_argument(
+        "--conda-create-envs-only",
+        dest="conda_create_envs_only",
+        action="store_true",
+        default=False,
+        help="Prepare all conda environments",
     )
 
     args = parser.parse_args(argv)

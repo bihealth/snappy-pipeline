@@ -37,7 +37,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           wgs_cnv_calling:
-            variant_calling_tool: gatk_ug
+            variant_calling_tool: gatk3_ug
             tools: [delly2, gcnv]
 
           wgs_cnv_annotation:

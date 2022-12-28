@@ -44,12 +44,12 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
 
           variant_filtration:
             path_variant_annotation: ../variant_annotation
             tools_ngs_mapping: ['bwa']
-            tools_variant_calling: ['gatk_hc']
+            tools_variant_calling: ['gatk3_hc']
             # Testing 1 out 40+ possible combinations:
             # {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}
             filter_combinations:
@@ -108,14 +108,14 @@ def test_filter_quality_step_part_get_input_files(variant_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
         }
     )
     # Define expected
     var_base_name = (
-        "VAR_ANNOTATION/output/bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
+        "VAR_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     root = get_project_root()
     pedigree_dict = {
@@ -170,15 +170,15 @@ def test_filter_inheritance_step_part_get_input_files(variant_filtration_workflo
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
         }
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative"
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative/out/"
+        "bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -230,7 +230,7 @@ def test_filter_frequency_step_part_get_input_files(variant_filtration_workflow)
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
             "inheritance": "dominant",
@@ -238,8 +238,8 @@ def test_filter_frequency_step_part_get_input_files(variant_filtration_workflow)
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant/"
-        "out/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant"
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant/"
+        "out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -292,7 +292,7 @@ def test_filter_regions_step_part_get_input_files(variant_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
             "inheritance": "dominant",
@@ -301,8 +301,8 @@ def test_filter_regions_step_part_get_input_files(variant_filtration_workflow):
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant."
-        "af_dominant/out/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1."
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative.dominant."
+        "af_dominant/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1."
         "conservative.dominant.af_dominant"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
@@ -357,7 +357,7 @@ def test_filter_scores_step_part_get_input_files(variant_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
             "inheritance": "dominant",
@@ -367,8 +367,8 @@ def test_filter_scores_step_part_get_input_files(variant_filtration_workflow):
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes/out/bwa.gatk_hc.jannovar_annotate_vcf.filtered."
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
+        "dominant.af_dominant.all_genes/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered."
         "P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
@@ -423,7 +423,7 @@ def test_filter_het_comp_step_part_get_input_files(variant_filtration_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "caller": "gatk_hc",
+            "caller": "gatk3_hc",
             "index_library": "P001-N1-DNA1-WGS1",
             "thresholds": "conservative",
             "inheritance": "dominant",
@@ -434,8 +434,8 @@ def test_filter_het_comp_step_part_get_input_files(variant_filtration_workflow):
     )
     # Define expected
     base_name = (
-        "work/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes.coding/out/bwa.gatk_hc.jannovar_annotate_vcf."
+        "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
+        "dominant.af_dominant.all_genes.coding/out/bwa.gatk3_hc.jannovar_annotate_vcf."
         "filtered.P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes.coding"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
@@ -505,9 +505,9 @@ def test_variant_filtration_workflow(variant_filtration_workflow):
 
     # Check result file construction
     tpl = (
-        "output/bwa.gatk_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
+        "output/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
         "dominant.dominant_freq.all_genes.coding.passthrough/out/"
-        "bwa.gatk_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
+        "bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
         "dominant.dominant_freq.all_genes.coding.passthrough.{ext}"
     )
     expected = [

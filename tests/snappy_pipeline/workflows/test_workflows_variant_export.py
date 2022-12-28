@@ -35,7 +35,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
 
@@ -92,12 +92,14 @@ def test_varfish_annotator_step_part_get_input_files_annotate(variant_export_wor
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "var_caller": "gatk_hc",
+            "var_caller": "gatk3_hc",
             "index_ngs_library": "P001-N1-DNA1-WGS1",
         }
     )
     # Define expected
-    base_name = "VAR_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+    base_name = (
+        "VAR_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
+    )
     expected = {
         "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
         "vcf": base_name + ".vcf.gz",
@@ -113,7 +115,7 @@ def test_varfish_annotator_step_part_get_input_files_bam_qc(variant_export_workf
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "var_caller": "gatk_hc",
+            "var_caller": "gatk3_hc",
             "index_ngs_library": "P001-N1-DNA1-WGS1",
         }
     )
@@ -259,8 +261,8 @@ def test_variant_export_workflow(variant_export_workflow):
 
     # Check result file construction
     tpl = (
-        "output/bwa.gatk_hc.varfish_annotated.P00{i}-N1-DNA1-WGS1/{dir_}/"
-        "bwa.gatk_hc.varfish_annotated{type_}.P00{i}-N1-DNA1-WGS1.{ext}"
+        "output/bwa.gatk3_hc.varfish_annotated.P00{i}-N1-DNA1-WGS1/{dir_}/"
+        "bwa.gatk3_hc.varfish_annotated{type_}.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     # Files in `out` directory
     expected = [

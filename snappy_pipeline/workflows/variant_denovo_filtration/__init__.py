@@ -52,19 +52,19 @@ For example, it might look as follows for the example from above:
 ::
 
     output/
-    +-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1
+    +-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       |-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
-    |       |-- bwa.gatk_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       |-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
-    |       |-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt
-    |       `-- bwa.gatk_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt.md5
+    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz
+    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt
+    |       `-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt.md5
     [...]
 
 ====================
@@ -377,7 +377,7 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        result = {"gatk_hc": [], "gatk_ug": []}
+        result = {"gatk3_hc": [], "gatk_ug": []}
         name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):

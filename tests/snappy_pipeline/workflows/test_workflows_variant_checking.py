@@ -33,11 +33,11 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
 
           variant_checking:
             tools_ngs_mapping: ['bwa']  # optional, copied from ngs mapping config
-            tools_variant_calling: ['gatk_hc']  # optional, copied from variant calling config
+            tools_variant_calling: ['gatk3_hc']  # optional, copied from variant calling config
             path_variant_calling: ../variant_calling  # REQUIRED
             tools: ['peddy']
 
@@ -171,7 +171,7 @@ def test_variant_checking_workflow(variant_checking_workflow):
             "sex_check.csv",
         )
         for mapper in ("bwa",)
-        for var_caller in ("gatk_hc",)
+        for var_caller in ("gatk3_hc",)
     ]
     actual = variant_checking_workflow.get_result_files()
     assert actual == expected

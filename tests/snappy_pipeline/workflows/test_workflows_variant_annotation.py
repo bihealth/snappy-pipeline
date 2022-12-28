@@ -36,7 +36,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
 
@@ -164,7 +164,7 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
         for i in (1, 4)  # only for indices
         for ext in ("vcf.gz", "vcf.gz.tbi", "vcf.gz.md5", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for var_caller in ("gatk_hc",)
+        for var_caller in ("gatk3_hc",)
     ]
     tpl = (
         "output/{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1/log/"
@@ -182,7 +182,7 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
             "conda_list.txt.md5",
         )
         for mapper in ("bwa",)
-        for var_caller in ("gatk_hc",)
+        for var_caller in ("gatk3_hc",)
     ]
     actual = variant_annotation_workflow.get_result_files()
     assert actual == expected

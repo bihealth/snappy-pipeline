@@ -35,7 +35,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
 
           variant_combination:
             combinations:
@@ -298,8 +298,8 @@ def test_variant_checking_workflow(variant_combination_workflow):
             "vcf.gz.tbi.md5",
         )
         for type_, combination, left, right in (
-            ("vars_intersect", "all", "delly2", "gatk_hc"),
-            ("vars_share_interval", "small_conserved_cnv_common_limb_tad", "erds_sv2", "gatk_hc"),
+            ("vars_intersect", "all", "delly2", "gatk3_hc"),
+            ("vars_share_interval", "small_conserved_cnv_common_limb_tad", "erds_sv2", "gatk3_hc"),
         )
     ]
     expected = sorted(expected)

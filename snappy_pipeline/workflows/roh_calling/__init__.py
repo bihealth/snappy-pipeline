@@ -45,22 +45,22 @@ For example, it could look like this:
 ::
 
     output/
-    +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1
+    +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1
     |   `-- out
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.tbi
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.tbi.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.txt.gz
-    │       +-- bwa.gatk_ug.bcftools_roh.P001-N1-DNA1-WGS1.txt.gz.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz
-    │       +-- bwa.gatk_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi
-    │       +-- bwa.gatk_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz
-    │       +-- bwa.gatk_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.md5
-    │       +-- bwa.gatk_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.tbi
-    │       `-- bwa.gatk_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.tbi.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.tbi
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.bed.gz.tbi.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.txt.gz
+    │       +-- bwa.gatk3_ug.bcftools_roh.P001-N1-DNA1-WGS1.txt.gz.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz
+    │       +-- bwa.gatk3_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi
+    │       +-- bwa.gatk3_ug.bcftools_roh.P002-N1-DNA1-WGS1.bed.gz.tbi.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz
+    │       +-- bwa.gatk3_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.md5
+    │       +-- bwa.gatk3_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.tbi
+    │       `-- bwa.gatk3_ug.bcftools_roh.P003-N1-DNA1-WGS1.bed.gz.tbi.md5
     [...]
 
 ====================
@@ -119,7 +119,7 @@ step_config:
     tools_ngs_mapping:
       - bwa
     tools_variant_calling:
-      - gatk_hc
+      - gatk3_hc
     tools: [bcftools_roh] # REQUIRED, available: 'bcftools_roh'.
     bcftools_roh:
       path_targets: null

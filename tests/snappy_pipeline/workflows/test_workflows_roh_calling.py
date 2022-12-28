@@ -39,7 +39,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - gatk_hc
+            - gatk3_hc
           roh_calling:
             path_variant_callilng: ../variant_calling
 
@@ -98,7 +98,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_run(roh_calling_work
     """Tests BcftoolsRohStepPart._get_input_files_run()"""
     # Define expected
     base_name_out = (
-        "VAR_CALLING/output/bwa.gatk_hc.P001-N1-DNA1-WGS1/out/bwa.gatk_hc.P001-N1-DNA1-WGS1"
+        "VAR_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     )
     expected = {
         "vcf_tbi": base_name_out + ".vcf.gz.tbi",
@@ -108,7 +108,7 @@ def test_roh_calling_bcftools_roh_step_part_get_input_files_run(roh_calling_work
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "var_caller": "gatk_hc",
+            "var_caller": "gatk3_hc",
             "index_ngs_library": "P001-N1-DNA1-WGS1",
         }
     )
@@ -167,13 +167,13 @@ def test_roh_calling_workflow(roh_calling_workflow):
     assert expected == list(sorted(roh_calling_workflow.sub_steps.keys()))
 
     # Check result file construction
-    p0001_base_out = "output/bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/"
-    p0004_base_out = "output/bwa.gatk_hc.bcftools_roh.P004-N1-DNA1-WGS1/out/"
+    p0001_base_out = "output/bwa.gatk3_hc.bcftools_roh.P001-N1-DNA1-WGS1/out/"
+    p0004_base_out = "output/bwa.gatk3_hc.bcftools_roh.P004-N1-DNA1-WGS1/out/"
     expected = [
-        p0001_base_out + "bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1.regions.txt.gz",
-        p0001_base_out + "bwa.gatk_hc.bcftools_roh.P001-N1-DNA1-WGS1.regions.txt.gz.md5",
-        p0004_base_out + "bwa.gatk_hc.bcftools_roh.P004-N1-DNA1-WGS1.regions.txt.gz",
-        p0004_base_out + "bwa.gatk_hc.bcftools_roh.P004-N1-DNA1-WGS1.regions.txt.gz.md5",
+        p0001_base_out + "bwa.gatk3_hc.bcftools_roh.P001-N1-DNA1-WGS1.regions.txt.gz",
+        p0001_base_out + "bwa.gatk3_hc.bcftools_roh.P001-N1-DNA1-WGS1.regions.txt.gz.md5",
+        p0004_base_out + "bwa.gatk3_hc.bcftools_roh.P004-N1-DNA1-WGS1.regions.txt.gz",
+        p0004_base_out + "bwa.gatk3_hc.bcftools_roh.P004-N1-DNA1-WGS1.regions.txt.gz.md5",
     ]
     expected = list(sorted(expected))
     actual = list(sorted(roh_calling_workflow.get_result_files()))

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """Implementation of the ``ngs_mapping`` step
 
 The ngs_mapping step allows for the alignment of NGS data with standard read mappers, such as BWA
 for DNA data and STAR for RNA data.  Also, it provides functionality to compute post-alignment
-statistics, such as the coverage of target (e.g., exome or panel) regions and genome-wide per base
-pair coverage.
+statistics, such as the coverage of target (e.g., exome or panel) regions.
 
 There is a distinction made between "normal" DNA reads (short reads from Illumina) and "long"
 DNA reads, such as PacBio/Oxford Nanopore.  Again, the NGS mapping step will perform alignment
@@ -17,12 +15,20 @@ duplicates using Samblaster and depends on the actual configuration (see below f
 configuration).
 
 ==========
-Stability
+Properties
 ==========
 
-The ngs_mapping pipeline step is considered stable for short Illumina reads (DNA and RNA).
+overall stability
 
-The long read mapping steps may not be stable as they are currently considered experimental.
+    **stable**
+
+applicable to
+
+    germline and somatic read alignment
+
+generally applicable to
+
+    short and long read DNA and RNA sequencing
 
 .. _ngs_mapping_step_input:
 
