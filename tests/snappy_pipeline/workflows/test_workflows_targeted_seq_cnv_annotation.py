@@ -33,7 +33,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          targeted_seq_cnv_calling:
+          sv_calling_targeted:
             tools:
               - gcnv
             gcnv:
@@ -44,10 +44,10 @@ def minimal_config():
 
           targeted_seq_cnv_annotation:
             path_ngs_mapping: ../ngs_mapping
-            path_targeted_seq_cnv_calling: ../targeted_seq_cnv_calling
+            path_sv_calling_targeted: ../sv_calling_targeted
             tools_ngs_mapping:
             - bwa
-            tools_targeted_seq_cnv_calling:
+            tools_sv_calling_targeted:
             - gcnv
 
 
@@ -81,7 +81,7 @@ def targeted_seq_cnv_annotation_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "targeted_seq_cnv_calling": lambda x: "CNV_CALLING/" + x,
+        "sv_calling_targeted": lambda x: "CNV_CALLING/" + x,
     }
     # Construct the workflow object
     return TargetedSeqCnvAnnotationWorkflow(

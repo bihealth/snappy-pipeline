@@ -60,8 +60,8 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
 from snappy_pipeline.workflows.targeted_seq_cnv_annotation import TargetedSeqCnvAnnotationWorkflow
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -82,7 +82,7 @@ step_config:
     path_ngs_mapping: ../ngs_mapping
     path_targeted_seq_cnv_annotation: ../targeted_seq_cnv_annotation
     tools_ngs_mapping: null
-    tools_targeted_seq_cnv_calling: null
+    tools_sv_calling_targeted: null
     release: GRCh37              # OPTIONAL: default 'GRCh37'
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
@@ -123,10 +123,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _build_ngs_library_to_kit(self):
         # Get XHMM or gCNV configuration
-        if "xhmm" in DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/tools"):
-            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/xhmm")
+        if "xhmm" in DictQuery(self.w_config).get("step_config/sv_calling_targeted/tools"):
+            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/xhmm")
         else:  # assume gCNV
-            tool_config = DictQuery(self.w_config).get("step_config/targeted_seq_cnv_calling/gcnv")
+            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
 
         if not tool_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
@@ -252,7 +252,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (TargetedSeqCnvAnnotationWorkflow, TargetedSeqCnvCallingWorkflow, NgsMappingWorkflow),
+            (TargetedSeqCnvAnnotationWorkflow, SvCallingTargetedWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -263,15 +263,15 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
             "targeted_seq_cnv_annotation", self.config["path_targeted_seq_cnv_annotation"]
         )
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        # Copy over "tools" setting from targeted_seq_cnv_calling/ngs_mapping if not set here
+        # Copy over "tools" setting from sv_calling_targeted/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
                 "dna"
             ]
-        if not self.config["tools_targeted_seq_cnv_calling"]:
+        if not self.config["tools_sv_calling_targeted"]:
             # Remove plain ERDS as it does not do multi-sample genotypeing
-            tools = self.w_config["step_config"]["targeted_seq_cnv_calling"]["tools"]
-            self.config["tools_targeted_seq_cnv_calling"] = [t for t in tools if t != "erds"]
+            tools = self.w_config["step_config"]["sv_calling_targeted"]["tools"]
+            self.config["tools_sv_calling_targeted"] = [t for t in tools if t != "erds"]
         # Build mapping from NGS DNA library to library kit.
         self.ngs_library_to_kit = self.sub_steps["varfish_annotator"].ngs_library_to_kit
 
@@ -309,7 +309,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.varfish_annotated.{index_library.name}"
-        if "xhmm" in self.config["tools_targeted_seq_cnv_calling"]:
+        if "xhmm" in self.config["tools_sv_calling_targeted"]:
             min_kit_usages = 10
             chosen_kits = {kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages}
             chosen_donors = [
@@ -331,7 +331,7 @@ class TargetedSeqCnvExportWorkflow(BaseStep):
                     ".conda_list.txt.md5",
                 ),
             )
-        if "gcnv" in self.config["tools_targeted_seq_cnv_calling"]:
+        if "gcnv" in self.config["tools_sv_calling_targeted"]:
             min_kit_usages = 10
             chosen_kits = {kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages}
             chosen_donors = [

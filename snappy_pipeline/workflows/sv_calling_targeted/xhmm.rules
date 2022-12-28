@@ -1,7 +1,7 @@
 # XHMM needs many rules, thus they are in their own files.
 
 
-rule targeted_seq_cnv_calling_xhmm_coverage:
+rule sv_calling_targeted_xhmm_coverage:
     input:
         unpack(wf.get_input_files("xhmm", "coverage")),
     output:
@@ -19,7 +19,7 @@ rule targeted_seq_cnv_calling_xhmm_coverage:
         wf.wrapper_path("xhmm/gatk_cov")
 
 
-rule targeted_seq_cnv_calling_xhmm_merge_cov:
+rule sv_calling_targeted_xhmm_merge_cov:
     input:
         wf.get_input_files("xhmm", "merge_cov"),
     output:
@@ -35,7 +35,7 @@ rule targeted_seq_cnv_calling_xhmm_merge_cov:
         wf.wrapper_path("xhmm/merge_cov")
 
 
-rule targeted_seq_cnv_calling_xhmm_ref_stats:
+rule sv_calling_targeted_xhmm_ref_stats:
     output:
         **wf.get_output_files("xhmm", "ref_stats"),
     threads: wf.get_resource("xhmm", "ref_stats", "threads")
@@ -49,7 +49,7 @@ rule targeted_seq_cnv_calling_xhmm_ref_stats:
         wf.wrapper_path("xhmm/gatk_ref_stats")
 
 
-rule targeted_seq_cnv_calling_xhmm_filter_center:
+rule sv_calling_targeted_xhmm_filter_center:
     input:
         unpack(wf.get_input_files("xhmm", "filter_center")),
     output:
@@ -65,7 +65,7 @@ rule targeted_seq_cnv_calling_xhmm_filter_center:
         wf.wrapper_path("xhmm/filter_center")
 
 
-rule targeted_seq_cnv_calling_xhmm_pca:
+rule sv_calling_targeted_xhmm_pca:
     input:
         wf.get_input_files("xhmm", "pca"),
     output:
@@ -81,7 +81,7 @@ rule targeted_seq_cnv_calling_xhmm_pca:
         wf.wrapper_path("xhmm/pca")
 
 
-rule targeted_seq_cnv_calling_xhmm_normalize:
+rule sv_calling_targeted_xhmm_normalize:
     input:
         unpack(wf.get_input_files("xhmm", "normalize")),
     output:
@@ -97,7 +97,7 @@ rule targeted_seq_cnv_calling_xhmm_normalize:
         wf.wrapper_path("xhmm/normalize")
 
 
-rule targeted_seq_cnv_calling_xhmm_zscore_center:
+rule sv_calling_targeted_xhmm_zscore_center:
     input:
         wf.get_input_files("xhmm", "zscore_center"),
     output:
@@ -113,7 +113,7 @@ rule targeted_seq_cnv_calling_xhmm_zscore_center:
         wf.wrapper_path("xhmm/zscore_center")
 
 
-rule targeted_seq_cnv_calling_xhmm_refilter:
+rule sv_calling_targeted_xhmm_refilter:
     input:
         unpack(wf.get_input_files("xhmm", "refilter")),
     output:
@@ -129,7 +129,7 @@ rule targeted_seq_cnv_calling_xhmm_refilter:
         wf.wrapper_path("xhmm/refilter")
 
 
-rule targeted_seq_cnv_calling_xhmm_discover:
+rule sv_calling_targeted_xhmm_discover:
     input:
         unpack(wf.get_input_files("xhmm", "discover")),
     output:
@@ -145,7 +145,7 @@ rule targeted_seq_cnv_calling_xhmm_discover:
         wf.wrapper_path("xhmm/discover")
 
 
-rule targeted_seq_cnv_calling_xhmm_genotype:
+rule sv_calling_targeted_xhmm_genotype:
     input:
         unpack(wf.get_input_files("xhmm", "genotype")),
     output:
@@ -161,7 +161,7 @@ rule targeted_seq_cnv_calling_xhmm_genotype:
         wf.wrapper_path("xhmm/genotype")
 
 
-rule targeted_seq_cnv_calling_xhmm_extract_ped:
+rule sv_calling_targeted_xhmm_extract_ped:
     input:
         unpack(wf.get_input_files("xhmm", "extract_ped")),
     output:

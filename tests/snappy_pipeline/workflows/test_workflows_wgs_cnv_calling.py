@@ -106,9 +106,9 @@ def wgs_cnv_calling_workflow(
         germline_sheet_fake_fs2_gcnv_model,
         mocker,
     )
-    # Patch glob.glob with expected model directories
+    # Patch glob with expected model directories
     mocker.patch(
-        "snappy_pipeline.workflows.gcnv.gcnv_run.glob.glob",
+        "snappy_pipeline.workflows.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we

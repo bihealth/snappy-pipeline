@@ -67,7 +67,7 @@ Project Info
     step/somatic_variant_filtration
     step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
-    step/targeted_seq_cnv_calling
+    step/sv_calling_targeted
     step/targeted_seq_mei_calling
     step/targeted_seq_repeat_analysis
     step/tcell_crg_report

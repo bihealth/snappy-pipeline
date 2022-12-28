@@ -2,7 +2,7 @@
 """Implementation of the gCNV CASE mode run methods.
 """
 
-import glob
+from glob import glob
 from itertools import chain
 import json
 import os
@@ -50,7 +50,7 @@ def get_model_dir_list(pattern):
 
     :return: Returns list with all directories that match the inputted pattern.
     """
-    return [path_ for path_ in glob.glob(pattern) if os.path.isdir(path_)]
+    return [path_ for path_ in glob(pattern) if os.path.isdir(path_)]
 
 
 def get_model_dir_to_dict(pattern):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the targeted_seq_cnv_calling workflow module code"""
+"""Tests for the sv_calling_targeted workflow module code"""
 
 import copy
 import textwrap
@@ -9,7 +9,7 @@ import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.workflows.targeted_seq_cnv_calling import TargetedSeqCnvCallingWorkflow
+from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
 
 from .common import get_expected_gcnv_log_file, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
@@ -38,9 +38,7 @@ def get_expected_xhmm_log_file(step_name):
     :return: Returns expected log file path for basic steps in XHMM.
     """
     expected_log = (
-        "work/{mapper}.xhmm_"
-        + step_name
-        + ".{library_kit}/log/snakemake.targeted_seq_cnv_calling.log"
+        "work/{mapper}.xhmm_" + step_name + ".{library_kit}/log/snakemake.sv_calling_targeted.log"
     )
     return expected_log
 
@@ -67,7 +65,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          targeted_seq_cnv_calling:
+          sv_calling_targeted:
             tools:
               - xhmm
               - gcnv
@@ -121,14 +119,14 @@ def minimal_config_large_cohort_background(minimal_config_large_cohort):
 def minimal_config_large_cohort_without_gcnv_model(minimal_config_large_cohort):
     """Returns minimum configuration file for large trio cohort, no precomputed models defined."""
     minimal_config_adjusted = copy.deepcopy(minimal_config_large_cohort)
-    minimal_config_adjusted["step_config"]["targeted_seq_cnv_calling"]["gcnv"][
+    minimal_config_adjusted["step_config"]["sv_calling_targeted"]["gcnv"][
         "precomputed_model_paths"
     ] = []
     return minimal_config_adjusted
 
 
 @pytest.fixture
-def targeted_seq_cnv_calling_workflow(
+def sv_calling_targeted_workflow(
     dummy_workflow,
     minimal_config,
     config_lookup_paths,
@@ -138,7 +136,7 @@ def targeted_seq_cnv_calling_workflow(
     mocker,
 ):
     """
-    Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet - small cohort
+    Return SvCallingTargetedWorkflow object pre-configured with germline sheet - small cohort
     """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs(
@@ -149,16 +147,16 @@ def targeted_seq_cnv_calling_workflow(
         germline_sheet_fake_fs2_gcnv_model,
         mocker,
     )
-    # Patch glob.glob with expected model directories
+    # Patch glob with expected model directories
     mocker.patch(
-        "snappy_pipeline.workflows.gcnv.gcnv_run.glob.glob",
+        "snappy_pipeline.workflows.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return TargetedSeqCnvCallingWorkflow(
+    return SvCallingTargetedWorkflow(
         dummy_workflow,
         minimal_config,
         config_lookup_paths,
@@ -168,7 +166,7 @@ def targeted_seq_cnv_calling_workflow(
 
 
 @pytest.fixture
-def targeted_seq_cnv_calling_workflow_large_cohort(
+def sv_calling_targeted_workflow_large_cohort(
     dummy_workflow,
     minimal_config_large_cohort,
     config_lookup_paths,
@@ -178,7 +176,7 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
     mocker,
 ):
     """
-    Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    Return SvCallingTargetedWorkflow object pre-configured with germline sheet -
     large trio cohort.
     """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
@@ -187,7 +185,7 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return TargetedSeqCnvCallingWorkflow(
+    return SvCallingTargetedWorkflow(
         dummy_workflow,
         minimal_config_large_cohort,
         config_lookup_paths,
@@ -197,7 +195,7 @@ def targeted_seq_cnv_calling_workflow_large_cohort(
 
 
 @pytest.fixture
-def targeted_seq_cnv_calling_workflow_large_cohort_background(
+def sv_calling_targeted_workflow_large_cohort_background(
     dummy_workflow,
     minimal_config_large_cohort_background,
     config_lookup_paths,
@@ -206,7 +204,7 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
     germline_sheet_fake_fs2,
     mocker,
 ):
-    """Return TargetedSeqCnvCallingWorkflow object pre-configured with germline sheet -
+    """Return SvCallingTargetedWorkflow object pre-configured with germline sheet -
     large trio cohort as background."""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
@@ -214,7 +212,7 @@ def targeted_seq_cnv_calling_workflow_large_cohort_background(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return TargetedSeqCnvCallingWorkflow(
+    return SvCallingTargetedWorkflow(
         dummy_workflow,
         minimal_config_large_cohort_background,
         config_lookup_paths,
@@ -235,7 +233,7 @@ def test_validate_request(
     germline_sheet_fake_fs2_gcnv_model,
     mocker,
 ):
-    """Tests TargetedSeqCnvCallingWorkflow.validate_request()"""
+    """Tests SvCallingTargetedWorkflow.validate_request()"""
     # Patch out file-system
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
@@ -245,9 +243,9 @@ def test_validate_request(
         germline_sheet_fake_fs2_gcnv_model,
         mocker,
     )
-    # Patch glob.glob with expected model directories
+    # Patch glob with expected model directories
     mocker.patch(
-        "snappy_pipeline.workflows.gcnv.gcnv_run.glob.glob",
+        "snappy_pipeline.workflows.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
 
@@ -256,7 +254,7 @@ def test_validate_request(
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Empty precomputed models, should fail
     with pytest.raises(InvalidConfiguration):
-        TargetedSeqCnvCallingWorkflow(
+        SvCallingTargetedWorkflow(
             dummy_workflow,
             minimal_config_large_cohort_without_gcnv_model,
             config_lookup_paths,
@@ -265,8 +263,8 @@ def test_validate_request(
         )
 
 
-def test_target_seq_cnv_calling_workflow_get_result_files(targeted_seq_cnv_calling_workflow):
-    """Tests TargetedSeqCnvCallingWorkflow.get_result_files()
+def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_workflow):
+    """Tests SvCallingTargetedWorkflow.get_result_files()
 
     Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results from the tools, namely: gCNV and XHMM.
@@ -307,21 +305,21 @@ def test_target_seq_cnv_calling_workflow_get_result_files(targeted_seq_cnv_calli
     ]
     expected = sorted(expected)
     # Get actual
-    actual = sorted(targeted_seq_cnv_calling_workflow.get_result_files())
+    actual = sorted(sv_calling_targeted_workflow.get_result_files())
     assert actual == expected
 
 
 def test_target_seq_cnv_calling_workflow_all_donors(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+    sv_calling_targeted_workflow, sv_calling_targeted_workflow_large_cohort
 ):
-    """Tests TargetedSeqCnvCallingWorkflow.all_donors()"""
+    """Tests SvCallingTargetedWorkflow.all_donors()"""
     # ----------------------- #
     # Test small sample sheet #
     # ----------------------- #
     # Define expected
     expected = ["P00{i}-N1-DNA1-WGS1".format(i=i) for i in range(1, 7)]
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.all_donors()
+    actual = sv_calling_targeted_workflow.all_donors()
     assert len(actual) == 6, "Small sample sheet should contain only 6 donors."
     assert_message_tpl = "Value {{donor_name}} not in expected list: {expected}".format(
         expected=", ".join(expected)
@@ -335,7 +333,7 @@ def test_target_seq_cnv_calling_workflow_all_donors(
     # Define expected
     expected = ["P{i}-N1-DNA1-WGS1".format(i=str(i).zfill(3)) for i in range(1, 502)]
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow_large_cohort.all_donors()
+    actual = sv_calling_targeted_workflow_large_cohort.all_donors()
     assert len(actual) == 501, "Large sample sheet should contain 501 donors."
     assert_message_tpl = (
         "Value {donor_name} not in expected list: P001-N1-DNA1-WGS1 up to P501-N1-DNA1-WGS1."
@@ -346,40 +344,38 @@ def test_target_seq_cnv_calling_workflow_all_donors(
 
 
 def test_target_seq_cnv_calling_workflow_all_background_donors(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort_background
+    sv_calling_targeted_workflow, sv_calling_targeted_workflow_large_cohort_background
 ):
-    """Tests TargetedSeqCnvCallingWorkflow.all_background_donors()"""
+    """Tests SvCallingTargetedWorkflow.all_background_donors()"""
     # Test small foreground sample sheet
-    actual = targeted_seq_cnv_calling_workflow.all_background_donors()
+    actual = sv_calling_targeted_workflow.all_background_donors()
     assert len(actual) == 0, "Small sample sheet should contain zero background donors."
     # Test large background sample sheet
-    actual = targeted_seq_cnv_calling_workflow_large_cohort_background.all_background_donors()
+    actual = sv_calling_targeted_workflow_large_cohort_background.all_background_donors()
     assert len(actual) == 501, "Large sample sheet should contain 501 background donors."
 
 
-def test_target_seq_cnv_calling_workflow_get_library_count(targeted_seq_cnv_calling_workflow):
-    """Tests TargetedSeqCnvCallingWorkflow.get_library_count()"""
+def test_target_seq_cnv_calling_workflow_get_library_count(sv_calling_targeted_workflow):
+    """Tests SvCallingTargetedWorkflow.get_library_count()"""
     # Test undefined library kit
     expected = 0
-    actual = targeted_seq_cnv_calling_workflow.get_library_count("_not_a_library_kit_name_")
+    actual = sv_calling_targeted_workflow.get_library_count("_not_a_library_kit_name_")
     assert actual == expected, "It should return zero as the library kit name is not defined."
     # Test defined library kit - foreground
     expected = 6
-    actual = targeted_seq_cnv_calling_workflow.get_library_count(
-        "Agilent_SureSelect_Human_All_Exon_V6"
-    )
+    actual = sv_calling_targeted_workflow.get_library_count("Agilent_SureSelect_Human_All_Exon_V6")
     assert actual == expected
 
 
 def test_pick_kits_and_donors(
-    targeted_seq_cnv_calling_workflow, targeted_seq_cnv_calling_workflow_large_cohort
+    sv_calling_targeted_workflow, sv_calling_targeted_workflow_large_cohort
 ):
-    """Tests TargetedSeqCnvCallingWorkflow.pick_kits_and_donors()"""
+    """Tests SvCallingTargetedWorkflow.pick_kits_and_donors()"""
 
     # Test small cohort - 6 individuals
     expected_library_kits = ["Agilent_SureSelect_Human_All_Exon_V6"]
     expected_kit_counts = {"Agilent_SureSelect_Human_All_Exon_V6": 6}
-    library_kits, _, kit_counts = targeted_seq_cnv_calling_workflow.pick_kits_and_donors()
+    library_kits, _, kit_counts = sv_calling_targeted_workflow.pick_kits_and_donors()
     assert library_kits == expected_library_kits
     assert expected_kit_counts == kit_counts
 
@@ -390,7 +386,7 @@ def test_pick_kits_and_donors(
         library_kits,
         _,
         kit_counts,
-    ) = targeted_seq_cnv_calling_workflow_large_cohort.pick_kits_and_donors()
+    ) = sv_calling_targeted_workflow_large_cohort.pick_kits_and_donors()
     assert library_kits == expected_library_kits
     assert expected_kit_counts == kit_counts
 
@@ -398,20 +394,20 @@ def test_pick_kits_and_donors(
 # Global RunGcnvTargetSeqStepPart Tests ------------------------------------------------------------
 
 
-def test_gcnv_call_assertion(targeted_seq_cnv_calling_workflow):
+def test_gcnv_call_assertion(sv_calling_targeted_workflow):
     """Tests raise UnsupportedActionException"""
     with pytest.raises(UnsupportedActionException):
-        targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "_undefined_action_")
+        sv_calling_targeted_workflow.get_input_files("gcnv", "_undefined_action_")
 
 
-def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
+def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_resource()"""
     # Define tested actions
     high_resource_actions = (
         "call_cnvs",
         "post_germline_calls",
     )
-    all_actions = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "actions")
+    all_actions = sv_calling_targeted_workflow.substep_getattr("gcnv", "actions")
     default_actions = [action for action in all_actions if action not in high_resource_actions]
     # Define expected
     high_res_expected_dict = {
@@ -430,18 +426,18 @@ def test_gcnv_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
     for action in high_resource_actions:
         for resource, expected in high_res_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = targeted_seq_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
             assert actual == expected, msg_error
 
     # Evaluate - all other actions
     for action in default_actions:
         for resource, expected in default_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = targeted_seq_cnv_calling_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
             assert actual == expected, msg_error
 
 
-def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
+def test_gcnv_get_params(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_params for all actions"""
     all_actions = (
         "preprocess_intervals",
@@ -455,13 +451,13 @@ def test_gcnv_get_params(targeted_seq_cnv_calling_workflow):
     actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
     for action in all_actions:
         if action in actions_w_params:
-            targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
+            sv_calling_targeted_workflow.get_params("gcnv", action)
         else:
             with pytest.raises(UnsupportedActionException):
-                targeted_seq_cnv_calling_workflow.get_params("gcnv", action)
+                sv_calling_targeted_workflow.get_params("gcnv", action)
 
 
-def test_gcnv_validate_precomputed_model_paths_config(targeted_seq_cnv_calling_workflow):
+def test_gcnv_validate_precomputed_model_paths_config(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.validate_model_requirements()"""
     # Initialise input
     valid_dict = {
@@ -477,23 +473,23 @@ def test_gcnv_validate_precomputed_model_paths_config(targeted_seq_cnv_calling_w
     missing_key_dict = {"model_pattern": "/path/to/model_*"}
 
     # Sanity check
-    targeted_seq_cnv_calling_workflow.substep_getattr(
-        "gcnv", "validate_precomputed_model_paths_config"
-    )(config=[valid_dict])
+    sv_calling_targeted_workflow.substep_getattr("gcnv", "validate_precomputed_model_paths_config")(
+        config=[valid_dict]
+    )
     # Test key typo
     with pytest.raises(InvalidConfiguration):
-        targeted_seq_cnv_calling_workflow.substep_getattr(
+        sv_calling_targeted_workflow.substep_getattr(
             "gcnv", "validate_precomputed_model_paths_config"
         )(config=[valid_dict, typo_dict])
     # Test key missing
     with pytest.raises(InvalidConfiguration):
-        targeted_seq_cnv_calling_workflow.substep_getattr(
+        sv_calling_targeted_workflow.substep_getattr(
             "gcnv", "validate_precomputed_model_paths_config"
         )(config=[valid_dict, missing_key_dict])
 
 
 def test_gcnv_validate_ploidy_model_directory(
-    fake_fs, mocker, targeted_seq_cnv_calling_workflow, ploidy_model_files
+    fake_fs, mocker, sv_calling_targeted_workflow, ploidy_model_files
 ):
     """Tests RunGcnvTargetSeqStepPart.validate_ploidy_model_directory()"""
     # Create data directories
@@ -507,21 +503,21 @@ def test_gcnv_validate_ploidy_model_directory(
     patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
 
     # Should return True as it is a directory and it contains the expected files
-    assert targeted_seq_cnv_calling_workflow.substep_getattr(
-        "gcnv", "validate_ploidy_model_directory"
-    )("/data")
+    assert sv_calling_targeted_workflow.substep_getattr("gcnv", "validate_ploidy_model_directory")(
+        "/data"
+    )
     # Should return False as empty directory
-    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+    assert not sv_calling_targeted_workflow.substep_getattr(
         "gcnv", "validate_ploidy_model_directory"
     )("/empty")
     # Should return False not a directory
-    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+    assert not sv_calling_targeted_workflow.substep_getattr(
         "gcnv", "validate_ploidy_model_directory"
     )("__not_a_directory__")
 
 
 def test_gcnv_validate_call_model_directory(
-    fake_fs, mocker, targeted_seq_cnv_calling_workflow, call_model_files
+    fake_fs, mocker, sv_calling_targeted_workflow, call_model_files
 ):
     """Tests RunGcnvTargetSeqStepPart.validate_call_model_directory()"""
     # Create data directories
@@ -535,20 +531,20 @@ def test_gcnv_validate_call_model_directory(
     patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
 
     # Should return True as it is a directory and it contains the expected files
-    assert targeted_seq_cnv_calling_workflow.substep_getattr(
-        "gcnv", "validate_call_model_directory"
-    )("/call_data")
+    assert sv_calling_targeted_workflow.substep_getattr("gcnv", "validate_call_model_directory")(
+        "/call_data"
+    )
     # Should return False as empty directory
-    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+    assert not sv_calling_targeted_workflow.substep_getattr(
         "gcnv", "validate_call_model_directory"
     )("/empty")
     # Should return False not a directory
-    assert not targeted_seq_cnv_calling_workflow.substep_getattr(
+    assert not sv_calling_targeted_workflow.substep_getattr(
         "gcnv", "validate_call_model_directory"
     )("__not_a_directory__")
 
 
-def test_gcnv_get_result_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_get_result_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_result_files()"""
     expected = [
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz",
@@ -580,23 +576,23 @@ def test_gcnv_get_result_files(targeted_seq_cnv_calling_workflow):
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log.md5",
     ]
-    actual = targeted_seq_cnv_calling_workflow.substep_getattr("gcnv", "get_result_files")()
+    actual = sv_calling_targeted_workflow.substep_getattr("gcnv", "get_result_files")()
     assert actual == expected
 
 
 # Tests for RunGcnvTargetSeqStepPart (preprocess_intervals) ----------------------------------------
 
 
-def test_gcnv_preprocess_intervals_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_preprocess_intervals_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_preprocess_intervals()"""
     # Define expected - empty dictionary for all
     expected = {}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "preprocess_intervals")(None)
+    actual = sv_calling_targeted_workflow.get_input_files("gcnv", "preprocess_intervals")(None)
     assert actual == expected
 
 
-def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_preprocess_intervals_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_preprocess_intervals()"""
     # Define expected
     output_path = (
@@ -605,11 +601,11 @@ def test_gcnv_preprocess_intervals_step_part_get_output_files(targeted_seq_cnv_c
     )
     expected = {"interval_list": output_path}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "preprocess_intervals")
+    actual = sv_calling_targeted_workflow.get_output_files("gcnv", "preprocess_intervals")
     assert actual == expected
 
 
-def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_gcnv_target_step_part_get_log_file(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'preprocess_intervals' step"""
     # Define expected
     expected = (
@@ -617,14 +613,14 @@ def test_gcnv_target_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
         "gcnv_preprocess_intervals.{library_kit}.log"
     )
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "preprocess_intervals")
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "preprocess_intervals")
     assert actual == expected
 
 
 # Tests for RunGcnvTargetSeqStepPart (coverage) ----------------------------------------------------
 
 
-def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_coverage_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_coverage()"""
     # Define expected
     interval_list_out = (
@@ -639,11 +635,11 @@ def test_gcnv_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workfl
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "coverage")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("gcnv", "coverage")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_coverage_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_coverage()"""
     # Define expected
     tsv_out = (
@@ -651,25 +647,25 @@ def test_gcnv_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
     )
     expected = {"tsv": tsv_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "coverage")
+    actual = sv_calling_targeted_workflow.get_output_files("gcnv", "coverage")
     assert actual == expected
 
 
-def test_gcnv_coverage_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_gcnv_coverage_step_part_get_log_file(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'coverage' step"""
     # Define expected
     expected = (
         "work/{mapper}.gcnv_coverage.{library_name}/log/{mapper}.gcnv_coverage.{library_name}.log"
     )
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "coverage")
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "coverage")
     assert actual == expected
 
 
 # Tests for RunGcnvTargetSeqStepPart (contig_ploidy) -----------------------------------------------
 
 
-def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_contig_ploidy_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_contig_ploidy()"""
     # Define expected
     tsv_pattern = (
@@ -681,11 +677,11 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(targeted_seq_cnv_calling_w
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_contig_ploidy_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_contig_ploidy()"""
     # Define expected
     done_out = (
@@ -694,38 +690,38 @@ def test_gcnv_contig_ploidy_step_part_get_output_files(targeted_seq_cnv_calling_
     )
     expected = {"done": done_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "contig_ploidy")
+    actual = sv_calling_targeted_workflow.get_output_files("gcnv", "contig_ploidy")
     assert actual == expected
 
 
-def test_gcnv_get_params_ploidy_model(targeted_seq_cnv_calling_workflow):
+def test_gcnv_get_params_ploidy_model(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_params_ploidy_model()"""
     # Initialise wildcard
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config
     expected = {"model": "/path/to/ploidy-model"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
     assert actual == expected
 
 
-def test_gcnv_contig_ploidy_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_gcnv_contig_ploidy_step_part_get_log_file(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'contig_ploidy' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="contig_ploidy")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "contig_ploidy")
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "contig_ploidy")
     assert actual == expected
 
 
 # Tests for RunGcnvTargetSeqStepPart (call_cnvs) ---------------------------------------------------
 
 
-def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_call_cnvs_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_call_cnvs()"""
     # Define expected
     tsv_pattern = (
@@ -744,11 +740,11 @@ def test_gcnv_call_cnvs_step_part_get_input_files(targeted_seq_cnv_calling_workf
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("gcnv", "call_cnvs")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_gcnv_call_cnvs_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_call_cnvs()"""
     # Define expected
     done_out = (
@@ -757,11 +753,11 @@ def test_gcnv_call_cnvs_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = {"done": done_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("gcnv", "call_cnvs")
+    actual = sv_calling_targeted_workflow.get_output_files("gcnv", "call_cnvs")
     assert actual == expected
 
 
-def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
+def test_gcnv_get_params_model(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_params_model()"""
     # Initialise wildcard
     wildcards_01 = Wildcards(
@@ -773,19 +769,19 @@ def test_gcnv_get_params_model(targeted_seq_cnv_calling_workflow):
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config - shard 01
     expected = {"model": "/data/model_01"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
     assert actual == expected
     # Test large cohort - model defined in config - shard 02
     expected = {"model": "/data/model_02"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_model_for_library_in_config__"}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
     assert actual == expected
 
 
-def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_gcnv_call_cnvs_step_part_get_log_file(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'call_cnvs' step"""
     # Define expected
     expected = (
@@ -793,7 +789,7 @@ def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow
         "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}.log"
     )
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("gcnv", "call_cnvs")
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "call_cnvs")
     assert actual == expected
 
 
@@ -801,7 +797,7 @@ def test_gcnv_call_cnvs_step_part_get_log_file(targeted_seq_cnv_calling_workflow
 
 
 def test_gcnv_post_germline_calls_step_part_get_input_files(
-    targeted_seq_cnv_calling_workflow,
+    sv_calling_targeted_workflow,
 ):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_post_germline_calls()"""
     # Define expected
@@ -820,17 +816,15 @@ def test_gcnv_post_germline_calls_step_part_get_input_files(
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("gcnv", "post_germline_calls")(
-        wildcards
-    )
+    actual = sv_calling_targeted_workflow.get_input_files("gcnv", "post_germline_calls")(wildcards)
     assert actual == expected
 
 
-def test_gcnv_get_params_post_germline_calls(targeted_seq_cnv_calling_workflow):
+def test_gcnv_get_params_post_germline_calls(sv_calling_targeted_workflow):
     """Tests RunGcnvTargetSeqStepPart._get_params_post_germline_calls()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-    actual = targeted_seq_cnv_calling_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
+    actual = sv_calling_targeted_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
     assert actual == expected
 
 
@@ -838,7 +832,7 @@ def test_gcnv_get_params_post_germline_calls(targeted_seq_cnv_calling_workflow):
 
 
 def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(
-    targeted_seq_cnv_calling_workflow,
+    sv_calling_targeted_workflow,
 ):
     """Tests RunGcnvTargetSeqStepPart._get_input_files_joint_germline_cnv_segmentation()"""
     # Define expected
@@ -856,73 +850,71 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files(
+    actual = sv_calling_targeted_workflow.get_input_files(
         "gcnv", "joint_germline_cnv_segmentation"
     )(wildcards)
     assert actual == expected
 
 
 def test_gcnv_joint_germline_cnv_segmentation_step_part_get_output_files(
-    targeted_seq_cnv_calling_workflow,
+    sv_calling_targeted_workflow,
 ):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_joint_germline_cnv_segmentation()"""
     # Define expected
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files(
+    actual = sv_calling_targeted_workflow.get_output_files(
         "gcnv", "joint_germline_cnv_segmentation"
     )
     assert actual == expected
 
 
 def test_gcnv_joint_germline_cnv_segmentation_step_part_get_log_file(
-    targeted_seq_cnv_calling_workflow,
+    sv_calling_targeted_workflow,
 ):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'joint_germline_cnv_segmentation' step"""
     # Define expected
     expected = get_expected_gcnv_log_file(step_name="gcnv", extended=True)
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file(
-        "gcnv", "joint_germline_cnv_segmentation"
-    )
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "joint_germline_cnv_segmentation")
     assert actual == expected
 
 
 # Global XhmmStepPart Tests ------------------------------------------------------------------------
 
 
-def test_xhmm_call_assertion(targeted_seq_cnv_calling_workflow):
+def test_xhmm_call_assertion(sv_calling_targeted_workflow):
     """Tests raise UnsupportedActionException"""
     with pytest.raises(UnsupportedActionException):
-        targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "_undefined_action_")
+        sv_calling_targeted_workflow.get_input_files("xhmm", "_undefined_action_")
 
 
-def test_xhmm_get_params(targeted_seq_cnv_calling_workflow):
+def test_xhmm_get_params(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_params for all actions"""
     for action in XHMM_ACTIONS:
         if action == "coverage":
-            targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+            sv_calling_targeted_workflow.get_params("xhmm", action)
         else:
             with pytest.raises(UnsupportedActionException):
-                targeted_seq_cnv_calling_workflow.get_params("xhmm", action)
+                sv_calling_targeted_workflow.get_params("xhmm", action)
 
 
 # Tests for XhmmStepPart (coverage) ----------------------------------------------------------------
 
 
-def test_xhmm_coverage_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_coverage_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_coverage()"""
     # Define expected
     bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {"bam": bam_out + ".bam", "bai": bam_out + ".bam.bai"}
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "coverage")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "coverage")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_coverage_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_coverage()"""
     # Define expected
     pattern_out = (
@@ -935,25 +927,23 @@ def test_xhmm_coverage_step_part_get_output_files(targeted_seq_cnv_calling_workf
         "sample_summary": pattern_out + ".sample_summary",
     }
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "coverage")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "coverage")
     assert actual == expected
 
 
-def test_xhmm_coverage_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_coverage_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'coverage' step"""
     # Define expected
-    expected = (
-        "work/{mapper}.xhmm_coverage.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
-    )
+    expected = "work/{mapper}.xhmm_coverage.{library_name}/log/snakemake.sv_calling_targeted.log"
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "coverage")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "coverage")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (merge_cov) ---------------------------------------------------------------
 
 
-def test_xhmm_merge_cov_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_merge_cov_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_merge_cov()"""
     # Define expected
     base_out = (
@@ -969,11 +959,11 @@ def test_xhmm_merge_cov_step_part_get_input_files(targeted_seq_cnv_calling_workf
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "merge_cov")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "merge_cov")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_merge_cov_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_merge_cov()"""
     # Define expected
     name_out = (
@@ -982,23 +972,23 @@ def test_xhmm_merge_cov_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = [name_out]
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "merge_cov")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "merge_cov")
     assert actual == expected
 
 
-def test_xhmm_merge_cov_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_merge_cov_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'merge_cov' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="merge_cov")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "merge_cov")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "merge_cov")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (ref_stats) ---------------------------------------------------------------
 
 
-def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_ref_stats_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_ref_stats()"""
     # Define expected
     name_out = (
@@ -1007,23 +997,23 @@ def test_xhmm_ref_stats_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = {"extreme_gc_targets": name_out}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "ref_stats")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "ref_stats")
     assert actual == expected
 
 
-def test_xhmm_ref_stats_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_ref_stats_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'ref_stats' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="ref_stats")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "ref_stats")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "ref_stats")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (filter_center) -----------------------------------------------------------
 
 
-def test_xhmm_filter_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_filter_center_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_filter_center()"""
     # Define expected
     base_out = (
@@ -1042,11 +1032,11 @@ def test_xhmm_filter_center_step_part_get_input_files(targeted_seq_cnv_calling_w
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "filter_center")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "filter_center")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_filter_center_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_filter_center()"""
     # Define expected
     pattern_out = (
@@ -1059,23 +1049,23 @@ def test_xhmm_filter_center_step_part_get_output_files(targeted_seq_cnv_calling_
         "filtered_samples": pattern_out + ".filtered_samples.txt",
     }
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "filter_center")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "filter_center")
     assert actual == expected
 
 
-def test_xhmm_filter_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_filter_center_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'filter_center' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="filter_center")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "filter_center")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "filter_center")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (pca) ---------------------------------------------------------------------
 
 
-def test_xhmm_pca_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_pca_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_pca()"""
     # Define expected
     base_out = (
@@ -1091,11 +1081,11 @@ def test_xhmm_pca_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "pca")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "pca")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_pca_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_pca_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_pca()"""
     # Define expected
     pattern_out = "work/{mapper}.xhmm_pca.{library_kit}/out/{mapper}.xhmm_pca.{library_kit}"
@@ -1105,23 +1095,23 @@ def test_xhmm_pca_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
         "pc": pattern_out + ".PC.txt",
     }
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "pca")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "pca")
     assert actual == expected
 
 
-def test_xhmm_pca_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_pca_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'pca' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="pca")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "pca")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "pca")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (normalize) ---------------------------------------------------------------
 
 
-def test_xhmm_normalize_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_normalize_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_normalize()"""
     # Define expected
     centered_out = (
@@ -1141,11 +1131,11 @@ def test_xhmm_normalize_step_part_get_input_files(targeted_seq_cnv_calling_workf
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "normalize")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "normalize")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_normalize_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_normalize_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_normalize()"""
     # Define expected
     pattern_out = (
@@ -1153,23 +1143,23 @@ def test_xhmm_normalize_step_part_get_output_files(targeted_seq_cnv_calling_work
     )
     expected = {"normalized": pattern_out, "num_removed": pattern_out + ".num_removed_PC.txt"}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "normalize")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "normalize")
     assert actual == expected
 
 
-def test_xhmm_normalize_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_normalize_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'normalize' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="normalize")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "normalize")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "normalize")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (zscore_center) -----------------------------------------------------------
 
 
-def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_zscore_center_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_zscore_center()"""
     # Define expected
     base_out = (
@@ -1184,11 +1174,11 @@ def test_xhmm_zscore_center_step_part_get_input_files(targeted_seq_cnv_calling_w
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "zscore_center")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "zscore_center")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_zscore_center_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_zscore_center_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_zscore_center()"""
     # Define expected
     pattern_out = (
@@ -1201,23 +1191,23 @@ def test_xhmm_zscore_center_step_part_get_output_files(targeted_seq_cnv_calling_
         "filtered_targets": pattern_out + ".filtered_targets.txt",
     }
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "zscore_center")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "zscore_center")
     assert actual == expected
 
 
-def test_xhmm_zscore_center_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_zscore_center_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'zscore_center' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="zscore_center")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "zscore_center")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "zscore_center")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (zscore_center) -----------------------------------------------------------
 
 
-def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_refilter_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_refilter()"""
     # Define expected
     original_out = (
@@ -1242,11 +1232,11 @@ def test_xhmm_refilter_step_part_get_input_files(targeted_seq_cnv_calling_workfl
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "refilter")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "refilter")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_refilter_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_refilter_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_refilter()"""
     # Define expected
     base_out = (
@@ -1254,23 +1244,23 @@ def test_xhmm_refilter_step_part_get_output_files(targeted_seq_cnv_calling_workf
     )
     expected = [base_out]
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "refilter")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "refilter")
     assert actual == expected
 
 
-def test_xhmm_refilter_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_refilter_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'refilter' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="refilter")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "refilter")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "refilter")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (discover) ----------------------------------------------------------------
 
 
-def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_discover_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_discover()"""
     # Define expected
     center_zscore_out = (
@@ -1289,33 +1279,33 @@ def test_xhmm_discover_step_part_get_input_files(targeted_seq_cnv_calling_workfl
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "discover")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "discover")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_discover_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_discover_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_discover()"""
     # Define expected
     base_out = "work/{mapper}.xhmm_discover.{library_kit}/out/{mapper}.xhmm_discover.{library_kit}"
     expected = {"xcnv": base_out + ".xcnv", "aux_xcnv": base_out + ".aux_xcnv"}
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "discover")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "discover")
     assert actual == expected
 
 
-def test_xhmm_discover_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_discover_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'discover' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="discover")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "discover")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "discover")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (genotype) ----------------------------------------------------------------
 
 
-def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_genotype_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_genotype()"""
     # Define expected
     pattern_out = (
@@ -1334,33 +1324,33 @@ def test_xhmm_genotype_step_part_get_input_files(targeted_seq_cnv_calling_workfl
             "library_kit": "Agilent_SureSelect_Human_All_Exon_V6",
         }
     )
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "genotype")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "genotype")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_genotype_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_genotype_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_genotype()"""
     # Define expected
     base_out = "work/{mapper}.xhmm_genotype.{library_kit}/out/{mapper}.xhmm_genotype.{library_kit}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "genotype")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "genotype")
     assert actual == expected
 
 
-def test_xhmm_genotype_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_genotype_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'genotype' step"""
     # Define expected
     expected = get_expected_xhmm_log_file(step_name="genotype")
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "genotype")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "genotype")
     assert actual == expected
 
 
 # Tests for XhmmStepPart (extract_ped) -------------------------------------------------------------
 
 
-def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_extract_ped_step_part_get_input_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_input_files_extract_ped()"""
     # Define expected
     filtered_samples_out = (
@@ -1378,30 +1368,30 @@ def test_xhmm_extract_ped_step_part_get_input_files(targeted_seq_cnv_calling_wor
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = targeted_seq_cnv_calling_workflow.get_input_files("xhmm", "extract_ped")(wildcards)
+    actual = sv_calling_targeted_workflow.get_input_files("xhmm", "extract_ped")(wildcards)
     assert actual == expected
 
 
-def test_xhmm_extract_ped_step_part_get_output_files(targeted_seq_cnv_calling_workflow):
+def test_xhmm_extract_ped_step_part_get_output_files(sv_calling_targeted_workflow):
     """Tests XhmmStepPart._get_output_files_genotype()"""
     # Define expected
     base_out = "work/{mapper}.xhmm.{library_name}/out/{mapper}.xhmm.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_output_files("xhmm", "extract_ped")
+    actual = sv_calling_targeted_workflow.get_output_files("xhmm", "extract_ped")
     assert actual == expected
 
 
-def test_xhmm_extract_ped_part_get_log_file(targeted_seq_cnv_calling_workflow):
+def test_xhmm_extract_ped_part_get_log_file(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_log_file for 'genotype' step"""
     # Define expected
-    expected = "work/{mapper}.xhmm.{library_name}/log/snakemake.targeted_seq_cnv_calling.log"
+    expected = "work/{mapper}.xhmm.{library_name}/log/snakemake.sv_calling_targeted.log"
     # Get actual
-    actual = targeted_seq_cnv_calling_workflow.get_log_file("xhmm", "extract_ped")
+    actual = sv_calling_targeted_workflow.get_log_file("xhmm", "extract_ped")
     assert actual == expected
 
 
-def test_xhmm_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
+def test_xhmm_step_part_get_resource_usage(sv_calling_targeted_workflow):
     """Tests XhmmStepPart.get_resource()"""
     # Define expected
     merge_cov_expected_dict = {
@@ -1420,14 +1410,14 @@ def test_xhmm_step_part_get_resource_usage(targeted_seq_cnv_calling_workflow):
     # Evaluate - merge_cov
     for resource, expected in merge_cov_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = targeted_seq_cnv_calling_workflow.get_resource("xhmm", "merge_cov", resource)
+        actual = sv_calling_targeted_workflow.get_resource("xhmm", "merge_cov", resource)
         assert actual == expected, msg_error
 
     # Evaluate - all other actions
-    all_actions = targeted_seq_cnv_calling_workflow.substep_getattr("xhmm", "actions")
+    all_actions = sv_calling_targeted_workflow.substep_getattr("xhmm", "actions")
     default_actions = [action for action in all_actions if action != "merge_cov"]
     for action in default_actions:
         for resource, expected in default_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = targeted_seq_cnv_calling_workflow.get_resource("xhmm", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("xhmm", action, resource)
             assert actual == expected, msg_error
