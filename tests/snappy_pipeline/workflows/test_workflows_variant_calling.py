@@ -42,7 +42,7 @@ def minimal_config():
             baf_file_generation:
               enabled: true
             tools:
-            - bcftools
+            - bcftools_call
             - gatk3_hc
             - gatk3_ug
 
@@ -91,12 +91,12 @@ def variant_calling_workflow(
     )
 
 
-# Tests for BcftoolsStepPart ----------------------------------------------------------------------
+# Tests for BcftoolsCallStepPart ------------------------------------------------------------------
 
 
 def test_bcftools_step_part_get_input_files(variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    actual = variant_calling_workflow.get_input_files("bcftools", "run")(wildcards)
+    actual = variant_calling_workflow.get_input_files("bcftools_call", "run")(wildcards)
     expected = {
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
         "bam": [
@@ -110,37 +110,37 @@ def test_bcftools_step_part_get_input_files(variant_calling_workflow):
 
 def test_bcftools_step_part_get_output_files(variant_calling_workflow):
     # Define expected
-    base_name_out = "work/{mapper}.bcftools.{library_name}/out/{mapper}.bcftools.{library_name}"
+    base_name_out = (
+        "work/{mapper}.bcftools_call.{library_name}/out/{mapper}.bcftools_call.{library_name}"
+    )
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     expected["output_links"] = [path.replace("work/", "output/") for path in expected.values()]
     for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
         for full_ext in (ext, f"{ext}.md5"):
-            base = "output/{mapper}.bcftools.{library_name}/log/{mapper}.bcftools.{library_name}.bcftools_run"
+            base = "output/{mapper}.bcftools_call.{library_name}/log/{mapper}.bcftools_call.{library_name}.bcftools_call_run"
             expected["output_links"].append(f"{base}.{full_ext}")
     # Get actual
-    actual = variant_calling_workflow.get_output_files("bcftools", "run")
+    actual = variant_calling_workflow.get_output_files("bcftools_call", "run")
     assert actual == expected
 
 
 def test_bcftools_step_part_get_log_file(variant_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.bcftools.{library_name}/log/{mapper}.bcftools.{library_name}.bcftools_run"
-    )
+    base_name_out = "work/{mapper}.bcftools_call.{library_name}/log/{mapper}.bcftools_call.{library_name}.bcftools_call_run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
-    actual = variant_calling_workflow.get_log_file("bcftools", "run")
+    actual = variant_calling_workflow.get_log_file("bcftools_call", "run")
     assert actual == expected
 
 
-def test_bcftools_step_part_get_resource(variant_calling_workflow):
-    """Tests BcftoolsStepPart.get_resource()"""
+def test_bcftools_call_step_part_get_resource(variant_calling_workflow):
+    """Tests BcftoolsCallStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("bcftools", "run", resource)
+        actual = variant_calling_workflow.get_resource("bcftools_call", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -200,7 +200,7 @@ def test_gatk3_hc_step_part_get_log_file(variant_calling_workflow):
 def test_gatk3_hc_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "88G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -264,7 +264,7 @@ def test_gatk3_ug_step_part_get_log_file(variant_calling_workflow):
 def test_gatk3_ug_step_part_get_resource(variant_calling_workflow):
     """Tests GatkHaplotypeCallerStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "88G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -481,7 +481,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
     # Check created sub steps
     expected = [
         "baf_file_generation",
-        "bcftools",
+        "bcftools_call",
         "bcftools_stats",
         "gatk3_hc",
         "gatk3_ug",
@@ -502,7 +502,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )
@@ -528,7 +528,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         )
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )
@@ -559,7 +559,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         )
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )
@@ -577,7 +577,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for i, t in ((1, 1), (1, 2), (1, 3), (4, 4), (4, 5), (4, 6))
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )
@@ -592,7 +592,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for i in (1, 4)  # only for indices
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )
@@ -607,7 +607,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for i, t in ((1, 1), (1, 2), (1, 3), (4, 4), (4, 5), (4, 6))
         for mapper in ("bwa",)
         for var_caller in (
-            "bcftools",
+            "bcftools_call",
             "gatk3_hc",
             "gatk3_ug",
         )

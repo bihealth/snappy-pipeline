@@ -40,7 +40,7 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - bcftools
+            - bcftools_call
             - gatk3_hc
             - gatk3_ug
           variant_annotation:
@@ -373,7 +373,7 @@ def test_variant_phasing_workflow(variant_phasing_workflow):
     )
     base_out_list = [
         base_out.format(tool=tool, i=i)
-        for tool in ("bcftools", "gatk3_hc", "gatk3_ug")
+        for tool in ("bcftools_call", "gatk3_hc", "gatk3_ug")
         for i in ("1", "4")
     ]
     expected = []

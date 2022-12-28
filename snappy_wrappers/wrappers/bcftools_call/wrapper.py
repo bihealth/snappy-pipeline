@@ -106,8 +106,8 @@ run-shard()
         --annotate FORMAT/AD,FORMAT/DP \
         -f {snakemake.config[static_data_config][reference][path]} \
         --per-sample-mF \
-        --max-depth {snakemake.config[step_config][variant_calling][bcftools][max_depth]} \
-        --max-idepth {snakemake.config[step_config][variant_calling][bcftools][max_indel_depth]} \
+        --max-depth {snakemake.config[step_config][variant_calling][bcftools_call][max_depth]} \
+        --max-idepth {snakemake.config[step_config][variant_calling][bcftools_call][max_indel_depth]} \
         --redo-BAQ \
         --regions $2 \
         {snakemake.input.bam} \
