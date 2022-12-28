@@ -198,18 +198,10 @@ class Delly2StepPart(
     @dictify
     def _get_output_files_genotype(self):
         infix = "{mapper}.delly2_genotype.{library_name}"
-        work_files = {}
-        work_files["bcf"] = f"work/{infix}/out/{infix}.bcf"
-        work_files["bcf_md5"] = f"work/{infix}/out/{infix}.bcf.md5"
-        work_files["bcf_csi"] = f"work/{infix}/out/{infix}.bcf.csi"
-        work_files["bcf_csi_md5"] = f"work/{infix}/out/{infix}.bcf.csi.md5"
-        yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("merge_genotypes").values()
-            )
-        ]
+        yield "bcf", f"work/{infix}/out/{infix}.bcf"
+        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
+        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
+        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):
@@ -218,17 +210,25 @@ class Delly2StepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                token = f"{wildcards.mapper}.delly2_genotype.{donor.dna_ngs_library.name}"
-                bcfs.append(ngs_mapping(f"output/{token}/out/{token}.bcf"))
+                infix = f"{wildcards.mapper}.delly2_genotype.{donor.dna_ngs_library.name}"
+                bcfs.append(f"work/{infix}/out/{infix}.bcf")
         yield "bcf", bcfs
 
     @dictify
     def _get_output_files_merge_genotypes(self):
         infix = "{mapper}.delly2.{library_name}"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        work_files = {}
+        work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
+        work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
+        work_files["vcf_tbi"] =  f"work/{infix}/out/{infix}.vcf.gz.tbi"
+        work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        yield from work_files.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(
+                work_files.values(), self.get_log_file("merge_genotypes").values()
+            )
+        ]
 
     @dictify
     def get_log_file(self, action):
