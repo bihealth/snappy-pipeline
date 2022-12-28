@@ -90,7 +90,7 @@ step_config:
     tools_ngs_mapping:
     - bwa
     tools_sv_calling_targeted:
-    - xhmm
+    - gcnv
     bed_files: []
 """
 
@@ -116,11 +116,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        # Get XHMM or gCNV configuration
-        if "xhmm" in DictQuery(self.w_config).get("step_config/sv_calling_targeted/tools"):
-            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/xhmm")
-        else:  # assume gCNV
-            tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
+        tool_config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
 
         if not tool_config["path_target_interval_list_mapping"]:
             # No mapping given, we will use the "default" one for all.
@@ -158,13 +154,7 @@ class VcfCnvFilterStepPart(BaseStepPart):
             key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
             # SVs
             sv_calling_targeted = self.parent.sub_workflows["sv_calling_targeted"]
-            if wildcards.caller == "xhmm":
-                library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
-                tpl = tpl.replace(".{index_ngs_library}", "_genotype.%s" % library_kit)
-            elif wildcards.caller == "gcnv":
-                library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
-                tpl = tpl.replace(".{index_ngs_library}", "_merge_cohort_vcfs.%s" % library_kit)
-            elif wildcards.caller == "cnvetti_hom":
+            if wildcards.caller == "gcnv":
                 library_kit = self.ngs_library_to_kit[wildcards.index_ngs_library]
                 tpl = tpl.replace(".{index_ngs_library}", "_merge_cohort_vcfs.%s" % library_kit)
             for key, ext in key_ext.items():
@@ -302,28 +292,6 @@ class TargetedSeqCnvAnnotationWorkflow(BaseStep):
         library_kits, donors, kit_counts = self._pick_kits_and_donors()
         # Actually yield the result files.
         name_pattern = "{mapper}.{caller}.annotated.{index_library.name}"
-        if "xhmm" in self.config["tools_sv_calling_targeted"]:
-            min_kit_usages = 10
-            chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
-            chosen_donors = [
-                donor.name
-                for donor in donors
-                if self.ngs_library_to_kit.get(donor.dna_ngs_library.name) in chosen_kits
-            ]
-            yield from self._yield_result_files(
-                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                chosen_donors,
-                mapper=self.config["tools_ngs_mapping"],
-                caller=["xhmm"],
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
-            )
         if "gcnv" in self.config["tools_sv_calling_targeted"]:
             min_kit_usages = 10
             chosen_kits = [kit for kit in library_kits if kit_counts.get(kit, 0) > min_kit_usages]
