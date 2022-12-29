@@ -6,6 +6,11 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Get shortcut to configuration of varfish_export step
 export_config = snakemake.config["step_config"]["varfish_export"]
+# Get shortcut to "fix_manta_invs.py" postprocessing script
+fix_manta_invs = os.path.join(
+    os.path.dirname(__file__),
+    "fix_manta_invs.py",
+)
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -57,49 +62,54 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-# For WGS, extract around exon BED file
-if [[ {snakemake.params.args[is_wgs]} == True ]]; then
-    set -e
-    bcftools view \
-        -R {export_config[path_exon_bed]} \
-        {snakemake.input.vcf} \
-    | bcftools sort -T $TMPDIR \
-    | bcftools norm -d all \
-    | bgzip -c \
-    > $TMPDIR/tmp.vcf.gz
-    tabix -f $TMPDIR/tmp.vcf.gz
-else
-    set -e
-    ln -sr {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
-    ln -sr {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
-fi
+samples=$(cut -f 2 {snakemake.input.ped} | tr '\n' ',' | sed -e 's/,$//g')
+
+# Fix the Manta inversions
+python3 {fix_manta_invs} \
+    --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+    --input-vcf {snakemake.input.vcf} \
+    --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
+bcftools sort -o $TMPDIR/fixed_bnd_to_inv.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
+
+# Add the missing "GT" tag
+echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
+> $TMPDIR/header.gt.txt
+
+bcftools annotate \
+    -h $TMPDIR/header.gt.txt \
+    $TMPDIR/fixed_bnd_to_inv.vcf \
+| bcftools view \
+    -i 'GT ~ "1"' \
+    -O z \
+    -o $TMPDIR/final_for_import.vcf.gz
+tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.vcf.gz
+
+# Compatibility mode with currently deployed VarFish Server
+compatibility_option="--opt-out callers-array"
 
 # Execute VarFish Annotator
 varfish-annotator \
-    annotate \
+    annotate-svs \
     -XX:MaxHeapSize=10g \
     -XX:+UseG1GC \
     \
     --release {export_config[release]} \
     \
-    --self-test-chr1-only \
-    --ref-path {snakemake.config[static_data_config][reference][path]} \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \
     --ensembl-ser-path {export_config[path_ensembl_ser]} \
     --input-ped {snakemake.input.ped} \
     \
-    --input-vcf $TMPDIR/tmp.vcf.gz \
+    --input-vcf $TMPDIR/final_for_import.vcf.gz \
     --output-db-info {snakemake.output.db_infos} \
-    --output-gts {snakemake.output.gts}
-
-# Copy out PED file to output
-cp {snakemake.input.ped} {snakemake.output.ped}
+    --output-gts {snakemake.output.gts} \
+    --output-feature-effects {snakemake.output.feature_effects} \
+    $compatibility_option
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
-compute-md5 {snakemake.output.ped} {snakemake.output.ped_md5}
+compute-md5 {snakemake.output.feature_effects} {snakemake.output.feature_effects_md5}
 """
 )
 

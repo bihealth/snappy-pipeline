@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-"""CUBI Pipeline variant_Export step Snakefile"""
-
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.variant_export import VariantExportWorkflow
+from snappy_pipeline.workflows.varfish_export import VarfishExportWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,16 +17,13 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = VarfishExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
-    variant_export_link_out_run,
-    # Writing pedigrees should be done locally as well
-    variant_export_write_pedigree_run,
+    varfish_export_write_pedigree_run,
 
 
 rule all:
@@ -37,26 +31,12 @@ rule all:
         wf.get_result_files(),
 
 
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule variant_export_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
-
-# Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Export for VarFish ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out pedigree file -----------------------------------------------------
 
 
-rule variant_export_write_pedigree_run:
+rule varfish_export_write_pedigree_run:
     input:
         unpack(wf.get_input_files("write_pedigree", "run")),
     output:
@@ -68,7 +48,7 @@ rule variant_export_write_pedigree_run:
 # Run varfish-annotator-cli annotate ------------------------------------------
 
 
-rule variant_export_varfish_annotator_annotate:
+rule varfish_export_varfish_annotator_annotate:
     input:
         unpack(wf.get_input_files("varfish_annotator", "annotate")),
     output:
@@ -86,10 +66,31 @@ rule variant_export_varfish_annotator_annotate:
         wf.wrapper_path("varfish_annotator/annotate")
 
 
+# Run varfish-annotator-cli annotate-svs ---------------------------------------
+
+
+rule varfish_export_varfish_annotator_annotate_svs:
+    input:
+        unpack(wf.get_input_files("varfish_annotator", "annotate_svs")),
+    output:
+        **wf.get_output_files("varfish_annotator", "annotate_svs"),
+    threads: wf.get_resource("varfish_annotator", "annotate_svs", "threads")
+    resources:
+        time=wf.get_resource("varfish_annotator", "annotate_svs", "time"),
+        memory=wf.get_resource("varfish_annotator", "annotate_svs", "memory"),
+        partition=wf.get_resource("varfish_annotator", "annotate_svs", "partition"),
+    log:
+        **wf.get_log_file("varfish_annotator", "annotate_svs"),
+    # params:
+    #     **{"args": wf.get_params("varfish_annotator", "annotate_svs")},
+    wrapper:
+        wf.wrapper_path("varfish_annotator/annotate_svs")
+
+
 # Gather statistics about the alignment ---------------------------------------
 
 
-rule variant_export_varfish_annotator_bam_qc:
+rule varfish_export_varfish_annotator_bam_qc:
     input:
         unpack(wf.get_input_files("varfish_annotator", "bam_qc")),
     output:

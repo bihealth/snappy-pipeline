@@ -7,7 +7,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.variant_export import VariantExportWorkflow
+from snappy_pipeline.workflows.varfish_export import VariantExportWorkflow
 
 from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
@@ -219,7 +219,7 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(variant_export_workflow
 def test_varfish_annotator_step_part_get_params_annotate(variant_export_workflow):
     """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    expected = {"is_wgs": True, "step_name": "variant_export"}
+    expected = {"is_wgs": True, "step_name": "varfish_export"}
     actual = variant_export_workflow.get_params("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
 

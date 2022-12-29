@@ -1,15 +1,21 @@
-# -*- coding: utf-8 -*-
-"""Wrapper for running collecting coverage QC data."""
 import tempfile
 
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-this_file = __file__
-
-# cov_qc bamstats flagstats idxstats
+DEF_HELPER_FUNCS = r"""
+compute-md5()
+{
+    if [[ $# -ne 2 ]]; then
+        >&2 echo "Invalid number of arguments: $#"
+        exit 1
+    fi
+    md5sum $1 \
+    | awk '{ gsub(/.*\//, "", $2); print; }' \
+    > $2
+}
+"""
 
 with tempfile.NamedTemporaryFile("wt") as json_tmpf:
     # Write library name to identifier that should be used in output file into a JSON file.
@@ -22,8 +28,6 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
     #    "P002-N1-DNA1-WGS1": "P002",
     #    "P003-N1-DNA1-WGS1": "P003",
     #  }
-    #
-    # cf. https://bitbucket.org/snakemake/snakemake/issues/878
     for library_name, identifier in snakemake.params.args.items():
         print(f"{library_name} {identifier}", file=json_tmpf)
         json_tmpf.flush()
@@ -33,31 +37,38 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
         r"""
     set -x
 
-    # TODO: remove this again, is for fail early
-    # Additional logging for transparency & reproducibility
-    # Logging: Save a copy this wrapper (with the pickle details in the header)
-    cp {this_file} {snakemake.log.wrapper}
+    # Write files for reproducibility -------------------------------------------------------------
 
-    # Write out information about conda installation.
-    conda list > {snakemake.log.conda_list}
-    conda info > {snakemake.log.conda_info}
-    md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-    md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
+    {DEF_HELPER_FUNCS}
 
-    # Also pipe stderr to log file
-    if [[ -n "{snakemake.log}" ]]; then
+    # Write out information about conda and save a copy of the wrapper with picked variables
+    # as well as the environment.yaml file.
+    conda list >{snakemake.log.conda_list}
+    conda info >{snakemake.log.conda_info}
+    compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
+    compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
+    cp {__real_file__} {snakemake.log.wrapper}
+    compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
+    cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
+    compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
+
+    # Also pipe stderr to log file ----------------------------------------------------------------
+
+    if [[ -n "{snakemake.log.log}" ]]; then
         if [[ "$(set +e; tty; set -e)" != "" ]]; then
-            rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-            exec 2> >(tee -a "{snakemake.log}" >&2)
+            rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+            exec 2> >(tee -a "{snakemake.log.log}" >&2)
         else
-            rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-            echo "No tty, logging disabled" >"{snakemake.log}"
+            rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+            echo "No tty, logging disabled" >"{snakemake.log.log}"
         fi
     fi
 
     # Create auto-cleaned temporary directory
     export TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" EXIT
+
+    # Run actual tools ----------------------------------------------------------------------------
 
     # --------------------- #
     # Get output identifier #
@@ -151,7 +162,17 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
     # Compress output files and create MD5 sums.
     gzip ${{out_bam_qc%.gz}}
 
-    pushd $(dirname {snakemake.output.bam_qc}) && \
-        md5sum $(basename {snakemake.output.bam_qc}) > $(basename {snakemake.output.bam_qc}).md5
+    # Compute MD5 sums on output files
+    compute-md5 {snakemake.output.bam_qc} {snakemake.output.bam_qc_md5}
     """
     )
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+{DEF_HELPER_FUNCS}
+
+sleep 1s  # try to wait for log file flush
+compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
+"""
+)
