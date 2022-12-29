@@ -12,7 +12,7 @@ import warnings
 from snakemake.io import Wildcards, expand, touch
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.gcnv.gcnv_common import (
     GcnvCommonStepPart,
     InconsistentLibraryKitsWarning,
@@ -517,18 +517,12 @@ class RunGcnvStepPart(
         The function will skip pedigrees where samples have inconsistent library kits and print a warning.
         """
 
-        def path_work_to_output(work_path):
-            """Helper to convert a work to an output path"""
-            return re.sub(r"^work/", "output/", work_path)
-
-        # Get list with all result path template strings (output and log files).  This is done using the
-        # functions generating the output patterns of the joint germline CNV segmentation step.
-        result_path_tpls = list(
-            chain(
-                self._get_output_files_joint_germline_cnv_segmentation().values(),  # output files
-                self._get_log_file_joint_germline_cnv_segmentation().values(),  # log files
-            )
-        )
+        # Get list with all result path template strings.
+        result_path_tpls = [
+            path
+            for path in flatten(self._get_output_files_joint_germline_cnv_segmentation().values())
+            if path.startswith("output/")
+        ]
 
         # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
         # library kits within one pedigree, raise a warning and skip this pedigree.
@@ -551,11 +545,8 @@ class RunGcnvStepPart(
                 # The library kits are consistent in the pedigree.  Yield all concrete output paths, replacing
                 # prefix "work/" by "output/".
                 for path_tpl in result_path_tpls:
-                    yield from map(
-                        path_work_to_output,
-                        expand(
-                            path_tpl,
-                            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                            library_name=[index_library_name],
-                        ),
+                    yield from expand(
+                        path_tpl,
+                        mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        library_name=[index_library_name],
                     )

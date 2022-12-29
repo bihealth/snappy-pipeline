@@ -240,7 +240,7 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
     expected = [
         pattern_out.format(i=i, tool=tool, ext=ext)
         for i in (1, 4)  # only index: P001, P004
-        for tool in ("gcnv", "manta")
+        for tool in ("gcnv", "manta", "delly2")
         for ext in (
             ".vcf.gz",
             ".vcf.gz.md5",
@@ -255,7 +255,11 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
     expected += [
         pattern_log.format(i=i, tool=tool, step_name=step_name, ext=ext)
         for i in (1, 4)  # only index: P001, P004
-        for tool, step_name in (("gcnv", "joint_germline_segmentation"), ("manta", "sv_calling"))
+        for tool, step_name in (
+            ("gcnv", "joint_germline_segmentation"),
+            ("manta", "sv_calling"),
+            ("delly2", "sv_calling"),
+        )
         for ext in (
             ".log",
             ".log.md5",
@@ -829,6 +833,22 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_output_files(
     # Define expected
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    expected["output_links"] = [
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log.md5",
+    ]
     # Get actual
     actual = sv_calling_targeted_workflow.get_output_files(
         "gcnv", "joint_germline_cnv_segmentation"
