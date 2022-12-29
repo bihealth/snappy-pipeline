@@ -109,7 +109,9 @@ step_config:
       - 'HLA-*'      # HLA genes
       - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     cnvkit:
+      path_normals_list: ""                # Optional file listing libraries to include in panel
       path_target_regions: REQUIRED        # Bed files of targetted regions
+      access: ""                           # Access bed file (when absent, created by cnvkit.py access
       exclude: []                          # [access] Bed file of regions to exclude (mappability, blacklisted, ...)
       min_gap_size: 5000                   # [access] Minimum gap size between accessible sequence regions
       annotate: ""                         # [autobin] Optional targets annotations
@@ -307,9 +309,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.config["mutect2"]["path_normals_list"]:
+        if self.config["cnvkit"]["path_normals_list"]:
             self.normal_libraries = []
-            with open(self.config["mutect2"]["path_normals_list"], "rt") as f:
+            with open(self.config["cnvkit"]["path_normals_list"], "rt") as f:
                 for line in f:
                     self.normal_libraries.append(line.strip())
 
@@ -449,12 +451,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if action == "access":
             tpl = "work/cnvkit.access/log/cnvkit.access.{ext}"
             for key, ext in ext_dict.items():
-                print("DEBUG- log for access: {}".format(tpl.format(ext=ext)))
                 yield key, tpl.format(ext=ext)
         elif action == "autobin":
             tpl = "work/{{mapper}}.cnvkit.autobin/log/{{mapper}}.cnvkit.autobin.{ext}"
             for key, ext in ext_dict.items():
-                print("DEBUG- log for autobin: {}".format(tpl.format(ext=ext)))
                 yield key, tpl.format(ext=ext)
         elif action == "coverage":
             tpl = "work/{{mapper}}.cnvkit.coverage/log/{{mapper}}.cnvkit.coverage.{{normal_library}}.{ext}"
@@ -527,6 +527,15 @@ class PanelOfNormalsWorkflow(BaseStep):
                 for ext in ext_list[caller]:
                     yield tpl.format(mapper=mapper, caller=caller, ext=ext)
 
+        if "cnvkit" in set(self.config["tools"]) & set(TOOLS):
+            tpl = "output/cnvkit.access/out/cnvkit.access.{ext}"
+            for ext in ("bed", "bed.md5"):
+                yield tpl.format(ext=ext)
+            tpl = "output/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.{ext}"
+            for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
+                for ext in ("target.bed", "target.bed.md5", "antitarget.bed", "antitarget.bed.md5"):
+                    yield tpl.format(mapper=mapper, ext=ext)
+
         ext_list = [
             "log",
             "log.md5",
@@ -545,6 +554,15 @@ class PanelOfNormalsWorkflow(BaseStep):
             for caller in set(self.config["tools"]) & set(TOOLS):
                 for ext in ext_list:
                     yield tpl.format(mapper=mapper, caller=caller, ext=ext)
+
+        if "cnvkit" in set(self.config["tools"]) & set(TOOLS):
+            tpl = "output/cnvkit.access/log/cnvkit.access.{ext}"
+            for ext in ext_list:
+                yield tpl.format(ext=ext)
+            tpl = "output/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin.{ext}"
+            for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
+                for ext in ext_list:
+                    yield tpl.format(mapper=mapper, ext=ext)
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""

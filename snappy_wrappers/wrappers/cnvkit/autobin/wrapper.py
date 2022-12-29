@@ -7,6 +7,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["cnvkit"]
+
 shell(
     r"""
 # Also pipe everything to log file
@@ -42,16 +44,16 @@ md5()
 # -----------------------------------------------------------------------------
 
 cnvkit.py autobin --method "hybrid" \
-    --fasta {snakemake.config[static_data_config][reference][path] \
+    --fasta {snakemake.config[static_data_config][reference][path]} \
     --access {snakemake.input.access} \
-    --targets {config[targets]} \
+    --targets {config[path_target_regions]} \
     --bp-per-bin {config[bp_per_bin]} \
     --target-min-size {config[target_min_size]} --target-max-size {config[target_max_size]} \
     --antitarget-min-size {config[antitarget_min_size]} --antitarget-max-size {config[antitarget_max_size]} \
     $(if [[ -n "{config[annotate]}" ]] ; then \
         echo --annotate {config[annotate]} --short-names
     fi) \
-    --target-output-bed {snakemake.output.target} --antitarger-output-bed {snakemake.output.antitarget} \
+    --target-output-bed {snakemake.output.target} --antitarget-output-bed {snakemake.output.antitarget} \
     {snakemake.input.bams}
 
 md5 {snakemake.output.target}

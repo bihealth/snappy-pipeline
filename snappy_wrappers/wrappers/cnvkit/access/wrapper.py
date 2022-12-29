@@ -32,14 +32,18 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # -----------------------------------------------------------------------------
 
-cnvkit.py access \
-    -o {snakemake.output} \
-    --min-gap-size config[min_gap_size] {exclude} \
-    {snakemake.config[static_data_config][reference][path]}
+if [[ -n "{config[access]}" ]]
+then
+    ln -sr {config[access]} {snakemake.output.access}
+else
+    cnvkit.py access \
+        -o {snakemake.output.access} \
+        --min-gap-size {config[min_gap_size]} {exclude} \
+        {snakemake.config[static_data_config][reference][path]}
+fi
 
-
-fn=$(basename "{snakemake.output}")
-d=$(dirname "{snakemake.output}")
+fn=$(basename "{snakemake.output.access}")
+d=$(dirname "{snakemake.output.access}")
 pushd $d
 md5sum $fn > $fn.md5
 popd

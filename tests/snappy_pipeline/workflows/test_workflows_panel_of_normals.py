@@ -400,38 +400,30 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
         for mapper in ("bwa",)
     ]
     # add log files
-    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals.{ext}"
-    expected += [
-        tpl.format(mapper=mapper, ext=ext)
-        for ext in (
-            "conda_info.txt",
-            "conda_list.txt",
-            "log",
-            "conda_info.txt.md5",
-            "conda_list.txt.md5",
-            "log.md5",
-        )
-        for mapper in ("bwa",)
-    ]
+    tpl = "output/{mapper}.mutect2.create_panel/log/{mapper}.mutect2.panel_of_normals"
+    for mapper in ("bwa",):
+        expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
     # Now for basic cnvkit files (panel of normal only)
     tpl = "output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.{ext}"
     expected += [
         tpl.format(mapper=mapper, ext=ext) for ext in ("cnn", "cnn.md5") for mapper in ("bwa",)
     ]
-    # add log files
-    tpl = "output/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.panel_of_normals.{ext}"
+    tpl = "output/cnvkit.access/out/cnvkit.access.{ext}"
+    expected += [tpl.format(ext=ext) for ext in ("bed", "bed.md5")]
+    tpl = "output/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.{ext}"
     expected += [
         tpl.format(mapper=mapper, ext=ext)
-        for ext in (
-            "conda_info.txt",
-            "conda_list.txt",
-            "log",
-            "conda_info.txt.md5",
-            "conda_list.txt.md5",
-            "log.md5",
-        )
+        for ext in ("target.bed", "target.bed.md5", "antitarget.bed", "antitarget.bed.md5")
         for mapper in ("bwa",)
     ]
+    # add log files
+    tpl = "output/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.panel_of_normals"
+    for mapper in ("bwa",):
+        expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
+    expected += get_expected_log_files_dict("output/cnvkit.access/log/cnvkit.access").values()
+    tpl = "output/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin"
+    for mapper in ("bwa",):
+        expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
     expected = list(sorted(expected))
     actual = list(sorted(panel_of_normals_workflow.get_result_files()))
     assert actual == expected

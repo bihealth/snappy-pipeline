@@ -42,7 +42,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # -----------------------------------------------------------------------------
 
-cnvkit reference \
+cnvkit.py reference \
     --output {snakemake.output.panel} \
     --fasta {snakemake.config[static_data_config][reference][path]} \
     {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
