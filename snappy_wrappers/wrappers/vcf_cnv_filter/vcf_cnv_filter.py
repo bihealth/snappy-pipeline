@@ -144,39 +144,6 @@ class FilterStep:
         raise NotImplementedError("Implement me!")
 
 
-class FixupXhmmStep(FilterStep):
-    def _setup(self):
-        self.active = True
-
-    def _apply(self, record):
-        if "XHMM" not in record.INFO.get("SVMETHOD", ""):
-            yield record
-        else:
-            has_del = [c for c in record.calls if c.data.get("GT") == "1"]
-            has_dup = [c for c in record.calls if c.data.get("GT") == "2"]
-
-            if has_del and has_dup:
-                sv_type = "CNV"
-            elif has_del:
-                sv_type = "DEL"
-            elif has_dup:
-                sv_type = "DUP"
-            else:
-                raise RuntimeError("Logic error with genotypes in XHMM")
-
-            record.REF = "N"
-            record.ALT = [vcfpy.SymbolicAllele(sv_type)]
-            record.INFO["SVTYPE"] = sv_type
-
-            for call in record.calls:
-                if call.data.get("GT") != "0":
-                    call.set_genotype("1")
-                else:
-                    call.set_genotype("0")
-
-            yield record
-
-
 class InheritanceAnnoFilterStep(FilterStep):
     def _setup(self):
         self.active = True
@@ -283,8 +250,6 @@ class AnnotateOverlappingGenesFilter(FilterStep):
 
 #: The filters to apply.
 FILTERS = (
-    # Make the XHMM ``<DIP> -> <DEL>,<DUP>`` compatible with the rest of the world.
-    FixupXhmmStep,
     # Add annotation for compatibility with inheritance.
     InheritanceAnnoFilterStep,
     # Annotate with carrier counts.

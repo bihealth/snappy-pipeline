@@ -248,6 +248,14 @@ class WritePedigreeStepPart(BaseStepPart):
         self._validate_action(action=action)
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
+    # @listify
+    def get_result_files(self):
+        # tpl = self.get_output_files("run")
+        # for sheet in getattr(self.parent, "shortcut_sheets", []):
+        #     for index_ngs_library in sheet.index_ngs_library_to_pedigree.keys():
+        #         yield tpl.format(index_ngs_library=index_ngs_library)
+        return []
+
     def run(self, wildcards, output):
         """Write out the pedigree information
 

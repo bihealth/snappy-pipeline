@@ -1,9 +1,0 @@
-channels:
-- conda-forge
-- bioconda
-- r
-dependencies:
-- xhmm ==0.0.0.2016_01_04.cc14e52
-- bcftools ==1.9
-- samtools ==1.9
-- htslib ==1.9

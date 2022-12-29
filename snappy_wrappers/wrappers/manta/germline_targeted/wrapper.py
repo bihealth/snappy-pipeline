@@ -1,13 +1,6 @@
-from snakemake.shell import shell
+from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-delly2_config = snakemake.config["step_config"][snakemake.params.step_key]["delly2"]
-
-if delly2_config["path_exclude_tsv"]:
-    exclude_str = "--exclude %s" % delly2_config["path_exclude_tsv"]
-else:
-    exclude_str = ""
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -59,21 +52,50 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-delly call \
-    --map-qual {delly2_config[map_qual]} \
-    --qual-tra {delly2_config[qual_tra]} \
-    --geno-qual {delly2_config[geno_qual]} \
-    --mad-cutoff {delly2_config[mad_cutoff]} \
-    --genome {snakemake.config[static_data_config][reference][path]} \
-    --outfile {snakemake.output.bcf} \
-    {exclude_str} \
-    {snakemake.input.bam}
+basedir=$(dirname $(dirname {snakemake.output.vcf}))
+workdir=$basedir/work
+outdir=$basedir/out
 
-tabix -f {snakemake.output.bcf}
+# Ensure the working directory is removed, configManta.py will bail out if it already exists
+trap "rm -rf \"$workdir\"" EXIT
+# Clear out $outdir, there may be some old files remaining that are not governed by Snakemake
+rm -rf $outdir/*
+
+configManta.py \
+    --exome \
+    --referenceFasta {snakemake.config[static_data_config][reference][path]} \
+    --runDir $workdir \
+    $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
+
+perl -p -i -e 's/isEmail = .*/isEmail = False/g' $workdir/runWorkflow.py
+
+python2 $workdir/runWorkflow.py \
+    --jobs 16
+
+cp -ra $workdir/results $outdir
+rm -rf $workdir
+
+pushd $outdir
+tar czf results.tar.gz results
+ln -sr results/variants/diploidSV.vcf.gz $(basename {snakemake.output.vcf})
+ln -sr results/variants/diploidSV.vcf.gz.tbi $(basename {snakemake.output.vcf_tbi})
+ln -sr results/variants/candidateSV.vcf.gz \
+    $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz
+ln -sr results/variants/candidateSV.vcf.gz.tbi \
+    $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz.tbi
+popd
 
 # Compute MD5 sums on output files
-compute-md5 {snakemake.output.bcf} {snakemake.output.bcf_md5}
-compute-md5 {snakemake.output.bcf_csi} {snakemake.output.bcf_csi_md5}
+compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
+compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

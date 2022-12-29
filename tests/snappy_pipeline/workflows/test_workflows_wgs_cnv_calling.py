@@ -1004,6 +1004,22 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_output_files(wgs_cnv
     """Tests RunGcnvWgsStepPart._get_output_files_joint_germline_cnv_segmentation()"""
     pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    expected["output_links"] = [
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log.md5",
+    ]
     actual = wgs_cnv_calling_workflow.get_output_files("gcnv", "joint_germline_cnv_segmentation")
     assert actual == expected
 
