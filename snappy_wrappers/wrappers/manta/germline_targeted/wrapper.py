@@ -57,7 +57,9 @@ workdir=$basedir/work
 outdir=$basedir/out
 
 # Ensure the working directory is removed, configManta.py will bail out if it already exists
-# trap "rm -rf \"$workdir\"" EXIT
+trap "rm -rf \"$workdir\"" EXIT
+# Clear out $outdir, there may be some old files remaining that are not governed by Snakemake
+rm -rf $outdir/*
 
 configManta.py \
     --exome \
@@ -81,6 +83,7 @@ ln -sr results/variants/candidateSV.vcf.gz \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz
 ln -sr results/variants/candidateSV.vcf.gz.tbi \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz.tbi
+popd
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}

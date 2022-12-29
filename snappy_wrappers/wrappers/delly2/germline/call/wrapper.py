@@ -74,14 +74,6 @@ tabix -f {snakemake.output.bcf}
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.bcf} {snakemake.output.bcf_md5}
 compute-md5 {snakemake.output.bcf_csi} {snakemake.output.bcf_csi_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
 """
 )
 
