@@ -210,7 +210,6 @@ class Delly2StepPart(
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         bcfs = []
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
