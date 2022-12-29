@@ -21,20 +21,21 @@ set -x
 
 # Write files for reproducibility -----------------------------------------------------------------
 
+{DEF_HELPER_FUNCS}
+
 # Write out information about conda and save a copy of the wrapper with picked variables
 # as well as the environment.yaml file.
 conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
+compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
 cp {__real_file__} {snakemake.log.wrapper}
-md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
+compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
 cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
+compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
 
 # Also pipe stderr to log file --------------------------------------------------------------------
 
-# Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
@@ -44,6 +45,10 @@ if [[ -n "{snakemake.log.log}" ]]; then
         echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
+
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 

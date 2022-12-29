@@ -69,6 +69,17 @@ step_config:
       #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
       #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
       precomputed_model_paths: []
+
+    delly2:
+      path_exclude_tsv: null  # optional
+      max_threads: 16
+      map_qual: 1
+      geno_qual: 5
+      qual_tra: 20
+      mad_cutoff: 9
+
+    manta:
+      max_threads: 16
 """
 
 
