@@ -48,6 +48,7 @@ rule sv_calling_targeted_write_pedigree_run:
 
 # GATK-gCNV -------------------------------------------------------------------
 
+
 rule sv_calling_targeted_gcnv_preprocess_intervals:
     input:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
@@ -152,6 +153,7 @@ rule sv_calling_targeted_gcnv_joint_germline_cnv_segmentation:
 
 # Run Manta -------------------------------------------------------------------
 
+
 rule sv_calling_targeted_manta_run:
     input:
         unpack(wf.get_input_files("manta", "run")),
@@ -170,6 +172,7 @@ rule sv_calling_targeted_manta_run:
 
 # Delly2 Steps ----------------------------------------------------------------
 
+
 rule sv_calling_targeted_delly2_call:
     input:
         unpack(wf.get_input_files("delly2", "call")),
@@ -181,7 +184,7 @@ rule sv_calling_targeted_delly2_call:
         memory=wf.get_resource("delly2", "call", "memory"),
         partition=wf.get_resource("delly2", "call", "partition"),
     params:
-        step_key="sv_calling_targeted"
+        step_key="sv_calling_targeted",
     log:
         **wf.get_log_file("delly2", "call"),
     wrapper:
@@ -199,7 +202,7 @@ rule sv_calling_targeted_delly2_merge_calls:
         memory=wf.get_resource("delly2", "merge_calls", "memory"),
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
     params:
-        step_key="sv_calling_targeted"
+        step_key="sv_calling_targeted",
     log:
         **wf.get_log_file("delly2", "merge_calls"),
     wrapper:
@@ -217,7 +220,7 @@ rule sv_calling_targeted_delly2_genotype:
         memory=wf.get_resource("delly2", "genotype", "memory"),
         partition=wf.get_resource("delly2", "genotype", "partition"),
     params:
-        step_key="sv_calling_targeted"
+        step_key="sv_calling_targeted",
     log:
         **wf.get_log_file("delly2", "genotype"),
     wrapper:
@@ -235,10 +238,8 @@ rule sv_calling_targeted_delly2_merge_genotypes:
         memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
     params:
-        step_key="sv_calling_targeted"
+        step_key="sv_calling_targeted",
     log:
         **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
         wf.wrapper_path("delly2/germline/merge_genotypes")
-
-
