@@ -59,7 +59,7 @@ import re
 import typing
 import warnings
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background, Pedigree
 from matplotlib.cbook import flatten
 from snakemake.io import Wildcards, expand
 
@@ -70,7 +70,6 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
-    pedigree,
 )
 from snappy_pipeline.workflows.abstract.common import SnakemakeDict, SnakemakeDictItemsGenerator
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
@@ -236,7 +235,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
                     ]
                     yield index, donors
 
-    def _is_pedigree_good(self, pedigree: pedigree) -> bool:
+    def _is_pedigree_good(self, pedigree: Pedigree) -> bool:
         """Check pedigrees for inconsistencies and issue warning for any.
 
         :return: ``True`` if there was no inconsistency reported
