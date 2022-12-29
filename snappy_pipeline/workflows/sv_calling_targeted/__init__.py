@@ -198,7 +198,7 @@ class Delly2StepPart(
         yield from self._get_input_files_call(wildcards).items()
         pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
         infix = f"{wildcards.mapper}.delly2_merge_calls.{pedigree.index.dna_ngs_library.name}"
-        yield "vcf", f"work/{infix}/out/{infix}.bcf"
+        yield "bcf", f"work/{infix}/out/{infix}.bcf"
 
     @dictify
     def _get_output_files_genotype(self):
