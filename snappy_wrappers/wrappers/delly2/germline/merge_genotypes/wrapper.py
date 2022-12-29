@@ -61,14 +61,11 @@ if [[ $sample_count -eq 1 ]]; then
         -o {snakemake.output.vcf} \
         {snakemake.input.bcf}
 else
-    out=$(realpath {snakemake.output.vcf})
-    pushd $TMPDIR/cwd
     bcftools merge \
         -m id \
         -O z \
-        -o $out \
+        -o {snakemake.output.vcf} \
         {snakemake.input.bcf}
-    popd
 fi
 tabix -f {snakemake.output.vcf}
 
