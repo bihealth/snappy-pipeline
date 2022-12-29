@@ -1,91 +1,97 @@
-# -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's call merging step
-"""
-
-import tempfile
-
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Bad regions on hg19 with too high BND call count.
-bad_hg19 = (
-    ("2", 33091770, 33092140, "troublesome poly-T"),
-    ("2", 33141280, 33141700, "troublesome poly-G"),
-    ("12", 66451360, 66451390, "troublesome poly-T"),
-    ("12", 66451440, 66451470, "troublesome ALU"),
-    ("15", 55218220, 55218290, "troublesome L1"),
-    ("15", 77910860, 77910960, "troublesome poly-T+ALU"),
+DEF_HELPER_FUNCS = r"""
+compute-md5()
+{
+    if [[ $# -ne 2 ]]; then
+        >&2 echo "Invalid number of arguments: $#"
+        exit 1
+    fi
+    md5sum $1 \
+    | awk '{ gsub(/.*\//, "", $2); print; }' \
+    > $2
+}
+"""
+
+# Actually run the script.
+shell(
+    r"""
+set -x
+
+# Write files for reproducibility -----------------------------------------------------------------
+
+{DEF_HELPER_FUNCS}
+
+# Write out information about conda and save a copy of the wrapper with picked variables
+# as well as the environment.yaml file.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
+compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
+cp {__real_file__} {snakemake.log.wrapper}
+compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
+cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
+compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
+
+# Also pipe stderr to log file --------------------------------------------------------------------
+
+if [[ -n "{snakemake.log.log}" ]]; then
+    if [[ "$(set +e; tty; set -e)" != "" ]]; then
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec 2> >(tee -a "{snakemake.log.log}" >&2)
+    else
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
+    fi
+fi
+
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
+# Run actual tools --------------------------------------------------------------------------------
+
+delly merge \
+    --outfile $TMPDIR/tmp.bcf \
+    {snakemake.input.bcf}
+
+# Some yak-shaving for removing SVs starting at 0 which BCF does not like.
+bcftools view \
+    -O v \
+    $TMPDIR/tmp.bcf \
+| awk -F $'\t' '
+    BEGIN {{ OFS=FS; }}
+    (/^#/ || ($2 != 0)) {{ print $0; }}
+    ($2 == 0) {{ $2 = 1; print $0; }}' \
+| bcftools view \
+    -O b \
+    /dev/stdin \
+> {snakemake.output.bcf}
+
+tabix -f {snakemake.output.bcf}
+
+# Compute MD5 sums on output files
+compute-md5 {snakemake.output.bcf} {snakemake.output.bcf_md5}
+compute-md5 {snakemake.output.bcf_csi} {snakemake.output.bcf_csi_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
+"""
 )
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-if "hg19" in reference or "GRCh37" in reference:
-    fix_bnds = r"""
-        | awk -F $'\t' '
-            /^#/ {{ print $0 }}
-            /^[^#]/ {{
-                if (($1 == "2" && $2 >= 33091770 && $2 <= 33092140) || ($1 == "2" && $2 >= 33141280 && $2 <= 33141700) || ($1 == "12" && $2 >= 66451360 && $2 <= 66451390) || ($1 == "12" && $2 >= 66451440 && $2 <= 66451470) || ($1 == "15" && $2 >= 55218220 && $2 <= 55218290) || ($1 == "15" && $2 >= 77910860 && $2 <= 77910960)) {{
-                    next;
-                }} else {{
-                    print $0;
-                }}
-            }}'
-    """.strip()
-else:
-    fix_bnds = ""
 
-with tempfile.NamedTemporaryFile("wt") as tmpf:
-    # Write paths to input files into temporary file.
-    #
-    # cf. https://bitbucket.org/snakemake/snakemake/issues/878
-    print("\n".join(snakemake.input), file=tmpf)
-    tmpf.flush()
-    # Actually run the script.
-    shell(
-        r"""
-    # -----------------------------------------------------------------------------
-    # Redirect stderr to log file by default and enable printing executed commands
-    exec &> >(tee -a "{snakemake.log}")
-    set -x
-    # -----------------------------------------------------------------------------
+# Compute MD5 sums of logs.
+shell(
+    r"""
+{DEF_HELPER_FUNCS}
 
-    export LC_ALL=C
-    export TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-
-    mkdir $TMPDIR/cwd
-
-    i=0
-    for x in $(cat {tmpf.name}); do
-        let "i=$i+1"
-        ln -s $(readlink -f $x) $TMPDIR/cwd/$i.bcf
-        ln -s $(readlink -f $x).csi $TMPDIR/cwd/$i.bcf.csi
-    done
-
-    pushd $TMPDIR/cwd
-    delly merge \
-        --outfile $TMPDIR/tmp.bcf \
-        *.bcf
-    popd
-
-    # Some yak-shaving for removing SVs starting at 0 which BCF does not like.
-    bcftools view \
-        -O v \
-        $TMPDIR/tmp.bcf \
-    {fix_bnds} \
-    | awk -F $'\t' '
-        BEGIN {{ OFS=FS; }}
-        (/^#/ || ($2 != 0)) {{ print $0; }}
-        ($2 == 0) {{ $2 = 1; print $0; }}' \
-    | bcftools view \
-        -O b \
-        /dev/stdin \
-    > {snakemake.output.bcf}
-
-    tabix -f {snakemake.output.bcf}
-
-    pushd $(dirname {snakemake.output.bcf})
-    md5sum $(basename {snakemake.output.bcf}) >$(basename {snakemake.output.bcf}).md5
-    md5sum $(basename {snakemake.output.bcf}).csi >$(basename {snakemake.output.bcf}).csi.md5
-    """
-    )
+sleep 1s  # try to wait for log file flush
+compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
+"""
+)

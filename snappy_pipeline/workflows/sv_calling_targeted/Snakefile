@@ -180,6 +180,8 @@ rule sv_calling_targeted_delly2_call:
         time=wf.get_resource("delly2", "call", "time"),
         memory=wf.get_resource("delly2", "call", "memory"),
         partition=wf.get_resource("delly2", "call", "partition"),
+    params:
+        step_key="sv_calling_targeted"
     log:
         **wf.get_log_file("delly2", "call"),
     wrapper:
@@ -196,6 +198,8 @@ rule sv_calling_targeted_delly2_merge_calls:
         time=wf.get_resource("delly2", "merge_calls", "time"),
         memory=wf.get_resource("delly2", "merge_calls", "memory"),
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
+    params:
+        step_key="sv_calling_targeted"
     log:
         **wf.get_log_file("delly2", "merge_calls"),
     wrapper:
@@ -212,6 +216,8 @@ rule sv_calling_targeted_delly2_genotype:
         time=wf.get_resource("delly2", "genotype", "time"),
         memory=wf.get_resource("delly2", "genotype", "memory"),
         partition=wf.get_resource("delly2", "genotype", "partition"),
+    params:
+        step_key="sv_calling_targeted"
     log:
         **wf.get_log_file("delly2", "genotype"),
     wrapper:
@@ -228,6 +234,8 @@ rule sv_calling_targeted_delly2_merge_genotypes:
         time=wf.get_resource("delly2", "merge_genotypes", "time"),
         memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
+    params:
+        step_key="sv_calling_targeted"
     log:
         **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:

@@ -119,9 +119,7 @@ class SvCallingTargetedGetResultFilesMixin:
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
-                    yield from expand(
-                        path_tpl, mapper=[mapper], library_name=library_name
-                    )
+                    yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
 
 
 class Delly2StepPart(
@@ -227,7 +225,7 @@ class Delly2StepPart(
         work_files = {}
         work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
         work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
-        work_files["vcf_tbi"] =  f"work/{infix}/out/{infix}.vcf.gz.tbi"
+        work_files["vcf_tbi"] = f"work/{infix}/out/{infix}.vcf.gz.tbi"
         work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
         yield from work_files.items()
         yield "output_links", [
