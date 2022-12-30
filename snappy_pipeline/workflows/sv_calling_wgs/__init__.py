@@ -1,111 +1,5 @@
-# -*- coding: utf-8 -*-
 """Implementation of the ``sv_calling_wgs`` step
-
-The (germline) ``sv_calling_wgs`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned NGS reads) and performs germline SV calling on them.  The result are called SVs in VCF
-format.
-
-In contrast to WGS CNV calling, WGS SV calling is able to identify more than just copy number
-variation, e.g., inversions.  Large-range CNVs are often better detected by WGS CNV calling.
-
-The WGS SV calling step is mostly followed by WGS SV filtration to reduce the FDR and remove
-artifacts.
-
-.. warning::
-
-    Note that only one NGS library is currently supported per bio entity/donor, also if you have
-    both Illumina and PacBio data for one patient, for example.  This means that you have to
-    create a separate patient with different pk (and secondary id if you only use secondary id for
-    file names) for the PacBio data set or create the patient in another project.
-
-==========
-Step Input
-==========
-
-The variant annotation step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` step.
-
-===========
-Step Output
-===========
-
-For all pedigrees, variant calling will be performed on the primary DNA NGS libraries of all
-members, separately for each configured read mapper and variant caller.  The name of the primary
-DNA NGS library of the index will be used as an identification token in the output file.  For each
-read mapper, variant caller, and pedigree, the following files will be generated:
-
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
-
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- bwa.delly2.P001-N1-DNA1-WGS1-4
-    |   `-- out
-    |       |-- bwa.delly2.P001-N1-DNA1-WGS1-4.vcf.gz
-    |       |-- bwa.delly2.P001-N1-DNA1-WGS1-4.vcf.gz.tbi
-    |       |-- bwa.delly2.P001-N1-DNA1-WGS1-4.vcf.gz.md5
-    |       `-- bwa.delly2.P001-N1-DNA1-WGS1-4.vcf.gz.tbi.md5
-    [...]
-
-Generally, these files will be unfiltered, i.e., contain low-quality variants.
-
---------------
-Delly 2 Output
---------------
-
-The Delly 2 workflow used in this pipeline step incorporates the variants of the whole cohort for
-regenotyping.
-
-.. note::
-
-    The file will contain variant records for variants not present in the pedigree at hand. This
-    will change in the future and variants not present in the pedigree will be removed.
-
-====================
-Global Configuration
-====================
-
-- ``static_data_config/reference/path`` must be set appropriately
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_sv_calling_wgs.rst
-
-=============================
-Available Germline SV Callers
-=============================
-
-The following germline SV callers are currently available
-
-- ``"dna"`` (Illumina)
-    - ``"delly2"``
-    - ``"manta"``
-
-- ``"dna_long"`` (PacBio)
-    - ``"pb_honey_spots"``
-    - ``"sniffles"``
-    - ``"sniffles2"``
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
 """
-
-# TODO: remove variants not in pedigree after the final merge step
-# TODO: assumption: same platform type
-# TODO: only one primary NGS library!
-# TODO: only WGS libraries!
 
 from collections import OrderedDict
 import itertools
@@ -113,7 +7,7 @@ import os
 import sys
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -122,6 +16,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
 
@@ -134,7 +29,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available (short) DNA WGS SV callers
-DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel")
+DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel", "melt")
 
 #: Available (long) DNA WGS SV callers
 LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
@@ -147,7 +42,10 @@ step_config:
     tools:
       dna: [delly2] # Required if short-read mapper used; otherwise, leave empty. Example: 'delly2'.
       dna_long: []  # Required if long-read mapper used (PacBio/Oxford Nanopore); otherwise, leave empty. Example: 'sniffles'.
+
     path_ngs_mapping: ../ngs_mapping    # REQUIRED
+
+    # Short-read SV calling tool configuration
     delly2:
       path_exclude_tsv: null  # optional
       max_threads: 16
@@ -157,16 +55,29 @@ step_config:
       mad_cutoff: 9
     manta:
       max_threads: 16
-    ignore_chroms:
-    - NC_007605  # herpes virus
-    - hs37d5     # GRCh37 decoy
-    - chrEBV     # Eppstein-Barr Virus
-    - '*_decoy'  # decoy contig
-    - 'HLA-*'    # HLA genes
-    - 'chrUn_*'  # unplaced contigs
     popdel:
       window_size: 10000000
       max_sv_size: 20000  # == padding
+    gcnv:
+      # Path to gCNV model - will execute analysis in CASE MODE.
+      #
+      # Example of precomputed model:
+      # - library: "Agilent SureSelect Human All Exon V6"  # Library name
+      #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
+      #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
+      precomputed_model_paths: []  # REQUIRED
+
+      # Path to BED file with uniquely mappable regions.
+      path_uniquely_mapable_bed: null  # REQUIRED
+    melt:
+      me_refs_infix: 1KGP_Hg19
+      me_types:
+      - ALU
+      - LINE1
+      - SVA
+      genes_file: add_bed_files/1KGP_Hg19/hg19.genes.bed  # adjust, e.g., Hg38/Hg38.genes.bed
+
+    # Long-read SV calling tool configuration
     pb_honey_spots:
       num_threads: 16
     sniffles:
@@ -174,13 +85,22 @@ step_config:
     sniffles2:
       num_threads: 16
       tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed  # REQUIRED
+
+    # Common configuration
+    ignore_chroms:
+    - NC_007605  # herpes virus
+    - hs37d5     # GRCh37 decoy
+    - chrEBV     # Eppstein-Barr Virus
+    - '*_decoy'  # decoy contig
+    - 'HLA-*'    # HLA genes
+    - 'chrUn_*'  # unplaced contigs
 """
 
 
 class Delly2StepPart(BaseStepPart):
     """WGS SV identification using Delly2
 
-    Delly2 supports the calling based on whole cohorts.  The rough steps are as follows:
+    Delly2 supports the calling based on pedigrees.  The rough steps are as follows:
 
     - Perform variant calling on each sample individually ("delly2_call")
     - Merge called variants to get a cohort-wide site list ("delly2_merge_calls")
@@ -432,106 +352,20 @@ class MantaStepPart(BaseStepPart):
         )
 
 
-class SvTkStepPart(BaseStepPart):
-    """svtk implementation"""
-
-    #: Step name
-    name = "svtk"
-
-    #: Actions in svtk workflow
-    actions = ("standardize",)
-
-    #: Directory infixes
-    dir_infixes = {
-        "standardize": r"{mapper,[^\.]+}.{caller,[^\.]+}.svtk_standardize.{library_name,[^\.]+}",
-    }
+class GcnvWgsStepPart(RunGcnvStepPart):
+    """WGS CNV calling with GATK4 gCNV"""
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{caller}.svtk_{step}.{{index_ngs_library}}/out/"
-            "{{mapper}}.{caller}.svtk_{step}.{{index_ngs_library}}{ext}"
-        )
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-        # Build shortcut from library name to library info
-        self.library_name_to_library = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.library_name_to_library.update(sheet.library_name_to_library)
-
-    def get_input_files(self, action):
-        """Return appropriate input function for the given action"""
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "standardize": self._get_input_files_standardize,
-        }
-        return mapping[action]
+        # Take shortcut from library to library kit.
+        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
 
     @dictify
-    def _get_input_files_standardize(self, wildcards):
-        """Return input files for "standardize" action"""
-        tpl = (
-            "output/{mapper}.{caller_infix}.{library_name}/out/"
-            "{mapper}.{caller_infix}.{library_name}{ext}"
-        )
-        if wildcards.caller == "delly2":
-            caller_infix = "delly2.call"
-            name_ext = {"calls": ".bcf"}
-        else:
-            name_ext = {"calls": ".vcf.gz"}
-        for name, ext in name_ext.items():
-            yield name, tpl.format(ext=ext, caller_infix=caller_infix, **wildcards)
-
-    def _donors_with_dna_ngs_library(self):
-        """Yield donors with DNA NGS library"""
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    yield donor
-
-    def get_ped_members(self, wildcards):
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        return " ".join(
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        )
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output paths for the given action; include wildcards"""
-        # Validate action
-        self._validate_action(action)
-        infix = self.dir_infixes[action]
-        infix2 = infix.replace(r",[^\.]+", "")
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            infix = self.dir_infixes[action].replace(r",[^\.]+", "")
-            yield name, "work/" + infix + "/out/" + infix2 + ext
-
-    def get_log_file(self, action):
-        """Return log file path for the given action; includes wildcards"""
-        # Validate action
-        self._validate_action(action)
-        infix = self.dir_infixes[action]
-        infix2 = infix.replace(r",[^\.]+", "")
-        return f"work/{infix2}/log/{infix2}.log"
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="04:00:00",  # 4 hours
-            memory=f"{4 * 1024}M",
-        )
+    def _build_ngs_library_to_kit(self):
+        # No mapping given as WGS, we will use the "default" one for all.
+        for donor in self.parent.all_donors():
+            if donor.dna_ngs_library:
+                yield donor.dna_ngs_library.name, "default"
 
 
 class PopDelStepPart(BaseStepPart):
@@ -686,6 +520,215 @@ class PopDelStepPart(BaseStepPart):
             threads=2,
             time="4-00:00:00",  # 4 days
             memory=f"{12 * 1024 * 2}M",
+        )
+
+
+class MeltStepPart(BaseStepPart):
+    """MEI calling using Melt
+
+    We perform cohort-wide genotyping of the mobile elements.  This requires a somewhat complicated
+    workflow.  The methods input/output/etc. delegate to appropriate privated functions, thus
+    this class is somewhat lengthy.  In the, however, it's not that complex.
+    """
+
+    #: Step name
+    name = "melt"
+
+    #: Class available actions
+    actions = (
+        "preprocess",
+        "indiv_analysis",
+        "group_analysis",
+        "genotype",
+        "make_vcf",
+        "merge_vcf",
+        "reorder_vcf",
+    )
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        #: All individual's primary NGS libraries
+        self.all_dna_ngs_libraries = []
+        for sheet in self.parent.shortcut_sheets:
+            for donor in sheet.donors:
+                if donor.dna_ngs_library:
+                    self.all_dna_ngs_libraries.append(donor.dna_ngs_library.name)
+        #: Linking NGS libraries to pedigree
+        self.index_ngs_library_to_pedigree = OrderedDict()
+        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
+            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+
+    def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        mapping = {
+            "preprocess": self._get_input_files_preprocess,
+            "indiv_analysis": self._get_input_files_indiv_analysis,
+            "group_analysis": self._get_input_files_group_analysis,
+            "genotype": self._get_input_files_genotype,
+            "make_vcf": self._get_input_files_make_vcf,
+            "merge_vcf": self._get_input_files_merge_vcf,
+            "reorder_vcf": self._get_input_files_reorder_vcf,
+        }
+        return mapping[action]
+
+    @dictify
+    def _get_input_files_preprocess(self, wildcards):
+        # Get shorcut to NGS mapping sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
+            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+            yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
+
+    @dictify
+    def _get_input_files_indiv_analysis(self, wildcards):
+        tpl = "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}{ext}"
+        yield "orig_bam", tpl.format(ext=".bam", **wildcards)
+        yield "orig_bai", tpl.format(ext=".bam.bai", **wildcards)
+        yield "disc_bam", tpl.format(ext=".bam.disc", **wildcards)
+        yield "disc_bai", tpl.format(ext=".bam.disc.bai", **wildcards)
+
+    @listify
+    def _get_input_files_group_analysis(self, wildcards):
+        for library_name in self.all_dna_ngs_libraries:
+            yield "work/{mapper}.melt.indiv_analysis.{me_type}/out/.done.{library_name}".format(
+                library_name=library_name, **wildcards
+            )
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards):
+        yield "done", "work/{mapper}.melt.group_analysis.{me_type}/out/.done".format(**wildcards)
+        yield "bam", "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}.bam".format(
+            **wildcards
+        )
+
+    @listify
+    def _get_input_files_make_vcf(self, wildcards):
+        yield "work/{mapper}.melt.group_analysis.{me_type}/out/.done".format(**wildcards)
+        # Probably, best create a create-list intermediate target
+        for library_name in self.all_dna_ngs_libraries:
+            yield "work/{mapper}.melt.genotype.{me_type}/out/.done.{library_name}".format(
+                library_name=library_name, **wildcards
+            )
+
+    @listify
+    def _get_input_files_merge_vcf(self, wildcards):
+        for me_type in self.config["melt"]["me_types"]:
+            yield "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz".format(
+                me_type=me_type, **wildcards
+            )
+
+    @dictify
+    def _get_input_files_reorder_vcf(self, wildcards):
+        yield "vcf", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz".format(
+            **wildcards
+        )
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi".format(
+            **wildcards
+        )
+
+    def get_ped_members(self, wildcards):
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+        return " ".join(
+            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+        )
+
+    def get_output_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        mapping = {
+            "preprocess": self._get_output_files_preprocess,
+            "indiv_analysis": self._get_output_files_indiv_analysis,
+            "group_analysis": self._get_output_files_group_analysis,
+            "genotype": self._get_output_files_genotype,
+            "make_vcf": self._get_output_files_make_vcf,
+            "merge_vcf": self._get_output_files_merge_vcf,
+            "reorder_vcf": self._get_output_files_reorder_vcf,
+        }
+        return mapping[action]()
+
+    @dictify
+    def _get_output_files_preprocess(self):
+        # Note that mapper is not part of the output BAM file as MELT infers sample file from BAM
+        # file name instead of using sample name from BAM header.
+        tpl = "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}%s"
+        yield "orig_bam", tpl % ".bam"
+        yield "orig_bai", tpl % ".bam.bai"
+        yield "disc_bam", tpl % ".bam.disc"
+        yield "disc_bai", tpl % ".bam.disc.bai"
+        yield "disc_fq", tpl % ".bam.fq"
+
+    @dictify
+    def _get_output_files_indiv_analysis(self):
+        yield "done", touch("work/{mapper}.melt.indiv_analysis.{me_type}/out/.done.{library_name}")
+
+    @dictify
+    def _get_output_files_group_analysis(self):
+        yield "done", touch("work/{mapper}.melt.group_analysis.{me_type}/out/.done")
+
+    @dictify
+    def _get_output_files_genotype(self):
+        yield "done", touch("work/{mapper}.melt.genotype.{me_type}/out/.done.{library_name}")
+
+    @dictify
+    def _get_output_files_make_vcf(self):
+        yield "list_txt", "work/{mapper}.melt.genotype.{me_type}/out/list.txt"
+        yield "done", touch("work/{mapper}.melt.make_vcf.{me_type}/out/.done")
+        yield "vcf", "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz"
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf.{me_type}/out/{me_type}.final_comp.vcf.gz.tbi"
+
+    @dictify
+    def _get_output_files_merge_vcf(self):
+        yield "vcf", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz"
+        yield "vcf_tbi", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi"
+        yield "vcf_md5", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.md5"
+        yield "vcf_tbi_md5", "work/{mapper}.melt.merge_vcf/out/{mapper}.melt.merge_vcf.vcf.gz.tbi.md5"
+
+    @dictify
+    def _get_output_files_reorder_vcf(self):
+        tpl = "work/{mapper}.melt.{index_library_name}/out/{mapper}.melt.{index_library_name}.%s%s"
+        key_ext = {"vcf": "vcf.gz", "vcf_tbi": "vcf.gz.tbi"}
+        for key, ext in key_ext.items():
+            yield key, tpl % (ext, "")
+            yield key + "_md5", tpl % (ext, ".md5")
+
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
+        if action == "preprocess":
+            return "work/{mapper}.melt.preprocess.{library_name}/log/snakemake.wgs_mei_calling.log"
+        elif action in ("indiv_analysis", "genotype"):
+            return (
+                "work/{{mapper}}.melt.{action}.{{me_type}}/log/"
+                "snakemake.wgs_mei_calling.{{library_name}}.log"
+            ).format(action=action)
+        elif action in ("indiv_analysis", "group_analysis", "genotype", "make_vcf"):
+            return (
+                "work/{{mapper}}.melt.{action}.{{me_type}}/log/" "snakemake.wgs_mei_calling.log"
+            ).format(action=action)
+        elif action == "merge_vcf":
+            return "work/{mapper}.melt.merge_vcf/log/snakemake.wgs_mei_calling.log"
+        elif action == "reorder_vcf":
+            return (
+                "work/{mapper}.melt.reorder_vcf.{index_library_name}/log/"
+                "snakemake.wgs_mei_calling.log"
+            )
+        return None
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=6,
+            time="5-07:00:00",  # ~5.3 days
+            memory=f"{int(3.75 * 1024 * 6)}M",
         )
 
 
@@ -940,7 +983,7 @@ class Sniffles2StepPart(BaseStepPart):
         )
 
 
-class WgsSvCallingWorkflow(BaseStep):
+class SvCallingWgsWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
     name = "sv_calling_wgs"
@@ -965,8 +1008,8 @@ class WgsSvCallingWorkflow(BaseStep):
             (
                 Delly2StepPart,
                 MantaStepPart,
-                SvTkStepPart,
                 PopDelStepPart,
+                GcnvWgsStepPart,
                 PbHoneySpotsStepPart,
                 SnifflesStepPart,
                 Sniffles2StepPart,
