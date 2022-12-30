@@ -34,9 +34,13 @@ def minimal_config():
             tools:
               dna: ['bwa']
             compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
+            target_cov_report:
+              path_target_interval_list_mapping:
+              - name: "Agilent SureSelect Human All Exon V6"
+                pattern: "Agilent SureSelect Human All Exon V6*"
+                path: "path/to/targets.bed"
 
           variant_calling:
             baf_file_generation:

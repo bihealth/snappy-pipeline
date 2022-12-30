@@ -47,7 +47,7 @@ export REF={snakemake.config[static_data_config][reference][path]}
 export MALLOC_ARENA_MAX=4
 
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 echo {snakemake.params[args][sample_list]} \
 | tr ' ' '\n' \
