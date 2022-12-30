@@ -247,3 +247,22 @@ rule variant_calling_baf_file_generation:
         **wf.get_log_file("baf_file_generation", "run"),
     wrapper:
         wf.wrapper_path("baf_file_generation")
+
+
+# Run bcftools roh ------------------------------------------------------------
+
+
+rule variant_calling_bcftools_roh:
+    input:
+        unpack(wf.get_input_files("bcftools_roh", "run")),
+    output:
+        **wf.get_output_files("bcftools_roh", "run"),
+    threads: wf.get_resource("bcftools_roh", "run", "threads")
+    resources:
+        time=wf.get_resource("bcftools_roh", "run", "time"),
+        memory=wf.get_resource("bcftools_roh", "run", "memory"),
+        partition=wf.get_resource("bcftools_roh", "run", "partition"),
+    log:
+        wf.get_log_file("bcftools_roh", "run"),
+    wrapper:
+        wf.wrapper_path("bcftools_roh")

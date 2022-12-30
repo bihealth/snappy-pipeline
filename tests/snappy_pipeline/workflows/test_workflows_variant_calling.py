@@ -482,6 +482,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
     expected = [
         "baf_file_generation",
         "bcftools_call",
+        "bcftools_roh",
         "bcftools_stats",
         "gatk3_hc",
         "gatk3_ug",
@@ -563,10 +564,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "gatk3_hc",
             "gatk3_ug",
         )
-        for step in (
-            "bcftools_stats_run",
-            "baf_file_generation_run",
-        )
+        for step in ("bcftools_stats_run", "baf_file_generation_run", "bcftools_roh_run")
     ]
     tpl = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
@@ -612,6 +610,21 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "gatk3_ug",
         )
         for ext in ("bw", "bw.md5")
+    ]
+    tpl = (
+        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
+        "roh/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
+    )
+    expected += [
+        tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
+        for i in (1, 4)
+        for mapper in ("bwa",)
+        for var_caller in (
+            "bcftools_call",
+            "gatk3_hc",
+            "gatk3_ug",
+        )
+        for ext in ("txt", "txt.md5")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(variant_calling_workflow.get_result_files()))
