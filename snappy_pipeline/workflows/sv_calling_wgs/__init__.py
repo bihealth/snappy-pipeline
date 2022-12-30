@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``wgs_sv_calling`` step
+"""Implementation of the ``sv_calling_wgs`` step
 
-The (germline) ``wgs_sv_calling`` step takes as the input the results of the ``ngs_mapping`` step
+The (germline) ``sv_calling_wgs`` step takes as the input the results of the ``ngs_mapping`` step
 (aligned NGS reads) and performs germline SV calling on them.  The result are called SVs in VCF
 format.
 
@@ -78,7 +78,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_wgs_sv_calling.rst
+.. include:: DEFAULT_CONFIG_sv_calling_wgs.rst
 
 =============================
 Available Germline SV Callers
@@ -139,11 +139,11 @@ DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel")
 #: Available (long) DNA WGS SV callers
 LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
 
-#: Default configuration for the wgs_sv_calling step
+#: Default configuration for the sv_calling_wgs step
 DEFAULT_CONFIG = r"""
 # Default configuration
 step_config:
-  wgs_sv_calling:
+  sv_calling_wgs:
     tools:
       dna: [delly2] # Required if short-read mapper used; otherwise, leave empty. Example: 'delly2'.
       dna_long: []  # Required if long-read mapper used (PacBio/Oxford Nanopore); otherwise, leave empty. Example: 'sniffles'.
@@ -943,7 +943,7 @@ class Sniffles2StepPart(BaseStepPart):
 class WgsSvCallingWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
-    name = "wgs_sv_calling"
+    name = "sv_calling_wgs"
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -1056,7 +1056,7 @@ class WgsSvCallingWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "wgs_sv_calling", "path_ngs_mapping"),
+            ("step_config", "sv_calling_wgs", "path_ngs_mapping"),
             "Path to NGS mapping not configured but required for variant calling",
         )
         self.ensure_w_config(
@@ -1064,13 +1064,13 @@ class WgsSvCallingWorkflow(BaseStep):
             "Path to reference FASTA not configured but required for variant calling",
         )
         # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["wgs_sv_calling"]["tools"]["dna"])
+        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna"])
         invalid = selected - set(DNA_WGS_SV_CALLERS)
         if invalid:
             raise Exception(
                 "Invalid short-read WGS SV caller selected: {}".format(list(sorted(invalid)))
             )
-        selected = set(self.w_config["step_config"]["wgs_sv_calling"]["tools"]["dna_long"])
+        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna_long"])
         invalid = selected - set(LONG_DNA_WGS_SV_CALLERS)
         if invalid:
             raise Exception(

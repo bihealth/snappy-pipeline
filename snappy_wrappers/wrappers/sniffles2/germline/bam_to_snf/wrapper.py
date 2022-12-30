@@ -14,7 +14,7 @@ trap "rm -rf $TMPDIR" EXIT ERR
 sniffles \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --input {snakemake.input.bam} \
-    --tandem-repeats {snakemake.config[step_config][wgs_sv_calling][sniffles2][tandem_repeats]} \
+    --tandem-repeats {snakemake.config[step_config][sv_calling_wgs][sniffles2][tandem_repeats]} \
     --vcf $TMPDIR/tmp.vcf \
     --snf {snakemake.output.snf} \
     --threads {snakemake.threads}
