@@ -54,7 +54,6 @@ Project Info
     step/ngs_data_qc
     step/ngs_mapping
     step/ngs_sanity_checking
-    step/roh_calling
     step/somatic_gene_fusion_calling
     step/somatic_neoepitope_prediction
     step/somatic_ngs_sanity_checking

@@ -97,3 +97,9 @@ Moving GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2 to /home/holtgrem_c/miniconda
 ```
 
 You are now ready to run GATK v3 from this environment.
+
+## Development Notes
+
+Here, you can find the required layout for post-PR commit messages:
+
+- https://github.com/amannn/action-semantic-pull-request#configuration
