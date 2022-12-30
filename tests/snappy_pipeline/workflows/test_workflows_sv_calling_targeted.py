@@ -39,6 +39,8 @@ def minimal_config():
 
           sv_calling_targeted:
             tools:
+              - delly2
+              - manta
               - gcnv
             path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
@@ -311,18 +313,6 @@ def test_target_seq_cnv_calling_workflow_all_donors(
     for donor in actual:
         msg = assert_message_tpl.format(donor_name=donor.dna_ngs_library.name)
         assert donor.dna_ngs_library.name in expected, msg
-
-
-def test_target_seq_cnv_calling_workflow_all_background_donors(
-    sv_calling_targeted_workflow, sv_calling_targeted_workflow_large_cohort_background
-):
-    """Tests SvCallingTargetedWorkflow.all_background_donors()"""
-    # Test small foreground sample sheet
-    actual = sv_calling_targeted_workflow.all_background_donors()
-    assert len(actual) == 0, "Small sample sheet should contain zero background donors."
-    # Test large background sample sheet
-    actual = sv_calling_targeted_workflow_large_cohort_background.all_background_donors()
-    assert len(actual) == 501, "Large sample sheet should contain 501 background donors."
 
 
 def test_target_seq_cnv_calling_workflow_get_library_count(sv_calling_targeted_workflow):

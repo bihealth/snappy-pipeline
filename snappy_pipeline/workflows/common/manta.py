@@ -18,10 +18,10 @@ from snappy_wrappers.resource_usage import ResourceUsage
 
 
 class MantaStepPart(
+    SvCallingGetLogFileMixin,
+    SvCallingGetResultFilesMixin,
     ForwardSnakemakeFilesMixin,
     ForwardResourceUsageMixin,
-    SvCallingGetResultFilesMixin,
-    SvCallingGetLogFileMixin,
     BaseStepPart,
 ):
     """Perform SV calling on exomes using Manta"""
@@ -56,7 +56,7 @@ class MantaStepPart(
 
     @dictify
     def _get_output_files_run(self):
-        infix = "{mapper}.delly2.{library_name}"
+        infix = "{mapper}.manta.{library_name}"
         work_files = {
             "vcf": f"work/{infix}/out/{infix}.vcf.gz",
             "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
@@ -64,5 +64,5 @@ class MantaStepPart(
             "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
         }
         yield from augment_work_dir_with_output_links(
-            work_files, self.get_log_file("merge_genotypes").values()
+            work_files, self.get_log_file().values()
         ).items()

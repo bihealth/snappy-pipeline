@@ -243,10 +243,10 @@ class PopDelStepPart(
 
 
 class MeltStepPart(
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
+    ForwardSnakemakeFilesMixin,
+    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """MEI calling using MELT

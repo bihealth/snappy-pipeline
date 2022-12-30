@@ -1,5 +1,7 @@
 """Code shared by steps in ``sv_calling_{targeted,wgs}``"""
 
+import typing
+
 from snakemake.io import expand
 
 from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
@@ -15,6 +17,9 @@ class SvCallingGetResultFilesMixin:
         The implementation will return a list of all paths with prefix ``output/` that are
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
+        if self.name not in DictQuery(self.w_config).get(f"step_config/{self.parent.name}/tools"):
+            return  # tool not enabled, no result files
+
         ngs_mapping_config = DictQuery(self.w_config).get("step_config/ngs_mapping")
         for mapper in ngs_mapping_config["tools"]["dna"]:
             # Get list of result path templates.
@@ -39,13 +44,13 @@ class SvCallingGetLogFileMixin:
     """Mixin that provides ``get_log_files()`` for SV calling steps"""
 
     @dictify
-    def get_log_file(self, action):
+    def get_log_file(self, action: typing.Optional[str] = None):
         """Return dict of log files in the "log" directory"""
         _ = action
-        if action != "merge_genotypes":
-            infix = f"delly2_{action}"
+        if action and action != self.actions[-1]:
+            infix = f"{self.name}_{action}"
         else:
-            infix = "delly2"
+            infix = self.name
         prefix = f"work/{{mapper}}.{infix}.{{library_name}}/log/{{mapper}}.{infix}.{{library_name}}.sv_calling"
         key_ext = (
             ("log", ".log"),

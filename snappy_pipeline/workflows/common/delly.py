@@ -18,10 +18,10 @@ from snappy_wrappers.resource_usage import ResourceUsage
 
 
 class Delly2StepPart(
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
+    ForwardSnakemakeFilesMixin,
+    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """Perform SV calling on exomes using Delly2"""
