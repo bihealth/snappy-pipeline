@@ -608,6 +608,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
     expected = [
         "bam_collect_doc",
         "bwa",
+        "bwa_mem2",
         "external",
         "link_in",
         "minimap2",
@@ -615,8 +616,8 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "star",
         "target_coverage_report",
     ]
-    actual = list(sorted(ngs_mapping_workflow.sub_steps.keys()))
-    assert actual == expected
+    actual = ngs_mapping_workflow.sub_steps.keys()
+    assert sorted(actual) == sorted(expected)
 
 
 def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
