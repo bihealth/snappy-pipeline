@@ -64,11 +64,11 @@ input_files()
     set -x
 
     if [[ -z "{input_right}" ]]; then
-        zcat force {input_right}
+        (zcat force {input_right})
     else
         seqtk mergepe \
-            <(zcat {input_right} | tee >(wc -l | $TMPDIR/count_left)) \
-            <(zcat {input_right} | tee >(wc -l | $TMPDIR/count_right))
+            <(zcat {input_right} | tee >(wc -l > $TMPDIR/count_left)) \
+            <(zcat {input_right} | tee >(wc -l > $TMPDIR/count_right))
     fi
 }}
 
@@ -107,20 +107,14 @@ run_bwa_mem2()
         split_as_supp_flag="-M"
     fi
 
-    if [[ $paired -eq 1 ]]; then
-        fastq_right=${{reads_right[$i]}}
-    else
-        fastq_right=
-    fi
-
     if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
-        rg_arg="-R @RG\tID:{snakemake.params.args[sample_name]}.$i\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
+        rg_arg="-R @RG\tID:{snakemake.params.args[sample_name]}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
     else
         rg_arg=
     fi
 
-    bwa mem \
-        $INDEX \
+    bwa-mem2 mem \
+        {snakemake.config[step_config][ngs_mapping][bwa_mem2][path_index]} \
         $split_as_supp_flag \
         $rg_arg \
         -p \
@@ -135,21 +129,21 @@ run_bwa_mem2()
 postproc_bam()
 {{
     set -x
-    out=$1
 
     samtools sort \
         -T $TMPDIR/sort_bam \
         -m {snakemake.config[step_config][ngs_mapping][bwa_mem2][memory_bam_sort]} \
         -@ {snakemake.config[step_config][ngs_mapping][bwa_mem2][num_threads_bam_sort]} \
         -O BAM \
-        -u \
         -o /dev/stdout \
+        /dev/stdin \
     | tee >(samtools stats    /dev/stdin >{snakemake.output.report_bamstats_txt}) \
-    | tee >(samtools flagstat /dev/stdin >{snakemake.output.report_bamstats_txt}) \
+    | tee >(samtools flagstat /dev/stdin >{snakemake.output.report_flagstats_txt}) \
     | tee >(samtools index    /dev/stdin -o {snakemake.output.bam_bai}) \
     | tee >(compute-md5       /dev/stdin {snakemake.output.bam_md5}) \
-    | bgzip -@ 2 -c \
     > {snakemake.output.bam}
+
+    compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_bai_md5}
 
     touch \
         {snakemake.output.bam} \
@@ -157,17 +151,21 @@ postproc_bam()
         {snakemake.output.bam_bai} \
         {snakemake.output.bam_bai_md5}
 
-    compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_bai_md5}
+    samtools idxstats {snakemake.output.bam} >{snakemake.output.report_idxstats_txt}
 
-    samtools idxstats {snakemake.output.bam_bai} >{snakemake.output.report_bamstats_txt})
+    compute-md5 {snakemake.output.report_bamstats_txt}  {snakemake.output.report_bamstats_txt_md5}
+    compute-md5 {snakemake.output.report_flagstats_txt} {snakemake.output.report_flagstats_txt_md5}
+    compute-md5 {snakemake.output.report_idxstats_txt}  {snakemake.output.report_idxstats_txt_md5}
 }}
 
 # Check input line counts written out in input_files()
 check_input_line_counts()
 {{
     if [[ -e $TMPDIR/count_left ]]; then
-        if diff $TMPDIR/count_left $TMPDIR/count_right >/dev/null; then
+        if ! diff $TMPDIR/count_left $TMPDIR/count_right >/dev/null; then
             >&2 echo "Different number of lines in left/right file."
+            >&2 cat $TMPDIR/count_left
+            >&2 cat $TMPDIR/count_right
             exit 1
         fi
     fi

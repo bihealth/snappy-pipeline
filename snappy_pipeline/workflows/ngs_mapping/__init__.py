@@ -706,7 +706,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
         )
 
         # Check that the path to the BWA-MEM2 index is valid.
-        for ext in (".0123", "amb", ".ann", ".bwt.2bit.64", ".pac"):
+        for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"):
             expected_path = self.config["bwa_mem2"]["path_index"] + ext
             if not os.path.exists(expected_path):  # pragma: no cover
                 raise InvalidConfiguration(
