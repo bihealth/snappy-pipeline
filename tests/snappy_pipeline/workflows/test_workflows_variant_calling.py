@@ -527,7 +527,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "wrapper.py",
             "wrapper.py.md5",
         )
-        for mapper in ("bwa", )
+        for mapper in ("bwa",)
         for var_caller in (
             "bcftools_call",
             "gatk3_hc",
