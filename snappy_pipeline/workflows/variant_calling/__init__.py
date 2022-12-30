@@ -745,13 +745,8 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     """ROH calling with `bcftools roh`."""
 
     name = "bcftools_roh"
-
     actions = ("run",)
-
-    report_per_donor = True
-
-    def __init__(self, parent):
-        super().__init__(parent)
+    report_per_donor = False
 
     def get_input_files(self, action: str) -> SnakemakeDict:
         """Return required input files"""
