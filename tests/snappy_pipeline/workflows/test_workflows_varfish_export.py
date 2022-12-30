@@ -106,7 +106,7 @@ def test_varfish_annotator_step_part_get_input_files_annotate(varfish_export_wor
     )
     expected = {
         "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
-        "vcf": base_name + ".vcf.gz",
+        "vcf": [base_name + ".vcf.gz"],
     }
     # Get actual
     actual = varfish_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
