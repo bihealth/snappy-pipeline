@@ -94,7 +94,7 @@ varfish-annotator \
     --output-gts {snakemake.output.gts}
 
 # Copy out PED file to output
-cp {snakemake.input.ped} {snakemake.output.ped}
+cp -H {snakemake.input.ped} {snakemake.output.ped}
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}

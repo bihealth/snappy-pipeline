@@ -59,7 +59,7 @@ import re
 import typing
 import warnings
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background, Pedigree
+from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
 from snakemake.io import Wildcards, expand
 
@@ -253,18 +253,24 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     @dictify
     def _get_input_files_annotate(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
-        tpl = (
-            "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}"
-        )
-        key_ext = {"vcf": ".vcf.gz"}
+
         variant_calling = self.parent.sub_workflows["variant_calling"]
-        for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext).format(
-                mapper=wildcards.mapper,
-                var_caller=wildcards.var_caller,
-                index_ngs_library=wildcards.index_ngs_library,
+
+        path = (
+            "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
+            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
+        )
+
+        vcfs = []
+        for var_caller in self.parent.config["tools_variant_calling"]:
+            vcfs.append(
+                variant_calling(path).format(
+                    mapper=wildcards.mapper,
+                    var_caller=var_caller,
+                    index_ngs_library=wildcards.index_ngs_library,
+                )
             )
+        yield "vcf", vcfs
 
     @dictify
     def _get_output_files_annotate(self):
@@ -302,21 +308,30 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     def _get_input_files_annotate_svs(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        path_tpl = "output/{mapper}.{index_ngs_library}/out/{mapper}.{index_ngs_library}"
-        key_ext = {"vcf": ".vcf.gz"}
         if self.parent.config["path_sv_calling_targeted"]:
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
+            sv_callers = self.parent.config["tools_sv_calling_targeted"]
         elif self.parent.config["sv_calling_wgs"]:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
+            sv_callers = self.parent.config["tools_sv_calling_wgs"]
         else:
             raise RuntimeError("Neither targeted nor WGS SV calling configured")
-        for key, ext in key_ext.items():
-            path = f"{path_tpl}{ext}"
-            yield key, sv_calling(path).format(
-                mapper=wildcards.mapper,
-                var_caller=wildcards.var_caller,
-                index_ngs_library=wildcards.index_ngs_library,
+
+        path = (
+            "output/{mapper}.{sv_caller}.{index_ngs_library}/"
+            "out/{mapper}.{sv_caller}.{index_ngs_library}.vcf.gz"
+        )
+
+        vcfs = []
+        for sv_caller in sv_callers:
+            vcfs.append(
+                sv_calling(path).format(
+                    mapper=wildcards.mapper,
+                    sv_caller=sv_caller,
+                    index_ngs_library=wildcards.index_ngs_library,
+                )
             )
+        yield "vcf", vcfs
 
     @dictify
     def _get_output_files_annotate_svs(self):
@@ -341,7 +356,6 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
-        vals = {"mapper": wildcards.mapper, "var_caller": wildcards.var_caller}
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
@@ -351,17 +365,17 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
             if not donor.dna_ngs_library:
                 continue
             tpl = (
-                "output/{mapper}.{index_ngs_library}/report/bam_qc/"
-                "{mapper}.{index_ngs_library}.bam.%s.txt"
-            ).format(**vals, index_ngs_library=donor.dna_ngs_library.name)
+                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/bam_qc/"
+                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.bam.%s.txt"
+            )
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(ngs_mapping(tpl % key))
             if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
                 continue
             path = (
-                "output/{mapper}.{index_ngs_library}/report/cov_qc/"
-                "{mapper}.{index_ngs_library}.txt"
-            ).format(**vals, index_ngs_library=donor.dna_ngs_library.name)
+                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/cov_qc/"
+                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.txt"
+            )
             result["cov_qc"].append(ngs_mapping(path))
         return result
 
@@ -457,6 +471,11 @@ class VarfishExportWorkflow(BaseStep):
             and "sv_calling_targeted" in self.w_config["step_config"]
         ):
             self.config["tools_sv_calling_targeted"] = step_config["sv_calling_targeted"]["tools"]
+        if (
+            not self.config["tools_sv_calling_wgs"]
+            and "sv_calling_wgs" in self.w_config["step_config"]
+        ):
+            self.config["tools_sv_calling_wgs"] = step_config["sv_calling_wgs"]["tools"]
 
         # Build additional information
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
