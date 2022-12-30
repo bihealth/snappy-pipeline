@@ -527,7 +527,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "wrapper.py",
             "wrapper.py.md5",
         )
-        for mapper in ("bwa",)
+        for mapper in ("bwa", )
         for var_caller in (
             "bcftools_call",
             "gatk3_hc",
@@ -536,6 +536,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         for step in (
             f"{var_caller}_run",
             "jannovar_stats_run",
+            "bcftools_roh_run",
         )
     ]
     base_out = (
@@ -565,33 +566,6 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "gatk3_ug",
         )
         for step in ("bcftools_stats_run", "baf_file_generation_run")
-    ]
-    base_out = (
-        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
-        "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{step}.{ext}"
-    )
-    expected += [
-        base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller, step=step)
-        for i in (1, 4)  # only for indices
-        for ext in (
-            "log",
-            "log.md5",
-            "conda_info.txt",
-            "conda_info.txt.md5",
-            "conda_list.txt",
-            "conda_list.txt.md5",
-            "environment.yaml",
-            "environment.yaml.md5",
-            "wrapper.py",
-            "wrapper.py.md5",
-        )
-        for mapper in ("bwa",)
-        for var_caller in (
-            "bcftools_call",
-            "gatk3_hc",
-            "gatk3_ug",
-        )
-        for step in ("bcftools_roh_run",)
     ]
     tpl = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"

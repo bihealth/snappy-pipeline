@@ -801,21 +801,9 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
     Statistics are computed overall and per-sample
     """
 
-    #: Step name
     name = "jannovar_stats"
-
-    #: Class available actions
     actions = ("run",)
-
-    #: Whether we generate per-donor files.
     report_per_donor = False
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
-            "{mapper}.{var_caller}.{index_library_name}"
-        )
 
     @dictify
     def get_input_files(self, action) -> SnakemakeDictItemsGenerator:
@@ -836,10 +824,12 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
+        base_path = (
+            "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
+            "{mapper}.{var_caller}.{index_library_name}"
+        )
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
-        work_files = {}
-        for key, ext in ext_names.items():
-            work_files[key] = self.base_path_out + ext
+        work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)

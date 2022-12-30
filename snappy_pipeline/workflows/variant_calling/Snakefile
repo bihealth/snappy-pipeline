@@ -263,6 +263,6 @@ rule variant_calling_bcftools_roh:
         memory=wf.get_resource("bcftools_roh", "run", "memory"),
         partition=wf.get_resource("bcftools_roh", "run", "partition"),
     log:
-        wf.get_log_file("bcftools_roh", "run"),
+        **wf.get_log_file("bcftools_roh", "run"),
     wrapper:
         wf.wrapper_path("bcftools_roh")
