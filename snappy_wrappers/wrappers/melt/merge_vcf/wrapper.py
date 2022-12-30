@@ -19,7 +19,7 @@ module load Java/1.7.0_80
 module load BCFtools
 module load HTSlib
 
-bcftools concat -a {snakemake.input} \
+bcftools concat -a {snakemake.input.vcf} \
 | bgzip -c \
 > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}

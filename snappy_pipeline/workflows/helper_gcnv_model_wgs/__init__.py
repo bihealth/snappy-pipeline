@@ -91,7 +91,7 @@ from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep
-from snappy_pipeline.workflows.gcnv.gcnv_build_model import BuildGcnvModelStepPart
+from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 #: Default configuration for the helper_gcnv_model_wgs schema

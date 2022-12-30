@@ -26,8 +26,7 @@ wf = WgsSvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcw
 
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
-    sv_calling_wgs_link_out_run,
+    sv_calling_wgs_write_pedigree,
 
 
 rule all:
@@ -37,16 +36,14 @@ rule all:
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Generic linking out ---------------------------------------------------------
+# Write out pedigree file -----------------------------------------------------
 
 
-rule sv_calling_wgs_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
+rule sv_calling_targeted_write_pedigree_run:
     output:
-        wf.get_output_files("link_out", "run"),
+        wf.get_output_files("write_pedigree", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
 
 # Structural Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,25 +144,6 @@ rule sv_calling_wgs_delly2_merge_genotypes:
         wf.wrapper_path("delly2/germline/merge_genotypes")
 
 
-# SVTK Steps ------------------------------------------------------------------
-
-
-rule wgs_sv_svtk_standardize:
-    input:
-        unpack(wf.get_input_files("svtk", "standardize")),
-    output:
-        **wf.get_output_files("svtk", "standardize"),
-    threads: wf.get_resource("svtk", "standardize", "threads")
-    resources:
-        time=wf.get_resource("svtk", "standardize", "time"),
-        memory=wf.get_resource("svtk", "standardize", "memory"),
-        partition=wf.get_resource("svtk", "standardize", "partition"),
-    log:
-        wf.get_log_file("svtk", "standardize"),
-    wrapper:
-        wf.wrapper_path("svtk/standardize")
-
-
 # Run PB Honey Spots ----------------------------------------------------------
 
 
@@ -258,7 +236,7 @@ rule sv_calling_wgs_popdel_profile:
     wildcard_constraints:
         index_ngs_library=r"[^\.]+",
     log:
-        wf.get_log_file("popdel", "profile"),
+        **wf.get_log_file("popdel", "profile"),
     wrapper:
         wf.wrapper_path("popdel/profile")
 
@@ -274,7 +252,7 @@ rule sv_calling_wgs_popdel_call:
         memory=wf.get_resource("popdel", "call", "memory"),
         partition=wf.get_resource("popdel", "call", "partition"),
     log:
-        wf.get_log_file("popdel", "call"),
+        **wf.get_log_file("popdel", "call"),
     wrapper:
         wf.wrapper_path("popdel/call")
 
@@ -290,7 +268,7 @@ rule sv_calling_wgs_popdel_concat_calls:
         memory=wf.get_resource("popdel", "concat_calls", "memory"),
         partition=wf.get_resource("popdel", "concat_calls", "partition"),
     log:
-        wf.get_log_file("popdel", "concat_calls"),
+        **wf.get_log_file("popdel", "concat_calls"),
     wrapper:
         wf.wrapper_path("popdel/concat_calls")
 
@@ -310,6 +288,6 @@ rule sv_calling_wgs_popdel_reorder_vcf:
     params:
         ped_members=wf.substep_getattr("popdel", "get_ped_members"),
     log:
-        wf.get_log_file("popdel", "reorder_vcf"),
+        **wf.get_log_file("popdel", "reorder_vcf"),
     wrapper:
         wf.wrapper_path("popdel/reorder_vcf")

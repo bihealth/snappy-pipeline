@@ -107,13 +107,13 @@ def sv_calling_wgs_workflow(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
     patch_module_fs(
-        "snappy_pipeline.workflows.gcnv.gcnv_run",
+        "snappy_pipeline.workflows.common.gcnv.gcnv_run",
         germline_sheet_fake_fs2_gcnv_model,
         mocker,
     )
     # Patch glob with expected model directories
     mocker.patch(
-        "snappy_pipeline.workflows.gcnv.gcnv_run.glob",
+        "snappy_pipeline.workflows.common.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
@@ -450,7 +450,7 @@ def test_gcnv_validate_ploidy_model_directory(
     for file_ in ploidy_model_files:
         fake_fs.fs.create_file(tpl.format(file_=file_))
     # Patch out file-system
-    patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.common.gcnv.gcnv_run", fake_fs, mocker)
 
     # Should return True as it is a directory and it contains the expected files
     assert sv_calling_wgs_workflow.substep_getattr("gcnv", "validate_ploidy_model_directory")(
@@ -478,7 +478,7 @@ def test_gcnv_validate_call_model_directory(
     for file_ in call_model_files:
         fake_fs.fs.create_file(tpl.format(file_=file_))
     # Patch out file-system
-    patch_module_fs("snappy_pipeline.workflows.gcnv.gcnv_run", fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.common.gcnv.gcnv_run", fake_fs, mocker)
 
     # Should return True as it is a directory and it contains the expected files
     assert sv_calling_wgs_workflow.substep_getattr("gcnv", "validate_call_model_directory")(
@@ -806,8 +806,18 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_log_file(sv_calling_
 def test_sv_calling_wgs_workflow(sv_calling_wgs_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["cnvetti", "delly2", "gcnv", "link_out", "write_pedigree"]
-    assert list(sorted(sv_calling_wgs_workflow.sub_steps.keys())) == expected
+    expected = [
+        "delly2",
+        "gcnv",
+        "write_pedigree",
+        "manta",
+        "melt",
+        "pb_honey_spots",
+        "popdel",
+        "sniffles",
+        "sniffles2",
+    ]
+    assert sorted(sv_calling_wgs_workflow.sub_steps.keys()) == sorted(expected)
     # Check result file construction
     tpl = (
         "output/{mapper}.{cnv_caller}.P00{i}-N1-DNA1-WGS1/out/"
@@ -835,13 +845,12 @@ def test_sv_calling_wgs_workflow(sv_calling_wgs_workflow):
         )
     ]
     pattern_log = (
-        "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/log/"
-        "bwa.{tool}.P00{i}-N1-DNA1-WGS1.joint_germline_segmentation{ext}"
+        "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/log/" "bwa.{tool}.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     expected += [
         pattern_log.format(i=i, tool=tool, ext=ext)
         for i in (1, 4)  # only index: P001, P004
-        for tool in ("gcnv",)
+        for tool in ("joint_germline_segmentation.gcnv", "melt")
         for ext in (
             ".log",
             ".log.md5",

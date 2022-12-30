@@ -15,7 +15,7 @@ exec 2> >(tee -a "{snakemake.log}")
 set -x
 # -----------------------------------------------------------------------------
 
-genotype_dir=$(dirname $(echo "{snakemake.input}" | tr ' ' '\n' | grep genotype | head -n 1))
+genotype_dir=$(dirname {snakemake.input.genotype} | head -n 1)
 ls $genotype_dir/*.{snakemake.wildcards.me_type}.tsv \
 | sort \
 > {snakemake.output.list_txt}
@@ -26,7 +26,7 @@ melt_mei -Xmx2G MakeVCF \
     -h {snakemake.config[static_data_config][reference][path]} \
     -j 100 \
     -t $(melt_mei_path)/me_refs/{snakemake.config[step_config][wgs_mei_calling][melt][me_refs_infix]}/{snakemake.wildcards.me_type}_MELT.zip \
-    -p $(dirname $(echo "{snakemake.input}" | tr ' ' '\n' | grep group_analysis | head -n 1)) \
+    -p $(dirname {snakemake.input.group_analysis}) \
     -w $(dirname {snakemake.output.done}) \
     -o $(dirname {snakemake.output.done})
 
