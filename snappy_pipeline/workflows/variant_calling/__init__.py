@@ -697,7 +697,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def get_input_files(self, action: str) -> SnakemakeDict:
         """Return required input files"""
         self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
+        return getattr(self, f"_get_input_files_{action}")()
 
     @dictify
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:

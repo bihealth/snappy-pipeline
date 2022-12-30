@@ -254,7 +254,7 @@ rule variant_calling_baf_file_generation:
 
 rule variant_calling_bcftools_roh:
     input:
-        unpack(wf.get_input_files("bcftools_roh", "run")),
+        **wf.get_input_files("bcftools_roh", "run"),
     output:
         **wf.get_output_files("bcftools_roh", "run"),
     threads: wf.get_resource("bcftools_roh", "run", "threads")
