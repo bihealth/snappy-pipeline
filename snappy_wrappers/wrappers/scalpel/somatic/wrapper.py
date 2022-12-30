@@ -32,7 +32,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export LD_LIBRARY_PATH=$(dirname $(which tabix))/../lib
 
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT KILL TERM INT HUP
+trap "rm -rf $TMPDIR" EXIT KILL TERM INT HUP
 
 # Arguments:
 # - output VCf

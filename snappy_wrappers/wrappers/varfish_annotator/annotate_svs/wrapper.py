@@ -65,24 +65,28 @@ trap "rm -rf $TMPDIR" EXIT
 samples=$(cut -f 2 {snakemake.input.ped} | tr '\n' ',' | sed -e 's/,$//g')
 
 # Fix the Manta inversions
-python3 {fix_manta_invs} \
-    --reference-fasta {snakemake.config[static_data_config][reference][path]} \
-    --input-vcf {snakemake.input.vcf} \
-    --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
-bcftools sort -o $TMPDIR/fixed_bnd_to_inv.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.vcf
+i=0
+for vcf in {snakemake.input.vcf}; do
+    let "i=$i+1"
+    num=$(printf %03d $i)
 
-# Add the missing "GT" tag
-echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
-> $TMPDIR/header.gt.txt
+    python3 {fix_manta_invs} \
+        --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+        --input-vcf $vcf \
+        --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
+    bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
 
-bcftools annotate \
-    -h $TMPDIR/header.gt.txt \
-    $TMPDIR/fixed_bnd_to_inv.vcf \
-| bcftools view \
-    -i 'GT ~ "1"' \
-    -O z \
-    -o $TMPDIR/final_for_import.vcf.gz
-tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.vcf.gz
+    # Add the missing "GT" tag
+    echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
+    > $TMPDIR/header.gt.txt
+
+    bcftools annotate \
+        -h $TMPDIR/header.gt.txt \
+        $TMPDIR/fixed_bnd_to_inv.$num.vcf \
+        -O z \
+        -o $TMPDIR/final_for_import.$num.vcf.gz
+    tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
+done
 
 # Compatibility mode with currently deployed VarFish Server
 compatibility_option="--opt-out callers-array"
@@ -100,7 +104,9 @@ varfish-annotator \
     --ensembl-ser-path {export_config[path_ensembl_ser]} \
     --input-ped {snakemake.input.ped} \
     \
-    --input-vcf $TMPDIR/final_for_import.vcf.gz \
+    $(for vcf in $TMPDIR/final_for_import.*.vcf.gz; do \
+        echo --input-vcf $vcf; \
+    done) \
     --output-db-info {snakemake.output.db_infos} \
     --output-gts {snakemake.output.gts} \
     --output-feature-effects {snakemake.output.feature_effects} \
@@ -110,6 +116,14 @@ varfish-annotator \
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
 compute-md5 {snakemake.output.feature_effects} {snakemake.output.feature_effects_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

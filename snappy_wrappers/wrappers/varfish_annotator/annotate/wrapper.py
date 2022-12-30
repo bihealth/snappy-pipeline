@@ -100,6 +100,14 @@ cp -H {snakemake.input.ped} {snakemake.output.ped}
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
 compute-md5 {snakemake.output.ped} {snakemake.output.ped_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

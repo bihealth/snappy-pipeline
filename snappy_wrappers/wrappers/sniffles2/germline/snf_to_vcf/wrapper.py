@@ -9,7 +9,7 @@ shell(
 set -x
 
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT ERR
+trap "rm -rf $TMPDIR" EXIT ERR
 
 sniffles \
     --reference {snakemake.config[static_data_config][reference][path]} \

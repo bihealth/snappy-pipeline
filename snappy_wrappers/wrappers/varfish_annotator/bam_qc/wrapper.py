@@ -164,6 +164,14 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
 
     # Compute MD5 sums on output files
     compute-md5 {snakemake.output.bam_qc} {snakemake.output.bam_qc_md5}
+
+    # Create output links --------------------------------------------------------------------------
+
+    for path in {snakemake.output.output_links}; do
+      dst=$path
+      src=work/${{dst#output/}}
+      ln -sr $src $dst
+    done
     """
     )
 

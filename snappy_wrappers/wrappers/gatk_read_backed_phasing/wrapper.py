@@ -31,7 +31,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 # Build list of intervals with <1% variants -------------------------------------------------------
 

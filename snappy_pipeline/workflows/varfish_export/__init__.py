@@ -194,7 +194,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
                 and not self.parent.config["path_sv_calling_wgs"]
             ):
                 return
-            raw_path_tpls = self._get_output_files_annotate().values()
+            raw_path_tpls = self._get_output_files_annotate_svs().values()
         elif action == "bam_qc":
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Filter the templates to the paths in the output directory.
@@ -351,7 +351,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         # Generate paths in "output/" directory
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("annotate").values())
+            for work_path in chain(work_paths.values(), self.get_log_file("annotate_svs").values())
         ]
 
     @dictify
