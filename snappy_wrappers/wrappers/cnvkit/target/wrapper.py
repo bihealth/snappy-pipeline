@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py genome2access
+"""Wrapper for cnvkit.py target
 """
 
 from snakemake.shell import shell
@@ -29,23 +29,33 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+set -x
 
 # -----------------------------------------------------------------------------
 
-zcat {config[path_target_regions]} > $TMPDIR/regions.bed
-
 cnvkit.py target \
-    --short-names \
-    --split \
-    -o {snakemake.output} \
-    $TMPDIR/regions.bed
+    --output {snakemake.output.target} \
+    $(if [[ -n "{config[annotate]}" ]]; then \
+        echo --short-names --annotate {config[annotate]}
+    fi) \
+    $(if [[ "config{split}" = "True" ]]; then \
+        echo --split
+    fi) \
+    --avg-size {config[target_avg_size]} \
+    {config[path_target_regions]}
 
-fn=$(basename "{snakemake.output}")
-d=$(dirname "{snakemake.output}")
+fn=$(basename "{snakemake.output.target}")
+d=$(dirname "{snakemake.output.target}")
 pushd $d
 md5sum $fn > $fn.md5
 popd
 """
 )
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+"""
+)
+

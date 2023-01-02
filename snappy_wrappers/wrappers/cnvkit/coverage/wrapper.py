@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py coverage
+"""Wrapper for cnvkit.py coverage
 """
 
 from snakemake.shell import shell
@@ -28,6 +28,8 @@ conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+
+set -x
 
 # Function definitions ---------------------------------------------------------
 

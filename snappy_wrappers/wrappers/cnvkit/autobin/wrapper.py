@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py genome2access
+"""Wrapper for cnvkit.py autobin
 """
 
 from snakemake.shell import shell
@@ -27,6 +27,8 @@ conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+
+set -x
 
 # Function definitions ---------------------------------------------------------
 md5()
@@ -60,3 +62,11 @@ md5 {snakemake.output.target}
 md5 {snakemake.output.antitarget}
 """
 )
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+"""
+)
+
