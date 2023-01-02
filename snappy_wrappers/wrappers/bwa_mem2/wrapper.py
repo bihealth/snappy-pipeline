@@ -67,7 +67,7 @@ input_files()
         (zcat force {input_right})
     else
         seqtk mergepe \
-            <(zcat {input_right} | tee >(wc -l > $TMPDIR/count_left)) \
+            <(zcat {input_left} | tee >(wc -l > $TMPDIR/count_left)) \
             <(zcat {input_right} | tee >(wc -l > $TMPDIR/count_right))
     fi
 }}

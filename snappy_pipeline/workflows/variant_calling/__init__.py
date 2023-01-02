@@ -790,7 +790,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="00:10:00",
+            time="01:00:00",
             memory="4G",
         )
 
