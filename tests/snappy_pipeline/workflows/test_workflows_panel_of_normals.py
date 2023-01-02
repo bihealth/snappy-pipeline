@@ -190,25 +190,41 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
 # Tests for CnvkitStepPart ------------------------------------------------------------------------
 
 
-def test_cnvkit_step_part_get_input_files_autobin(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_input_files_autobin()"""
+# def test_cnvkit_step_part_get_input_files_autobin(panel_of_normals_workflow):
+#     """Tests CnvkitStepPart._get_input_files_autobin()"""
+#     wildcards = Wildcards(
+#         fromdict={
+#             "mapper": "bwa",
+#         }
+#     )
+#     expected = {
+#         "access": "work/cnvkit.access/out/cnvkit.access.bed",
+#         "bams": [
+#             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+#             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+#         ],
+#         "bais": [
+#             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+#             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+#         ],
+#     }
+#     actual = panel_of_normals_workflow.get_input_files("cnvkit", "autobin")(wildcards)
+#     assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_antitarget(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_antitarget()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
+            "normal_library": "P001-N1-DNA1-WGS1",
         }
     )
     expected = {
         "access": "work/cnvkit.access/out/cnvkit.access.bed",
-        "bams": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        ],
-        "bais": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        ],
+        "target": "work/cnvkit.target/out/cnvkit.target.bed",
     }
-    actual = panel_of_normals_workflow.get_input_files("cnvkit", "autobin")(wildcards)
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "antitarget")(wildcards)
     assert actual == expected
 
 
@@ -223,8 +239,8 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
     expected = {
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "target": "work/bwa.cnvkit.autobin/out/bwa.cnvkit.autobin.target.bed",
-        "antitarget": "work/bwa.cnvkit.autobin/out/bwa.cnvkit.autobin.antitarget.bed",
+        "target": "work/cnvkit.target/out/cnvkit.target.bed",
+        "antitarget": "work/cnvkit.antitarget/out/cnvkit.antitarget.bed",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards)
     assert actual == expected
@@ -251,6 +267,48 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
     assert actual == expected
 
 
+def test_cnvkit_step_part_get_input_files_sex(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_input_files_sex()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+        }
+    )
+    expected = {
+        "target": [
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.target.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.target.cnn",
+        ],
+        "antitarget": [
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.antitarget.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.antitarget.cnn",
+        ],
+    }
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "sex")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_metrics(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_input_files_metrics()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+        }
+    )
+    expected = {
+        "target": [
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.target.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.target.cnn",
+        ],
+        "antitarget": [
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.antitarget.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.antitarget.cnn",
+        ],
+    }
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "metrics")(wildcards)
+    assert actual == expected
+
+
 def test_cnvkit_step_part_get_output_files_access(panel_of_normals_workflow):
     """Tests CvnkitStepPart._get_output_files_access()"""
     expected = {
@@ -261,15 +319,35 @@ def test_cnvkit_step_part_get_output_files_access(panel_of_normals_workflow):
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_output_files_autobin(panel_of_normals_workflow):
-    """Tests CvnkitStepPart._get_output_files_autobin()"""
+# def test_cnvkit_step_part_get_output_files_autobin(panel_of_normals_workflow):
+#     """Tests CvnkitStepPart._get_output_files_autobin()"""
+#     expected = {
+#         "target": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.target.bed",
+#         "target_md5": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.target.bed.md5",
+#         "antitarget": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.antitarget.bed",
+#         "antitarget_md5": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.antitarget.bed.md5",
+#     }
+#     actual = panel_of_normals_workflow.get_output_files("cnvkit", "autobin")
+#     assert actual == expected
+
+
+def test_cnvkit_step_part_get_output_files_target(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_output_files_target()"""
     expected = {
-        "target": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.target.bed",
-        "target_md5": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.target.bed.md5",
-        "antitarget": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.antitarget.bed",
-        "antitarget_md5": "work/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.antitarget.bed.md5",
+        "target": "work/cnvkit.target/out/cnvkit.target.bed",
+        "target_md5": "work/cnvkit.target/out/cnvkit.target.bed.md5",
     }
-    actual = panel_of_normals_workflow.get_output_files("cnvkit", "autobin")
+    actual = panel_of_normals_workflow.get_output_files("cnvkit", "target")
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_output_files_antitarget(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_output_files_antitarget()"""
+    expected = {
+        "antitarget": "work/cnvkit.antitarget/out/cnvkit.antitarget.bed",
+        "antitarget_md5": "work/cnvkit.antitarget/out/cnvkit.antitarget.bed.md5",
+    }
+    actual = panel_of_normals_workflow.get_output_files("cnvkit", "antitarget")
     assert actual == expected
 
 
@@ -287,12 +365,31 @@ def test_cnvkit_step_part_get_output_files_coverage(panel_of_normals_workflow):
 
 def test_cnvkit_step_part_get_output_files_create_panel(panel_of_normals_workflow):
     """Tests CvnkitStepPart._get_output_files_create_panel()"""
-    base_name_out = "work/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals"
     expected = {
         "panel": "work/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn",
         "panel_md5": "work/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("cnvkit", "create_panel")
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_output_files_sex(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_output_files_sex()"""
+    expected = {
+        "table": "work/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.sex.tsv",
+        "table_md5": "work/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.sex.tsv.md5",
+    }
+    actual = panel_of_normals_workflow.get_output_files("cnvkit", "sex")
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_output_files_metrics(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_output_files_metrics()"""
+    expected = {
+        "table": "work/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.metrics.tsv",
+        "table_md5": "work/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.metrics.tsv.md5",
+    }
+    actual = panel_of_normals_workflow.get_output_files("cnvkit", "metrics")
     assert actual == expected
 
 
@@ -304,11 +401,27 @@ def test_cnvkit_step_part_get_log_file_access(panel_of_normals_workflow):
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_log_file_autobin(panel_of_normals_workflow):
-    """Tests CvnkitStepPart._get_log_files_autobin()"""
-    base_name_out = "work/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin"
+# def test_cnvkit_step_part_get_log_file_autobin(panel_of_normals_workflow):
+#     """Tests CvnkitStepPart._get_log_files_autobin()"""
+#     base_name_out = "work/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin"
+#     expected = get_expected_log_files_dict(base_out=base_name_out)
+#     actual = panel_of_normals_workflow.get_log_file("cnvkit", "autobin")
+#     assert actual == expected
+
+
+def test_cnvkit_step_part_get_log_file_target(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_log_files_target()"""
+    base_name_out = "work/cnvkit.target/log/cnvkit.target"
     expected = get_expected_log_files_dict(base_out=base_name_out)
-    actual = panel_of_normals_workflow.get_log_file("cnvkit", "autobin")
+    actual = panel_of_normals_workflow.get_log_file("cnvkit", "target")
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_log_file_antitarget(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_log_files_antitarget()"""
+    base_name_out = "work/cnvkit.antitarget/log/cnvkit.antitarget"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    actual = panel_of_normals_workflow.get_log_file("cnvkit", "antitarget")
     assert actual == expected
 
 
@@ -328,6 +441,22 @@ def test_cnvkit_step_part_get_log_file_create_panel(panel_of_normals_workflow):
     assert actual == expected
 
 
+def test_cnvkit_step_part_get_log_file_sex(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_log_files_sex()"""
+    base_name_out = "work/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.sex"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    actual = panel_of_normals_workflow.get_log_file("cnvkit", "sex")
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_log_file_metrics(panel_of_normals_workflow):
+    """Tests CvnkitStepPart._get_log_files_metrics()"""
+    base_name_out = "work/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.metrics"
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    actual = panel_of_normals_workflow.get_log_file("cnvkit", "metrics")
+    assert actual == expected
+
+
 def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     """Tests CvnkitStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
@@ -337,10 +466,22 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
         "memory": "8G",
         "partition": "medium",
     }
-    autobin_expected_dict = {
+    # autobin_expected_dict = {
+    #     "threads": 2,
+    #     "time": "02:00:00",
+    #     "memory": "16G",
+    #     "partition": "medium",
+    # }
+    target_expected_dict = {
         "threads": 2,
         "time": "02:00:00",
-        "memory": "16G",
+        "memory": "8G",
+        "partition": "medium",
+    }
+    antitarget_expected_dict = {
+        "threads": 2,
+        "time": "02:00:00",
+        "memory": "8G",
         "partition": "medium",
     }
     coverage_expected_dict = {
@@ -355,6 +496,18 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
         "memory": "16G",
         "partition": "medium",
     }
+    sex_expected_dict = {
+        "threads": 2,
+        "time": "02:00:00",
+        "memory": "16G",
+        "partition": "medium",
+    }
+    metrics_expected_dict = {
+        "threads": 2,
+        "time": "02:00:00",
+        "memory": "16G",
+        "partition": "medium",
+    }
 
     # Evaluate action `access`
     for resource, expected in access_expected_dict.items():
@@ -363,9 +516,21 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
         assert actual == expected, msg_error
 
     # Evaluate action `autobin`
-    for resource, expected in autobin_expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}' for action 'autobin'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "autobin", resource)
+    # for resource, expected in autobin_expected_dict.items():
+    #     msg_error = f"Assertion error for resource '{resource}' for action 'autobin'."
+    #     actual = panel_of_normals_workflow.get_resource("cnvkit", "autobin", resource)
+    #     assert actual == expected, msg_error
+
+    # Evaluate action `target`
+    for resource, expected in target_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'target'."
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)
+        assert actual == expected, msg_error
+
+    # Evaluate action `antitarget`
+    for resource, expected in antitarget_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'antitarget'."
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)
         assert actual == expected, msg_error
 
     # Evaluate action `coverage`
@@ -378,6 +543,18 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     for resource, expected in reference_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'create_panel'."
         actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)
+        assert actual == expected, msg_error
+
+    # Evaluate action `sex`
+    for resource, expected in reference_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'sex'."
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "sex", resource)
+        assert actual == expected, msg_error
+
+    # Evaluate action `metrics`
+    for resource, expected in reference_expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}' for action 'metrics'."
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "metrics", resource)
         assert actual == expected, msg_error
 
 
@@ -410,18 +587,40 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     ]
     tpl = "output/cnvkit.access/out/cnvkit.access.{ext}"
     expected += [tpl.format(ext=ext) for ext in ("bed", "bed.md5")]
-    tpl = "output/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.{ext}"
+    # tpl = "output/{mapper}.cnvkit.autobin/out/{mapper}.cnvkit.autobin.{ext}"
+    # expected += [
+    #     tpl.format(mapper=mapper, ext=ext)
+    #     for ext in ("target.bed", "target.bed.md5", "antitarget.bed", "antitarget.bed.md5")
+    #     for mapper in ("bwa",)
+    # ]
+    tpl = "output/cnvkit.target/out/cnvkit.target.{ext}"
+    expected += [tpl.format(ext=ext) for ext in ("bed", "bed.md5")]
+    tpl = "output/cnvkit.antitarget/out/cnvkit.antitarget.{ext}"
+    expected += [tpl.format(ext=ext) for ext in ("bed", "bed.md5")]
+    tpl = "output/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.sex.{ext}"
     expected += [
-        tpl.format(mapper=mapper, ext=ext)
-        for ext in ("target.bed", "target.bed.md5", "antitarget.bed", "antitarget.bed.md5")
-        for mapper in ("bwa",)
+        tpl.format(mapper=mapper, ext=ext) for ext in ("tsv", "tsv.md5") for mapper in ("bwa",)
+    ]
+    tpl = "output/{mapper}.cnvkit.create_panel/report/{mapper}.cnvkit.metrics.{ext}"
+    expected += [
+        tpl.format(mapper=mapper, ext=ext) for ext in ("tsv", "tsv.md5") for mapper in ("bwa",)
     ]
     # add log files
     tpl = "output/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.panel_of_normals"
     for mapper in ("bwa",):
         expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
     expected += get_expected_log_files_dict("output/cnvkit.access/log/cnvkit.access").values()
-    tpl = "output/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin"
+    # tpl = "output/{mapper}.cnvkit.autobin/log/{mapper}.cnvkit.autobin"
+    # for mapper in ("bwa",):
+    #     expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
+    expected += get_expected_log_files_dict("output/cnvkit.target/log/cnvkit.target").values()
+    expected += get_expected_log_files_dict(
+        "output/cnvkit.antitarget/log/cnvkit.antitarget"
+    ).values()
+    tpl = "output/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.sex"
+    for mapper in ("bwa",):
+        expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
+    tpl = "output/{mapper}.cnvkit.create_panel/log/{mapper}.cnvkit.metrics"
     for mapper in ("bwa",):
         expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
     expected = list(sorted(expected))
