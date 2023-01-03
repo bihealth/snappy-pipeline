@@ -111,17 +111,17 @@ step_config:
       path_target_regions: REQUIRED        # Bed files of targetted regions
       access: ""                           # Access bed file (when absent, created by cnvkit.py access
       exclude: []                          # [access] Bed file of regions to exclude (mappability, blacklisted, ...)
-      min_gap_size: 5000                   # [access] Minimum gap size between accessible sequence regions
+      min_gap_size: 0                      # [access] Minimum gap size between accessible sequence regions (0: use default value)
       annotate: ""                         # [autobin, target] Optional targets annotations
-      bp_per_bin: 100000                   # [autobin] Desired average number of sequencing read bases mapped to each bin
-      target_min_size: 20                  # [autobin] Min size of target bins
-      target_max_size: 20000               # [autobin] Max size of target bins
-      antitarget_min_size: 500             # [autobin] Min size of antitarget bins
-      antitarget_max_size: 500000          # [autobin] Max size of antitarget bins
-      target_avg_size: 266.666666666666667 # [target] Average size of split target bins (set to average exons size)
-      split: False                         # [target] Split large intervals into smaller ones
-      antitarget_avg_size: 150000          # [antitarget] Average size of antitarget bins
-      min_size: 25000                      # [antitarget] Min size of antitarget bins (should be set to 1/6 of antitarget_avg_size)
+      bp_per_bin: 0                        # [autobin] Desired average number of sequencing read bases mapped to each bin (0: use default value)
+      target_min_size: 0                   # [autobin] Min size of target bins (0: use default value)
+      target_max_size: 0                   # [autobin] Max size of target bins (0: use default value)
+      antitarget_min_size: 0               # [autobin] Min size of antitarget bins (0: use default value)
+      antitarget_max_size: 0               # [autobin] Max size of antitarget bins (0: use default value)
+      target_avg_size: 0                   # [target] Average size of split target bins (0: use default value)
+      split: True                          # [target] Split large intervals into smaller ones
+      antitarget_avg_size: 0               # [antitarget] Average size of antitarget bins (0: use default value)
+      min_size: 0                          # [antitarget] Min size of antitarget bins (0: use default value)
       min_mapq: 0                          # [coverage] Mininum mapping quality score to count a read for coverage depth
       count: False                         # [coverage] Alternative couting algorithm
       min_cluster_size: 0                  # [reference] Minimum cluster size to keep in reference profiles. 0 for no clustering
@@ -317,7 +317,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         #     memory="16G",
         # ),
         "coverage": ResourceUsage(
-            threads=2,
+            threads=8,
             time="02:00:00",  # 2 hours
             memory="16G",
         ),
@@ -419,12 +419,12 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for computing panel of normals"""
         tpl = (
-            "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.target.cnn"
+            "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.targetcoverage.cnn"
         )
         targets = [
             tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
         ]
-        tpl = "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.antitarget.cnn"
+        tpl = "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.antitargetcoverage.cnn"
         antitargets = [
             tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
         ]
@@ -490,10 +490,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_output_files_coverage(self):
         return {
-            "target": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.target.cnn",
-            "target_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.target.cnn.md5",
-            "antitarget": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.antitarget.cnn",
-            "antitarget_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.antitarget.cnn.md5",
+            "target": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.targetcoverage.cnn",
+            "target_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.targetcoverage.cnn.md5",
+            "antitarget": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.antitargetcoverage.cnn",
+            "antitarget_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.antitargetcoverage.cnn.md5",
         }
 
     def _get_output_files_create_panel(self):

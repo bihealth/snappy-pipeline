@@ -255,12 +255,12 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
     )
     expected = {
         "target": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.target.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.target.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
         ],
         "antitarget": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.antitarget.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.antitarget.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.antitargetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.antitargetcoverage.cnn",
         ],
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
@@ -276,12 +276,12 @@ def test_cnvkit_step_part_get_input_files_sex(panel_of_normals_workflow):
     )
     expected = {
         "target": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.target.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.target.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
         ],
         "antitarget": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.antitarget.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.antitarget.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.antitargetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.antitargetcoverage.cnn",
         ],
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "sex")(wildcards)
@@ -297,12 +297,12 @@ def test_cnvkit_step_part_get_input_files_metrics(panel_of_normals_workflow):
     )
     expected = {
         "target": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.target.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.target.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
         ],
         "antitarget": [
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P001-N1-DNA1-WGS1.antitarget.cnn",
-            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.coverage.P002-N1-DNA1-WGS1.antitarget.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P001-N1-DNA1-WGS1.antitargetcoverage.cnn",
+            "work/bwa.cnvkit.coverage/out/bwa.cnvkit.P002-N1-DNA1-WGS1.antitargetcoverage.cnn",
         ],
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "metrics")(wildcards)
@@ -354,10 +354,10 @@ def test_cnvkit_step_part_get_output_files_antitarget(panel_of_normals_workflow)
 def test_cnvkit_step_part_get_output_files_coverage(panel_of_normals_workflow):
     """Tests CvnkitStepPart._get_output_files_coverage()"""
     expected = {
-        "target": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.target.cnn",
-        "target_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.target.cnn.md5",
-        "antitarget": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.antitarget.cnn",
-        "antitarget_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.coverage.{normal_library}.antitarget.cnn.md5",
+        "target": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.targetcoverage.cnn",
+        "target_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.targetcoverage.cnn.md5",
+        "antitarget": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.antitargetcoverage.cnn",
+        "antitarget_md5": "work/{mapper}.cnvkit.coverage/out/{mapper}.cnvkit.{normal_library}.antitargetcoverage.cnn.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("cnvkit", "coverage")
     assert actual == expected
@@ -485,7 +485,7 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
         "partition": "medium",
     }
     coverage_expected_dict = {
-        "threads": 2,
+        "threads": 8,
         "time": "02:00:00",
         "memory": "16G",
         "partition": "medium",

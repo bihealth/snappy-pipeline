@@ -36,7 +36,12 @@ set -x
 cnvkit.py antitarget \
     --output {snakemake.output.antitarget} \
     --access {snakemake.input.access} \
-    --avg-size {config[antitarget_avg_size]} --min-size {config[min_size]} \
+    $(if [[ {config[antitarget_avg_size]} -gt 0 ]]; then \
+        echo --avg-size {config[antitarget_avg_size]}
+    fi) \
+    $(if [[ {config[min_size]} -gt 0 ]]; then \
+        echo --min-size {config[min_size]}
+    fi) \
     {snakemake.input.target}
 
 fn=$(basename "{snakemake.output.antitarget}")
@@ -53,4 +58,3 @@ shell(
 md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
-

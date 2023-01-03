@@ -38,10 +38,12 @@ cnvkit.py target \
     $(if [[ -n "{config[annotate]}" ]]; then \
         echo --short-names --annotate {config[annotate]}
     fi) \
-    $(if [[ "config{split}" = "True" ]]; then \
+    $(if [[ "{config[split]}" = "True" ]]; then \
         echo --split
     fi) \
-    --avg-size {config[target_avg_size]} \
+    $(if [[ {config[target_avg_size]} -gt 0 ]]; then \
+        echo --avg-size {config[target_avg_size]}
+    fi) \
     {config[path_target_regions]}
 
 fn=$(basename "{snakemake.output.target}")
@@ -58,4 +60,3 @@ shell(
 md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
-

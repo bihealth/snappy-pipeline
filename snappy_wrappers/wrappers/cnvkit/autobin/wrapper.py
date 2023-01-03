@@ -49,9 +49,21 @@ cnvkit.py autobin --method "hybrid" \
     --fasta {snakemake.config[static_data_config][reference][path]} \
     --access {snakemake.input.access} \
     --targets {config[path_target_regions]} \
-    --bp-per-bin {config[bp_per_bin]} \
-    --target-min-size {config[target_min_size]} --target-max-size {config[target_max_size]} \
-    --antitarget-min-size {config[antitarget_min_size]} --antitarget-max-size {config[antitarget_max_size]} \
+    $(if [[ {config[bp_per_bin]} -gt 0 ]]; then \
+        echo --bp-per-bin {config[bp_per_bin]}
+    fi) \
+    $(if [[ {config[target_min_size]} -gt 0 ]]; then \
+        echo --target-min-size {config[target_min_size]}
+    fi) \
+    $(if [[ {config[target_max_size]} -gt 0 ]]; then \
+        echo --target-max-size {config[target_max_size]}
+    fi) \
+    $(if [[ {config[antitarget_min_size]} -gt 0 ]]; then \
+        echo --antitarget-min-size {config[antitarget_min_size]}
+    fi)
+    $(if [[ {config[antitarget_max_size]} -gt 0 ]]; then \
+        echo --antitarget-max-size {config[antitarget_max_size]}
+    fi) \
     $(if [[ -n "{config[annotate]}" ]] ; then \
         echo --annotate {config[annotate]} --short-names
     fi) \
@@ -66,7 +78,6 @@ md5 {snakemake.output.antitarget}
 # Compute MD5 sums of logs.
 shell(
     r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}")
 """
 )
-

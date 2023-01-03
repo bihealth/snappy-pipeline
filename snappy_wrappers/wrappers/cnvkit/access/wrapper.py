@@ -40,7 +40,10 @@ then
 else
     cnvkit.py access \
         -o {snakemake.output.access} \
-        --min-gap-size {config[min_gap_size]} {exclude} \
+        $(if [[ {config[min_gap_size]} -gt 0 ]]; then \
+            echo --min-gap-size {config[min_gap_size]}
+        fi) \
+        {exclude} \
         {snakemake.config[static_data_config][reference][path]}
 fi
 
@@ -58,4 +61,3 @@ shell(
 md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
-
