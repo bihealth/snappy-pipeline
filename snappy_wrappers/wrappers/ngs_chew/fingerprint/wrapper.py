@@ -44,6 +44,7 @@ mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 ngs-chew fingerprint \
     --reference {snakemake.config[static_data_config][reference][path]} \
+    --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
     --input-bam {snakemake.input.bam} \
     --genome-release {genome_release}
