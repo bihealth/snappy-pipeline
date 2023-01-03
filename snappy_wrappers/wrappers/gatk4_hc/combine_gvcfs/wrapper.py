@@ -97,6 +97,7 @@ run-shard()
         --tmp-dir $TMPDIR \
         --reference {snakemake.config[static_data_config][reference][path]} \
         --output $TMPDIR/shards-output/$(printf %06d $job_no).g.vcf.gz \
+        --break-bands-at-multiples-of {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][window_length]} \
         --intervals $interval \
         -G StandardAnnotation \
         -G AS_StandardAnnotation \
