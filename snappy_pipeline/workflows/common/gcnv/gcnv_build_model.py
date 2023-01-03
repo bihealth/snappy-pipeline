@@ -5,7 +5,7 @@
 from snakemake.io import expand, touch
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.gcnv.gcnv_common import GcnvCommonStepPart
+from snappy_pipeline.workflows.common.gcnv.gcnv_common import GcnvCommonStepPart
 
 
 class AnnotateGcMixin:

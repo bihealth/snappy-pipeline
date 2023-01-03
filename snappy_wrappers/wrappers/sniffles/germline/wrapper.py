@@ -33,7 +33,7 @@ for input in $inputs; do
 
     sniffles \
         -m $input \
-        -t {snakemake.config[step_config][wgs_sv_calling][sniffles][num_threads]} \
+        -t {snakemake.config[step_config][sv_calling_wgs][sniffles][num_threads]} \
         -v $outname \
         --tmp_file $TMPDIR/sniffles.tmp \
         --cluster \

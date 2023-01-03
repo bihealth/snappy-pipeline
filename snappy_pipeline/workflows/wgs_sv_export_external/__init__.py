@@ -104,7 +104,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   wgs_sv_export_external:
     tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
-    tool_wgs_sv_calling: null    # OPTIONAL: used to create output file prefix.
+    tool_sv_calling_wgs: null    # OPTIONAL: used to create output file prefix.
     merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
     merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
     search_paths: []             # REQUIRED: path to all VCF files.
@@ -320,7 +320,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
         """
         mapper = self.config["tool_ngs_mapping"]
-        caller = self.config["tool_wgs_sv_calling"]
+        caller = self.config["tool_sv_calling_wgs"]
         if mapper and caller:
             return f"{mapper}.{caller}."
         elif mapper or caller:

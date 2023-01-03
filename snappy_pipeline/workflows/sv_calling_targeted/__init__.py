@@ -4,27 +4,16 @@ Based on the output of ``ngs_mapping``, call structural variants from depth of c
 read pair, and split read signal.
 """
 
-from copy import deepcopy
-from itertools import chain
 import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_background, is_not_background
-from snakemake.io import expand
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
-from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
-from snappy_pipeline.workflows.abstract import (
-    BaseStep,
-    BaseStepPart,
-    LinkInStep,
-    WritePedigreeStepPart,
-)
-from snappy_pipeline.workflows.abstract.common import (
-    ForwardResourceUsageMixin,
-    ForwardSnakemakeFilesMixin,
-)
-from snappy_pipeline.workflows.gcnv.gcnv_run import RunGcnvStepPart
+from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.common.delly import Delly2StepPart
+from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
+from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_wrappers.resource_usage import ResourceUsage
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -90,235 +79,6 @@ class GcnvTargetedStepPart(RunGcnvStepPart):
         super().__init__(parent)
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self.parent.ngs_library_to_kit
-
-
-class SvCallingTargetedGetResultFilesMixin:
-    """Mixin that provides ``get_result_files()`` for SV calling steps"""
-
-    @listify
-    def get_result_files(self):
-        """Return list of concrete output paths in ``output/``.
-
-        The implementation will return a list of all paths with prefix ``output/` that are
-        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
-        """
-        ngs_mapping_config = DictQuery(self.w_config).get("step_config/ngs_mapping")
-        for mapper in ngs_mapping_config["tools"]["dna"]:
-            # Get list of result path templates.
-            output_files_tmp = self.get_output_files(self.actions[-1])
-            if isinstance(output_files_tmp, dict):
-                output_files = output_files_tmp.values()
-            else:
-                output_files = output_files_tmp
-            result_paths_tpls = list(
-                filter(
-                    lambda p: p.startswith("output/"),
-                    flatten(output_files),
-                )
-            )
-            #: Generate all concrete output paths.
-            for path_tpl in result_paths_tpls:
-                for library_name in self.index_ngs_library_to_pedigree.keys():
-                    yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
-
-
-class Delly2StepPart(
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
-    SvCallingTargetedGetResultFilesMixin,
-    BaseStepPart,
-):
-    """Perform SV calling on exomes using Delly2"""
-
-    name = "delly2"
-    actions = ("call", "merge_calls", "genotype", "merge_genotypes")
-
-    _cheap_resource_usage = ResourceUsage(
-        threads=2,
-        time="4-00:00:00",
-        memory=f"{7 * 1024 * 2}M",
-    )
-    _normal_resource_usage = ResourceUsage(
-        threads=2,
-        time="7-00:00:00",  # 7 days
-        memory=f"{20 * 1024 * 2}M",
-    )
-    resource_usage_dict = {
-        "call": _normal_resource_usage,
-        "merge_calls": _cheap_resource_usage,
-        "genotype": _normal_resource_usage,
-        "merge_genotypes": _cheap_resource_usage,
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-        self.donor_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
-
-    @dictify
-    def _get_input_files_call(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        token = f"{wildcards.mapper}.{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{token}/out/{token}.bam")
-
-    @dictify
-    def _get_output_files_call(self):
-        infix = "{mapper}.delly2_call.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
-
-    @dictify
-    def _get_input_files_merge_calls(self, wildcards):
-        bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.delly2_call.{donor.dna_ngs_library.name}"
-                bcfs.append(f"work/{infix}/out/{infix}.bcf")
-        yield "bcf", bcfs
-
-    @dictify
-    def _get_output_files_merge_calls(self):
-        infix = "{mapper}.delly2_merge_calls.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
-
-    @dictify
-    def _get_input_files_genotype(self, wildcards):
-        yield from self._get_input_files_call(wildcards).items()
-        pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-        infix = f"{wildcards.mapper}.delly2_merge_calls.{pedigree.index.dna_ngs_library.name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-
-    @dictify
-    def _get_output_files_genotype(self):
-        infix = "{mapper}.delly2_genotype.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
-
-    @dictify
-    def _get_input_files_merge_genotypes(self, wildcards):
-        bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.delly2_genotype.{donor.dna_ngs_library.name}"
-                bcfs.append(f"work/{infix}/out/{infix}.bcf")
-        yield "bcf", bcfs
-
-    @dictify
-    def _get_output_files_merge_genotypes(self):
-        infix = "{mapper}.delly2.{library_name}"
-        work_files = {}
-        work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
-        work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
-        work_files["vcf_tbi"] = f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
-        yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("merge_genotypes").values()
-            )
-        ]
-
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files in the "log" directory"""
-        _ = action
-        if action != "merge_genotypes":
-            infix = f"delly2_{action}"
-        else:
-            infix = "delly2"
-        prefix = f"work/{{mapper}}.{infix}.{{library_name}}/log/{{mapper}}.{infix}.{{library_name}}.sv_calling"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
-
-
-class MantaStepPart(
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
-    SvCallingTargetedGetResultFilesMixin,
-    BaseStepPart,
-):
-    """Perform SV calling on exomes using Manta"""
-
-    name = "manta"
-    actions = ("run",)
-
-    resource_usage_dict = {
-        "run": ResourceUsage(
-            threads=16,
-            time="2-00:00:00",
-            memory=f"{int(3.75 * 1024 * 16)}M",
-        )
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        #: Shortcuts from index NGS library name to Pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        bams = []
-        for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
-            if donor.dna_ngs_library:
-                token = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
-                bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
-        yield "bam", bams
-
-    @dictify
-    def _get_output_files_run(self):
-        work_files = {}
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            infix = "{mapper}.manta.{library_name}"
-            work_files[name] = f"work/{infix}/out/{infix}{ext}"
-        yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
-
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files in the "log" directory"""
-        _ = action
-        caller = self.__class__.name
-        prefix = f"work/{{mapper}}.{caller}.{{library_name}}/log/{{mapper}}.{caller}.{{library_name}}.sv_calling"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
 
 
 class SvCallingTargetedWorkflow(BaseStep):
@@ -407,26 +167,13 @@ class SvCallingTargetedWorkflow(BaseStep):
                 yield from pedigree.donors
 
     @listify
-    def all_background_donors(self):
-        """Get all background donors.
-
-        :return: Returns list of all background donors in sample sheets.
-        """
-        sheets = deepcopy(self.shortcut_sheets)
-        sheets = list(filter(is_background, sheets))
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors
-
-    @listify
     def get_result_files(self):
         """Return list of result files for the NGS mapping workflow
 
         We will process all NGS libraries of all test samples in all sample sheets.
         """
         for sub_step in self.sub_steps.values():
-            if sub_step.name not in (LinkInStep.name,):
-                yield from sub_step.get_result_files()
+            yield from sub_step.get_result_files()
 
     def pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a

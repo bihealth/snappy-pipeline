@@ -33,7 +33,7 @@ def minimal_config():
             search_paths: [/search_path]
             search_patterns: [{"vcf": "*/*.vcf.gz"}]
             tool_ngs_mapping: null
-            tool_wgs_sv_calling: dragen
+            tool_sv_calling_wgs: dragen
             path_refseq_ser: /data/refseq_ser
             path_ensembl_ser: /data/ensembl_ser
             path_db: /data/db

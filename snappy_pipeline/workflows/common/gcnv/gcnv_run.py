@@ -13,7 +13,7 @@ from snakemake.io import Wildcards, expand, touch
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
-from snappy_pipeline.workflows.gcnv.gcnv_common import (
+from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
     GcnvCommonStepPart,
     InconsistentLibraryKitsWarning,
 )

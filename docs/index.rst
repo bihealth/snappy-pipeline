@@ -76,11 +76,7 @@ Project Info
     step/variant_denovo_filtration
     step/variant_phasing
     step/variant_filtration
-    step/wgs_cnv_annotation
-    step/wgs_cnv_calling
-    step/wgs_mei_calling
-    step/wgs_sv_annotation
-    step/wgs_sv_calling
+    step/sv_calling_wgs
     step/wgs_sv_filtration
 
 

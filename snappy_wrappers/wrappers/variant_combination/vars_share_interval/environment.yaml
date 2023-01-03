@@ -1,9 +1,0 @@
-channels:
-- conda-forge
-- bioconda
-dependencies:
-- bcftools =1.8
-- htslib =1.8
-#- snpsift ==4.3.1r
-- bedtools ==2.27.0
-# - bedops ==2.4.30

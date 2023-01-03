@@ -102,7 +102,7 @@ for input in $inputs; do
     ln -sr $input.bai $TMPDIR/$(basename $input)/del.bam.bai
     pushd $TMPDIR/$(basename $input)
 
-    parallel -t -j {snakemake.config[step_config][wgs_sv_calling][pb_honey_spots][num_threads]} honey_py_spots ::: {{1..22}} X Y
+    parallel -t -j {snakemake.config[step_config][sv_calling_wgs][pb_honey_spots][num_threads]} honey_py_spots ::: {{1..22}} X Y
 
     prefix=$(basename $input .bam | rev | cut -d . -f 2- | rev)
     suffix=$(basename $input .bam | rev | cut -d . -f 1 | rev)
