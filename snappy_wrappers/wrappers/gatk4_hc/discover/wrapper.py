@@ -84,7 +84,7 @@ wc -l $TMPDIR/final_intervals.txt
 # Create per-shard output directory
 mkdir -p $TMPDIR/shards-output
 
-# Function to run HaplotypeCaller in "joint" mode - cannot generate gVCF
+# Function to run HaplotypeCaller in to generate gVCF
 run-shard()
 {{
     job_no=$1
