@@ -13,6 +13,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
+from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -24,7 +25,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available SV callers
-SV_CALLERS = ("gcnv", "delly2", "manta")
+SV_CALLERS = ("gcnv", "delly2", "manta", "melt")
 
 #: Minimum number of samples per kit to apply gCNV calling criteria to be analyzed
 GCNV_MIN_KIT_SAMPLES = 10
@@ -69,6 +70,15 @@ step_config:
 
     manta:
       max_threads: 16
+
+    melt:
+      me_refs_infix: 1KGP_Hg19
+      me_types:
+      - ALU
+      - LINE1
+      - SVA
+      jar_file: REQUIRED
+      genes_file: add_bed_files/1KGP_Hg19/hg19.genes.bed  # adjust, e.g., Hg38/Hg38.genes.bed
 """
 
 
@@ -102,7 +112,13 @@ class SvCallingTargetedWorkflow(BaseStep):
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
-            (WritePedigreeStepPart, GcnvTargetedStepPart, Delly2StepPart, MantaStepPart)
+            (
+                WritePedigreeStepPart,
+                GcnvTargetedStepPart,
+                Delly2StepPart,
+                MantaStepPart,
+                MeltStepPart,
+            )
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])

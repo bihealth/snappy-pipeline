@@ -254,3 +254,140 @@ rule sv_calling_targeted_delly2_merge_genotypes:
         **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
         wf.wrapper_path("delly2/germline/merge_genotypes")
+
+
+# Run Melt --------------------------------------------------------------------
+
+
+# Regular expression for wildcard constraints
+RE_NO_DOT = r"[^.]+"
+
+
+rule sv_calling_targeted_melt_preprocess:
+    input:
+        unpack(wf.get_input_files("melt", "preprocess")),
+    output:
+        **wf.get_output_files("melt", "preprocess"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "preprocess", "threads")
+    resources:
+        time=wf.get_resource("melt", "preprocess", "time"),
+        memory=wf.get_resource("melt", "preprocess", "memory"),
+        partition=wf.get_resource("melt", "preprocess", "partition"),
+    log:
+        **wf.get_log_file("melt", "preprocess"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/preprocess")
+
+
+rule sv_calling_targeted_melt_indiv_analysis:
+    input:
+        unpack(wf.get_input_files("melt", "indiv_analysis")),
+    output:
+        **wf.get_output_files("melt", "indiv_analysis"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "indiv_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "indiv_analysis", "time"),
+        memory=wf.get_resource("melt", "indiv_analysis", "memory"),
+        partition=wf.get_resource("melt", "indiv_analysis", "partition"),
+    log:
+        **wf.get_log_file("melt", "indiv_analysis"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/indiv_analysis")
+
+
+rule sv_calling_targeted_melt_group_analysis:
+    input:
+        unpack(wf.get_input_files("melt", "group_analysis")),
+    output:
+        **wf.get_output_files("melt", "group_analysis"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "group_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "group_analysis", "time"),
+        memory=wf.get_resource("melt", "group_analysis", "memory"),
+        partition=wf.get_resource("melt", "group_analysis", "partition"),
+    log:
+        **wf.get_log_file("melt", "group_analysis"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/group_analysis")
+
+
+rule sv_calling_targeted_melt_genotype:
+    input:
+        unpack(wf.get_input_files("melt", "genotype")),
+    output:
+        **wf.get_output_files("melt", "genotype"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "genotype", "threads")
+    resources:
+        time=wf.get_resource("melt", "genotype", "time"),
+        memory=wf.get_resource("melt", "genotype", "memory"),
+        partition=wf.get_resource("melt", "genotype", "partition"),
+    log:
+        **wf.get_log_file("melt", "genotype"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/genotype")
+
+
+rule sv_calling_targeted_melt_make_vcf:
+    input:
+        unpack(wf.get_input_files("melt", "make_vcf")),
+    output:
+        **wf.get_output_files("melt", "make_vcf"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+    threads: wf.get_resource("melt", "make_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "make_vcf", "time"),
+        memory=wf.get_resource("melt", "make_vcf", "memory"),
+        partition=wf.get_resource("melt", "make_vcf", "partition"),
+    log:
+        **wf.get_log_file("melt", "make_vcf"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/make_vcf")
+
+
+rule sv_calling_targeted_melt_merge_vcf:
+    input:
+        unpack(wf.get_input_files("melt", "merge_vcf")),
+    output:
+        **wf.get_output_files("melt", "merge_vcf"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+    threads: wf.get_resource("melt", "merge_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "merge_vcf", "time"),
+        memory=wf.get_resource("melt", "merge_vcf", "memory"),
+        partition=wf.get_resource("melt", "merge_vcf", "partition"),
+    log:
+        **wf.get_log_file("melt", "merge_vcf"),
+    params:
+        step_key="sv_calling_targeted",
+    wrapper:
+        wf.wrapper_path("melt/merge_vcf")
