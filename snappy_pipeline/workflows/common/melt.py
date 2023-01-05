@@ -207,9 +207,7 @@ class MeltStepPart(
         yield "list_txt", f"work/{infix}/out/list.txt"
         yield "done", touch(f"work/{infix}/out/.done")
         yield "vcf", f"work/{infix}/out/{infix}.final_comp.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.final_comp.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.final_comp.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.final_comp.vcf.gz.tbi.md5"
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
