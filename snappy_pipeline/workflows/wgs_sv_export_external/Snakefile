@@ -83,6 +83,7 @@ rule wgs_sv_export_external_varfish_annotator_external_merge_vcf:
         time=wf.get_resource("varfish_annotator_external", "merge_vcf", "time"),
         memory=wf.get_resource("varfish_annotator_external", "merge_vcf", "memory"),
         partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
     params:
@@ -104,6 +105,7 @@ rule wgs_sv_export_external_varfish_annotator_external_annotate_svs:
         time=wf.get_resource("varfish_annotator_external", "annotate", "time"),
         memory=wf.get_resource("varfish_annotator_external", "annotate", "memory"),
         partition=wf.get_resource("varfish_annotator_external", "annotate", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator_external", "annotate", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator_external", "annotate"),
     params:

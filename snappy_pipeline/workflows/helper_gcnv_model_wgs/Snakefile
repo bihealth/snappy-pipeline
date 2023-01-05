@@ -38,6 +38,7 @@ rule build_gcnv_model_preprocess_intervals:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
         memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     wrapper:
@@ -54,6 +55,7 @@ rule build_gcnv_model_annotate_gc:
         time=wf.get_resource("gcnv", "annotate_gc", "time"),
         memory=wf.get_resource("gcnv", "annotate_gc", "memory"),
         partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
+        tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "annotate_gc"),
     wrapper:
@@ -70,6 +72,7 @@ rule build_gcnv_model_coverage:
         time=wf.get_resource("gcnv", "coverage", "time"),
         memory=wf.get_resource("gcnv", "coverage", "memory"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
+        tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "coverage"),
     wrapper:
@@ -86,6 +89,7 @@ rule build_gcnv_model_filter_intervals:
         time=wf.get_resource("gcnv", "filter_intervals", "time"),
         memory=wf.get_resource("gcnv", "filter_intervals", "memory"),
         partition=wf.get_resource("gcnv", "filter_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "filter_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "filter_intervals"),
     wrapper:
@@ -102,6 +106,7 @@ rule build_gcnv_model_contig_ploidy:
         time=wf.get_resource("gcnv", "contig_ploidy", "time"),
         memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
         partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
+        tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     wrapper:
@@ -118,6 +123,7 @@ rule build_gcnv_model_call_cnvs:
         time=wf.get_resource("gcnv", "call_cnvs", "time"),
         memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
         partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
+        tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
     wrapper:
@@ -138,6 +144,7 @@ checkpoint build_gcnv_model_scatter_intervals:
         time=wf.get_resource("gcnv", "scatter_intervals", "time"),
         memory=wf.get_resource("gcnv", "scatter_intervals", "memory"),
         partition=wf.get_resource("gcnv", "scatter_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "scatter_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "scatter_intervals"),
     wrapper:
@@ -154,6 +161,7 @@ rule build_gcnv_model_calling_gcnv_post_germline_calls:
         time=wf.get_resource("gcnv", "post_germline_calls", "time"),
         memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
         partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
+        tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     wrapper:

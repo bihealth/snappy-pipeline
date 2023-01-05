@@ -64,6 +64,7 @@ rule somatic_wgs_cnv_calling_canvas_run:
         time=wf.get_resource("canvas", "run", "time"),
         memory=wf.get_resource("canvas", "run", "memory"),
         partition=wf.get_resource("canvas", "run", "partition"),
+        tmpdir=wf.get_resource("canvas", "run", "tmpdir"),
     log:
         **wf.get_log_file("canvas", "run"),
     wrapper:
@@ -86,6 +87,7 @@ rule somatic_wgs_cnv_calling_cnvetti_coverage:
         time=wf.get_resource("cnvetti", "coverage", "time"),
         memory=wf.get_resource("cnvetti", "coverage", "memory"),
         partition=wf.get_resource("cnvetti", "coverage", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "coverage", "tmpdir"),
     log:
         **wf.get_log_file("cnvetti", "coverage"),
     wrapper:
@@ -103,6 +105,7 @@ rule somatic_wgs_cnv_calling_cnvetti_tumor_normal_ratio:
         time=wf.get_resource("cnvetti", "tumor_normal_ratio", "time"),
         memory=wf.get_resource("cnvetti", "tumor_normal_ratio", "memory"),
         partition=wf.get_resource("cnvetti", "tumor_normal_ratio", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "tumor_normal_ratio", "tmpdir"),
     log:
         **wf.get_log_file("cnvetti", "tumor_normal_ratio"),
     wrapper:
@@ -121,6 +124,7 @@ rule somatic_wgs_cnv_calling_cnvetti_segment:
         time=wf.get_resource("cnvetti", "segment", "time"),
         memory=wf.get_resource("cnvetti", "segment", "memory"),
         partition=wf.get_resource("cnvetti", "segment", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "segment", "tmpdir"),
     log:
         **wf.get_log_file("cnvetti", "segment"),
     wrapper:
@@ -140,6 +144,7 @@ rule somatic_wgs_cnv_calling_control_freec_run:
         time=wf.get_resource("control_freec", "run", "time"),
         memory=wf.get_resource("control_freec", "run", "memory"),
         partition=wf.get_resource("control_freec", "run", "partition"),
+        tmpdir=wf.get_resource("control_freec", "run", "tmpdir"),
     log:
         **wf.get_log_file("control_freec", "run"),
     wrapper:
@@ -159,6 +164,7 @@ rule somatic_wgs_cnv_calling_control_freec_transform_output:
         time=wf.get_resource("control_freec", "transform", "time"),
         memory=wf.get_resource("control_freec", "transform", "memory"),
         partition=wf.get_resource("control_freec", "transform", "partition"),
+        tmpdir=wf.get_resource("control_freec", "transform", "tmpdir"),
     log:
         **wf.get_log_file("control_freec", "transform"),
     wrapper:
@@ -178,6 +184,7 @@ rule somatic_wgs_cnv_calling_control_freec_plot:
         time=wf.get_resource("control_freec", "plot", "time"),
         memory=wf.get_resource("control_freec", "plot", "memory"),
         partition=wf.get_resource("control_freec", "plot", "partition"),
+        tmpdir=wf.get_resource("control_freec", "plot", "tmpdir"),
     log:
         **wf.get_log_file("control_freec", "plot"),
     wrapper:
@@ -197,6 +204,7 @@ rule somatic_wgs_cnv_calling_cnvkit_run:
         time=wf.get_resource("cnvkit", "run", "time"),
         memory=wf.get_resource("cnvkit", "run", "memory"),
         partition=wf.get_resource("cnvkit", "run", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "run", "tmpdir"),
     log:
         **wf.get_log_file("cnvkit", "run"),
     wrapper:

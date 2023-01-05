@@ -78,6 +78,7 @@ rule data_qc_fastqc_run:
         time=wf.get_resource("fastqc", "run", "time"),
         memory=wf.get_resource("fastqc", "run", "memory"),
         partition=wf.get_resource("fastqc", "run", "partition"),
+        tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
     params:
         args=wf.substep_dispatch("fastqc", "get_args", "run"),
     log:

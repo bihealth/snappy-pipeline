@@ -79,6 +79,7 @@ rule gene_expression_quantification_strandedness_run:
         time=wf.get_resource("strandedness", "run", "time"),
         memory=wf.get_resource("strandedness", "run", "memory"),
         partition=wf.get_resource("strandedness", "run", "partition"),
+        tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
     log:
         **wf.get_log_file("strandedness", "run"),
     wrapper:
@@ -99,6 +100,7 @@ rule gene_expression_quantification_duplication_run:
         time=wf.get_resource("duplication", "run", "time"),
         memory=wf.get_resource("duplication", "run", "memory"),
         partition=wf.get_resource("duplication", "run", "partition"),
+        tmpdir=wf.get_resource("duplication", "run", "tmpdir"),
     log:
         **wf.get_log_file("duplication", "run"),
     wrapper:
@@ -116,6 +118,7 @@ rule gene_expression_quantification_dupradar_run:
         time=wf.get_resource("dupradar", "run", "time"),
         memory=wf.get_resource("dupradar", "run", "memory"),
         partition=wf.get_resource("dupradar", "run", "partition"),
+        tmpdir=wf.get_resource("dupradar", "run", "tmpdir"),
     log:
         **wf.get_log_file("dupradar", "run"),
     wrapper:
@@ -133,6 +136,7 @@ rule gene_expression_quantification_rnaseqc_run:
         time=wf.get_resource("rnaseqc", "run", "time"),
         memory=wf.get_resource("rnaseqc", "run", "memory"),
         partition=wf.get_resource("rnaseqc", "run", "partition"),
+        tmpdir=wf.get_resource("rnaseqc", "run", "tmpdir"),
     log:
         **wf.get_log_file("rnaseqc", "run"),
     wrapper:
@@ -150,6 +154,7 @@ rule gene_expression_quantification_star_run:
         time=wf.get_resource("stats", "run", "time"),
         memory=wf.get_resource("stats", "run", "memory"),
         partition=wf.get_resource("stats", "run", "partition"),
+        tmpdir=wf.get_resource("stats", "run", "tmpdir"),
     log:
         **wf.get_log_file("stats", "run"),
     wrapper:
@@ -172,6 +177,7 @@ rule gene_expression_quantification_featurecounts_run:
         time=wf.get_resource("featurecounts", "run", "time"),
         memory=wf.get_resource("featurecounts", "run", "memory"),
         partition=wf.get_resource("featurecounts", "run", "partition"),
+        tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
     log:
         **wf.get_log_file("featurecounts", "run"),
     wrapper:
@@ -193,6 +199,7 @@ rule gene_expression_quantification_salmon_run:
         time=wf.get_resource("salmon", "run", "time"),
         memory=wf.get_resource("salmon", "run", "memory"),
         partition=wf.get_resource("salmon", "run", "partition"),
+        tmpdir=wf.get_resource("salmon", "run", "tmpdir"),
     log:
         **wf.get_log_file("salmon", "run"),
     params:

@@ -16,3 +16,4 @@ class ResourceUsage:
     time: str
     memory: str
     partition: typing.Optional[str] = None
+    tmpdir: typing.Optional[str] = None

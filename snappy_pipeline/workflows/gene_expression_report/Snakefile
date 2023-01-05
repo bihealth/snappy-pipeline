@@ -62,6 +62,7 @@ rule gene_expression_report_aggregate_counts:
         time=wf.get_resource("aggregate_counts", "run", "time"),
         memory=wf.get_resource("aggregate_counts", "run", "memory"),
         partition=wf.get_resource("aggregate_counts", "run", "partition"),
+        tmpdir=wf.get_resource("aggregate_counts", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/rpkm_expression")
 
@@ -77,6 +78,7 @@ rule gene_expression_report_compute_ranks:
         time=wf.get_resource("compute_ranks", "run", "time"),
         memory=wf.get_resource("compute_ranks", "run", "memory"),
         partition=wf.get_resource("compute_ranks", "run", "partition"),
+        tmpdir=wf.get_resource("compute_ranks", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/rank_expression")
 
@@ -92,6 +94,7 @@ rule gene_expression_report_compute_signatures:
         time=wf.get_resource("compute_signatures", "run", "time"),
         memory=wf.get_resource("compute_signatures", "run", "memory"),
         partition=wf.get_resource("compute_signatures", "run", "partition"),
+        tmpdir=wf.get_resource("compute_signatures", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/compute_signatures")
 
@@ -107,5 +110,6 @@ rule gene_expression_report_plot_expression_distribution:
         time=wf.get_resource("plot_expression_distribution", "run", "time"),
         memory=wf.get_resource("plot_expression_distribution", "run", "memory"),
         partition=wf.get_resource("plot_expression_distribution", "run", "partition"),
+        tmpdir=wf.get_resource("plot_expression_distribution", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/plot_expression_distribution")

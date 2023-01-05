@@ -64,6 +64,7 @@ rule somatic_variant_annotation_jannovar_annotate_somatic_vcf:
         time=wf.get_resource("jannovar", "annotate_somatic_vcf", "time"),
         memory=wf.get_resource("jannovar", "annotate_somatic_vcf", "memory"),
         partition=wf.get_resource("jannovar", "annotate_somatic_vcf", "partition"),
+        tmpdir=wf.get_resource("jannovar", "annotate_somatic_vcf", "tmpdir"),
     params:
         **{"args": wf.get_params("jannovar", "annotate_somatic_vcf")},
     log:

@@ -64,6 +64,7 @@ rule somatic_msi_calling_mantis:
         time=wf.get_resource("mantis", "run", "time"),
         memory=wf.get_resource("mantis", "run", "memory"),
         partition=wf.get_resource("mantis", "run", "partition"),
+        tmpdir=wf.get_resource("mantis", "run", "tmpdir"),
     log:
         wf.get_log_file("mantis", "run"),
     wrapper:
