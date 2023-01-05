@@ -41,7 +41,7 @@ class MeltStepPart(
     )
 
     _resource_usage = ResourceUsage(
-        threads=6,
+        threads=1,
         time="1-00:00:00",
         memory="6G",
     )
