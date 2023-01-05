@@ -1,25 +1,27 @@
-# -*- coding: utf-8 -*-
-"""Wrapper for running Melt genotype
-"""
-
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
 
 shell(
     r"""
 # -----------------------------------------------------------------------------
 # Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log}")
+exec 2> >(tee -a "{snakemake.log.log}")
 set -x
 # -----------------------------------------------------------------------------
 
-melt_mei -Xmx2G Genotype \
+JAR={snakemake.config[step_config][sv_calling_targeted][melt][jar_file]}
+ME_REFS={melt_config[me_refs_path]}
+ME_INFIX={melt_config[me_refs_infix]}
+
+java -Xmx6G -jar $JAR \
+    Genotype \
     -h {snakemake.config[static_data_config][reference][path]} \
     -bamfile {snakemake.input.bam} \
     -p $(dirname {snakemake.input.done}) \
-    -t $(melt_mei_path)/me_refs/{snakemake.config[step_config][wgs_mei_calling][melt][me_refs_infix]}/{snakemake.wildcards.me_type}_MELT.zip \
+    -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
     -w $(dirname {snakemake.output.done})
 
 """

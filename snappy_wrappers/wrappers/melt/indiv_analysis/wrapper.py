@@ -1,27 +1,28 @@
-# -*- coding: utf-8 -*-
-"""Wrapper for running Melt IndivAnalysis
-"""
-
 from snakemake.shell import shell
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+melt_arg_exome = {"sv_calling_targeted": "-exome"}.get(snakemake.params.step_key, "")
 
 shell(
     r"""
 # -----------------------------------------------------------------------------
 # Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log}")
+exec 2> >(tee -a "{snakemake.log.log}")
 set -x
 # -----------------------------------------------------------------------------
 
-export MALLOC_ARENA_MAX=4
+JAR={snakemake.config[step_config][sv_calling_targeted][melt][jar_file]}
+ME_REFS={melt_config[me_refs_path]}
+ME_INFIX={melt_config[me_refs_infix]}
 
-melt_mei -Xmx18G IndivAnalysis \
+java -Xmx6G -jar $JAR \
+    IndivAnalysis \
     -b hs37d5/NC_007605 \
-    -c 30 \
+    {melt_arg_exome} \
     -h {snakemake.config[static_data_config][reference][path]} \
-    -t $(melt_mei_path)/me_refs/{snakemake.config[step_config][wgs_mei_calling][melt][me_refs_infix]}/{snakemake.wildcards.me_type}_MELT.zip \
+    -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \
     -bamfile {snakemake.input.orig_bam}

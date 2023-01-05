@@ -139,11 +139,10 @@ postproc_bam()
         /dev/stdin \
     | tee >(samtools stats    /dev/stdin >{snakemake.output.report_bamstats_txt}) \
     | tee >(samtools flagstat /dev/stdin >{snakemake.output.report_flagstats_txt}) \
-    | tee >(samtools index    /dev/stdin -o {snakemake.output.bam_bai}) \
+    | tee >(stdbuf -o0 samtools index /dev/stdin -o /dev/stdout >{snakemake.output.bam_bai}) \
     | tee >(compute-md5       /dev/stdin {snakemake.output.bam_md5}) \
     > {snakemake.output.bam}
 
-    compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_bai_md5}
 
     touch \
         {snakemake.output.bam} \
@@ -151,7 +150,27 @@ postproc_bam()
         {snakemake.output.bam_bai} \
         {snakemake.output.bam_bai_md5}
 
-    samtools idxstats {snakemake.output.bam} >{snakemake.output.report_idxstats_txt}
+    # We use stdbuf on samtools index above toether with stdout redirection.  We have seen
+    # some interesting timing issues with clustered/distributed file systems and the small
+    # index file not having been written by the time that samtools idxstats uses it.  In
+    # addition we attempt to run it 5 times with incremental waits to make things more
+    # robust.
+    for i in {{1..5}}; do
+        set +e
+        samtools idxstats {snakemake.output.bam} >{snakemake.output.report_idxstats_txt}
+        ret=$?
+        set -e
+        if [[ "$ret" -eq 0 ]]; then
+            break
+        elif [[ "$i" -lt 5 ]]; then
+            sleep "${{i}}m"
+        fi
+    done
+    if [[ "$ret" -ne 0 ]]; then
+        >&2 echo "samtools idxstats failed 5 times - something wrong with the index?"
+        exit 1
+    fi
+    compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_bai_md5}
 
     compute-md5 {snakemake.output.report_bamstats_txt}  {snakemake.output.report_bamstats_txt_md5}
     compute-md5 {snakemake.output.report_flagstats_txt} {snakemake.output.report_flagstats_txt_md5}

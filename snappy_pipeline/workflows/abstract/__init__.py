@@ -154,7 +154,7 @@ class BaseStepPart:
             raise ValueError(f"Invalid resource name: {resource_name}")
         resource_usage = self.get_resource_usage(action)
         if resource_name == "tmpdir" and not resource_usage.tmpdir:
-            return self._get_tmpdir()
+            return self.parent.get_tmpdir()
         if resource_name == "partition" and not resource_usage.partition:
             return self.get_default_partition()
         else:
@@ -854,7 +854,7 @@ class BaseStep:
             with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
                 tmpdir = os.path.expandvars(tmpdir)
         if not tmpdir:
-            tmpdir = os.getenv.get("TMPDIR")
+            tmpdir = os.getenv("TMPDIR")
         if not tmpdir:
             tmpdir = tempfile.gettempdir()
         # Force existence of temporary directory

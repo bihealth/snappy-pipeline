@@ -1,11 +1,10 @@
 channels:
-- conda-forge
-- bioconda
-- r
-- http://conda.cubi.bihealth.org/cubiconda
+  - conda-forge
+  - bioconda
 dependencies:
-- melt_mei
-- htslib
-- perl
-- bcftools
-- bowtie2
+  - htslib =1.16
+  - bcftools =1.16
+  - samtools =1.16
+  - perl
+  - bowtie2
+  - openjdk
