@@ -516,7 +516,7 @@ class RunGcnvStepPart(
 
         The function will skip pedigrees where samples have inconsistent library kits and print a warning.
         """
-        if "gcnv" not in self.config['tools']:
+        if "gcnv" not in self.config["tools"]:
             return
 
         # Get list with all result path template strings.

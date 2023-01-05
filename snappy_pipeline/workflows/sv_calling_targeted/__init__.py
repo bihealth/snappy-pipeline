@@ -112,7 +112,13 @@ class SvCallingTargetedWorkflow(BaseStep):
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
-            (WritePedigreeStepPart, GcnvTargetedStepPart, Delly2StepPart, MantaStepPart, MeltStepPart)
+            (
+                WritePedigreeStepPart,
+                GcnvTargetedStepPart,
+                Delly2StepPart,
+                MantaStepPart,
+                MeltStepPart,
+            )
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])

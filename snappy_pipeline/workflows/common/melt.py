@@ -1,32 +1,20 @@
-import typing
-import re
 from itertools import chain
+import re
+import typing
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (
-    BaseStep,
-    BaseStepPart,
-    ResourceUsage,
-    WritePedigreeStepPart,
-)
+from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import (
     ForwardResourceUsageMixin,
     ForwardSnakemakeFilesMixin,
 )
-from snappy_pipeline.workflows.common.delly import Delly2StepPart
-from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
-from snappy_pipeline.workflows.common.manta import MantaStepPart
-from snappy_pipeline.workflows.common.sv_calling import (
-    SvCallingGetLogFileMixin,
-    SvCallingGetResultFilesMixin,
-)
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_wrappers.tools.genome_windows import yield_regions
+from snappy_pipeline.workflows.common.sv_calling import SvCallingGetResultFilesMixin
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
 
 class MeltStepPart(
     SvCallingGetResultFilesMixin,
@@ -55,7 +43,7 @@ class MeltStepPart(
     _resource_usage = ResourceUsage(
         threads=6,
         time="1-00:00:00",
-        memory=f"6G",
+        memory="6G",
     )
     resource_usage_dict = {
         "preprocess": _resource_usage,
@@ -140,13 +128,13 @@ class MeltStepPart(
             "hum_breaks.sorted.bam.bai",
             "tmp.bed",
         )
-        yield "_more", [
-            f"work/{infix}/out/{{library_name}}.{{me_type}}.{ext}" for ext in exts
-        ]
+        yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.{ext}" for ext in exts]
 
     @dictify
     def _get_log_file_indiv_analysis(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt_indiv_analysis.{library_name}.{me_type}", suffix="_{library_name}").items()
+        yield from self._get_log_file_with_infix(
+            "{mapper}.melt_indiv_analysis.{library_name}.{me_type}", suffix="_{library_name}"
+        ).items()
 
     @listify
     def _get_input_files_group_analysis(self, wildcards):
@@ -168,13 +156,13 @@ class MeltStepPart(
             "merged.hum_breaks.sorted.bam.bai",
             "pre_geno.tsv",
         )
-        yield "_more", [
-            f"work/{infix}/out/{{me_type}}.{ext}" for ext in exts
-        ]
+        yield "_more", [f"work/{infix}/out/{{me_type}}.{ext}" for ext in exts]
 
     @dictify
     def _get_log_file_group_analysis(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt_group_analysis.{index_library_name}.{me_type}").items()
+        yield from self._get_log_file_with_infix(
+            "{mapper}.melt_group_analysis.{index_library_name}.{me_type}"
+        ).items()
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
@@ -187,13 +175,13 @@ class MeltStepPart(
     def _get_output_files_genotype(self):
         infix = "{mapper}.melt_genotype.{index_library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
-        yield "_more", [
-            f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"
-        ]
+        yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"]
 
     @dictify
     def _get_log_file_genotype(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt_genotype.{index_library_name}.{me_type}", suffix="_{library_name}").items()
+        yield from self._get_log_file_with_infix(
+            "{mapper}.melt_genotype.{index_library_name}.{me_type}", suffix="_{library_name}"
+        ).items()
 
     @dictify
     def _get_input_files_make_vcf(self, wildcards):
@@ -209,7 +197,9 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_make_vcf(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt_make_vcf.{index_library_name}.{me_type}").items()
+        yield from self._get_log_file_with_infix(
+            "{mapper}.melt_make_vcf.{index_library_name}.{me_type}"
+        ).items()
 
     @dictify
     def _get_output_files_make_vcf(self):
@@ -241,9 +231,7 @@ class MeltStepPart(
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("merge_vcf").values()
-            )
+            for work_path in chain(work_files.values(), self.get_log_file("merge_vcf").values())
         ]
 
     @dictify
