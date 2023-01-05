@@ -76,6 +76,7 @@ rule variant_phasing_gatk_phase_by_transmission_run:
         time=wf.get_resource("gatk_phase_by_transmission", "run", "time"),
         memory=wf.get_resource("gatk_phase_by_transmission", "run", "memory"),
         partition=wf.get_resource("gatk_phase_by_transmission", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_phase_by_transmission", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk_phase_by_transmission", "run"),
     wrapper:
@@ -95,6 +96,7 @@ rule variant_phasing_gatk_read_backed_phasing_only_run:
         time=wf.get_resource("gatk_read_backed_phasing_only", "run", "time"),
         memory=wf.get_resource("gatk_read_backed_phasing_only", "run", "memory"),
         partition=wf.get_resource("gatk_read_backed_phasing_only", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_only", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk_read_backed_phasing_only", "run"),
     wrapper:
@@ -114,6 +116,7 @@ rule variant_phasing_gatk_read_backed_phasing_also_run:
         time=wf.get_resource("gatk_read_backed_phasing_also", "run", "time"),
         memory=wf.get_resource("gatk_read_backed_phasing_also", "run", "memory"),
         partition=wf.get_resource("gatk_read_backed_phasing_also", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_also", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk_read_backed_phasing_also", "run"),
     wrapper:

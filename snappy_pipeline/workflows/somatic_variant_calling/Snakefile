@@ -63,6 +63,7 @@ rule somatic_variant_calling_mutect_run:
         time=wf.get_resource("mutect", "run", "time"),
         memory=wf.get_resource("mutect", "run", "memory"),
         partition=wf.get_resource("mutect", "run", "partition"),
+        tmpdir=wf.get_resource("mutect", "run", "tmpdir"),
     log:
         **wf.get_log_file("mutect", "run"),
     wrapper:
@@ -82,6 +83,7 @@ rule somatic_variant_calling_mutect2_pileup_normal:
         time=wf.get_resource("mutect2", "pileup_normal", "time"),
         memory=wf.get_resource("mutect2", "pileup_normal", "memory"),
         partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
+        tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
     log:
         **wf.get_log_file("mutect2", "pileup_normal"),
     params:
@@ -100,6 +102,7 @@ rule somatic_variant_calling_mutect2_pileup_tumor:
         time=wf.get_resource("mutect2", "pileup_tumor", "time"),
         memory=wf.get_resource("mutect2", "pileup_tumor", "memory"),
         partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
+        tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
     log:
         **wf.get_log_file("mutect2", "pileup_tumor"),
     wrapper:
@@ -116,6 +119,7 @@ rule somatic_variant_calling_mutect2_contamination:
         time=wf.get_resource("mutect2", "contamination", "time"),
         memory=wf.get_resource("mutect2", "contamination", "memory"),
         partition=wf.get_resource("mutect2", "contamination", "partition"),
+        tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
     log:
         **wf.get_log_file("mutect2", "contamination"),
     wrapper:
@@ -132,6 +136,7 @@ rule somatic_variant_calling_mutect2_run:
         time=wf.get_resource("mutect2", "run", "time"),
         memory=wf.get_resource("mutect2", "run", "memory"),
         partition=wf.get_resource("mutect2", "run", "partition"),
+        tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
     log:
         **wf.get_log_file("mutect2", "run"),
     params:
@@ -150,6 +155,7 @@ rule somatic_variant_calling_mutect2_filter:
         time=wf.get_resource("mutect2", "filter", "time"),
         memory=wf.get_resource("mutect2", "filter", "memory"),
         partition=wf.get_resource("mutect2", "filter", "partition"),
+        tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
     log:
         **wf.get_log_file("mutect2", "filter"),
     params:
@@ -172,6 +178,7 @@ rule somatic_variant_calling_scalpel_run:
         time=wf.get_resource("scalpel", "run", "time"),
         memory=wf.get_resource("scalpel", "run", "memory"),
         partition=wf.get_resource("scalpel", "run", "partition"),
+        tmpdir=wf.get_resource("scalpel", "run", "tmpdir"),
     log:
         **wf.get_log_file("scalpel", "run"),
     params:
@@ -193,6 +200,7 @@ rule somatic_variant_calling_strelka2_run:
         time=wf.get_resource("strelka2", "run", "time"),
         memory=wf.get_resource("strelka2", "run", "memory"),
         partition=wf.get_resource("strelka2", "run", "partition"),
+        tmpdir=wf.get_resource("strelka2", "run", "tmpdir"),
     log:
         **wf.get_log_file("strelka2", "run"),
     params:
@@ -215,6 +223,7 @@ rule somatic_variant_calling_bcftools_joint_run:
         time=wf.get_resource("bcftools_joint", "run", "time"),
         memory=wf.get_resource("bcftools_joint", "run", "memory"),
         partition=wf.get_resource("bcftools_joint", "run", "partition"),
+        tmpdir=wf.get_resource("bcftools_joint", "run", "tmpdir"),
     params:
         args=wf.substep_dispatch("bcftools_joint", "get_args", "run"),
     log:
@@ -236,6 +245,7 @@ rule somatic_variant_calling_platypus_joint_run:
         time=wf.get_resource("platypus_joint", "run", "time"),
         memory=wf.get_resource("platypus_joint", "run", "memory"),
         partition=wf.get_resource("platypus_joint", "run", "partition"),
+        tmpdir=wf.get_resource("platypus_joint", "run", "tmpdir"),
     params:
         args=wf.substep_dispatch("platypus_joint", "get_args", "run"),
     log:
@@ -257,6 +267,7 @@ rule somatic_variant_calling_gatk_ug_joint_run:
         time=wf.get_resource("gatk_ug_joint", "run", "time"),
         memory=wf.get_resource("gatk_ug_joint", "run", "memory"),
         partition=wf.get_resource("gatk_ug_joint", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_ug_joint", "run", "tmpdir"),
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_ug_joint",
@@ -280,6 +291,7 @@ rule somatic_variant_calling_gatk_hc_joint_run:
         time=wf.get_resource("gatk_hc_joint", "run", "time"),
         memory=wf.get_resource("gatk_hc_joint", "run", "memory"),
         partition=wf.get_resource("gatk_hc_joint", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_hc_joint", "run", "tmpdir"),
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_hc_joint",
@@ -303,6 +315,7 @@ rule somatic_variant_calling_varscan_joint_run:
         time=wf.get_resource("varscan_joint", "run", "time"),
         memory=wf.get_resource("varscan_joint", "run", "memory"),
         partition=wf.get_resource("varscan_joint", "run", "partition"),
+        tmpdir=wf.get_resource("varscan_joint", "run", "tmpdir"),
     params:
         args=wf.substep_dispatch("varscan_joint", "get_args", "call_pedigree"),
         step_key="somatic_variant_calling",

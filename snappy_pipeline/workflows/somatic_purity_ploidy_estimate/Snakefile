@@ -78,6 +78,7 @@ rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
         time=wf.get_resource("ascat", "baf_tumor", "time"),
         memory=wf.get_resource("ascat", "baf_tumor", "memory"),
         partition=wf.get_resource("ascat", "baf_tumor", "partition"),
+        tmpdir=wf.get_resource("ascat", "baf_tumor", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "baf_tumor"),
     wrapper:
@@ -94,6 +95,7 @@ rule somatic_purity_ploidy_estimate_ascat_baf_normal:
         time=wf.get_resource("ascat", "baf_normal", "time"),
         memory=wf.get_resource("ascat", "baf_normal", "memory"),
         partition=wf.get_resource("ascat", "baf_normal", "partition"),
+        tmpdir=wf.get_resource("ascat", "baf_normal", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "baf_normal"),
     wrapper:
@@ -113,6 +115,7 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
         time=wf.get_resource("ascat", "cnv_tumor", "time"),
         memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
         partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
+        tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "cnv_tumor"),
     wrapper:
@@ -129,6 +132,7 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
         time=wf.get_resource("ascat", "cnv_normal", "time"),
         memory=wf.get_resource("ascat", "cnv_normal", "memory"),
         partition=wf.get_resource("ascat", "cnv_normal", "partition"),
+        tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "cnv_normal"),
     wrapper:
@@ -148,6 +152,7 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes:
         time=wf.get_resource("ascat", "cnv_tumor", "time"),
         memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
         partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
+        tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "cnv_tumor"),
     wrapper:
@@ -164,6 +169,7 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal_wes:
         time=wf.get_resource("ascat", "cnv_normal", "time"),
         memory=wf.get_resource("ascat", "cnv_normal", "memory"),
         partition=wf.get_resource("ascat", "cnv_normal", "partition"),
+        tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "cnv_normal"),
     wrapper:
@@ -183,6 +189,7 @@ rule somatic_purity_ploidy_estimate_ascat_run_ascat:
         time=wf.get_resource("ascat", "run_ascat", "time"),
         memory=wf.get_resource("ascat", "run_ascat", "memory"),
         partition=wf.get_resource("ascat", "run_ascat", "partition"),
+        tmpdir=wf.get_resource("ascat", "run_ascat", "tmpdir"),
     log:
         **wf.get_log_file("ascat", "run_ascat"),
     wrapper:

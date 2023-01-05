@@ -109,6 +109,7 @@ if config["step_config"]["variant_export_external"]["gvcf_option"]:
             time=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "time"),
             memory=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "memory"),
             partition=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "partition"),
+            tmpdir=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "tmpdir"),
         log:
             **wf.get_log_file("varfish_annotator_external", "gvcf_to_vcf"),
         params:
@@ -128,6 +129,7 @@ else:
             time=wf.get_resource("varfish_annotator_external", "merge_vcf", "time"),
             memory=wf.get_resource("varfish_annotator_external", "merge_vcf", "memory"),
             partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
+            tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
         log:
             **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
         params:
@@ -149,6 +151,7 @@ rule variant_export_external_varfish_annotator_annotate:
         time=wf.get_resource("varfish_annotator_external", "annotate", "time"),
         memory=wf.get_resource("varfish_annotator_external", "annotate", "memory"),
         partition=wf.get_resource("varfish_annotator_external", "annotate", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator_external", "annotate", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator_external", "annotate"),
     params:
@@ -170,6 +173,7 @@ rule variant_export_external_bam_reports_bam_qc:
         time=wf.get_resource("bam_reports", "bam_qc", "time"),
         memory=wf.get_resource("bam_reports", "bam_qc", "memory"),
         partition=wf.get_resource("bam_reports", "bam_qc", "partition"),
+        tmpdir=wf.get_resource("bam_reports", "bam_qc", "tmpdir"),
     params:
         **{"args": wf.get_params("bam_reports", "bam_qc")},
     log:
@@ -191,6 +195,7 @@ rule variant_export_external_bam_reports_run:
         time=wf.get_resource("bam_reports", "run", "time"),
         memory=wf.get_resource("bam_reports", "run", "memory"),
         partition=wf.get_resource("bam_reports", "run", "partition"),
+        tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
     params:
         **{"args": wf.get_params("bam_reports", "run")},
     log:
@@ -212,6 +217,7 @@ rule variant_export_external_bam_reports_collect:
         time=wf.get_resource("bam_reports", "run", "time"),
         memory=wf.get_resource("bam_reports", "run", "memory"),
         partition=wf.get_resource("bam_reports", "run", "partition"),
+        tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
     log:
         wf.get_log_file("bam_reports", "collect"),
     wrapper:
@@ -231,6 +237,7 @@ rule variant_export_external_varfish_annotator_bam_qc:
         time=wf.get_resource("varfish_annotator_external", "bam_qc", "time"),
         memory=wf.get_resource("varfish_annotator_external", "bam_qc", "memory"),
         partition=wf.get_resource("varfish_annotator_external", "bam_qc", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator_external", "bam_qc", "tmpdir"),
     params:
         **{"args": wf.get_params("varfish_annotator_external", "bam_qc")},
     log:

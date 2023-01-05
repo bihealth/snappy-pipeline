@@ -62,6 +62,7 @@ rule cbioportal_export_study_metadata:
         time=wf.get_resource("cbioportal_study_meta_files", "run", "time"),
         memory=wf.get_resource("cbioportal_study_meta_files", "run", "memory"),
         partition=wf.get_resource("cbioportal_study_meta_files", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_study_meta_files", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/study_meta")
 
@@ -74,6 +75,7 @@ rule cbioportal_export_meta_files:
         time=wf.get_resource("cbioportal_meta_files", "run", "time"),
         memory=wf.get_resource("cbioportal_meta_files", "run", "memory"),
         partition=wf.get_resource("cbioportal_meta_files", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_meta_files", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/meta_files")
 
@@ -89,6 +91,7 @@ rule cbioportal_export_patient_metadata:
         time=wf.get_resource("cbioportal_clinical_data", "run", "time"),
         memory=wf.get_resource("cbioportal_clinical_data", "run", "memory"),
         partition=wf.get_resource("cbioportal_clinical_data", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_clinical_data", "run", "tmpdir"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -103,6 +106,7 @@ rule cbioportal_export_case_lists:
         time=wf.get_resource("cbioportal_case_lists", "run", "time"),
         memory=wf.get_resource("cbioportal_case_lists", "run", "memory"),
         partition=wf.get_resource("cbioportal_case_lists", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_case_lists", "run", "tmpdir"),
     params:
         sheet=wf.substep_dispatch("cbioportal_clinical_data", "get_sample_sheets", "run"),
     wrapper:
@@ -124,6 +128,7 @@ rule cbioportal_export_generate_mafs:
         time=wf.get_resource("cbioportal_vcf2maf", "run", "time"),
         memory=wf.get_resource("cbioportal_vcf2maf", "run", "memory"),
         partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_vcf2maf", "run", "tmpdir"),
     params:
         args=wf.substep_dispatch("cbioportal_vcf2maf", "get_args", "run"),
     wrapper:
@@ -145,6 +150,7 @@ rule cbioportal_export_concatenate_maf:
         time=wf.get_resource("cbioportal_maf", "run", "time"),
         memory=wf.get_resource("cbioportal_maf", "run", "memory"),
         partition=wf.get_resource("cbioportal_maf", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_maf", "run", "tmpdir"),
     shell:
         r"""
         cat \
@@ -166,6 +172,7 @@ rule cbioportal_export_CNA_calls:
         time=wf.get_resource("cbioportal_cna_data", "gistic", "time"),
         memory=wf.get_resource("cbioportal_cna_data", "gistic", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "gistic", "partition"),
+        tmpdir=wf.get_resource("cbioportal_cna_data", "gistic", "tmpdir"),
     params:
         datatype="int",
     wrapper:
@@ -185,6 +192,7 @@ rule cbioportal_export_CNA_log2:
         time=wf.get_resource("cbioportal_cna_data", "log2", "time"),
         memory=wf.get_resource("cbioportal_cna_data", "log2", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "log2", "partition"),
+        tmpdir=wf.get_resource("cbioportal_cna_data", "log2", "tmpdir"),
     params:
         datatype="float",
     wrapper:
@@ -204,6 +212,7 @@ rule cbioportal_export_segments:
         time=wf.get_resource("cbioportal_cna_data", "segments", "time"),
         memory=wf.get_resource("cbioportal_cna_data", "segments", "memory"),
         partition=wf.get_resource("cbioportal_cna_data", "segments", "partition"),
+        tmpdir=wf.get_resource("cbioportal_cna_data", "segments", "tmpdir"),
     shell:
         r"""
         cat \
@@ -226,6 +235,7 @@ rule cbioportal_create_dataframe_matching_results:
         time=wf.get_resource("cbioportal_zscores", "run", "time"),
         memory=wf.get_resource("cbioportal_zscores", "run", "memory"),
         partition=wf.get_resource("cbioportal_zscores", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_zscores", "run", "tmpdir"),
     run:
         wf.substep_dispatch("cbioportal_zscores", "get_df", output)
 
@@ -240,5 +250,6 @@ rule cbioportal_compute_zscores:
         time=wf.get_resource("cbioportal_compute_zscores", "run", "time"),
         memory=wf.get_resource("cbioportal_compute_zscores", "run", "memory"),
         partition=wf.get_resource("cbioportal_compute_zscores", "run", "partition"),
+        tmpdir=wf.get_resource("cbioportal_compute_zscores", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("cbioportal/zscores")

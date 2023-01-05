@@ -59,6 +59,7 @@ rule sv_calling_targeted_gcnv_preprocess_intervals:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
         memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     wrapper:
@@ -75,6 +76,7 @@ rule sv_calling_targeted_gcnv_coverage:
         time=wf.get_resource("gcnv", "coverage", "time"),
         memory=wf.get_resource("gcnv", "coverage", "memory"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
+        tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "coverage"),
     wrapper:
@@ -91,6 +93,7 @@ rule sv_calling_targeted_gcnv_contig_ploidy:
         time=wf.get_resource("gcnv", "contig_ploidy", "time"),
         memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
         partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
+        tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
@@ -109,6 +112,7 @@ rule sv_calling_targeted_gcnv_call_cnvs:
         time=wf.get_resource("gcnv", "call_cnvs", "time"),
         memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
         partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
+        tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
     params:
@@ -127,6 +131,7 @@ rule sv_calling_targeted_gcnv_post_germline_calls:
         time=wf.get_resource("gcnv", "post_germline_calls", "time"),
         memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
         partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
+        tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     params:
@@ -145,6 +150,7 @@ rule sv_calling_targeted_gcnv_joint_germline_cnv_segmentation:
         time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
         memory=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "memory"),
         partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
+        tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
     wrapper:
@@ -164,6 +170,7 @@ rule sv_calling_targeted_manta_run:
         time=wf.get_resource("manta", "run", "time"),
         memory=wf.get_resource("manta", "run", "memory"),
         partition=wf.get_resource("manta", "run", "partition"),
+        tmpdir=wf.get_resource("manta", "run", "tmpdir"),
     log:
         **wf.get_log_file("manta", "run"),
     wrapper:
@@ -183,6 +190,7 @@ rule sv_calling_targeted_delly2_call:
         time=wf.get_resource("delly2", "call", "time"),
         memory=wf.get_resource("delly2", "call", "memory"),
         partition=wf.get_resource("delly2", "call", "partition"),
+        tmpdir=wf.get_resource("delly2", "call", "tmpdir"),
     params:
         step_key="sv_calling_targeted",
     log:
@@ -201,6 +209,7 @@ rule sv_calling_targeted_delly2_merge_calls:
         time=wf.get_resource("delly2", "merge_calls", "time"),
         memory=wf.get_resource("delly2", "merge_calls", "memory"),
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
+        tmpdir=wf.get_resource("delly2", "merge_calls", "tmpdir"),
     params:
         step_key="sv_calling_targeted",
     log:
@@ -219,6 +228,7 @@ rule sv_calling_targeted_delly2_genotype:
         time=wf.get_resource("delly2", "genotype", "time"),
         memory=wf.get_resource("delly2", "genotype", "memory"),
         partition=wf.get_resource("delly2", "genotype", "partition"),
+        tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
     params:
         step_key="sv_calling_targeted",
     log:
@@ -237,6 +247,7 @@ rule sv_calling_targeted_delly2_merge_genotypes:
         time=wf.get_resource("delly2", "merge_genotypes", "time"),
         memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
+        tmpdir=wf.get_resource("delly2", "merge_genotypes", "tmpdir"),
     params:
         step_key="sv_calling_targeted",
     log:

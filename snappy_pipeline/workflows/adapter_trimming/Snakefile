@@ -78,6 +78,7 @@ rule adapter_trimming_bbduk_run:
         time=wf.get_resource("bbduk", "run", "time"),
         memory=wf.get_resource("bbduk", "run", "memory"),
         partition=wf.get_resource("bbduk", "run", "partition"),
+        tmpdir=wf.get_resource("bbduk", "run", "tmpdir"),
     log:
         **wf.get_log_file("bbduk", "run"),
     params:
@@ -99,6 +100,7 @@ rule adapter_trimming_fastp_run:
         time=wf.get_resource("fastp", "run", "time"),
         memory=wf.get_resource("fastp", "run", "memory"),
         partition=wf.get_resource("fastp", "run", "partition"),
+        tmpdir=wf.get_resource("fastp", "run", "tmpdir"),
     log:
         **wf.get_log_file("fastp", "run"),
     params:

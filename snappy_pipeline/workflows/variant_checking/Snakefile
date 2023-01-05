@@ -76,6 +76,7 @@ rule variant_checking_peddy_run:
         time=wf.get_resource("peddy", "run", "time"),
         memory=wf.get_resource("peddy", "run", "memory"),
         partition=wf.get_resource("peddy", "run", "partition"),
+        tmpdir=wf.get_resource("peddy", "run", "tmpdir"),
     log:
         wf.get_log_file("peddy", "run"),
     wrapper:

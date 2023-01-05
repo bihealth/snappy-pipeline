@@ -64,6 +64,7 @@ rule variant_calling_bcftools_call_run:
         time=wf.get_resource("bcftools_call", "run", "time"),
         memory=wf.get_resource("bcftools_call", "run", "memory"),
         partition=wf.get_resource("bcftools_call", "run", "partition"),
+        tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
     log:
         **wf.get_log_file("bcftools_call", "run"),
     wrapper:
@@ -83,6 +84,7 @@ rule variant_calling_gatk3_hc_run:
         time=wf.get_resource("gatk3_hc", "run", "time"),
         memory=wf.get_resource("gatk3_hc", "run", "memory"),
         partition=wf.get_resource("gatk3_hc", "run", "partition"),
+        tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk3_hc", "run"),
     wrapper:
@@ -102,6 +104,7 @@ rule variant_calling_gatk3_ug_run:
         time=wf.get_resource("gatk3_ug", "run", "time"),
         memory=wf.get_resource("gatk3_ug", "run", "memory"),
         partition=wf.get_resource("gatk3_ug", "run", "partition"),
+        tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk3_ug", "run"),
     wrapper:
@@ -121,6 +124,7 @@ rule variant_calling_gatk4_hc_joint_run:
         time=wf.get_resource("gatk4_hc_joint", "run", "time"),
         memory=wf.get_resource("gatk4_hc_joint", "run", "memory"),
         partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
+        tmpdir=wf.get_resource("gatk4_hc_joint", "run", "tmpdir"),
     log:
         **wf.get_log_file("gatk4_hc_joint", "run"),
     wrapper:
@@ -141,6 +145,7 @@ rule variant_calling_gatk4_hc_gvcf_discover:
         time=wf.get_resource("gatk4_hc_gvcf", "discover", "time"),
         memory=wf.get_resource("gatk4_hc_gvcf", "discover", "memory"),
         partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
+        tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
     params:
         step_key="variant_calling",
         caller_key="gatk4_hc_gvcf",
@@ -161,6 +166,7 @@ rule variant_calling_gatk4_hc_gvcf_combine_gvcfs:
         time=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "time"),
         memory=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "memory"),
         partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
+        tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
     params:
         step_key="variant_calling",
         caller_key="gatk4_hc_gvcf",
@@ -181,6 +187,7 @@ rule variant_calling_gatk4_hc_gvcf_genotype:
         time=wf.get_resource("gatk4_hc_gvcf", "genotype", "time"),
         memory=wf.get_resource("gatk4_hc_gvcf", "genotype", "memory"),
         partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
+        tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
     params:
         step_key="variant_calling",
         caller_key="gatk4_hc_gvcf",
@@ -205,6 +212,7 @@ rule variant_calling_bcftools_stats_report:
         time=wf.get_resource("bcftools_stats", "run", "time"),
         memory=wf.get_resource("bcftools_stats", "run", "memory"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
+        tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
     log:
         **wf.get_log_file("bcftools_stats", "run"),
     wrapper:
@@ -224,6 +232,7 @@ rule variant_calling_jannovar_stats_report:
         time=wf.get_resource("jannovar_stats", "run", "time"),
         memory=wf.get_resource("jannovar_stats", "run", "memory"),
         partition=wf.get_resource("jannovar_stats", "run", "partition"),
+        tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
     log:
         **wf.get_log_file("jannovar_stats", "run"),
     wrapper:
@@ -243,6 +252,7 @@ rule variant_calling_baf_file_generation:
         time=wf.get_resource("baf_file_generation", "run", "time"),
         memory=wf.get_resource("baf_file_generation", "run", "memory"),
         partition=wf.get_resource("baf_file_generation", "run", "partition"),
+        tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
     log:
         **wf.get_log_file("baf_file_generation", "run"),
     wrapper:
@@ -262,6 +272,7 @@ rule variant_calling_bcftools_roh:
         time=wf.get_resource("bcftools_roh", "run", "time"),
         memory=wf.get_resource("bcftools_roh", "run", "memory"),
         partition=wf.get_resource("bcftools_roh", "run", "partition"),
+        tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
     log:
         **wf.get_log_file("bcftools_roh", "run"),
     wrapper:

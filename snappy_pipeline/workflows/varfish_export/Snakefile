@@ -58,6 +58,7 @@ rule varfish_export_varfish_annotator_annotate:
         time=wf.get_resource("varfish_annotator", "annotate", "time"),
         memory=wf.get_resource("varfish_annotator", "annotate", "memory"),
         partition=wf.get_resource("varfish_annotator", "annotate", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator", "annotate", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator", "annotate"),
     params:
@@ -79,6 +80,7 @@ rule varfish_export_varfish_annotator_annotate_svs:
         time=wf.get_resource("varfish_annotator", "annotate_svs", "time"),
         memory=wf.get_resource("varfish_annotator", "annotate_svs", "memory"),
         partition=wf.get_resource("varfish_annotator", "annotate_svs", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator", "annotate_svs", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator", "annotate_svs"),
     # params:
@@ -100,6 +102,7 @@ rule varfish_export_varfish_annotator_bam_qc:
         time=wf.get_resource("varfish_annotator", "bam_qc", "time"),
         memory=wf.get_resource("varfish_annotator", "bam_qc", "memory"),
         partition=wf.get_resource("varfish_annotator", "bam_qc", "partition"),
+        tmpdir=wf.get_resource("varfish_annotator", "bam_qc", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator", "bam_qc"),
     params:

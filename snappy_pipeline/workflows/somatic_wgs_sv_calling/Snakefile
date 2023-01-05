@@ -64,6 +64,7 @@ rule somatic_wgs_sv_calling_manta_run:
         time=wf.get_resource("manta", "run", "time"),
         memory=wf.get_resource("manta", "run", "memory"),
         partition=wf.get_resource("manta", "run", "partition"),
+        tmpdir=wf.get_resource("manta", "run", "tmpdir"),
     log:
         wf.get_log_file("manta", "run"),
     wrapper:

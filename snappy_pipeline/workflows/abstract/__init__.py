@@ -3,6 +3,8 @@
 
 from collections import OrderedDict
 from collections.abc import MutableMapping
+import contextlib
+import datetime
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
@@ -10,6 +12,7 @@ import itertools
 import os
 import os.path
 import sys
+import tempfile
 import typing
 
 import attr
@@ -49,6 +52,39 @@ set -x
 # -----------------------------------------------------------------------------
 
 """.lstrip()
+
+
+@contextlib.contextmanager
+def modified_environ(*remove, **update):
+    """
+    Temporarily updates the ``os.environ`` dictionary in-place.
+
+    The ``os.environ`` dictionary is updated in-place so that the modification
+    is sure to work in all situations.
+
+    :param remove: Environment variables to remove.
+    :param update: Dictionary of environment variables and values to add/update.
+
+       Source: https://stackoverflow.com/a/34333710/84349
+    """
+    env = os.environ
+    update = update or {}
+    remove = remove or []
+
+    # List of environment variables being updated or removed.
+    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
+    # Environment variables and values to restore on exit.
+    update_after = {k: env[k] for k in stomped}
+    # Environment variables and values to remove on exit.
+    remove_after = frozenset(k for k in update if k not in env)
+
+    try:
+        env.update(update)
+        [env.pop(k, None) for k in remove]
+        yield
+    finally:
+        env.update(update_after)
+        [env.pop(k) for k in remove_after]
 
 
 class ImplementationUnavailableError(NotImplementedError):
@@ -114,9 +150,11 @@ class BaseStepPart:
         :param action: The action to return the resource requirement for.
         :param resource_name: The name to return the resource for.
         """
-        if resource_name not in ("threads", "time", "memory", "partition"):
+        if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
         resource_usage = self.get_resource_usage(action)
+        if resource_name == "tmpdir" and not resource_usage.tmpdir:
+            return self._get_tmpdir()
         if resource_name == "partition" and not resource_usage.partition:
             return self.get_default_partition()
         else:
@@ -800,6 +838,28 @@ class BaseStep:
         Delegates to the sub step object's get_resource function
         """
         return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
+
+    def get_tmpdir(self):
+        """Return temporary directory.
+
+        To be used directly or via get_resource("step", "action", "tmpdir")
+
+        1. Try to evaluate global_config/tmpdir. Interpret $-variables from environment.
+           Provides the current date as $TODAY.
+        2. If this fails, try to use environment variable TMPDIR.
+        3. If this fails, use tempfile.gettempdir(), same as Snakemake default.
+        """
+        tmpdir = self.w_config.get("global_config", {}).get("tmpdir", None)
+        if tmpdir:
+            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
+                tmpdir = os.path.expandvars(tmpdir)
+        if not tmpdir:
+            tmpdir = os.getenv.get("TMPDIR")
+        if not tmpdir:
+            tmpdir = tempfile.gettempdir()
+        # Force existence of temporary directory
+        os.makedirs(tmpdir, exist_ok=True)
+        return tmpdir
 
     def get_log_file(self, sub_step, action):
         """Return path to the log file
