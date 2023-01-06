@@ -195,6 +195,7 @@ check_input_line_counts()
 input_files \
 | trim_adapters \
 | run_bwa_mem2 \
+| mask_duplicates \
 | postproc_bam
 
 check_input_line_counts
