@@ -114,8 +114,12 @@ set -x
 set +e
 SNAKEMAKE_BATCH_END=$SLURM_ARRAY_TASK_MAX
 SNAKEMAKE_BATCH_CUR=$SLURM_ARRAY_TASK_ID
-if [[ ! -z "$SNAKEMAKE_BATCH_CUR"]]; then
-    SNAKEMAKE_BATCH_ARG="${SNAKEMAKE_BATCH_RULE-default}=${SNAKEMAKE_BATCH_CUR}/${SNAKEMAKE_BATCH_END}"
+if [[ ! -z "$SNAKEMAKE_BATCH_CUR" ]]; then
+    if [[ $SLURM_ARRAY_TASK_ID -lt 1 ]]; then
+        >&2 echo "Snakemake batches start couting at 1"
+        exit 1
+    fi
+    SNAKEMAKE_BATCH_ARG="--batch ${SNAKEMAKE_BATCH_RULE-default}=${SNAKEMAKE_BATCH_CUR}/${SNAKEMAKE_BATCH_END}"
 else
     SNAKEMAKE_BATCH_ARG=
 fi
