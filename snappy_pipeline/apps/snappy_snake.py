@@ -176,6 +176,8 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--dryrun")
     if wrapper_args.reason:
         snakemake_argv.append("--reason")
+    if wrapper_args.batch:
+        snakemake_argv += ["--batch", wrapper_args.batch]
     if not wrapper_args.snappy_pipeline_use_profile:
         snakemake_argv += ["--cores", str(wrapper_args.cores or 1)]
     if wrapper_args.conda_create_envs_only:
@@ -281,7 +283,11 @@ def main(argv=None):
         default=rerun_triggers_default,
         help=f"Expose --rerun-triggers from snakemake and set to {rerun_triggers_default} by default",
     )
-
+    group.add_argument(
+        "--batch",
+        metavar="RULE=BATCH/BATCHES",
+        help="Create the given batch for the given rule.  See Snakemake documentation for more info.",
+    )
     group = parser.add_argument_group(
         "Snakemake Verbosity / Debugging",
         "Arguments from Snakemake that are useful for debugging, such as " "increasing verbosity",

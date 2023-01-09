@@ -110,8 +110,20 @@ set -x
 
 # Kick off Snakemake --------------------------------------------------------
 
+# Interpret array jobs.
+set +e
+SNAKEMAKE_BATCH_END=$SLURM_ARRAY_TASK_MAX
+SNAKEMAKE_BATCH_CUR=$SLURM_ARRAY_TASK_ID
+if [[ ! -z "$SNAKEMAKE_BATCH_CUR"]]; then
+    SNAKEMAKE_BATCH_ARG="${SNAKEMAKE_BATCH_RULE-default}=${SNAKEMAKE_BATCH_CUR}/${SNAKEMAKE_BATCH_END}"
+else
+    SNAKEMAKE_BATCH_ARG=
+fi
+set -e
+
 # Using the medium project/queue is a sensible default.
 snappy-snake --printshellcmds \
+    ${SNAKEMAKE_BATCH_ARG} \
     --snappy-pipeline-use-profile "cubi-v1" \
     --snappy-pipeline-jobs $MAX_JOBS \
     --restart-times ${RESTART_TIMES} \
