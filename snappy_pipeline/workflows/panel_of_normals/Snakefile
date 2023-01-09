@@ -101,40 +101,26 @@ rule panel_of_normals_mutect2_create_panel:
 
 # Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Write out the tumor-only results for the normals ----------------------------
+# Write out access file (if required, must be run prior to the cnvkit panel of normals)
 
-
-rule panel_of_normals_cnvkit_access:
+rule panel_of_normals_access_run:
     output:
-        **wf.get_output_files("cnvkit", "access"),
-    threads: wf.get_resource("cnvkit", "access", "threads")
+        **wf.get_output_files("access", "run"),
     resources:
-        time=wf.get_resource("cnvkit", "access", "time"),
-        memory=wf.get_resource("cnvkit", "access", "memory"),
-        partition=wf.get_resource("cnvkit", "access", "partition"),
+        time=wf.get_resource("access", "run", "time"),
+        memory=wf.get_resource("access", "run", "memory"),
+        partition=wf.get_resource("access", "run", "partition"),
     log:
-        **wf.get_log_file("cnvkit", "access"),
+        **wf.get_log_file("access", "run"),
     wrapper:
         wf.wrapper_path("cnvkit/access")
 
 
-# rule panel_of_normals_cnvkit_autobin:
-#     input:
-#         unpack(wf.get_input_files("cnvkit", "autobin")),
-#     output:
-#         **wf.get_output_files("cnvkit", "autobin"),
-#     threads: wf.get_resource("cnvkit", "autobin", "threads")
-#     resources:
-#         time=wf.get_resource("cnvkit", "autobin", "time"),
-#         memory=wf.get_resource("cnvkit", "autobin", "memory"),
-#         partition=wf.get_resource("cnvkit", "autobin", "partition"),
-#     log:
-#         **wf.get_log_file("cnvkit", "autobin"),
-#     wrapper:
-#         wf.wrapper_path("cnvkit/autobin")
-
+# Write out the normals-only results for the normals --------------------------
 
 rule panel_of_normals_cnvkit_target:
+    input:
+        unpack(wf.get_input_files("cnvkit", "target")),
     output:
         **wf.get_output_files("cnvkit", "target"),
     threads: wf.get_resource("cnvkit", "target", "threads")
@@ -144,6 +130,8 @@ rule panel_of_normals_cnvkit_target:
         partition=wf.get_resource("cnvkit", "target", "partition"),
     log:
         **wf.get_log_file("cnvkit", "target"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "target"),
     wrapper:
         wf.wrapper_path("cnvkit/target")
 
@@ -160,6 +148,8 @@ rule panel_of_normals_cnvkit_antitarget:
         partition=wf.get_resource("cnvkit", "antitarget", "partition"),
     log:
         **wf.get_log_file("cnvkit", "antitarget"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "antitarget"),
     wrapper:
         wf.wrapper_path("cnvkit/antitarget")
 
@@ -176,6 +166,8 @@ rule panel_of_normals_cnvkit_coverage:
         partition=wf.get_resource("cnvkit", "coverage", "partition"),
     log:
         **wf.get_log_file("cnvkit", "coverage"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "coverage"),
     wrapper:
         wf.wrapper_path("cnvkit/coverage")
 
@@ -195,37 +187,25 @@ rule panel_of_normals_cnvkit_create_panel:
         partition=wf.get_resource("cnvkit", "create_panel", "partition"),
     log:
         **wf.get_log_file("cnvkit", "create_panel"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "create_panel"),
     wrapper:
         wf.wrapper_path("cnvkit/reference")
 
 
-rule panel_of_normals_cnvkit_sex:
+rule panel_of_normals_cnvkit_report:
     input:
-        unpack(wf.get_input_files("cnvkit", "sex")),
+        unpack(wf.get_input_files("cnvkit", "report")),
     output:
-        **wf.get_output_files("cnvkit", "sex"),
-    threads: wf.get_resource("cnvkit", "sex", "threads")
+        **wf.get_output_files("cnvkit", "report"),
+    threads: wf.get_resource("cnvkit", "report", "threads")
     resources:
-        time=wf.get_resource("cnvkit", "sex", "time"),
-        memory=wf.get_resource("cnvkit", "sex", "memory"),
-        partition=wf.get_resource("cnvkit", "sex", "partition"),
+        time=wf.get_resource("cnvkit", "report", "time"),
+        memory=wf.get_resource("cnvkit", "report", "memory"),
+        partition=wf.get_resource("cnvkit", "report", "partition"),
     log:
-        **wf.get_log_file("cnvkit", "sex"),
+        **wf.get_log_file("cnvkit", "report"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "report"),
     wrapper:
-        wf.wrapper_path("cnvkit/sex")
-
-
-rule panel_of_normals_cnvkit_metrics:
-    input:
-        unpack(wf.get_input_files("cnvkit", "metrics")),
-    output:
-        **wf.get_output_files("cnvkit", "metrics"),
-    threads: wf.get_resource("cnvkit", "metrics", "threads")
-    resources:
-        time=wf.get_resource("cnvkit", "metrics", "time"),
-        memory=wf.get_resource("cnvkit", "metrics", "memory"),
-        partition=wf.get_resource("cnvkit", "metrics", "partition"),
-    log:
-        **wf.get_log_file("cnvkit", "metrics"),
-    wrapper:
-        wf.wrapper_path("cnvkit/metrics")
+        wf.wrapper_path("cnvkit/report")

@@ -9,7 +9,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["cnvkit"]
 
-exclude = " -- exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
+exclude = " --exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
 
 shell(
     r"""
@@ -34,18 +34,13 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-if [[ -n "{config[access]}" ]]
-then
-    ln -sr {config[access]} {snakemake.output.access}
-else
-    cnvkit.py access \
-        -o {snakemake.output.access} \
-        $(if [[ {config[min_gap_size]} -gt 0 ]]; then \
-            echo --min-gap-size {config[min_gap_size]}
-        fi) \
-        {exclude} \
-        {snakemake.config[static_data_config][reference][path]}
-fi
+cnvkit.py access \
+    -o {snakemake.output.access} \
+    $(if [[ {config[min_gap_size]} -gt 0 ]]; then \
+        echo --min-gap-size {config[min_gap_size]}
+    fi) \
+    {exclude} \
+    {snakemake.config[static_data_config][reference][path]}
 
 fn=$(basename "{snakemake.output.access}")
 d=$(dirname "{snakemake.output.access}")

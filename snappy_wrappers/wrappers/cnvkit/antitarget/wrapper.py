@@ -33,16 +33,23 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-cnvkit.py antitarget \
-    --output {snakemake.output.antitarget} \
-    --access {snakemake.input.access} \
-    $(if [[ {config[antitarget_avg_size]} -gt 0 ]]; then \
-        echo --avg-size {config[antitarget_avg_size]}
-    fi) \
-    $(if [[ {config[min_size]} -gt 0 ]]; then \
-        echo --min-size {config[min_size]}
-    fi) \
-    {snakemake.input.target}
+if [[ -n "{config[path_target_regions]}" ]]
+then
+    cnvkit.py antitarget \
+        --output {snakemake.output.antitarget} \
+        $(if [[ -n "{config[access]}" ]]; then \
+            echo --access {config[access]}
+        fi) \
+        $(if [[ {config[antitarget_avg_size]} -gt 0 ]]; then \
+            echo --avg-size {config[antitarget_avg_size]}
+        fi) \
+        $(if [[ {config[min_size]} -gt 0 ]]; then \
+            echo --min-size {config[min_size]}
+        fi) \
+        {snakemake.input.target}
+else
+    touch {snakemake.output.antitarget}
+fi
 
 fn=$(basename "{snakemake.output.antitarget}")
 d=$(dirname "{snakemake.output.antitarget}")

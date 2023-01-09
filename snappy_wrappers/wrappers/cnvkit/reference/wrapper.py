@@ -10,6 +10,10 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["cnvkit"]
 
+# NOTE: snakemake.input.target and snakemake.input.antitarget contain
+#       the output of target & antitarget substeps when there is no bam files
+#       the bam files lists when the list of normals is not empty
+
 cluster = (
     " --cluster --min-cluster-size {}".format(config["min_cluster_size"])
     if config["min_cluster_size"] > 0
@@ -44,11 +48,20 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-cnvkit.py reference \
-    --output {snakemake.output.panel} \
-    --fasta {snakemake.config[static_data_config][reference][path]} \
-    {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
-    {snakemake.input.target} {snakemake.input.antitarget} 
+if [[ "{snakemake.params.args[flat]}" = "True" ]]
+then
+    cnvkit.py reference \
+        --output {snakemake.output.panel} \
+        --fasta {snakemake.config[static_data_config][reference][path]} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        --targets {snakemake.input.target} --antitargets {snakemake.input.antitarget} 
+else
+    cnvkit.py reference \
+        --output {snakemake.output.panel} \
+        --fasta {snakemake.config[static_data_config][reference][path]} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        {snakemake.input.target} {snakemake.input.antitarget} 
+fi
 
 fn=$(basename "{snakemake.output.panel}")
 d=$(dirname "{snakemake.output.panel}")
