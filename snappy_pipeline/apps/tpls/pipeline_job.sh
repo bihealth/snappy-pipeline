@@ -111,19 +111,12 @@ set -x
 # Kick off Snakemake --------------------------------------------------------
 
 # Interpret array jobs.
-set +e
-SNAKEMAKE_BATCH_END=${SLURM_ARRAY_TASK_MAX-}
-SNAKEMAKE_BATCH_CUR=${SLURM_ARRAY_TASK_ID-}
-if [[ ! -z "$SNAKEMAKE_BATCH_CUR" ]]; then
-    if [[ $SLURM_ARRAY_TASK_ID -lt 1 ]]; then
-        >&2 echo "Snakemake batches start couting at 1"
-        exit 1
-    fi
-    SNAKEMAKE_BATCH_ARG="--batch ${SNAKEMAKE_BATCH_RULE-default}=${SNAKEMAKE_BATCH_CUR}/${SNAKEMAKE_BATCH_END}"
+# Allow selection of batch
+if [[ ! -z "${SNAPPY_BATCH-}" ]]; then
+    SNAKEMAKE_BATCH_ARG="--batch ${SNAKEMAKE_BATCH_RULE-default}=${SNAPPY_BATCH}"
 else
     SNAKEMAKE_BATCH_ARG=
 fi
-set -e
 
 # Using the medium project/queue is a sensible default.
 snappy-snake --printshellcmds \
