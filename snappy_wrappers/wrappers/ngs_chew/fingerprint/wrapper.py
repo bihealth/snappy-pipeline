@@ -6,12 +6,6 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-path_ref = snakemake.config["static_data_config"]["reference"]["path"]
-if "hg19" in path_ref or "37" in path_ref:
-    genome_release = "GRCh37"
-else:
-    genome_release = "GRCh38"
-
 shell(
     r"""
 set -x
@@ -46,8 +40,7 @@ ngs-chew fingerprint \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
-    --input-bam {snakemake.input.bam} \
-    --genome-release {genome_release}
+    --input-bam {snakemake.input.bam}
 
 pushd $(dirname {snakemake.output.npz})
 md5sum $(basename {snakemake.output.npz}) >$(basename {snakemake.output.npz_md5})
