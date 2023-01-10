@@ -8,7 +8,7 @@ shell(
     r"""
 # -----------------------------------------------------------------------------
 # Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log}")
+exec 2> >(tee -a "{snakemake.log.log}")
 set -x
 # -----------------------------------------------------------------------------
 

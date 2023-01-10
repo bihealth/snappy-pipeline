@@ -52,7 +52,16 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-bcftools concat -a {snakemake.input.vcf} \
+# Filter input VCF files to those with any lines
+input=
+for vcf in {snakemake.input.vcf}; do
+    lines=$(zcat $vcf | wc -l)
+    if [[ $lines -ne 0 ]]; then
+        input="$input $vcf"
+    fi
+done
+
+bcftools concat -a $input \
 | bgzip -c \
 > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
