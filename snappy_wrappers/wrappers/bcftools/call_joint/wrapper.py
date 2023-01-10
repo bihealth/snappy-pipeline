@@ -48,11 +48,17 @@ export -f bcftools_joint
 # Hack: get back bin directory of base/root environment.
 export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
 
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+mkdir -p $TMPDIR/parallel
+
 snappy-genome_windows \
     --fai-file $REF.fai \
     --window-size {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][window_length]} \
     {args_ignore_chroms} \
 | parallel \
+    --plain \
+    --workdir $TMPDIR/parallel \
     --keep-order \
     --verbose \
     --max-procs {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][num_threads]} \
