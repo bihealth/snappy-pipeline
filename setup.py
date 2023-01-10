@@ -63,7 +63,7 @@ TOOLS = (
 )
 
 # Name of the scripts
-SCRIPTS = ("snappy-transfer_utils", "snappy-vcf_sort", "snappy-vcf_split")
+SCRIPTS = ("snappy-vcf_sort", "snappy-vcf_split")
 
 
 def console_scripts_entry_points(names, module):
