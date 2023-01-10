@@ -108,9 +108,12 @@ generate_intervals()
 }}
 
 
+mkdir -p $TMPDIR/parallel
 for vartype in snp indel; do
     generate_intervals \
     | parallel \
+        --plain \
+        --workdir $TMPDIR/parallel
         --keep-order \
         --verbose \
         --max-procs {snakemake.config[step_config][somatic_variant_calling][varscan_joint][num_cores]} \
