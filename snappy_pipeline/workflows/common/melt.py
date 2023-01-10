@@ -119,16 +119,6 @@ class MeltStepPart(
     def _get_output_files_indiv_analysis(self):
         infix = "{mapper}.melt_indiv_analysis.{library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
-        exts = (
-            "aligned.final.sorted.bam",
-            "aligned.final.sorted.bam.bai",
-            "aligned.pulled.sorted.bam",
-            "aligned.pulled.sorted.bam.bai",
-            "hum_breaks.sorted.bam",
-            "hum_breaks.sorted.bam.bai",
-            "tmp.bed",
-        )
-        yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.{ext}" for ext in exts]
 
     @dictify
     def _get_log_file_indiv_analysis(self):
