@@ -103,6 +103,7 @@ rule panel_of_normals_mutect2_create_panel:
 
 # Write out access file (if required, must be run prior to the cnvkit panel of normals)
 
+
 rule panel_of_normals_access_run:
     output:
         **wf.get_output_files("access", "run"),
@@ -117,6 +118,7 @@ rule panel_of_normals_access_run:
 
 
 # Write out the normals-only results for the normals --------------------------
+
 
 rule panel_of_normals_cnvkit_target:
     input:
