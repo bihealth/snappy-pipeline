@@ -137,7 +137,44 @@ step_config:
         tx_obj: TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
         bs_obj: BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5
     cnvkit:
-      path_annotate_refflat: REQUIRED  #REQUIRED
+      path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
+      path_antitarget: REQUIRED         # Usually ../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
+      path_panel_of_normals: REQUIRED   # Usually ../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn
+      min_mapq: 0                       # [coverage] Mininum mapping quality score to count a read for coverage depth
+      count: False                      # [coverage] Alternative couting algorithm
+      gc_correction: True               # [fix] Use GC correction
+      edge_correction: True             # [fix] Use edge correction
+      rmask_correction: True            # [fix] Use rmask correction
+      # BCBIO uses
+      # seg_method: haar
+      # seg_threshold: 0.0001
+      # -- OR
+      # seg_method: cbs
+      # seg_threshold: 0.000001
+      segmentation_method: cbs          # [segment] One of cbs, flasso, haar, hmm, hmm-tumor, hmm-germline, none
+      segmentation_threshold: 0.000001  # [segment] Significance threshold (hmm methods: smoothing window size)
+      drop_low_coverage: False          # [segment, call, genemetrics] Drop very low coverage bins
+      drop_outliers: 10                 # [segment] Drop outlier bins (0 for no outlier filtering)
+      smooth_cbs: True                  # [segment] Additional smoothing of CBS segmentation (WARNING- not the default value)
+      center: ""                        # [call] Either one of mean, median, mode, biweight, or a constant log2 ratio value.
+      filter: ampdel                    # [call] One of ampdel, cn, ci, sem (merging segments flagged with the specified filter), "" for no filtering
+      calling_method: threshold         # [call] One of threshold, clonal, none
+      call_thresholds: "-1.1,-0.25,0.2,0.7" # [call] Thresholds for calling integer copy number
+      ploidy: 2                         # [call] Ploidy of sample cells
+      purity: 0                         # [call] Estimated tumor cell fraction (0 for discarding tumor cell purity)
+      gender: ""                        # [call, diagram] Specify the chromosomal sex of all given samples as male or female. Guess when missing
+      male_reference: False             # [call, diagram] Create male reference
+      diagram_threshold: 0.5            # [diagram] Copy number change threshold to label genes
+      diagram_min_probes: 3             # [diagram] Min number of covered probes to label genes
+      shift_xy: True                    # [diagram] Shift X & Y chromosomes according to sample sex
+      breaks_min_probes: 1              # [breaks] Min number of covered probes for a break inside the gene
+      genemetrics_min_probes: 3         # [genemetrics] Min number of covered probes to consider a gene
+      genemetrics_threshold: 0.2        # [genemetrics] Min abs log2 change to consider a gene
+      genemetrics_alpha: 0.05           # [genemetrics] Significance cutoff
+      genemetrics_bootstrap: 100        # [genemetrics] Number of bootstraps
+      segmetrics_alpha: 0.05            # [segmetrics] Significance cutoff
+      segmetrics_bootstrap: 100         # [segmetrics] Number of bootstraps
+      smooth_bootstrap: False           # [segmetrics] Smooth bootstrap results
 """
 
 
@@ -406,19 +443,243 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     name = "cnvkit"
 
     #: Class available actions
-    actions = ("run",)
+    actions = (
+        "coverage",
+        "fix",
+        "segment",
+        "call",
+        "export",
+        "plot",
+        "report",
+    )
 
-    def get_output_files(self, action):
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage_dict = {
+        "plot": ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{30 * 1024}M",
+        ),
+        "coverage": ResourceUsage(
+            threads=8,
+            time="1-00:00:00",  # 1 day
+            memory=f"{16 * 1024}M",
+        ),
+        "default": ResourceUsage(
+            threads=1,
+            time="1-00:00:00",  # 1 day
+            memory=f"{int(7.5 * 1024)}M",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def check_config(self):
+        """Check configuration for cnvkit"""
+        if "cnvkit" not in self.config["tools"]:
+            return  # cnvkit not enabled, skip
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_target"),
+            "Path to target regions is missing for cnvkit",
+        )
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_antitarget"),
+            "Path to antitarget regions is missing for cnvkit",
+        )
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_panel_of_normals"),
+            "Path to panel of normals (reference) is missing for cnvkit",
+        )
+
+    def get_input_files(self, action):
+        """Return input paths input function, dependent on rule"""
         # Validate action
         self._validate_action(action)
-        return {
-            "segment": self.base_path_out.format(var_caller=self.name, ext=".cns"),
-            "segment_md5": self.base_path_out.format(var_caller=self.name, ext=".cns.md5"),
-            "bins": self.base_path_out.format(var_caller=self.name, ext=".cnr"),
-            "bins_md5": self.base_path_out.format(var_caller=self.name, ext=".cnr.md5"),
-            "scatter": self.base_path_out.format(var_caller=self.name, ext=".scatter.png"),
-            "scatter_md5": self.base_path_out.format(var_caller=self.name, ext=".scatter.png.md5"),
+        method_mapping = {
+            "coverage": self._get_input_files_coverage,
+            "call": self._get_input_files_call,
+            "fix": self._get_input_files_fix,
+            "segment": self._get_input_files_segment,
+            "export": self._get_input_files_export,
+            "plot": self._get_input_files_plot,
+            "report": self._get_input_files_report,
         }
+        return method_mapping[action]
+
+    def _get_input_files_coverage(self, wildcards):
+        # BAM/BAI file
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
+        input_files = {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
+        }
+        return input_files
+
+    @staticmethod
+    def _get_input_files_fix(wildcards):
+        tpl_base = "{mapper}.cnvkit.{library_name}"
+        tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
+        input_files = {
+            "target": tpl.format(target="target", **wildcards),
+            "antitarget": tpl.format(target="antitarget", **wildcards),
+        }
+        return input_files
+
+    @staticmethod
+    def _get_input_files_segment(wildcards):
+        cnr_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
+        input_files = {"cnr": cnr_pattern.format(**wildcards)}
+        return input_files
+
+    @staticmethod
+    def _get_input_files_call(wildcards):
+        segment_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
+        )
+        input_files = {"segment": segment_pattern.format(**wildcards)}
+        return input_files
+
+    @staticmethod
+    def _get_input_files_export(wildcards):
+        cns_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+        input_files = {"cns": cns_pattern.format(**wildcards)}
+        return input_files
+
+    @staticmethod
+    def _get_input_files_plot(wildcards):
+        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
+        input_files = {
+            "cnr": tpl.format(ext="cnr", **wildcards),
+            "cns": tpl.format(ext="cns", **wildcards),
+        }
+        return input_files
+
+    def _get_input_files_report(self, wildcards):
+        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
+        input_files = {
+            "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
+            "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
+            "cnr": tpl.format(ext="cnr", **wildcards),
+            "cns": tpl.format(ext="cns", **wildcards),
+        }
+        return input_files
+
+    def get_output_files(self, action):
+        """Return output files for the given action"""
+        # Validate action
+        self._validate_action(action)
+        method_mapping = {
+            "coverage": self._get_output_files_coverage,
+            "fix": self._get_output_files_fix,
+            "call": self._get_output_files_call,
+            "segment": self._get_output_files_segment,
+            "export": self._get_output_files_export,
+            "plot": self._get_output_files_plot,
+            "report": self._get_output_files_report,
+        }
+        return method_mapping[action]()
+
+    @staticmethod
+    def _get_output_files_coverage():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        output_files = {}
+        for target in ("target", "antitarget"):
+            output_files[target] = os.path.join(
+                "work", name_pattern, "out", name_pattern + ".{}coverage.cnn".format(target)
+            )
+            output_files[target + "_md5"] = output_files[target] + ".md5"
+        return output_files
+
+    @staticmethod
+    def _get_output_files_fix():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
+        return {"ratios": tpl, "ratios_md5": tpl + ".md5"}
+
+    @staticmethod
+    def _get_output_files_segment():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
+        return {"segments": tpl, "segments_md5": tpl + ".md5"}
+
+    @staticmethod
+    def _get_output_files_call():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        return {"calls": tpl, "calls_md5": tpl + ".md5"}
+
+    @dictify
+    def _get_output_files_plot(self):
+        plots = (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+        chrom_plots = (("heatmap", "pdf"), ("scatter", "png"))
+        chroms = list(chain(range(1, 23), ["X", "Y"]))
+        output_files = {}
+        # Yield file name pairs for global plots
+        tpl = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{plot}.{ext}"
+        )
+        for plot, ext in plots:
+            output_files[plot] = tpl.format(plot=plot, ext=ext)
+            output_files[plot + "_md5"] = output_files[plot] + ".md5"
+        # Yield file name pairs for the chromosome-wise plots
+        tpl_chrom = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
+        )
+        for plot, ext in chrom_plots:
+            for chrom in chroms:
+                key = "{plot}_chr{chrom}".format(plot=plot, chrom=chrom)
+                output_files[key] = tpl_chrom.format(plot=plot, ext=ext, chrom=chrom)
+                output_files[key + "_md5"] = output_files[key] + ".md5"
+        return output_files
+
+    @staticmethod
+    def _get_output_files_export():
+        exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
+        output_files = {}
+        tpl = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
+            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
+        )
+        for export, ext in exports:
+            output_files[export] = tpl.format(export=export, ext=ext)
+            output_files[export + "_md5"] = output_files[export] + ".md5"
+        return output_files
+
+    @dictify
+    def _get_output_files_report(self):
+        reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+        output_files = {}
+        tpl = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{report}.txt"
+        )
+        for report in reports:
+            output_files[report] = tpl.format(report=report)
+            output_files[report + "_md5"] = output_files[report] + ".md5"
+        return output_files
+
+    def get_log_file(self, action):
+        """Return path to log file for the given action"""
+        # Validate action
+        self._validate_action(action)
+        prefix = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/log/"
+            "{{mapper}}.cnvkit.{action}.{{library_name}}"
+        ).format(action=action)
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        log_files = {}
+        for key, ext in key_ext:
+            log_files[key] = prefix + ext
+            log_files[key + "_md5"] = prefix + ext + ".md5"
+        return log_files
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -430,11 +691,12 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{10 * 1024 * 4}M",
-        )
+        if action == "plot":
+            return self.resource_usage_dict.get("plot")
+        elif action == "coverage":
+            return self.resource_usage_dict.get("coverage")
+        else:
+            return self.resource_usage_dict.get("default")
 
 
 class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -624,11 +886,38 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             )
         # Plots for cnvetti
         if "cnvkit" in self.config["tools"]:
+            exts = (".cnr", ".cns", ".bed", ".seg", ".vcf.gz", ".vcf.gz.tbi")
             yield from self._yield_result_files(
                 tpl,
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller="cnvkit",
-                ext=[".cnr", ".cnr.md5", ".cns", ".cns.md5", ".scatter.png", ".scatter.png.md5"],
+                ext=exts,
+            )
+            yield from self._yield_result_files(
+                tpl,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller="cnvkit",
+                ext=[ext + ".md5" for ext in exts],
+            )
+            reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+            yield from self._yield_report_files(
+                (
+                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
+                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
+                ),
+                [(report, "txt", False) for report in reports],
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller="cnvkit",
+            )
+            plots = (("diagram", "pdf", False), ("heatmap", "pdf", True), ("scatter", "png", True))
+            yield from self._yield_report_files(
+                (
+                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
+                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
+                ),
+                plots,
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller="cnvkit",
             )
         if "cnvetti" in bcf_tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
@@ -675,6 +964,50 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     tpl, cancer_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
 
+    def _yield_report_files(self, tpl, exts, **kwargs):
+        """Build report paths from path template and extension list"""
+        for sheet in filter(is_not_background, self.shortcut_sheets):
+            for sample_pair in sheet.all_sample_pairs:
+                if (
+                    not sample_pair.tumor_sample.dna_ngs_library
+                    or not sample_pair.normal_sample.dna_ngs_library
+                ):
+                    msg = (
+                        "INFO: sample pair for cancer bio sample {} has is missing primary"
+                        "normal or primary cancer NGS library"
+                    )  # pragma: no cover
+                    print(
+                        msg.format(sample_pair.tumor_sample.name), file=sys.stderr
+                    )  # pragma: no cover
+                    continue  # pragma: no cover
+                for plot, ext, chrom in exts:
+                    yield from expand(
+                        tpl,
+                        cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                        ext=plot + "." + ext,
+                        **kwargs,
+                    )
+                    yield from expand(
+                        tpl,
+                        cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                        ext=plot + "." + ext + ".md5",
+                        **kwargs,
+                    )
+                    if chrom:
+                        for c in map(str, chain(range(1, 23), ("X", "Y"))):
+                            yield from expand(
+                                tpl,
+                                cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                                ext=plot + ".chr" + c + "." + ext,
+                                **kwargs,
+                            )
+                            yield from expand(
+                                tpl,
+                                cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                                ext=plot + ".chr" + c + "." + ext + ".md5",
+                                **kwargs,
+                            )
+
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
@@ -687,8 +1020,4 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 "Path to somatic (small) variant calling not configured but required for somatic "
                 "WGS CNV calling"
             ),
-        )
-        self.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
-            "Somatic (small) variant calling tool not configured for somatic WGS CNV calling",
         )

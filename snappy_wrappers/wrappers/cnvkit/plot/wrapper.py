@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py plot
+"""Wrapper for cnvkit.py plot
 """
 
 from snakemake.shell import shell
@@ -7,19 +7,24 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-mapper = snakemake.wildcards.mapper
-if "library_name" in snakemake.wildcards.keys():
-    libname = snakemake.wildcards.library_name
-    tool_and_mapper = mapper + ".cnvkit.plot"
-    make_per_chr_plots = "true"
-    opt_filetype = "pdf"
-elif "cancer_library" in snakemake.wildcards.keys():
-    libname = snakemake.wildcards.cancer_library
-    tool_and_mapper = mapper + ".control_freec"
-    make_per_chr_plots = "false"
-    opt_filetype = "png"
-else:
-    raise Exception("Unsupported naming")
+step = snakemake.config["pipeline_step"]["name"]
+config = snakemake.config["step_config"][step]["cnvkit"]
+
+gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
+male = " --male-reference" if config["male_reference"] else ""
+
+heatmaps = [
+    snakemake.output.get(x)
+    for x in filter(
+        lambda x: x.startswith("heatmap_chr") and not x.endswith("_md5"), snakemake.output.keys()
+    )
+]
+scatters = [
+    snakemake.output.get(x)
+    for x in filter(
+        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), snakemake.output.keys()
+    )
+]
 
 shell(
     r"""
@@ -40,42 +45,94 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
+set -x
+
+# -----------------------------------------------------------------------------
+
+md5()
+{{
+    d=$(dirname $1)
+    f=$(basename $1)
+    pushd $d
+    md5sum $f > $f.md5
+    popd
+}}
+
 # -----------------------------------------------------------------------------
 
 unset DISPLAY
 
-d="work/{tool_and_mapper}.{libname}/out"
-
-fn="{tool_and_mapper}.{libname}.diagram.pdf"
-cnvkit.py diagram -s {snakemake.input.cns} {snakemake.input.cnr} -o $d/$fn
-pushd $d ; md5sum $fn > $fn.md5 ; popd
-
-fn="{tool_and_mapper}.{libname}.scatter.{opt_filetype}"
-cnvkit.py scatter -s {snakemake.input.cns} {snakemake.input.cnr} -o $d/$fn
-pushd $d ; md5sum $fn > $fn.md5 ; popd
-
-fn="{tool_and_mapper}.{libname}.heatmap.{opt_filetype}"
-cnvkit.py heatmap {snakemake.input.cnr} -o $d/$fn
-pushd $d ; md5sum $fn > $fn.md5 ; popd
-
-if [ "{make_per_chr_plots}" = true ] ; then
-    chroms=$(tail -n +2 "{snakemake.input.cnr}" | cut -f 1 | sort | uniq | grep -E "^(chr)?([0-9]+|X|Y)")
-
-    for chr in $chroms ; do
-        c=$(echo "$chr" | sed -e "s/^chr//")
-        fn="{tool_and_mapper}.{libname}.scatter.chr${{c}}.{opt_filetype}"
-        cnvkit.py scatter -s {snakemake.input.cns} --chromosome $chr {snakemake.input.cnr} -o $d/$fn
-        pushd $d ; md5sum $fn > $fn.md5 ; popd
-    done
-
-    for chr in $chroms ; do
-        c=$(echo "$chr" | sed -e "s/^chr//")
-        fn="{tool_and_mapper}.{libname}.heatmap.chr${{c}}.{opt_filetype}"
-        cnvkit.py heatmap --chromosome $chr {snakemake.input.cnr} -o $d/$fn
-        pushd $d ; md5sum $fn > $fn.md5 ; popd
-    done
+if [[ -n "{snakemake.output.diagram}" ]]
+then
+    cnvkit.py diagram \
+        --output {snakemake.output.diagram} \
+        --segment {snakemake.input.cns} \
+        {gender} {male} \
+        --threshold {config[diagram_threshold]} --min-probes {config[diagram_min_probes]} \
+        $(if [[ "{config[shift_xy]}" = "False" ]]; then \
+            echo --no-shift-xy
+        fi) \
+        {snakemake.input.cnr}
 else
-    echo "Not creating per-chromosome heatmap or scatter plots."
+    touch {snakemake.output.diagram}
 fi
+md5 {snakemake.output.diagram}
+
+if [[ -n "{snakemake.output.scatter}" ]]
+then
+    cnvkit.py scatter \
+        --output {snakemake.output.scatter} \
+        --segment {snakemake.input.cns} \
+        {gender} {male} \
+        {snakemake.input.cnr}
+else
+    touch {snakemake.output.scatter}
+fi
+md5 {snakemake.output.scatter}
+
+if [[ -n "{snakemake.output.heatmap}" ]]
+then
+    cnvkit.py heatmap \
+        --output {snakemake.output.heatmap} \
+        {snakemake.input.cnr}
+else
+    touch {snakemake.output.heatmap}
+fi
+md5 {snakemake.output.heatmap}
+
+for heatmap in {heatmaps}
+do
+    if [[ -n "$heatmap" ]]
+    then
+        cnvkit.py heatmap \
+            --output $heatmap \
+            {snakemake.input.cnr}
+    else
+        touch $heatmap
+    fi
+    md5 $heatmap
+done
+
+for scatter in {scatters}
+do
+    if [[ -n "$scatter" ]]
+    then
+        cnvkit.py scatter \
+            --output $scatter \
+            --segment {snakemake.input.cns} \
+            {gender} {male} \
+            {snakemake.input.cnr}
+    else
+        touch $scatter
+    fi
+    md5 $scatter
+done
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

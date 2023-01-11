@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py export
+"""Wrapper for cnvkit.py export
 """
 
 from snakemake.shell import shell
@@ -26,6 +26,8 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
+set -x
+
 export TMPDIR=$(mktemp -d)
 
 cnvkit.py export bed {snakemake.input} -o {snakemake.output.bed}
@@ -46,6 +48,14 @@ fn=$(basename "{snakemake.output.seg}")
 md5sum $fn > $fn.md5
 fn=$(basename "{snakemake.output.vcf}")
 md5sum $fn > $fn.md5
+md5sum $fn.tbi > $fn.tbi.md5
 popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
