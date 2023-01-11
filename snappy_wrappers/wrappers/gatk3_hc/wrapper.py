@@ -108,7 +108,7 @@ run-shard()
 export -f run-shard
 
 # Perform parallel execution
-mkdir -p $TMPDIR/parallel
+(set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
 num_threads={snakemake.config[step_config][variant_calling][gatk3_hc][num_threads]}
 cat $TMPDIR/final_intervals.txt \
 | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
