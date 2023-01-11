@@ -7,7 +7,7 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["cnvkit"]
+config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["access"]
 
 exclude = " --exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
 

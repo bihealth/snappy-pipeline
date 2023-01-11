@@ -42,24 +42,6 @@ access()
         {snakemake.config[static_data_config][reference][path]}
 }}
 
-autobin()
-{{
-    cnvkit.py autobin --method $1 \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
-        --access $2 \
-        $(if [[ {config[bp_per_bin]} -gt 0 ]]; then \
-            echo --bp-per-bin {config[bp_per_bin]}
-        fi) \
-        $(if [[ {config[target_min_size]} -gt 0 ]]; then \
-            echo --target-min-size {config[target_min_size]}
-        fi) \
-        $(if [[ {config[target_max_size]} -gt 0 ]]; then \
-            echo --target-max-size {config[target_max_size]}
-        fi) \
-        --target-output-bed $tmpdir/target.bed --antitarget-output-bed $tmpdir/antitarget.bed \
-        {bams} > $tmpdir/autobin.txt
-}}
-
 # -----------------------------------------------------------------------------
 
 target="{config[path_target_regions]}"
@@ -67,28 +49,34 @@ target_avg_size={config[target_avg_size]}
 
 if [[ -z "$target" ]] && [[ $target_avg_size -eq 0 ]]
 then
-    tmpdir=$(mktemp -d $TMPDIR)
+    tmpdir=$(mktemp -d)
 
     if [[ -n "{bams}" ]]
     then
+        access
+        cnvkit.py autobin --method wgs \
+            --fasta {snakemake.config[static_data_config][reference][path]} \
+            --access $tmpdir/access.bed \
+            --bp-per-bin {config[bp_per_bin]} \
+            --target-output-bed $tmpdir/target.bed --antitarget-output-bed $tmpdir/antitarget.bed \
+            {bams} > $tmpdir/autobin.txt
+        target_avg_size=$(cat $tmpdir/autobin.txt | grep "Target:" | cut -f 3)
+
+        if [[ -z "{config[access]}" ]]
+        then
+            target=$tmpdir/access.bed
+        else
+            target="{config[access]}"
+        fi
+    else
         if [[ -z "{config[access]}" ]]
         then
             access
-            autobin wgs $tmpdir/access.bed
-
             target=$tmpdir/access.bed
-            target_avg_size=$(cat $tmpdir/autobin.txt | grep "Target:" | cut -f 3)
         else
-            autobin amplicon "{config[access]}"
-
             target="{config[access]}"
-            target_avg_size=$(cat $tmpdir/autobin.txt | grep "Target:" | cut -f 3)
         fi
-    else
-        access
-
-        target=$tmpdir/access.bed
-        target_avg_size=50000
+        target_avg_size=5000
     fi
 fi
 
@@ -100,8 +88,8 @@ cnvkit.py target \
     $(if [[ "{config[split]}" = "True" ]]; then \
         echo --split
     fi) \
-    $(if [[ {config[target_avg_size]} -gt 0 ]]; then \
-        echo --avg-size {config[target_avg_size]}
+    $(if [[ $target_avg_size -gt 0 ]]; then \
+        echo --avg-size $target_avg_size
     fi) \
     $target
 

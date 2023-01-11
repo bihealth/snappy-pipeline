@@ -22,7 +22,7 @@ cluster = (
 gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
 male = " --male-reference" if config["male_reference"] else ""
 no_gc = " --no-gc" if not config["gc_correction"] else ""
-no_edge = " --no-edge" if not config["edge_correction"] else ""
+no_edge = " --no-edge" if not config["edge_correction"] or not config["path_target_regions"] else ""
 no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
 
 shell(

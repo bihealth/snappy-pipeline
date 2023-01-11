@@ -68,17 +68,25 @@ Panel of normals generation for tools
 - Panel of normal for ``mutect2`` somatic variant caller
 - Panel of normal for ``cvnkit`` somatic Copy Number Alterations caller
 
+``access`` is used to create a genome accessibility file that can be used for ``cnvkit`` panel of normals creation.
+Its output (``output/cnvkit.access/out/cnvkit.access.bed``) is optional, but its presence impacts of the way the target and antitarget regions are computed in whole genome mode.
+
+In a nutshell, for exome data, the accessibility file is only used to create antitarget regions.
+For genome data, it is used by the ``autobin`` tool to compute the average target size used during target regions creation.
+If it is present, the target size is computed in amplicon mode, and when it is absent,
+an accessibility file is created with default settings, which value is used by ``autobin`` is whole genome mode.
+
+This follows the internal ``batch`` code of ``cnvkit``.
+
 =======
 Reports
 =======
 
-Report tables and plots can be found in the ``output/{mapper}.cnvkit/report`` directory.
+Report tables can be found in the ``output/{mapper}.cnvkit/report`` directory.
 Two tables are produced, grouping results for all normal samples together:
 
 - ``metrics.txt``: coverage metrics over target and antitarget regions.
 - ``sex.txt``: prediction of the donor's gender based on the coverage of chromosome X & Y target and antitarget regions.
-
-Coverage plots are also produced, for the whole genome or by chromosome.
 
 The cnvkit authors recommend to check these reports to ensure that all data is suitable for panel of normal creation.
 """
@@ -139,6 +147,7 @@ step_config:
       access: ""                  # Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)
       annotate: ""                # [target] Optional targets annotations
       target_avg_size: 0          # [target] Average size of split target bins (0: use default value)
+      bp_per_bin: 50000           # [autobin] Expected base per bin
       split: True                 # [target] Split large intervals into smaller ones
       antitarget_avg_size: 0      # [antitarget] Average size of antitarget bins (0: use default value)
       min_size: 0                 # [antitarget] Min size of antitarget bins (0: use default value)
@@ -378,7 +387,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return self.resource_usage_dict.get(action)
 
     def get_input_files(self, action):
-        """Return input files for mutect2 variant calling"""
+        """Return input files for cnvkit panel of normals creation"""
         # Validate action
         self._validate_action(action)
         mapping = {

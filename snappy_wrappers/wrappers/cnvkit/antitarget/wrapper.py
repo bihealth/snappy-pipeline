@@ -10,6 +10,8 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["cnvkit"]
 
+target = snakemake.input.get("target", "")
+
 shell(
     r"""
 # Also pipe everything to log file
@@ -46,7 +48,7 @@ then
         $(if [[ {config[min_size]} -gt 0 ]]; then \
             echo --min-size {config[min_size]}
         fi) \
-        {snakemake.input.target}
+        {target}
 else
     touch {snakemake.output.antitarget}
 fi
