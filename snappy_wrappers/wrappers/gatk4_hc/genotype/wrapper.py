@@ -135,6 +135,8 @@ ln -sr {snakemake.input.gvcf_tbi} {snakemake.output.gvcf_tbi}
 ln -sr {snakemake.input.gvcf_tbi_md5} {snakemake.output.gvcf_tbi_md5}
 
 # Compute MD5 sums on output files
+compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
+compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 compute-md5 {snakemake.output.gvcf} {snakemake.output.gvcf_md5}
 compute-md5 {snakemake.output.gvcf_tbi} {snakemake.output.gvcf_tbi_md5}
 
