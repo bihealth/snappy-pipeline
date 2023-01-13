@@ -187,6 +187,8 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--use-conda")
         if mamba_available and wrapper_args.use_mamba:
             snakemake_argv += ["--conda-frontend", "mamba"]
+        else:
+            snakemake_argv += ["--conda-frontend", "conda"]
 
     # Configure profile if configured
     if wrapper_args.snappy_pipeline_use_profile:
