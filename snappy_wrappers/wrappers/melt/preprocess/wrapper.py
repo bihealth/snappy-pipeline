@@ -2,6 +2,8 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -13,7 +15,7 @@ set -x
 ln -sr {snakemake.input.bam} {snakemake.output.orig_bam}
 ln -sr {snakemake.input.bai} {snakemake.output.orig_bai}
 
-JAR={snakemake.config[step_config][sv_calling_targeted][melt][jar_file]}
+JAR={melt_config[jar_file]}
 
 java -Xmx4G -jar $JAR \
     Preprocess \
