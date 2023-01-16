@@ -146,7 +146,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 ## Run Sniffles ----------------------------------------------------------------
 #
 #
-#rule sv_calling_wgs_sniffles_run:
+# rule sv_calling_wgs_sniffles_run:
 #    input:
 #        wf.get_input_files("sniffles", "run"),
 #    output:
@@ -166,7 +166,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 ## Run Sniffles 2 --------------------------------------------------------------
 #
 #
-#rule sv_calling_wgs_sniffles2_bam_to_snf:
+# rule sv_calling_wgs_sniffles2_bam_to_snf:
 #    input:
 #        unpack(wf.get_input_files("sniffles2", "bam_to_snf")),
 #    output:
@@ -183,7 +183,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 #        wf.wrapper_path("sniffles2/germline/bam_to_snf")
 #
 #
-#rule sv_calling_wgs_sniffles2_snf_to_vcf:
+# rule sv_calling_wgs_sniffles2_snf_to_vcf:
 #    input:
 #        unpack(wf.get_input_files("sniffles2", "snf_to_vcf")),
 #    output:
@@ -203,10 +203,10 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 ## PopDel Steps ----------------------------------------------------------------
 #
 #
-#ruleorder: sv_calling_wgs_popdel_reorder_vcf > sv_calling_wgs_popdel_concat_calls > sv_calling_wgs_popdel_call > sv_calling_wgs_popdel_profile
+# ruleorder: sv_calling_wgs_popdel_reorder_vcf > sv_calling_wgs_popdel_concat_calls > sv_calling_wgs_popdel_call > sv_calling_wgs_popdel_profile
 #
 #
-#rule sv_calling_wgs_popdel_profile:
+# rule sv_calling_wgs_popdel_profile:
 #    input:
 #        unpack(wf.get_input_files("popdel", "profile")),
 #    output:
@@ -225,7 +225,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 #        wf.wrapper_path("popdel/profile")
 #
 #
-#rule sv_calling_wgs_popdel_call:
+# rule sv_calling_wgs_popdel_call:
 #    input:
 #        unpack(wf.get_input_files("popdel", "call")),
 #    output:
@@ -242,7 +242,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 #        wf.wrapper_path("popdel/call")
 #
 #
-#rule sv_calling_wgs_popdel_concat_calls:
+# rule sv_calling_wgs_popdel_concat_calls:
 #    input:
 #        unpack(wf.get_input_files("popdel", "concat_calls")),
 #    output:
@@ -259,7 +259,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 #        wf.wrapper_path("popdel/concat_calls")
 #
 #
-#rule sv_calling_wgs_popdel_reorder_vcf:
+# rule sv_calling_wgs_popdel_reorder_vcf:
 #    input:
 #        unpack(wf.get_input_files("popdel", "reorder_vcf")),
 #    output:
