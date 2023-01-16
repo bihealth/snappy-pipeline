@@ -111,4 +111,4 @@ rule wgs_sv_export_external_varfish_annotator_external_annotate_svs:
     params:
         **{"args": wf.get_params("varfish_annotator_external", "annotate")},
     wrapper:
-        wf.wrapper_path("varfish_annotator/annotate_sv")
+        wf.wrapper_path("varfish_annotator/annotate_svs")
