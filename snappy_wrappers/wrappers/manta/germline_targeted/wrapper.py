@@ -75,6 +75,8 @@ python2 $workdir/runWorkflow.py \
 cp -ra $workdir/results $outdir
 rm -rf $workdir
 
+sleep 1min  # for good measure
+
 pushd $outdir
 tar czf results.tar.gz results
 ln -sr results/variants/diploidSV.vcf.gz $(basename {snakemake.output.vcf})
