@@ -926,10 +926,15 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         paths_work = getattr(self, f"_get_output_files_{action}_work")()
         yield from paths_work.items()
         # Return list of paths to the links that will be created in ``output/``
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-        ]
+        paths_all = list(paths_work.values())
+        paths_logs = self.get_log_file(action)
+        if isinstance(paths_logs, dict):
+            paths_all += list(paths_logs.values())
+        elif isinstance(paths_logs, list):
+            paths_all += paths_logs
+        elif isinstance(paths_logs, str):
+            paths_all.append(paths_logs)
+        yield "output_links", [re.sub(r"^work/", "output/", work_path) for work_path in paths_all]
 
     @dictify
     def _get_output_files_run_work(self):
