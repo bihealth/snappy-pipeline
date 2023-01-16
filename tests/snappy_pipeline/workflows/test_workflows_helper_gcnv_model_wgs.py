@@ -114,12 +114,12 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
     )
     expected_low = {
         "threads": 1,
-        "time": "04:00:00",
+        "time": "1-00:00:00",
         "memory": "7680M",
     }
     expected_high = {
         "threads": 16,
-        "time": "2-00:00:00",
+        "time": "4-00:00:00",
         "memory": "46080M",
     }
     for action in actions:
@@ -140,10 +140,10 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
             else:
                 if action in high_resource_action_list:
                     actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)
-                    assert actual == expected_high.get(resource)
+                    assert actual == expected_high.get(resource), f"action = {action}"
                 else:
                     actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)
-                    assert actual == expected_low.get(resource)
+                    assert actual == expected_low.get(resource), f"action = {action}"
 
 
 # Tests for BuildGcnvWgsModelStepPart (preprocess_intervals) ---------------------------------------
