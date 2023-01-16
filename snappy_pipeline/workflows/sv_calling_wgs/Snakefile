@@ -4,7 +4,7 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.sv_calling_wgs import WgsSvCallingWorkflow
+from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,13 +20,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsSvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = SvCallingWgsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
-
-
-localrules:
-    sv_calling_wgs_write_pedigree,
 
 
 rule all:
@@ -39,7 +35,7 @@ rule all:
 # Write out pedigree file -----------------------------------------------------
 
 
-rule sv_calling_targeted_write_pedigree_run:
+rule sv_calling_wgs_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     run:
@@ -53,7 +49,7 @@ rule sv_calling_targeted_write_pedigree_run:
 
 rule sv_calling_wgs_manta_run:
     input:
-        wf.get_input_files("manta", "run"),
+        unpack(wf.get_input_files("manta", "run")),
     output:
         **wf.get_output_files("manta", "run"),
     threads: wf.get_resource("manta", "run", "threads")
@@ -63,7 +59,7 @@ rule sv_calling_wgs_manta_run:
         partition=wf.get_resource("manta", "run", "partition"),
         tmpdir=wf.get_resource("manta", "run", "tmpdir"),
     log:
-        wf.get_log_file("manta", "run"),
+        **wf.get_log_file("manta", "run"),
     wrapper:
         wf.wrapper_path("manta/germline_wgs")
 
@@ -84,16 +80,15 @@ rule sv_calling_wgs_delly2_call:
         tmpdir=wf.get_resource("delly2", "call", "tmpdir"),
     params:
         step_key="sv_calling_wgs",
-        library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
     log:
-        wf.get_log_file("delly2", "call"),
+        **wf.get_log_file("delly2", "call"),
     wrapper:
         wf.wrapper_path("delly2/germline/call")
 
 
 rule sv_calling_wgs_delly2_merge_calls:
     input:
-        wf.get_input_files("delly2", "merge_calls"),
+        unpack(wf.get_input_files("delly2", "merge_calls")),
     output:
         **wf.get_output_files("delly2", "merge_calls"),
     threads: wf.get_resource("delly2", "merge_calls", "threads")
@@ -105,7 +100,7 @@ rule sv_calling_wgs_delly2_merge_calls:
     params:
         step_key="sv_calling_wgs",
     log:
-        wf.get_log_file("delly2", "merge_calls"),
+        **wf.get_log_file("delly2", "merge_calls"),
     wrapper:
         wf.wrapper_path("delly2/germline/merge_calls")
 
@@ -123,16 +118,15 @@ rule sv_calling_wgs_delly2_genotype:
         tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
     params:
         step_key="sv_calling_wgs",
-        library_info=wf.substep_getattr("delly2", "get_library_extra_infos"),
     log:
-        wf.get_log_file("delly2", "genotype"),
+        **wf.get_log_file("delly2", "genotype"),
     wrapper:
         wf.wrapper_path("delly2/germline/genotype")
 
 
 rule sv_calling_wgs_delly2_merge_genotypes:
     input:
-        wf.get_input_files("delly2", "merge_genotypes"),
+        unpack(wf.get_input_files("delly2", "merge_genotypes")),
     output:
         **wf.get_output_files("delly2", "merge_genotypes"),
     threads: wf.get_resource("delly2", "merge_genotypes", "threads")
@@ -144,163 +138,391 @@ rule sv_calling_wgs_delly2_merge_genotypes:
     params:
         step_key="sv_calling_wgs",
     log:
-        wf.get_log_file("delly2", "merge_genotypes"),
+        **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
         wf.wrapper_path("delly2/germline/merge_genotypes")
 
 
-# Run PB Honey Spots ----------------------------------------------------------
+## Run Sniffles ----------------------------------------------------------------
+#
+#
+#rule sv_calling_wgs_sniffles_run:
+#    input:
+#        wf.get_input_files("sniffles", "run"),
+#    output:
+#        **wf.get_output_files("sniffles", "run"),
+#    threads: wf.get_resource("sniffles", "run", "threads")
+#    resources:
+#        time=wf.get_resource("sniffles", "run", "time"),
+#        memory=wf.get_resource("sniffles", "run", "memory"),
+#        partition=wf.get_resource("sniffles", "run", "partition"),
+#        tmpdir=wf.get_resource("sniffles", "run", "tmpdir"),
+#    log:
+#        wf.get_log_file("sniffles", "run"),
+#    wrapper:
+#        wf.wrapper_path("sniffles/germline")
+#
+#
+## Run Sniffles 2 --------------------------------------------------------------
+#
+#
+#rule sv_calling_wgs_sniffles2_bam_to_snf:
+#    input:
+#        unpack(wf.get_input_files("sniffles2", "bam_to_snf")),
+#    output:
+#        **wf.get_output_files("sniffles2", "bam_to_snf"),
+#    threads: wf.get_resource("sniffles2", "bam_to_snf", "threads")
+#    resources:
+#        time=wf.get_resource("sniffles2", "bam_to_snf", "time"),
+#        memory=wf.get_resource("sniffles2", "bam_to_snf", "memory"),
+#        partition=wf.get_resource("sniffles2", "bam_to_snf", "partition"),
+#        tmpdir=wf.get_resource("sniffles2", "bam_to_snf", "tmpdir"),
+#    log:
+#        wf.get_log_file("sniffles2", "bam_to_snf"),
+#    wrapper:
+#        wf.wrapper_path("sniffles2/germline/bam_to_snf")
+#
+#
+#rule sv_calling_wgs_sniffles2_snf_to_vcf:
+#    input:
+#        unpack(wf.get_input_files("sniffles2", "snf_to_vcf")),
+#    output:
+#        **wf.get_output_files("sniffles2", "snf_to_vcf"),
+#    threads: wf.get_resource("sniffles2", "snf_to_vcf", "threads")
+#    resources:
+#        time=wf.get_resource("sniffles2", "snf_to_vcf", "time"),
+#        memory=wf.get_resource("sniffles2", "snf_to_vcf", "memory"),
+#        partition=wf.get_resource("sniffles2", "snf_to_vcf", "partition"),
+#        tmpdir=wf.get_resource("sniffles2", "snf_to_vcf", "tmpdir"),
+#    log:
+#        wf.get_log_file("sniffles2", "snf_to_vcf"),
+#    wrapper:
+#        wf.wrapper_path("sniffles2/germline/snf_to_vcf")
 
 
-rule sv_calling_wgs_pb_honey_spots_run:
+## PopDel Steps ----------------------------------------------------------------
+#
+#
+#ruleorder: sv_calling_wgs_popdel_reorder_vcf > sv_calling_wgs_popdel_concat_calls > sv_calling_wgs_popdel_call > sv_calling_wgs_popdel_profile
+#
+#
+#rule sv_calling_wgs_popdel_profile:
+#    input:
+#        unpack(wf.get_input_files("popdel", "profile")),
+#    output:
+#        **wf.get_output_files("popdel", "profile"),
+#    threads: wf.get_resource("popdel", "profile", "threads")
+#    resources:
+#        time=wf.get_resource("popdel", "profile", "time"),
+#        memory=wf.get_resource("popdel", "profile", "memory"),
+#        partition=wf.get_resource("popdel", "profile", "partition"),
+#        tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
+#    wildcard_constraints:
+#        index_ngs_library=r"[^\.]+",
+#    log:
+#        **wf.get_log_file("popdel", "profile"),
+#    wrapper:
+#        wf.wrapper_path("popdel/profile")
+#
+#
+#rule sv_calling_wgs_popdel_call:
+#    input:
+#        unpack(wf.get_input_files("popdel", "call")),
+#    output:
+#        **wf.get_output_files("popdel", "call"),
+#    threads: wf.get_resource("popdel", "call", "threads")
+#    resources:
+#        time=wf.get_resource("popdel", "call", "time"),
+#        memory=wf.get_resource("popdel", "call", "memory"),
+#        partition=wf.get_resource("popdel", "call", "partition"),
+#        tmpdir=wf.get_resource("popdel", "call", "tmpdir"),
+#    log:
+#        **wf.get_log_file("popdel", "call"),
+#    wrapper:
+#        wf.wrapper_path("popdel/call")
+#
+#
+#rule sv_calling_wgs_popdel_concat_calls:
+#    input:
+#        unpack(wf.get_input_files("popdel", "concat_calls")),
+#    output:
+#        **wf.get_output_files("popdel", "concat_calls"),
+#    threads: wf.get_resource("popdel", "concat_calls", "threads")
+#    resources:
+#        time=wf.get_resource("popdel", "concat_calls", "time"),
+#        memory=wf.get_resource("popdel", "concat_calls", "memory"),
+#        partition=wf.get_resource("popdel", "concat_calls", "partition"),
+#        tmpdir=wf.get_resource("popdel", "concat_calls", "tmpdir"),
+#    log:
+#        **wf.get_log_file("popdel", "concat_calls"),
+#    wrapper:
+#        wf.wrapper_path("popdel/concat_calls")
+#
+#
+#rule sv_calling_wgs_popdel_reorder_vcf:
+#    input:
+#        unpack(wf.get_input_files("popdel", "reorder_vcf")),
+#    output:
+#        **wf.get_output_files("popdel", "reorder_vcf"),
+#    threads: wf.get_resource("popdel", "reorder_vcf", "threads")
+#    resources:
+#        time=wf.get_resource("popdel", "reorder_vcf", "time"),
+#        memory=wf.get_resource("popdel", "reorder_vcf", "memory"),
+#        partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
+#        tmpdir=wf.get_resource("popdel", "reorder_vcf", "tmpdir"),
+#    wildcard_constraints:
+#        index_ngs_library=r"[^\.]+",
+#    params:
+#        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
+#    log:
+#        **wf.get_log_file("popdel", "reorder_vcf"),
+#    wrapper:
+#        wf.wrapper_path("popdel/reorder_vcf")
+
+
+# Run Melt --------------------------------------------------------------------
+
+
+# Regular expression for wildcard constraints
+RE_NO_DOT = r"[^.]+"
+
+
+rule sv_calling_wgs_melt_preprocess:
     input:
-        wf.get_input_files("pb_honey_spots", "run"),
+        unpack(wf.get_input_files("melt", "preprocess")),
     output:
-        **wf.get_output_files("pb_honey_spots", "run"),
-    threads: wf.get_resource("pb_honey_spots", "run", "threads")
-    resources:
-        time=wf.get_resource("pb_honey_spots", "run", "time"),
-        memory=wf.get_resource("pb_honey_spots", "run", "memory"),
-        partition=wf.get_resource("pb_honey_spots", "run", "partition"),
-        tmpdir=wf.get_resource("pb_honey_spots", "run", "tmpdir"),
-    log:
-        wf.get_log_file("pb_honey_spots", "run"),
-    wrapper:
-        wf.wrapper_path("pb_honey_spots/germline")
-
-
-# Run Sniffles ----------------------------------------------------------------
-
-
-rule sv_calling_wgs_sniffles_run:
-    input:
-        wf.get_input_files("sniffles", "run"),
-    output:
-        **wf.get_output_files("sniffles", "run"),
-    threads: wf.get_resource("sniffles", "run", "threads")
-    resources:
-        time=wf.get_resource("sniffles", "run", "time"),
-        memory=wf.get_resource("sniffles", "run", "memory"),
-        partition=wf.get_resource("sniffles", "run", "partition"),
-        tmpdir=wf.get_resource("sniffles", "run", "tmpdir"),
-    log:
-        wf.get_log_file("sniffles", "run"),
-    wrapper:
-        wf.wrapper_path("sniffles/germline")
-
-
-# Run Sniffles 2 --------------------------------------------------------------
-
-
-rule sv_calling_wgs_sniffles2_bam_to_snf:
-    input:
-        unpack(wf.get_input_files("sniffles2", "bam_to_snf")),
-    output:
-        **wf.get_output_files("sniffles2", "bam_to_snf"),
-    threads: wf.get_resource("sniffles2", "bam_to_snf", "threads")
-    resources:
-        time=wf.get_resource("sniffles2", "bam_to_snf", "time"),
-        memory=wf.get_resource("sniffles2", "bam_to_snf", "memory"),
-        partition=wf.get_resource("sniffles2", "bam_to_snf", "partition"),
-        tmpdir=wf.get_resource("sniffles2", "bam_to_snf", "tmpdir"),
-    log:
-        wf.get_log_file("sniffles2", "bam_to_snf"),
-    wrapper:
-        wf.wrapper_path("sniffles2/germline/bam_to_snf")
-
-
-rule sv_calling_wgs_sniffles2_snf_to_vcf:
-    input:
-        unpack(wf.get_input_files("sniffles2", "snf_to_vcf")),
-    output:
-        **wf.get_output_files("sniffles2", "snf_to_vcf"),
-    threads: wf.get_resource("sniffles2", "snf_to_vcf", "threads")
-    resources:
-        time=wf.get_resource("sniffles2", "snf_to_vcf", "time"),
-        memory=wf.get_resource("sniffles2", "snf_to_vcf", "memory"),
-        partition=wf.get_resource("sniffles2", "snf_to_vcf", "partition"),
-        tmpdir=wf.get_resource("sniffles2", "snf_to_vcf", "tmpdir"),
-    log:
-        wf.get_log_file("sniffles2", "snf_to_vcf"),
-    wrapper:
-        wf.wrapper_path("sniffles2/germline/snf_to_vcf")
-
-
-# PopDel Steps ----------------------------------------------------------------
-
-
-ruleorder: sv_calling_wgs_popdel_reorder_vcf > sv_calling_wgs_popdel_concat_calls > sv_calling_wgs_popdel_call > sv_calling_wgs_popdel_profile
-
-
-rule sv_calling_wgs_popdel_profile:
-    input:
-        unpack(wf.get_input_files("popdel", "profile")),
-    output:
-        **wf.get_output_files("popdel", "profile"),
-    threads: wf.get_resource("popdel", "profile", "threads")
-    resources:
-        time=wf.get_resource("popdel", "profile", "time"),
-        memory=wf.get_resource("popdel", "profile", "memory"),
-        partition=wf.get_resource("popdel", "profile", "partition"),
-        tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
+        **wf.get_output_files("melt", "preprocess"),
     wildcard_constraints:
-        index_ngs_library=r"[^\.]+",
-    log:
-        **wf.get_log_file("popdel", "profile"),
-    wrapper:
-        wf.wrapper_path("popdel/profile")
-
-
-rule sv_calling_wgs_popdel_call:
-    input:
-        unpack(wf.get_input_files("popdel", "call")),
-    output:
-        **wf.get_output_files("popdel", "call"),
-    threads: wf.get_resource("popdel", "call", "threads")
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "preprocess", "threads")
     resources:
-        time=wf.get_resource("popdel", "call", "time"),
-        memory=wf.get_resource("popdel", "call", "memory"),
-        partition=wf.get_resource("popdel", "call", "partition"),
-        tmpdir=wf.get_resource("popdel", "call", "tmpdir"),
+        time=wf.get_resource("melt", "preprocess", "time"),
+        memory=wf.get_resource("melt", "preprocess", "memory"),
+        partition=wf.get_resource("melt", "preprocess", "partition"),
     log:
-        **wf.get_log_file("popdel", "call"),
-    wrapper:
-        wf.wrapper_path("popdel/call")
-
-
-rule sv_calling_wgs_popdel_concat_calls:
-    input:
-        unpack(wf.get_input_files("popdel", "concat_calls")),
-    output:
-        **wf.get_output_files("popdel", "concat_calls"),
-    threads: wf.get_resource("popdel", "concat_calls", "threads")
-    resources:
-        time=wf.get_resource("popdel", "concat_calls", "time"),
-        memory=wf.get_resource("popdel", "concat_calls", "memory"),
-        partition=wf.get_resource("popdel", "concat_calls", "partition"),
-        tmpdir=wf.get_resource("popdel", "concat_calls", "tmpdir"),
-    log:
-        **wf.get_log_file("popdel", "concat_calls"),
-    wrapper:
-        wf.wrapper_path("popdel/concat_calls")
-
-
-rule sv_calling_wgs_popdel_reorder_vcf:
-    input:
-        unpack(wf.get_input_files("popdel", "reorder_vcf")),
-    output:
-        **wf.get_output_files("popdel", "reorder_vcf"),
-    threads: wf.get_resource("popdel", "reorder_vcf", "threads")
-    resources:
-        time=wf.get_resource("popdel", "reorder_vcf", "time"),
-        memory=wf.get_resource("popdel", "reorder_vcf", "memory"),
-        partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
-        tmpdir=wf.get_resource("popdel", "reorder_vcf", "tmpdir"),
-    wildcard_constraints:
-        index_ngs_library=r"[^\.]+",
+        **wf.get_log_file("melt", "preprocess"),
     params:
-        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
-    log:
-        **wf.get_log_file("popdel", "reorder_vcf"),
+        step_key="sv_calling_wgs",
     wrapper:
-        wf.wrapper_path("popdel/reorder_vcf")
+        wf.wrapper_path("melt/preprocess")
+
+
+rule sv_calling_wgs_melt_indiv_analysis:
+    input:
+        unpack(wf.get_input_files("melt", "indiv_analysis")),
+    output:
+        **wf.get_output_files("melt", "indiv_analysis"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "indiv_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "indiv_analysis", "time"),
+        memory=wf.get_resource("melt", "indiv_analysis", "memory"),
+        partition=wf.get_resource("melt", "indiv_analysis", "partition"),
+    log:
+        **wf.get_log_file("melt", "indiv_analysis"),
+    params:
+        step_key="sv_calling_wgs",
+    wrapper:
+        wf.wrapper_path("melt/indiv_analysis")
+
+
+rule sv_calling_wgs_melt_group_analysis:
+    input:
+        unpack(wf.get_input_files("melt", "group_analysis")),
+    output:
+        **wf.get_output_files("melt", "group_analysis"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "group_analysis", "threads")
+    resources:
+        time=wf.get_resource("melt", "group_analysis", "time"),
+        memory=wf.get_resource("melt", "group_analysis", "memory"),
+        partition=wf.get_resource("melt", "group_analysis", "partition"),
+    log:
+        **wf.get_log_file("melt", "group_analysis"),
+    params:
+        step_key="sv_calling_wgs",
+    wrapper:
+        wf.wrapper_path("melt/group_analysis")
+
+
+rule sv_calling_wgs_melt_genotype:
+    input:
+        unpack(wf.get_input_files("melt", "genotype")),
+    output:
+        **wf.get_output_files("melt", "genotype"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+        me_type=RE_NO_DOT,
+    threads: wf.get_resource("melt", "genotype", "threads")
+    resources:
+        time=wf.get_resource("melt", "genotype", "time"),
+        memory=wf.get_resource("melt", "genotype", "memory"),
+        partition=wf.get_resource("melt", "genotype", "partition"),
+    log:
+        **wf.get_log_file("melt", "genotype"),
+    params:
+        step_key="sv_calling_wgs",
+    wrapper:
+        wf.wrapper_path("melt/genotype")
+
+
+rule sv_calling_wgs_melt_make_vcf:
+    input:
+        unpack(wf.get_input_files("melt", "make_vcf")),
+    output:
+        **wf.get_output_files("melt", "make_vcf"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        index_library_name=RE_NO_DOT,
+    threads: wf.get_resource("melt", "make_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "make_vcf", "time"),
+        memory=wf.get_resource("melt", "make_vcf", "memory"),
+        partition=wf.get_resource("melt", "make_vcf", "partition"),
+    log:
+        **wf.get_log_file("melt", "make_vcf"),
+    params:
+        step_key="sv_calling_wgs",
+    wrapper:
+        wf.wrapper_path("melt/make_vcf")
+
+
+rule sv_calling_wgs_melt_merge_vcf:
+    input:
+        unpack(wf.get_input_files("melt", "merge_vcf")),
+    output:
+        **wf.get_output_files("melt", "merge_vcf"),
+    wildcard_constraints:
+        mapper=RE_NO_DOT,
+        library_name=RE_NO_DOT,
+    threads: wf.get_resource("melt", "merge_vcf", "threads")
+    resources:
+        time=wf.get_resource("melt", "merge_vcf", "time"),
+        memory=wf.get_resource("melt", "merge_vcf", "memory"),
+        partition=wf.get_resource("melt", "merge_vcf", "partition"),
+    log:
+        **wf.get_log_file("melt", "merge_vcf"),
+    params:
+        step_key="sv_calling_wgs",
+    wrapper:
+        wf.wrapper_path("melt/merge_vcf")
+
+
+# GATK-gCNV -------------------------------------------------------------------
+
+
+rule sv_calling_wgs_gcnv_preprocess_intervals:
+    input:
+        unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
+    output:
+        **wf.get_output_files("gcnv", "preprocess_intervals"),
+    threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
+        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
+    log:
+        wf.get_log_file("gcnv", "preprocess_intervals"),
+    wrapper:
+        wf.wrapper_path("gcnv/preprocess_intervals")
+
+
+rule sv_calling_wgs_gcnv_coverage:
+    input:
+        unpack(wf.get_input_files("gcnv", "coverage")),
+    output:
+        **wf.get_output_files("gcnv", "coverage"),
+    threads: wf.get_resource("gcnv", "coverage", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "coverage", "time"),
+        memory=wf.get_resource("gcnv", "coverage", "memory"),
+        partition=wf.get_resource("gcnv", "coverage", "partition"),
+        tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
+    log:
+        wf.get_log_file("gcnv", "coverage"),
+    wrapper:
+        wf.wrapper_path("gcnv/coverage")
+
+
+rule sv_calling_wgs_gcnv_contig_ploidy:
+    input:
+        unpack(wf.get_input_files("gcnv", "contig_ploidy")),
+    output:
+        **wf.get_output_files("gcnv", "contig_ploidy"),
+    threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "contig_ploidy", "time"),
+        memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
+        partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
+        tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
+    log:
+        wf.get_log_file("gcnv", "contig_ploidy"),
+    params:
+        args=wf.get_params("gcnv", "contig_ploidy"),
+    wrapper:
+        wf.wrapper_path("gcnv/contig_ploidy_case_mode")
+
+
+rule sv_calling_wgs_gcnv_call_cnvs:
+    input:
+        unpack(wf.get_input_files("gcnv", "call_cnvs")),
+    output:
+        **wf.get_output_files("gcnv", "call_cnvs"),
+    threads: wf.get_resource("gcnv", "call_cnvs", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "call_cnvs", "time"),
+        memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
+        partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
+        tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
+    log:
+        wf.get_log_file("gcnv", "call_cnvs"),
+    params:
+        args=wf.get_params("gcnv", "call_cnvs"),
+    wrapper:
+        wf.wrapper_path("gcnv/call_cnvs_case_mode")
+
+
+rule sv_calling_wgs_gcnv_post_germline_calls:
+    input:
+        unpack(wf.get_input_files("gcnv", "post_germline_calls")),
+    output:
+        **wf.get_output_files("gcnv", "post_germline_calls"),
+    threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "post_germline_calls", "time"),
+        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
+        partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
+        tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
+    log:
+        wf.get_log_file("gcnv", "post_germline_calls"),
+    params:
+        args=wf.get_params("gcnv", "post_germline_calls"),
+    wrapper:
+        wf.wrapper_path("gcnv/post_germline_calls_case_mode")
+
+
+rule sv_calling_wgs_gcnv_joint_germline_cnv_segmentation:
+    input:
+        unpack(wf.get_input_files("gcnv", "joint_germline_cnv_segmentation")),
+    output:
+        **wf.get_output_files("gcnv", "joint_germline_cnv_segmentation"),
+    threads: wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "threads")
+    resources:
+        time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
+        memory=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "memory"),
+        partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
+        tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
+    log:
+        **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
+    wrapper:
+        wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")

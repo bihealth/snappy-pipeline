@@ -13,7 +13,7 @@ exec 2> >(tee -a "{snakemake.log.log}")
 set -x
 # -----------------------------------------------------------------------------
 
-JAR={snakemake.config[step_config][sv_calling_targeted][melt][jar_file]}
+JAR={melt_config[jar_file]}
 ME_REFS={melt_config[me_refs_path]}
 ME_INFIX={melt_config[me_refs_infix]}
 

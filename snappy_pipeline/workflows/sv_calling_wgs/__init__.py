@@ -20,6 +20,7 @@ from snappy_pipeline.workflows.abstract.common import (
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
+from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
@@ -242,157 +243,6 @@ class PopDelStepPart(
         )
 
 
-class MeltStepPart(
-    SvCallingGetResultFilesMixin,
-    SvCallingGetLogFileMixin,
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
-    BaseStepPart,
-):
-    """MEI calling using MELT
-
-    We implement the workflow as per-pedigree calling.  Generally, this leads to consistent
-    positions within each pedigree but not necessarily across the whole cohort.
-
-    Note that MELT is not free software, so further setup is needed.
-    """
-
-    name = "melt"
-    actions = (
-        "preprocess",
-        "indiv_analysis",
-        "group_analysis",
-        "genotype",
-        "make_vcf",
-        "merge_vcf",
-        "reorder_vcf",
-    )
-
-    _resource_usage = ResourceUsage(
-        threads=6,
-        time="1-00:00:00",
-        memory=f"{int(3.75 * 1024 * 6)}M",
-    )
-    resource_usage_dict = {
-        "preprocess": _resource_usage,
-        "indiv_analysis": _resource_usage,
-        "group_analysis": _resource_usage,
-        "genotype": _resource_usage,
-        "make_vcf": _resource_usage,
-        "merge_vcf": _resource_usage,
-        "reorder_vcf": _resource_usage,
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        #: All individual's primary NGS libraries
-        self.all_dna_ngs_libraries = []
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    self.all_dna_ngs_libraries.append(donor.dna_ngs_library.name)
-        #: Linking NGS libraries to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    @dictify
-    def _get_input_files_preprocess(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
-
-    @dictify
-    def _get_output_files_preprocess(self):
-        # Note that mapper is not part of the output BAM file as MELT infers sample file from BAM
-        # file name instead of using sample name from BAM header.
-        prefix = "work/{mapper}.melt.preprocess.{library_name}/out/{library_name}"
-        yield "orig_bam", f"{prefix}.bam"
-        yield "orig_bai", f"{prefix}.bam.bai"
-        yield "disc_bam", f"{prefix}.bam.disc"
-        yield "disc_bai", f"{prefix}.bam.disc.bai"
-        yield "disc_fq", f"{prefix}.bam.fq"
-
-    @dictify
-    def _get_input_files_indiv_analysis(self, wildcards):
-        infix = f"{wildcards.mapper}.melt.preprocess.{wildcards.library_name}"
-        yield "orig_bam", f"work/{infix}/out/{wildcards.library_name}.bam"
-        yield "disc_bam", f"work/{infix}/out/{wildcards.library_name}.bam.disc"
-
-    @dictify
-    def _get_output_files_indiv_analysis(self):
-        infix = "{mapper}.melt.indiv_analysis.{me_type}"
-        yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
-
-    @listify
-    def _get_input_files_group_analysis(self, wildcards):
-        for library_name in self.all_dna_ngs_libraries:
-            infix = f"{wildcards.mapper}.melt.indiv_analysis.{wildcards.me_type}"
-            yield f"work/{infix}/out/.done.{library_name}"
-
-    @dictify
-    def _get_output_files_group_analysis(self):
-        yield "done", touch("work/{mapper}.melt.group_analysis.{me_type}/out/.done")
-
-    @dictify
-    def _get_input_files_genotype(self, wildcards):
-        infix_done = f"{wildcards.mapper}.melt.group_analysis.{wildcards.me_type}"
-        yield "done", f"work/{infix_done}/out/.done".format(**wildcards)
-        infix_bam = f"{wildcards.mapper}.melt.preprocess.{wildcards.library_name}"
-        yield "bam", f"work/{infix_bam}/out/{wildcards.library_name}.bam"
-
-    @dictify
-    def _get_output_files_genotype(self):
-        yield "done", touch("work/{mapper}.melt.genotype.{me_type}/out/.done.{library_name}")
-
-    @dictify
-    def _get_input_files_make_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.melt.group_analysis.{wildcards.me_type}"
-        yield "group_analysis", f"work/{infix}/out/.done"
-        paths = []
-        for library_name in self.all_dna_ngs_libraries:
-            infix = f"{wildcards.mapper}.melt.genotype.{wildcards.me_type}"
-            yield f"work/{infix}/out/.done.{library_name}"
-        yield "genotype", paths
-
-    @dictify
-    def _get_output_files_make_vcf(self):
-        infix = "{mapper}.melt.genotype.{me_type}"
-        yield "list_txt", f"work/{infix}/out/list.txt"
-        yield "done", touch(f"work/{infix}/out/.done")
-        yield "vcf", f"work/{infix}.final_comp.vcf.gz"
-        yield "vcf_tbi", f"work/{infix}.final_comp.vcf.gz.tbi"
-
-    @dictify
-    def _get_input_files_merge_vcf(self, wildcards):
-        vcfs = []
-        for me_type in self.config["melt"]["me_types"]:
-            infix = f"{wildcards.mapper}.melt.merge_vcf.{wildcards.me_type}"
-            vcfs.append(f"work/{infix}/out/{me_type}.final_comp.vcf.gz")
-        yield "vcf", vcfs
-
-    @dictify
-    def _get_output_files_merge_vcf(self):
-        infix = "{mapper}.melt.merge_vcf"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
-
-    @dictify
-    def _get_input_files_reorder_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.melt.merge_vcf"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-
-    @dictify
-    def _get_output_files_reorder_vcf(self):
-        infix = "{mapper}.melt.{index_library_name}"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
-
-
 class Sniffles2StepPart(BaseStepPart):
     """WGS SV identification using Sniffles 2"""
 
@@ -468,10 +318,10 @@ class SvCallingWgsWorkflow(BaseStep):
             (
                 Delly2StepPart,
                 MantaStepPart,
-                PopDelStepPart,
+#               PopDelStepPart,
                 GcnvWgsStepPart,
                 MeltStepPart,
-                Sniffles2StepPart,
+#               Sniffles2StepPart,
                 WritePedigreeStepPart,
             )
         )
