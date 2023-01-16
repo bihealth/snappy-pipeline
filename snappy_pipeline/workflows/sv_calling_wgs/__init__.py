@@ -4,7 +4,6 @@
 from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -318,10 +317,10 @@ class SvCallingWgsWorkflow(BaseStep):
             (
                 Delly2StepPart,
                 MantaStepPart,
-#               PopDelStepPart,
+                #               PopDelStepPart,
                 GcnvWgsStepPart,
                 MeltStepPart,
-#               Sniffles2StepPart,
+                #               Sniffles2StepPart,
                 WritePedigreeStepPart,
             )
         )

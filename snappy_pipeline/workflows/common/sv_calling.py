@@ -17,7 +17,9 @@ class SvCallingGetResultFilesMixin:
         The implementation will return a list of all paths with prefix ``output/` that are
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
-        if self.name not in self.config["tools"] and self.name not in self.config["tools"].get("dna", {}):
+        if self.name not in self.config["tools"] and self.name not in self.config["tools"].get(
+            "dna", {}
+        ):
             return  # tool not enabled, no result files
 
         ngs_mapping_config = DictQuery(self.w_config).get("step_config/ngs_mapping")
