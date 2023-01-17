@@ -57,6 +57,7 @@ from ..workflows import (
     variant_export_external,
     variant_filtration,
     variant_phasing,
+    wgs_cnv_export_external,
     wgs_sv_export_external,
 )
 
@@ -110,6 +111,7 @@ STEP_TO_MODULE = {
     "variant_export_external": variant_export_external,
     "variant_filtration": variant_filtration,
     "variant_phasing": variant_phasing,
+    "wgs_cnv_export_external": wgs_cnv_export_external,
     "wgs_sv_export_external": wgs_sv_export_external,
 }
 

@@ -223,20 +223,7 @@ def test_bam_reports_step_part_call_get_output_files_bam_qc(
         "flagstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt.md5",
         "idxstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt",
         "idxstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt.md5",
-        "output_links": [
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt",
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt.md5",
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt",
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt.md5",
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt",
-            "output/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt.md5",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.log",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.log.md5",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_info.txt",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_info.txt.md5",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_list.txt",
-            "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc.conda_list.txt.md5",
-        ],
+        "output_links": [],
     }
     actual = variant_export_external_workflow.get_output_files("bam_reports", "bam_qc")
     assert actual == expected
@@ -342,7 +329,7 @@ def test_varfish_annotator_step_part_call_get_log_file_gvcf_to_vcf(
 ):
     """Tests VarfishAnnotatorExternalStepPart._get_log_file_gvcf_to_vcf()"""
     base_name = "work/dragen.{index_ngs_library}/log/dragen.{index_ngs_library}.gvcf_to_vcf"
-    expected = get_expected_log_files_dict(base_out=base_name)
+    expected = get_expected_log_files_dict(base_out=base_name, extended=True)
     actual = variant_export_external_workflow.get_log_file(
         "varfish_annotator_external", "gvcf_to_vcf"
     )
@@ -409,7 +396,7 @@ def test_varfish_annotator_step_part_call_get_output_files_merge_vcf(
 def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(variant_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart._get_log_file_merge_vcf()"""
     base_name = "work/dragen.{index_ngs_library}/log/dragen.{index_ngs_library}.merge_vcf"
-    expected = get_expected_log_files_dict(base_out=base_name)
+    expected = get_expected_log_files_dict(base_out=base_name, extended=True)
     actual = variant_export_external_workflow.get_log_file(
         "varfish_annotator_external", "merge_vcf"
     )
@@ -472,6 +459,9 @@ def test_varfish_annotator_step_part_get_output_files_annotate(variant_export_ex
         "gts_md5": base_name_out + ".gts.tsv.gz.md5",
         "db_infos": base_name_out + ".db-infos.tsv.gz",
         "db_infos_md5": base_name_out + ".db-infos.tsv.gz.md5",
+        "ped": base_name_out + ".ped",
+        "ped_md5": base_name_out + ".ped.md5",
+        "output_links": [],
     }
     # Get actual
     actual = variant_export_external_workflow.get_output_files(
@@ -495,7 +485,7 @@ def test_varfish_annotator_step_part_get_log_file_annotate(variant_export_extern
         "wrapper": base_name_wrapper + ".wrapper.py",
         "wrapper_md5": base_name_wrapper + ".wrapper.py.md5",
     }
-    log_dict = get_expected_log_files_dict(base_out=base_name_log)
+    log_dict = get_expected_log_files_dict(base_out=base_name_log, extended=True)
     expected = {**wrapper_dict, **log_dict}
     # Get actual
     actual = variant_export_external_workflow.get_log_file("varfish_annotator_external", "annotate")
@@ -561,6 +551,7 @@ def test_varfish_annotator_step_part_get_output_files_bam_qc(variant_export_exte
     expected = {
         "bam_qc": base_name_out + ".bam-qc.tsv.gz",
         "bam_qc_md5": base_name_out + ".bam-qc.tsv.gz.md5",
+        "output_links": [],
     }
     # Get actual
     actual = variant_export_external_workflow.get_output_files(
@@ -584,7 +575,7 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(variant_export_external
         "wrapper": base_name_wrapper + ".wrapper.py",
         "wrapper_md5": base_name_wrapper + ".wrapper.py.md5",
     }
-    log_dict = get_expected_log_files_dict(base_out=base_name_log)
+    log_dict = get_expected_log_files_dict(base_out=base_name_log, extended=True)
     expected = {**wrapper_dict, **log_dict}
     # Get actual
     actual = variant_export_external_workflow.get_log_file("varfish_annotator_external", "bam_qc")
@@ -663,6 +654,10 @@ def test_variant_export_external_workflow(variant_export_external_workflow):
             "conda_info.txt.md5",
             "conda_list.txt",
             "conda_list.txt.md5",
+            "wrapper.py",
+            "wrapper.py.md5",
+            "environment.yaml",
+            "environment.yaml.md5",
         )
         for type_ in (".annotate", ".bam_qc")
     ]
