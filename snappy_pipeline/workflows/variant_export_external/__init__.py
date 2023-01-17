@@ -154,6 +154,13 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
         yield f"work/input_links/{wildcards.library_name}/.done_bam_external"
         yield f"work/input_links/{wildcards.library_name}/.done_bai_external"
 
+    @dictify
+    def get_output_files(self, action):
+        """Return output files"""
+        result = super().get_output_files(action)
+        result["output_links"] = []
+        yield from result.items()
+
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
@@ -361,10 +368,15 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         prefix = (
             "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
         )
+        paths_work = {}
         for infix in ("gts", "db-infos"):
             key = infix.replace("-", "_")
-            yield key, prefix + f".{infix}.tsv.gz"
-            yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
+            paths_work[key] = prefix + f".{infix}.tsv.gz"
+            paths_work[key + "_md5"] = prefix + f".{infix}.tsv.gz.md5"
+        paths_work["ped"] = f"{prefix}.ped"
+        paths_work["ped_md5"] = f"{prefix}.ped.md5"
+        yield from paths_work.items()
+        yield "output_links", []
 
     @dictify
     def _get_output_files_bam_qc(self):
@@ -374,6 +386,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
         yield key, prefix + ".bam-qc.tsv.gz"
         yield key + "_md5", prefix + ".bam-qc.tsv.gz.md5"
+        yield "output_links", []
 
     @dictify
     def get_log_file(self, action):
@@ -391,14 +404,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
         key_ext = (
             ("log", ".log"),
-            ("log_md5", ".log.md5"),
             ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
             ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     @staticmethod
     @dictify
@@ -408,10 +421,11 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             f"varfish_annotated.{action}.{{index_ngs_library}}"
         )
         key_ext = (
-            ("wrapper", ".wrapper.py"),
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
@@ -623,6 +637,10 @@ class VariantExportExternalWorkflow(BaseStep):
                     ".conda_info.txt.md5",
                     ".conda_list.txt",
                     ".conda_list.txt.md5",
+                    ".wrapper.py",
+                    ".wrapper.py.md5",
+                    ".environment.yaml",
+                    ".environment.yaml.md5",
                 ),
             )
 

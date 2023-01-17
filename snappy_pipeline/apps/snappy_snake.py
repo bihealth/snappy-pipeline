@@ -57,8 +57,8 @@ from ..workflows import (
     variant_export_external,
     variant_filtration,
     variant_phasing,
-    wgs_sv_export_external,
     wgs_cnv_export_external,
+    wgs_sv_export_external,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -111,8 +111,8 @@ STEP_TO_MODULE = {
     "variant_export_external": variant_export_external,
     "variant_filtration": variant_filtration,
     "variant_phasing": variant_phasing,
-    "wgs_sv_export_external": wgs_sv_export_external,
     "wgs_cnv_export_external": wgs_cnv_export_external,
+    "wgs_sv_export_external": wgs_sv_export_external,
 }
 
 
