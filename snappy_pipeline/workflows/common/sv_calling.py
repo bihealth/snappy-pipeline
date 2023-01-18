@@ -50,10 +50,14 @@ class SvCallingGetLogFileMixin:
         """Return dict of log files in the "log" directory"""
         _ = action
         if action and action != self.actions[-1]:
-            infix = f"{self.name}_{action}"
+            token = f"{self.name}_{action}"
         else:
-            infix = self.name
-        prefix = f"work/{{mapper}}.{infix}.{{library_name}}/log/{{mapper}}.{infix}.{{library_name}}.sv_calling"
+            token = self.name
+        if hasattr(self, f"_get_log_file_infix_{action}"):
+            infix = getattr(self, f"_get_log_file_infix_{action}")()
+        else:
+            infix = f"{{mapper}}.{token}.{{library_name}}"
+        prefix = f"work/{infix}/log/{infix}.sv_calling"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),

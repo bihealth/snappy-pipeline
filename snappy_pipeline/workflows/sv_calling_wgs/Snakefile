@@ -9,11 +9,12 @@ from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
+# Regular expression for wildcard constraints
+RE_BETWEEN_DOTS = r"[^.\.]+"
+
 # Configuration ===============================================================
 
-
 configfile: "config.yaml"
-
 
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
@@ -200,91 +201,93 @@ rule sv_calling_wgs_delly2_merge_genotypes:
 #        wf.wrapper_path("sniffles2/germline/snf_to_vcf")
 
 
-## PopDel Steps ----------------------------------------------------------------
-#
-#
-# ruleorder: sv_calling_wgs_popdel_reorder_vcf > sv_calling_wgs_popdel_concat_calls > sv_calling_wgs_popdel_call > sv_calling_wgs_popdel_profile
-#
-#
-# rule sv_calling_wgs_popdel_profile:
-#    input:
-#        unpack(wf.get_input_files("popdel", "profile")),
-#    output:
-#        **wf.get_output_files("popdel", "profile"),
-#    threads: wf.get_resource("popdel", "profile", "threads")
-#    resources:
-#        time=wf.get_resource("popdel", "profile", "time"),
-#        memory=wf.get_resource("popdel", "profile", "memory"),
-#        partition=wf.get_resource("popdel", "profile", "partition"),
-#        tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
-#    wildcard_constraints:
-#        index_ngs_library=r"[^\.]+",
-#    log:
-#        **wf.get_log_file("popdel", "profile"),
-#    wrapper:
-#        wf.wrapper_path("popdel/profile")
-#
-#
-# rule sv_calling_wgs_popdel_call:
-#    input:
-#        unpack(wf.get_input_files("popdel", "call")),
-#    output:
-#        **wf.get_output_files("popdel", "call"),
-#    threads: wf.get_resource("popdel", "call", "threads")
-#    resources:
-#        time=wf.get_resource("popdel", "call", "time"),
-#        memory=wf.get_resource("popdel", "call", "memory"),
-#        partition=wf.get_resource("popdel", "call", "partition"),
-#        tmpdir=wf.get_resource("popdel", "call", "tmpdir"),
-#    log:
-#        **wf.get_log_file("popdel", "call"),
-#    wrapper:
-#        wf.wrapper_path("popdel/call")
-#
-#
-# rule sv_calling_wgs_popdel_concat_calls:
-#    input:
-#        unpack(wf.get_input_files("popdel", "concat_calls")),
-#    output:
-#        **wf.get_output_files("popdel", "concat_calls"),
-#    threads: wf.get_resource("popdel", "concat_calls", "threads")
-#    resources:
-#        time=wf.get_resource("popdel", "concat_calls", "time"),
-#        memory=wf.get_resource("popdel", "concat_calls", "memory"),
-#        partition=wf.get_resource("popdel", "concat_calls", "partition"),
-#        tmpdir=wf.get_resource("popdel", "concat_calls", "tmpdir"),
-#    log:
-#        **wf.get_log_file("popdel", "concat_calls"),
-#    wrapper:
-#        wf.wrapper_path("popdel/concat_calls")
-#
-#
-# rule sv_calling_wgs_popdel_reorder_vcf:
-#    input:
-#        unpack(wf.get_input_files("popdel", "reorder_vcf")),
-#    output:
-#        **wf.get_output_files("popdel", "reorder_vcf"),
-#    threads: wf.get_resource("popdel", "reorder_vcf", "threads")
-#    resources:
-#        time=wf.get_resource("popdel", "reorder_vcf", "time"),
-#        memory=wf.get_resource("popdel", "reorder_vcf", "memory"),
-#        partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
-#        tmpdir=wf.get_resource("popdel", "reorder_vcf", "tmpdir"),
-#    wildcard_constraints:
-#        index_ngs_library=r"[^\.]+",
-#    params:
-#        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
-#    log:
-#        **wf.get_log_file("popdel", "reorder_vcf"),
-#    wrapper:
-#        wf.wrapper_path("popdel/reorder_vcf")
+# PopDel Steps ----------------------------------------------------------------
+
+
+rule sv_calling_wgs_popdel_profile:
+    input:
+        unpack(wf.get_input_files("popdel", "profile")),
+    output:
+        **wf.get_output_files("popdel", "profile"),
+    wildcard_constraints:
+        mapper=RE_BETWEEN_DOTS,
+        index_ngs_library=RE_BETWEEN_DOTS,
+    threads: wf.get_resource("popdel", "profile", "threads")
+    resources:
+        time=wf.get_resource("popdel", "profile", "time"),
+        memory=wf.get_resource("popdel", "profile", "memory"),
+        partition=wf.get_resource("popdel", "profile", "partition"),
+        tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
+    log:
+        **wf.get_log_file("popdel", "profile"),
+    wrapper:
+        wf.wrapper_path("popdel/profile")
+
+
+rule sv_calling_wgs_popdel_call:
+    input:
+        unpack(wf.get_input_files("popdel", "call")),
+    output:
+        **wf.get_output_files("popdel", "call"),
+    wildcard_constraints:
+        mapper=RE_BETWEEN_DOTS,
+        chrom=RE_BETWEEN_DOTS,
+        begin=RE_BETWEEN_DOTS,
+        end=RE_BETWEEN_DOTS,
+    threads: wf.get_resource("popdel", "call", "threads")
+    resources:
+        time=wf.get_resource("popdel", "call", "time"),
+        memory=wf.get_resource("popdel", "call", "memory"),
+        partition=wf.get_resource("popdel", "call", "partition"),
+        tmpdir=wf.get_resource("popdel", "call", "tmpdir"),
+    log:
+        **wf.get_log_file("popdel", "call"),
+    wrapper:
+        wf.wrapper_path("popdel/call")
+
+
+rule sv_calling_wgs_popdel_concat_calls:
+    input:
+        unpack(wf.get_input_files("popdel", "concat_calls")),
+    output:
+        **wf.get_output_files("popdel", "concat_calls"),
+    wildcard_constraints:
+        mapper=RE_BETWEEN_DOTS,
+    threads: wf.get_resource("popdel", "concat_calls", "threads")
+    resources:
+        time=wf.get_resource("popdel", "concat_calls", "time"),
+        memory=wf.get_resource("popdel", "concat_calls", "memory"),
+        partition=wf.get_resource("popdel", "concat_calls", "partition"),
+        tmpdir=wf.get_resource("popdel", "concat_calls", "tmpdir"),
+    log:
+        **wf.get_log_file("popdel", "concat_calls"),
+    wrapper:
+        wf.wrapper_path("popdel/concat_calls")
+
+
+rule sv_calling_wgs_popdel_reorder_vcf:
+    input:
+        unpack(wf.get_input_files("popdel", "reorder_vcf")),
+    output:
+        **wf.get_output_files("popdel", "reorder_vcf"),
+    wildcard_constraints:
+        mapper=RE_BETWEEN_DOTS,
+        index_ngs_library=RE_BETWEEN_DOTS,
+    threads: wf.get_resource("popdel", "reorder_vcf", "threads")
+    resources:
+        time=wf.get_resource("popdel", "reorder_vcf", "time"),
+        memory=wf.get_resource("popdel", "reorder_vcf", "memory"),
+        partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
+        tmpdir=wf.get_resource("popdel", "reorder_vcf", "tmpdir"),
+    params:
+        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
+    log:
+        **wf.get_log_file("popdel", "reorder_vcf"),
+    wrapper:
+       wf.wrapper_path("popdel/reorder_vcf")
 
 
 # Run Melt --------------------------------------------------------------------
-
-
-# Regular expression for wildcard constraints
-RE_NO_DOT = r"[^.]+"
 
 
 rule sv_calling_wgs_melt_preprocess:
@@ -293,9 +296,9 @@ rule sv_calling_wgs_melt_preprocess:
     output:
         **wf.get_output_files("melt", "preprocess"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        library_name=RE_NO_DOT,
-        me_type=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        library_name=RE_BETWEEN_DOTS,
+        me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "preprocess", "threads")
     resources:
         time=wf.get_resource("melt", "preprocess", "time"),
@@ -315,9 +318,9 @@ rule sv_calling_wgs_melt_indiv_analysis:
     output:
         **wf.get_output_files("melt", "indiv_analysis"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        library_name=RE_NO_DOT,
-        me_type=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        library_name=RE_BETWEEN_DOTS,
+        me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "indiv_analysis", "threads")
     resources:
         time=wf.get_resource("melt", "indiv_analysis", "time"),
@@ -337,9 +340,9 @@ rule sv_calling_wgs_melt_group_analysis:
     output:
         **wf.get_output_files("melt", "group_analysis"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        index_library_name=RE_NO_DOT,
-        me_type=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        index_library_name=RE_BETWEEN_DOTS,
+        me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "group_analysis", "threads")
     resources:
         time=wf.get_resource("melt", "group_analysis", "time"),
@@ -359,9 +362,9 @@ rule sv_calling_wgs_melt_genotype:
     output:
         **wf.get_output_files("melt", "genotype"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        index_library_name=RE_NO_DOT,
-        me_type=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        index_library_name=RE_BETWEEN_DOTS,
+        me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "genotype", "threads")
     resources:
         time=wf.get_resource("melt", "genotype", "time"),
@@ -381,8 +384,8 @@ rule sv_calling_wgs_melt_make_vcf:
     output:
         **wf.get_output_files("melt", "make_vcf"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        index_library_name=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        index_library_name=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "make_vcf", "threads")
     resources:
         time=wf.get_resource("melt", "make_vcf", "time"),
@@ -402,8 +405,8 @@ rule sv_calling_wgs_melt_merge_vcf:
     output:
         **wf.get_output_files("melt", "merge_vcf"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
-        library_name=RE_NO_DOT,
+        mapper=RE_BETWEEN_DOTS,
+        library_name=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "merge_vcf", "threads")
     resources:
         time=wf.get_resource("melt", "merge_vcf", "time"),
@@ -434,7 +437,7 @@ rule sv_calling_wgs_gcnv_preprocess_intervals:
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     wrapper:
-        wf.wrapper_path("gcnv/preprocess_intervals")
+        wf.wrapper_path("gcnv/preprocess_intervals_wgs")
 
 
 rule sv_calling_wgs_gcnv_coverage:
