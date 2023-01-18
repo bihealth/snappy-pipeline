@@ -1,7 +1,8 @@
 """Implementation of the ``sv_calling_wgs`` step
 """
 
-from collections import OrderedDict
+from itertools import chain
+import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
@@ -110,11 +111,16 @@ class GcnvWgsStepPart(RunGcnvStepPart):
                 yield donor.dna_ngs_library.name, "wgs"
 
 
+def escape_dots_dashes(s: str) -> str:
+    """Escape dots and dashes with double-underscore constructs."""
+    return s.replace("_", "__under__").replace(".", "__dot__").replace("-", "__hyphen__")
+
+
 class PopDelStepPart(
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
+    ForwardSnakemakeFilesMixin,
+    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """WGS SV identification using PopDel.
@@ -141,11 +147,11 @@ class PopDelStepPart(
     def __init__(self, parent):
         super().__init__(parent)
         # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
+        self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
         # Build shortcut from library name to library info
-        self.library_name_to_library = OrderedDict()
+        self.library_name_to_library = {}
         for sheet in self.parent.shortcut_sheets:
             self.library_name_to_library.update(sheet.library_name_to_library)
 
@@ -157,12 +163,12 @@ class PopDelStepPart(
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.index_ngs_library}"
+        infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
     @dictify
     def _get_output_files_profile(self):
-        infix = "{mapper}.popdel_profile.{index_library_name}"
+        infix = "{mapper}.popdel_profile.{library_name}"
         yield "profile", f"work/{infix}/out/{infix}.profile"
         yield "profile_md5", f"work/{infix}/out/{infix}.profile.md5"
 
@@ -183,17 +189,20 @@ class PopDelStepPart(
 
     @dictify
     def _get_output_files_call(self):
-        infix = "{mapper}.popdel_call.{chrom}-{begin}-{end}"
+        infix = self._get_log_file_infix_call()
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
         yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
+    def _get_log_file_infix_call(self):
+        return "{mapper}.popdel_call.{chrom}-{begin}-{end}"
+
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
         window_size = self.config["popdel"]["window_size"]
         padding = self.config["popdel"]["max_sv_size"]
-        vcfs = {}
+        vcfs = []
         with open(self._get_fai_path(), "rt") as fai_file:
             for r in yield_regions(
                 fai_file,
@@ -203,7 +212,8 @@ class PopDelStepPart(
             ):
                 if r.begin == 0:
                     r.begin = 1
-                infix = f"{wildcards.mapper}.popdel.call.{r.chrom}-{r.begin}-{r.end}"
+                chrom = escape_dots_dashes(r.chrom)
+                infix = f"{wildcards.mapper}.popdel_call.{chrom}-{r.begin}-{r.end}"
                 vcfs.append(f"work/{infix}/out/{infix}.vcf.gz")
         yield "vcf", vcfs
 
@@ -215,28 +225,37 @@ class PopDelStepPart(
 
     @dictify
     def _get_output_files_concat_calls(self):
-        infix = "{mapper}.popdel_concat_calls"
+        infix = self._get_log_file_infix_concat_calls()
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
         yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
+    def _get_log_file_infix_concat_calls(self):
+        return "{mapper}.popdel_concat_calls"
+
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.popdel.internal.concat_calls"
+        infix = f"{wildcards.mapper}.popdel_concat_calls"
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
 
     @dictify
     def _get_output_files_reorder_vcf(self):
-        infix = "{mapper}.popdel.{index_ngs_library}"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        infix = "{mapper}.popdel.{library_name}"
+        work_files = {}
+        work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
+        work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
+        work_files["vcf_tbi"] = f"work/{infix}/out/{infix}.vcf.gz.tbi"
+        work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        yield from work_files.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(work_files.values(), self.get_log_file("reorder_vcf").values())
+        ]
 
     def get_ped_members(self, wildcards):
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         return " ".join(
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         )
@@ -261,7 +280,7 @@ class Sniffles2StepPart(BaseStepPart):
             "{mapper}.sniffles2.{index_ngs_library}{ext}"
         )
         # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
+        self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
@@ -317,10 +336,10 @@ class SvCallingWgsWorkflow(BaseStep):
             (
                 Delly2StepPart,
                 MantaStepPart,
-                #               PopDelStepPart,
+                PopDelStepPart,
                 GcnvWgsStepPart,
                 MeltStepPart,
-                #               Sniffles2StepPart,
+                # Sniffles2StepPart,
                 WritePedigreeStepPart,
             )
         )
