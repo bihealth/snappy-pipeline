@@ -250,9 +250,7 @@ class PopDelStepPart(
         yield from work_files.items()
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("reorder_vcf").values()
-            )
+            for work_path in chain(work_files.values(), self.get_log_file("reorder_vcf").values())
         ]
 
     def get_ped_members(self, wildcards):

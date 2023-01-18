@@ -14,7 +14,9 @@ RE_BETWEEN_DOTS = r"[^.\.]+"
 
 # Configuration ===============================================================
 
+
 configfile: "config.yaml"
+
 
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
@@ -284,7 +286,7 @@ rule sv_calling_wgs_popdel_reorder_vcf:
     log:
         **wf.get_log_file("popdel", "reorder_vcf"),
     wrapper:
-       wf.wrapper_path("popdel/reorder_vcf")
+        wf.wrapper_path("popdel/reorder_vcf")
 
 
 # Run Melt --------------------------------------------------------------------
