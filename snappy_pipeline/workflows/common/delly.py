@@ -30,15 +30,11 @@ class Delly2StepPart(
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
     _cheap_resource_usage = ResourceUsage(
-        threads=2,
-        time="4-00:00:00",
-        memory=f"{7 * 1024 * 2}M",
+        threads=1,
+        time="1-00:00:00",
+        memory="4G",
     )
-    _normal_resource_usage = ResourceUsage(
-        threads=2,
-        time="7-00:00:00",  # 7 days
-        memory=f"{20 * 1024 * 2}M",
-    )
+    _normal_resource_usage = ResourceUsage(threads=1, time="2-00:00:00", memory="8G")
     resource_usage_dict = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,
