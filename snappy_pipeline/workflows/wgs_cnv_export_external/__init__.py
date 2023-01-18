@@ -195,6 +195,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             key = infix.replace("-", "_")
             yield key, prefix + f".{infix}.tsv.gz"
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
+        yield "output_links", []
 
     def get_log_file(self, action):
         self._validate_action(action)
@@ -224,17 +225,15 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             "varfish_annotated.{index_ngs_library}"
         )
         key_ext = (
-            ("wrapper", ".wrapper.py"),
-            ("wrapper_md5", ".wrapper.py.md5"),
             ("log", ".log"),
-            ("log_md5", ".log.md5"),
             ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
             ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
         )
         for key, ext in key_ext:
             yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -379,6 +378,7 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             infix=INFIXES,
             ext=EXTS,
         )
+        #yield "output_links", []
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             ext=(
@@ -388,6 +388,10 @@ class WgsCnvExportExternalWorkflow(BaseStep):
                 ".conda_info.txt.md5",
                 ".conda_list.txt",
                 ".conda_list.txt.md5",
+                ".wrapper.py",
+                ".wrapper.py.md5",
+                ".environment.yaml",
+                ".environment.yaml.md5",
             ),
         )
 
