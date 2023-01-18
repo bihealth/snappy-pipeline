@@ -378,7 +378,6 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             infix=INFIXES,
             ext=EXTS,
         )
-        #yield "output_links", []
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             ext=(
