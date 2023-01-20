@@ -372,7 +372,7 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     for substep in ("target", "antitarget", "panel_of_normals", "report"):
         for mapper in ("bwa",):
             expected += get_expected_log_files_dict(
-                tpl.format(mapper=mapper, substep=substep)
+                base_out=tpl.format(mapper=mapper, substep=substep)
             ).values()
 
     expected = list(sorted(expected))

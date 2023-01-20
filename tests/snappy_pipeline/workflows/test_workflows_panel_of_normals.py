@@ -127,8 +127,8 @@ def test_mutect2_step_part_get_output_files_prepare_panel(panel_of_normals_workf
     expected = {
         "vcf": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz",
         "vcf_md5": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz.md5",
-        "tbi": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz.tbi",
-        "tbi_md5": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz.tbi.md5",
+        "vcf_tbi": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare.vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "prepare_panel")
     assert actual == expected
@@ -495,7 +495,7 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     # add log files
     tpl = "output/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals"
     for mapper in ("bwa",):
-        expected += get_expected_log_files_dict(tpl.format(mapper=mapper)).values()
+        expected += get_expected_log_files_dict(base_out=tpl.format(mapper=mapper)).values()
 
     # Now for basic cnvkit files (panel of normal only)
     tpl = "output/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.{ext}"
@@ -521,13 +521,15 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     for substep in ("target", "antitarget", "panel_of_normals", "report"):
         for mapper in ("bwa",):
             expected += get_expected_log_files_dict(
-                tpl.format(mapper=mapper, substep=substep)
+                base_out=tpl.format(mapper=mapper, substep=substep)
             ).values()
 
     # Access
     tpl = "output/cnvkit.access/out/cnvkit.access.{ext}"
     expected += [tpl.format(ext=ext) for ext in ("bed", "bed.md5")]
-    expected += get_expected_log_files_dict("output/cnvkit.access/log/cnvkit.access").values()
+    expected += get_expected_log_files_dict(
+        base_out="output/cnvkit.access/log/cnvkit.access"
+    ).values()
 
     expected = list(sorted(expected))
     actual = list(sorted(panel_of_normals_workflow.get_result_files()))
