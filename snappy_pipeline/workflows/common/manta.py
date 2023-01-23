@@ -29,13 +29,26 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
-    resource_usage_dict = {
-        "run": ResourceUsage(
-            threads=16,
-            time="2-00:00:00",
-            memory=f"{int(3.75 * 1024 * 16)}M",
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        num_threads = self.config["manta"]["num_threads"]
+        return ResourceUsage(
+            threads=num_threads,
+            time="7-00:00:00",  # 3 days
+            memory=f"{int(3.5 * 1024 * num_threads)}M",
         )
-    }
 
     def __init__(self, parent):
         super().__init__(parent)
