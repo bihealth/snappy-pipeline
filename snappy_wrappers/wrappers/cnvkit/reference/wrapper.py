@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py genome2access
+"""Wrapper for cnvkit.py reference
 """
 
 from snakemake.shell import shell
@@ -9,6 +9,21 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["cnvkit"]
+
+# NOTE: snakemake.input.target and snakemake.input.antitarget contain
+#       the output of target & antitarget substeps when there is no bam files
+#       the bam files lists when the list of normals is not empty
+
+cluster = (
+    " --cluster --min-cluster-size {}".format(config["min_cluster_size"])
+    if config["min_cluster_size"] > 0
+    else ""
+)
+gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
+male = " --male-reference" if config["male_reference"] else ""
+no_gc = " --no-gc" if not config["gc_correction"] else ""
+no_edge = " --no-edge" if not config["edge_correction"] or not config["path_target_regions"] else ""
+no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
 
 shell(
     r"""
@@ -29,40 +44,36 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
+set -x
+
 # -----------------------------------------------------------------------------
 
-if [[ "{config[normals_reference]}" == "" ]]
+if [[ "{snakemake.params.args[flat]}" = "True" ]]
 then
-    export TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-    mkdir $TMPDIR/out
-
-    cnvkit.py coverage \
-        -o $TMPDIR/out/target.cnn \
-        {snakemake.input.bam} \
-        {snakemake.input.target}
-
-    cnvkit.py coverage \
-        -o $TMPDIR/out/antitarget.cnn \
-        {snakemake.input.bam} \
-        {snakemake.input.antitarget}
-
     cnvkit.py reference \
-        -o {snakemake.output} \
-        -f {snakemake.config[static_data_config][reference][path]} \
-        -t $TMPDIR/out/target.cnn \
-        -a $TMPDIR/out/antitarget.cnn
-
-    rm -rf $TMPDIR
+        --output {snakemake.output.panel} \
+        --fasta {snakemake.config[static_data_config][reference][path]} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        --targets {snakemake.input.target} --antitargets {snakemake.input.antitarget} 
 else
-    r=$(realpath --relative-to=$d {config[normals_reference]})
-    ln -s $r {snakemake.output}
+    cnvkit.py reference \
+        --output {snakemake.output.panel} \
+        --fasta {snakemake.config[static_data_config][reference][path]} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        {snakemake.input.target} {snakemake.input.antitarget} 
 fi
 
-fn=$(basename "{snakemake.output}")
-d=$(dirname "{snakemake.output}")
+fn=$(basename "{snakemake.output.panel}")
+d=$(dirname "{snakemake.output.panel}")
 pushd $d
 md5sum $fn > $fn.md5
 popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

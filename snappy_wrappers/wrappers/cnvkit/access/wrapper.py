@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py genome2access
+"""Wrapper for cnvkit.py access
 """
 
 from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
+
+config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["access"]
+
+exclude = " --exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
 
 shell(
     r"""
@@ -26,17 +30,29 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
+set -x
+
 # -----------------------------------------------------------------------------
 
 cnvkit.py access \
-    -o {snakemake.output} \
+    -o {snakemake.output.access} \
+    $(if [[ {config[min_gap_size]} -gt 0 ]]; then \
+        echo --min-gap-size {config[min_gap_size]}
+    fi) \
+    {exclude} \
     {snakemake.config[static_data_config][reference][path]}
 
-
-fn=$(basename "{snakemake.output}")
-d=$(dirname "{snakemake.output}")
+fn=$(basename "{snakemake.output.access}")
+d=$(dirname "{snakemake.output.access}")
 pushd $d
 md5sum $fn > $fn.md5
 popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

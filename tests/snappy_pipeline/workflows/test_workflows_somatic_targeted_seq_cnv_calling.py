@@ -46,6 +46,10 @@ def minimal_config():
             - cnvetti_on_target
             - cnvkit
             - copywriter
+            cnvkit:
+              path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
+              path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
+              path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
 
         data_sets:
           first_batch:
@@ -270,119 +274,6 @@ def test_cnvetti_on_target_step_part_get_resource_usage(somatic_targeted_seq_cnv
             assert actual == expected, msg_error
 
 
-# Tests for CnvKitStepPart (access) ---------------------------------------------------------------
-
-
-def test_cnvkit_access_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "access")
-    assert actual is None
-
-
-def test_cnvkit_access_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/cnvkit.access/out/access.bed"
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "access") == expected
-    )
-
-
-def test_cnvkit_access_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = get_expected_log_files_dict(base_out="work/cnvkit.access/log/cnvkit.access")
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "access")
-    assert actual == expected
-
-
-def test_cnvkit_access_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'access'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
-            "cnvkit", "access", resource
-        )
-        assert actual == expected, msg_error
-
-
-# Tests for CnvKitStepPart (target) ---------------------------------------------------------------
-
-
-def test_cnvkit_target_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "target")(
-        wildcards
-    )
-    assert actual == {"access": "work/cnvkit.access/out/access.bed"}
-
-
-def test_cnvkit_target_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/cnvkit.target/out/target.bed"
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "target") == expected
-    )
-
-
-def test_cnvkit_target_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = get_expected_log_files_dict(base_out="work/cnvkit.target/log/cnvkit.target")
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "target")
-    assert actual == expected
-
-
-def test_cnvkit_target_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'target'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
-            "cnvkit", "target", resource
-        )
-        assert actual == expected, msg_error
-
-
-# Tests for CnvKitStepPart (antitarget) -----------------------------------------------------------
-
-
-def test_cnvkit_antitarget_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    expected = {
-        "access": "work/cnvkit.access/out/access.bed",
-        "target": "work/cnvkit.target/out/target.bed",
-    }
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "antitarget")(
-        wildcards
-    )
-    assert actual == expected
-
-
-def test_cnvkit_antitarget_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/cnvkit.antitarget/out/antitarget.bed"
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "antitarget")
-        == expected
-    )
-
-
-def test_cnvkit_antitarget_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    expected = get_expected_log_files_dict(base_out="work/cnvkit.antitarget/log/cnvkit.antitarget")
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "antitarget")
-    assert actual == expected
-
-
-def test_cnvkit_antitarget_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'antitarget'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
-            "cnvkit", "antitarget", resource
-        )
-        assert actual == expected, msg_error
-
-
 # Tests for CnvKitStepPart (coverage) -------------------------------------------------------------
 
 
@@ -391,10 +282,8 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
         fromdict={"mapper": "bwa", "target": "target", "library_name": "P001-T1-DNA1-WGS1"}
     )
     expected = {
-        "antitarget": "work/cnvkit.antitarget/out/antitarget.bed",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "target": "work/cnvkit.target/out/target.bed",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "coverage")(
         wildcards
@@ -404,12 +293,12 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
 
 def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.coverage.{library_name}/out/{mapper}.cnvkit.coverage.{library_name}"
-    )
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}"
     expected = {
         "target": base_name_out + ".targetcoverage.cnn",
+        "target_md5": base_name_out + ".targetcoverage.cnn.md5",
         "antitarget": base_name_out + ".antitargetcoverage.cnn",
+        "antitarget_md5": base_name_out + ".antitargetcoverage.cnn.md5",
     }
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "coverage")
@@ -419,7 +308,7 @@ def test_cnvkit_coverage_step_part_get_output_files(somatic_targeted_seq_cnv_cal
 
 def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     base_file_name = (
-        "work/{mapper}.cnvkit.coverage.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}"
+        "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.coverage.{library_name}"
     )
     expected = get_expected_log_files_dict(base_out=base_file_name)
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "coverage")
@@ -429,7 +318,7 @@ def test_cnvkit_coverage_step_part_get_log_file(somatic_targeted_seq_cnv_calling
 def test_cnvkit_coverage_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'coverage'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 8, "time": "08:00:00", "memory": "16384M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -439,70 +328,14 @@ def test_cnvkit_coverage_step_part_get_resource(somatic_targeted_seq_cnv_calling
         assert actual == expected, msg_error
 
 
-# Tests for CnvKitStepPart (reference) ------------------------------------------------------------
-
-
-def test_cnvkit_reference_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "reference")(
-        wildcards
-    )
-    expected = {
-        "antitarget": "work/cnvkit.antitarget/out/antitarget.bed",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "target": "work/cnvkit.target/out/target.bed",
-    }
-    assert actual == expected
-
-
-def test_cnvkit_reference_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = (
-        "work/{mapper}.cnvkit.reference.{library_name}/out/"
-        "{mapper}.cnvkit.reference.{library_name}.cnn"
-    )
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "reference")
-    assert actual == expected
-
-
-def test_cnvkit_reference_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
-    # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.reference.{library_name}/log/{mapper}.cnvkit.reference.{library_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "reference")
-    assert actual == expected
-
-
-def test_cnvkit_reference_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
-    """Tests CnvKitStepPart.get_resource_usage() - action 'reference'"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
-            "cnvkit", "reference", resource
-        )
-        assert actual == expected, msg_error
-
-
 # Tests for CnvKitStepPart (fix) ------------------------------------------------------------------
 
 
 def test_cnvkit_fix_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    coverage_base_out = (
-        "work/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1/out/bwa.cnvkit.coverage.P001-T1-DNA1-WGS1"
-    )
-    reference_base_out = (
-        "work/bwa.cnvkit.reference.P001-T1-DNA1-WGS1/out/bwa.cnvkit.reference.P001-T1-DNA1-WGS1"
-    )
+    coverage_base_out = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1"
     expected = {
         "antitarget": coverage_base_out + ".antitargetcoverage.cnn",
-        "ref": reference_base_out + ".cnn",
         "target": coverage_base_out + ".targetcoverage.cnn",
     }
     # Get actual
@@ -512,13 +345,14 @@ def test_cnvkit_fix_step_part_get_input_files(somatic_targeted_seq_cnv_calling_w
 
 
 def test_cnvkit_fix_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = "work/{mapper}.cnvkit.fix.{library_name}/out/{mapper}.cnvkit.fix.{library_name}.cnr"
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
+    expected = {"ratios": base_name_out, "ratios_md5": base_name_out + ".md5"}
     assert somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "fix") == expected
 
 
 def test_cnvkit_fix_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = "work/{mapper}.cnvkit.fix.{library_name}/log/{mapper}.cnvkit.fix.{library_name}"
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.fix.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "fix")
@@ -528,7 +362,7 @@ def test_cnvkit_fix_step_part_get_log_file(somatic_targeted_seq_cnv_calling_work
 def test_cnvkit_fix_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'fix'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -541,9 +375,7 @@ def test_cnvkit_fix_step_part_get_resource(somatic_targeted_seq_cnv_calling_work
 
 def test_cnvkit_segment_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    expected = {
-        "cnr": "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr"
-    }
+    expected = {"cnr": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"}
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "segment")(
         wildcards
     )
@@ -551,30 +383,27 @@ def test_cnvkit_segment_step_part_get_input_files(somatic_targeted_seq_cnv_calli
 
 
 def test_cnvkit_segment_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = (
-        "work/{mapper}.cnvkit.segment.{library_name}/out/{mapper}.cnvkit.segment.{library_name}.cns"
+    base_name_out = (
+        "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
     )
-    assert (
-        somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "segment") == expected
-    )
+    expected = {"segments": base_name_out, "segments_md5": base_name_out + ".md5"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "segment")
+    assert actual == expected
 
 
 def test_cnvkit_segment_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.segment.{library_name}/log/{mapper}.cnvkit.segment.{library_name}"
-    )
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.segment.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "segment")
-
     assert actual == expected
 
 
 def test_cnvkit_segment_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'fix'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -589,9 +418,7 @@ def test_cnvkit_segment_step_part_get_resource(somatic_targeted_seq_cnv_calling_
 
 def test_cnvkit_call_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    segment_file = (
-        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
-    )
+    segment_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segment.cns"
     expected = {"segment": segment_file}
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
@@ -600,17 +427,15 @@ def test_cnvkit_call_step_part_get_input_files(somatic_targeted_seq_cnv_calling_
 
 
 def test_cnvkit_call_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    expected = (
-        "work/{mapper}.cnvkit.call.{library_name}/out/{mapper}.cnvkit.call.{library_name}.cns"
-    )
-    assert somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "call") == expected
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+    expected = {"calls": base_name_out, "calls_md5": base_name_out + ".md5"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "call")
+    assert actual == expected
 
 
 def test_cnvkit_call_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.call.{library_name}/log/{mapper}.cnvkit.call.{library_name}"
-    )
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.call.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "call")
@@ -620,7 +445,7 @@ def test_cnvkit_call_step_part_get_log_file(somatic_targeted_seq_cnv_calling_wor
 def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -633,10 +458,8 @@ def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
 
 def test_cnvkit_plot_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    cnr_file = "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr"
-    cns_file = (
-        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
-    )
+    cnr_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"
+    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"
     expected = {
         "cnr": cnr_file,
         "cns": cns_file,
@@ -649,17 +472,23 @@ def test_cnvkit_plot_step_part_get_input_files(somatic_targeted_seq_cnv_calling_
 
 def test_cnvkit_plot_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_out = "work/{mapper}.cnvkit.plot.{library_name}/out/{mapper}.cnvkit.plot.{library_name}"
-    expected = {
-        "diagram": base_out + ".diagram.pdf",
-        "heatmap": base_out + ".heatmap.pdf",
-        "scatter": base_out + ".scatter.pdf",
-    }
-    for chrom in chain(range(1, 23), ("X", "Y")):
-        for diagram in ("heatmap", "scatter"):
-            tpl = base_out + ".%s.chr%s.pdf"
-            expected["{}_chr{}".format(diagram, chrom)] = tpl % (diagram, chrom)
-
+    expected = {}
+    tpl = (
+        "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+        "{{mapper}}.cnvkit.{{library_name}}.{plot}.{ext}"
+    )
+    for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png")):
+        expected[plot] = tpl.format(plot=plot, ext=ext)
+        expected[plot + "_md5"] = expected[plot] + ".md5"
+    tpl = (
+        "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+        "{{mapper}}.cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
+    )
+    for plot, ext in (("heatmap", "pdf"), ("scatter", "png")):
+        for chrom in chain(range(1, 23), ("X", "Y")):
+            key = "{plot}_chr{chrom}".format(plot=plot, chrom=str(chrom))
+            expected[key] = tpl.format(plot=plot, ext=ext, chrom=str(chrom))
+            expected[key + "_md5"] = expected[key] + ".md5"
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "plot")
     assert actual == expected
@@ -668,7 +497,7 @@ def test_cnvkit_plot_step_part_get_output_files(somatic_targeted_seq_cnv_calling
 def test_cnvkit_plot_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
     expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.cnvkit.plot.{library_name}/log/{mapper}.cnvkit.plot.{library_name}"
+        base_out="work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.plot.{library_name}"
     )
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "plot")
@@ -678,7 +507,7 @@ def test_cnvkit_plot_step_part_get_log_file(somatic_targeted_seq_cnv_calling_wor
 def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "30720M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "08:00:00", "memory": "30720M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -691,9 +520,7 @@ def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
 
 def test_cnvkit_export_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    expected = {
-        "cns": "work/bwa.cnvkit.call.P001-T1-DNA1-WGS1/out/bwa.cnvkit.call.P001-T1-DNA1-WGS1.cns"
-    }
+    expected = {"cns": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"}
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "export")(
         wildcards
     )
@@ -702,15 +529,11 @@ def test_cnvkit_export_step_part_get_input_files(somatic_targeted_seq_cnv_callin
 
 def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.export.{library_name}/out/{mapper}.cnvkit.export.{library_name}"
-    )
-    expected = {
-        "bed": base_name_out + ".bed",
-        "seg": base_name_out + ".seg",
-        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
-        "vcf": base_name_out + ".vcf.gz",
-    }
+    expected = {}
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}"
+    for key, ext in (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi")):
+        expected[key] = base_name_out + "." + ext
+        expected[key + "_md5"] = expected[key] + ".md5"
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "export")
     assert actual == expected
@@ -718,9 +541,7 @@ def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calli
 
 def test_cnvkit_export_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.export.{library_name}/log/{mapper}.cnvkit.export.{library_name}"
-    )
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.export.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "export")
@@ -730,7 +551,7 @@ def test_cnvkit_export_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_export_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -745,13 +566,19 @@ def test_cnvkit_export_step_part_get_resource(somatic_targeted_seq_cnv_calling_w
 
 def test_cnvkit_report_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    cnr_file = "work/bwa.cnvkit.fix.P001-T1-DNA1-WGS1/out/bwa.cnvkit.fix.P001-T1-DNA1-WGS1.cnr"
-    cns_file = (
-        "work/bwa.cnvkit.segment.P001-T1-DNA1-WGS1/out/bwa.cnvkit.segment.P001-T1-DNA1-WGS1.cns"
+    cnr_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"
+    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"
+    target_file = (
+        "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.targetcoverage.cnn"
+    )
+    antitarget_file = (
+        "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.antitargetcoverage.cnn"
     )
     expected = {
         "cnr": cnr_file,
         "cns": cns_file,
+        "target": target_file,
+        "antitarget": antitarget_file,
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
@@ -763,16 +590,11 @@ def test_cnvkit_report_step_part_get_input_files(somatic_targeted_seq_cnv_callin
 
 def test_cnvkit_report_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.report.{library_name}/out/{mapper}.cnvkit.report.{library_name}"
-    )
-    expected = {
-        "breaks": base_name_out + ".breaks.txt",
-        "gainloss": base_name_out + ".gainloss.txt",
-        "gender": base_name_out + ".gender.txt",
-        "metrics": base_name_out + ".metrics.txt",
-        "segmetrics": base_name_out + ".segmetrics.txt",
-    }
+    expected = {}
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}"
+    for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics"):
+        expected[report] = base_name_out + "." + report + ".txt"
+        expected[report + "_md5"] = expected[report] + ".md5"
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "report")
     assert actual == expected
@@ -780,9 +602,7 @@ def test_cnvkit_report_step_part_get_output_files(somatic_targeted_seq_cnv_calli
 
 def test_cnvkit_report_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
-    base_name_out = (
-        "work/{mapper}.cnvkit.report.{library_name}/log/{mapper}.cnvkit.report.{library_name}"
-    )
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.report.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     # Get actual
     actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "report")
@@ -792,7 +612,7 @@ def test_cnvkit_report_step_part_get_log_file(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_report_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
     """Tests CnvKitStepPart.get_resource_usage() - action 'call'"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -995,49 +815,43 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         )
     ]
     # cnvkit
-    tpl = (
-        "output/bwa.cnvkit.call.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvkit.call.P00{i}-T{t}-DNA1-WGS1.{ext}"
-    )
+    tpl = "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{ext}{md5}"
     expected += [
-        tpl.format(i=i, t=t, ext=ext) for i, t in ((1, 1), (2, 1), (2, 2)) for ext in ("cns",)
+        tpl.format(i=i, t=t, ext=ext, md5=md5)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("cnr", "cns", "bed", "seg", "vcf.gz", "vcf.gz.tbi")
+        for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.export.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvkit.export.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.{ext}{md5}"
     )
     expected += [
-        tpl.format(i=i, t=t, ext=ext)
+        tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("bed", "seg", "vcf.gz", "vcf.gz.tbi")
+        for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+        for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.plot.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvkit.plot.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.chr{chrom}.{ext}{md5}"
     )
     expected += [
-        tpl.format(i=i, t=t, ext=ext)
+        tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("diagram.pdf", "heatmap.pdf", "scatter.pdf")
-    ]
-    tpl = (
-        "output/bwa.cnvkit.plot.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvkit.plot.P00{i}-T{t}-DNA1-WGS1.{diagram}.chr{chrom}.pdf"
-    )
-    expected += [
-        tpl.format(i=i, t=t, diagram=diagram, chrom=chrom)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for diagram in ("heatmap", "scatter")
+        for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
         for chrom in chain(range(1, 23), ("X", "Y"))
+        for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.report.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvkit.report.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{report}.txt{md5}"
     )
     expected += [
-        tpl.format(i=i, t=t, ext=ext)
+        tpl.format(i=i, t=t, report=report, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("breaks.txt", "gainloss.txt", "gender.txt", "metrics.txt", "segmetrics.txt")
+        for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+        for md5 in ("", ".md5")
     ]
     # copywriter
     tpl = (

@@ -97,3 +97,117 @@ rule panel_of_normals_mutect2_create_panel:
         **wf.get_log_file("mutect2", "create_panel"),
     wrapper:
         wf.wrapper_path("mutect2/create_panel")
+
+
+# Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out access file (if required, must be run prior to the cnvkit panel of normals)
+
+
+rule panel_of_normals_access_run:
+    output:
+        **wf.get_output_files("access", "run"),
+    resources:
+        time=wf.get_resource("access", "run", "time"),
+        memory=wf.get_resource("access", "run", "memory"),
+        partition=wf.get_resource("access", "run", "partition"),
+    log:
+        **wf.get_log_file("access", "run"),
+    wrapper:
+        wf.wrapper_path("cnvkit/access")
+
+
+# Write out the normals-only results for the normals --------------------------
+
+
+rule panel_of_normals_cnvkit_target:
+    input:
+        unpack(wf.get_input_files("cnvkit", "target")),
+    output:
+        **wf.get_output_files("cnvkit", "target"),
+    threads: wf.get_resource("cnvkit", "target", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "target", "time"),
+        memory=wf.get_resource("cnvkit", "target", "memory"),
+        partition=wf.get_resource("cnvkit", "target", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "target"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "target"),
+    wrapper:
+        wf.wrapper_path("cnvkit/target")
+
+
+rule panel_of_normals_cnvkit_antitarget:
+    input:
+        unpack(wf.get_input_files("cnvkit", "antitarget")),
+    output:
+        **wf.get_output_files("cnvkit", "antitarget"),
+    threads: wf.get_resource("cnvkit", "antitarget", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "antitarget", "time"),
+        memory=wf.get_resource("cnvkit", "antitarget", "memory"),
+        partition=wf.get_resource("cnvkit", "antitarget", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "antitarget"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "antitarget"),
+    wrapper:
+        wf.wrapper_path("cnvkit/antitarget")
+
+
+rule panel_of_normals_cnvkit_coverage:
+    input:
+        unpack(wf.get_input_files("cnvkit", "coverage")),
+    output:
+        **wf.get_output_files("cnvkit", "coverage"),
+    threads: wf.get_resource("cnvkit", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "coverage", "time"),
+        memory=wf.get_resource("cnvkit", "coverage", "memory"),
+        partition=wf.get_resource("cnvkit", "coverage", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "coverage"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "coverage"),
+    wrapper:
+        wf.wrapper_path("cnvkit/coverage")
+
+
+# Create the panel of normals -------------------------------------------------
+
+
+rule panel_of_normals_cnvkit_create_panel:
+    input:
+        unpack(wf.get_input_files("cnvkit", "create_panel")),
+    output:
+        **wf.get_output_files("cnvkit", "create_panel"),
+    threads: wf.get_resource("cnvkit", "create_panel", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "create_panel", "time"),
+        memory=wf.get_resource("cnvkit", "create_panel", "memory"),
+        partition=wf.get_resource("cnvkit", "create_panel", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "create_panel"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "create_panel"),
+    wrapper:
+        wf.wrapper_path("cnvkit/reference")
+
+
+rule panel_of_normals_cnvkit_report:
+    input:
+        unpack(wf.get_input_files("cnvkit", "report")),
+    output:
+        **wf.get_output_files("cnvkit", "report"),
+    threads: wf.get_resource("cnvkit", "report", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "report", "time"),
+        memory=wf.get_resource("cnvkit", "report", "memory"),
+        partition=wf.get_resource("cnvkit", "report", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "report"),
+    params:
+        args=wf.substep_dispatch("cnvkit", "get_args", "report"),
+    wrapper:
+        wf.wrapper_path("cnvkit/report")

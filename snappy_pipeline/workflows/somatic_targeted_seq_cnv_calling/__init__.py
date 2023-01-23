@@ -29,51 +29,55 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section will contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.cnvkit.export.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.cnvkit.export.{lib_name}-{lib_pk}.bed``
-    - ``{mapper}.cnvkit.export.{lib_name}-{lib_pk}.seg``
-    - ``{mapper}.cnvkit.export.{lib_name}-{lib_pk}.vcf.gz``
-    - ``{mapper}.cnvkit.export.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}/out``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.diagram.pdf``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.scatter.pdf``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.heatmap.pdf``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.heatmap.chr1.pdf``
+- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/out/``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.bed``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.seg``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.vcf.gz``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/report``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.diagram.pdf``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.scatter.pdf``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.heatmap.pdf``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.heatmap.chr1.pdf``
     - ...
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.scatter.chrX.pdf``
-- ``{mapper}.cnvkit.report.{lib_name}-{lib_pk}/out``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.breaks.txt``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.gainloss.txt``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.gender.txt``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.metrics.txt``
-    - ``{mapper}.cnvkit.plot.{lib_name}-{lib_pk}.segmetrics.txt``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.scatter.chrX.pdf``
+- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/report``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.breaks.txt``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.genemetrics.txt``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.gender.txt``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.metrics.txt``
+    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.segmetrics.txt``
 
 For example:
 
 ::
 
     output/
-    |-- bwa.cnvkit.export.P001-T1-DNA1-WES1-000007
+    |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007
     |   `-- out
-    |       |-- bwa.cnvkit.export.P001-T1-DNA1-WES1-000007.bed
-    |       |-- bwa.cnvkit.export.P001-T1-DNA1-WES1-000007.seg
-    |       `-- bwa.cnvkit.export.P001-T1-DNA1-WES1-000007.vcf
-    |-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016
-    |   `-- out
-    |       |-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016.diagram.pdf
-    |       |-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016.heatmap.pdf
-    |       |-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016.scatter.pdf
-    |       |-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016.heatmap.chr1.pdf
+    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.bed
+    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.seg
+    |       `-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.vcf
+    |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016
+    |   `-- report
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.diagram.pdf
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.heatmap.pdf
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.scatter.pdf
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.heatmap.chr1.pdf
     |       |-- ...
-    |       `-- bwa.cnvkit.plot.P002-T1-DNA1-WES1-000016.scatter.chrX.pdf
-    |-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016
-    |   `-- out
-    |       |-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016.breaks.txt
-    |       |-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016.gainloss.txt
-    |       |-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016.gender.txt
-    |       |-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016.metrics.txt
-    |       `-- bwa.cnvkit.report.P002-T1-DNA1-WES1-000016.segmetrics.txt
+    |       `-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.scatter.chrX.pdf
+    |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016
+    |   `-- report
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.breaks.txt
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.genemetrics.txt
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.gender.txt
+    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.metrics.txt
+    |       `-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.segmetrics.txt
     [...]
+
+Note that tool ``cnvetti`` doesn't follow the snappy convention above:
+the tool name is followed by an underscore & the action, where the action is one of ``coverage``, ``segment`` and ``postprocess``.
+For example, the output directory would contain a directory named ``bwa.cnvetti_coverage.P002-T1-DNA1-WES1-000016``.
 
 =====================
 Default Configuration
@@ -92,7 +96,7 @@ Available Somatic Targeted CNV Caller
 """
 
 from collections import OrderedDict
-import itertools
+from itertools import chain
 import os
 import os.path
 import sys
@@ -119,15 +123,44 @@ step_config:
     tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'copywriter', 'cnvetti_on_target' and 'cnvetti_off_target'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     cnvkit:
-      path_target_regions: REQUIRED   # REQUIRED
-      seg_method: haar
-      seg_threshold: 0.0001
+      path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
+      path_antitarget: REQUIRED         # Usually ../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
+      path_panel_of_normals: REQUIRED   # Usually ../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn
+      min_mapq: 0                       # [coverage] Mininum mapping quality score to count a read for coverage depth
+      count: False                      # [coverage] Alternative couting algorithm
+      gc_correction: True               # [fix] Use GC correction
+      edge_correction: True             # [fix] Use edge correction
+      rmask_correction: True            # [fix] Use rmask correction
       # BCBIO uses
       # seg_method: haar
       # seg_threshold: 0.0001
       # -- OR
       # seg_method: cbs
       # seg_threshold: 0.000001
+      segmentation_method: cbs          # [segment] One of cbs, flasso, haar, hmm, hmm-tumor, hmm-germline, none
+      segmentation_threshold: 0.000001  # [segment] Significance threshold (hmm methods: smoothing window size)
+      drop_low_coverage: False          # [segment, call, genemetrics] Drop very low coverage bins
+      drop_outliers: 10                 # [segment] Drop outlier bins (0 for no outlier filtering)
+      smooth_cbs: True                  # [segment] Additional smoothing of CBS segmentation (WARNING- not the default value)
+      center: ""                        # [call] Either one of mean, median, mode, biweight, or a constant log2 ratio value.
+      filter: ampdel                    # [call] One of ampdel, cn, ci, sem (merging segments flagged with the specified filter), "" for no filtering
+      calling_method: threshold         # [call] One of threshold, clonal, none
+      call_thresholds: "-1.1,-0.25,0.2,0.7" # [call] Thresholds for calling integer copy number
+      ploidy: 2                         # [call] Ploidy of sample cells
+      purity: 0                         # [call] Estimated tumor cell fraction (0 for discarding tumor cell purity)
+      gender: ""                        # [call, diagram] Specify the chromosomal sex of all given samples as male or female. Guess when missing
+      male_reference: False             # [call, diagram] Create male reference
+      diagram_threshold: 0.5            # [diagram] Copy number change threshold to label genes
+      diagram_min_probes: 3             # [diagram] Min number of covered probes to label genes
+      shift_xy: True                    # [diagram] Shift X & Y chromosomes according to sample sex
+      breaks_min_probes: 1              # [breaks] Min number of covered probes for a break inside the gene
+      genemetrics_min_probes: 3         # [genemetrics] Min number of covered probes to consider a gene
+      genemetrics_threshold: 0.2        # [genemetrics] Min abs log2 change to consider a gene
+      genemetrics_alpha: 0.05           # [genemetrics] Significance cutoff
+      genemetrics_bootstrap: 100        # [genemetrics] Number of bootstraps
+      segmetrics_alpha: 0.05            # [segmetrics] Significance cutoff
+      segmetrics_bootstrap: 100         # [segmetrics] Number of bootstraps
+      smooth_bootstrap: False           # [segmetrics] Smooth bootstrap results
     copywriter:
       path_target_regions: REQUIRED # REQUIRED
       bin_size: 20000 # TODO: make actually configurable
@@ -394,14 +427,10 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     #: Class available actions
     actions = (
-        "access",
-        "target",
-        "antitarget",
         "coverage",
-        "reference",
         "fix",
-        "call",
         "segment",
+        "call",
         "export",
         "plot",
         "report",
@@ -411,12 +440,17 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     resource_usage_dict = {
         "plot": ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
+            time="08:00:00",  # 1 day
             memory=f"{30 * 1024}M",
+        ),
+        "coverage": ResourceUsage(
+            threads=8,
+            time="08:00:00",  # 8 hours
+            memory=f"{16 * 1024}M",
         ),
         "default": ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
+            time="03:59:59",  # 1 day
             memory=f"{int(7.5 * 1024)}M",
         ),
     }
@@ -429,8 +463,16 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         if "cnvkit" not in self.config["tools"]:
             return  # cnvkit not enabled, skip
         self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_target_regions"),
+            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_target"),
             "Path to target regions is missing for cnvkit",
+        )
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_antitarget"),
+            "Path to antitarget regions is missing for cnvkit",
+        )
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_panel_of_normals"),
+            "Path to panel of normals (reference) is missing for cnvkit",
         )
 
     def get_input_files(self, action):
@@ -438,11 +480,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
         method_mapping = {
-            "access": None,
-            "target": self._get_input_files_target,
-            "antitarget": self._get_input_files_antitarget,
             "coverage": self._get_input_files_coverage,
-            "reference": self._get_input_files_reference,
             "call": self._get_input_files_call,
             "fix": self._get_input_files_fix,
             "segment": self._get_input_files_segment,
@@ -452,232 +490,173 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return method_mapping[action]
 
-    @staticmethod
-    def _get_input_files_target(_):
-        input_files = {"access": "work/cnvkit.access/out/access.bed"}
-        return input_files
-
-    @staticmethod
-    def _get_input_files_antitarget(_):
-        input_files = {
-            "access": "work/cnvkit.access/out/access.bed",
-            "target": "work/cnvkit.target/out/target.bed",
-        }
-        return input_files
-
     def _get_input_files_coverage(self, wildcards):
-        input_files = {
-            "target": "work/cnvkit.target/out/target.bed",
-            "antitarget": "work/cnvkit.antitarget/out/antitarget.bed",
-        }
         # BAM/BAI file
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
-        input_files["bam"] = ngs_mapping(base_path + ".bam")
-        input_files["bai"] = ngs_mapping(base_path + ".bam.bai")
-        return input_files
-
-    def _get_input_files_reference(self, wildcards):
         input_files = {
-            "target": "work/cnvkit.target/out/target.bed",
-            "antitarget": "work/cnvkit.antitarget/out/antitarget.bed",
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
         }
-        # BAM/BAI file
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
-        )
-        input_files["bam"] = ngs_mapping(base_path + ".bam")
-        input_files["bai"] = ngs_mapping(base_path + ".bam.bai")
         return input_files
 
     @staticmethod
     def _get_input_files_fix(wildcards):
-        tpl_base = "{mapper}.cnvkit.{substep}.{library_name}"
-        tpl = "work/" + tpl_base + "/out/" + tpl_base + ".cnn"
-        input_files = {"ref": tpl.format(substep="reference", **wildcards)}
+        tpl_base = "{mapper}.cnvkit.{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
-        for target in ("target", "antitarget"):
-            input_files[target] = tpl.format(target=target, substep="coverage", **wildcards)
+        input_files = {
+            "target": tpl.format(target="target", **wildcards),
+            "antitarget": tpl.format(target="antitarget", **wildcards),
+        }
         return input_files
 
     @staticmethod
     def _get_input_files_segment(wildcards):
-        cnr_pattern = (
-            "work/{mapper}.cnvkit.fix.{library_name}/out/{mapper}.cnvkit.fix.{library_name}.cnr"
-        )
+        cnr_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_call(wildcards):
         segment_pattern = (
-            "work/{mapper}.cnvkit.segment.{library_name}/out/"
-            "{mapper}.cnvkit.segment.{library_name}.cns"
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
         )
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_export(wildcards):
-        cns_pattern = (
-            "work/{mapper}.cnvkit.call.{library_name}/out/{mapper}.cnvkit.call.{library_name}.cns"
-        )
+        cns_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_plot(wildcards):
-        tpl = (
-            "work/{mapper}.cnvkit.{substep}.{library_name}/out/"
-            "{mapper}.cnvkit.{substep}.{library_name}.{ext}"
-        )
+        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
         input_files = {
-            "cnr": tpl.format(substep="fix", ext="cnr", **wildcards),
-            "cns": tpl.format(substep="segment", ext="cns", **wildcards),
+            "cnr": tpl.format(ext="cnr", **wildcards),
+            "cns": tpl.format(ext="cns", **wildcards),
         }
         return input_files
 
     def _get_input_files_report(self, wildcards):
-        return self._get_input_files_plot(wildcards)
+        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
+        input_files = {
+            "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
+            "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
+            "cnr": tpl.format(ext="cnr", **wildcards),
+            "cns": tpl.format(ext="cns", **wildcards),
+        }
+        return input_files
 
     def get_output_files(self, action):
         """Return output files for the given action"""
-        # Validate action
-        self._validate_action(action)
-        method_mapping = {
-            "access": self._get_output_files_access,
-            "target": self._get_output_files_target,
-            "antitarget": self._get_output_files_antitarget,
-            "coverage": self._get_output_files_coverage,
-            "reference": self._get_output_files_reference,
-            "fix": self._get_output_files_fix,
-            "call": self._get_output_files_call,
-            "segment": self._get_output_files_segment,
-            "export": self._get_output_files_export,
-            "plot": self._get_output_files_plot,
-            "report": self._get_output_files_report,
-        }
-        return method_mapping[action]()
-
-    @staticmethod
-    def _get_output_files_access():
-        return "work/cnvkit.access/out/access.bed"
-
-    @staticmethod
-    def _get_output_files_target():
-        return "work/cnvkit.target/out/target.bed"
-
-    @staticmethod
-    def _get_output_files_antitarget():
-        return "work/cnvkit.antitarget/out/antitarget.bed"
+        if action == "coverage":
+            return self._get_output_files_coverage()
+        elif action == "fix":
+            return self._get_output_files_fix()
+        elif action == "segment":
+            return self._get_output_files_segment()
+        elif action == "call":
+            return self._get_output_files_call()
+        elif action == "export":
+            return self._get_output_files_export()
+        elif action == "plot":
+            return self._get_output_files_plot()
+        elif action == "report":
+            return self._get_output_files_report()
+        else:
+            self._validate_action(action)
 
     @staticmethod
     def _get_output_files_coverage():
-        name_pattern = "{mapper}.cnvkit.coverage.{library_name}"
+        name_pattern = "{mapper}.cnvkit.{library_name}"
         output_files = {}
         for target in ("target", "antitarget"):
             output_files[target] = os.path.join(
                 "work", name_pattern, "out", name_pattern + ".{}coverage.cnn".format(target)
             )
+            output_files[target + "_md5"] = output_files[target] + ".md5"
         return output_files
 
     @staticmethod
-    def _get_output_files_reference():
-        name_pattern = "{mapper}.cnvkit.reference.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnn")
-        return tpl
-
-    @staticmethod
     def _get_output_files_fix():
-        name_pattern = "{mapper}.cnvkit.fix.{library_name}"
+        name_pattern = "{mapper}.cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
-        return tpl
+        return {"ratios": tpl, "ratios_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_segment():
-        name_pattern = "{mapper}.cnvkit.segment.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
-        return tpl
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
+        return {"segments": tpl, "segments_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_call():
-        name_pattern = "{mapper}.cnvkit.call.{library_name}"
+        name_pattern = "{mapper}.cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
-        return tpl
+        return {"calls": tpl, "calls_md5": tpl + ".md5"}
 
     @dictify
     def _get_output_files_plot(self):
-        plots = ("scatter", "diagram", "heatmap")
-        chroms = list(itertools.chain(range(1, 23), ["X", "Y"]))
+        plots = (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+        chrom_plots = (("heatmap", "pdf"), ("scatter", "png"))
+        chroms = list(chain(range(1, 23), ["X", "Y"]))
+        output_files = {}
         # Yield file name pairs for global plots
         tpl = (
-            "work/{mapper}.cnvkit.plot.{library_name}/out/"
-            "{mapper}.cnvkit.plot.{library_name}.{plot}.pdf"
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{plot}.{ext}"
         )
-        yield from (
-            (plot, tpl.format(plot=plot, **format_id("mapper", "library_name"))) for plot in plots
-        )
+        for plot, ext in plots:
+            output_files[plot] = tpl.format(plot=plot, ext=ext)
+            output_files[plot + "_md5"] = output_files[plot] + ".md5"
         # Yield file name pairs for the chromosome-wise plots
-        chrom_plots = ("scatter", "heatmap")
         tpl_chrom = (
-            "work/{mapper}.cnvkit.plot.{library_name}/out/"
-            "{mapper}.cnvkit.plot.{library_name}.{plot}.chr{chrom}.pdf"
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
         )
-        yield from (
-            (
-                "{plot}_chr{chrom}".format(plot=plot, chrom=chrom),
-                tpl_chrom.format(plot=plot, chrom=chrom, **format_id("mapper", "library_name")),
-            )
-            for plot in chrom_plots
-            for chrom in chroms
-        )
+        for plot, ext in chrom_plots:
+            for chrom in chroms:
+                key = "{plot}_chr{chrom}".format(plot=plot, chrom=chrom)
+                output_files[key] = tpl_chrom.format(plot=plot, ext=ext, chrom=chrom)
+                output_files[key + "_md5"] = output_files[key] + ".md5"
+        return output_files
 
     @staticmethod
     def _get_output_files_export():
-        keys = ("bed", "seg", "vcf", "vcf_tbi")
-        exts = ("bed", "seg", "vcf.gz", "vcf.gz.tbi")
-        name_pattern = "{mapper}.cnvkit.export.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".{ext}")
+        exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
         output_files = {}
-        for key, ext in zip(keys, exts):
-            output_files[key] = tpl.format(ext=ext, **format_id("mapper", "library_name"))
+        tpl = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
+            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
+        )
+        for export, ext in exports:
+            output_files[export] = tpl.format(export=export, ext=ext)
+            output_files[export + "_md5"] = output_files[export] + ".md5"
         return output_files
 
     @dictify
     def _get_output_files_report(self):
-        reports = ("breaks", "gainloss", "gender", "metrics", "segmetrics")
+        reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+        output_files = {}
         tpl = (
-            "work/{mapper}.cnvkit.report.{library_name}/out/"
-            "{mapper}.cnvkit.report.{library_name}.{report}.txt"
+            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
+            "{{mapper}}.cnvkit.{{library_name}}.{report}.txt"
         )
-        yield from (
-            (report, tpl.format(report=report, **format_id("mapper", "library_name")))
-            for report in reports
-        )
+        for report in reports:
+            output_files[report] = tpl.format(report=report)
+            output_files[report + "_md5"] = output_files[report] + ".md5"
+        return output_files
 
-    @staticmethod
-    def get_log_file(action):
+    def get_log_file(self, action):
         """Return path to log file for the given action"""
-        if action in ("access", "target", "antitarget"):
-            prefix = "work/cnvkit.{action}/log/cnvkit.{action}"
-        elif action in (
-            "coverage",
-            "reference",
-            "fix",
-            "call",
-            "segment",
-            "export",
-            "plot",
-            "report",
-        ):
-            prefix = (
-                "work/{{mapper}}.cnvkit.{action}.{{library_name}}/log/"
-                "{{mapper}}.cnvkit.{action}.{{library_name}}"
-            )
-        else:
-            raise ValueError("Unknown action {}".format(action))
-        prefix = prefix.format(action=action)
+        # Validate action
+        self._validate_action(action)
+        prefix = (
+            "work/{{mapper}}.cnvkit.{{library_name}}/log/"
+            "{{mapper}}.cnvkit.{action}.{{library_name}}"
+        ).format(action=action)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -701,6 +680,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         self._validate_action(action)
         if action == "plot":
             return self.resource_usage_dict.get("plot")
+        elif action == "coverage":
+            return self.resource_usage_dict.get("coverage")
         else:
             return self.resource_usage_dict.get("default")
 
@@ -908,7 +889,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
-            "cnvkit": ("call", "report", "export", "plot"),  # ("report", "export", "plot"),
+            "cnvkit": ("fix", "call", "report", "export", "plot"),
             "copywriter": ("call",),
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
@@ -946,7 +927,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                                     yield f.replace("work/", "output/")
 
     def check_config(self):
-        """Check that the necessary globalc onfiguration is present"""
+        """Check that the necessary global configuration is present"""
         self.ensure_w_config(
             ("step_config", "somatic_targeted_seq_cnv_calling", "path_ngs_mapping"),
             (
