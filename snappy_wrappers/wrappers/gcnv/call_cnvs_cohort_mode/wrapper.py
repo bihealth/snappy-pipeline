@@ -11,6 +11,10 @@ shell(
 set -x
 set -euo pipefail
 
+# We use /tmp as the temporary directory as we will need to compile things and
+# this is small but needs many small file accesses. Cluster files sytems are not
+# so good here but local disks are fine.
+export TMPDIR=/tmp
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" ERR EXIT
 
