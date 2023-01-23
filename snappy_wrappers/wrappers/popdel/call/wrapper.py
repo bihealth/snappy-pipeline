@@ -53,7 +53,7 @@ EOF
     done
 
     bcftools annotate \
-        --header $TMPDIR/header.txt \
+        --header-lines $TMPDIR/header.txt \
         $TMPDIR/tmp.vcf \
     | awk -F $'\t' \
         'BEGIN {{ OFS = FS }}
