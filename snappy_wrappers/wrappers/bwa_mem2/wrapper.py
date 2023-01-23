@@ -64,7 +64,7 @@ input_files()
     set -x
 
     if [[ -z "{input_right}" ]]; then
-        (zcat force {input_right})
+        (zcat {input_right})
     else
         seqtk mergepe \
             <(zcat {input_left} | tee >(wc -l > $TMPDIR/count_left)) \
