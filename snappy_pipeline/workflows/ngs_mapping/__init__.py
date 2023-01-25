@@ -362,28 +362,29 @@ step_config:
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
+      path_features: ""    # Required for computing gene counts
       num_threads_align: 16
       num_threads_trimming: 8
       num_threads_bam_view: 4
       num_threads_bam_sort: 4
       memory_bam_sort: 4G
+      genome_load: NoSharedMemory
+      raw_star_options: ''
+      align_intron_max: 1000000                # ENCODE option
+      align_intron_min: 20                     # ENCODE option
+      align_mates_gap_max: 1000000             # ENCODE option
+      align_sjdb_overhang_min: 1               # ENCODE option
+      align_sj_overhang_min: 8                 # ENCODE option
+      out_filter_mismatch_n_max: 999           # ENCODE option
+      out_filter_mismatch_n_over_l_max: 0.04   # ENCODE option
+      out_filter_multimap_n_max: 20            # ENCODE option
+      out_filter_type: BySJout                 # ENCODE option
+      out_filter_intron_motifs: None    # or for cufflinks: RemoveNoncanonical
+      out_sam_strand_field: None        # or for cufflinks: intronMotif
+      transcriptome: false              # true to output transcript coordinate bam for RSEM
       trim_adapters: false
       mask_duplicates: false
-      raw_star_options: ''
-      align_intron_max: 1000000
-      align_intron_min: 20
-      align_mates_gap_max: 1000000
-      align_sjdb_overhang_min: 1
-      align_sj_overhang_min: 8
-      genome_load: NoSharedMemory
-      out_filter_intron_motifs: None # or for cufflinks: RemoveNoncanonical
-      out_filter_mismatch_n_max: 999
-      out_filter_mismatch_n_over_l_max: 0.04
-      out_filter_multimap_n_max: 20
-      out_filter_type: BySJout
-      out_sam_strand_field: None # or for cufflinks: intronMotif
       include_unmapped: true
-      quant_mode: ''
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
@@ -770,8 +771,18 @@ class StarStepPart(ReadMappingStepPart):
     @dictify
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
-        yield from super()._get_output_files_run_work()
-        yield "whatever", []
+        output_files = super()._get_output_files_run_work()
+        if self.config[self.name]["path_features"]:
+            output_files["gene_counts"] = self.base_path_out.format(
+                mapper=self.name, ext=".GeneCounts.tab"
+            )
+            output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
+        if self.config[self.name]["transcriptome"]:
+            output_files["transcriptome"] = self.base_path_out.format(
+                mapper=self.name, ext=".toTranscriptome.bam"
+            )
+            output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
+        return output_files
 
     def get_resource_usage(self, action):
         """Get Resource Usage

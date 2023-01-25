@@ -1,12 +1,22 @@
-# -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for STAR: Snakemake wrapper.py
-"""
-
 from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
+out_gc = snakemake.output.get("gene_counts", "__dummy__")
+out_tx = snakemake.output.get("transcriptome", "__dummy__")
+
+DEF_HELPER_FUNCS = r"""
+compute-md5()
+{
+    if [[ $# -ne 2 ]]; then
+        >&2 echo "Invalid number of arguments: $#"
+        exit 1
+    fi
+    md5sum $1 \
+    | awk '{ gsub(/.*\//, "", $2); print; }' \
+    > $2
+}
+"""
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
@@ -17,18 +27,23 @@ shell(
     r"""
 set -x
 
+# Write files for reproducibility -----------------------------------------------------------------
+
+{DEF_HELPER_FUNCS}
+
 # Write out information about conda and save a copy of the wrapper with picked variables
 # as well as the environment.yaml file.
 conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
+compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
 cp {__real_file__} {snakemake.log.wrapper}
-md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
+compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
 cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
+compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
 
-# Also pipe stderr to log file
+# Also pipe stderr to log file --------------------------------------------------------------------
+
 if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
@@ -39,9 +54,12 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-# Setup auto-cleaned TMPDIR
+# Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
+
+# Some More Preparation ---------------------------------------------------------------------------
+
 mkdir -p $TMPDIR/tmp.d $TMPDIR/pre.d
 
 # Define some global shortcuts
@@ -54,38 +72,23 @@ declare -a reads_right=({reads_right})
 
 # Function Definitions ----------------------------------------------------------------------------
 
-# Duplicate masking
+# Duplicate masking from SAM file in STDIN to STDOUT
 mask_duplicates()
 {{
     set -x
 
-    if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then
-        samtools view \
-            -Sh \
-            -@ {snakemake.config[step_config][ngs_mapping][star][num_threads_bam_view]} \
-            $1 \
-        | samblaster --addMateTags \
-        | samtools view \
-            -u \
-            -Sb \
-            -@ {snakemake.config[step_config][ngs_mapping][star][num_threads_bam_view]}
-    else
-        cat $1 # TODO: can we somehow remove this?
-    fi
+    samblaster --addMateTags 
 }}
 
-# Alignment postprocessing
-postproc_bam()
+# Sort by coordinate input SAM from STDIN
+sort_by_coord()
 {{
     set -x
-    in=$1
-    out=$2
 
-    mask_duplicates $in \
-    | samtools sort \
+    samtools sort -O BAM \
         -m {snakemake.config[step_config][ngs_mapping][star][memory_bam_sort]} \
         -@ {snakemake.config[step_config][ngs_mapping][star][num_threads_bam_sort]} \
-        -o $out
+        -
 }}
 
 # Merge and index STAR output
@@ -99,10 +102,8 @@ index_bam()
     samtools index $out_bam
 
     # Build MD5 files
-    pushd $(dirname $out_bam) && \
-        md5sum $(basename $out_bam) > $(basename $out_bam).md5 && \
-        md5sum $(basename $out_bam).bai > $(basename $out_bam).bai.md5 && \
-    popd
+    compute-md5 $out_bam $out_bam.md5
+    compute-md5 $out_bam.bai $out_bam.bai.md5
 }}
 
 # Function for running STAR
@@ -137,6 +138,16 @@ run_star()
         trim_cmd="zcat"
     fi
 
+    quant_mode=""
+    if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]
+    then
+        quant_mode="$quant_mode GeneCounts"
+    fi
+    if [[ "{snakemake.config[step_config][ngs_mapping][star][transcriptome]}" = "True" ]]
+    then
+        quant_mode="$quant_mode TranscriptomeSAM"
+    fi
+
     STAR \
         --readFilesIn ${{left_files}} ${{right_files}} \
         {snakemake.config[step_config][ngs_mapping][star][raw_star_options]} \
@@ -161,37 +172,48 @@ run_star()
             else
                 echo "None"; \
             fi) \
-        $(if [[ -n "{snakemake.config[step_config][ngs_mapping][star][quant_mode]}" ]]; then \
-            echo --quantMode {snakemake.config[step_config][ngs_mapping][star][quant_mode]}
+        $(if [[ -n "$quant_mode" ]]; then \
+            echo "--quantMode $quant_mode"
         fi) \
-        --runThreadN {snakemake.config[step_config][ngs_mapping][star][num_threads_align]}
+        $(if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]; then \
+            echo --sjdbGTFfile "{snakemake.config[step_config][ngs_mapping][star][path_features]}"
+        fi) \
+        $(if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then \
+            echo " --outStd SAM " ; \
+        else
+            echo " --outSAMtype BAM SortedByCoordinate "; \
+        fi) \
+        --runThreadN {snakemake.config[step_config][ngs_mapping][star][num_threads_align]} 
 
     >&2 ls -lhR $TMPDIR
-
-    postproc_bam $TMPDIR/pre.d/out.Aligned.out.sam {snakemake.output.bam}
-
-    if [[ "{snakemake.config[step_config][ngs_mapping][star][quant_mode]}" = *"TranscriptomeSAM"* ]]; then
-        out_tx=$(echo "{snakemake.output.bam}" | sed -e "s/\\.bam$/\\.toTranscriptome\\.bam/")
-        postproc_bam $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam ${{out_tx}}
-    fi
 }}
 
 # Perform Alignment -------------------------------------------------------------------------------
 
 # Run STAR
-run_star
+if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then
+    run_star | mask_duplicates | sort_by_coord > {snakemake.output.bam}
+else
+    run_star
+    mv $TMPDIR/pre.d/out.Aligned.sortedByCoord.out.bam {snakemake.output.bam}
+fi
 
 index_bam {snakemake.output.bam}
 
-if [[ "{snakemake.config[step_config][ngs_mapping][star][quant_mode]}" = *"TranscriptomeSAM"* ]]; then
-    out_tx=$(echo "{snakemake.output.bam}" | sed -e "s/\\.bam$/\\.toTranscriptome\\.bam/")
-    index_bam ${{out_tx}}
+# Optional output: gene counts & mapping on transcriptome -----------------------------------------
+
+if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]; then
+    mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
+    compute-md5 {out_gc} {out_gc}.md5
 fi
 
-if [[ "{snakemake.config[step_config][ngs_mapping][star][quant_mode]}" = *"GeneCounts"* ]]; then
-    out_gc=$(echo "{snakemake.output.bam}" | sed -e "s/\\.bam$/\\.GeneCounts\\.tab/")
-    mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab ${{out_gc}}
-    md5sum ${{out_gc}} > ${{out_gc}}.md5
+if [[ "{snakemake.config[step_config][ngs_mapping][star][transcriptome]}" = "True" ]]; then
+    if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then
+        samtools view -h -S $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam | mask_duplicates | samtools view -h -b - > {out_tx}
+    else
+        mv $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam {out_tx}
+    fi
+    compute-md5 {out_tx} {out_tx}.md5
 fi
 
 # QC Report ---------------------------------------------------------------------------------------
@@ -203,21 +225,9 @@ samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_tx
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 
 # Build MD5 files for the reports
-md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
-md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
-md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
-
-# Additional logging for transparency & reproducibility
-if [[ ! -z "{snakemake.log.log}" ]]; then
-    # Logging: Save a copy this wrapper (with the pickle details in the header)
-    cp {this_file} $(dirname {snakemake.log.log})/wrapper_star.py
-    # Logging: Save a permanent copy of the environment file used
-    cp $(dirname {this_file})/environment.yaml $(dirname {snakemake.log.log})/environment_wrapper_star.yaml
-    # Logging: parameters used by STAR
-    cp $TMPDIR/pre.d/out.Log.out $(dirname {snakemake.log.log})/Log.out
-    # Logging: STAR alignment summary
-    cp $TMPDIR/pre.d/out.Log.final.out $(dirname {snakemake.log.log})/Log.final.out
-fi
+compute-md5 {snakemake.output.report_bamstats_txt}  {snakemake.output.report_bamstats_txt_md5}
+compute-md5 {snakemake.output.report_flagstats_txt} {snakemake.output.report_flagstats_txt_md5}
+compute-md5 {snakemake.output.report_idxstats_txt}  {snakemake.output.report_idxstats_txt_md5}
 
 # Create output links -----------------------------------------------------------------------------
 
@@ -232,7 +242,9 @@ done
 # Compute MD5 sums of logs.
 shell(
     r"""
+{DEF_HELPER_FUNCS}
+
 sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
 """
 )
