@@ -5,7 +5,7 @@ dependencies:
   - bcftools >=1.9
   - htslib >=1.9
   - samtools >=1.9
-  - varfish-annotator-cli ==0.31
+  - varfish-annotator-cli ==0.32
   - openjdk >=8,<9
   - jq
   - vcfpy
