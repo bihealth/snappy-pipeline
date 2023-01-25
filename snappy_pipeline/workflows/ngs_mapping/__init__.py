@@ -450,7 +450,17 @@ class ReportGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for report generation steps"""
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return False
+        if not getattr(self, "tool_categories", None):
+            return False
+
+        extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
+        extraction_type = extra_infos.get("extractionType", "DNA").lower()
+        if extra_infos["seqPlatform"] in ("ONT", "PacBio"):
+            suffix = "_long"
+        else:
+            suffix = ""
+        library_tool_category = f"{extraction_type}{suffix}"
+        return library_tool_category not in self.tool_categories
 
     @listify
     def get_result_files(self):
@@ -479,9 +489,11 @@ class ReportGetResultFilesMixin:
             #: Generate all concrete output paths.
             for library_name in self.parent.ngs_library_to_extra_infos.keys():
                 for sub_step in self.parent.sub_steps.values():
-                    if isinstance(
-                        sub_step, ReadMappingStepPart
-                    ) and not sub_step.skip_result_files_for_library(library_name):
+                    if (
+                        isinstance(sub_step, ReadMappingStepPart)
+                        and not sub_step.skip_result_files_for_library(library_name)
+                        and not self.skip_result_files_for_library(library_name)
+                    ):
                         for path_tpl in result_paths_tpls:
                             yield path_tpl.format(mapper=sub_step.name, library_name=library_name)
                 if action == "collect":
@@ -755,6 +767,12 @@ class StarStepPart(ReadMappingStepPart):
                 )
                 raise InvalidConfiguration(tpl)
 
+    @dictify
+    def _get_output_files_run_work(self):
+        """Override base class' function to make Snakemake aware of extra files for STAR."""
+        yield from super()._get_output_files_run_work()
+        yield "whatever", []
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -881,6 +899,9 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     #: Step name
     name = "target_coverage_report"
+
+    #: Run for "dna" and "dna_long" only
+    tool_categories = ("dna", "dna_long")
 
     #: Class available actions
     actions = ("run", "collect")
@@ -1009,6 +1030,9 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     #: Step name
     name = "bam_collect_doc"
+
+    #: Run for "dna" and "dna_long" only
+    tool_categories = ("dna", "dna_long")
 
     #: Class available actions
     actions = ("run",)
@@ -1216,8 +1240,8 @@ class NgsMappingWorkflow(BaseStep):
             for bio_sample in donor.bio_samples.values():
                 for test_sample in bio_sample.test_samples.values():
                     for library in test_sample.ngs_libraries.values():
-                        if library.extra_infos.get("libraryKit"):
-                            result[library.name] = library.extra_infos
+                        result.setdefault(library.name, {}).update(test_sample.extra_infos)
+                        result.setdefault(library.name, {}).update(library.extra_infos)
         return result
 
     def _build_ngs_library_to_kit(self):
