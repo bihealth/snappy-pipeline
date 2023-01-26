@@ -146,6 +146,7 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 
 - (short/Illumina) DNA
     - ``"bwa"``
+    - ``"bwa_mem2"``
     - ``"external"``
 
 - (short/Illumina) RNA-seq
@@ -155,6 +156,30 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 - (long/PacBio/Nanopore) DNA
     - ``"minimap2"``
     - ``"external"``
+
+====================================
+Notes on `STAR` mapper configuration
+====================================
+
+Recent versions of `STAR` offer the possibility to output gene counts and alignments of reads on the transcritpome,
+rather than on the genome.
+
+In both cases, this requires that `STAR` is aware of the genes, transcripts, exon & introns features.
+These can be provided either during the indexing stage, or with recent versions, during mapping.
+
+The configuration provides the possibility to pass to `STAR` the location of a `gtf` file describing the features.
+This removes the need to include gene models into the generation of indices, so that the user can select the
+gene models (either from ENSEMBL or GENCODE, for example).
+
+When the configuration option `path_features` is set, the step will output a table of expression counts
+for all genes, in `output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
+
+If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
+mapped to the transcriptome (`output/stat.{library_name}/out/star.{library_name}.toTranscriptome.bam`).
+`STAR` will rely on the `path_features` configuration option, or on the gene models embedded in
+the indices to generate the mappings. If both are absent, the step will fail.
+Note that the mappings to the transcriptome will not be indexes using `samtools index`, because the
+absence of the positional mappings.
 
 =======
 Reports
