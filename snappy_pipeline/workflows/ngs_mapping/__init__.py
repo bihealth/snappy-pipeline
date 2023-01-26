@@ -146,6 +146,7 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 
 - (short/Illumina) DNA
     - ``"bwa"``
+    - ``"bwa_mem2"``
     - ``"external"``
 
 - (short/Illumina) RNA-seq
@@ -155,6 +156,30 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 - (long/PacBio/Nanopore) DNA
     - ``"minimap2"``
     - ``"external"``
+
+====================================
+Notes on `STAR` mapper configuration
+====================================
+
+Recent versions of `STAR` offer the possibility to output gene counts and alignments of reads on the transcritpome,
+rather than on the genome.
+
+In both cases, this requires that `STAR` is aware of the genes, transcripts, exon & introns features.
+These can be provided either during the indexing stage, or with recent versions, during mapping.
+
+The configuration provides the possibility to pass to `STAR` the location of a `gtf` file describing the features.
+This removes the need to include gene models into the generation of indices, so that the user can select the
+gene models (either from ENSEMBL or GENCODE, for example).
+
+When the configuration option `path_features` is set, the step will output a table of expression counts
+for all genes, in `output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
+
+If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
+mapped to the transcriptome (`output/stat.{library_name}/out/star.{library_name}.toTranscriptome.bam`).
+`STAR` will rely on the `path_features` configuration option, or on the gene models embedded in
+the indices to generate the mappings. If both are absent, the step will fail.
+Note that the mappings to the transcriptome will not be indexes using `samtools index`, because the
+absence of the positional mappings.
 
 =======
 Reports
@@ -362,28 +387,29 @@ step_config:
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
+      path_features: ""    # Required for computing gene counts
       num_threads_align: 16
       num_threads_trimming: 8
       num_threads_bam_view: 4
       num_threads_bam_sort: 4
       memory_bam_sort: 4G
+      genome_load: NoSharedMemory
+      raw_star_options: ''
+      align_intron_max: 1000000                # ENCODE option
+      align_intron_min: 20                     # ENCODE option
+      align_mates_gap_max: 1000000             # ENCODE option
+      align_sjdb_overhang_min: 1               # ENCODE option
+      align_sj_overhang_min: 8                 # ENCODE option
+      out_filter_mismatch_n_max: 999           # ENCODE option
+      out_filter_mismatch_n_over_l_max: 0.04   # ENCODE option
+      out_filter_multimap_n_max: 20            # ENCODE option
+      out_filter_type: BySJout                 # ENCODE option
+      out_filter_intron_motifs: None    # or for cufflinks: RemoveNoncanonical
+      out_sam_strand_field: None        # or for cufflinks: intronMotif
+      transcriptome: false              # true to output transcript coordinate bam for RSEM
       trim_adapters: false
       mask_duplicates: false
-      raw_star_options: ''
-      align_intron_max: 1000000
-      align_intron_min: 20
-      align_mates_gap_max: 1000000
-      align_sjdb_overhang_min: 1
-      align_sj_overhang_min: 8
-      genome_load: NoSharedMemory
-      out_filter_intron_motifs: None # or for cufflinks: RemoveNoncanonical
-      out_filter_mismatch_n_max: 999
-      out_filter_mismatch_n_over_l_max: 0.04
-      out_filter_multimap_n_max: 20
-      out_filter_type: BySJout
-      out_sam_strand_field: None # or for cufflinks: intronMotif
       include_unmapped: true
-      quant_mode: ''
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
@@ -450,7 +476,17 @@ class ReportGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for report generation steps"""
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return False
+        if not getattr(self, "tool_categories", None):
+            return False
+
+        extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
+        extraction_type = extra_infos.get("extractionType", "DNA").lower()
+        if extra_infos["seqPlatform"] in ("ONT", "PacBio"):
+            suffix = "_long"
+        else:
+            suffix = ""
+        library_tool_category = f"{extraction_type}{suffix}"
+        return library_tool_category not in self.tool_categories
 
     @listify
     def get_result_files(self):
@@ -479,9 +515,11 @@ class ReportGetResultFilesMixin:
             #: Generate all concrete output paths.
             for library_name in self.parent.ngs_library_to_extra_infos.keys():
                 for sub_step in self.parent.sub_steps.values():
-                    if isinstance(
-                        sub_step, ReadMappingStepPart
-                    ) and not sub_step.skip_result_files_for_library(library_name):
+                    if (
+                        isinstance(sub_step, ReadMappingStepPart)
+                        and not sub_step.skip_result_files_for_library(library_name)
+                        and not self.skip_result_files_for_library(library_name)
+                    ):
                         for path_tpl in result_paths_tpls:
                             yield path_tpl.format(mapper=sub_step.name, library_name=library_name)
                 if action == "collect":
@@ -755,6 +793,22 @@ class StarStepPart(ReadMappingStepPart):
                 )
                 raise InvalidConfiguration(tpl)
 
+    @dictify
+    def _get_output_files_run_work(self):
+        """Override base class' function to make Snakemake aware of extra files for STAR."""
+        output_files = super()._get_output_files_run_work()
+        if self.config[self.name]["path_features"]:
+            output_files["gene_counts"] = self.base_path_out.format(
+                mapper=self.name, ext=".GeneCounts.tab"
+            )
+            output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
+        if self.config[self.name]["transcriptome"]:
+            output_files["transcriptome"] = self.base_path_out.format(
+                mapper=self.name, ext=".toTranscriptome.bam"
+            )
+            output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
+        return output_files
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -881,6 +935,9 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     #: Step name
     name = "target_coverage_report"
+
+    #: Run for "dna" and "dna_long" only
+    tool_categories = ("dna", "dna_long")
 
     #: Class available actions
     actions = ("run", "collect")
@@ -1010,11 +1067,16 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     #: Step name
     name = "bam_collect_doc"
 
+    #: Run for "dna" and "dna_long" only
+    tool_categories = ("dna", "dna_long")
+
     #: Class available actions
     actions = ("run",)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config["bam_collect_doc"]["enabled"]
+        return not self.config["bam_collect_doc"][
+            "enabled"
+        ] or super().skip_result_files_for_library(library_name)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1216,8 +1278,8 @@ class NgsMappingWorkflow(BaseStep):
             for bio_sample in donor.bio_samples.values():
                 for test_sample in bio_sample.test_samples.values():
                     for library in test_sample.ngs_libraries.values():
-                        if library.extra_infos.get("libraryKit"):
-                            result[library.name] = library.extra_infos
+                        result.setdefault(library.name, {}).update(test_sample.extra_infos)
+                        result.setdefault(library.name, {}).update(library.extra_infos)
         return result
 
     def _build_ngs_library_to_kit(self):

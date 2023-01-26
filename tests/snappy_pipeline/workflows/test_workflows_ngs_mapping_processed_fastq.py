@@ -6,7 +6,7 @@ from copy import deepcopy
 import io
 import textwrap
 
-from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
+from biomedsheets.io_tsv import read_cancer_tsv_sheet
 import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
@@ -33,14 +33,18 @@ def minimal_config():
             path_link_in: "/preprocess"
             tools:
               dna: ['bwa']
+              rna: ['star']
             target_coverage_report:
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
-            compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta
+            star:
+              path_index: /path/to/star/index
+              path_features: /path/to/features.gtf
+              transcriptome: true
             bam_collect_doc:
               enabled: true
 
@@ -50,9 +54,8 @@ def minimal_config():
             search_patterns:
             - {"left": "*/*/*_R1.fastq.gz", "right": "*/*/*_R2.fastq.gz"}
             search_paths: ['/path']
-            type: germline_variants
+            type: matched_cancer
             naming_scheme: only_secondary_id
-            pedigree_field: pedigree_field
         """
         ).lstrip()
     )
@@ -65,15 +68,13 @@ def ngs_mapping_workflow(
     config_lookup_paths,
     work_dir,
     config_paths,
-    germline_sheet_fake_fs_path_link_in,
+    cancer_sheet_fake_fs_path_link_in,
     aligner_indices_fake_fs,
     mocker,
 ):
-    """Return NgsMappingWorkflow object pre-configured with germline sheet"""
+    """Return NgsMappingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs(
-        "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
-    )
+    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs_path_link_in, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Construct the workflow object
@@ -155,42 +156,20 @@ def get_expected_output_files_dict(bam_base_out: str, report_base_out: str, log_
 
 def test_extraction_type_check(
     ngs_mapping_workflow,
-    germline_sheet_tsv,
-    generic_rna_sheet_tsv,
-    generic_mix_extraction_sheet_tsv,
+    cancer_sheet_tsv,
 ):
     """Tests extraction type check method."""
-    # Create dna sample sheet based on germline sheet
-    germline_sheet_io = io.StringIO(germline_sheet_tsv)
-    dna_sheet = read_germline_tsv_sheet(germline_sheet_io)
-
-    # Create rna sample sheet
-    rna_sheet_io = io.StringIO(generic_rna_sheet_tsv)
-    rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
-
     # Create mix data sample sheet
-    mix_sheet_io = io.StringIO(generic_mix_extraction_sheet_tsv)
-    mix_sheet = read_generic_tsv_sheet(mix_sheet_io)
-
-    # Evaluate if only DNA is True
-    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=dna_sheet)
-    assert dna_bool, "Germline extraction type are set to DNA by default."
-    assert not rna_bool, "No RNA sample was included in the sample sheet."
-
-    # Evaluate if only RNA is True
-    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=rna_sheet)
-    assert not dna_bool, "No DNA sample was included in the sample sheet."
-    assert rna_bool, "Only RNA samples were included in the sample sheet."
+    cancer_sheet_io = io.StringIO(cancer_sheet_tsv)
+    cancer_sheet = read_cancer_tsv_sheet(cancer_sheet_io)
 
     # Evaluate if both DNA and RNA are True
-    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=mix_sheet)
+    dna_bool, rna_bool = ngs_mapping_workflow.extraction_type_check(sample_sheet=cancer_sheet)
     assert dna_bool, "Sample sheet contains both DNA and RNA."
     assert rna_bool, "Sample sheet contains both DNA and RNA."
 
 
-def test_project_validation_germline(
-    ngs_mapping_workflow, germline_sheet_tsv, generic_rna_sheet_tsv, minimal_config
-):
+def test_project_validation_cancer(ngs_mapping_workflow, cancer_sheet_tsv, minimal_config):
     """Tests project validation method in ngs mapping workflow"""
     # Convert yaml to dict
     minimal_config_dict = deepcopy(minimal_config)
@@ -198,61 +177,14 @@ def test_project_validation_germline(
     minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
 
     # Create germline sample sheet
-    germline_sheet_io = io.StringIO(germline_sheet_tsv)
-    germline_sheet = read_germline_tsv_sheet(germline_sheet_io)
-
-    # Create rna sample sheet
-    rna_sheet_io = io.StringIO(generic_rna_sheet_tsv)
-    rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
+    cancer_sheet_io = io.StringIO(cancer_sheet_tsv)
+    cancer_sheet = read_cancer_tsv_sheet(cancer_sheet_io)
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
     out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
+        config_dict=minimal_config_dict, sample_sheets_list=[cancer_sheet]
     )
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
-
-    # Exception raised cause no RNA mapper defined in config
-    with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[rna_sheet]
-        )
-    error_msg = "RNA sample provided, but config only contains DNA mapper."
-    assert exec_info.value.args[0] is not None, error_msg
-
-    # Exception raised cause only DNA mapper defined in config
-    with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
-        )
-    error_msg = "DNA and RNA sample provided, but config only contains DNA mapper."
-    assert exec_info.value.args[0] is not None, error_msg
-
-    # Update config and remove RNA exception
-    minimal_config_dict["tools"]["rna"] = ["rna_mapper"]
-    out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
-    )
-    error_msg = (
-        "No exception expected: DNA, RNA sample sheet and respective tools defined in config."
-    )
-    assert out is None, error_msg
-
-    # Update config and introduce DNA exception
-    minimal_config_dict["tools"]["dna"] = []
-    with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
-        )
-    error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
-    assert exec_info.value.args[0] is not None, error_msg
-
-    # Exception raised cause no DNA mapper defined in config
-    with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
-        )
-    error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
-    assert exec_info.value.args[0] is not None, error_msg
 
 
 # Tests for BwaStepPart ----------------------------------------------------------------------------
@@ -328,16 +260,18 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
 def test_star_step_part_get_args(ngs_mapping_workflow):
     """Tests StarStepPart.get_args()"""
     # Define expected
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
     expected = {
         "input": {
-            "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz"],
+            "reads_left": [
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R1.fastq.gz"
+            ],
             "reads_right": [
-                "work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
             ],
         },
         "platform": "ILLUMINA",
-        "sample_name": "P001-N1-DNA1-WGS1",
+        "sample_name": "P001-T1-RNA1-mRNA_seq1",
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("star", "run")(wildcards)
@@ -347,8 +281,8 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
 def test_star_step_part_get_input_files(ngs_mapping_workflow):
     """Tests StarStepPart.get_input_files()"""
     # Define expected
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    expected = "work/input_links/P001-N1-DNA1-WGS1/.done"
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
+    expected = "work/input_links/P001-T1-RNA1-mRNA_seq1/.done"
     # Get actual and assert
     actual = ngs_mapping_workflow.get_input_files("star", "run")(wildcards)
     assert actual == expected
@@ -361,8 +295,28 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
     report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
     log_base_out = "work/star.{library_name}/log/star.{library_name}"
     expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
+    expected["gene_counts"] = "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab"
+    expected[
+        "gene_counts_md5"
+    ] = "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab.md5"
+    expected[
+        "transcriptome"
+    ] = "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam"
+    expected[
+        "transcriptome_md5"
+    ] = "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam.md5"
+    expected["output_links"].extend(
+        [
+            "output/star.{library_name}/out/star.{library_name}.GeneCounts.tab",
+            "output/star.{library_name}/out/star.{library_name}.GeneCounts.tab.md5",
+            "output/star.{library_name}/out/star.{library_name}.toTranscriptome.bam",
+            "output/star.{library_name}/out/star.{library_name}.toTranscriptome.bam.md5",
+        ]
+    )
+    expected["output_links"].sort()
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("star", "run")
+    actual["output_links"].sort()
     assert actual == expected
 
 
@@ -526,14 +480,13 @@ def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_wo
     # Define expected
     expected = [
         "work/bwa.P001-N1-DNA1-WGS1/report/cov_qc/bwa.P001-N1-DNA1-WGS1.txt",
+        "work/bwa.P001-T1-DNA1-WGS1/report/cov_qc/bwa.P001-T1-DNA1-WGS1.txt",
         "work/bwa.P002-N1-DNA1-WGS1/report/cov_qc/bwa.P002-N1-DNA1-WGS1.txt",
-        "work/bwa.P003-N1-DNA1-WGS1/report/cov_qc/bwa.P003-N1-DNA1-WGS1.txt",
-        "work/bwa.P004-N1-DNA1-WGS1/report/cov_qc/bwa.P004-N1-DNA1-WGS1.txt",
-        "work/bwa.P005-N1-DNA1-WGS1/report/cov_qc/bwa.P005-N1-DNA1-WGS1.txt",
-        "work/bwa.P006-N1-DNA1-WGS1/report/cov_qc/bwa.P006-N1-DNA1-WGS1.txt",
+        "work/bwa.P002-T1-DNA1-WGS1/report/cov_qc/bwa.P002-T1-DNA1-WGS1.txt",
+        "work/bwa.P002-T2-DNA1-WGS1/report/cov_qc/bwa.P002-T2-DNA1-WGS1.txt",
     ]
     # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
     actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards)
     assert actual == expected
 
@@ -625,16 +578,29 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     to the expected results from the tools, namely: bwa, external, link_in, minimap2, star,
     target_coverage_report.
     """
-    # Check result file construction
+    # Expected library names
+    dna = (
+        "P001-N1-DNA1-WGS1",
+        "P001-T1-DNA1-WGS1",
+        "P002-N1-DNA1-WGS1",
+        "P002-T1-DNA1-WGS1",
+        "P002-T2-DNA1-WGS1",
+    )
+    rna = ("P001-T1-RNA1-mRNA_seq1", "P002-T2-RNA1-mRNA_seq1")
+
+    # Check result file construction (dna/bwa)
     expected = [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/out/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
-        for i in range(1, 7)
+        "output/bwa.{library_name}/out/bwa.{library_name}.{ext}".format(
+            library_name=library_name, ext=ext
+        )
         for ext in ("bam", "bam.bai", "bam.md5", "bam.bai.md5")
+        for library_name in dna
     ]
     for infix in ("bam_collect_doc", "mapping", "target_cov_report", "ngs_chew_fingerprint"):
         expected += [
-            "output/bwa.P00{i}-N1-DNA1-WGS1/log/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
-            for i in range(1, 7)
+            "output/bwa.{library_name}/log/bwa.{library_name}.{ext}".format(
+                library_name=library_name, ext=ext
+            )
             for ext in (
                 f"{infix}.log",
                 f"{infix}.log.md5",
@@ -647,40 +613,95 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
                 f"{infix}.wrapper.py",
                 f"{infix}.wrapper.py.md5",
             )
+            for library_name in dna
         ]
     bam_stats_text_out = (
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.{stats}.{ext}"
+        "output/bwa.{library_name}/report/bam_qc/bwa.{library_name}.bam.{stats}.{ext}"
     )
     expected += [
-        bam_stats_text_out.format(i=i, stats=stats, ext=ext)
+        bam_stats_text_out.format(library_name=library_name, stats=stats, ext=ext)
         for ext in ("txt", "txt.md5")
-        for i in range(1, 7)
+        for library_name in dna
         for stats in ("bamstats", "flagstats", "idxstats")
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.cov.{ext}".format(
-            i=i, ext=ext
+        "output/bwa.{library_name}/report/cov/bwa.{library_name}.cov.{ext}".format(
+            library_name=library_name, ext=ext
         )
         for ext in ("bw", "bw.md5", "vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
-        for i in range(1, 7)
+        for library_name in dna
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/fingerprint/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
-            i=i, ext=ext
+        "output/bwa.{library_name}/report/fingerprint/bwa.{library_name}.{ext}".format(
+            library_name=library_name, ext=ext
         )
         for ext in ("npz", "npz.md5")
-        for i in range(1, 7)
+        for library_name in dna
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
-            i=i, ext=ext
+        "output/bwa.{library_name}/report/cov_qc/bwa.{library_name}.{ext}".format(
+            library_name=library_name, ext=ext
         )
         for ext in ("txt", "txt.md5")
-        for i in range(1, 7)
+        for library_name in dna
     ]
     expected += [
         "output/target_cov_report/log/snakemake.target_coverage.log",
         "output/target_cov_report/out/target_cov_report.txt",
         "output/target_cov_report/out/target_cov_report.txt.md5",
     ]
+
+    # Check result file construction (rna/star)
+    expected += [
+        "output/star.{library_name}/out/star.{library_name}.{ext}".format(
+            library_name=library_name, ext=ext
+        )
+        for ext in (
+            "bam",
+            "bam.bai",
+            "bam.md5",
+            "bam.bai.md5",
+            "GeneCounts.tab",
+            "GeneCounts.tab.md5",
+            "toTranscriptome.bam",
+            "toTranscriptome.bam.md5",
+        )
+        for library_name in rna
+    ]
+    for infix in ("mapping", "ngs_chew_fingerprint"):
+        expected += [
+            "output/star.{library_name}/log/star.{library_name}.{ext}".format(
+                library_name=library_name, ext=ext
+            )
+            for ext in (
+                f"{infix}.log",
+                f"{infix}.log.md5",
+                f"{infix}.conda_info.txt",
+                f"{infix}.conda_info.txt.md5",
+                f"{infix}.conda_list.txt",
+                f"{infix}.conda_list.txt.md5",
+                f"{infix}.environment.yaml",
+                f"{infix}.environment.yaml.md5",
+                f"{infix}.wrapper.py",
+                f"{infix}.wrapper.py.md5",
+            )
+            for library_name in rna
+        ]
+    bam_stats_text_out = (
+        "output/star.{library_name}/report/bam_qc/star.{library_name}.bam.{stats}.{ext}"
+    )
+    expected += [
+        bam_stats_text_out.format(library_name=library_name, stats=stats, ext=ext)
+        for ext in ("txt", "txt.md5")
+        for library_name in rna
+        for stats in ("bamstats", "flagstats", "idxstats")
+    ]
+    expected += [
+        "output/star.{library_name}/report/fingerprint/star.{library_name}.{ext}".format(
+            library_name=library_name, ext=ext
+        )
+        for ext in ("npz", "npz.md5")
+        for library_name in rna
+    ]
+
     assert sorted(ngs_mapping_workflow.get_result_files()) == sorted(expected)
