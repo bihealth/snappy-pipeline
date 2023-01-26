@@ -1074,7 +1074,9 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     actions = ("run",)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config["bam_collect_doc"]["enabled"]
+        return not self.config["bam_collect_doc"][
+            "enabled"
+        ] or super().skip_result_files_for_library(library_name)
 
     def __init__(self, parent):
         super().__init__(parent)

@@ -589,14 +589,21 @@ def cancer_sheet_tsv():
     """Return contents for cancer TSV file"""
     return textwrap.dedent(
         """
-        patientName\tsampleName\tisTumor\tlibraryType\tfolderName
-        P001\tN1\tN\tWGS\tP001_N1_DNA1_WGS1
-        P001\tT1\tY\tWGS\tP001_T1_DNA1_WGS1
-        P001\tT1\tY\tmRNA_seq\tP001_T1_RNA1_mRNA_seq1
-        P002\tN1\tN\tWGS\tP002_N1_DNA1_WGS1
-        P002\tT1\tY\tWGS\tP002_T1_DNA1_WGS1
-        P002\tT2\tY\tWGS\tP002_T2_DNA1_WGS1
-        P002\tT2\tY\tmRNA_seq\tP002_T12RNA1_mRNA_seq1
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        isTumor\tbioSample\tnormal/tumor\tstring\t.\t.\t.\t.\t.
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+        extractionType\ttestSample\textraction type\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        patientName\tsampleName\tisTumor\tlibraryType\tfolderName\tlibraryKit\textractionType
+        P001\tN1\tN\tWGS\tP001_N1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
+        P001\tT1\tY\tWGS\tP001_T1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
+        P001\tT1\tY\tmRNA_seq\tP001_T1_RNA1_mRNA_seq1\tNone\tRNA
+        P002\tN1\tN\tWGS\tP002_N1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
+        P002\tT1\tY\tWGS\tP002_T1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
+        P002\tT2\tY\tWGS\tP002_T2_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
+        P002\tT2\tY\tmRNA_seq\tP002_T2-RNA1_mRNA_seq1\tNone\tRNA
         """
     ).lstrip()
 
@@ -853,7 +860,7 @@ def cancer_sheet_fake_fs(fake_fs, cancer_sheet_tsv):
     fake_fs.fs.makedirs("/work", exist_ok=True)
     # Create FASTQ read files for the samples
     tpl = "/path/{folder}/FCXXXXXX/L001/{folder}_R{i}.fastq.gz"
-    for line in cancer_sheet_tsv.splitlines()[1:]:
+    for line in cancer_sheet_tsv.splitlines()[8:]:
         folder = line.split("\t")[4]
         fake_fs.fs.create_file(tpl.format(folder=folder, i=1), create_missing_dirs=True)
         fake_fs.fs.create_file(tpl.format(folder=folder, i=2), create_missing_dirs=True)
@@ -871,9 +878,8 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
     fake_fs.fs.makedirs("/work", exist_ok=True)
     # Create FASTQ read files for the samples
     tpl = "/preprocess/{library_name}/FCXXXXXX/L001/out/{donor}_R{i}.fastq.gz"
-    for line in cancer_sheet_tsv.splitlines()[1:]:
-        (donor, sample, isTumor, assay, folder) = line.split("\t")
-        extract = "RNA" if assay == "mRNA_seq" else "DNA"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
         library_name = f"{donor}-{sample}-{extract}1-{assay}1"
         fake_fs.fs.create_file(
             tpl.format(donor=donor, library_name=library_name, i=1), create_missing_dirs=True
