@@ -90,7 +90,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
@@ -231,7 +231,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((BuildGcnvWgsModelStepPart,))
+        self.register_sub_step_classes((WritePedigreeStepPart,BuildGcnvWgsModelStepPart,))
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 

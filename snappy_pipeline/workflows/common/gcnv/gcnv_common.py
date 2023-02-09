@@ -194,6 +194,7 @@ class GcnvCommonStepPart(
         high_resource_action_list = (
             "call_cnvs",
             "post_germline_calls",
+            "joint_germline_cnv_segmentation",
         )
         if action in high_resource_action_list:
             return self.resource_usage_dict.get("high_resource")

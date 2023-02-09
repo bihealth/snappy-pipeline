@@ -13,7 +13,7 @@ for item in config["path_target_interval_list_mapping"]:
         target_interval_bed = item["path"]
         break
 else:  # of for, did not break out
-    raise Exception("Found no target intervals for %s" % item["name"])
+    raise Exception("Found no target intervals for %s" % snakemake.wildcards.library_kit)
 
 shell(
     r"""

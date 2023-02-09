@@ -50,27 +50,38 @@ step_config:
     # Short-read SV calling tool configuration
     delly2:
       path_exclude_tsv: null  # optional
-      max_threads: 16
       map_qual: 1
       geno_qual: 5
       qual_tra: 20
       mad_cutoff: 9
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
     manta:
-      max_threads: 16
+      num_threads: 16
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
     popdel:
       window_size: 10000000
       max_sv_size: 20000  # == padding
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
     gcnv:
+      # Path to interval block list with PAR region for contig calling.
+      path_par_intervals: null  # REQUIRED
       # Path to gCNV model - will execute analysis in CASE MODE.
       #
       # Example of precomputed model:
       # - library: "Agilent SureSelect Human All Exon V6"  # Library name
       #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
       #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
-      precomputed_model_paths: []  # REQUIRED
-
       # Path to BED file with uniquely mappable regions.
       path_uniquely_mapable_bed: null  # REQUIRED
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
     melt:
       me_refs_infix: 1KGP_Hg19
       me_types:
@@ -79,10 +90,16 @@ step_config:
       - SVA
       jar_file: REQUIRED
       genes_file: add_bed_files/1KGP_Hg19/hg19.genes.bed  # adjust, e.g., Hg38/Hg38.genes.bed
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
 
     # Long-read SV calling tool configuration
     sniffles2:
       tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed  # REQUIRED
+      # Skip processing of the following libraries.  If the library is in
+      # family/pedigree then all of the family/pedigree will be skipped.
+      skip_libraries: []
 
     # Common configuration
     ignore_chroms:

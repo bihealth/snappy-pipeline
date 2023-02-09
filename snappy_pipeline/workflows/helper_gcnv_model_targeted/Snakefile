@@ -27,9 +27,21 @@ wf = HelperBuildTargetSeqGcnvModelWorkflow(
 # Rules =======================================================================
 
 
+localrules:
+    # Writing out pedigrees can be done locally
+    sv_calling_targeted_write_pedigree_run,
+
+
 rule all:
     input:
         wf.get_result_files(),
+
+
+rule build_gcnv_model_write_pedigree_run:
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
 
 rule build_gcnv_model_preprocess_intervals:
