@@ -34,7 +34,7 @@ class Delly2StepPart(
         time="1-00:00:00",
         memory="4G",
     )
-    _normal_resource_usage = ResourceUsage(threads=1, time="2-00:00:00", memory="8G")
+    _normal_resource_usage = ResourceUsage(threads=1, time="2-00:00:00", memory="16G")
     resource_usage_dict = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,
