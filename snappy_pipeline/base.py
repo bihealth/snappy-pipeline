@@ -20,6 +20,10 @@ except ImportError:
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
+class SkipLibraryWarning(UserWarning):
+    """Raised when libraries are skipped."""
+
+
 class InvalidConfiguration(Exception):
     """Raised on invalid configuration"""
 

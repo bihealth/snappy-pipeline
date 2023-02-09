@@ -63,6 +63,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_backgroun
 from matplotlib.cbook import flatten
 from snakemake.io import Wildcards, expand
 
+from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import DictQuery, dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -73,6 +74,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.common import SnakemakeDict, SnakemakeDictItemsGenerator
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
+from snappy_pipeline.workflows.common.gcnv.gcnv_common import InconsistentLibraryKitsWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
 from snappy_pipeline.workflows.variant_calling import (
@@ -210,10 +212,6 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
             "index_ngs_library": list(index_ngs_libraries.keys()),
             "mapper": [self.parent.config["tools_ngs_mapping"][0]],
         }
-        # if action == "annotate":
-        #     kwargs["var_caller"] = self.parent.config["tools_variant_calling"]
-        # elif action == "annotate_svs" and self.parent.config["path_sv_calling_targeted"]:
-        #     kwargs["sv_caller"] = self.parent.config["tools_sv_calling_targeted"]
         for path_tpl in path_tpls:
             yield from expand(path_tpl, **kwargs)
 
@@ -311,11 +309,28 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         if self.parent.config["path_sv_calling_targeted"]:
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
             sv_callers = self.parent.config["tools_sv_calling_targeted"]
-        elif self.parent.config["sv_calling_wgs"]:
+            skip_libraries = {
+                sv_caller: self.parent.w_config["step_config"]["sv_calling_targeted"]
+                .get(sv_caller, {})
+                .get("skip_libraries", [])
+                for sv_caller in sv_callers
+            }
+        elif self.parent.config["path_sv_calling_wgs"]:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
-            sv_callers = self.parent.config["tools_sv_calling_wgs"]
+            sv_callers = self.parent.config["tools_sv_calling_wgs"]["dna"]
+            skip_libraries = {
+                sv_caller: self.parent.w_config["step_config"]["sv_calling_wgs"]
+                .get(sv_caller, {})
+                .get("skip_libraries", [])
+                for sv_caller in sv_callers
+            }
         else:
             raise RuntimeError("Neither targeted nor WGS SV calling configured")
+
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        library_names = [
+            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+        ]
 
         path = (
             "output/{mapper}.{sv_caller}.{index_ngs_library}/"
@@ -324,6 +339,30 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
 
         vcfs = []
         for sv_caller in sv_callers:
+            if any(map(skip_libraries[sv_caller].__contains__, library_names)):
+                msg = (
+                    f"Found libraries to skip in family {library_names}.  All samples will be skipped "
+                    f"for {sv_caller}."
+                )
+                warnings.warn(SkipLibraryWarning(msg))
+                continue
+
+            if sv_caller == "gcnv":
+                library_kits = [
+                    self.parent.ngs_library_to_kit.get(library_name, "__default__")
+                    for library_name in library_names
+                ]
+                if len(set(library_kits)) != 1:
+                    names_kits = list(zip(library_names, library_kits))
+                    msg = (
+                        "Found inconsistent library kits (more than one kit!) for pedigree with "
+                        f"index {wildcards.index_ngs_library}.  The library name/kit pairs are "
+                        f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
+                        "skipped for gcnv calls)."
+                    )
+                    warnings.warn(InconsistentLibraryKitsWarning(msg))
+                    continue
+
             vcfs.append(
                 sv_calling(path).format(
                     mapper=wildcards.mapper,
@@ -332,6 +371,20 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
                 )
             )
         yield "vcf", vcfs
+
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        library_names = [
+            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+        ]
+        path_vcf_cov = (
+            "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
+        )
+        cov_vcfs = [
+            ngs_mapping(path_vcf_cov.format(mapper=wildcards.mapper, library_name=library_name))
+            for library_name in library_names
+        ]
+        yield "vcf_cov", cov_vcfs
 
     @dictify
     def _get_output_files_annotate_svs(self):
@@ -353,6 +406,9 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
             re.sub(r"^work/", "output/", work_path)
             for work_path in chain(work_paths.values(), self.get_log_file("annotate_svs").values())
         ]
+
+    #: Alias the get params function.
+    _get_params_annotate_svs = _get_params_annotate
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
@@ -457,7 +513,7 @@ class VarfishExportWorkflow(BaseStep):
                 "sv_calling_targeted", self.config["path_sv_calling_targeted"]
             )
         if self.config["path_sv_calling_wgs"]:
-            self.register_sub_workflow("sv_calling_targeted", self.config["path_sv_calling_wgs"])
+            self.register_sub_workflow("sv_calling_wgs", self.config["path_sv_calling_wgs"])
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here

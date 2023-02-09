@@ -4,6 +4,9 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+# Optionally get path to coverage VCF file.
+coverage_vcf = " ".join(getattr(snakemake.input, "vcf_cov", []))
+
 # Get shortcut to configuration of varfish_export step
 step_name = snakemake.params.args["step_name"]
 export_config = snakemake.config["step_config"][step_name]
@@ -99,6 +102,12 @@ varfish-annotator \
     -XX:+UseG1GC \
     \
     --release {export_config[release]} \
+    \
+    $(if [[ "{coverage_vcf}" != "" ]]; then \
+        for path in {coverage_vcf}; do \
+            echo --coverage-vcf $path; \
+        done; \
+    fi) \
     \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \

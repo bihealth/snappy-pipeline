@@ -83,8 +83,8 @@ rule varfish_export_varfish_annotator_annotate_svs:
         tmpdir=wf.get_resource("varfish_annotator", "annotate_svs", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator", "annotate_svs"),
-    # params:
-    #     **{"args": wf.get_params("varfish_annotator", "annotate_svs")},
+    params:
+        **{"args": wf.get_params("varfish_annotator", "annotate_svs")},
     wrapper:
         wf.wrapper_path("varfish_annotator/annotate_svs")
 
