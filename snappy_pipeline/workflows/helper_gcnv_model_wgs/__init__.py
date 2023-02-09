@@ -231,7 +231,12 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WritePedigreeStepPart,BuildGcnvWgsModelStepPart,))
+        self.register_sub_step_classes(
+            (
+                WritePedigreeStepPart,
+                BuildGcnvWgsModelStepPart,
+            )
+        )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
