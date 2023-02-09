@@ -48,7 +48,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
@@ -57,9 +57,9 @@ workdir=$basedir/work
 outdir=$basedir/out
 
 # Ensure the working directory is removed, configManta.py will bail out if it already exists
-#trap "rm -rf \"$workdir\"" EXIT
+trap "rm -rf \"$workdir\"" EXIT
 # Clear out $outdir, there may be some old files remaining that are not governed by Snakemake
-#rm -rf $outdir/*
+rm -rf $outdir/* $workdir/*
 
 configManta.py \
     --retainTempFiles \
@@ -71,12 +71,12 @@ configManta.py \
 perl -p -i -e 's/isEmail = .*/isEmail = False/g' $workdir/runWorkflow.py
 
 python2 $workdir/runWorkflow.py \
-    --jobs 16
+    --jobs {snakemake.threads}
 
 cp -ra $workdir/results $outdir
-#rm -rf $workdir
+rm -rf $workdir
 
-sleep 1min  # for good measure
+sleep 1m  # for good measure
 
 pushd $outdir
 tar czf results.tar.gz results
