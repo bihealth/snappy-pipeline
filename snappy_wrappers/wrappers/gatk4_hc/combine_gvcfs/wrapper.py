@@ -127,6 +127,7 @@ bcftools concat \
     /dev/stdin \
 | bcftools norm \
     -d exact \
+    -c ws \
     -f {snakemake.config[static_data_config][reference][path]} \
     -O z \
     -o {snakemake.output.gvcf}
