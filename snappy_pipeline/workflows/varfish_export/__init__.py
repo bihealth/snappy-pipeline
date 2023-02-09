@@ -310,14 +310,18 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
             sv_callers = self.parent.config["tools_sv_calling_targeted"]
             skip_libraries = {
-                sv_caller: self.parent.w_config["step_config"]["sv_calling_targeted"].get(sv_caller, {}).get("skip_libraries", [])
+                sv_caller: self.parent.w_config["step_config"]["sv_calling_targeted"]
+                .get(sv_caller, {})
+                .get("skip_libraries", [])
                 for sv_caller in sv_callers
             }
         elif self.parent.config["path_sv_calling_wgs"]:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
             sv_callers = self.parent.config["tools_sv_calling_wgs"]["dna"]
             skip_libraries = {
-                sv_caller: self.parent.w_config["step_config"]["sv_calling_wgs"].get(sv_caller, {}).get("skip_libraries", [])
+                sv_caller: self.parent.w_config["step_config"]["sv_calling_wgs"]
+                .get(sv_caller, {})
+                .get("skip_libraries", [])
                 for sv_caller in sv_callers
             }
         else:
@@ -337,14 +341,17 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         for sv_caller in sv_callers:
             if any(map(skip_libraries[sv_caller].__contains__, library_names)):
                 msg = (
-                   f"Found libraries to skip in family {library_names}.  All samples will be skipped "
-                   f"for {sv_caller}."
+                    f"Found libraries to skip in family {library_names}.  All samples will be skipped "
+                    f"for {sv_caller}."
                 )
                 warnings.warn(SkipLibraryWarning(msg))
                 continue
 
-            if sv_caller == 'gcnv':
-                library_kits = [self.parent.ngs_library_to_kit.get(library_name, '__default__') for library_name in library_names]
+            if sv_caller == "gcnv":
+                library_kits = [
+                    self.parent.ngs_library_to_kit.get(library_name, "__default__")
+                    for library_name in library_names
+                ]
                 if len(set(library_kits)) != 1:
                     names_kits = list(zip(library_names, library_kits))
                     msg = (
