@@ -43,7 +43,7 @@ class MeltStepPart(
     _resource_usage = ResourceUsage(
         threads=1,
         time="1-00:00:00",
-        memory="6G",
+        memory="12G",
     )
     resource_usage_dict = {
         "preprocess": _resource_usage,
