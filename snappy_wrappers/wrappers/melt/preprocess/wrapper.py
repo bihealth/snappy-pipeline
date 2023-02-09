@@ -17,7 +17,7 @@ ln -sr {snakemake.input.bai} {snakemake.output.orig_bai}
 
 JAR={melt_config[jar_file]}
 
-java -Xmx4G -jar $JAR \
+java -Xmx8G -jar $JAR \
     Preprocess \
     -bamfile {snakemake.output.orig_bam} \
     -h {snakemake.config[static_data_config][reference][path]}

@@ -16,7 +16,7 @@ JAR={melt_config[jar_file]}
 ME_REFS={melt_config[me_refs_path]}
 ME_INFIX={melt_config[me_refs_infix]}
 
-java -Xmx6G -jar $JAR \
+java -Xmx8G -jar $JAR \
     Genotype \
     -h {snakemake.config[static_data_config][reference][path]} \
     -bamfile {snakemake.input.bam} \
