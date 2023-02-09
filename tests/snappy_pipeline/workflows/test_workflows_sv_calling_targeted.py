@@ -366,6 +366,7 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
     high_resource_actions = (
         "call_cnvs",
         "post_germline_calls",
+        "joint_germline_cnv_segmentation",
     )
     all_actions = sv_calling_targeted_workflow.substep_getattr("gcnv", "actions")
     default_actions = [action for action in all_actions if action not in high_resource_actions]
