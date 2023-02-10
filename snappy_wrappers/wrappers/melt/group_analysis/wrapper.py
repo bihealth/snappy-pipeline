@@ -16,7 +16,7 @@ JAR={melt_config[jar_file]}
 ME_REFS={melt_config[me_refs_path]}
 ME_INFIX={melt_config[me_refs_infix]}
 
-java -jar -Xmx8G -jar $JAR \
+java -jar -Xmx13G -jar $JAR \
     GroupAnalysis \
     -h {snakemake.config[static_data_config][reference][path]} \
     -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \

@@ -17,7 +17,7 @@ JAR={melt_config[jar_file]}
 ME_REFS={melt_config[me_refs_path]}
 ME_INFIX={melt_config[me_refs_infix]}
 
-java -Xmx8G -jar $JAR \
+java -Xmx13G -jar $JAR \
     IndivAnalysis \
     -b hs37d5/NC_007605 \
     {melt_arg_exome} \
