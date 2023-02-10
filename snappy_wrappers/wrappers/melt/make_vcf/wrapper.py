@@ -22,7 +22,7 @@ ls $genotype_dir/*.{snakemake.wildcards.me_type}.tsv \
 > {snakemake.output.list_txt}
 
 # TODO: allowing 100% no-call wise?
-java -Xmx8G -jar $JAR \
+java -Xmx13G -jar $JAR \
     MakeVCF \
     -genotypingdir $genotype_dir \
     -h {snakemake.config[static_data_config][reference][path]} \
