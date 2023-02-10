@@ -16,48 +16,55 @@ export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
-# TODO: add through shell.prefix
-export TMPDIR=/fast/users/$USER/scratch/tmp
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-mkdir -p $TMPDIR/out
+# Setup auto-cleaned tmpdir
+tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
 
-out_base=$TMPDIR/out/$(basename {snakemake.output.vcf} .vcf.gz)
+vcf=$(basename --suffix=.gz {snakemake.output.vcf})
 
 gatk --java-options "-Xmx6g" Mutect2 \
-    --tmp-dir ${{TMPDIR}} \
+    --tmp-dir ${{tmpdir}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
-    --input {snakemake.input} \
+    --input {snakemake.input.normal_bam} \
     --max-mnp-distance 0 \
-    --output ${{out_base}}.vcf \
+    --output $tmpdir/$vcf \
     $(if [[ -n "{snakemake.params.args[intervals]}" ]]; then
         for itv in "{snakemake.params.args[intervals]}"; do \
             echo -n "--intervals $itv "; \
         done; \
     fi)
 
-bgzip ${{out_base}}.vcf
+bgzip $tmpdir/$vcf
+tabix $tmpdir/$vcf.gz
 
-gatk IndexFeatureFile --input ${{out_base}}.vcf.gz
+pushd $tmpdir
+md5sum $vcf.gz > $vcf.gz.md5
+md5sum $vcf.gz.tbi > $vcf.gz.tbi.md5
+popd
 
-pushd $TMPDIR && \
-    for f in ${{out_base}}.*; do \
-        md5sum $f >$f.md5; \
-    done && \
-    popd
+mv $tmpdir/$vcf.gz $tmpdir/$vcf.gz.md5 $tmpdir/$vcf.gz.tbi $tmpdir/$vcf.gz.tbi.md5 $(dirname {snakemake.output.vcf})
+"""
+)
 
-mv ${{out_base}}.* $(dirname {snakemake.output.vcf})
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

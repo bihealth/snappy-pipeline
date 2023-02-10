@@ -7,12 +7,9 @@ from snakemake import shell
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.config["static_data_config"]["reference"]["path"]
-germline_resource = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
-    "germline_resource"
-]
-panel_of_normals = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
-    "panel_of_normals"
-]
+config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
+
+extra_arguments = " ".join(config["extra_arguments"])
 
 shell.executable("/bin/bash")
 
@@ -24,25 +21,28 @@ set -x
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
-# TODO: add through shell.prefix
-export TMPDIR=/fast/users/$USER/scratch/tmp
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+# Setup auto-cleaned tmpdir
+export tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
 mkdir -p $TMPDIR/out
 
-out_base=$TMPDIR/out/$(basename {snakemake.output.raw} .vcf.gz)
+out_base=$tmpdir/out/$(basename {snakemake.output.raw} .vcf.gz)
 
 # Add intervals if required
 intervals=""
@@ -54,23 +54,22 @@ then
     done
 fi
 
-# Add panel of normals if required
-pon=""
-if [[ "X{panel_of_normals}" != "X" ]]
-then
-    pon=" --panel-of-normals {panel_of_normals}"
-fi
-
 gatk Mutect2 \
-    --tmp-dir $TMPDIR \
+    --tmp-dir $tmpdir \
     --input {snakemake.input.normal_bam} \
     --input {snakemake.input.tumor_bam} \
     --normal "{snakemake.params.normal_lib_name}" \
     --reference {reference} \
-    --germline-resource {germline_resource} \
-    --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \
     --output $out_base.vcf \
-    $intervals $pon
+    --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \
+    $(if [[ -n "{config[germline_resource]}" ]]; then \
+        echo --germline-resource {config[germline_resource]}
+    fi) \
+    $(if [[ -n "{config[panel_of_normals]}" ]]; then \
+        echo --panel-of-normals {config[panel_of_normals]}
+    fi) \
+    $intervals \
+    {extra_arguments}
 
 rm -f $out_base.vcf.idx
 
@@ -83,14 +82,20 @@ dir_base=$(dirname ${{out_base}})
 
 tar -zcvf ${{out_base}}.f1r2_tar.tar.gz --directory ${{dir_base}} ${{file_base}}.f1r2.tar.gz
 
-pushd $TMPDIR && \
-    for f in $out_base.*; do \
-        md5sum $f >$f.md5; \
-    done && \
-    popd
+pushd $tmpdir
+for f in $out_base.*; do
+    md5sum $f >$f.md5
+done
+popd
 
 mv $out_base.* $(dirname {snakemake.output.raw})
-# d=$(dirname {snakemake.output.raw})
-# cp /fast/scratch/users/blance_c/tmp/tmpqd1wusadsomatic_variant_calling_mutect2/$d/* $(dirname {snakemake.output.raw})
 """
 )
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+"""
+)
+
