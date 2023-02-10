@@ -98,4 +98,3 @@ shell(
 md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
-

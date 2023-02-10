@@ -31,15 +31,17 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
-# TODO: add through shell.prefix
-export TMPDIR=/fast/users/$USER/scratch/tmp
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-mkdir -p $TMPDIR/out
+# Setup auto-cleaned tmpdir
+export tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
 
-out_base=$TMPDIR/out/$(basename {snakemake.output.pileup} .pileup)
+out_base=$tmpdir/$(basename {snakemake.output.pileup} .pileup)
 
 gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
     --input {snakemake.input.bam} \
@@ -48,12 +50,19 @@ gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
     --intervals {common_variants} \
     --output $out_base.pileup
 
-pushd $TMPDIR && \
+pushd $tmpdir && \
     for f in $out_base.*; do \
         md5sum $f >$f.md5; \
     done && \
     popd
 
 mv $out_base.* $(dirname {snakemake.output.pileup})
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
