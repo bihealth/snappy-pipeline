@@ -91,8 +91,7 @@ if config["step_config"]["somatic_variant_calling"]["mutect2"]["common_variants"
             normal_lib_name=wf.substep_getattr("mutect2", "get_normal_lib_name"),
         wrapper:
             wf.wrapper_path("mutect2/pileup")
-    
-    
+
     rule somatic_variant_calling_mutect2_pileup_tumor:
         input:
             unpack(wf.get_input_files("mutect2", "pileup_tumor")),
@@ -108,8 +107,7 @@ if config["step_config"]["somatic_variant_calling"]["mutect2"]["common_variants"
             **wf.get_log_file("mutect2", "pileup_tumor"),
         wrapper:
             wf.wrapper_path("mutect2/pileup")
-    
-    
+
     rule somatic_variant_calling_mutect2_contamination:
         input:
             unpack(wf.get_input_files("mutect2", "contamination")),
@@ -164,9 +162,8 @@ rule somatic_variant_calling_mutect2_filter:
         tumor_lib_name=wf.substep_getattr("mutect2", "get_tumor_lib_name"),
     wrapper:
         wf.wrapper_path("mutect2/filter")
-
-
 # Run Scalpel -----------------------------------------------------------------
+
 
 
 rule somatic_variant_calling_scalpel_run:
