@@ -40,9 +40,8 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 # Setup auto-cleaned tmpdir
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
-mkdir -p $TMPDIR/out
 
-out_base=$tmpdir/out/$(basename {snakemake.output.raw} .vcf.gz)
+out_base=$tmpdir/$(basename {snakemake.output.raw} .vcf.gz)
 
 # Add intervals if required
 intervals=""
