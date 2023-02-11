@@ -1085,3 +1085,429 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
             ).format(**vals).lstrip()
+
+
+class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
+    """Base class for parallel wrapper class
+
+    Extends ParalleleBaseWrapper for:
+    - Increase of resource usage in case of job failure
+    - Multiple output files
+    """
+
+    merge_block_size = 1000
+
+    def __init__(self, snakemake):
+        super().__init__(snakemake)
+
+    def get_all_output(self):
+        """Return dict with all output"""
+        return {
+            key: os.path.join(self.main_cwd, relative_path)
+            for key, relative_path in dict(self.snakemake.output).items()
+        }
+
+    def get_all_log(self):
+        """Return dict with all log"""
+        return {
+            key: os.path.join(self.main_cwd, relative_path)
+            for key, relative_path in dict(self.snakemake.log).items()
+        }
+
+    def allow_resources_increase(self):
+        """Returns true if chunks restarted with increased resources upon fail"""
+        raise NotImplementedError("Override me!")
+
+    def merge_code_level_one(self):
+        """Code to merge all chunk outputs & logs at level one"""
+        raise NotImplementedError("Override me!")
+
+    def merge_code_final(self):
+        """Code to merge all chunk or level one merge outputs & logs"""
+        raise NotImplementedError("Override me!")
+
+    def construct_preamble(self):
+        """Return a preamble that redefines resource_chunk_{threads,memory} to
+        define functions as "scaling up" with the number of attempts.
+        """
+        return textwrap.dedent(
+            "\n".join(
+                ParallelMutect2BaseWrapper._construct_preamble(self.allow_resources_increase())
+            ).format(
+                all_output=self.get_all_output(),
+                chunk_resources_threads=repr(self.job_resources.threads),
+                chunk_resources_time=repr(self.job_resources.time),
+                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_partition=repr(self.job_resources.partition),
+                merge_resources_threads=repr(self.merge_resources.threads),
+                merge_resources_time=repr(self.merge_resources.time),
+                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_partition=repr(self.merge_resources.partition),
+            )
+        )
+
+    @classmethod
+    def _construct_preamble(cls, allow_resources_increase):
+        yield r"""
+            shell.executable("/bin/bash")
+            shell.prefix("set -ex;")
+
+            configfile: 'config.json'
+
+            localrules: all
+        """
+
+        if allow_resources_increase:
+            yield r"""
+            def multiply_time(day_time_str, factor):
+                # Check if time contains day, ex: '1-00:00:00'
+                if "-" in day_time_str:
+                    arr_ = day_time_str.split("-")
+                    days = int(arr_[0])
+                    time_str = arr_[1]
+                else:
+                    days = 0
+                    time_str = day_time_str
+
+                # Process based on time structure
+                arr_ = time_str.split(":")
+                if time_str.count(":") == 2: # hours:minutes:seconds
+                    seconds = int(arr_[0]) * 60 * 60 + int(arr_[1]) * 60 + int(arr_[2])
+                elif time_str.count(":") == 1: # minutes:seconds
+                    seconds = int(arr_[0]) * 60 + int(arr_[1])
+                elif time_str.count(":") == 0: # minutes
+                    seconds = int(time_str) * 60
+                else:
+                    raise ValueError(f"Invalid time: {{day_time_str}}")
+                # Add days to second
+                seconds += days * 86400
+
+                # Apply factor
+                seconds = int(seconds * factor)
+
+                # Normalise time
+                (norm_days, remainder) = divmod(seconds, 86400)
+                (hours, remainder) = divmod(remainder, 3600)
+                (minutes, seconds) = divmod(remainder, 60)
+
+                # Fill string - example hour '7' -> '07'
+                h_str = str(hours).zfill(2)
+                m_str = str(minutes).zfill(2)
+                s_str = str(seconds).zfill(2)
+
+                return "%d-%s:%s:%s" % (norm_days, h_str, m_str, s_str)
+
+
+            def multiply_memory(memory_str, factor):
+                memory_mb = None
+                suffixes = (
+                    ("k", 1e-3),
+                    ("M", 1),
+                    ("G", 1e3),
+                    ("T", 1e6),
+                )
+                for (suffix, mult) in suffixes:
+                    if memory_str.endswith(suffix):
+                        memory_mb = float(memory_str[:-1]) * mult
+                        break
+                # No match, assume no suffix int
+                if not memory_mb:
+                    memory_mb = float(memory_str)
+                return int(memory_mb * factor)
+            """
+
+        yield r"""
+            def resource_chunk_threads(wildcards):
+                '''Return the number of threads to use for running one chunk.'''
+                return {chunk_resources_threads}
+
+            def resource_chunk_partition(wildcards):
+                '''Return the partition to use for running one chunk.'''
+                return {chunk_resources_partition}
+
+            def resource_merge_threads(wildcards):
+                '''Return the number of threads to use for running merging.'''
+                return {merge_resources_threads}
+
+            def resource_merge_memory(wildcards):
+                '''Return the memory to use for running merging.'''
+                return {merge_resources_memory}
+
+            def resource_merge_time(wildcards):
+                '''Return the time to use for running merging.'''
+                return {merge_resources_time}
+
+            def resource_merge_partition(wildcards):
+                '''Return the partition to use for running merging.'''
+                return {merge_resources_partition}
+        """
+
+        if allow_resources_increase:
+            yield r"""
+            def resource_chunk_memory(wildcards, attempt):
+                '''Return the memory to use for running one chunk.'''
+                return multiply_memory({chunk_resources_memory}, attempt)
+
+            def resource_chunk_time(wildcards, attempt):
+                '''Return the time to use for running one chunk.'''
+                return multiply_time({chunk_resources_time}, attempt)
+            """
+        else:
+            yield r"""
+            def resource_chunk_memory(wildcards):
+                '''Return the memory to use for running one chunk.'''
+                return {chunk_resources_memory}
+
+            def resource_chunk_time(wildcards):
+                '''Return the time to use for running one chunk.'''
+                return {chunk_resources_time})
+            """
+
+        yield r"""
+            rule all:
+                input: **{all_output}
+        """
+
+    def construct_parallel_rules(self):
+        """Construct the rules for parallel processing to generate."""
+        for jobno, region in enumerate(self.get_regions()):
+            params = dict(self.snakemake.params)
+            params.setdefault("args", {}).update({"intervals": [region.human_readable()]})
+            output = {
+                key: "job_out.{jobno}.d/out/tmp_{jobno}.{fn}".format(
+                    jobno=jobno, fn=os.path.basename(fn)
+                )
+                for key, fn in dict(self.snakemake.output).items()
+            }
+            log = {
+                key: "job_out.{jobno}.d/log/tmp_{jobno}.{fn}".format(
+                    jobno=jobno, fn=os.path.basename(fn)
+                )
+                for key, fn in dict(self.snakemake.log).items()
+            }
+            vals = {
+                "input": repr(dict(self.snakemake.input)),
+                "jobno": jobno,
+                "params": repr(params),
+                "output": repr(output),
+                "log": repr(log),
+                "wrapper_prefix": "file://" + self.wrapper_base_dir,
+                "inner_wrapper": self.inner_wrapper,
+            }
+            yield textwrap.dedent(
+                r"""
+            rule chunk_{jobno}:
+                input:
+                    **{input}
+                output:
+                    **{output}
+                log:
+                    **{log}
+                threads: resource_chunk_threads
+                resources:
+                    time=resource_chunk_time,
+                    memory=resource_chunk_memory,
+                    partition=resource_chunk_partition,
+                params:
+                    **{params}
+                wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
+        """
+            ).format(**vals).lstrip()
+
+    def construct_merge_rule(self):
+        """Join the overall result files.
+
+        The aim of this class is to enable writing wrappers agnostic of parallelisation.
+        The wrappers should only test if there is a `snakemake.params[args][intervals]`,
+        and restrict the computation to those intervals when present.
+        Otherwise, the wrapper should generate output & logs regardless of parallelisation.
+
+        When the user's defined interval length is very small, the number of parallel
+        chunks is very large. When it exceeds `merge_block_size`, the merging is done
+        is two passes: merging blocks of `merge_block_size` chunks, and then merging
+        the level one blocks just merged to generate the final output.
+
+        The output files in `snakemake.output` are used to generate the output in all
+        chunk rules. This is also used to generate input for merge rules (level one & final).
+        The log files of each chunk are put in a tar file at each merging step, to ensure
+        that the complete log of each chunk is kept.
+        TODO: The tr file of the complete log is generated in `work`, but it is not linked
+        to `output`, as for the other files. It means that an automatic upload of complete
+        logs to SODAR is not yet possible, if the upload is based on the contents of òutput`.
+        TODO: This blurb should be expanded in moved to a developer's documentation.
+        """
+        # Extract all outputs from snakemake object
+        final_input = {}
+        merge_rules = []
+        chunk_logs = None
+        outputs = dict(self.snakemake.output)
+
+        # Distinguish cases of more than two levels, two levels, and one levels for merging.
+        n_jobs = len(self.get_regions())
+        if n_jobs > self.merge_block_size * self.merge_block_size:
+            # Too many files (>1M with merge_block_size of 1k)
+            raise Exception("Number of output file requires more than two mergin steps!")
+        elif n_jobs > self.merge_block_size:
+            # We need two merge passes.
+            # Find the number of level one merge jobs
+            n_merge = (n_jobs + self.merge_block_size - 1) // self.merge_block_size
+            # Loop creating level one merge jobs
+            final_input = {key: [] for key in outputs.keys()}
+            for i_merge in range(n_merge):
+                # Create level one merge rule & append it to list
+                merge_input, merge_output, merge_log = self._prepare_level_one_merge(
+                    i_merge, n_jobs
+                )
+                merge_rules.append(
+                    self._construct_level_one_merge_rule(
+                        i_merge,
+                        merge_input,
+                        merge_output,
+                        merge_log,
+                        "merge_out.{jobno}.d/log/merge.tar.gz".format(jobno=i_merge),
+                    )
+                )
+                for key in final_input.keys():
+                    final_input[key].append(merge_output[key])
+            # Create the list of all merge level 1 logs
+            chunk_logs = [
+                "merge_out.{jobno}.d/log/*".format(jobno=i_merge) for i_merge in range(n_merge)
+            ]
+        else:
+            # We can do with one merge pass, all chunks output as final merge input.
+            for key, fn in outputs.items():
+                final_input[key] = [
+                    "job_out.{jobno}.d/out/tmp_{jobno}.{fn}".format(
+                        jobno=i_job, fn=os.path.basename(fn)
+                    )
+                    for i_job in range(n_jobs)
+                ]
+            chunk_logs = ["job_out.{jobno}.d/log/*".format(jobno=i_job) for i_job in range(n_jobs)]
+
+        # Create final merge rule & append to list
+        merge_rules.append(
+            self._construct_final_merge_rule(
+                final_input,
+                outputs,
+                chunk_logs,
+                os.path.join(self.main_cwd, self.snakemake.log.log + ".merge.tar.gz"),
+            )
+        )
+
+        return "\n\n".join(merge_rules)
+
+    def _prepare_level_one_merge(self, i_merge, n_jobs):
+        """Create input, output & logs for a level one merge job"""
+        outputs = dict(self.snakemake.output)
+        # List of jobs in merge
+        first_job = i_merge * self.merge_block_size
+        last_job = (i_merge + 1) * self.merge_block_size
+        if last_job > n_jobs:
+            last_job = n_jobs
+
+        # Collect all chunks outputs as input for this merge
+        merge_input = {}
+        for key, fn in outputs.items():
+            merge_input[key] = [
+                "job_out.{jobno}.d/out/tmp_{jobno}.{fn}".format(
+                    jobno=i_job, fn=os.path.basename(fn)
+                )
+                for i_job in range(first_job, last_job)
+            ]
+
+        # Create merge outputs & logs
+        merge_output = {}
+        for key, fn in outputs.items():
+            path = "merge_out.{jobno}.d/out/merge_{jobno}.{fn}".format(
+                jobno=i_merge, fn=os.path.basename(fn)
+            )
+            merge_output[key] = path
+
+        merge_log = [
+            "job_out.{jobno}.d/log/*".format(jobno=i_job) for i_job in range(first_job, last_job)
+        ]
+
+        return (merge_input, merge_output, merge_log)
+
+    def _construct_level_one_merge_rule(
+        self, chunk_no, merge_input, merge_output, chunk_logs, merge_log
+    ):
+        return (
+            textwrap.dedent(
+                r"""
+            rule merge_chunk_{chunk_no}:
+                input: **{chunk_input}
+                output: **{chunk_output}
+                threads: resource_merge_threads
+                resources:
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
+                shell:
+                    r'''
+                    set -euo pipefail  # Unofficial Bash strict mode
+
+                    # Merge chunks output ------------------------------------------
+                    {merge_code}
+
+                    # Save chunk logs in tarball -----------------------------------
+                    mkdir -p $(dirname {merge_log})
+                    tar -zcvf {merge_log} {chunk_logs}
+                    pushd $(dirname {merge_log})
+                    f=$(basename {merge_log})
+                    md5sum $f > $f.md5
+                    popd
+                    '''
+        """
+            )
+            .lstrip()
+            .format(
+                chunk_no=chunk_no,
+                chunk_input=repr(merge_input),
+                chunk_output=repr(merge_output),
+                merge_code=self.merge_code_level_one(),
+                chunk_logs=" ".join(chunk_logs),
+                merge_log=merge_log,
+            )
+        )
+
+    def _construct_final_merge_rule(self, merge_input, merge_output, chunk_logs, merge_log):
+        return (
+            textwrap.dedent(
+                r"""
+            rule merge_all:
+                input: **{all_input}
+                output: **{all_output}
+                log: **{all_log}
+                threads: resource_merge_threads
+                resources:
+                    time=resource_merge_time,
+                    memory=resource_merge_memory,
+                    partition=resource_merge_partition,
+                shell:
+                    r'''
+                    set -euo pipefail  # Unofficial Bash strict mode
+
+                    # Merge chunks output ------------------------------------------
+                    {merge_code}
+
+                    # Save chunk logs in tarball -----------------------------------
+                    mkdir -p $(dirname {merge_log})
+                    tar -zcvf {merge_log} {chunk_logs}
+                    pushd $(dirname {merge_log})
+                    f=$(basename {merge_log})
+                    md5sum $f > $f.md5
+                    popd
+                    '''
+                """
+            )
+            .lstrip()
+            .format(
+                all_input=repr(merge_input),
+                all_output=self.get_all_output(),
+                all_log=self.get_all_log(),
+                merge_code=self.merge_code_final(),
+                chunk_logs=" ".join(chunk_logs),
+                merge_log=merge_log,
+            )
+        )

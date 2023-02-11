@@ -2,6 +2,7 @@
 """Code for testing mutect2_par/run wrapper"""
 import importlib.machinery
 import os
+import re
 from pathlib import Path
 import tempfile
 import textwrap
@@ -85,10 +86,10 @@ def minimal_config():
 def snakemake_output_dict():
     """Returns dictionary that defined snakemake.output"""
     return {
-        "vcf": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz",
-        "vcf_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.md5",
-        "vcf_tbi": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.tbi.gz",
-        "vcf_tbi_md5": "work/{mapper}.mutect2.prepare_panel/out/{normal_library}.vcf.gz.tbi.md5",
+        "vcf": "work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz",
+        "vcf_md5": "work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5",
+        "vcf_tbi": "work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi",
+        "vcf_tbi_md5": "work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
     }
 
 
@@ -96,7 +97,7 @@ def snakemake_output_dict():
 def snakemake_obj(minimal_config, snakemake_output_dict):
     """Returns Snakemake object."""
     # Define helper variables
-    rule_name = "somatic_variant_calling_mutect2_run"
+    rule_name = "panel_of_normals_mutect2_prepare_panel"
     threads = 2
     bench_iteration = 2
     script_dir = "/work"
@@ -105,7 +106,7 @@ def snakemake_obj(minimal_config, snakemake_output_dict):
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
 
-    log_base_name = "work/{mapper}.mutect2.prepare_panel/log/{normal_library}"
+    log_base_name = "work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1"
     log_dict = {
         "conda_info": log_base_name + ".conda_info.txt",
         "conda_info_md5": log_base_name + ".conda_info.txt.md5",
@@ -179,50 +180,25 @@ def construct_preamble_module(
     return module
 
 
-def test_mutect2_wrapper_prepare_panel_construct_parallel_rules(
-    snakemake_obj, variant_caller_fake_fs, mocker
-):
-    """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
+def test_mutect2_wrapper_prepare_panel_joint_chunks(snakemake_obj, variant_caller_fake_fs, mocker):
+    """Tests ParallelMutect2Wrapper.joint_chunks()"""
     # Patch out file-system
     patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
+    # Force level_one
+    wrapper_par.merge_block_size = 3
     # Define expected
-    data_path = (Path(__file__).parent / "data/mutect2_par_prepare_panel_chunk.snakemake").resolve()
+    data_path = (Path(__file__).parent / "data/mutect2_par_prepare_panel.snakemake").resolve()
     with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
-    # Get actual and assert if `rule chunk_0` is correct
-    # Note: It is not feasible to test all chunks as the `wrapper` will be set to a local file
-    _tmp_actual = list(wrapper_par.construct_parallel_rules())[0]
-    actual = (
-        "\n".join(
-            [line for line in _tmp_actual.split("\n") if not ("wrapper" in line or line == "")]
-        )
-        + "\n"
-    )
-    assert actual == expected
-
-
-def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_fake_fs, mocker):
-    """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
-    # Patch out file-system
-    patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
-    wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
-    # Define expected
-    data_path = (
-        Path(__file__).parent / "data/mutect2_par_prepare_panel_preamble.snakemake"
-    ).resolve()
-    with open(data_path, "r", encoding="utf8") as f:
-        expected = f.read()
+    # Remove wrapper lines that contain path to script
+    remove_wrapper = re.compile(" +wrapper: [^\n]+\n")
     # Get actual and assert
-    actual = (
-        wrapper_par.construct_merge_rule()
-        .replace("{mapper}", snakemake_obj.wildcards["mapper"])
-        .replace("{normal_library}", snakemake_obj.wildcards["normal_library"])
-    )
+    actual = remove_wrapper.sub("", wrapper_par.joint_chunks())
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_multiply_time(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_multiply_time(construct_preamble_module):
     """Tests Parallel Preamble multiply_time()"""
     # Constant factor
     factor = 10
@@ -250,7 +226,7 @@ def test_mutect2_wrapper_run_preamble_multiply_time(construct_preamble_module):
         construct_preamble_module.multiply_time(day_time_str="_not_a_valid_time", factor=factor)
 
 
-def test_mutect2_wrapper_run_preamble_multiply_memory(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_multiply_memory(construct_preamble_module):
     """Tests Parallel Preamble multiply_memory()"""
     # Constant factor
     factor = 10
@@ -274,14 +250,14 @@ def test_mutect2_wrapper_run_preamble_multiply_memory(construct_preamble_module)
         assert actual == _expected, msg
 
 
-def test_mutect2_wrapper_run_preamble_resource_chunk_threads(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_chunk_threads(construct_preamble_module):
     """Tests Parallel Preamble resource_chunk_threads() - Chunks always get a single thread"""
     expected = 1
     actual = construct_preamble_module.resource_chunk_threads(wildcards=None)
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_resource_chunk_memory(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_chunk_memory(construct_preamble_module):
     """
     Tests Parallel Preamble resource_chunk_memory() - Baseline memory defined in Snakemake object
     """
@@ -302,7 +278,7 @@ def test_mutect2_wrapper_run_preamble_resource_chunk_memory(construct_preamble_m
         assert actual == _expected, msg
 
 
-def test_mutect2_wrapper_run_preamble_resource_chunk_time(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_chunk_time(construct_preamble_module):
     """
     Tests Parallel Preamble resource_chunk_time() - Baseline time defined in Snakemake object
     """
@@ -323,35 +299,35 @@ def test_mutect2_wrapper_run_preamble_resource_chunk_time(construct_preamble_mod
         assert actual == _expected, msg
 
 
-def test_mutect2_wrapper_run_preamble_resource_chunk_partition(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_chunk_partition(construct_preamble_module):
     """Tests Parallel Preamble resource_chunk_partition()"""
     expected = "medium"
     actual = construct_preamble_module.resource_chunk_partition(wildcards=None)
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_resource_merge_threads(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_merge_threads(construct_preamble_module):
     """Tests Parallel Preamble resource_merge_threads() - Merge always get a single thread"""
     expected = 1
     actual = construct_preamble_module.resource_merge_threads(wildcards=None)
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_resource_merge_memory(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_merge_memory(construct_preamble_module):
     """Tests Parallel Preamble resource_merge_memory() - Merge always get the same value"""
     expected = "8G"
     actual = construct_preamble_module.resource_merge_memory(wildcards=None)
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_resource_merge_time(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_merge_time(construct_preamble_module):
     """Tests Parallel Preamble resource_merge_time() - Merge always get the same value"""
     expected = "20:00:00"
     actual = construct_preamble_module.resource_merge_time(wildcards=None)
     assert actual == expected
 
 
-def test_mutect2_wrapper_run_preamble_resource_merge_partition(construct_preamble_module):
+def test_mutect2_wrapper_prepare_panel_preamble_resource_merge_partition(construct_preamble_module):
     """Tests Parallel Preamble resource_merge_partition()"""
     expected = "medium"
     actual = construct_preamble_module.resource_merge_partition(wildcards=None)

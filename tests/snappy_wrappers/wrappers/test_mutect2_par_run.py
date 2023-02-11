@@ -2,6 +2,7 @@
 """Code for testing mutect2_par/run wrapper"""
 import importlib.machinery
 import os
+import re
 from pathlib import Path
 import tempfile
 import textwrap
@@ -44,8 +45,8 @@ def minimal_config():
             - mutect2
             mutect2:
               panel_of_normals: ''      # Set path to panel of normals vcf if required
-              germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
-              common_variants: REQUIRED # Common germline variants for contamination estimation
+              germline_resource: ''     # Germline variants resource (same as panel of normals)
+              common_variants: ''       # Common germline variants for contamination estimation
               # Parallelization configuration
               num_cores: 2              # number of cores to use locally
               window_length: 50000000   # split input into windows of this size, each triggers a job
@@ -180,8 +181,8 @@ def construct_preamble_module(snakemake_obj, variant_caller_fake_fs, mocker):
     return module
 
 
-def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_fake_fs, mocker):
-    """Tests ParallelMutect2Wrapper.construct_merge_rule()"""
+def test_mutect2_wrapper_run_joint_chunks(snakemake_obj, variant_caller_fake_fs, mocker):
+    """Tests ParallelMutect2Wrapper.joint_chunks()"""
     # Patch out file-system
     patch_module_fs("snappy_wrappers.wrapper_parallel", variant_caller_fake_fs, mocker)
     wrapper_par = ParallelMutect2Wrapper(snakemake=snakemake_obj)
@@ -189,8 +190,10 @@ def test_mutect2_wrapper_run_construct_merge_rule(snakemake_obj, variant_caller_
     data_path = (Path(__file__).parent / "data/mutect2_par_run.snakemake").resolve()
     with open(data_path, "r", encoding="utf8") as f:
         expected = f.read()
+    # Remove wrapper lines that contain path to script
+    remove_wrapper = re.compile(" +wrapper: [^\n]+\n")
     # Get actual and assert
-    actual = wrapper_par.construct_merge_rule()
+    actual = remove_wrapper.sub("", wrapper_par.joint_chunks())
     assert actual == expected
 
 
