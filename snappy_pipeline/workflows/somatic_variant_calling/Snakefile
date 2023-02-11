@@ -162,8 +162,9 @@ rule somatic_variant_calling_mutect2_filter:
         tumor_lib_name=wf.substep_getattr("mutect2", "get_tumor_lib_name"),
     wrapper:
         wf.wrapper_path("mutect2/filter")
-# Run Scalpel -----------------------------------------------------------------
 
+
+# Run Scalpel -----------------------------------------------------------------
 
 
 rule somatic_variant_calling_scalpel_run:
