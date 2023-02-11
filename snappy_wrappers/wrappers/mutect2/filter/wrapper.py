@@ -8,6 +8,15 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 
+segments = (
+    " --tumor-segmentation {} ".format(snakemake.input.segments)
+    if "segments" in snakemake.input
+    else ""
+)
+table = (
+    " --contamination-table {} ".format(snakemake.input.table) if "table" in snakemake.input else ""
+)
+
 shell.executable("/bin/bash")
 
 shell(
@@ -71,8 +80,7 @@ zcat {snakemake.input.raw} \
 # Filter calls
 gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --reference {reference} \
-    --tumor-segmentation {snakemake.input.segments} \
-    --contamination-table {snakemake.input.table} \
+    {segments} {table} \
     --ob-priors $tmpdir/read-orientation-model.tar.gz \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
