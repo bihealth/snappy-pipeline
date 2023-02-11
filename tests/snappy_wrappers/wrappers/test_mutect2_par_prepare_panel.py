@@ -2,8 +2,8 @@
 """Code for testing mutect2_par/run wrapper"""
 import importlib.machinery
 import os
-import re
 from pathlib import Path
+import re
 import tempfile
 import textwrap
 import types
