@@ -43,8 +43,11 @@ def minimal_config():
             tools:
             - mutect
             - scalpel
+            - mutect2
             scalpel:
               path_target_regions: /path/to/target/regions.bed
+            mutect2:
+              common_variants: /path/to/common_variants.vcf
 
         data_sets:
           first_batch:
@@ -501,6 +504,7 @@ def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
         "full_vcf": base_name_out + ".full.vcf.gz",
         "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
         "tar": base_name_out + ".tar.gz",
+        "tar_md5": base_name_out + ".tar.gz.md5",
         "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
         "vcf": base_name_out + ".vcf.gz",
@@ -936,9 +940,31 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
     expected = [
         tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for ext in (
+            "vcf.gz",
+            "vcf.gz.md5",
+            "vcf.gz.tbi",
+            "vcf.gz.tbi.md5",
+            "full.vcf.gz",
+            "full.vcf.gz.md5",
+            "full.vcf.gz.tbi",
+            "full.vcf.gz.tbi.md5",
+        )
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
+        for var_caller in ("mutect", "scalpel", "mutect2")
+    ]
+    # add special cases
+    expected += [
+        tpl.format(mapper=mapper, var_caller="mutect", i=i, t=t, ext=ext)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("txt", "txt.md5", "wig", "wig.md5")
+        for mapper in ("bwa",)
+    ]
+    expected += [
+        tpl.format(mapper=mapper, var_caller="scalpel", i=i, t=t, ext=ext)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("tar.gz", "tar.gz.md5")
+        for mapper in ("bwa",)
     ]
     # add log files
     tpl = (
@@ -957,7 +983,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
             "log.md5",
         )
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
+        for var_caller in ("mutect", "scalpel", "mutect2")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_calling_workflow.get_result_files()))

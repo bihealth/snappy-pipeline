@@ -43,50 +43,50 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf ${{TMPDIR}}" EXIT
-mkdir -p ${{TMPDIR}}/out
-mkdir -p ${{TMPDIR}}/vcfs
+# Setup auto-cleaned tmpdir
+export tmpdir=$(mktemp -d)
+trap "rm -rf ${{tmpdir}}" EXIT
+mkdir -p ${{tmpdir}}/out
+mkdir -p ${{tmpdir}}/vcfs
 
-out_base=${{TMPDIR}}/out/$(basename {snakemake.output.vcf} .vcf.gz)
+out_base=${{tmpdir}}/out/$(basename {snakemake.output.vcf} .vcf.gz)
 
 vcfs=$(echo "{snakemake.input.normals}" | tr ' ' '\n')
 
 # Create a file with the list of contigs & vcf list for GenomicsDBImport
-rm -f ${{TMPDIR}}/contigs.txt
+rm -f ${{tmpdir}}/contigs.txt
 cmd=""
 for vcf in ${{vcfs}}
 do
     bcftools view -h ${{vcf}} \
         | grep "^##contig=<" \
         | sed -re "s/.*ID=([^,>]+),length=([^,>]+).*/\1:1-\2/" \
-        >> ${{TMPDIR}}/contigs_all.list
+        >> ${{tmpdir}}/contigs_all.list
     cmd="$cmd -V ${{vcf}} "
 done
-sort ${{TMPDIR}}/contigs_all.list | uniq > ${{TMPDIR}}/contigs.list
+sort ${{tmpdir}}/contigs_all.list | uniq > ${{tmpdir}}/contigs.list
 
 # Create the genomicsdb
 rm -rf pon_db
 gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
-    --tmp-dir ${{TMPDIR}} \
+    --tmp-dir ${{tmpdir}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
-    --genomicsdb-workspace-path ${{TMPDIR}}/pon_db \
-    --intervals ${{TMPDIR}}/contigs.list \
+    --genomicsdb-workspace-path ${{tmpdir}}/pon_db \
+    --intervals ${{tmpdir}}/contigs.list \
     $cmd
 
 # Create the panel of normals vcf
 gatk CreateSomaticPanelOfNormals \
-    --tmp-dir ${{TMPDIR}} \
+    --tmp-dir ${{tmpdir}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --germline-resource "{snakemake.config[step_config][panel_of_normals][mutect2][germline_resource]}" \
-    --variant gendb://${{TMPDIR}}/pon_db \
+    --variant gendb://${{tmpdir}}/pon_db \
     --output ${{out_base}}.vcf
 
 bgzip ${{out_base}}.vcf
 tabix -f ${{out_base}}.vcf.gz
 
-pushd $TMPDIR && \
+pushd $tmpdir && \
     for f in ${{out_base}}.*; do \
         md5sum $f >$f.md5; \
     done && \

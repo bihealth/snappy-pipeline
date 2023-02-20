@@ -8,6 +8,15 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 
+segments = (
+    " --tumor-segmentation {} ".format(snakemake.input.segments)
+    if "segments" in snakemake.input
+    else ""
+)
+table = (
+    " --contamination-table {} ".format(snakemake.input.table) if "table" in snakemake.input else ""
+)
+
 shell.executable("/bin/bash")
 
 shell(
@@ -18,38 +27,42 @@ set -x
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
 
-# TODO: add through shell.prefix
-export TMPDIR=/fast/users/$USER/scratch/tmp
 
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+
+# Setup auto-cleaned tmpdir
+export tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
 
 # Extract orientation stats for all chunks
-mkdir -p $TMPDIR/f1r2
-rel_path=$(realpath --relative-to=$TMPDIR/f1r2 {snakemake.input.f1r2})
-pushd $TMPDIR/f1r2
+mkdir -p $tmpdir/f1r2
+rel_path=$(realpath --relative-to=$tmpdir/f1r2 {snakemake.input.f1r2})
+pushd $tmpdir/f1r2
 tar -zxvf ${{rel_path}}
 popd
 
 # Create command line list of all f1r2 stats
-chunks=$(ls $TMPDIR/f1r2/*.tar.gz)
+chunks=$(ls $tmpdir/f1r2/*.tar.gz)
 cmd=$(echo "$chunks" | tr '\n' ' ' | sed -e "s/ *$//" | sed -e "s/ / -I /g")
 
 # Create orientation model
 gatk --java-options '-Xms4000m -Xmx8000m' LearnReadOrientationModel \
     -I $cmd \
-    -O $TMPDIR/read-orientation-model.tar.gz
+    -O $tmpdir/read-orientation-model.tar.gz
 
 # Workaround problem with bcftools merging inserting missing values (.) in MPOS
 zcat {snakemake.input.raw} \
@@ -62,16 +75,15 @@ zcat {snakemake.input.raw} \
             print $0;
         }}
     }}' \
-    > $TMPDIR/in.vcf
+    > $tmpdir/in.vcf
 
 # Filter calls
 gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --reference {reference} \
-    --tumor-segmentation {snakemake.input.segments} \
-    --contamination-table {snakemake.input.table} \
-    --ob-priors $TMPDIR/read-orientation-model.tar.gz \
+    {segments} {table} \
+    --ob-priors $tmpdir/read-orientation-model.tar.gz \
     --stats {snakemake.input.stats} \
-    --variant $TMPDIR/in.vcf \
+    --variant $tmpdir/in.vcf \
     --output {snakemake.output.full}
 
 # Index & move to final dest
@@ -91,5 +103,12 @@ md5sum $fn > $fn.md5
 fn=$(basename {snakemake.output.full_vcf_tbi})
 md5sum $fn > $fn.md5
 popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

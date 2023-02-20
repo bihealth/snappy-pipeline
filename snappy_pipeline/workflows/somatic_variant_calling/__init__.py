@@ -102,7 +102,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
-EXTS_MATCHED = {
+EXT_MATCHED = {
     "mutect": {
         "vcf": ".vcf.gz",
         "vcf_md5": ".vcf.gz.md5",
@@ -127,6 +127,7 @@ EXTS_MATCHED = {
         "full_vcf_tbi": ".full.vcf.gz.tbi",
         "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
         "tar": ".tar.gz",
+        "tar_md5": ".tar.gz.md5",
     },
     "mutect2": {
         "vcf": ".vcf.gz",
@@ -137,10 +138,6 @@ EXTS_MATCHED = {
         "full_md5": ".full.vcf.gz.md5",
         "full_vcf_tbi": ".full.vcf.gz.tbi",
         "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
-        "stats": ".vcf.stats",
-        "stats_md5": ".vcf.stats.md5",
-        "f1r2": ".f1r2_tar.tar.gz",
-        "f1r2_md5": ".f1r2_tar.tar.gz.md5",
     },
 }
 
@@ -220,8 +217,15 @@ step_config:
     # Configuration for MuTect 2
     mutect2:
       panel_of_normals: ''      # Set path to panel of normals vcf if required
-      germline_resource: REQUIRED # Germline variants resource (same as panel of normals)
-      common_variants: REQUIRED # Common germline variants for contamination estimation
+      germline_resource: ''     # Germline variants resource (same as panel of normals)
+      common_variants: ''       # Common germline variants for contamination estimation
+      extra_arguments: []       # List additional Mutect2 arguments
+                                # Each additional argument xust be in the form:
+                                # "--<argument name> <argument value>"
+                                # For example, to filter reads prior to calling & to
+                                # add annotations to the output vcf:
+                                # - "--read-filter CigarContainsNoNOperator"
+                                # - "--annotation AssemblyComplexity BaseQuality"
       # Parallelization configuration
       num_cores: 2              # number of cores to use locally
       window_length: 50000000   # split input into windows of this size, each triggers a job
@@ -440,7 +444,7 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
 
     def get_output_files(self, action):
         output_files = {}
-        for k, v in EXTS_MATCHED[self.name].items():
+        for k, v in EXT_MATCHED[self.name].items():
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
@@ -480,7 +484,7 @@ class Mutect2StepPart(MutectBaseStepPart):
     name = "mutect2"
 
     #: Class available actions
-    actions = ("run", "filter", "contamination", "pileup_normal", "pileup_tumor")
+    actions = ["run", "filter"]  # "contamination", "pileup_normal", "pileup_tumor")
 
     #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
@@ -521,6 +525,8 @@ class Mutect2StepPart(MutectBaseStepPart):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
+        if self.config[self.name]["common_variants"]:
+            self.actions.extend(["contamination", "pileup_normal", "pileup_tumor"])
 
     def get_input_files(self, action):
         """Return input function for Mutect2 rules.
@@ -563,8 +569,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
         }
 
-    @staticmethod
-    def _get_input_files_filter(wildcards):
+    def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
@@ -578,13 +583,15 @@ class Mutect2StepPart(MutectBaseStepPart):
                 **wildcards
             )
         )
-        return {
+        input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
             "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
-            "table": base_path + ".contamination.tbl",
-            "segments": base_path + ".segments.tbl",
         }
+        if "contamination" in self.actions:
+            input_files["table"] = base_path + ".contamination.tbl"
+            input_files["segments"] = base_path + ".segments.tbl"
+        return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
         """Get input files for rule ``pileup_normal``.
@@ -766,6 +773,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         somatic_ext_names = expand("full_{name}", name=EXT_NAMES)
         somatic_ext_values = expand(".full{ext}", ext=EXT_VALUES)
         result["tar"] = self.base_path_out.format(var_caller="scalpel", ext=".tar.gz")
+        result["tar_md5"] = self.base_path_out.format(var_caller="scalpel", ext=".tar.gz.md5")
         result.update(
             dict(
                 zip(
@@ -1130,25 +1138,26 @@ class SomaticVariantCallingWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         name_pattern = "{mapper}.{caller}.{tumor_library.name}"
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED),
-            ext=EXT_VALUES,
-        )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED),
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-            ),
-        )
+        for caller in set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller=caller,
+                ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller=caller,
+                ext=(
+                    ".log",
+                    ".log.md5",
+                    ".conda_info.txt",
+                    ".conda_info.txt.md5",
+                    ".conda_list.txt",
+                    ".conda_list.txt.md5",
+                ),
+            )
         # Panel of normals
         # joint calling
         name_pattern = "{mapper}.{caller}.{donor.name}"
