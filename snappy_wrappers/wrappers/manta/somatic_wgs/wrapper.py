@@ -36,7 +36,6 @@ cp -ra $workdir/results $outdir
 rm -rf $workdir
 
 pushd $outdir
-tar czf results.tar.gz results
 ln -sr results/variants/somaticSV.vcf.gz $(basename {snakemake.output.vcf})
 ln -sr results/variants/somaticSV.vcf.gz.tbi $(basename {snakemake.output.vcf_tbi})
 ln -sr results/variants/candidateSV.vcf.gz \
