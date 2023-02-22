@@ -109,8 +109,6 @@ jobs:
       - name: Install some more dependencies via pip
         # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
         run: pip install -r requirements/test.txt; pip install --ignore-installed py
-      - name: Zeigt her eure Fuesse
-        run: pip freeze
       - name: Run tests
         run: pytest
         env:
