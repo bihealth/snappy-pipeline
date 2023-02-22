@@ -224,7 +224,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         """
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
-                if not require_consistent_pedigree_kits or self._is_pedigree_good(pedigree):
+                if self._is_pedigree_good(pedigree):
                     index = pedigree.index.dna_ngs_library.name
                     donors = [
                         donor.dna_ngs_library.name
