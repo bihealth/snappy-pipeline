@@ -27,6 +27,7 @@ wf = SvCallingWgsWorkflow(workflow, config, lookup_paths, config_paths, os.getcw
 
 # Rules =======================================================================
 
+
 localrules:
     # Writing out pedigrees can be done locally
     sv_calling_wgs_write_pedigree_run,
