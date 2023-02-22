@@ -633,7 +633,13 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(sv_calling_targeted_workfl
         "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
     )
     tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
-    expected = {"tsv": tsv_list_out}
+    expected = {
+        "tsv": tsv_list_out,
+        "ped": [
+            "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+            "work/write_pedigree.P004-N1-DNA1-WGS1/out/P004-N1-DNA1-WGS1.ped",
+        ],
+    }
     # Get actual
     wildcards = Wildcards(
         fromdict={"mapper": "bwa", "library_kit": "Agilent_SureSelect_Human_All_Exon_V6"}
