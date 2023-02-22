@@ -91,6 +91,7 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
+    long_description_content_type="text/markdown",
     author="Manuel Holtgrewe",
     author_email="manuel.holtgrewe@bih-charite.de",
     url="https://github.com/bihealth/snappy-pipeline",

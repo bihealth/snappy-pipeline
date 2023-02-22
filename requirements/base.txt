@@ -9,7 +9,7 @@ fasteners==0.17.3
 
 # We're trying to keep the PyPi package up to date, you might have to install
 # from source, though.
-biomedsheets >=0.11.4
+biomedsheets >=0.11.7
 
 # Helpful for CLIs
 termcolor==1.1.0
