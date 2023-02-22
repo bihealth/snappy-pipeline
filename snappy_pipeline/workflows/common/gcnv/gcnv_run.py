@@ -258,6 +258,12 @@ class ContigPloidyMixin:
                 name_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
                 tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
         yield ext, tsvs
+        # Yield path to pedigree file
+        peds = []
+        for library_name in sorted(self.index_ngs_library_to_pedigree):
+            name_pattern = f"write_pedigree.{library_name}"
+            peds.append(f"work/{name_pattern}/out/{library_name}.ped")
+        yield "ped", peds
 
     @dictify
     def _get_output_files_contig_ploidy(self):
