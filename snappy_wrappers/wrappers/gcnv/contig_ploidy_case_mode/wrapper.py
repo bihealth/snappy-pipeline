@@ -59,7 +59,9 @@ for sample_dir in ploidy_calls.glob("SAMPLE_*"):
         line = call_lines[i]
         arr = line.split("\t")
         chrom = arr[0].lower()
-        if "x" in chrom or "y" in chrom:
+        if chrom.startswith("@") or chrom == "contig":
+            pass  # noop
+        elif "x" in chrom or "y" in chrom:
             ploidy = int(arr[1])
             if "x" in arr[0].lower():
                 if ploidy != ploidy_x[sample_sex]:
@@ -69,6 +71,11 @@ for sample_dir in ploidy_calls.glob("SAMPLE_*"):
                 if ploidy != ploidy_y[sample_sex]:
                     arr[1] = str(ploidy_y[sample_sex])
                     arr[2] = f"42.000{ploidy}"  # magic marker
+        else:
+            ploidy = int(arr[1])
+            if ploidy != 2:
+                arr[1] = "2"
+                arr[2] = f"42.000{ploidy}"  # magic marker
         call_lines[i] = "\t".join(arr)
     with path_call.open("wt") as outputf:
         for line in call_lines:
