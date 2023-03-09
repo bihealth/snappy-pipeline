@@ -6,7 +6,7 @@ import os
 from snakemake.shell import shell
 
 # Pick the target BED file to use.
-config = DictQuery(snakemake.config).get("step_config/sv_calling_targeted")
+config = DictQuery(snakemake.config).get("step_config/sv_calling_targeted/gcnv")
 for item in config["path_target_interval_list_mapping"]:
     if item["name"] == snakemake.wildcards.library_kit:
         target_interval_bed = item["path"]
