@@ -56,6 +56,7 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -73,53 +74,58 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
+#: Names of the annotator tools
+TOOLS = ("jannovar", "vep")
+
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   somatic_variant_annotation:
-    window_length: 50000000   # split input into windows of this size, each triggers a job
-    num_jobs: 100             # number of windows to process in parallel
-    use_profile: true         # use Snakemake profile for parallel processing
-    restart_times: 5          # number of times to re-launch jobs in case of failure
-    max_jobs_per_second: 10   # throttling of job creation
-    max_status_checks_per_second: 10   # throttling of status checks
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605  # herpes virus
-    - hs37d5     # GRCh37 decoy
-    - chrEBV     # Eppstein-Barr Virus
-    - 'GL*'      # problematic unplaced loci
-    - '*_decoy'  # decoy contig
-    - 'HLA-*'    # HLA genes
-    use_advanced_ped_filters: false  # whether or not to use the advanced pedigree filters flag
+    tools: ["jannovar", "vep"]
     path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
-    path_jannovar_ser: REQUIRED                # REQUIRED
-    flag_off_target: False  # REQUIRED
     tools_ngs_mapping: []      # default to those configured for ngs_mapping
     tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-    dbnsfp:  # configuration for default genome release, needs change if differing
-      col_contig: 1
-      col_pos: 2
-      columns: []
-    annotation_tracks_bed: []
-    annotation_tracks_tsv: []
-    annotation_tracks_vcf: []
+    jannovar:
+      window_length: 50000000   # split input into windows of this size, each triggers a job
+      num_jobs: 100             # number of windows to process in parallel
+      use_profile: true         # use Snakemake profile for parallel processing
+      restart_times: 5          # number of times to re-launch jobs in case of failure
+      max_jobs_per_second: 10   # throttling of job creation
+      max_status_checks_per_second: 10   # throttling of status checks
+      ignore_chroms:            # patterns of chromosome names to ignore
+      - NC_007605  # herpes virus
+      - hs37d5     # GRCh37 decoy
+      - chrEBV     # Eppstein-Barr Virus
+      - 'GL*'      # problematic unplaced loci
+      - '*_decoy'  # decoy contig
+      - 'HLA-*'    # HLA genes
+      use_advanced_ped_filters: false  # whether or not to use the advanced pedigree filters flag
+      path_jannovar_ser: REQUIRED                # REQUIRED
+      flag_off_target: False  # REQUIRED
+      dbnsfp:  # configuration for default genome release, needs change if differing
+        col_contig: 1
+        col_pos: 2
+        columns: []
+      annotation_tracks_bed: []
+      annotation_tracks_tsv: []
+      annotation_tracks_vcf: []
+    vep:
+      path_dir_cache: REQUIRED
+      species: homo_sapiens
+      assembly: GRCh38
+      cache_version: 102        # WARNING- this must match the wrapper's vep version!
+      transcript_db: ""         # Other options: merged and refseq
 """
 
 
-class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
-    """Annotate VCF file from somatic calling using "Jannovar annotate-vcf"
+class AnnotateSomaticVcfStepPart(BaseStepPart):
+    """Annotate VCF file from somatic calls
 
     .. note:
 
         The ``tumor_library`` wildcard can actually be the name of a donor!
     """
-
-    #: Step name
-    name = "jannovar"
-
-    #: Class available actions
-    actions = ("annotate_somatic_vcf",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -137,7 +143,7 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
 
     @dictify
     def get_input_files(self, action):
-        """Return path to pedigree input file"""
+        """Return path to somatic vcf input file"""
         # Validate action
         self._validate_action(action)
         tpl = (
@@ -155,9 +161,9 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         prefix = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
-        )
+            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/out/"
+            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
+        ).format(annotator=self.annotator)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, prefix + ext
@@ -169,9 +175,9 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         prefix = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/log/"
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
-        )
+            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/log/"
+            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
+        ).format(annotator=self.annotator)
 
         key_ext = (
             ("log", ".log"),
@@ -201,6 +207,19 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.name
 
+
+class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
+    """Annotate VCF file from somatic calling using "Jannovar annotate-vcf" """
+
+    #: Step name
+    name = "jannovar"
+
+    #: Annotator name to construct output paths
+    annotator = "jannovar_annotate_somatic_vcf"
+
+    #: Class available actions
+    actions = ("annotate_somatic_vcf",)
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -216,6 +235,53 @@ class JannovarAnnotateSomaticVcfStepPart(BaseStepPart):
             time="4-04:00:00",  # 4 days and 4 hours
             memory=f"{8 * 1024 * 2}M",
         )
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_variant_annotation", "jannovar", "path_jannovar_ser"),
+            "Path to serialized Jannovar database",
+        )
+
+
+class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
+    """Annotate VCF file from somatic calling using ENSEMBL's VEP"""
+
+    #: Step name
+    name = "vep"
+
+    #: Annotator name to construct output paths
+    annotator = "vep"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+        """
+        # Validate action
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="24:00:00",  # 24 hours
+            memory=f"{8 * 1024 * 2}M",
+        )
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_variant_annotation", "vep", "path_dir_cache"),
+            "Path to VEP cache",
+        )
+        if not self.config["vep"]["transcript_db"] in ("merged", "refseq", ""):
+            raise InvalidConfiguration("transcript_db must be empty, or 'merged' or 'refseq'")
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
@@ -242,7 +308,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((JannovarAnnotateSomaticVcfStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
+        )
         # Register sub workflows
         self.register_sub_workflow(
             "somatic_variant_calling", self.config["path_somatic_variant_calling"]
@@ -263,18 +331,26 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
+        annotators = list(
+            map(
+                lambda x: x.replace("jannovar", "jannovar_annotate_somatic_vcf"),
+                set(self.config["tools"]) & set(TOOLS),
+            )
+        )
         callers = set(self.config["tools_somatic_variant_calling"])
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            annotator=annotators,
             ext=(
                 ".log",
                 ".log.md5",
@@ -285,11 +361,12 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             ),
         )
         # joint calling
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_somatic_vcf.{donor.name}"
+        name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
+            annotator=annotators,
             ext=EXT_VALUES,
         )
 
@@ -330,8 +407,4 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         self.ensure_w_config(
             ("step_config", "somatic_variant_annotation", "path_somatic_variant_calling"),
             "Path to variant calling not configured but required for somatic variant annotation",
-        )
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "path_jannovar_ser"),
-            "Path to serialized Jannovar database",
         )
