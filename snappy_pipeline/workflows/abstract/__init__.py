@@ -11,6 +11,7 @@ from io import StringIO
 import itertools
 import os
 import os.path
+import socket
 import sys
 import tempfile
 import typing
@@ -845,13 +846,13 @@ class BaseStep:
         To be used directly or via get_resource("step", "action", "tmpdir")
 
         1. Try to evaluate global_config/tmpdir. Interpret $-variables from environment.
-           Provides the current date as $TODAY.
+           Provides the current date as $TODAY, hostname from ``socket.gethostname()``
         2. If this fails, try to use environment variable TMPDIR.
         3. If this fails, use tempfile.gettempdir(), same as Snakemake default.
         """
         tmpdir = self.w_config.get("global_config", {}).get("tmpdir", None)
         if tmpdir:
-            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
+            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d"), HOSTNAME=socket.gethostname()):
                 tmpdir = os.path.expandvars(tmpdir)
         if not tmpdir:
             tmpdir = os.getenv("TMPDIR")
