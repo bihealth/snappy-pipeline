@@ -40,7 +40,8 @@ class SvCallingGetResultFilesMixin:
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
-                    yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
+                    if library_name not in self.config[self.name].get("skip_libraries", []):
+                        yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
 
 
 class SvCallingGetLogFileMixin:
