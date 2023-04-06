@@ -87,6 +87,15 @@ step_config:
     tools_ngs_mapping: []      # default to those configured for ngs_mapping
     tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
     jannovar:
+      path_jannovar_ser: REQUIRED                # REQUIRED
+      flag_off_target: False  # REQUIRED
+      dbnsfp:  # configuration for default genome release, needs change if differing
+        col_contig: 1
+        col_pos: 2
+        columns: []
+      annotation_tracks_bed: []
+      annotation_tracks_tsv: []
+      annotation_tracks_vcf: []
       window_length: 50000000   # split input into windows of this size, each triggers a job
       num_jobs: 100             # number of windows to process in parallel
       use_profile: true         # use Snakemake profile for parallel processing
@@ -100,22 +109,13 @@ step_config:
       - 'GL*'      # problematic unplaced loci
       - '*_decoy'  # decoy contig
       - 'HLA-*'    # HLA genes
-      use_advanced_ped_filters: false  # whether or not to use the advanced pedigree filters flag
-      path_jannovar_ser: REQUIRED                # REQUIRED
-      flag_off_target: False  # REQUIRED
-      dbnsfp:  # configuration for default genome release, needs change if differing
-        col_contig: 1
-        col_pos: 2
-        columns: []
-      annotation_tracks_bed: []
-      annotation_tracks_tsv: []
-      annotation_tracks_vcf: []
     vep:
       path_dir_cache: REQUIRED
       species: homo_sapiens
       assembly: GRCh38
       cache_version: 102        # WARNING- this must match the wrapper's vep version!
       transcript_db: ""         # Other options: merged and refseq
+      pick: yes                 # Other option: no (report one or all consequences)
 """
 
 
@@ -270,7 +270,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         return ResourceUsage(
             threads=1,
             time="24:00:00",  # 24 hours
-            memory=f"{8 * 1024 * 2}M",
+            memory=f"{64 * 1024 * 1}M",
         )
 
     def check_config(self):
@@ -282,6 +282,8 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         )
         if not self.config["vep"]["transcript_db"] in ("merged", "refseq", ""):
             raise InvalidConfiguration("transcript_db must be empty, or 'merged' or 'refseq'")
+        if not self.config["vep"]["pick"] in ("yes", "no"):
+            raise InvalidConfiguration("pick must be either 'yes' or 'no'")
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):

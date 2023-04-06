@@ -32,8 +32,11 @@ vep --offline --cache \
     $(if [[ -n "{config[transcript_db]}" ]]; then \
         echo "--{config[transcript_db]}"
     fi) \
+    $(if [[ "{config[pick]}" = "yes" ]]; then \
+        echo "--pick"
+    fi) \
     --fasta {static_config[reference][path]} \
-    --everything --stats_text \
+    --everything --stats_text --force_overwrite --buffer_size 500 --verbose \
     --input_file {snakemake.input.vcf} \
     --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
 
