@@ -207,7 +207,7 @@ def test_vep_step_part_get_params(somatic_variant_annotation_workflow):
 def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "65536M", "partition": "medium"}
+    expected_dict = {"threads": 8, "time": "24:00:00", "memory": "16384M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

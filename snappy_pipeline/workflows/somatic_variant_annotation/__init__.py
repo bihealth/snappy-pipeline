@@ -110,12 +110,16 @@ step_config:
       - '*_decoy'  # decoy contig
       - 'HLA-*'    # HLA genes
     vep:
-      path_dir_cache: REQUIRED
+      cache_dir: ""             # Defaults to $HOME/.vep Not a good idea on the cluster
       species: homo_sapiens
       assembly: GRCh38
       cache_version: 102        # WARNING- this must match the wrapper's vep version!
-      transcript_db: ""         # Other options: merged and refseq
+      tx_flag: "gencode_basic"  # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
       pick: yes                 # Other option: no (report one or all consequences)
+      num_threads: 8
+      buffer_size: 1000
+      output_options:
+      - everything
 """
 
 
@@ -268,20 +272,16 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=1,
+            threads=self.config["vep"]["num_threads"],
             time="24:00:00",  # 24 hours
-            memory=f"{64 * 1024 * 1}M",
+            memory=f"{16 * 1024 * 1}M",
         )
 
     def check_config(self):
         if self.name not in self.config["tools"]:
             return
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "vep", "path_dir_cache"),
-            "Path to VEP cache",
-        )
-        if not self.config["vep"]["transcript_db"] in ("merged", "refseq", ""):
-            raise InvalidConfiguration("transcript_db must be empty, or 'merged' or 'refseq'")
+        if not self.config["vep"]["tx_flag"] in ("merged", "refseq", "gencode_basic"):
+            raise InvalidConfiguration("tx_flag must be 'gencode_basic', or 'merged' or 'refseq'")
         if not self.config["vep"]["pick"] in ("yes", "no"):
             raise InvalidConfiguration("pick must be either 'yes' or 'no'")
 

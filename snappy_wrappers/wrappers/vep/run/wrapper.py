@@ -7,9 +7,10 @@ from snakemake.shell import shell
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
-# Get shortcuts to static data and step configuration
-static_config = snakemake.config["static_data_config"]
-config = snakemake.config["step_config"]["somatic_variant_annotation"]["vep"]
+# Get shortcuts to step configuration
+current_step = snakemake.config["pipeline_step"]["name"]
+vep_config = snakemake.config["step_config"][current_step]["vep"]
+script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
 shell(
     r"""
@@ -26,18 +27,19 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-vep --offline --cache \
-    --dir_cache {config[path_dir_cache]} \
-    --species {config[species]} --assembly {config[assembly]} --cache_version {config[cache_version]} \
-    $(if [[ -n "{config[transcript_db]}" ]]; then \
-        echo "--{config[transcript_db]}"
+vep --verbose --force_overwrite --offline --cache \
+    --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
+    --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
+    $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
+        echo --dir_cache {vep_config[cache_dir]}
     fi) \
-    $(if [[ "{config[pick]}" = "yes" ]]; then \
+    {script_output_options} \
+    $(if [[ "{vep_config[pick]}" = "yes" ]]; then \
         echo "--pick"
     fi) \
-    --fasta {static_config[reference][path]} \
-    --everything --stats_text --force_overwrite --buffer_size 500 --verbose \
-    --input_file {snakemake.input.vcf} \
+    --{vep_config[tx_flag]} \
+    --fasta {snakemake.config[static_data_config][reference][path]} \
+    --input_file {snakemake.input.vcf} --format vcf \
     --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
 
 tabix {snakemake.output.vcf}

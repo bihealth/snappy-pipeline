@@ -1,1 +1,8 @@
-../environment.yaml
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - python
+    - ensembl-vep=102
+    - htslib
+
