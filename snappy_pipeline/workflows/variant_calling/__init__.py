@@ -352,7 +352,8 @@ step_config:
 
 
 class GetResultFilesMixin:
-    """Mixin to provide ``get_result_files()`` function for
+    """Mixin to provide ``get_result_files()`` function for variant calling and
+    variant annotation steps.
 
     The function will use ``get_output_files()`` for all actions to obtain
     the files in the ``output/directory`` to expect from the given step.
@@ -381,12 +382,16 @@ class GetResultFilesMixin:
                         kwargs["donor_library_name"] = member_library_names
                     else:
                         kwargs["library_name"] = [index_library_name]
-                    if "{var_caller}" in path_tpl:
-                        kwargs["var_caller"] = self.parent.config["tools"]
+                    for key, value in self.get_extra_kv_pairs().items():
+                        if "{%s}" % key in path_tpl:
+                            kwargs[key] = value
                     yield from expand(
                         path_tpl,
                         **kwargs,
                     )
+
+    def get_extra_kv_pairs(self):
+        return {"var_caller": self.parent.config["tools"]}
 
     @dictify
     def _get_index_dna_ngs_libraries(
