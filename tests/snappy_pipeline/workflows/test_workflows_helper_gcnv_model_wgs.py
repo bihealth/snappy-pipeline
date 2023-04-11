@@ -351,7 +351,14 @@ def test_gcnv_contig_ploidy_step_part_get_input_files(helper_gcnv_model_workflow
         "work/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1/out/bwa.gcnv_coverage.P00{i}-N1-DNA1-WGS1.tsv"
     )
     tsv_list_out = [tsv_pattern.format(i=i) for i in range(1, 7)]  # P001 - P006
-    expected = {"interval_list": interval_list_out, "tsv": tsv_list_out}
+    expected = {
+        "interval_list": interval_list_out,
+        "tsv": tsv_list_out,
+        "ped": [
+            "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+            "work/write_pedigree.P004-N1-DNA1-WGS1/out/P004-N1-DNA1-WGS1.ped",
+        ],
+    }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_kit": "default"})
     actual = helper_gcnv_model_workflow.get_input_files("gcnv", "contig_ploidy")(wildcards)
