@@ -39,7 +39,7 @@ rule all:
 
 rule variant_annotation_vep_run:
     input:
-        unpack(wf.get_input_files("vep", "run")),
+        **wf.get_input_files("vep", "run"),
     output:
         **wf.get_output_files("vep", "run"),
     threads: wf.get_resource("vep", "run", "threads")

@@ -54,9 +54,9 @@ trap "rm -rf $TMPDIR" EXIT
 
 vep --verbose \
     --fasta {snakemake.config[static_data_config][reference][path]} \
-    --input_file {snakemake.input} \
-    --output_file {snakemake.output} \
-    --format vcf \
+    --input_file {snakemake.input.vcf} \
+    --output_file {snakemake.output.vcf} \
+    --compress_output bgzip \
     --vcf \
     --symbol \
     --terms SO \
@@ -65,6 +65,7 @@ vep --verbose \
     --offline \
     --{snakemake.config[step_config][variant_annotation][vep][tx_flag]} \
     --force_overwrite \
+    --buffer_size {snakemake.config[step_config][variant_annotation][vep][buffer_size]} \
     $(if [[ ! -z "{snakemake.config[step_config][variant_annotation][vep][cache_dir]}" ]]; then \
         echo --dir_cache {snakemake.config[step_config][variant_annotation][vep][cache_dir]}; \
     fi) \
@@ -72,6 +73,10 @@ vep --verbose \
     --assembly {snakemake.config[step_config][variant_annotation][vep][assembly]} \
     --fork {snakemake.config[step_config][variant_annotation][vep][num_threads]} \
     {snakemake.config[step_config][variant_annotation][vep][more_flags]}
+
+tabix -f {snakemake.output.vcf}
+compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
+compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

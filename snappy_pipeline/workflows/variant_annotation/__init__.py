@@ -100,6 +100,8 @@ step_config:
       num_threads: 16
       # Additional flags.
       more_flags: "--af_gnomade --af_gnomadg"
+      # The --buffer_size parameter
+      buffer_size: 100000
 """
 
 
