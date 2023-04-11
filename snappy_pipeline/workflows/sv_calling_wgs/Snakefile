@@ -33,6 +33,11 @@ localrules:
     sv_calling_wgs_write_pedigree_run,
 
 
+localrules:
+    # Writing out pedigrees can be done locally
+    sv_calling_wgs_write_pedigree_run,
+
+
 rule all:
     input:
         wf.get_result_files(),

@@ -42,12 +42,12 @@ def minimal_config():
               - delly2
               - manta
               - gcnv
-            path_target_interval_list_mapping:
-              - pattern: "Agilent SureSelect Human All Exon V6.*"
-                name: "Agilent_SureSelect_Human_All_Exon_V6"
-                path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
-                path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
             gcnv:
+              path_target_interval_list_mapping:
+                - pattern: "Agilent SureSelect Human All Exon V6.*"
+                  name: "Agilent_SureSelect_Human_All_Exon_V6"
+                  path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
+                  path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
               precomputed_model_paths:
                 - library: "Agilent SureSelect Human All Exon V6"
                   contig_ploidy: /path/to/ploidy-model
