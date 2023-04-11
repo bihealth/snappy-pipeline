@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+"""SNAPPY Pipeline variant_annotation step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run VEP ---------------------------------------------------------------------
+
+
+rule variant_annotation_vep_run:
+    input:
+        unpack(wf.get_input_files("vep", "run")),
+    output:
+        **wf.get_output_files("vep", "run"),
+    threads: wf.get_resource("vep", "run", "threads")
+    resources:
+        time=wf.get_resource("vep", "run", "time"),
+        memory=wf.get_resource("vep", "run", "memory"),
+        partition=wf.get_resource("vep", "run", "partition"),
+        tmpdir=wf.get_resource("vep", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("vep", "run"),
+    wrapper:
+        wf.wrapper_path("vep")

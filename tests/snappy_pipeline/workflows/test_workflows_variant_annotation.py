@@ -37,8 +37,10 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+
           variant_annotation:
-            path_jannovar_ser: /path/to/jannovar.ser
+            vep:
+              cache_dir: "/some/dir/"
 
         data_sets:
           first_batch:
@@ -85,21 +87,21 @@ def variant_annotation_workflow(
     )
 
 
-# Tests for JannovarAnnotateVcfStepPart -----------------------------------------------------------
+# Tests for VepStepPart ---------------------------------------------------------------------------
 
 
-def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_workflow):
-    """Tests JannovarAnnotateVcfStepPart.get_input_files()"""
+def test_vep_run_step_part_get_input_files(variant_annotation_workflow):
+    """Tests VepStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
         "VAR_CALLING/output/"
-        "{mapper}.{var_caller}.{index_ngs_library}/out/{mapper}.{var_caller}.{index_ngs_library}"
+        "{mapper}.{var_caller}.{library_name}/out/{mapper}.{var_caller}.{library_name}"
     )
     expected_vcf = base_name_out + ".vcf.gz"
     expected_tbi = base_name_out + ".vcf.gz.tbi"
-    expected_keys = {"ped", "vcf", "vcf_tbi"}
+    expected_keys = {"vcf", "vcf_tbi"}
     # Get actual
-    result = variant_annotation_workflow.get_input_files("jannovar", "annotate_vcf")
+    result = variant_annotation_workflow.get_input_files("vep", "run")
     # Assert if all keys present
     assert set(result.keys()) == expected_keys
     # Assert vcf and tbi
@@ -107,40 +109,46 @@ def test_jannovar_annotate_vcf_step_part_get_input_files(variant_annotation_work
     assert result["vcf_tbi"] == expected_tbi
 
 
-def test_jannovar_annotate_vcf_step_part_get_output_files(variant_annotation_workflow):
-    """Tests JannovarAnnotateVcfStepPart.get_output_files()"""
+def test_vep_run_step_part_get_output_files(variant_annotation_workflow):
+    """Tests VepStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/out/"
-        "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
+        "work/{mapper}.{var_caller}.vep.{library_name}/out/"
+        "{mapper}.{var_caller}.vep.{library_name}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    expected["output_links"] = [path.replace("work/", "output/") for path in expected.values()]
+    token = "{mapper}.{var_caller}.vep.{library_name}"
+    for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
+        for full_ext in (ext, f"{ext}.md5"):
+            base = f"output/{token}/log/{token}"
+            expected["output_links"].append(f"{base}.{full_ext}")
     # Get actual
-    actual = variant_annotation_workflow.get_output_files("jannovar", "annotate_vcf")
+    actual = variant_annotation_workflow.get_output_files("vep", "run")
     assert actual == expected
 
 
-def test_jannovar_annotate_vcf_step_part_get_log_file(variant_annotation_workflow):
-    """Tests JannovarAnnotateVcfStepPart.get_log_file()"""
+def test_vep_run_step_part_get_log_file(variant_annotation_workflow):
+    """Tests VepStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}/log/"
-        "{mapper}.{var_caller}.jannovar_annotate_vcf.{index_ngs_library}"
+        "work/{mapper}.{var_caller}.vep.{library_name}/log/"
+        "{mapper}.{var_caller}.vep.{library_name}"
     )
-    expected = get_expected_log_files_dict(base_out=base_name_out)
+    expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
-    actual = variant_annotation_workflow.get_log_file("jannovar", "annotate_vcf")
+    actual = variant_annotation_workflow.get_log_file("vep", "run")
     assert actual == expected
 
 
-def test_jannovar_annotate_step_part_get_resource_usage(variant_annotation_workflow):
-    """Tests JannovarAnnotateVcfStepPart.get_resource_usage()"""
+def test_vep_run_step_part_get_resource_usage(variant_annotation_workflow):
+    """Tests VepStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "4-03:30:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "1-00", "memory": "32G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_annotation_workflow.get_resource("jannovar", "annotate_vcf", resource)
+        actual = variant_annotation_workflow.get_resource("vep", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -150,14 +158,14 @@ def test_jannovar_annotate_step_part_get_resource_usage(variant_annotation_workf
 def test_variant_annotation_workflow(variant_annotation_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["jannovar", "link_out", "write_pedigree"]
+    expected = ["vep"]
     actual = list(sorted(variant_annotation_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1/out/"
-        "{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1.{ext}"
+        "output/{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1/out/"
+        "{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     expected = [
         tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
@@ -167,13 +175,17 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
         for var_caller in ("gatk3_hc",)
     ]
     tpl = (
-        "output/{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1/log/"
-        "{mapper}.{var_caller}.jannovar_annotate_vcf.P00{i}-N1-DNA1-WGS1.{ext}"
+        "output/{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1/log/"
+        "{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     expected += [
         tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
         for i in (1, 4)  # only for indices
         for ext in (
+            "environment.yaml",
+            "environment.yaml.md5",
+            "wrapper.py",
+            "wrapper.py.md5",
             "log",
             "log.md5",
             "conda_info.txt",
@@ -185,4 +197,6 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
         for var_caller in ("gatk3_hc",)
     ]
     actual = variant_annotation_workflow.get_result_files()
+    actual.sort()
+    expected.sort()
     assert actual == expected
