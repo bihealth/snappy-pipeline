@@ -271,20 +271,10 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return result
 
     def _get_params_annotate(self, wildcards):
-        result = {
-            "is_wgs": True,
+        return {
             "step_name": "wgs_sv_export_external",
             "varfish_server_compatibility": self.config["varfish_server_compatibility"],
         }
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if (
-                donor.dna_ngs_library
-                and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
-            ):
-                result["is_wgs"] = True
-                return result
-        return result
 
     def _collect_vcfs(self, wildcards):
         """Yield path to pedigree VCF"""

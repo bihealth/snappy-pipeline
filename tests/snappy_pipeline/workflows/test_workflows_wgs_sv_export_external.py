@@ -316,7 +316,6 @@ def test_varfish_annotator_step_part_get_params_annotate(wgs_sv_export_external_
     """Tests VarfishAnnotatorAnnotateStepPart_.get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
-        "is_wgs": True,
         "step_name": "wgs_sv_export_external",
         "varfish_server_compatibility": False,
     }
