@@ -58,8 +58,8 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-# For WGS, extract around exon BED file
-if [[ {snakemake.params.args[is_wgs]} == True ]]; then
+# Extract around BED file, if given.
+if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
     set -e
     bcftools view \
         -R {export_config[path_exon_bed]} \

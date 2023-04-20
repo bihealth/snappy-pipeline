@@ -109,7 +109,8 @@ step_config:
     search_paths: []             # REQUIRED: list of paths to VCF files.
     search_patterns: []          # REQUIRED: list of search patterns, ex.: [{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}]
     release: GRCh37              # OPTIONAL: genome release; default 'GRCh37'.
-    path_exon_bed: REQUIRED      # OPTIONAL: exon BED file to use when handling WGS data.
+    # Path to BED file with exons; used for reducing data to near-exon small variants.
+    path_exon_bed: null          # REQUIRED: exon BED file to use
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file.
     path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file.
     path_db: REQUIRED            # REQUIRED: path to annotator DB file to use.
@@ -479,8 +480,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 donor.dna_ngs_library
                 and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
             ):
-                return {"is_wgs": True, "step_name": "variant_export_external"}
-        return {"is_wgs": False, "step_name": "variant_export_external"}
+                return {"step_name": "variant_export_external"}
+        return {"step_name": "variant_export_external"}
 
     def _get_params_bam_qc(self, wildcards):
         """Get parameters for wrapper ``variant_annotator/bam_qc``

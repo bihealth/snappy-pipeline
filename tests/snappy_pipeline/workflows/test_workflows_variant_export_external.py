@@ -495,7 +495,7 @@ def test_varfish_annotator_step_part_get_log_file_annotate(variant_export_extern
 def test_varfish_annotator_step_part_get_params_annotate(variant_export_external_workflow):
     """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    expected = {"is_wgs": True, "step_name": "variant_export_external"}
+    expected = {"step_name": "variant_export_external"}
     actual = variant_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
         wildcards
     )

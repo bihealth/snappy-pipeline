@@ -119,8 +119,8 @@ step_config:
     #
     # The release of the genome reference that data has been aligned to.
     release: GRCh37              # REQUIRED: default 'GRCh37'
-    # Path to BED file with exons; used for reducing WGS data to near-exon small variants.
-    path_exon_bed: REQUIRED      # REQUIRED: exon BED file to use when handling WGS data
+    # Path to BED file with exons; used for reducing data to near-exon small variants.
+    path_exon_bed: null          # REQUIRED: exon BED file to use
     # Path to Jannovar RefSeq ``.ser`` file for annotation
     path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
     # Path to Jannovar ENSEMBL ``.ser`` file for annotation
@@ -299,8 +299,8 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
                 donor.dna_ngs_library
                 and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
             ):
-                return {"is_wgs": True, "step_name": "varfish_export"}
-        return {"is_wgs": False, "step_name": "varfish_export"}
+                return {"step_name": "varfish_export"}
+        return {"step_name": "varfish_export"}
 
     @dictify
     def _get_input_files_annotate_svs(self, wildcards):

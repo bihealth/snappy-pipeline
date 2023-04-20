@@ -260,7 +260,7 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(varfish_export_workflow
 def test_varfish_annotator_step_part_get_params_annotate(varfish_export_workflow):
     """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    expected = {"is_wgs": True, "step_name": "varfish_export"}
+    expected = {"step_name": "varfish_export"}
     actual = varfish_export_workflow.get_params("varfish_annotator", "annotate")(wildcards)
     assert actual == expected
 
