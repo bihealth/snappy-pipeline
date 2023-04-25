@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bcftools >=1.9
+  - htslib >=1.9
+  - samtools >=1.9
+  - mehari ==0.2.0
+  - jq
+  - vcfpy
+  - pysam

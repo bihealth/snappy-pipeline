@@ -121,12 +121,8 @@ step_config:
     release: GRCh37              # REQUIRED: default 'GRCh37'
     # Path to BED file with exons; used for reducing data to near-exon small variants.
     path_exon_bed: null          # REQUIRED: exon BED file to use
-    # Path to Jannovar RefSeq ``.ser`` file for annotation
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
-    # Path to Jannovar ENSEMBL ``.ser`` file for annotation
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
-    # Path to VarFish annotator database file to use for annotating.
-    path_db: REQUIRED            # REQUIRED: spath to varfish-annotator DB file to use
+    # Path to mehari database.
+    path_mehari_db: REQUIRED     # REQUIRED: path to mehari database
 """
 
 
