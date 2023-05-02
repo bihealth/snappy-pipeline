@@ -75,19 +75,16 @@ else
     ln -sr {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
 fi
 
-release=$(echo {export_config[release]} | tr '[:upper:]' '[:lower:]')
-
 # Perform Mehari sequence variant annotation.
 mehari \
     annotate \
     seqvars \
-    --release ${release} \
     --path-db {export_config[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
     --path-input-vcf $TMPDIR/tmp.vcf.gz \
-    --path-output-tsv >(gzip -c > {snakemake.output.gts})
+    --path-output-tsv {snakemake.output.gts}
 
-cat | gzip -c > {snakemake.output.db-infos} <<EOF
+cat <<EOF | gzip -c > {snakemake.output.db_infos}
 genomebuild	db_name	release
 GRCh37	clinvar	20210728
 GRCh37	gnomad_exomes	r2.1.1

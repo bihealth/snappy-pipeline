@@ -103,20 +103,16 @@ mehari \
     done) \
     --path-output-tsv >(gzip -c > {snakemake.output.gts})
 
-cat | gzip -c > {snakemake.output.db-infos} <<EOF
+cat <<EOF | gzip -c > {snakemake.output.db_infos}
 genomebuild	db_name	release
 GRCh37	clinvar	20210728
 GRCh37	gnomad_exomes	r2.1.1
 GRCh37	gnomad_genomes	r2.1.1
 EOF
 
-# Copy out PED file to output
-cp -H {snakemake.input.ped} {snakemake.output.ped}
-
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
-compute-md5 {snakemake.output.feature_effects} {snakemake.output.feature_effects_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

@@ -391,8 +391,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
             "gts_md5": f"{prefix}.gts.tsv.gz.md5",
-            "feature_effects": f"{prefix}.feature-effects.tsv.gz",
-            "feature_effects_md5": f"{prefix}.feature-effects.tsv.gz.md5",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
             "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
         }
