@@ -77,7 +77,7 @@ fi
 
 release=$(echo {export_config[release]} | tr '[:upper:]' '[:lower:]')
 
-# Execute VarFish Annotator
+# Perform Mehari sequence variant annotation.
 mehari \
     annotate \
     seqvars \

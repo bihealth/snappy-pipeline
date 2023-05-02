@@ -92,35 +92,16 @@ for vcf in {snakemake.input.vcf}; do
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
 
-# Compatibility mode with currently deployed VarFish Server
-compatibility_option="--opt-out callers-array"
-
-# Execute VarFish Annotator
-varfish-annotator \
-    annotate-svs \
-    -XX:MaxHeapSize=10g \
-    -XX:+UseG1GC \
-    \
-    --release {export_config[release]} \
-    \
-    $(if [[ "{coverage_vcf}" != "" ]]; then \
-        for path in {coverage_vcf}; do \
-            echo --coverage-vcf $path; \
-        done; \
-    fi) \
-    \
-    --db-path {export_config[path_db]} \
-    --refseq-ser-path {export_config[path_refseq_ser]} \
-    --ensembl-ser-path {export_config[path_ensembl_ser]} \
-    --input-ped {snakemake.input.ped} \
-    \
-    $(for vcf in $TMPDIR/final_for_import.*.vcf.gz; do \
-        echo --input-vcf $vcf; \
+# Perform Mehari structural variant annotation.
+mehari \
+    annotate \
+    strucvars \
+    --path-db {export_config[path_mehari_db]} \
+    --path-input-ped {snakemake.input.ped} \
+    $(for p in $TMPDIR/final_for_import.*.vcf.gz; do \
+        echo --path-input-vcf $p; \
     done) \
-    --output-db-info {snakemake.output.db_infos} \
-    --output-gts {snakemake.output.gts} \
-    --output-feature-effects {snakemake.output.feature_effects} \
-    $compatibility_option
+    --path-output-tsv >(gzip -c > {snakemake.output.gts})
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
