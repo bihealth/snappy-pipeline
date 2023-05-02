@@ -130,7 +130,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     """This step part is responsible for annotating the variants with Mehari"""
 
     name = "mehari"
-    actions = ("annotate", "annotate_svs", "bam_qc")
+    actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -180,16 +180,16 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     @listify
     def get_result_files(self, action):
         # Generate templates to the output paths from action's result files.
-        if action == "annotate":
-            raw_path_tpls = self._get_output_files_annotate().values()
-        elif action == "annotate_svs":
-            # Only annotate SVs if path to step for calling them is configured.
+        if action == "annotate_seqvars":
+            raw_path_tpls = self._get_output_files_annotate_seqvars().values()
+        elif action == "annotate_strucvars":
+            # Only annotate_seqvars SVs if path to step for calling them is configured.
             if (
                 not self.parent.config["path_sv_calling_targeted"]
                 and not self.parent.config["path_sv_calling_wgs"]
             ):
                 return
-            raw_path_tpls = self._get_output_files_annotate_svs().values()
+            raw_path_tpls = self._get_output_files_annotate_strucvars().values()
         elif action == "bam_qc":
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Filter the templates to the paths in the output directory.
@@ -198,7 +198,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.config["path_sv_calling_targeted"]) and (action == "annotate_svs")
+                bool(self.parent.config["path_sv_calling_targeted"])
+                and (action == "annotate_strucvars")
             )
         )
         kwargs = {
@@ -242,7 +243,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         return not msg
 
     @dictify
-    def _get_input_files_annotate(self, wildcards):
+    def _get_input_files_annotate_seqvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         variant_calling = self.parent.sub_workflows["variant_calling"]
@@ -264,13 +265,13 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         yield "vcf", vcfs
 
     @dictify
-    def _get_output_files_annotate(self):
+    def _get_output_files_annotate_seqvars(self):
         # Generate paths in "work/" directory
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.mehari_annotate.{index_ngs_library}"
+            "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
         )
-        work_paths = {  # annotate will write out PED file
+        work_paths = {  # annotate_seqvars will write out PED file
             "ped": f"{prefix}.ped",
             "ped_md5": f"{prefix}.ped.md5",
             "gts": f"{prefix}.gts.tsv.gz",
@@ -282,10 +283,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Generate paths in "output/" directory
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("annotate").values())
+            for work_path in chain(
+                work_paths.values(), self.get_log_file("annotate_seqvars").values()
+            )
         ]
 
-    def _get_params_annotate(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+    def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if (
@@ -296,7 +299,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         return {"step_name": "varfish_export"}
 
     @dictify
-    def _get_input_files_annotate_svs(self, wildcards):
+    def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         if self.parent.config["path_sv_calling_targeted"]:
@@ -380,10 +383,10 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         yield "vcf_cov", cov_vcfs
 
     @dictify
-    def _get_output_files_annotate_svs(self):
+    def _get_output_files_annotate_strucvars(self):
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.mehari_annotate_svs.{index_ngs_library}"
+            "{mapper}.mehari_annotate_strucvars.{index_ngs_library}"
         )
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
@@ -397,11 +400,13 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Generate paths in "output/" directory
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("annotate_svs").values())
+            for work_path in chain(
+                work_paths.values(), self.get_log_file("annotate_strucvars").values()
+            )
         ]
 
     #: Alias the get params function.
-    _get_params_annotate_svs = _get_params_annotate
+    _get_params_annotate_strucvars = _get_params_annotate_seqvars
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
