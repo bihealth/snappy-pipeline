@@ -126,17 +126,14 @@ step_config:
 """
 
 
-class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
-    """This step part is responsible for annotating the variants with VarFish Annotator"""
+class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
+    """This step part is responsible for annotating the variants with Mehari"""
 
-    name = "varfish_annotator"
+    name = "mehari"
     actions = ("annotate", "annotate_svs", "bam_qc")
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/out/.done"
-        )
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
@@ -155,7 +152,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-            f"{{mapper}}.varfish_annotator_{action}.{{index_ngs_library}}"
+            f"{{mapper}}.mehari_{action}.{{index_ngs_library}}"
         )
         key_ext = (
             ("wrapper", ".wrapper.py"),
@@ -271,7 +268,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         # Generate paths in "work/" directory
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_annotate.{index_ngs_library}"
+            "{mapper}.mehari_annotate.{index_ngs_library}"
         )
         work_paths = {  # annotate will write out PED file
             "ped": f"{prefix}.ped",
@@ -386,7 +383,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     def _get_output_files_annotate_svs(self):
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_annotate_svs.{index_ngs_library}"
+            "{mapper}.mehari_annotate_svs.{index_ngs_library}"
         )
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
@@ -435,7 +432,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_bam_qc.{index_ngs_library}"
+            "{mapper}.mehari_bam_qc.{index_ngs_library}"
         )
         work_paths = {
             "bam_qc": f"{prefix}.bam-qc.tsv.gz",
@@ -498,9 +495,7 @@ class VarfishExportWorkflow(BaseStep):
         )
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (WritePedigreeStepPart, VarfishAnnotatorAnnotateStepPart, LinkOutStepPart)
-        )
+        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
 
         # Register sub workflows
         self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
@@ -560,8 +555,8 @@ class VarfishExportWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        for action in self.sub_steps["varfish_annotator"].actions:
-            yield from self.sub_steps["varfish_annotator"].get_result_files(action)
+        for action in self.sub_steps["mehari"].actions:
+            yield from self.sub_steps["mehari"].get_result_files(action)
 
     def check_config(self):
         self.ensure_w_config(
