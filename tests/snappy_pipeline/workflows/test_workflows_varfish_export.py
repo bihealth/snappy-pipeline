@@ -88,11 +88,11 @@ def varfish_export_workflow(
     )
 
 
-# Tests for VarfishAnnotatorAnnotateStepPart -------------------------------------------------------
+# Tests for MehariAnnotateStepPart -------------------------------------------------------
 
 
-def test_varfish_annotator_step_part_get_input_files_annotate(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_input_files_annotate()"""
+def test_mehari_step_part_get_input_files_annotate(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_input_files_annotate()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -109,12 +109,12 @@ def test_varfish_annotator_step_part_get_input_files_annotate(varfish_export_wor
         "vcf": [base_name + ".vcf.gz"],
     }
     # Get actual
-    actual = varfish_export_workflow.get_input_files("varfish_annotator", "annotate")(wildcards)
+    actual = varfish_export_workflow.get_input_files("mehari", "annotate_seqvars")(wildcards)
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_input_files_bam_qc(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_input_files_bam_qc()"""
+def test_mehari_step_part_get_input_files_bam_qc(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_input_files_bam_qc()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -137,16 +137,16 @@ def test_varfish_annotator_step_part_get_input_files_bam_qc(varfish_export_workf
         "cov_qc": [base_name_cov.format(i=i) for i in donor_indices],
     }
     # Get actual
-    actual = varfish_export_workflow.get_input_files("varfish_annotator", "bam_qc")(wildcards)
+    actual = varfish_export_workflow.get_input_files("mehari", "bam_qc")(wildcards)
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_output_files_annotate(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_output_files_annotate()"""
+def test_mehari_step_part_get_output_files_annotate(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_output_files_annotate()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-        "{mapper}.varfish_annotator_annotate.{index_ngs_library}"
+        "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
     )
     expected = {
         "gts": base_name_out + ".gts.tsv.gz",
@@ -156,69 +156,69 @@ def test_varfish_annotator_step_part_get_output_files_annotate(varfish_export_wo
         "ped": base_name_out + ".ped",
         "ped_md5": base_name_out + ".ped.md5",
         "output_links": [
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.ped",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.ped.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.gts.tsv.gz",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.gts.tsv.gz.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.db-infos.tsv.gz",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_annotate.{index_ngs_library}.db-infos.tsv.gz.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.wrapper.py",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.wrapper.py.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.log",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.log.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.conda_info.txt",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.conda_info.txt.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.conda_list.txt",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.conda_list.txt.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.environment.yaml",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_annotate.{index_ngs_library}.environment.yaml.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.ped",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.ped.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.gts.tsv.gz",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.gts.tsv.gz.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.db-infos.tsv.gz",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.db-infos.tsv.gz.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.wrapper.py",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.wrapper.py.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.log",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.log.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.conda_info.txt",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.conda_info.txt.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.conda_list.txt",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.conda_list.txt.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.environment.yaml",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_annotate_seqvars.{index_ngs_library}.environment.yaml.md5",
         ],
     }
     # Get actual
-    actual = varfish_export_workflow.get_output_files("varfish_annotator", "annotate")
+    actual = varfish_export_workflow.get_output_files("mehari", "annotate_seqvars")
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_output_files_bam_qc(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_output_files_bam_qc()"""
+def test_mehari_step_part_get_output_files_bam_qc(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_output_files_bam_qc()"""
     # Define expected
     base_name_out = (
         "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-        "{mapper}.varfish_annotator_bam_qc.{index_ngs_library}"
+        "{mapper}.mehari_bam_qc.{index_ngs_library}"
     )
     expected = {
         "bam_qc": base_name_out + ".bam-qc.tsv.gz",
         "bam_qc_md5": base_name_out + ".bam-qc.tsv.gz.md5",
         "output_links": [
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.bam-qc.tsv.gz",
-            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.bam-qc.tsv.gz.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.wrapper.py",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.wrapper.py.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.log",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.log.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.conda_info.txt",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.conda_info.txt.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.conda_list.txt",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.conda_list.txt.md5",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.environment.yaml",
-            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.varfish_annotator_bam_qc.{index_ngs_library}.environment.yaml.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_bam_qc.{index_ngs_library}.bam-qc.tsv.gz",
+            "output/{mapper}.varfish_export.{index_ngs_library}/out/{mapper}.mehari_bam_qc.{index_ngs_library}.bam-qc.tsv.gz.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.wrapper.py",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.wrapper.py.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.log",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.log.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.conda_info.txt",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.conda_info.txt.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.conda_list.txt",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.conda_list.txt.md5",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.environment.yaml",
+            "output/{mapper}.varfish_export.{index_ngs_library}/log/{mapper}.mehari_bam_qc.{index_ngs_library}.environment.yaml.md5",
         ],
     }
     # Get actual
-    actual = varfish_export_workflow.get_output_files("varfish_annotator", "bam_qc")
+    actual = varfish_export_workflow.get_output_files("mehari", "bam_qc")
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_log_file_annotate(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_log_file()_annotate"""
+def test_mehari_step_part_get_log_file_annotate(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_log_file()_annotate"""
     # Define expected
     base_name_log = (
         "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-        "{mapper}.varfish_annotator_annotate.{index_ngs_library}"
+        "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
     )
     base_name_wrapper = (
         "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-        "{mapper}.varfish_annotator_annotate.{index_ngs_library}"
+        "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
     )
     wrapper_dict = {
         "wrapper": base_name_wrapper + ".wrapper.py",
@@ -229,20 +229,20 @@ def test_varfish_annotator_step_part_get_log_file_annotate(varfish_export_workfl
     log_dict = get_expected_log_files_dict(base_out=base_name_log)
     expected = {**wrapper_dict, **log_dict}
     # Get actual
-    actual = varfish_export_workflow.get_log_file("varfish_annotator", "annotate")
+    actual = varfish_export_workflow.get_log_file("mehari", "annotate_seqvars")
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_log_file_bam_qc(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_log_file()_bam_qc"""
+def test_mehari_step_part_get_log_file_bam_qc(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_log_file()_bam_qc"""
     # Define expected
     base_name_log = (
         "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-        "{mapper}.varfish_annotator_bam_qc.{index_ngs_library}"
+        "{mapper}.mehari_bam_qc.{index_ngs_library}"
     )
     base_name_wrapper = (
         "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-        "{mapper}.varfish_annotator_bam_qc.{index_ngs_library}"
+        "{mapper}.mehari_bam_qc.{index_ngs_library}"
     )
     wrapper_dict = {
         "wrapper": base_name_wrapper + ".wrapper.py",
@@ -253,40 +253,40 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(varfish_export_workflow
     log_dict = get_expected_log_files_dict(base_out=base_name_log)
     expected = {**wrapper_dict, **log_dict}
     # Get actual
-    actual = varfish_export_workflow.get_log_file("varfish_annotator", "bam_qc")
+    actual = varfish_export_workflow.get_log_file("mehari", "bam_qc")
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_annotate(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
+def test_mehari_step_part_get_params_annotate(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_params_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {"step_name": "varfish_export"}
-    actual = varfish_export_workflow.get_params("varfish_annotator", "annotate")(wildcards)
+    actual = varfish_export_workflow.get_params("mehari", "annotate_seqvars")(wildcards)
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_bam_qc(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_params_bam_qc()"""
+def test_mehari_step_part_get_params_bam_qc(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_params_bam_qc()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "P001-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
         "P002-N1-DNA1-WGS1": "P002-N1-DNA1-WGS1",
         "P003-N1-DNA1-WGS1": "P003-N1-DNA1-WGS1",
     }
-    actual = varfish_export_workflow.get_params("varfish_annotator", "bam_qc")(wildcards)
+    actual = varfish_export_workflow.get_params("mehari", "bam_qc")(wildcards)
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_resource_usage(varfish_export_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart.get_resource_usage()"""
-    all_actions = varfish_export_workflow.substep_getattr("varfish_annotator", "actions")
+def test_mehari_step_part_get_resource_usage(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart.get_resource_usage()"""
+    all_actions = varfish_export_workflow.substep_getattr("mehari", "actions")
     # Define expected
     expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "14G", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = varfish_export_workflow.get_resource("varfish_annotator", action, resource)
+            actual = varfish_export_workflow.get_resource("mehari", action, resource)
             assert actual == expected, msg_error
 
 
@@ -296,28 +296,28 @@ def test_varfish_annotator_step_part_get_resource_usage(varfish_export_workflow)
 def test_varfish_export_workflow(varfish_export_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["link_out", "varfish_annotator", "write_pedigree"]
+    expected = ["link_out", "mehari", "write_pedigree"]
     actual = list(sorted(varfish_export_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction
     tpl = (
         "output/bwa.varfish_export.P00{i}-N1-DNA1-WGS1/{dir_}/"
-        "bwa.varfish_annotator_{action}.P00{i}-N1-DNA1-WGS1.{ext}"
+        "bwa.mehari_{action}.P00{i}-N1-DNA1-WGS1.{ext}"
     )
     # Files in `out` directory
     expected = [
         tpl.format(dir_="out", i=i, ext=ext, action=action)
         for i in (1, 4)  # only for indices
         for (action, ext) in (
-            ("annotate", "gts.tsv.gz"),
-            ("annotate", "gts.tsv.gz.md5"),
-            ("annotate", "db-infos.tsv.gz"),
-            ("annotate", "db-infos.tsv.gz.md5"),
+            ("annotate_seqvars", "gts.tsv.gz"),
+            ("annotate_seqvars", "gts.tsv.gz.md5"),
+            ("annotate_seqvars", "db-infos.tsv.gz"),
+            ("annotate_seqvars", "db-infos.tsv.gz.md5"),
             ("bam_qc", "bam-qc.tsv.gz"),
             ("bam_qc", "bam-qc.tsv.gz.md5"),
-            ("annotate", "ped"),
-            ("annotate", "ped.md5"),
+            ("annotate_seqvars", "ped"),
+            ("annotate_seqvars", "ped.md5"),
         )
     ]
     # Files in `log` directory
@@ -336,7 +336,7 @@ def test_varfish_export_workflow(varfish_export_workflow):
             "environment.yaml",
             "environment.yaml.md5",
         )
-        for action in ("annotate", "bam_qc")
+        for action in ("annotate_seqvars", "bam_qc")
     ]
     expected = sorted(expected)
     actual = sorted(varfish_export_workflow.get_result_files())

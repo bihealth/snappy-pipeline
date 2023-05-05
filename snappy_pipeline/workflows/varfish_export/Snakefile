@@ -45,67 +45,67 @@ rule varfish_export_write_pedigree_run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
 
-# Run varfish-annotator-cli annotate ------------------------------------------
+# Run varfish-annotator-cli annotate-seqvars -----------------------------------
 
 
-rule varfish_export_varfish_annotator_annotate:
+rule varfish_export_mehari_annotate_seqvars:
     input:
-        unpack(wf.get_input_files("varfish_annotator", "annotate")),
+        unpack(wf.get_input_files("mehari", "annotate_seqvars")),
     output:
-        **wf.get_output_files("varfish_annotator", "annotate"),
-    threads: wf.get_resource("varfish_annotator", "annotate", "threads")
+        **wf.get_output_files("mehari", "annotate_seqvars"),
+    threads: wf.get_resource("mehari", "annotate_seqvars", "threads")
     resources:
-        time=wf.get_resource("varfish_annotator", "annotate", "time"),
-        memory=wf.get_resource("varfish_annotator", "annotate", "memory"),
-        partition=wf.get_resource("varfish_annotator", "annotate", "partition"),
-        tmpdir=wf.get_resource("varfish_annotator", "annotate", "tmpdir"),
+        time=wf.get_resource("mehari", "annotate_seqvars", "time"),
+        memory=wf.get_resource("mehari", "annotate_seqvars", "memory"),
+        partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
+        tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
     log:
-        **wf.get_log_file("varfish_annotator", "annotate"),
+        **wf.get_log_file("mehari", "annotate_seqvars"),
     params:
-        **{"args": wf.get_params("varfish_annotator", "annotate")},
+        **{"args": wf.get_params("mehari", "annotate_seqvars")},
     wrapper:
-        wf.wrapper_path("varfish_annotator/annotate")
+        wf.wrapper_path("mehari/annotate_seqvars")
 
 
-# Run varfish-annotator-cli annotate-svs ---------------------------------------
+# Run varfish-annotator-cli annotate-strucvars ---------------------------------
 
 
-rule varfish_export_varfish_annotator_annotate_svs:
+rule varfish_export_mehari_annotate_strucvars:
     input:
-        unpack(wf.get_input_files("varfish_annotator", "annotate_svs")),
+        unpack(wf.get_input_files("mehari", "annotate_strucvars")),
     output:
-        **wf.get_output_files("varfish_annotator", "annotate_svs"),
-    threads: wf.get_resource("varfish_annotator", "annotate_svs", "threads")
+        **wf.get_output_files("mehari", "annotate_strucvars"),
+    threads: wf.get_resource("mehari", "annotate_strucvars", "threads")
     resources:
-        time=wf.get_resource("varfish_annotator", "annotate_svs", "time"),
-        memory=wf.get_resource("varfish_annotator", "annotate_svs", "memory"),
-        partition=wf.get_resource("varfish_annotator", "annotate_svs", "partition"),
-        tmpdir=wf.get_resource("varfish_annotator", "annotate_svs", "tmpdir"),
+        time=wf.get_resource("mehari", "annotate_strucvars", "time"),
+        memory=wf.get_resource("mehari", "annotate_strucvars", "memory"),
+        partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
+        tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
     log:
-        **wf.get_log_file("varfish_annotator", "annotate_svs"),
+        **wf.get_log_file("mehari", "annotate_strucvars"),
     params:
-        **{"args": wf.get_params("varfish_annotator", "annotate_svs")},
+        **{"args": wf.get_params("mehari", "annotate_strucvars")},
     wrapper:
-        wf.wrapper_path("varfish_annotator/annotate_svs")
+        wf.wrapper_path("mehari/annotate_strucvars")
 
 
 # Gather statistics about the alignment ---------------------------------------
 
 
-rule varfish_export_varfish_annotator_bam_qc:
+rule varfish_export_mehari_bam_qc:
     input:
-        unpack(wf.get_input_files("varfish_annotator", "bam_qc")),
+        unpack(wf.get_input_files("mehari", "bam_qc")),
     output:
-        **wf.get_output_files("varfish_annotator", "bam_qc"),
-    threads: wf.get_resource("varfish_annotator", "bam_qc", "threads")
+        **wf.get_output_files("mehari", "bam_qc"),
+    threads: wf.get_resource("mehari", "bam_qc", "threads")
     resources:
-        time=wf.get_resource("varfish_annotator", "bam_qc", "time"),
-        memory=wf.get_resource("varfish_annotator", "bam_qc", "memory"),
-        partition=wf.get_resource("varfish_annotator", "bam_qc", "partition"),
-        tmpdir=wf.get_resource("varfish_annotator", "bam_qc", "tmpdir"),
+        time=wf.get_resource("mehari", "bam_qc", "time"),
+        memory=wf.get_resource("mehari", "bam_qc", "memory"),
+        partition=wf.get_resource("mehari", "bam_qc", "partition"),
+        tmpdir=wf.get_resource("mehari", "bam_qc", "tmpdir"),
     log:
-        **wf.get_log_file("varfish_annotator", "bam_qc"),
+        **wf.get_log_file("mehari", "bam_qc"),
     params:
-        **{"args": wf.get_params("varfish_annotator", "bam_qc")},
+        **{"args": wf.get_params("mehari", "bam_qc")},
     wrapper:
-        wf.wrapper_path("varfish_annotator/bam_qc")
+        wf.wrapper_path("mehari/bam_qc")

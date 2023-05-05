@@ -121,26 +121,19 @@ step_config:
     release: GRCh37              # REQUIRED: default 'GRCh37'
     # Path to BED file with exons; used for reducing data to near-exon small variants.
     path_exon_bed: null          # REQUIRED: exon BED file to use
-    # Path to Jannovar RefSeq ``.ser`` file for annotation
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
-    # Path to Jannovar ENSEMBL ``.ser`` file for annotation
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
-    # Path to VarFish annotator database file to use for annotating.
-    path_db: REQUIRED            # REQUIRED: spath to varfish-annotator DB file to use
+    # Path to mehari database.
+    path_mehari_db: REQUIRED     # REQUIRED: path to mehari database
 """
 
 
-class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
-    """This step part is responsible for annotating the variants with VarFish Annotator"""
+class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
+    """This step part is responsible for annotating the variants with Mehari"""
 
-    name = "varfish_annotator"
-    actions = ("annotate", "annotate_svs", "bam_qc")
+    name = "mehari"
+    actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{mapper}.{var_caller}.varfish_annotated.{index_ngs_library}/out/.done"
-        )
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
@@ -159,7 +152,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-            f"{{mapper}}.varfish_annotator_{action}.{{index_ngs_library}}"
+            f"{{mapper}}.mehari_{action}.{{index_ngs_library}}"
         )
         key_ext = (
             ("wrapper", ".wrapper.py"),
@@ -187,16 +180,16 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     @listify
     def get_result_files(self, action):
         # Generate templates to the output paths from action's result files.
-        if action == "annotate":
-            raw_path_tpls = self._get_output_files_annotate().values()
-        elif action == "annotate_svs":
-            # Only annotate SVs if path to step for calling them is configured.
+        if action == "annotate_seqvars":
+            raw_path_tpls = self._get_output_files_annotate_seqvars().values()
+        elif action == "annotate_strucvars":
+            # Only annotate_seqvars SVs if path to step for calling them is configured.
             if (
                 not self.parent.config["path_sv_calling_targeted"]
                 and not self.parent.config["path_sv_calling_wgs"]
             ):
                 return
-            raw_path_tpls = self._get_output_files_annotate_svs().values()
+            raw_path_tpls = self._get_output_files_annotate_strucvars().values()
         elif action == "bam_qc":
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Filter the templates to the paths in the output directory.
@@ -205,7 +198,8 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.config["path_sv_calling_targeted"]) and (action == "annotate_svs")
+                bool(self.parent.config["path_sv_calling_targeted"])
+                and (action == "annotate_strucvars")
             )
         )
         kwargs = {
@@ -249,7 +243,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         return not msg
 
     @dictify
-    def _get_input_files_annotate(self, wildcards):
+    def _get_input_files_annotate_seqvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         variant_calling = self.parent.sub_workflows["variant_calling"]
@@ -271,13 +265,13 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         yield "vcf", vcfs
 
     @dictify
-    def _get_output_files_annotate(self):
+    def _get_output_files_annotate_seqvars(self):
         # Generate paths in "work/" directory
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_annotate.{index_ngs_library}"
+            "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
         )
-        work_paths = {  # annotate will write out PED file
+        work_paths = {  # annotate_seqvars will write out PED file
             "ped": f"{prefix}.ped",
             "ped_md5": f"{prefix}.ped.md5",
             "gts": f"{prefix}.gts.tsv.gz",
@@ -289,10 +283,12 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         # Generate paths in "output/" directory
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("annotate").values())
+            for work_path in chain(
+                work_paths.values(), self.get_log_file("annotate_seqvars").values()
+            )
         ]
 
-    def _get_params_annotate(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+    def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if (
@@ -303,7 +299,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         return {"step_name": "varfish_export"}
 
     @dictify
-    def _get_input_files_annotate_svs(self, wildcards):
+    def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         if self.parent.config["path_sv_calling_targeted"]:
@@ -387,16 +383,14 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         yield "vcf_cov", cov_vcfs
 
     @dictify
-    def _get_output_files_annotate_svs(self):
+    def _get_output_files_annotate_strucvars(self):
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_annotate_svs.{index_ngs_library}"
+            "{mapper}.mehari_annotate_strucvars.{index_ngs_library}"
         )
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
             "gts_md5": f"{prefix}.gts.tsv.gz.md5",
-            "feature_effects": f"{prefix}.feature-effects.tsv.gz",
-            "feature_effects_md5": f"{prefix}.feature-effects.tsv.gz.md5",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
             "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
         }
@@ -404,11 +398,13 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
         # Generate paths in "output/" directory
         yield "output_links", [
             re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("annotate_svs").values())
+            for work_path in chain(
+                work_paths.values(), self.get_log_file("annotate_strucvars").values()
+            )
         ]
 
     #: Alias the get params function.
-    _get_params_annotate_svs = _get_params_annotate
+    _get_params_annotate_strucvars = _get_params_annotate_seqvars
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
@@ -439,7 +435,7 @@ class VarfishAnnotatorAnnotateStepPart(VariantCallingGetLogFileMixin, BaseStepPa
     def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
         prefix = (
             "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.varfish_annotator_bam_qc.{index_ngs_library}"
+            "{mapper}.mehari_bam_qc.{index_ngs_library}"
         )
         work_paths = {
             "bam_qc": f"{prefix}.bam-qc.tsv.gz",
@@ -502,9 +498,7 @@ class VarfishExportWorkflow(BaseStep):
         )
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (WritePedigreeStepPart, VarfishAnnotatorAnnotateStepPart, LinkOutStepPart)
-        )
+        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
 
         # Register sub workflows
         self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
@@ -564,8 +558,8 @@ class VarfishExportWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        for action in self.sub_steps["varfish_annotator"].actions:
-            yield from self.sub_steps["varfish_annotator"].get_result_files(action)
+        for action in self.sub_steps["mehari"].actions:
+            yield from self.sub_steps["mehari"].get_result_files(action)
 
     def check_config(self):
         self.ensure_w_config(
