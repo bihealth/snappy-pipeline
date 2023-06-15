@@ -427,7 +427,9 @@ def test_cnvkit_call_step_part_get_input_files(somatic_targeted_seq_cnv_calling_
 
 
 def test_cnvkit_call_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+    base_name_out = (
+        "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
+    )
     expected = {"calls": base_name_out, "calls_md5": base_name_out + ".md5"}
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "call")
     assert actual == expected
@@ -453,13 +455,60 @@ def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
         assert actual == expected, msg_error
 
 
+# Tests for CnvKitStepPart (postprocess) ----------------------------------------------------------
+
+
+def test_cnvkit_postprocess_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    segment_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segment.cns"
+    call_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.call.cns"
+    expected = {"segment": segment_file, "call": call_file}
+    # Get actual
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "postprocess")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_cnvkit_postprocess_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+    expected = {"final": base_name_out, "final_md5": base_name_out + ".md5"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "postprocess")
+    assert actual == expected
+
+
+def test_cnvkit_postprocess_step_part_get_log_file(somatic_targeted_seq_cnv_calling_workflow):
+    # Define expected
+    base_name_out = (
+        "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.postprocess.{library_name}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name_out)
+    # Get actual
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("cnvkit", "postprocess")
+    assert actual == expected
+
+
+def test_cnvkit_postprocess_step_part_get_resource(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests CnvKitStepPart.get_resource_usage() - action 'postprocess'"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "7680M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
+            "cnvkit", "postprocess", resource
+        )
+        assert actual == expected, msg_error
+
+
 # Tests for CnvKitStepPart (plot) -----------------------------------------------------------------
 
 
 def test_cnvkit_plot_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
     cnr_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"
-    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"
+    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.call.cns"
     expected = {
         "cnr": cnr_file,
         "cns": cns_file,
@@ -520,7 +569,9 @@ def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
 
 def test_cnvkit_export_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
-    expected = {"cns": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"}
+    expected = {
+        "cns": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.call.cns"
+    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "export")(
         wildcards
     )
@@ -567,7 +618,7 @@ def test_cnvkit_export_step_part_get_resource(somatic_targeted_seq_cnv_calling_w
 def test_cnvkit_report_step_part_get_input_files(somatic_targeted_seq_cnv_calling_workflow):
     # Define expected
     cnr_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"
-    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"
+    cns_file = "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.call.cns"
     target_file = (
         "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.targetcoverage.cnn"
     )
