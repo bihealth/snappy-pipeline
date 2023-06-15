@@ -1,0 +1,61 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline tmb_calculation step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.tmb_calculation import TumorMutaionalBurdenCalculationWorkflow
+
+__author__ = ""
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+wf = TumorMutaionalBurdenCalculationWorkflow(workflow,config,lookup_paths,config_paths,os.getcwd())
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    tumor_mutational_burden_link_out_run
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# Generic linking out ---------------------------------------------------------
+
+
+
+rule tumor_mutational_burden_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+rule tumor_mutational_burden_calculation:
+    input:
+        **wf.get_input_files("tmb_gathering","tmb_gathering")
+    output:
+        **wf.get_output_files("tmb_gathering","tmb_gathering")
+    threads: wf.get_resource("tmb_gathering","tmb_gathering","threads")
+    resources: 
+        time=wf.get_resource("tmb_gathering", "tmb_gathering", "time"),
+        memory=wf.get_resource("tmb_gathering", "tmb_gathering", "memory"),
+        partition=wf.get_resource("tmb_gathering", "tmb_gathering", "partition"),
+        tmpdir=wf.get_resource("tmb_gathering", "tmb_gathering", "tmpdir"),
+    log:
+        **wf.get_log_file("tmb_gathering","tmb_gathering")
+    wrapper:
+        wf.wrapper_path("bcftools/TMB")
