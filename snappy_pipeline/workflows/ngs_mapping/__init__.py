@@ -410,6 +410,10 @@ step_config:
       trim_adapters: false
       mask_duplicates: false
       include_unmapped: true
+    strandedness:
+      path_exon_bed: REQUIRED
+      strand: -1
+      threshold: 0.1
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
@@ -829,6 +833,64 @@ class StarStepPart(ReadMappingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
+
+
+class StrandednessStepPart(BaseStepPart):
+    """Guess the protocol strandedness when missing and write it"""
+
+    #: Step name
+    name = "strandedness"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def get_input_files(self, action):
+        self._validate_action(action)
+        return {"bam": "work/star.{library_name}/out/star.{library_name}.bam"}
+
+    @dictify
+    def get_output_files(self, action):
+        self._validate_action(action)
+        for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.txt")):
+            yield key, "work/star.{library_name}/strandedness/star.{library_name}" + ext
+            yield key + "_md5", "work/star.{library_name}/strandedness/star.{library_name}" + ext + ".md5"
+        key, ext = ("output", ".decision.txt")
+        yield key, "output/star.{library_name}/strandedness/star.{library_name}" + ext
+        yield key + "_md5", "output/star.{library_name}/strandedness/star.{library_name}" + ext + ".md5"
+        for key, ext in (
+            ("log", ".log"),
+            ("conda_list", ".conda_list.txt"),
+            ("conda_info", ".conda_info.txt"),
+        ):
+            yield key, "output/star.{library_name}/log/star.{library_name}.strandedness" + ext
+            yield key + "_md5", "output/star.{library_name}/log/star.{library_name}.strandedness" + ext + ".md5"
+
+    def get_result_files(self):
+        tpl = "output/star.{library_name}/strandedness/star.{library_name}.decision.txt"
+        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+            if extra_info["extractionType"] == "RNA":
+                yield tpl.format(library_name=library_name)
+                yield tpl.format(library_name=library_name) + ".md5"
+        tpl = "output/star.{library_name}/log/star.{library_name}.strandedness.{ext}"
+        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+            if extra_info["extractionType"] == "RNA":
+                for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                    yield tpl.format(library_name=library_name, ext=ext)
+                    yield tpl.format(library_name=library_name, ext=ext) + ".md5"
+
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files in the "log" directory."""
+        _ = action
+        prefix = "work/star.{library_name}/log/star.{library_name}.strandedness"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -1260,6 +1322,7 @@ class NgsMappingWorkflow(BaseStep):
                 LinkInStep,
                 Minimap2StepPart,
                 StarStepPart,
+                StrandednessStepPart,
                 TargetCoverageReportStepPart,
                 BamCollectDocStepPart,
                 NgsChewStepPart,

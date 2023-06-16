@@ -344,6 +344,67 @@ def test_star_step_part_get_resource(ngs_mapping_workflow):
         assert actual == expected, msg_error
 
 
+# Tests for StrandednessStepPart -------------------------------------------------------------------
+
+
+def test_strandedness_step_part_get_input_files(ngs_mapping_workflow):
+    """Tests StrandednessStepPart.get_input_files()"""
+    # Define expected
+    expected = {"bam": "work/star.{library_name}/out/star.{library_name}.bam"}
+    # Get actual
+    actual = ngs_mapping_workflow.get_input_files("strandedness", "run")
+    assert actual == expected
+
+
+def test_strandedness_step_part_get_output_files(ngs_mapping_workflow):
+    """Tests StrandednessStepPart.get_output_files()"""
+    # Define expected
+    expected = {
+        "tsv": "work/star.{library_name}/strandedness/star.{library_name}.infer.txt",
+        "tsv_md5": "work/star.{library_name}/strandedness/star.{library_name}.infer.txt.md5",
+        "decision": "work/star.{library_name}/strandedness/star.{library_name}.decision.txt",
+        "decision_md5": "work/star.{library_name}/strandedness/star.{library_name}.decision.txt.md5",
+        "output": "output/star.{library_name}/strandedness/star.{library_name}.decision.txt",
+        "output_md5": "output/star.{library_name}/strandedness/star.{library_name}.decision.txt.md5",
+        "log": "output/star.{library_name}/log/star.{library_name}.strandedness.log",
+        "log_md5": "output/star.{library_name}/log/star.{library_name}.strandedness.log.md5",
+        "conda_list": "output/star.{library_name}/log/star.{library_name}.strandedness.conda_list.txt",
+        "conda_list_md5": "output/star.{library_name}/log/star.{library_name}.strandedness.conda_list.txt.md5",
+        "conda_info": "output/star.{library_name}/log/star.{library_name}.strandedness.conda_info.txt",
+        "conda_info_md5": "output/star.{library_name}/log/star.{library_name}.strandedness.conda_info.txt.md5",
+    }
+    # Get actual
+    actual = ngs_mapping_workflow.get_output_files("strandedness", "run")
+    assert actual == expected
+
+
+def test_strandedness_step_part_get_log_file(ngs_mapping_workflow):
+    """Tests StrandednessStepPart.get_log_file()"""
+    # Define expected
+    expected = {
+        "log": "work/star.{library_name}/log/star.{library_name}.strandedness.log",
+        "log_md5": "work/star.{library_name}/log/star.{library_name}.strandedness.log.md5",
+        "conda_info": "work/star.{library_name}/log/star.{library_name}.strandedness.conda_info.txt",
+        "conda_info_md5": "work/star.{library_name}/log/star.{library_name}.strandedness.conda_info.txt.md5",
+        "conda_list": "work/star.{library_name}/log/star.{library_name}.strandedness.conda_list.txt",
+        "conda_list_md5": "work/star.{library_name}/log/star.{library_name}.strandedness.conda_list.txt.md5",
+    }
+    # Get actual
+    actual = ngs_mapping_workflow.get_log_file("strandedness", "run")
+    assert actual == expected
+
+
+def test_strandedness_step_part_get_resource(ngs_mapping_workflow):
+    """Tests StrandednessStepPart.get_resource()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = ngs_mapping_workflow.get_resource("strandedness", "run", resource)
+        assert actual == expected, msg_error
+
+
 # Tests for Minimap2StepPart -----------------------------------------------------------------------
 
 
@@ -567,6 +628,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "minimap2",
         "ngs_chew",
         "star",
+        "strandedness",
         "target_coverage_report",
     ]
     actual = ngs_mapping_workflow.sub_steps.keys()
@@ -701,6 +763,27 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
             library_name=library_name, ext=ext
         )
         for ext in ("npz", "npz.md5")
+        for library_name in rna
+    ]
+    expected += [
+        "output/star.{library_name}/strandedness/star.{library_name}.decision.{ext}".format(
+            library_name=library_name, ext=ext
+        )
+        for ext in ("txt", "txt.md5")
+        for library_name in rna
+    ]
+    expected += [
+        "output/star.{library_name}/log/star.{library_name}.strandedness.{ext}".format(
+            library_name=library_name, ext=ext
+        )
+        for ext in (
+            "log",
+            "log.md5",
+            "conda_list.txt",
+            "conda_list.txt.md5",
+            "conda_info.txt",
+            "conda_info.txt.md5",
+        )
         for library_name in rna
     ]
 
