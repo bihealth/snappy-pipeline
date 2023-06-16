@@ -209,7 +209,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ),
         "create_panel": ResourceUsage(
             threads=2,
-            time="08:00:00",  # 8 hours
+            time="48:00:00",  # 48 hours
             memory="30G",
         ),
     }

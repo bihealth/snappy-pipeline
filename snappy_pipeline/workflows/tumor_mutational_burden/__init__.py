@@ -2,9 +2,16 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import (
+    CancerCaseSheet,
+    CancerCaseSheetOptions,
+    is_not_background,
+)
 from snakemake.io import expand
 
+from snappy_pipeline.base import (
+    UnsupportedActionException,
+)
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -14,7 +21,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 
 #: Extensions of files to create as main payload
-EXT_VALUES = (".json",".json.md5")
+EXT_VALUES = (".json", ".json.md5")
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("json", "json_md5")
@@ -22,24 +29,27 @@ EXT_NAMES = ("json", "json_md5")
 #: Default configuration for the tmb calculation step
 DEFAULT_CONFIG = r"""
 step_config:
-    tmb_calculation:
+    tumor_mutational_burden:
         path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
         tools_ngs_mapping: []      # default to those configured for ngs_mapping
         tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
+        target_regions: # REQUIRED
 """
 
-class TumorMutaionalBurdenCalculationStepPart(BaseStepPart):
+
+class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     """Calculation tumor mutational burden for each sample"""
-    name = 'tmb_gathering'
 
-    actions = ("tmb_gathering",)
+    name = "tmb_gathering"
 
-    def __init__(self,parent):
+    actions = ("run",)
+
+    def __init__(self, parent):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
-            #update function of OrderedDict
+            # update function of OrderedDict
             self.tumor_ngs_library_to_sample_pair.update(
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
@@ -50,37 +60,41 @@ class TumorMutaionalBurdenCalculationStepPart(BaseStepPart):
                 self.donors[donor.name] = donor
 
     @dictify
-    def get_input_files(self,action):
+    def get_input_files(self, action):
         self._validate_action(action)
         tpl = (
             "output/{mapper}.{var_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"] #read
-        print(f"variant calling gathering")
+        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]  # read
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
-    
+
     @dictify
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
         prefix = (
-            "work/{mapper}.{var_caller}.tmb_calculation_json.{tumor_library}/out/"
-            "{mapper}.{var_caller}.tmb_calculation_json.{tumor_library}"
+            "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
+            "{mapper}.{var_caller}.tmb.{tumor_library}"
         )
+        path = (
+            "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
+        )
+        bed_file_name = self.w_config["step_config"]["tumor_mutational_burden"]["target_regions"].split("/")[-1]
         key_ext = {"json": ".json"}
         for key, ext in key_ext.items():
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-    
+        yield "bed_md5", path + bed_file_name + ".md5"
+
     @dictify
     def _get_log_file(self, action):
-        assert action == "tmb_gathering"
+        assert action == "run"
         prefix = (
-            "work/{mapper}.{var_caller}.tmb_calculation_json.{tumor_library}/log/"
-            "{mapper}.{var_caller}.tmb_calculation_json.{tumor_library}"
+            "work/{mapper}.{var_caller}.tmb.{tumor_library}/log/"
+            "{mapper}.{var_caller}.tmb.{tumor_library}"
         )
 
         key_ext = (
@@ -90,50 +104,39 @@ class TumorMutaionalBurdenCalculationStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-    
-    # def get_params(self, action):
-    #     """Return arguments to pass down."""
-    #     _ = action
-
-    #     def params_function(wildcards):
-    #         if wildcards.tumor_library not in self.donors:
-    #             return {
-    #                 "tumor_library": wildcards.tumor_library,
-    #                 "normal_library": self.get_normal_lib_name(wildcards),
-    #             }
-    #         else:
-    #             return {}
-
-    #     return params_function
 
     def get_resource_usage(self, action):
         """Get Resource Usage
-
         :param action: Action (i.e., step) in the workflow, example: 'run'.
         :type action: str
-
         :return: Returns ResourceUsage for step.
-
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            error_message = (
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
             raise UnsupportedActionException(error_message)
-        mem_mb = 7 * 1024 * 2 #read
+        mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
             threads=2,
-            time="4-04:00:00",  # 1 hour
+            time="1:00:00",  # 1 hour
             memory=f"{mem_mb}M",
         )
 
-class TumorMutaionalBurdenCalculationWorkflow(BaseStep):
-    """Perform TMB calculation """
-    name = "tmb_calculation"
+
+class TumorMutationalBurdenCalculationWorkflow(BaseStep):
+    """Perform TMB calculation"""
+
+    name = "tumormutation"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+        "options": CancerCaseSheetOptions(
+            allow_missing_normal=True, allow_missing_tumor=True
+        )
     }
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one."""
@@ -149,34 +152,60 @@ class TumorMutaionalBurdenCalculationWorkflow(BaseStep):
             (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((TumorMutaionalBurdenCalculationStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (TumorMutationalBurdenCalculationStepPart, LinkOutStepPart)
+        )
         # Register sub workflows
         self.register_sub_workflow(
-            "somatic_variant_calling", self.w_config["step_config"]["tmb_calculation"]["path_somatic_variant_calling"]
+            "somatic_variant_calling",
+            self.w_config["step_config"]["tumor_mutational_burden"][
+                "path_somatic_variant_calling"
+            ],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.w_config["step_config"]["tmb_calculation"]["tools_ngs_mapping"]:
-            self.w_config["step_config"]["tmb_calculation"]["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.w_config["step_config"]["tmb_calculation"]["tools_somatic_variant_calling"]:
-            self.w_config["step_config"]["tmb_calculation"]["tools_somatic_variant_calling"] = self.w_config["step_config"][
-                "somatic_variant_calling"
-            ]["tools"]
+        if not self.w_config["step_config"]["tumor_mutational_burden"][
+            "tools_ngs_mapping"
+        ]:
+            self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_ngs_mapping"
+            ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+        if not self.w_config["step_config"]["tumor_mutational_burden"][
+            "tools_somatic_variant_calling"
+        ]:
+            self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_somatic_variant_calling"
+            ] = self.w_config["step_config"]["somatic_variant_calling"]["tools"]
 
     @listify
     def get_result_files(self):
-        callers = set(self.w_config["step_config"]["tmb_calculation"]["tools_somatic_variant_calling"])
-        name_pattern = "{mapper}.{caller}.tmb_calculation_json.{tumor_library.name}"
+        callers = set(
+            self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_somatic_variant_calling"
+            ]
+        )
+        bed_file_name = self.w_config["step_config"]["tumor_mutational_burden"]["target_regions"].split("/")[-1]
+        name_pattern = "{mapper}.{caller}.tmb.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["tmb_calculation"]["tools_ngs_mapping"],
+            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_ngs_mapping"
+            ],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out",bed_file_name+"{ext}"),
+            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_ngs_mapping"
+            ],
+            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            ext=(".md5")
+        )
+        yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["tmb_calculation"]["tools_ngs_mapping"],
+            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_ngs_mapping"
+            ],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=(
                 ".log",
@@ -187,7 +216,7 @@ class TumorMutaionalBurdenCalculationWorkflow(BaseStep):
                 ".conda_list.txt.md5",
             ),
         )
-    
+
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.
 
@@ -207,22 +236,19 @@ class TumorMutaionalBurdenCalculationWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )
-    
-    def _yield_result_files_joint(self, tpl, **kwargs):
-        """
-        Checking the required config
-        
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for donor in sheet.donors:
-                yield from expand(tpl, donor=[donor], **kwargs)
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "tmb_calculation", "path_somatic_variant_calling"),
+            ("step_config", "tumor_mutational_burden", "path_somatic_variant_calling"),
             "Path to variant calling not configured but required for tmb calculation",
         )
-        
+
+        self.ensure_w_config(
+            ("step_config", "tumor_mutational_burden", "target_regions"),
+            "Path to target_regions file (bed format) not configured but required for tmb calculation",
+        )
