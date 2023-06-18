@@ -247,18 +247,45 @@ rule ngs_mapping_ngs_chew_fingerprint:
 # Compute protocol strandedness for STAR --------------------------------------
 
 
-rule ngs_mapping_strandedness:
+rule ngs_mapping_infer_strandedness:
     input:
-        **wf.get_input_files("strandedness", "run"),
+        **wf.get_input_files("strandedness", "infer"),
     output:
-        **wf.get_output_files("strandedness", "run"),
-    threads: wf.get_resource("strandedness", "run", "threads")
+        **wf.get_output_files("strandedness", "infer"),
+    threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
-        time=wf.get_resource("strandedness", "run", "time"),
-        memory=wf.get_resource("strandedness", "run", "memory"),
-        partition=wf.get_resource("strandedness", "run", "partition"),
-        tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
+        time=wf.get_resource("strandedness", "infer", "time"),
+        memory=wf.get_resource("strandedness", "infer", "memory"),
+        partition=wf.get_resource("strandedness", "infer", "partition"),
+        tmpdir=wf.get_resource("strandedness", "infer", "tmpdir"),
     log:
-        **wf.get_log_file("strandedness", "run"),
+        **wf.get_log_file("strandedness", "infer"),
     wrapper:
         wf.wrapper_path("rseqc")
+
+
+# Gene counts from mapper & strandedness --------------------------------------
+
+
+rule ngs_mapping_counts_with_strand:
+    input:
+        **wf.get_input_files("strandedness", "counts"),
+    output:
+        **wf.get_output_files("strandedness", "counts"),
+    shell:
+        r"""
+            set -x
+            if [[ "{wildcards[mapper]}" == "star" ]]
+            then
+                strand=$(grep -E '^ *"decision": "[012]"$' {input.decision} | sed -re 's/.*"([012])"$/\1/')
+                column=$(($strand + 2))
+                cut -f 1,$column {input.counts} > {output.counts}
+            else
+                ln -sr {input.counts} {output.counts}
+            fi
+            pushd $(dirname {output.counts})
+            md5sum $(basename {output.counts}) > $(basename {output.counts_md5})
+            popd
+            ln -sr {output.counts} {output.output}
+            ln -sr {output.counts_md5} {output.output_md5}
+        """

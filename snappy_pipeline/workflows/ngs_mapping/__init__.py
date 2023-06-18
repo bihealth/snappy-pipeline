@@ -813,6 +813,23 @@ class StarStepPart(ReadMappingStepPart):
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
         return output_files
 
+    @dictify
+    def get_output_files(self, action):
+        """Skip link to the gene counts file to delegate it to strandedness"""
+        assert action in self.actions
+        for key, paths in super().get_output_files(action).items():
+            if key != "output_links":
+                yield key, paths
+                continue
+            yield key, list(
+                filter(
+                    lambda x: not (
+                        x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5")
+                    ),
+                    paths,
+                )
+            )
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -842,47 +859,74 @@ class StrandednessStepPart(BaseStepPart):
     name = "strandedness"
 
     #: Class available actions
-    actions = ("run",)
+    actions = ("infer", "counts")
 
     def get_input_files(self, action):
         self._validate_action(action)
-        return {"bam": "work/star.{library_name}/out/star.{library_name}.bam"}
+        if action == "infer":
+            return {
+                "bam": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam",
+            }
+        elif action == "counts":
+            return {
+                "counts": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab",
+                "decision": "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json",
+            }
 
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.txt")):
-            yield key, "work/star.{library_name}/strandedness/star.{library_name}" + ext
-            yield key + "_md5", "work/star.{library_name}/strandedness/star.{library_name}" + ext + ".md5"
-        key, ext = ("output", ".decision.txt")
-        yield key, "output/star.{library_name}/strandedness/star.{library_name}" + ext
-        yield key + "_md5", "output/star.{library_name}/strandedness/star.{library_name}" + ext + ".md5"
-        for key, ext in (
-            ("log", ".log"),
-            ("conda_list", ".conda_list.txt"),
-            ("conda_info", ".conda_info.txt"),
-        ):
-            yield key, "output/star.{library_name}/log/star.{library_name}.strandedness" + ext
-            yield key + "_md5", "output/star.{library_name}/log/star.{library_name}.strandedness" + ext + ".md5"
+        if action == "infer":
+            for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
+                yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+                yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            key, ext = ("output", ".decision.json")
+            yield key, "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key + "_md5", "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            for key, ext in (
+                ("log", ".log"),
+                ("conda_list", ".conda_list.txt"),
+                ("conda_info", ".conda_info.txt"),
+            ):
+                yield key, "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext
+                yield key + "_md5", "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext + ".md5"
+        elif action == "counts":
+            key, ext = ("counts", ".GeneCounts.tab")
+            yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            key, ext = ("output", ".GeneCounts.tab")
+            yield key, "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext
+            yield key + "_md5", "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5"
 
     def get_result_files(self):
-        tpl = "output/star.{library_name}/strandedness/star.{library_name}.decision.txt"
-        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-            if extra_info["extractionType"] == "RNA":
-                yield tpl.format(library_name=library_name)
-                yield tpl.format(library_name=library_name) + ".md5"
-        tpl = "output/star.{library_name}/log/star.{library_name}.strandedness.{ext}"
-        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-            if extra_info["extractionType"] == "RNA":
-                for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                    yield tpl.format(library_name=library_name, ext=ext)
-                    yield tpl.format(library_name=library_name, ext=ext) + ".md5"
+        for mapper in self.config["tools"]["rna"]:
+            if self.config[mapper]["path_features"]:
+                tpl_out = (
+                    "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
+                )
+                tpl_strandedness = "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
+                tpl_log = (
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
+                )
+                for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+                    if extra_info["extractionType"] == "RNA":
+                        yield tpl_out.format(mapper=mapper, library_name=library_name)
+                        yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
+                        yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
+                        yield tpl_strandedness.format(
+                            mapper=mapper, library_name=library_name
+                        ) + ".md5"
+                        for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                            yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                            yield tpl_log.format(
+                                mapper=mapper, library_name=library_name, ext=ext
+                            ) + ".md5"
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
-        prefix = "work/star.{library_name}/log/star.{library_name}.strandedness"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
