@@ -701,6 +701,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "minimap2",
         "ngs_chew",
         "star",
+        "strandedness",
         "target_coverage_report",
     ]
     actual = ngs_mapping_workflow.sub_steps.keys()

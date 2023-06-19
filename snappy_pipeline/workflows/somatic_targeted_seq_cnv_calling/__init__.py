@@ -101,7 +101,7 @@ import os
 import os.path
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -884,6 +884,10 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
+    sheet_shortcut_kwargs = {
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+    }
 
     @classmethod
     def default_config_yaml(cls):
