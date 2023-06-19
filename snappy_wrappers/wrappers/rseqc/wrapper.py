@@ -91,7 +91,7 @@ then
 fi
 
 # ----- Write outputs
-md5=$(cat {config[path_exon_bed]} | sed -e "s/ .*//")
+md5=$(cat {config[path_exon_bed]} | md5sum | sed -e "s/ .*//")
 cat << __EOF > {snakemake.output.decision}
 {{
     "library_name": "{snakemake.wildcards[library_name]}",
