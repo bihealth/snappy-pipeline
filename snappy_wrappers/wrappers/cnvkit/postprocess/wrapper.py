@@ -36,6 +36,11 @@ stopifnot(all(c("chromosome", "start", "end") %in% colnames(segments)))
 calls <- read.table("{snakemake.input.call}", sep="\t", header=1, stringsAsFactors=FALSE)
 stopifnot(all(c("chromosome", "start", "end", "cn") %in% colnames(calls)))
 
+# Trim segments to avoid edge effects with calls
+segments[,"start"] <- segments[["start"]]+1
+segments[,"end"]   <- segments[["end"]]-1
+segments <- segments[segments[["end"]]-segments[["start"]]>0,]
+
 r1 <- GenomicRanges::GRanges(
     seqnames=segments[["chromosome"]],
     ranges=IRanges::IRanges(start=segments[["start"]], end=segments[["end"]]),
@@ -53,6 +58,10 @@ stopifnot(!any(duplicated(S4Vectors::queryHits(i))))
 # Default value: diploid segment (number of copies = 2)
 segments[,"cn"] <- 2
 segments[S4Vectors::queryHits(i),"cn"] <- calls[S4Vectors::subjectHits(i),"cn"]
+
+# Reset segment boundaries to original values
+segments[,"start"] <- segments[["start"]]-1
+segments[,"end"]   <- segments[["end"]]+1
 
 write.table(segments, file="{snakemake.output.final}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
 _EOF
