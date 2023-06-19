@@ -411,9 +411,9 @@ step_config:
       mask_duplicates: false
       include_unmapped: true
     strandedness:
-      path_exon_bed: REQUIRED
-      strand: -1
-      threshold: 0.1
+      path_exon_bed: REQUIRED   # Location of usually highly expressed genes. Known protein coding genes is a good choice
+      strand: -1                # -1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)
+      threshold: 0.85           # Minimum proportion of reads mapped to forward/reverse direction to call the protocol
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
