@@ -79,15 +79,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
             "{mapper}.{var_caller}.tmb.{tumor_library}"
         )
-        path = (
-            "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
-        )
-        bed_file_name = self.w_config["step_config"]["tumor_mutational_burden"]["target_regions"].split("/")[-1]
         key_ext = {"json": ".json"}
         for key, ext in key_ext.items():
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-        yield "bed_md5", path + bed_file_name + ".md5"
 
     @dictify
     def _get_log_file(self, action):
@@ -183,7 +178,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
                 "tools_somatic_variant_calling"
             ]
         )
-        bed_file_name = self.w_config["step_config"]["tumor_mutational_burden"]["target_regions"].split("/")[-1]
         name_pattern = "{mapper}.{caller}.tmb.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
@@ -192,14 +186,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             ],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=EXT_VALUES,
-        )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out",bed_file_name+"{ext}"),
-            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
-                "tools_ngs_mapping"
-            ],
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
-            ext=(".md5")
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
