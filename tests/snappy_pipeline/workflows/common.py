@@ -59,6 +59,12 @@ def get_expected_output_vcf_files_dict(base_out, log_base_out: typing.Optional[s
     # Return
     return expected
 
+def get_expected_output_json_files_dict(base_out):
+    expected = {
+        "json": f"{base_out}.json",
+        "json_md5": f"{base_out}.json.md5"
+    }
+    return expected
 
 def get_expected_output_bcf_files_dict(base_out):
     """
