@@ -5,12 +5,14 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.tumor_mutational_burden import TumorMutationalBurdenCalculationWorkflow
+from snappy_pipeline.workflows.tumor_mutational_burden import (
+    TumorMutationalBurdenCalculationWorkflow,
+)
 
 from .common import get_expected_log_files_dict, get_expected_output_json_files_dict
 from .conftest import patch_module_fs
+
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
@@ -42,7 +44,7 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-        
+              
           tumor_mutational_burden:
             path_somatic_variant_calling: ../somatic_variant_calling
             tools_ngs_mapping: []
@@ -60,6 +62,7 @@ def minimal_config():
         """
         ).lstrip()
     )
+
 
 @pytest.fixture
 def tumor_mutational_burden_workflow(
@@ -105,7 +108,8 @@ def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_work
     }
     actual = tumor_mutational_burden_workflow.get_input_files("tmb_gathering", "run")
     assert actual == expected
-    
+
+
 def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
     base_out = (
@@ -113,10 +117,9 @@ def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_wor
         "{mapper}.{var_caller}.tmb.{tumor_library}"
     )
     expected = get_expected_output_json_files_dict(base_out=base_out)
-    actual = tumor_mutational_burden_workflow.get_output_files(
-        "tmb_gathering", "run"
-    )
+    actual = tumor_mutational_burden_workflow.get_output_files("tmb_gathering", "run")
     assert actual == expected
+
 
 def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
@@ -128,7 +131,10 @@ def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workfl
     actual = tumor_mutational_burden_workflow.get_log_file("tmb_gathering", "run")
     assert actual == expected
 
-def test_tumor_mutational_step_part_get_resource_usage(tumor_mutational_burden_workflow):
+
+def test_tumor_mutational_step_part_get_resource_usage(
+    tumor_mutational_burden_workflow,
+):
     """Tests TumorMutationalBurdenCalculationStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 2, "time": "1:00:00", "memory": "4096M"}
@@ -157,18 +163,14 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         "{mapper}.{var_caller}.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
-        tpl.format(
-            mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="out"
-        )
+        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="out")
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("json", "json.md5")
         for mapper in ("bwa",)
         for var_caller in ("mutect2", "scalpel")
     ]
     expected += [
-        tpl.format(
-            mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="log"
-        )
+        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="log")
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in (
             "conda_info.txt",
