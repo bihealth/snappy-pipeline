@@ -2,16 +2,10 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import (
-    CancerCaseSheet,
-    CancerCaseSheetOptions,
-    is_not_background,
-)
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import (
-    UnsupportedActionException,
-)
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
