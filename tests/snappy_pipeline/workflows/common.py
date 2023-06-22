@@ -1,5 +1,6 @@
 """Shared method used in methods."""
 
+
 import typing
 
 
@@ -59,12 +60,20 @@ def get_expected_output_vcf_files_dict(base_out, log_base_out: typing.Optional[s
     # Return
     return expected
 
+
 def get_expected_output_json_files_dict(base_out):
-    expected = {
-        "json": f"{base_out}.json",
-        "json_md5": f"{base_out}.json.md5"
-    }
+    """
+    :param base_out: Base path structure for json files. For example, if the expected path for
+    the log is 'work/step.path/log/json', the argument should be
+    'work/step.path/log/step'.
+    :type base_out: str
+
+    :return: Returns dictionary with expected path for vcf related files based on the
+    provided input.
+    """
+    expected = {"json": f"{base_out}.json", "json_md5": f"{base_out}.json.md5"}
     return expected
+
 
 def get_expected_output_bcf_files_dict(base_out):
     """

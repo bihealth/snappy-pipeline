@@ -35,6 +35,7 @@ number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf
 
 TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
 cat << EOF > {snakemake.output.json}
+{
 "Library_name": {snakemake.wildcards.tumor_library},
 "VCF_file": $name_vcf,
 "VCF_md5": $vcf_md5,
@@ -48,10 +49,11 @@ cat << EOF > {snakemake.output.json}
 EOF
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_md5})
+}
 """
 )
 
-#Compute MD5 sums of logs
+# Compute MD5 sums of logs
 shell(
     r"""
 md5sum {snakemake.log.log} > {snakemake.log.log_md5}

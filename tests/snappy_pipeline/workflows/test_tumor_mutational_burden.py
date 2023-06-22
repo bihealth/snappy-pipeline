@@ -16,7 +16,7 @@ from .conftest import patch_module_fs
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
-    """Return YAML parsing result for (germline) configuration"""
+    """Return YAML parsing result for configuration"""
     yaml = ruamel_yaml.YAML()
     return yaml.load(
         textwrap.dedent(
@@ -44,7 +44,7 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-              
+
           tumor_mutational_burden:
             path_somatic_variant_calling: ../somatic_variant_calling
             tools_ngs_mapping: []
@@ -141,9 +141,7 @@ def test_tumor_mutational_step_part_get_resource_usage(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = tumor_mutational_burden_workflow.get_resource(
-            "tmb_gathering", "run", resource
-        )
+        actual = tumor_mutational_burden_workflow.get_resource("tmb_gathering", "run", resource)
         assert actual == expected, msg_error
 
 
@@ -153,7 +151,7 @@ def test_tumor_mutational_step_part_get_resource_usage(
 def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["tmb_gathering", "link_out"]
+    expected = ["link_out", "tmb_gathering"]
     actual = list(sorted(tumor_mutational_burden_workflow.sub_steps.keys()))
     assert actual == expected
 

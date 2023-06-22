@@ -109,9 +109,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = (
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
@@ -127,9 +125,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     name = "tumormutation"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(
-            allow_missing_normal=True, allow_missing_tumor=True
-        )
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
     @classmethod
@@ -147,20 +143,14 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (TumorMutationalBurdenCalculationStepPart, LinkOutStepPart)
-        )
+        self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
         # Register sub workflows
         self.register_sub_workflow(
             "somatic_variant_calling",
-            self.w_config["step_config"]["tumor_mutational_burden"][
-                "path_somatic_variant_calling"
-            ],
+            self.w_config["step_config"]["tumor_mutational_burden"]["path_somatic_variant_calling"],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.w_config["step_config"]["tumor_mutational_burden"][
-            "tools_ngs_mapping"
-        ]:
+        if not self.w_config["step_config"]["tumor_mutational_burden"]["tools_ngs_mapping"]:
             self.w_config["step_config"]["tumor_mutational_burden"][
                 "tools_ngs_mapping"
             ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
@@ -174,24 +164,18 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         callers = set(
-            self.w_config["step_config"]["tumor_mutational_burden"][
-                "tools_somatic_variant_calling"
-            ]
+            self.w_config["step_config"]["tumor_mutational_burden"]["tools_somatic_variant_calling"]
         )
         name_pattern = "{mapper}.{caller}.tmb.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
-                "tools_ngs_mapping"
-            ],
+            mapper=self.w_config["step_config"]["tumor_mutational_burden"]["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["tumor_mutational_burden"][
-                "tools_ngs_mapping"
-            ],
+            mapper=self.w_config["step_config"]["tumor_mutational_burden"]["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             ext=(
                 ".log",
@@ -236,5 +220,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
 
         self.ensure_w_config(
             ("step_config", "tumor_mutational_burden", "target_regions"),
-            "Path to target_regions file (bed format) not configured but required for tmb calculation",
+            "Path to target_regions file (bed format)"
+            "not configured but required for tmb calculation",
         )
