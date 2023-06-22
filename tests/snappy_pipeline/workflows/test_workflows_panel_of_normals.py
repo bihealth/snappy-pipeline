@@ -163,7 +163,7 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     # Define expected: default defined workflow.abstract
     create_panel_expected_dict = {
         "threads": 2,
-        "time": "08:00:00",
+        "time": "48:00:00",
         "memory": "30G",
         "partition": "medium",
     }
