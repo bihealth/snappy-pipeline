@@ -2,10 +2,9 @@ import logging
 import re
 import typing
 
-import vcfpy
-
-import exceptions
 from annotation import Annotation
+import exceptions
+import vcfpy
 
 
 class VcfParser:

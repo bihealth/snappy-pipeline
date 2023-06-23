@@ -1,9 +1,8 @@
 import re
 import typing
 
-import vcfpy
-
 import exceptions
+import vcfpy
 
 
 class Annotation:
