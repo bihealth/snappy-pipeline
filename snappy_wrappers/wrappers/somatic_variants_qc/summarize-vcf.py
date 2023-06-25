@@ -59,6 +59,10 @@ parser.add_option(
 ## PIPELINE
 # - __init__ :
 
+CONTIG = ["chr" + str(i) for i in range(1, 22)]
+CONTIG.append("chrX")
+CONTIG.append("chrY")
+
 
 def check_variant_in_bed(v_chrom, v_start, v_end, bed_intervals, padding=0):
     # print(f'variant chrom: {v_chrom} - start: {v_start} - end:{v_end}')
@@ -70,7 +74,7 @@ def check_variant_in_bed(v_chrom, v_start, v_end, bed_intervals, padding=0):
 
 
 # def calculate_exoms_length(bed_intervals):
-#     contigs= ["chr" + str(i) for i in range(1, 23)]
+#     contigs= ["chr" + str(i) for i in range(1, 22)]
 #     contigs.append("chrX")
 #     contigs.append("chrY")
 #     length = 0
@@ -140,45 +144,46 @@ def process_vcf_file(vcf_file, bed_file="", filter_file=False, padding=0):
         # mutation classes
         mt_classes = [0] * 6
         for variant in vcf_file:
-            vaf.append(variant.format("AF")[1])
-            total_v_count += 1
-            # Counting variants in or out of exom and variants with different support reads
-            if "chrUn" in variant.CHROM:
-                v_outside_exom += 1
-                if check_sp_read(variant) == "minimal":
-                    minimal_rp_snvs_nexom += 1
-                elif check_sp_read(variant) == "limited":
-                    limited_rp_snvs_nexom += 1
-                else:
-                    strong_rp_snvs_nexom += 1
-            elif check_variant_in_bed(
-                variant.CHROM, variant.start, variant.end, bed_file, padding=0
-            ):
-                v_inside_exom += 1
-                if check_sp_read(variant) == "minimal":
-                    minimal_rp_snvs_exom += 1
-                elif check_sp_read(variant) == "limited":
-                    limited_rp_snvs_exom += 1
-                else:
-                    strong_rp_snvs_exom += 1
+            if variant.CHROM in CONTIG:
+                vaf.append(float(variant.format("AF")[1][0]))
+                total_v_count += 1
+                # Counting variants in or out of exom and variants with different support reads
+                if "chrUn" in variant.CHROM:
+                    v_outside_exom += 1
+                    if check_sp_read(variant) == "minimal":
+                        minimal_rp_snvs_nexom += 1
+                    elif check_sp_read(variant) == "limited":
+                        limited_rp_snvs_nexom += 1
+                    else:
+                        strong_rp_snvs_nexom += 1
+                elif check_variant_in_bed(
+                    variant.CHROM, variant.start, variant.end, bed_file, padding=0
+                ):
+                    v_inside_exom += 1
+                    if check_sp_read(variant) == "minimal":
+                        minimal_rp_snvs_exom += 1
+                    elif check_sp_read(variant) == "limited":
+                        limited_rp_snvs_exom += 1
+                    else:
+                        strong_rp_snvs_exom += 1
 
-            else:
-                v_outside_exom += 1
-                if check_sp_read(variant) == "minimal":
-                    minimal_rp_snvs_nexom += 1
-                elif check_sp_read(variant) == "limited":
-                    limited_rp_snvs_nexom += 1
                 else:
-                    strong_rp_snvs_nexom += 1
-            # get number of snvs and indels
-            # Need to check multi allelic. Users shouldn't input multi allelic vcf file.
-            if get_variant_type(variant.REF, variant.ALT[0]) == "snp":
-                n_snps += 1
-                mt_classes = assign_class_snvs(variant, mt_classes)
-            else:
-                # More for indels
-                n_indels += 1
-                indels_length.append(abs(len(variant.REF) - len(variant.ALT[0])))
+                    v_outside_exom += 1
+                    if check_sp_read(variant) == "minimal":
+                        minimal_rp_snvs_nexom += 1
+                    elif check_sp_read(variant) == "limited":
+                        limited_rp_snvs_nexom += 1
+                    else:
+                        strong_rp_snvs_nexom += 1
+                # get number of snvs and indels
+                # Need to check multi allelic. Users shouldn't input multi allelic vcf file.
+                if get_variant_type(variant.REF, variant.ALT[0]) == "snp":
+                    n_snps += 1
+                    mt_classes = assign_class_snvs(variant, mt_classes)
+                else:
+                    # More for indels
+                    n_indels += 1
+                    indels_length.append(abs(len(variant.REF) - len(variant.ALT[0])))
 
         return (
             total_v_count,
@@ -231,7 +236,6 @@ def main():
         mt_classes,
         vaf,
     ) = process_vcf_file(filter_vcf, bed_intervals, filter_file=True, padding=options.padding)
-
     # After one for loop through vcf file. The VCF will automatically be closed.
     # length_exoms = calculate_exoms_length(bed_intervals)
     # for variant in filter_vcf:
@@ -255,7 +259,7 @@ def main():
         "classes": classes,
         "VAF": vaf,
     }
-    json_object = json.dumps(summary, indent=4)
+    json_object = json.dumps(summary)
 
     with open(outpath, "w") as outfile:
         outfile.write(json_object)

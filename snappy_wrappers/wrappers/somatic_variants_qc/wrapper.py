@@ -2,11 +2,13 @@
 """Wrapper for summarize information of vcf file after
 somatic variant calling step
 """
+import os
 from snakemake.shell import shell
 
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
+base_dir = os.path.dirname(os.path.realpath(__file__))
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -19,10 +21,10 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-python summarize-vcf.py --rawvcf {snakemake.input.raw_vcf} \
+python {base_dir}/summarize-vcf.py --rawvcf {snakemake.input.full_vcf} \
     --filtered-vcf {snakemake.input.passed_vcf} \
-    --exom-bedfile {snakemake.config[step_config][somatic_variants_QC][target_regions]} \
-    --padding {snakemake.config[step_config][somatic_variants_QC][padding]} \
+    --exom-bedfile {snakemake.config[step_config][somatic_variant_qc][target_regions]} \
+    --padding {snakemake.config[step_config][somatic_variant_qc][padding]} \
     --output {snakemake.output.json}
 
 pushd $(dirname {snakemake.output.json})

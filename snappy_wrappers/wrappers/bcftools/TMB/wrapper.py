@@ -46,10 +46,10 @@ cat << EOF > {snakemake.output.json}
 "Number_snvs": $number_snvs,
 "Number_indels": $number_indels,
 "Total_regions_length": $total_exom_length
+}
 EOF
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_md5})
-}
 """
 )
 
