@@ -487,10 +487,10 @@ output:                                               # Output columns definitio
               column: "Codons"
               on_missing: default
               default: ""
-    Existing_variantion:
+    Existing_variation:
         input:
             - set: "annotation"
-              column: "Existing_variantion"
+              column: "Existing_variation"
               on_missing: default
               default: ""
     # ALLELE_NUM
