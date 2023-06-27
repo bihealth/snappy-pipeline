@@ -3,32 +3,36 @@
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
 
+import os
 
-def write_case_list_sequenced(sheets, config, outfile):
+
+def write_case_list(args, outfile):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""
-    samples = []
-    for sheet in sheets:
-        for p in sheet.bio_entities.values():
-            for s in p.bio_samples.values():
-                if s.extra_infos["isTumor"]:
-                    samples.append(s.name)
-    samples = list(set(samples))
-
+    category = os.path.basename(outfile).replace(".txt", "")
     with open(outfile, "w") as f:
         s = "\n".join(
             [
                 "cancer_study_identifier: {cancer_study_id}",
-                "stable_id: {cancer_study_id}_sequenced",
-                "case_list_name: Sequenced tumors",
-                "case_list_description: Sequenced tumor samples",
-                "case_list_category: all_cases_with_mutation_data",
+                "stable_id: {cancer_study_id}_{stable_id}",
+                "case_list_name: {name}",
+                "case_list_description: {description}",
+                "case_list_category: {category}",
                 "case_list_ids: {all_samples}",
+                "",
             ]
         ).format(
-            cancer_study_id=config["step_config"]["cbioportal_export"]["cancer_study_id"],
-            all_samples="\t".join(samples),
+            cancer_study_id=snakemake.config["step_config"]["cbioportal_export"]["study"][
+                "cancer_study_id"
+            ],
+            stable_id=args["stable_id"],
+            name=args["name"],
+            description=args["description"],
+            category=args["category"],
+            all_samples="\t".join(args["samples"]),
         )
         f.write(s)
 
 
-write_case_list_sequenced(snakemake.params.sheet, snakemake.config, snakemake.output.sequenced)
+for case_list, filename in snakemake.output.items():
+    assert case_list in snakemake.params.keys()
+    write_case_list(snakemake.params[case_list], filename)
