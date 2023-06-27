@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the cbioportal_export workflow module code"""
 
-from pathlib import Path
 import textwrap
 
 import pytest
@@ -77,7 +76,7 @@ def cbioportal_export_workflow(
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
         "somatic_variant": lambda x: "/SOM_VAR_FILTRATION/" + x,
-        "copy_number_step": lambda x: "/COPY_NUMBER" + x,
+        "copy_number_step": lambda x: "/COPY_NUMBER/" + x,
     }
     # Construct the workflow object
     return cbioportalExportWorkflow(
@@ -99,7 +98,7 @@ def test_cbioportal_meta_files_step_part_get_input_files(cbioportal_export_workf
         cbioportal_export_workflow.get_input_files("cbioportal_meta_files", "run")
 
 
-def test_cbioportal_meta_files_step_part_get_log_file(cbioportal_export_workflow):
+def test_cbioportal_meta_files_step_part_get_output_files(cbioportal_export_workflow):
     """Tests CbioportalStudyMetaFilesStepPart.get_log_file()"""
     # Define expected: all meta files as somatic variants, CNA, segmentation & expression are present
     expected = [
@@ -109,13 +108,13 @@ def test_cbioportal_meta_files_step_part_get_log_file(cbioportal_export_workflow
             "clinical_patient",
             "clinical_sample",
             "mutation_extended",
-            "cna_log2",
             "cna_gistic",
+            "cna_log2",
             "segment",
             "expression",
         )
     ]
-    actual = cbioportal_export_workflow.get_output_files("cbioportal_meta_files", "run")
+    actual = list(cbioportal_export_workflow.get_output_files("cbioportal_meta_files", "run"))
     assert actual == expected
 
 
@@ -159,7 +158,7 @@ def test_cbioportal_clinical_data_step_part_get_output_files(cbioportal_export_w
     assert actual == expected
 
 
-def test_cbioportal_cna_data_step_part_get_log_file(cbioportal_export_workflow):
+def test_cbioportal_clinical_data_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalClinicalDataStepPart.get_log_file()"""
     # Define expected
     base_name_out = "work/log/cbioportal_clinical_data"
@@ -221,7 +220,7 @@ def test_cbioportal_case_lists_step_part_get_output_files(cbioportal_export_work
     assert actual == expected
 
 
-def test_cbioportal_cna_data_step_part_get_log_file(cbioportal_export_workflow):
+def test_cbioportal_case_lists_data_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalCaseListsStepPart.get_log_file()"""
     # Define expected
     base_name_out = "work/log/cbioportal_case_lists"
@@ -388,6 +387,7 @@ def test_cbioportal_mutations_step_part_get_output_files(cbioportal_export_workf
     expected = "work/upload/data_mutation_extended.txt"
     # Actual
     actual = cbioportal_export_workflow.get_output_files("cbioportal_mutations", "run")
+    assert actual == expected
 
 
 def test_cbioportal_mutations_step_part_get_log_file(cbioportal_export_workflow):
@@ -496,7 +496,7 @@ def test_cbioportal_cna_step_part_get_input_files_gistic(cbioportal_export_workf
     assert actual == expected
 
 
-def test_cbioportal_cna_step_part_get_output_files(cbioportal_export_workflow):
+def test_cbioportal_cna_step_part_get_output_files_log2(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_output_files() - action 'log2'"""
     # Define expected
     expected = "work/upload/data_cna_log2.txt"
@@ -505,7 +505,7 @@ def test_cbioportal_cna_step_part_get_output_files(cbioportal_export_workflow):
     assert actual == expected
 
 
-def test_cbioportal_cna_step_part_get_output_files(cbioportal_export_workflow):
+def test_cbioportal_cna_step_part_get_output_files_gistic(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_output_files() - action 'gistic'"""
     # Define expected
     expected = "work/upload/data_cna_gistic.txt"

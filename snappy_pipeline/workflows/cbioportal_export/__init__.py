@@ -79,19 +79,19 @@ DEFAULT_CONFIG = r"""
 step_config:
   cbioportal_export:
     # Required for RNA expression
-    path_ngs_mapping: ""
+    path_ngs_mapping: ""                                         # When missing, no expression data is uploaded to cBioPortal
     expression_tool: "star"
     # Required for somatic variants
     path_somatic_variant: ../somatic_variant_filtration          # REQUIRED (before or after filtration)
-    somatic_variant_calling_tool: "mutect2"                     # mutect/scalpel combo unsupported
+    somatic_variant_calling_tool: "mutect2"                      # mutect/scalpel combo unsupported
     somatic_variant_annotation_tool: "vep"
     filter_set: ""                                               # Will take variants before filtration step.dkfz_only.
                                                                  # For filters, use dkfz_only, dkfz_and_ebfilter, dkfz_and_ebfilter_and_oxog, ...
     exon_list: "genome_wide"                                     # Works together with filter set, see somatic_variant_filtration step
     exclude_variant_with_flag: ""
     # Required for Copy Number Alterations
-    path_copy_number: ../somatic_targeted_seq_cnv_calling   # Change to ../somatic_wgs_cnv_calling for WGS
-    copy_number_tool: cnvkit                                             # Control_FREEC is unsupported, CopywriteR is not maintained
+    path_copy_number: ""                                         # When missing, no CNV data uploaded to portal. Access WES & WGS steps
+    copy_number_tool: cnvkit                                     # Control_FREEC is currently unsupported, CopywriteR is not maintained
     # Required for MAF &/or cBioPortal
     path_gene_id_mappings: REQUIRED             # Mapping from pipeline gene ids to cBioPortal ids (HGNC symbols from GeneNexus)
     vcf2maf:
@@ -139,6 +139,9 @@ class cbioportalExportStepPart(BaseStepPart):
     output_file = None
 
     def _yield_libraries(self):
+        test_msg = 'WARNING: multiple test samples for sample "{}", test sample "{}" is ignored'
+        lib_msg = 'WARNING: multiple libraries for sample "{}", library "{}" is ignored'
+        samples = []
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
                 for biosample in donor.bio_samples.values():
@@ -151,19 +154,20 @@ class cbioportalExportStepPart(BaseStepPart):
                                 != self.extraction_type
                             ):
                                 continue
-                            library_name = None
+                            if sample_name in samples:
+                                print(
+                                    test_msg.format(sample_name, test_sample.name), file=sys.stderr
+                                )
+                                continue
+                            samples.append(sample_name)
+                            first = True
                             for lib in test_sample.ngs_libraries.values():
                                 # pick only one library
-                                # even if there is more than one lib, cbioportal cannot use it
-                                if library_name:
-                                    print(
-                                        'WARNING: multiple libraries for sample "{}", library "{}" is ignored'.format(
-                                            sample_name, lib.name
-                                        ),
-                                        file=sys.stderr,
-                                    )
-                                    continue
+                                if not first:
+                                    print(lib_msg.format(sample_name, lib.name), file=sys.stderr)
+                                    break
                                 yield lib
+                                first = False
 
     @dictify
     def get_input_files(self, action):
@@ -437,7 +441,10 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         if action == "gistic":
             return {
                 "action_type": "gistic",
-                "extra_args": {"pipeline_id": "ENSEMBL", "amplification": "7"},
+                "extra_args": {
+                    "pipeline_id": "ENSEMBL",
+                    "amplification": "9",
+                },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
             }
 
     def get_output_files(self, action):
@@ -592,17 +599,27 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
         # Validate action
         self._validate_action(action)
         donors = {}
-        for lib in self._yield_libraries():
-            extraction_type = lib.test_sample.extra_infos.get("extractionType", "")
-            donor_name = lib.test_sample.bio_sample.bio_entity.name
-            sample_name = lib.test_sample.bio_sample.name
-            if donor_name not in donors:
-                donors[donor_name] = {}
-            if sample_name not in donors[donor_name]:
-                donors[donor_name][sample_name] = {}
-            # Multiple libraries should not be returned by _yield_libraries
-            assert extraction_type not in donors[donor_name][sample_name]
-            donors[donor_name][sample_name][extraction_type] = lib.name
+        for extraction_type in ("DNA", "RNA"):
+            if (
+                extraction_type == "DNA"
+                and self.config["path_somatic_variant"] == ""
+                and self.config["path_copy_number"] == ""
+            ):
+                continue
+            if extraction_type == "RNA" and self.config["path_ngs_mapping"] == "":
+                continue
+            self.extraction_type = extraction_type
+            for lib in self._yield_libraries():
+                assert lib.test_sample.extra_infos["extractionType"] == extraction_type
+                donor_name = lib.test_sample.bio_sample.bio_entity.name
+                sample_name = lib.test_sample.bio_sample.name
+                if donor_name not in donors:
+                    donors[donor_name] = {}
+                if sample_name not in donors[donor_name]:
+                    donors[donor_name][sample_name] = {}
+                # Multiple libraries should not be returned by _yield_libraries
+                assert extraction_type not in donors[donor_name][sample_name]
+                donors[donor_name][sample_name][extraction_type] = lib.name
         return donors
 
     @dictify
@@ -626,20 +643,19 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         # Validate action
         self._validate_action(action)
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))
+        self.extraction_type = "DNA"
         for lib in self._yield_libraries():
             sample_name = lib.test_sample.bio_sample.name
-            extractionType = lib.test_sample.extra_infos["extractionType"]
-            if self.config["path_somatic_variant"] and extractionType == "DNA":
+            if self.config["path_somatic_variant"]:
                 samples["sequenced"] += [sample_name]
-            if self.config["path_copy_number"] and extractionType == "DNA":
+            if self.config["path_copy_number"]:
                 samples["cna"] += [sample_name]
-            if (
-                self.config["path_somatic_variant"]
-                and self.config["path_copy_number"]
-                and extractionType == "DNA"
-            ):
+            if self.config["path_somatic_variant"] and self.config["path_copy_number"]:
                 samples["cnaseq"] += [sample_name]
-            if self.config["path_ngs_mapping"] and extractionType == "RNA":
+        if self.config["path_ngs_mapping"]:
+            self.extraction_type = "RNA"
+            for lib in self._yield_libraries():
+                sample_name = lib.test_sample.bio_sample.name
                 samples["rna_seq_mrna"] += [sample_name]
         args = {}
         for k, v in samples.items():
