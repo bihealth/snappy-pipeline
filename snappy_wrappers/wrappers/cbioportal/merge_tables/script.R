@@ -36,11 +36,20 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "expression"), 
 
     if (type == "gistic") {
         stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
+        # Copy numbers (in "cn" column) are transformed into (pseudo-) gistic codes:
+        # 0: Deep deletion, 1: heterozygous deletion, 2: copy number neutral, 3: gain, 4: amplification
+        # In https://doi.org/10.1038/s41586-022-04738-6, the amplification is defined as 
+        # copy number greater or equal to 9 copies (args$amplification = 9).
         args$amplification <- as.numeric(args$amplification)
         cn <- read_sample_files(fns, args$pipeline_id, "cn")
         cn[args$amplification<=cn] <- args$amplification
         cn[2<cn & cn<args$amplification] <- 3
         cn[cn==args$amplification] <- 4
+        # The gistic codes are changed so that copy number neutral alterations are at 0.
+        # This is allowing finer selection of representative genes when there is no 1-1 mapping between pipeline id & gene symbols.
+        # This way, one could select as representative the gene with more extreme copy number change, using "maxabs".
+        # At the moment, the option describe above is not the selected one.
+        # The representative is currently selected based on the highest copy number over all samples (sum of cn is highest).
         tmp <- cn-2
         method <- "max"
     }
@@ -287,6 +296,7 @@ map_feature_id <- function(mat, mappings, from, to, method=c("sum", "max", "maxa
         tmp <- switch(method,
             sum=sapply(i, function(j) colSums(mat[j,,drop=FALSE], na.rm=TRUE)),
             max=sapply(i, function(j) { x <- mat[j,,drop=FALSE] ; x <- x[order(-rowSums(x, na.rm=TRUE)),,drop=FALSE] ; x[1,] }),
+            maxabs=sapply(i, function(j) { x <- mat[j,,drop=FALSE] ; x <- x[order(-rowSums(abs(x), na.rm=TRUE)),,drop=FALSE] ; x[1,] })
         )
         if (!is.matrix(x)) tmp <- matrix(tmp, ncol=1, dimnames=list(names(i), colnames(mat)))
         rslt <- rbind(rslt, tmp)
