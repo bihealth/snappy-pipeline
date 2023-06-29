@@ -6,7 +6,10 @@ import re
 import typing
 
 # from action import Action
-from common_functions import CommonFunctions
+
+from common_functions import calc_end_pos, minimize_mutation, strip_sequence_version, variant_type
+from protein_mutation_parser import parse_protein_mutation
+from variant_classification import variant_classification
 import exceptions
 
 
@@ -19,11 +22,12 @@ class Functions:
         self.compiled["identity"] = Functions.identity
         self.compiled["map"] = Functions.mapper
 
-        self.compiled["minimize_mutation"] = CommonFunctions.minimize_mutation
-        self.compiled["variant_classification"] = CommonFunctions.variant_classification
-        self.compiled["variant_type"] = CommonFunctions.variant_type
-        self.compiled["parse_protein_mutation"] = CommonFunctions.parse_protein_mutation
-        self.compiled["strip_sequence_version"] = CommonFunctions.strip_sequence_version
+        self.compiled["minimize_mutation"] = minimize_mutation
+        self.compiled["calc_end_pos"] = calc_end_pos
+        self.compiled["strip_sequence_version"] = strip_sequence_version
+        self.compiled["variant_type"] = variant_type
+        self.compiled["parse_protein_mutation"] = parse_protein_mutation
+        self.compiled["variant_classification"] = variant_classification
 
         for col_name, col_def in config["output"].items():
             if "function" in col_def and not col_def["function"] in self.compiled:
