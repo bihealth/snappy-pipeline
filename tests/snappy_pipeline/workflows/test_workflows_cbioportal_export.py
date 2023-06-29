@@ -354,7 +354,7 @@ def test_cbioportal_vcf2maf_step_part_get_args(cbioportal_export_workflow):
 def test_cbioportal_vcf2maf_step_part_get_resource_usage(cbioportal_export_workflow):
     """Tests cbioportalVcf2MafStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 2, "time": "12:00:00", "memory": "5120M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "02:00:00", "memory": "5120M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -459,7 +459,7 @@ def test_cbioportal_cns2cna_step_part_get_args(cbioportal_export_workflow):
 def test_cbioportal_cns2cna_step_part_get_resource_usage(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 2, "time": "12:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -527,7 +527,7 @@ def test_cbioportal_cna_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_cna_step_part_get_resource_usage(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     all_actions = cbioportal_export_workflow.substep_getattr("cbioportal_cna", "actions")
     for action in all_actions:
@@ -575,7 +575,7 @@ def test_cbioportal_segment_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_segment_step_part_get_resource_usage(cbioportal_export_workflow):
     """Tests cbioportalSegmentStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 2, "time": "12:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -632,7 +632,7 @@ def test_cbioportal_expression_step_part_get_args(cbioportal_export_workflow):
 def test_cbioportal_expression_step_part_get_resource_usage(cbioportal_export_workflow):
     """Tests cbioportalExpressionStepPart.get_resource_usage()"""
     # Define expected: default defined workflow.abstract
-    expected_dict = {"threads": 2, "time": "12:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

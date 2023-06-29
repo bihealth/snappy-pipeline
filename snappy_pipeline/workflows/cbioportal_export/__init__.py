@@ -305,7 +305,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="5120M",
         )
 
@@ -411,7 +411,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -464,7 +464,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="01:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -502,7 +502,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -558,7 +558,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
