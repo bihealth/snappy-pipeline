@@ -5,12 +5,13 @@ import os
 import re
 import typing
 
-# from action import Action
-
 from common_functions import calc_end_pos, minimize_mutation, strip_sequence_version, variant_type
+import exceptions
 from protein_mutation_parser import parse_protein_mutation
 from variant_classification import variant_classification
-import exceptions
+
+# from action import Action
+
 
 
 class Functions:
