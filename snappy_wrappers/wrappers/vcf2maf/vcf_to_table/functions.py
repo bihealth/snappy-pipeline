@@ -13,7 +13,6 @@ from variant_classification import variant_classification
 # from action import Action
 
 
-
 class Functions:
     mapping_files = {}
     TAB = re.compile("\t")
