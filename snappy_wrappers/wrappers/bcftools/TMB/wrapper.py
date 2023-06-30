@@ -26,6 +26,10 @@ bed_md5=$(md5sum $bed_file | awk '{{print $1}}')
 name_vcf=$(basename {snakemake.input.vcf})
 vcf_md5=$(md5sum {snakemake.input.vcf} | awk '{{print $1}}')
 
+cat_cmd=zcat    #in case that bed file has gzip format
+gzip -t $bed_file || cat_cmd=cat
+total_exom_length=$($cat_cmd $bed_file | \
+    awk '{{dis+=$3-$2}} END {{print dis}}')
 total_exom_length=$(zcat $bed_file | \
     awk '{{dis+=$3-$2}} END {{print dis}}') #TMB_rounded=`printf "%.3f" $TMB`
 
