@@ -46,7 +46,7 @@ CASE_LIST_FILES = {
     },
     "cna": {
         "filename": "all_cases_with_cna_data.txt",
-        "name": "Sequenced tumors",
+        "name": "Tumors with CNA data",
         "description": "Tumors with somatic Copy Number Alteration calls",
         "stable_id": "cna",
         "category": "all_cases_with_cna_data",
@@ -60,14 +60,14 @@ CASE_LIST_FILES = {
     },
     "cnaseq": {
         "filename": "all_cases_with_mutation_and_cna_data.txt",
-        "name": "Sequenced tumors",
+        "name": "Sequenced tumors with CNA",
         "description": "Tumors with somatic variant & CNA calls",
         "stable_id": "cnaseq",
         "category": "all_cases_with_mutation_and_cna_data",
     },
     "3way_complete": {
         "filename": "all_cases_with_mutation_and_cna_and_mrna_data.txt",
-        "name": "Sequenced tumors with expression",
+        "name": "Sequenced tumors with CNA & expression",
         "description": "Tumors with somatic variant calls, CNA calls & expression data",
         "stable_id": "3way_complete",
         "category": "all_cases_with_mutation_and_cna_and_mrna_data",
@@ -305,7 +305,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="5120M",
         )
 
@@ -411,7 +411,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -464,7 +464,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="01:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -502,7 +502,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 
@@ -558,7 +558,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
+            time="02:00:00",  # 2 hours
             memory="8192M",
         )
 

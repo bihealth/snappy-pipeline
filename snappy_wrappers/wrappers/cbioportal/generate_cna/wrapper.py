@@ -8,6 +8,7 @@ from snakemake import shell
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 r_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "script.R"))
+helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functions.R")
 
 shell(
     r"""
@@ -40,6 +41,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run the R script --------------------------------------------------------------------------------
 
 R --vanilla --slave << __EOF
+source("{helper_functions}")
 source("{r_script}")
 write.table(
     cns_to_cna("{snakemake.input}", "{snakemake.params[features]}", "{snakemake.params[pipeline_id]}"),

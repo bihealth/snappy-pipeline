@@ -8,10 +8,11 @@ from snakemake import shell
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 r_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "script.R"))
+helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functions.R")
 
-filenames = ", ".join(['"{}"="{}"'.format(k, v) for k, v in snakemake.input.items()])
+filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.input.items()])
 extra_args = ", ".join(
-    ['"{}"="{}"'.format(k, v) for k, v in snakemake.params["extra_args"].items()]
+    ['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.params["extra_args"].items()]
 )
 
 step = snakemake.config["pipeline_step"]["name"]
@@ -48,6 +49,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run the R script --------------------------------------------------------------------------------
 
 R --vanilla --slave << __EOF
+source("{helper_functions}")
 source("{r_script}")
 write.table(
     merge_tables(list({filenames}), mappings="{config[path_gene_id_mappings]}", type="{snakemake.params[action_type]}", args=list({extra_args})),
