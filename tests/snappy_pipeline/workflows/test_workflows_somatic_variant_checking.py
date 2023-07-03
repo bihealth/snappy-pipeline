@@ -6,9 +6,7 @@ import textwrap
 import pytest
 import ruamel.yaml as ruamel_yaml
 
-from snappy_pipeline.workflows.somatic_variant_checking import (
-    SomaticVariantQCWorkflow,
-)
+from snappy_pipeline.workflows.somatic_variant_checking import SomaticVariantQCWorkflow
 
 from .common import get_expected_log_files_dict, get_expected_output_json_files_dict
 from .conftest import patch_module_fs

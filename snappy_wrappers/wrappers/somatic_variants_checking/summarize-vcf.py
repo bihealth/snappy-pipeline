@@ -1,9 +1,10 @@
 # import packages
-from cyvcf2 import VCF  # for reading vcf file
-import json  # for writing out the json file
-import gzip
-import tabix
 import argparse
+import gzip
+import json  # for writing out the json file
+
+from cyvcf2 import VCF  # for reading vcf file
+import tabix
 
 parser = argparse.ArgumentParser(description="Gathering information of variants")
 parser.add_argument(

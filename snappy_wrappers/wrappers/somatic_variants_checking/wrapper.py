@@ -3,6 +3,7 @@
 somatic variant calling step
 """
 import os
+
 from snakemake.shell import shell
 
 __author__ = "Pham Gia Cuong"
