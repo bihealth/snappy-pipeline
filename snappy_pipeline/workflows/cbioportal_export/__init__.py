@@ -436,11 +436,11 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
-        if action == "log2":
-            return {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
         if action == "gistic":
+            return {"action_type": "gistic", "extra_args": {"pipeline_id": "ENSEMBL"}}
+        if action == "log2":
             return {
-                "action_type": "gistic",
+                "action_type": "log2",
                 "extra_args": {
                     "pipeline_id": "ENSEMBL",
                     "amplification": "9",
