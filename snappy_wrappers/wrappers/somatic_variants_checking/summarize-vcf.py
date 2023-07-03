@@ -1,7 +1,6 @@
 # import packages
-
-import json  # for writing out the json file
 from cyvcf2 import VCF  # for reading vcf file
+import json  # for writing out the json file
 import gzip
 import tabix
 import argparse
