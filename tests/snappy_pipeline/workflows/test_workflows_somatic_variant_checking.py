@@ -46,9 +46,9 @@ def minimal_config():
               path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_checking:
-            path_somatic_variant_calling: ../somatic_variant_calling   
-            tools_ngs_mapping: []      
-            tools_somatic_variant_calling: []  
+            path_somatic_variant_calling: ../somatic_variant_calling
+            tools_ngs_mapping: []
+            tools_somatic_variant_calling: []
             target_regions: /path/to/regions.bed
 
         data_sets:
@@ -92,6 +92,7 @@ def somatic_variant_checking_workflow(
         work_dir,
     )
 
+
 # Tests for SomaticVariantCheckingStepPart -----------------------------------------------------
 
 
@@ -131,7 +132,7 @@ def test_somatic_variant_checking_step_part_get_log_files(somatic_variant_checki
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_checking_workflow.get_log_file("SVQC_step", "run")
     assert actual == expected
-  
+
 
 def test_somatic_variant_checking_step_part_get_resource_usage(
     somatic_variant_checking_workflow,
@@ -152,7 +153,7 @@ def test_somatic_variant_checking_step_part_get_resource_usage(
 def test_somatic_variant_checking_workflow(somatic_variant_checking_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["SVQC_step","link_out"]
+    expected = ["SVQC_step", "link_out"]
     actual = list(sorted(somatic_variant_checking_workflow.sub_steps.keys()))
     assert actual == expected
 
