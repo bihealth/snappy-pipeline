@@ -46,7 +46,7 @@ CASE_LIST_FILES = {
     },
     "cna": {
         "filename": "all_cases_with_cna_data.txt",
-        "name": "Sequenced tumors",
+        "name": "Tumors with CNA data",
         "description": "Tumors with somatic Copy Number Alteration calls",
         "stable_id": "cna",
         "category": "all_cases_with_cna_data",
@@ -60,14 +60,14 @@ CASE_LIST_FILES = {
     },
     "cnaseq": {
         "filename": "all_cases_with_mutation_and_cna_data.txt",
-        "name": "Sequenced tumors",
+        "name": "Sequenced tumors with CNA",
         "description": "Tumors with somatic variant & CNA calls",
         "stable_id": "cnaseq",
         "category": "all_cases_with_mutation_and_cna_data",
     },
     "3way_complete": {
         "filename": "all_cases_with_mutation_and_cna_and_mrna_data.txt",
-        "name": "Sequenced tumors with expression",
+        "name": "Sequenced tumors with CNA & expression",
         "description": "Tumors with somatic variant calls, CNA calls & expression data",
         "stable_id": "3way_complete",
         "category": "all_cases_with_mutation_and_cna_and_mrna_data",
