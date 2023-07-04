@@ -101,7 +101,7 @@ import os
 import os.path
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -126,6 +126,7 @@ step_config:
       path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
       path_antitarget: REQUIRED         # Usually ../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
       path_panel_of_normals: REQUIRED   # Usually ../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn
+      plot: True                        # Generate plots (very slow)
       min_mapq: 0                       # [coverage] Mininum mapping quality score to count a read for coverage depth
       count: False                      # [coverage] Alternative couting algorithm
       gc_correction: True               # [fix] Use GC correction
@@ -431,6 +432,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "fix",
         "segment",
         "call",
+        "postprocess",
         "export",
         "plot",
         "report",
@@ -484,6 +486,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "call": self._get_input_files_call,
             "fix": self._get_input_files_fix,
             "segment": self._get_input_files_segment,
+            "postprocess": self._get_input_files_postprocess,
             "export": self._get_input_files_export,
             "plot": self._get_input_files_plot,
             "report": self._get_input_files_report,
@@ -525,8 +528,24 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     @staticmethod
+    def _get_input_files_postprocess(wildcards):
+        segment_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
+        )
+        call_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
+        )
+        input_files = {
+            "segment": segment_pattern.format(**wildcards),
+            "call": call_pattern.format(**wildcards),
+        }
+        return input_files
+
+    @staticmethod
     def _get_input_files_export(wildcards):
-        cns_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+        cns_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
+        )
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
@@ -535,7 +554,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
-            "cns": tpl.format(ext="cns", **wildcards),
+            "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
 
@@ -545,7 +564,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
             "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
             "cnr": tpl.format(ext="cnr", **wildcards),
-            "cns": tpl.format(ext="cns", **wildcards),
+            "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
 
@@ -559,6 +578,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             return self._get_output_files_segment()
         elif action == "call":
             return self._get_output_files_call()
+        elif action == "postprocess":
+            return self._get_output_files_postprocess()
         elif action == "export":
             return self._get_output_files_export()
         elif action == "plot":
@@ -594,8 +615,14 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     @staticmethod
     def _get_output_files_call():
         name_pattern = "{mapper}.cnvkit.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
         return {"calls": tpl, "calls_md5": tpl + ".md5"}
+
+    @staticmethod
+    def _get_output_files_postprocess():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        return {"final": tpl, "final_md5": tpl + ".md5"}
 
     @dictify
     def _get_output_files_plot(self):
@@ -858,6 +885,10 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
+    sheet_shortcut_kwargs = {
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+    }
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
@@ -889,11 +920,13 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
-            "cnvkit": ("fix", "call", "report", "export", "plot"),
+            "cnvkit": ["fix", "postprocess", "report", "export"],
             "copywriter": ("call",),
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
         }
+        if "cnvkit" in self.config["tools"] and self.config["cnvkit"]["plot"]:
+            tool_actions["cnvkit"] += ["plot"]
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (

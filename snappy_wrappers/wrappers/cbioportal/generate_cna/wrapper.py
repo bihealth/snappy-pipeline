@@ -10,14 +10,6 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 r_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "script.R"))
 helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functions.R")
 
-filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.input.items()])
-extra_args = ", ".join(
-    ['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.params["extra_args"].items()]
-)
-
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
 shell(
     r"""
 set -x
@@ -52,10 +44,12 @@ R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
-    merge_tables(list({filenames}), mappings="{config[path_gene_id_mappings]}", type="{snakemake.params[action_type]}", args=list({extra_args})),
+    cns_to_cna("{snakemake.input}", "{snakemake.params[features]}", "{snakemake.params[pipeline_id]}"),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF
+
+pushd $(dirname {snakemake.output}) ; md5sum $(basename {snakemake.output}) > $(basename {snakemake.output}).md5 ; popd
 """
 )
 
@@ -63,6 +57,6 @@ __EOF
 shell(
     r"""
 sleep 1s  # try to wait for log file flush
-pushd $(dirname {snakemake.log.conda_info}) ; md5sum $(basename {snakemake.log.log}) > $(basename {snakemake.log.log_md5}) ; popd
+pushd $(dirname {snakemake.log.log}) ; md5sum $(basename {snakemake.log.log}) > $(basename {snakemake.log.log_md5}) ; popd
 """
 )

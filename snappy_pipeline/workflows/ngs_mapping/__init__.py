@@ -410,6 +410,10 @@ step_config:
       trim_adapters: false
       mask_duplicates: false
       include_unmapped: true
+    strandedness:
+      path_exon_bed: REQUIRED   # Location of usually highly expressed genes. Known protein coding genes is a good choice
+      strand: -1                # -1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)
+      threshold: 0.85           # Minimum proportion of reads mapped to forward/reverse direction to call the protocol
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
@@ -809,6 +813,23 @@ class StarStepPart(ReadMappingStepPart):
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
         return output_files
 
+    @dictify
+    def get_output_files(self, action):
+        """Skip link to the gene counts file to delegate it to strandedness"""
+        assert action in self.actions
+        for key, paths in super().get_output_files(action).items():
+            if key != "output_links":
+                yield key, paths
+                continue
+            yield key, list(
+                filter(
+                    lambda x: not (
+                        x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5")
+                    ),
+                    paths,
+                )
+            )
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -829,6 +850,91 @@ class StarStepPart(ReadMappingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
+
+
+class StrandednessStepPart(BaseStepPart):
+    """Guess the protocol strandedness when missing and write it"""
+
+    #: Step name
+    name = "strandedness"
+
+    #: Class available actions
+    actions = ("infer", "counts")
+
+    def get_input_files(self, action):
+        self._validate_action(action)
+        if action == "infer":
+            return {
+                "bam": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam",
+            }
+        elif action == "counts":
+            return {
+                "counts": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab",
+                "decision": "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json",
+            }
+
+    @dictify
+    def get_output_files(self, action):
+        self._validate_action(action)
+        if action == "infer":
+            for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
+                yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+                yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            key, ext = ("output", ".decision.json")
+            yield key, "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key + "_md5", "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            for key, ext in (
+                ("log", ".log"),
+                ("conda_list", ".conda_list.txt"),
+                ("conda_info", ".conda_info.txt"),
+            ):
+                yield key, "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext
+                yield key + "_md5", "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext + ".md5"
+        elif action == "counts":
+            key, ext = ("counts", ".GeneCounts.tab")
+            yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            key, ext = ("output", ".GeneCounts.tab")
+            yield key, "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext
+            yield key + "_md5", "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5"
+
+    def get_result_files(self):
+        for mapper in self.config["tools"]["rna"]:
+            if self.config[mapper]["path_features"]:
+                tpl_out = (
+                    "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
+                )
+                tpl_strandedness = "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
+                tpl_log = (
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
+                )
+                for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+                    if extra_info["extractionType"] == "RNA":
+                        yield tpl_out.format(mapper=mapper, library_name=library_name)
+                        yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
+                        yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
+                        yield tpl_strandedness.format(
+                            mapper=mapper, library_name=library_name
+                        ) + ".md5"
+                        for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                            yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                            yield tpl_log.format(
+                                mapper=mapper, library_name=library_name, ext=ext
+                            ) + ".md5"
+
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files in the "log" directory."""
+        _ = action
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -1260,6 +1366,7 @@ class NgsMappingWorkflow(BaseStep):
                 LinkInStep,
                 Minimap2StepPart,
                 StarStepPart,
+                StrandednessStepPart,
                 TargetCoverageReportStepPart,
                 BamCollectDocStepPart,
                 NgsChewStepPart,
