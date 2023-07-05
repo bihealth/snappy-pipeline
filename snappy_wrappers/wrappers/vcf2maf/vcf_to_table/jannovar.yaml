@@ -1,7 +1,7 @@
-annotation:                                           # Definition of annotations from VEP
-    id: "CSQ"                                         # INFO field ID (unless change with --vcf_info_field option)
+annotation:                                           # Definition of annotations from jannovar
+    id: "ANN"                                         # INFO field ID (unless change with --vcf_info_field option)
     allele: "Allele"                                  # Variant used to calculate consequence (https://www.ensembl.org/info/docs/tools/vep/vep_formats.html#defaultout)
-    extract: "^Consequence annotations from Ensembl VEP. Format: (.+)$" # Regular expression to extract annotation names from the description of INFO field. The annotation names are in group 1
+    extract: "^Functional annotations:'(.+)'$"        # Regular expression to extract annotation names from the description of INFO field. The annotation names are in group 1
     split: "\\|"                                      # Regular expression to split annotations (& annotation names) from the INFO field
     minimize: True                                    # Variant minimization applied by VEP (see https://www.ensembl.org/info/docs/tools/vep/script/vep_other.html#colocated)
 
@@ -11,13 +11,13 @@ output:                                               # Output columns definitio
     Hugo_Symbol:                                      # Column name to output HGNC Symbol
         input:                                        # Required input
             - set: "annotation"                       # The "SYMBOL" annotation column contains the requested information
-              column: "SYMBOL"
+              column: "Gene_Name"
         on_missing: skip                              # Genomic regions variants are not attached to genes, skip them on output
 
     Entrez_Gene_Id:                                   # Column name to output NCBI ID
         input:
             - set: "annotation"                       # VEP doesn't provide NCBI gene ids (formerly ENTREZ gene ids)
-              column: "SYMBOL"                        # The column value is obtained by mapping the HGNC symbol                         
+              column: "Gene_Name"                     # The column value is obtained by mapping the HGNC symbol                         
         function: "map"                               # The "map" function is invoked with one input (the annotation SYMBOL),
         args:                                         # and one named argument, the mapping file (fixed for all variants)
             filename: "hgnc_symbol_to_entrez_id.tsv"
@@ -86,14 +86,8 @@ output:                                               # Output columns definitio
     Variant_Classification:                           # Variant classification
         input:                                        # Maps the VEP variant classification defined in
             - set: "annotation"                       # https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html#consequences
-              column: "Consequence"                   # to the cBioPortal/TCGA/GDC set of consequences defined in
-            - set: "annotation"                       # https://docs.gdc.cancer.gov/Encyclopedia/pages/Mutation_Annotation_Format_TCGAv2/
-              column: "VARIANT_CLASS"                 # Additional mapping values & methods were taken directly from the vcf2maf.pl code in
-            - set: "variant"                          # routine GetVariantClassification (https://github.com/mskcc/vcf2maf hash d13e404 2022-11-02)
-              column: "REF"
-            - set: "variant"                          # Note that a simple mapping was not possible, because the algorithm requires
-              column: "ALT"                           # the knowledge of substitution, insertion or deletion to assign some values.
-        function: "variant_classification"
+              column: "Annotation"                    # to the cBioPortal/TCGA/GDC set of consequences defined in
+        function: "variant_classification_jannovar"
         on_missing: default
         default: ""
 
@@ -157,10 +151,10 @@ output:                                               # Output columns definitio
 
     dbSNP_RS:                                         # dbSNP references
         input:                                        # Note that VEP also includes COSMIC references in that field.
-            - set: "annotation"                       # TODO: create a function that parses the vcf field, extracts only the dbSNP 
+            - set: "constant"                         # TODO: create a function that parses the vcf field, extracts only the dbSNP 
               column: "Existing_variation"            # ids and collapses them into a single strings separated by semicolumns.
               on_missing: default
-              default: "novel"
+              default: ""
 
     dbSNP_Val_Status:
         input:
@@ -330,21 +324,21 @@ output:                                               # Output columns definitio
     HGVSc:
         input:
             - set: "annotation"
-              column: "HGVSc"
+              column: "HGVS.c"
               on_missing: default
               default: ""
 
     HGVSp:
         input:
             - set: "annotation"
-              column: "HGVSp"
+              column: "HGVS.p"
               on_missing: default
               default: ""
 
     HGVSp_Short:                                      # Short version of the protein mutation defined in
         input:                                        # VEP annotation column "HGVSp"
             - set: "annotation"
-              column: "HGVSp"                         # The function "parse_protein_mutation" removed the 
+              column: "HGVS.p"                        # The function "parse_protein_mutation" removed the 
         function: "parse_protein_mutation"            # sequence identifier, and replaces 3-letter amino-acid codes
         args:                                         # with single letter amino-acid codes.
             add_sequence: False                       # The arguments "add_sequence", "want_short" & "want_long"
@@ -356,7 +350,7 @@ output:                                               # Output columns definitio
     Transcript_ID:
         input:
             - set: "annotation"
-              column: "Feature"
+              column: "Feature_ID"
               on_missing: default
               default: ""
 
@@ -421,361 +415,3 @@ output:                                               # Output columns definitio
               column: "Protein_position"
               on_missing: default
               default: ""
-
-    SWISSPROT:
-        input:
-            - set: "annotation"
-              column: "SWISSPROT"
-              on_missing: default
-              default: ""
-        function: "strip_sequence_version"
-
-    # The columns below are not mentioned at all in the cBioPortal documentation ------------------
-    # (https://docs.cbioportal.org/file-formats/#mutation-data) -----------------------------------
-    # They are displayed in the order they are found in the GDC documentation, --------------------
-    # except for "Protein_Position" & "SWISSPROT" which are mentioned as --------------------------
-    # optional columns in cBioPortal. -------------------------------------------------------------
-
-    # all_effects
-
-    Allele:
-        input:
-            - set: "annotation"
-              column: "Allele"
-              on_missing: default
-              default: ""
-    Gene:
-        input:
-            - set: "annotation"
-              column: "Gene"
-              on_missing: default
-              default: ""
-    Feature:
-        input:
-            - set: "annotation"
-              column: "Feature"
-              on_missing: default
-              default: ""
-    Feature_type:
-        input:
-            - set: "annotation"
-              column: "Feature_type"
-              on_missing: default
-              default: ""
-    # Consequence
-    cDNA_position:
-        input:
-            - set: "annotation"
-              column: "cDNA_position"
-              on_missing: default
-              default: ""
-    CDS_position:
-        input:
-            - set: "annotation"
-              column: "CDS_position"
-              on_missing: default
-              default: ""
-    Amino_acids:
-        input:
-            - set: "annotation"
-              column: "Amino_acids"
-              on_missing: default
-              default: ""
-    Codons:
-        input:
-            - set: "annotation"
-              column: "Codons"
-              on_missing: default
-              default: ""
-    Existing_variation:
-        input:
-            - set: "annotation"
-              column: "Existing_variation"
-              on_missing: default
-              default: ""
-    # ALLELE_NUM
-    DISTANCE:
-        input:
-            - set: "annotation"
-              column: "DISTANCE"
-              on_missing: default
-              default: ""
-    STRAND_VEP:
-        input:
-            - set: "annotation"
-              column: "STRAND"
-              on_missing: default
-              default: ""
-    SYMBOL:
-        input:
-            - set: "annotation"
-              column: "SYMBOL"
-              on_missing: default
-              default: ""
-    SYMBOL_SOURCE:
-        input:
-            - set: "annotation"
-              column: "SYMBOL_SOURCE"
-              on_missing: default
-              default: ""
-    HGNC_ID:
-        input:
-            - set: "annotation"
-              column: "HGNC_ID"
-              on_missing: default
-              default: ""
-    BIOTYPE:
-        input:
-            - set: "annotation"
-              column: "BIOTYPE"
-              on_missing: default
-              default: ""
-    CANONICAL:
-        input:
-            - set: "annotation"
-              column: "CANONICAL"
-              on_missing: default
-              default: ""
-    CCDS:
-        input:
-            - set: "annotation"
-              column: "CCDS"
-              on_missing: default
-              default: ""
-    ENSP:
-        input:
-            - set: "annotation"
-              column: "ENSP"
-              on_missing: default
-              default: ""
-    TREMBL:
-        input:
-            - set: "annotation"
-              column: "TREMBL"
-              on_missing: default
-              default: ""
-    UNIPARC:
-        input:
-            - set: "annotation"
-              column: "UNIPARC"
-              on_missing: default
-              default: ""
-    # RefSeq
-    SIFT:
-        input:
-            - set: "annotation"
-              column: "SIFT"
-              on_missing: default
-              default: ""
-    Polyphen:
-        input:
-            - set: "annotation"
-              column: "Polyphen"
-              on_missing: default
-              default: ""
-    EXON:
-        input:
-            - set: "annotation"
-              column: "EXON"
-              on_missing: default
-              default: ""
-    INTRON:
-        input:
-            - set: "annotation"
-              column: "INTRON"
-              on_missing: default
-              default: ""
-    DOMAINS:
-        input:
-            - set: "annotation"
-              column: "DOMAINS"
-              on_missing: default
-              default: ""
-    AF:
-        input:
-            - set: "annotation"
-              column: "AF"
-              on_missing: default
-              default: ""
-    AFR_AF:
-        input:
-            - set: "annotation"
-              column: "AFR_AF"
-              on_missing: default
-              default: ""
-    AMR_AF:
-        input:
-            - set: "annotation"
-              column: "AMR_AF"
-              on_missing: default
-              default: ""
-    # ASN_AF
-    EAS_AF:
-        input:
-            - set: "annotation"
-              column: "EAS_AF"
-              on_missing: default
-              default: ""
-    EUR_AF:
-        input:
-            - set: "annotation"
-              column: "EUR_AF"
-              on_missing: default
-              default: ""
-    SAS_AF:
-        input:
-            - set: "annotation"
-              column: "SAS_AF"
-              on_missing: default
-              default: ""
-    AA_AF:
-        input:
-            - set: "annotation"
-              column: "AA_AF"
-              on_missing: default
-              default: ""
-    EA_AF:
-        input:
-            - set: "annotation"
-              column: "EA_AF"
-              on_missing: default
-              default: ""
-    CLIN_SIG:
-        input:
-            - set: "annotation"
-              column: "CLIN_SIG"
-              on_missing: default
-              default: ""
-    SOMATIC:
-        input:
-            - set: "annotation"
-              column: "SOMATIC"
-              on_missing: default
-              default: ""
-    PUBMED:
-        input:
-            - set: "annotation"
-              column: "PUBMED"
-              on_missing: default
-              default: ""
-    MOTIF_NAME:
-        input:
-            - set: "annotation"
-              column: "MOTIF_NAME"
-              on_missing: default
-              default: ""
-    MOTIF_POS:
-        input:
-            - set: "annotation"
-              column: "MOTIF_POS"
-              on_missing: default
-              default: ""
-    HIGH_INF_POS:
-        input:
-            - set: "annotation"
-              column: "HIGH_INF_POS"
-              on_missing: default
-              default: ""
-    MOTIF_SCORE_CHANGE:
-        input:
-            - set: "annotation"
-              column: "MOTIF_SCORE_CHANGE"
-              on_missing: default
-              default: ""
-    IMPACT:
-        input:
-            - set: "annotation"
-              column: "IMPACT"
-              on_missing: default
-              default: ""
-    # PICK
-    VARIANT_CLASS:
-        input:
-            - set: "annotation"
-              column: "VARIANT_CLASS"
-              on_missing: default
-              default: ""
-    TSL:
-        input:
-            - set: "annotation"
-              column: "TSL"
-              on_missing: default
-              default: ""
-    HGVS_OFFSET:
-        input:
-            - set: "annotation"
-              column: "HGVS_OFFSET"
-              on_missing: default
-              default: ""
-    PHENO:
-        input:
-            - set: "annotation"
-              column: "PHENO"
-              on_missing: default
-              default: ""
-    # MINIMISED
-    GENE_PHENO:
-        input:
-            - set: "annotation"
-              column: "GENE_PHENO"
-              on_missing: default
-              default: ""
-    # FILTER
-    # flanking_bps
-    # vcf_id
-    # vcf_qual
-    gnomAD_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_AF"
-              on_missing: default
-              default: ""
-    gnomAD_AFR_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_AFR_AF"
-              on_missing: default
-              default: ""
-    gnomAD_AMR_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_AMR_AF"
-              on_missing: default
-              default: ""
-    gnomAD_ASJ_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_ASJ_AF"
-              on_missing: default
-              default: ""
-    gnomAD_EAS_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_EAS_AF"
-              on_missing: default
-              default: ""
-    gnomAD_FIN_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_FIN_AF"
-              on_missing: default
-              default: ""
-    gnomAD_NFE_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_NFE_AF"
-              on_missing: default
-              default: ""
-    gnomAD_OTH_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_OTH_AF"
-              on_missing: default
-              default: ""
-    gnomAD_SAS_AF:
-        input:
-            - set: "annotation"
-              column: "gnomAD_SAS_AF"
-              on_missing: default
-              default: ""
-

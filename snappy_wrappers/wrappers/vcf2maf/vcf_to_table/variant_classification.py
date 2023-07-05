@@ -60,10 +60,41 @@ variant_classes_vep109 = (
     ("feature_elongation", "Targeted_Region"),
     ("feature_truncation", "Targeted_Region"),
 )
-variant_classes_all = variant_classes_vcftomaf + variant_classes_vep109
+variant_classes_vep = variant_classes_vcftomaf + variant_classes_vep109
 
+variant_classes_jannovar = (
+    ("3_prime_UTR_exon_variant", "3'UTR"),
+    ("3_prime_UTR_intron_variant", "3'UTR"),
+    ("5_prime_UTR_exon_variant", "5'UTR"),
+    ("5_prime_UTR_intron_variant", "5'UTR"),
+    ("coding_transcript_intron_variant", "Intron"),
+    ("complex_substitution", "Targeted_Region"),
+    ("direct_tandem_duplication", "In_Frame_Ins"),
+    ("disruptive_inframe_deletion", "Frame_Shift_Del"),
+    ("disruptive_inframe_insertion", "Frame_Shift_Ins"),
+    ("downstream_gene_variant", "3'Flank"),
+    ("frameshift_elongation", "Frame_Shift_Ins"),
+    ("frameshift_truncation", "Frame_Shift_Del"),
+    #
+    ("inframe_deletion", "In_Frame_Del"),
+    ("inframe_insertion", "In_Frame_Ins"),
+    ("intergenic_variant", "IGR"),
+    ("missense_variant", "Missense_Mutation"),
+    ("mnv", "Missense_Mutation"),
+    ("non_coding_transcript_exon_variant", "RNA"),
+    ("non_coding_transcript_intron_variant", "RNA"),
+    ("splice_acceptor_variant", "Splice_Region"),
+    ("splice_donor_variant", "Splice_Region"),
+    ("splice_region_variant", "Splice_Region"),
+    ("start_lost", "Translation_Start_Site"),
+    ("stop_gained", "Nonsense_Mutation"),
+    ("stop_lost", "Nonstop_Mutation"),
+    ("stop_retained_variant", "Silent"),
+    ("synonymous_variant", "Silent"),
+    ("upstream_gene_variant", "5'Flank"),
+)
 
-def variant_classification(x, args=None):
+def variant_classification_vep(x, args=None):
     if x is None:
         return None
     assert isinstance(x, list) and len(x) == 4
@@ -93,7 +124,7 @@ def variant_classification(x, args=None):
         inFrame = (abs(len(ref) - len(alt)) % 3) == 0
 
         found = False
-        for (k, v) in variant_classes_all:
+        for (k, v) in variant_classes_vep:
             if ensembl == k:
                 tcga.append(v)
                 found = True
@@ -119,6 +150,45 @@ def variant_classification(x, args=None):
             ensembl == "protein_altering_variant" and inFrame and indel == "insertion"
         ):
             tcga.append("In_Frame_Ins")
+        else:
+            tcga.append("Targeted_Region")
+
+    return tcga
+
+def variant_classification_jannovar(x, args=None):
+    if x is None:
+        return None
+    assert isinstance(x, list) and len(x) == 3
+    if x[0] is None:
+        return None
+    assert isinstance(x[0], list) and len(x[0]) > 0
+    assert isinstance(x[1], list) and len(x[1]) == len(x[0])
+    assert isinstance(x[2], list) and len(x[2]) == len(x[0])
+    tcga = list()
+    for i in range(len(x[0])):
+        ensembl = x[0][i]
+        if ensembl is None:
+            tcga.append(None)
+            continue
+        ensembl = ensembl.split("&")[0]
+        ref = x[1][i].replace("-", "")
+        alt = x[2][i].replace("-", "")
+        indel = "insertion" if len(ref) < len(alt) else "deletion"
+        inFrame = (abs(len(ref) - len(alt)) % 3) == 0
+
+        found = False
+        for (k, v) in variant_classes_jannovar:
+            if ensembl == k:
+                tcga.append(v)
+                found = True
+                break
+        if found:
+            continue
+
+        if indel == "deletion" and ensembl == "frameshift_variant":
+            tcga.append("Frame_Shift_Del")
+        elif indel == "insertion" and ensembl == "frameshift_variant":
+            tcga.append("Frame_Shift_Ins")
         else:
             tcga.append("Targeted_Region")
 
