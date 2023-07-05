@@ -212,15 +212,15 @@ def _build_protein_pattern():
         + "("
         + "|".join(
             [
-                "0",  # No group, but seq in 2
-                substitution,  # 3: ref, 4: position, 5: alt
-                duplication,  # 6: start, 7: start pos, 9: end, 10: end pos
-                deletion,  # 11: start, 12: start pos, 14: end, 15: end pos
-                insertion,  # 16: start, 17: start pos, 18: end, 19: end pos (=start pos + 1), 20+22: insertion
-                delins,  # 23: start, 24: start pos, 26: end, 27: end pos, 28+30: insertion
-                frameshift,  # 31: start, 33: start pos, 33: end, 35: ter pos
-                extensionN,  # 37: pos (negative number)
-                extensionC,  # 39: pos, 40: alt, 42: ter pos
+                "(0|=|\?)",  # noqa: W605
+                substitution,  # 4: ref, 5: position, 6: alt
+                duplication,  # 7: start, 8: start pos, 10: end, 11: end pos
+                deletion,  # 12: start, 13: start pos, 15: end, 16: end pos
+                insertion,  # 17: start, 18: start pos, 19: end, 20: end pos (=start pos + 1), 21+23: insertion
+                delins,  # 24: start, 25: start pos, 27: end, 28: end pos, 29+31: insertion
+                frameshift,  # 32: start, 34: start pos, 34: end, 36: ter pos
+                extensionN,  # 38: pos (negative number)
+                extensionC,  # 40: pos, 41: alt, 43: ter pos
             ]
         )
         + ")"
@@ -285,80 +285,98 @@ def _one_or_interval(groups, i0, want_short=True, want_long=False):
 
 
 def _parse_mutation_groups(groups, want_short=True, want_long=False):
-    if groups[2] == "0":
-        rslt = "0"
+    iGroup = 3
+    if groups[iGroup] and groups[iGroup] in ("0", "=", "?"):
+        return groups[iGroup]
+    iGroup += 1
 
-    elif groups[3] is not None:
+    if groups[iGroup] is not None:
         # Substitutions
-        rslt = (
-            _aa(groups[3], want_short=want_short, want_long=want_long)
-            + groups[4]
-            + _aa(groups[5], want_short=want_short, want_long=want_long)
+        # print("DEBUG- substitution: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(4, 7)])))
+        return (
+            _aa(groups[iGroup], want_short=want_short, want_long=want_long)
+            + groups[iGroup + 1]
+            + _aa(groups[iGroup + 2], want_short=want_short, want_long=want_long)
         )
-        # print("DEBUG- substitution: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(3, 6)]), rslt))
+    iGroup += 3
 
-    elif groups[6] is not None:
+    if groups[iGroup] is not None:
         # Duplications
-        rslt = _one_or_interval(groups, 6, want_short=want_short, want_long=want_long) + "dup"
-        # print("DEBUG- duplication: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(6, 11)]), rslt))
+        # print("DEBUG- duplication: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(8, 12)])))
+        return _one_or_interval(groups, iGroup, want_short=want_short, want_long=want_long) + "dup"
+    iGroup += 5
 
-    elif groups[11] is not None:
+    if groups[iGroup] is not None:
         # Deletions
-        rslt = _one_or_interval(groups, 11, want_short=want_short, want_long=want_long) + "del"
-        # print("DEBUG- deletion: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(11, 16)]), rslt))
+        # print("DEBUG- deletion: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(12, 17)])))
+        return _one_or_interval(groups, iGroup, want_short=want_short, want_long=want_long) + "del"
+    iGroup += 5
 
-    elif groups[16] is not None:
+    if groups[iGroup] is not None:
         # Insertions
-        is_long = _is_long(groups[16])
-        rslt = (
-            _interval(groups, 16, want_short=want_short, want_long=want_long)
+        # print("DEBUG- insertion: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(17, 24)])))
+        is_long = _is_long(groups[iGroup])
+        return (
+            _interval(groups, iGroup, want_short=want_short, want_long=want_long)
             + "ins"
-            + _many_aas(groups[20], want_short=want_short, want_long=want_long, is_long=is_long)
-            + _aa(groups[22], want_short=want_short, want_long=want_long)
+            + _many_aas(
+                groups[iGroup + 4], want_short=want_short, want_long=want_long, is_long=is_long
+            )
+            + _aa(groups[iGroup + 6], want_short=want_short, want_long=want_long)
         )
-        # print("DEBUG- insertion: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(16, 23)]), rslt))
+    iGroup += 7
 
-    elif groups[23] is not None:
+    if groups[iGroup] is not None:
         # Deletion-insertions
-        is_long = _is_long(groups[23])
-        rslt = (
-            _one_or_interval(groups, 23, want_short=want_short, want_long=want_long)
+        # print("DEBUG- delins: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(24, 32)])))
+        is_long = _is_long(groups[iGroup])
+        return (
+            _one_or_interval(groups, iGroup, want_short=want_short, want_long=want_long)
             + "delins"
-            + _many_aas(groups[28], want_short=want_short, want_long=want_long, is_long=is_long)
-            + _aa(groups[30], want_short=want_short, want_long=want_long)
+            + _many_aas(
+                groups[iGroup + 5], want_short=want_short, want_long=want_long, is_long=is_long
+            )
+            + _aa(groups[iGroup + 7], want_short=want_short, want_long=want_long)
         )
-        # print("DEBUG- delins: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(23, 31)]), rslt))
+    iGroup += 8
 
-    elif groups[31] is not None:
+    if groups[iGroup] is not None:
         # Frameshift
-        rslt = (
-            _aa(groups[31], want_short=want_short, want_long=want_long)
-            + groups[32]
-            + _aa(groups[33], want_short=want_short, want_long=want_long)
+        # print("DEBUG- frameshift: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(32, 37)])))
+        return (
+            _aa(groups[iGroup], want_short=want_short, want_long=want_long)
+            + groups[iGroup + 1]
+            + _aa(groups[iGroup + 2], want_short=want_short, want_long=want_long)
             + "fs"
-            + _aa(groups[34], want_short=want_short, want_long=want_long)
-            + groups[35]
+            + _aa(groups[iGroup + 3], want_short=want_short, want_long=want_long)
+            + groups[iGroup + 4]
         )
-        # print("DEBUG- frameshift: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(31, 36)]), rslt))
+    iGroup += 5
 
-    elif groups[36] is not None:
+    if groups[iGroup] is not None:
         # Extension N terminus
-        rslt = _aa(groups[36], want_short=want_short, want_long=want_long) + "1ext" + groups[37]
-        # print("DEBUG- extension N: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(36, 38)]), rslt))
-
-    elif groups[38] is not None:
-        # Extension C terminus
-        rslt = (
-            _aa(groups[38], want_short=want_short, want_long=want_long)
-            + groups[39]
-            + _aa(groups[40], want_short=want_short, want_long=want_long)
-            + "ext"
-            + _aa(groups[41], want_short=want_short, want_long=want_long)
-            + groups[42]
+        # print("DEBUG- extension N: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(37, 39)])))
+        return (
+            _aa(groups[iGroup], want_short=want_short, want_long=want_long)
+            + "1ext"
+            + groups[iGroup + 1]
         )
-        # print("DEBUG- extension C: groups = {}, rslt = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(38, 43)]), rslt))
+    iGroup += 3
 
-    return rslt
+    if groups[iGroup] is not None:
+        # Extension C terminus
+        # print("DEBUG- extension C: groups = {}".format(", ".join(["{}={}".format(i, groups[i]) for i in range(39, 44)])))
+        return (
+            _aa(groups[iGroup], want_short=want_short, want_long=want_long)
+            + groups[iGroup + 1]
+            + _aa(groups[iGroup + 2], want_short=want_short, want_long=want_long)
+            + "ext"
+            + _aa(groups[iGroup + 3], want_short=want_short, want_long=want_long)
+            + groups[iGroup + 4]
+        )
+    iGroup += 5
+
+    return ""
 
 
 def _parse_one_mutation(mut, want_short=True, want_long=False, add_sequence=False):
