@@ -39,7 +39,7 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "gistic") {
-        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
+        stopifnot(all(c("pipeline_id") %in% names(args)))
         # Copy numbers (in "cn" column) are transformed into (pseudo-) gistic codes:
         # 0: Deep deletion, 1: heterozygous deletion, 2: copy number neutral, 3: gain, 4: amplification
         # In https://doi.org/10.1038/s41586-022-04738-6, the amplification is defined as 
@@ -59,7 +59,7 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "log2") {
-        stopifnot(all(c("pipeline_id") %in% names(args)))
+        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
         tmp <- read_sample_files(fns, args$pipeline_id, "log2")
         method <- "max"
     }
