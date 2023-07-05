@@ -94,6 +94,7 @@ variant_classes_jannovar = (
     ("upstream_gene_variant", "5'Flank"),
 )
 
+
 def variant_classification_vep(x, args=None):
     if x is None:
         return None
@@ -155,6 +156,7 @@ def variant_classification_vep(x, args=None):
 
     return tcga
 
+
 def variant_classification_jannovar(x, args=None):
     if x is None:
         return None
@@ -166,28 +168,28 @@ def variant_classification_jannovar(x, args=None):
     assert isinstance(x[2], list) and len(x[2]) == len(x[0])
     tcga = list()
     for i in range(len(x[0])):
-        ensembl = x[0][i]
-        if ensembl is None:
+        jannovar = x[0][i]
+        if jannovar is None:
             tcga.append(None)
             continue
-        ensembl = ensembl.split("&")[0]
+        jannovar = jannovar.split("&")[0]
         ref = x[1][i].replace("-", "")
         alt = x[2][i].replace("-", "")
         indel = "insertion" if len(ref) < len(alt) else "deletion"
-        inFrame = (abs(len(ref) - len(alt)) % 3) == 0
+        # inFrame = (abs(len(ref) - len(alt)) % 3) == 0
 
         found = False
         for (k, v) in variant_classes_jannovar:
-            if ensembl == k:
+            if jannovar == k:
                 tcga.append(v)
                 found = True
                 break
         if found:
             continue
 
-        if indel == "deletion" and ensembl == "frameshift_variant":
+        if indel == "deletion" and jannovar == "frameshift_variant":
             tcga.append("Frame_Shift_Del")
-        elif indel == "insertion" and ensembl == "frameshift_variant":
+        elif indel == "insertion" and jannovar == "frameshift_variant":
             tcga.append("Frame_Shift_Ins")
         else:
             tcga.append("Targeted_Region")

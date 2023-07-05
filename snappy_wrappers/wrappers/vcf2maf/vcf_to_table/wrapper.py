@@ -15,7 +15,11 @@ if config["somatic_variant_annotation_tool"] == "vep":
 elif config["somatic_variant_annotation_tool"] == "jannovar_annotate_somatic_vcf":
     vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "jannovar.yaml")
 else:
-    raise Exception("vcf to maf conversion error: unimplemented conversion from annotation tool {}".format(config["somatic_variant_annotation_tool"])
+    raise Exception(
+        "vcf to maf conversion error: unimplemented conversion from annotation tool {}".format(
+            config["somatic_variant_annotation_tool"]
+        )
+    )
 
 params = snakemake.params.args
 

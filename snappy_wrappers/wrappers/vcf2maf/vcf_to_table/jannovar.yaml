@@ -84,9 +84,13 @@ output:                                               # Output columns definitio
               default: "+"
 
     Variant_Classification:                           # Variant classification
-        input:                                        # Maps the VEP variant classification defined in
-            - set: "annotation"                       # https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html#consequences
-              column: "Annotation"                    # to the cBioPortal/TCGA/GDC set of consequences defined in
+        input:                                        # Maps the jannovar variant classification
+            - set: "annotation"
+              column: "Annotation"
+            - set: "variant"
+              column: "REF"
+            - set: "variant"
+              column: "ALT"
         function: "variant_classification_jannovar"
         on_missing: default
         default: ""
