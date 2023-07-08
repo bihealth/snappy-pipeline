@@ -76,8 +76,8 @@ class SomaticVariantQCStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     @dictify
-    def _get_log_file(self, action):
-        assert action == "run"
+    def _get_log_file(self, action): 
+        self._validate_action(action=action)
         prefix = (
             "work/{mapper}.{var_caller}.variantsqc.{tumor_library}/log/"
             "{mapper}.{var_caller}.variantsqc.{tumor_library}"
@@ -98,10 +98,7 @@ class SomaticVariantQCStepPart(BaseStepPart):
         :return: Returns ResourceUsage for step.
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        self._validate_action(action=action)
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
             threads=2,

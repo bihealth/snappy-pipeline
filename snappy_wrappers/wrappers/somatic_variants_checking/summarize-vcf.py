@@ -128,7 +128,9 @@ def process_vcf_file(
                     infor["n_indels"] += 1
                     infor["indels_length"].append(abs(len(variant.REF) - len(variant.ALT[0])))
             # Gathering information of variants in comparison to hard mapped regions
-
+            else:
+                infor["v_outside_exom"] += 1
+                
             if variant.CHROM in hard_contigs:
                 if check_variant_in_bed(
                     variant.CHROM, variant.start, variant.end, hard_file, padding

@@ -40,8 +40,8 @@ md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_m
 # Compute MD5 sums of logs
 shell(
     r"""
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
-md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
+md5sum $(basename {snakemake.log.log}) > {snakemake.log.log_md5}
+md5sum $(basename {snakemake.log.conda_list}) > {snakemake.log.conda_list_md5}
+md5sum $(basename {snakemake.log.conda_info}) > {snakemake.log.conda_info_md5}
 """
 )
