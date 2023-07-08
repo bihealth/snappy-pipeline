@@ -4,7 +4,6 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -76,7 +75,7 @@ class SomaticVariantQCStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     @dictify
-    def _get_log_file(self, action): 
+    def _get_log_file(self, action):
         self._validate_action(action=action)
         prefix = (
             "work/{mapper}.{var_caller}.variantsqc.{tumor_library}/log/"

@@ -5,9 +5,8 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart,ResourceUsage
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart, ResourceUsage
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
@@ -80,7 +79,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     @dictify
     def _get_log_file(self, action):
-        assert action == "run"
+        self._validate_action(action)
         prefix = (
             "work/{mapper}.{var_caller}.tmb.{tumor_library}/log/"
             "{mapper}.{var_caller}.tmb.{tumor_library}"
@@ -101,10 +100,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         :return: Returns ResourceUsage for step.
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+        self._validate_action(action)
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
             threads=2,
@@ -134,7 +130,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow), 
+            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
