@@ -7,8 +7,8 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart,ResourceUsage
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
@@ -134,7 +134,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            (SomaticVariantCallingWorkflow, NgsMappingWorkflow), 
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))

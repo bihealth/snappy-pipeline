@@ -39,18 +39,18 @@ number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf
 
 TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
 cat << EOF > {snakemake.output.json}
-{
-"Library_name": {snakemake.wildcards.tumor_library},
-"VCF_file": $name_vcf,
-"VCF_md5": $vcf_md5,
-"BED_file": $bed_file_name,
-"BED_md5": $bed_md5,
-"TMB": $TMB,
-"Number_variants": $number_variants,
-"Number_snvs": $number_snvs,
-"Number_indels": $number_indels,
-"Total_regions_length": $total_exom_length
-}
+{{
+  "Library_name": "{snakemake.wildcards.tumor_library}",
+  "VCF_file": "$name_vcf",
+  "VCF_md5": "$vcf_md5",
+  "BED_file": "$bed_file_name",
+  "BED_md5": "$bed_md5",
+  "TMB": "$TMB",
+  "Number_variants": "$number_variants",
+  "Number_snvs": "$number_snvs",
+  "Number_indels": "$number_indels",
+  "Total_regions_length": "$total_exom_length"
+}}
 EOF
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_md5})

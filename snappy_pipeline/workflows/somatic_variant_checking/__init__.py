@@ -27,10 +27,11 @@ step_config:
         tools_ngs_mapping: []      # default to those configured for ngs_mapping
         tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
         target_regions: # REQUIRED
-        padding: 0  #Used for count the number of variants outside of exom + padding
-        ignore_regions: []
-        minimal_support_read: 1
-        limited_support_read: 5
+        padding: 0  # Used for count the number of variants outside of exom + padding
+        AF_ID: 'AF' # REQUIRED ID of allele frequency field used in vcf file
+        ignore_regions: "" # hard mapping regions
+        minimal_support_read: 1 # threshold for defining a variant that has minimal support reads
+        limited_support_read: 5 # threshold for defining a variant that has limited support reads
 """
 
 
@@ -189,10 +190,7 @@ class SomaticVariantQCWorkflow(BaseStep):
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
+                if not sample_pair.tumor_sample.dna_ngs_library:
                     msg = (
                         "INFO: sample pair for cancer bio sample {} has is missing primary"
                         "normal or primary cancer NGS library"

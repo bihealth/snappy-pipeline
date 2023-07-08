@@ -6,49 +6,11 @@ import json  # for writing out the json file
 from cyvcf2 import VCF  # for reading vcf file
 import tabix
 
-parser = argparse.ArgumentParser(description="Gathering information of variants")
-parser.add_argument(
-    "--rawvcf",
-    help="raw vcf file",
-)
-parser.add_argument(
-    "--filtered-vcf",
-    help="filtered vcf file",
-)
-parser.add_argument(
-    "--exom-bedfile",
-    help="exom regions bed file",
-)
-parser.add_argument("--padding", help="it's padding", default=0)
-parser.add_argument(
-    "--ignore-regions",
-    help="bed file contains repeated or difficult to map regions",
-)
-parser.add_argument(
-    "-m",
-    "--minimal",
-    type=int,
-    default=1,
-    help="threshold for defining a variant that has minimal support reads",
-)
-parser.add_argument(
-    "-l",
-    "--limited",
-    type=int,
-    default=5,
-    help="threshold for defining a variant that has limited support reads",
-)
-parser.add_argument(
-    "--output",
-    help="json file contains information about vcf file",
-)
-args = parser.parse_args()
-
 
 def check_variant_in_bed(v_chrom, v_start, v_end, bed_intervals, padding=0):
     try:
         tmp = []
-        records = bed_intervals.query(v_chrom, v_start - padding, v_end + padding)
+        records = bed_intervals.query(v_chrom, v_start - int(padding), v_end + int(padding))
         for record in records:
             tmp.append(record)
         if len(tmp) >= 1:
@@ -81,7 +43,7 @@ def get_variant_type(ref, alt):
 
 
 def check_sp_read(variant, minimal, limited):
-    dp = variant.INFO["DP"]
+    dp = variant.format("AD")[1][0]
     if dp <= minimal:
         return "minimal"
     elif (dp > minimal) and (dp <= limited):
@@ -118,6 +80,7 @@ def process_vcf_file(
     hard_file="",
     filter_file=False,
     padding=0,
+    id_af="AF",
 ):
     infor = {
         "total_v_count": 0,
@@ -145,10 +108,10 @@ def process_vcf_file(
                     raise ValueError(
                         "Multiallelic variants are not supported"
                     )  # checking for multiallelic
-                infor["vaf"].append(float(variant.format("AF")[1][0]))
+                infor["vaf"].append(float(variant.format(id_af)[1][0]))
                 # Counting variants in or out of exom and variants with different support reads
                 if check_variant_in_bed(
-                    variant.CHROM, variant.start, variant.end, bed_file, padding=0
+                    variant.CHROM, variant.start, variant.end, bed_file, padding
                 ):
                     infor["v_inside_exom"] += 1
                     infor[str(check_sp_read(variant, minimal, limited)) + "_rp_snvs_exom"] += 1
@@ -168,7 +131,7 @@ def process_vcf_file(
 
             if variant.CHROM in hard_contigs:
                 if check_variant_in_bed(
-                    variant.CHROM, variant.start, variant.end, hard_file, padding=0
+                    variant.CHROM, variant.start, variant.end, hard_file, padding
                 ):
                     infor["v_in_hard_regions"] += 1
         return infor
@@ -177,6 +140,47 @@ def process_vcf_file(
         for variant in vcf_file:
             total_v_count += 1
         return total_v_count
+
+
+parser = argparse.ArgumentParser(description="Gathering information of variants")
+parser.add_argument(
+    "--rawvcf",
+    help="vcf file containing all called somatic variants, before filtration",
+    required=True,
+)
+parser.add_argument(
+    "--filtered-vcf", help="vcf file containing somatic variants passing all filters", required=True
+)
+parser.add_argument("--exom-bedfile", help="exom regions bed file", required=True)
+parser.add_argument("--padding", type=int, help="Size of padding around exom regions", default=0)
+parser.add_argument(
+    "--ignore-regions",
+    help="bed file contains repeated or difficult to map regions",
+)
+parser.add_argument(
+    "--AF",
+    default="AF",
+    help="ID of allele frequency in the vcf file",
+)
+parser.add_argument(
+    "-m",
+    "--minimal",
+    type=int,
+    default=1,
+    help="threshold for defining a variant that has minimal support reads",
+)
+parser.add_argument(
+    "-l",
+    "--limited",
+    type=int,
+    default=5,
+    help="threshold for defining a variant that has limited support reads",
+)
+parser.add_argument(
+    "--output",
+    help="json file contains information about vcf file, if not given, the tool will print it out",
+)
+args = parser.parse_args()
 
 
 def main():
@@ -204,6 +208,7 @@ def main():
             hard_intervals,
             filter_file=True,
             padding=args.padding,
+            id_af=args.AF,
         )
     else:
         infor = process_vcf_file(
@@ -216,23 +221,24 @@ def main():
             "",
             filter_file=True,
             padding=args.padding,
+            id_af=args.AF,
         )
 
     summary = {
         "sample": sample,
-        "number_full_variants": full_v_count,
-        "number_passed_variants": infor["total_v_count"],
-        "number_snvs_inside_exom": infor["v_inside_exom"],
-        "number_snvs_outside_exom": infor["v_outside_exom"],
-        "number_snvs_in_hard_regions": infor["v_in_hard_regions"],
-        "number_snps": infor["n_snps"],
+        "total_variants_number": full_v_count,
+        "number_variants_passing_filters": infor["total_v_count"],
+        "number_variants_in_enrichment_regions": infor["v_inside_exom"],
+        "number_variants_outside_enrichment_regions": infor["v_outside_exom"],
+        "number_variants_in_masked_regions": infor["v_in_hard_regions"],
+        "number_snvs": infor["n_snps"],
         "number_indels": infor["n_indels"],
-        "minimal_rp_snvs_exom": infor["minimal_rp_snvs_exom"],
-        "minimal_rp_snvs_nexom": infor["minimal_rp_snvs_nexom"],
-        "limited_rp_snvs_exom": infor["limited_rp_snvs_exom"],
-        "limited_rp_snvs_nexom": infor["limited_rp_snvs_nexom"],
-        "strong_rp_snvs_exom": infor["strong_rp_snvs_exom"],
-        "strong_rp_snvs_nexom": infor["strong_rp_snvs_nexom"],
+        "number_variants_in_enriched_with_minimal_support": infor["minimal_rp_snvs_exom"],
+        "number_variants_outside_enriched_with_minimal_support": infor["minimal_rp_snvs_nexom"],
+        "number_variants_in_enriched_with_limited_support": infor["limited_rp_snvs_exom"],
+        "number_variants_outside_enriched_with_limited_support": infor["limited_rp_snvs_nexom"],
+        "number_variants_in_enriched_with_strong_support": infor["strong_rp_snvs_exom"],
+        "number_variants_outside_enriched_with_strong_support": infor["strong_rp_snvs_nexom"],
         classes[0]: infor["mt_classes"][0],
         classes[1]: infor["mt_classes"][1],
         classes[2]: infor["mt_classes"][2],
@@ -245,9 +251,12 @@ def main():
     if not args.ignore_regions:
         del summary["number_snvs_in_hard_regions"]
     json_object = json.dumps(summary)
-
-    with open(args.output, "w") as outfile:
-        outfile.write(json_object)
+    if args.output:
+        with open(args.output, "w") as outfile:
+            outfile.write(json_object)
+        outfile.close()
+    else:
+        print(json_object)
 
 
 if __name__ == "__main__":
