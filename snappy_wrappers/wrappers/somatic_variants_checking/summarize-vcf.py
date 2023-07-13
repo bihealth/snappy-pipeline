@@ -43,7 +43,7 @@ def get_variant_type(ref, alt):
 
 
 def check_sp_read(variant, minimal, limited):
-    dp = variant.format("AD")[1][0]
+    dp = variant.format("AD")[1][1]
     if dp <= minimal:
         return "minimal"
     elif (dp > minimal) and (dp <= limited):
@@ -159,7 +159,7 @@ parser.add_argument(
     help="bed file contains repeated or difficult to map regions",
 )
 parser.add_argument(
-    "--AF",
+    "--variant-allele-frequency-id",
     default="AF",
     help="ID of allele frequency in the vcf file",
 )
@@ -209,7 +209,7 @@ def main():
             hard_intervals,
             filter_file=True,
             padding=args.padding,
-            id_af=args.AF,
+            id_af=args.variant_allele_frequency_id,
         )
     else:
         infor = process_vcf_file(
@@ -222,7 +222,7 @@ def main():
             "",
             filter_file=True,
             padding=args.padding,
-            id_af=args.AF,
+            id_af=args.variant_allele_frequency_id,
         )
 
     summary = {

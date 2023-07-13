@@ -27,7 +27,7 @@ step_config:
         tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
         target_regions: # REQUIRED
         padding: 0  # Used for count the number of variants outside of exom + padding
-        AF_ID: 'AF' # REQUIRED ID of allele frequency field used in vcf file
+        variant_allele_frequency_id: 'AF' # REQUIRED ID of allele frequency field used in vcf file
         ignore_regions: "" # hard mapping regions
         minimal_support_read: 1 # threshold for defining a variant that has minimal support reads
         limited_support_read: 5 # threshold for defining a variant that has limited support reads

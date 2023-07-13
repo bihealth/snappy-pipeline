@@ -29,19 +29,21 @@ python {base_dir}/summarize-vcf.py --rawvcf {snakemake.input.full_vcf} \
     --minimal {snakemake.config[step_config][somatic_variant_checking][minimal_support_read]} \
     --limited {snakemake.config[step_config][somatic_variant_checking][limited_support_read]} \
     --ignore-regions {snakemake.config[step_config][somatic_variant_checking][ignore_regions]} \
-    --AF {snakemake.config[step_config][somatic_variant_checking][AF_ID]} \
+    --variant-allele-frequency-id {snakemake.config[step_config][somatic_variant_checking][variant_allele_frequency_id]} \
     --output {snakemake.output.json}
 
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_md5})
+popd
     """
 )
 
 # Compute MD5 sums of logs
 shell(
     r"""
-md5sum $(basename {snakemake.log.log}) > {snakemake.log.log_md5}
-md5sum $(basename {snakemake.log.conda_list}) > {snakemake.log.conda_list_md5}
-md5sum $(basename {snakemake.log.conda_info}) > {snakemake.log.conda_info_md5}
+pushd $(dirname {snakemake.log.log})
+md5sum $(basename {snakemake.log.log}) > $(basename {snakemake.log.log_md5})
+md5sum $(basename {snakemake.log.conda_list}) > $(basename {snakemake.log.conda_list_md5})
+md5sum $(basename {snakemake.log.conda_info}) > $(basename {snakemake.log.conda_info_md5})
 """
 )

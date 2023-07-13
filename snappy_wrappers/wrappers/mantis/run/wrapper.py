@@ -33,7 +33,7 @@ mkdir -p $TMPDIR/out
 # but should also work for reasonable deep WGS according to them.
 # https://github.com/OSU-SRLab/MANTIS/issues/25
 
-python /fast/groups/cubi/projects/biotools/Mantis/MANTIS/mantis.py \
+python /fast/groups/cubi/work/projects/biotools/Mantis/MANTIS/mantis.py \
     -t {snakemake.input.tumor_bam}  \
     -n {snakemake.input.normal_bam} \
     --genome {snakemake.config[static_data_config][reference][path]} \
