@@ -1,7 +1,8 @@
 channels:
-- bioconda
-- conda-forge
+  - conda-forge
+  - bioconda
+
 dependencies:
-- python >=3.8
-- vcfpy
-- ruamel.yaml
+  - python >=3.8
+  - vcfpy
+  - ruamel.yaml
