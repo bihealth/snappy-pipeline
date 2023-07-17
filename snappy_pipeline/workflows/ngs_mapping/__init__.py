@@ -1253,7 +1253,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         self._check_action(action)
         return ResourceUsage(
             threads=1,
-            time="04:00:00",
+            time="24:00:00",
             memory="2G",
         )
 

@@ -679,7 +679,7 @@ def test_generate_doc_files_step_part_run_get_log_file(ngs_mapping_workflow):
 
 def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2G", "partition": "medium"}
     for resource, expected in expected_dict.items():
         actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)
         assert actual == expected
