@@ -92,6 +92,25 @@ for vcf in {snakemake.input.vcf}; do
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
 
+cat <<"EOF" > $TMPDIR/feature-effects.tsv
+case_id
+set_id
+sv_uuid
+refseq_gene_id
+refseq_transcript_id
+refseq_transcript_coding
+refseq_effect
+ensembl_gene_id
+ensembl_transcript_id
+ensembl_transcript_coding
+ensembl_effect
+EOF
+
+cat $TMPDIR/feature-effects.tsv \
+| tr '\n' '\t' \
+| sed -e 's/\t$/\n/g' \
+>{snakemake.output.feature_effects}
+
 # Perform Mehari structural variant annotation.
 mehari \
     annotate \
@@ -113,6 +132,7 @@ EOF
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
+compute-md5 {snakemake.output.feature_effects} {snakemake.output.feature_effects_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

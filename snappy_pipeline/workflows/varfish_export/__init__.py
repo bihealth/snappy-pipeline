@@ -87,9 +87,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
 
-#: Infixes to use for file name generation
-INFIXES = ("gts", "db-infos", "bam-qc")
-
 # TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
@@ -391,6 +388,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
             "gts_md5": f"{prefix}.gts.tsv.gz.md5",
+            "feature_effects": f"{prefix}.feature-effects.tsv.gz",
+            "feature_effects_md5": f"{prefix}.feature-effects.tsv.gz.md5",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
             "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
         }
