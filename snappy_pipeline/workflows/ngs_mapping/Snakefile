@@ -154,6 +154,8 @@ rule ngs_mapping_minimap2_run:
         memory=wf.get_resource("minimap2", "run", "memory"),
         partition=wf.get_resource("minimap2", "run", "partition"),
         tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+    params:
+        args=wf.get_params("minimap2", "run"),
     log:
         **wf.get_log_file("minimap2", "run"),
     wrapper:

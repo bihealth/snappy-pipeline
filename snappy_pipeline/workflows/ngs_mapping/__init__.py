@@ -417,6 +417,7 @@ step_config:
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
 """
 
 
@@ -1464,7 +1465,8 @@ class NgsMappingWorkflow(BaseStep):
 
         # Validate DNA project
         dna_tool_list = tools_dict.get("dna", [])
-        if dna_analysis and not dna_tool_list:
+        dna_long_tool_list = tools_dict.get("dna_long", [])
+        if dna_analysis and not (dna_tool_list + dna_long_tool_list):
             raise InvalidConfiguration(
                 "Sample sheet contains DNA but configuration has no DNA "
                 "mapper defined in tool list."

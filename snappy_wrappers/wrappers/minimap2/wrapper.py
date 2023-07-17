@@ -62,7 +62,7 @@ for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast
         zcat $fname; \
     fi \
     | minimap2 \
-        -t 16 \
+        -t {snakemake.config[step_config][ngs_mapping][minimap2][mapping_threads]} \
         -x $preset \
         -a {snakemake.config[step_config][ngs_mapping][minimap2][path_index]} \
         -Y \
