@@ -358,7 +358,7 @@ step_config:
       model_base_path: REQUIRED  # path to the Clair 3 models
       model_map: # mapping from base caller model to clair3 model.
         - caller_model: guppy/dna_r10.4.1_e8.2_400bps_hac_prom
-          clair3: r1041_e82_400bps_hac_g632
+          clair3_model: r1041_e82_400bps_hac_g632
 """
 
 
@@ -386,7 +386,10 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        "mapper": chain(
+                            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna_long"],
+                        )
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
@@ -547,6 +550,7 @@ class Clair3StepPart(VariantCallingStepPart):
     """Clair 3 variant calling"""
 
     name = "clair3"
+    actions = ("discover", "genotype")
 
     def check_config(self):
         if self.__class__.name not in self.config["tools"]:
@@ -555,12 +559,16 @@ class Clair3StepPart(VariantCallingStepPart):
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
 
-        assert action in ("run", "genotype"), f"invalid action: {action}"
+        assert action in self.actions, f"invalid action: {action}"
 
         def args_function(wildcards):
             library_name = wildcards.library_name
             extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
-            caller_model = self.config[self.name]["model_map"].get(extra_infos["libraryKit"])
+            caller_model = None
+            for entry in self.config[self.name]["model_map"]:
+                if entry["caller_model"] == extra_infos["libraryKit"]:
+                    caller_model = entry["clair3_model"]
+                    break
             if not caller_model:
                 raise ValueError(f"Could not find model for caller/model aka libraryKit of {caller_model}")
             return {
@@ -568,7 +576,6 @@ class Clair3StepPart(VariantCallingStepPart):
                 "caller_model": caller_model
             }
 
-        assert action == "run", "Unsupported actions"
         return args_function
 
     def get_resource_usage(self, action) -> ResourceUsage:
@@ -590,7 +597,7 @@ class Clair3StepPart(VariantCallingStepPart):
         yield "bam", ngs_mapping(bam_path)
 
     @dictify
-    def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+    def _get_input_files_genotype(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
 
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
@@ -1039,6 +1046,7 @@ class VariantCallingWorkflow(BaseStep):
             (
                 WritePedigreeStepPart,
                 BcftoolsCallStepPart,
+                Clair3StepPart,
                 Gatk3HaplotypeCallerStepPart,
                 Gatk3UnifiedGenotyperStepPart,
                 Gatk4HaplotypeCallerJointStepPart,
@@ -1063,6 +1071,15 @@ class VariantCallingWorkflow(BaseStep):
                         result.setdefault(library.name, {}).update(test_sample.extra_infos)
                         result.setdefault(library.name, {}).update(library.extra_infos)
         return result
+
+    @listify
+    def _all_donors(self, include_background=True):
+        """Return list of all donors in sample sheet."""
+        sheets = self.shortcut_sheets
+        if not include_background:
+            sheets = filter(is_not_background, sheets)
+        for sheet in sheets:
+            yield from sheet.donors
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

@@ -26,8 +26,8 @@ platform = {
 #: The model name has to be derived from the libraryKit aka caller_model of the args.
 model_name = None
 for entry in snakemake.config["step_config"]["variant_calling"]["clair3"]["model_map"]:
-    if entry.model == snakemake.params["args"]["caller_model"]:
-        model_name = entry.name
+    if entry["caller_model"] == snakemake.params["args"]["caller_model"]:
+        model_name = entry["clair3_model"]
         break
 if not model_name:
     raise ValueError("Could not find model for caller_model == {model_name}")
