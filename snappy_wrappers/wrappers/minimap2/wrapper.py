@@ -6,17 +6,33 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-this_file = __file__
-
 seq_platform = snakemake.params.args["extra_infos"]["seqPlatform"]
 library_kit = snakemake.params.args["extra_infos"]["libraryKit"]
+
+DEF_HELPER_FUNCS = r"""
+compute-md5()
+{
+    if [[ $# -ne 2 ]]; then
+        >&2 echo "Invalid number of arguments: $#"
+        exit 1
+    fi
+    md5sum $1 \
+    | awk '{ gsub(/.*\//, "", $2); print; }' \
+    > $2
+}
+"""
 
 shell(
     r"""
 set -x
 
-# Write out information about conda and save a copy of the wrapper with picked variables ----------
+# Write files for reproducibility -----------------------------------------------------------------
+
+{DEF_HELPER_FUNCS}
+
+# Write out information about conda and save a copy of the wrapper with picked variables
 # as well as the environment.yaml file.
+
 conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
@@ -64,11 +80,10 @@ input_files()
 {{
     for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast?.gz'); do
         basename=$(basename $fname .bam)
-
         if [[ "$fname" == *.bam ]]; then
-            samtools fastq -F 2048 $fname;
-        else \
-            zcat $fname;
+            samtools fastq -F 2048 $fname
+        else
+            zcat $fname
         fi
     done
 }}
@@ -84,7 +99,7 @@ run_minimap2()
         --MD \
         /dev/stdin \
     | samtools addreplacerg \
-        -r "@RG\tID:{snakemake.wildcards.library_name}.$i\tSM:{snakemake.wildcards.library_name}\tPL:$PLATFORM" - \
+        -r "@RG\tID:{snakemake.wildcards.library_name}\tSM:{snakemake.wildcards.library_name}\tPL:$platform" -
 }}
 
 # Alignment postprocessing
@@ -141,6 +156,13 @@ postproc_bam()
     compute-md5 {snakemake.output.report_flagstats_txt} {snakemake.output.report_flagstats_txt_md5}
     compute-md5 {snakemake.output.report_idxstats_txt}  {snakemake.output.report_idxstats_txt_md5}
 }}
+
+
+# Run actual tools --------------------------------------------------------------------------------
+
+input_files \
+| run_minimap2 \
+| postproc_bam
 
 # Create output links -----------------------------------------------------------------------------
 

@@ -75,7 +75,7 @@ rule variant_calling_bcftools_call_run:
 
 
 # Discover variants with Clair 3, create per-sample gVCF file
-rule variant_calling_clair3_hc_gvcf_discover:
+rule variant_calling_clair3_discover:
     input:
         unpack(wf.get_input_files("clair3", "discover")),
     output:
@@ -94,7 +94,28 @@ rule variant_calling_clair3_hc_gvcf_discover:
         wf.wrapper_path("clair3/discover")
 
 
-# Combine the gVCF files from the pedigree with GLNexus and create VCF.
+# Combine the gVCF files from the pedigree with CombineGVCFs
+rule variant_calling_clair3_combine_gvcfs:
+    input:
+        unpack(wf.get_input_files("clair3", "combine_gvcfs")),
+    output:
+        **wf.get_output_files("clair3", "combine_gvcfs"),
+    threads: wf.get_resource("clair3", "combine_gvcfs", "threads")
+    resources:
+        time=wf.get_resource("clair3", "combine_gvcfs", "time"),
+        memory=wf.get_resource("clair3", "combine_gvcfs", "memory"),
+        partition=wf.get_resource("clair3", "combine_gvcfs", "partition"),
+        tmpdir=wf.get_resource("clair3", "combine_gvcfs", "tmpdir"),
+    params:
+        step_key="variant_calling",
+        caller_key="clair3",
+    log:
+        **wf.get_log_file("clair3", "combine_gvcfs"),
+    wrapper:
+        wf.wrapper_path("gatk4_hc/combine_gvcfs")
+
+
+# Perform GenotypeGVCFs genotyping of all samples in each pedigree
 rule variant_calling_clair3_genotype:
     input:
         unpack(wf.get_input_files("clair3", "genotype")),
@@ -107,11 +128,15 @@ rule variant_calling_clair3_genotype:
         partition=wf.get_resource("clair3", "genotype", "partition"),
         tmpdir=wf.get_resource("clair3", "genotype", "tmpdir"),
     params:
-        args=wf.substep_dispatch("clair3", "get_args", "genotype"),
+        step_key="variant_calling",
+        caller_key="clair3",
     log:
         **wf.get_log_file("clair3", "genotype"),
     wrapper:
-        wf.wrapper_path("clair3/genotype")
+        wf.wrapper_path("gatk4_hc/genotype")
+
+
+
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 

@@ -1069,7 +1069,7 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
-                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
+                if ngs_library.extra_infos["seqPlatform"] in ("ONT", "PacBio"):
                     suffix = "_long"
                 else:
                     suffix = ""
