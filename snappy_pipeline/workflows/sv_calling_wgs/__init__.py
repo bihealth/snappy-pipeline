@@ -18,10 +18,6 @@ from snappy_pipeline.workflows.abstract.common import (
     ForwardSnakemakeFilesMixin,
     augment_work_dir_with_output_links,
 )
-from snappy_pipeline.workflows.common.sv_calling import (
-    SvCallingGetLogFileMixin,
-    SvCallingGetResultFilesMixin,
-)
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
