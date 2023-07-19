@@ -590,6 +590,10 @@ class GvcfStepPartMixin:
     @dictify
     def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
         infix = "{mapper}.%s_discover.{library_name}" % self.name
+        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
+        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
+        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
+        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"

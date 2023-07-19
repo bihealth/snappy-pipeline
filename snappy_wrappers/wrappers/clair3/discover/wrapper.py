@@ -95,7 +95,13 @@ pbgzip -d -c $TMPDIR/out/merge_output.gvcf.gz \
 
 tabix -f {snakemake.output.gvcf}
 
+# Copy out the phased VCF files.
+cp -a $TMPDIR/out/merge_output.vcf.gz {snakemake.output.vcf}
+cp -a $TMPDIR/out/merge_output.vcf.gz.tbi {snakemake.output.vcf_tbi}
+
 # Compute MD5 sums on output files
+compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
+compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 compute-md5 {snakemake.output.gvcf} {snakemake.output.gvcf_md5}
 compute-md5 {snakemake.output.gvcf_tbi} {snakemake.output.gvcf_tbi_md5}
 
