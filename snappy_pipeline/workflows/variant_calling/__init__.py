@@ -648,11 +648,10 @@ class Clair3StepPart(GvcfStepPartMixin, VariantCallingStepPart):
                     caller_model = entry["clair3_model"]
                     break
             if not caller_model:
-                raise ValueError(f"Could not find model for caller/model aka libraryKit of {caller_model}")
-            return {
-                "seq_platform": extra_infos["seqPlatform"],
-                "caller_model": caller_model
-            }
+                raise ValueError(
+                    f"Could not find model for caller/model aka libraryKit of {caller_model}"
+                )
+            return {"seq_platform": extra_infos["seqPlatform"], "caller_model": caller_model}
 
         return args_function
 
@@ -715,7 +714,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GvcfStepPartMixin, GatkCallerStepPartBase
     """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow"""
 
     name = "gatk4_hc_gvcf"
-
 
 
 class ReportGetLogFileMixin:

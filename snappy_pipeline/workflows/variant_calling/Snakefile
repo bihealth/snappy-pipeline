@@ -136,7 +136,6 @@ rule variant_calling_clair3_genotype:
         wf.wrapper_path("gatk4_hc/genotype")
 
 
-
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 
@@ -261,7 +260,6 @@ rule variant_calling_gatk4_hc_gvcf_genotype:
         **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
     wrapper:
         wf.wrapper_path("gatk4_hc/genotype")
-
 
 
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
