@@ -12,6 +12,7 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT ERR
 
 sniffles \
+    --threads {snakemake.threads} \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --input {snakemake.input.snf} \
     --tandem-repeats {snakemake.config[step_config][sv_calling_wgs][sniffles2][tandem_repeats]} \

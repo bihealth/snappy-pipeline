@@ -35,9 +35,6 @@ SnakemakeListItemsGenerator = typing.Generator[
 class ForwardSnakemakeFilesMixin:
     """Mixin for forwarding calls to ``get_{input,output,log}_file(s)``"""
 
-    name = "delly2"
-    actions = ("call", "merge_calls", "genotype", "merge_genotypes")
-
     def get_input_files(self, action: str) -> SnakemakeInputFunc:
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")

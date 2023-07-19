@@ -59,7 +59,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-# trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 # Override the "nproc" command in the called Clair3.
 mkdir -p $TMPDIR/bin
@@ -81,7 +81,7 @@ run_clair3.sh \
   --sample_name={snakemake.wildcards.library_name} \
   --bam_fn={snakemake.input.bam} \
   --ref_fn={snakemake.config[static_data_config][reference][path]} \
-  --threads={snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][num_threads]} \
+  --threads={snakemake.config[step_config][variant_calling][clair3][num_threads]} \
   --platform={platform} \
   --model_path="{model_base_path}/{caller_model}" \
   --output=$TMPDIR/out
