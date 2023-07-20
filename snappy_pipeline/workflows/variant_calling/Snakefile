@@ -94,7 +94,7 @@ rule variant_calling_clair3_discover:
         wf.wrapper_path("clair3/discover")
 
 
-# Combine the gVCF files from the pedigree with GLNexus 
+# Combine the gVCF files from the pedigree with GLNexus
 rule variant_calling_clair3_genotype:
     input:
         unpack(wf.get_input_files("clair3", "genotype")),
