@@ -15,17 +15,6 @@ compute-md5()
 }
 """
 
-#: The model base path comes from the configuration.
-model_base_path = snakemake.config["step_config"]["variant_calling"]["clair3"]["model_base_path"]
-#: The sequencing platform comes directly from the args.
-platform = {
-    "ONT": "ont",
-    "PacBio": "hifi",
-    "Illumina": "ilmn",
-}[snakemake.params["args"]["seq_platform"]]
-#: The model name has to be derived from the libraryKit aka caller_model of the args.
-caller_model = snakemake.params["args"]["caller_model"]
-
 shell(
     r"""
 set -x
@@ -59,54 +48,20 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
-
-# Override the "nproc" command in the called Clair3.
-mkdir -p $TMPDIR/bin
-cat <<"EOF" >$TMPDIR/bin/nproc
-#!/usr/bin/bash
-echo {snakemake.threads}
-EOF
-chmod +x $TMPDIR/bin/nproc
-export PATH=$TMPDIR/bin:$PATH
-
+trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-nproc
+glnexus_cli \
+    --config $(dirname {__file__})/glnexus_config.yml \
+    {snakemake.input.gvcf} \
+| bcftools view - \
+| bgzip -@ 4 -c \
+> {snakemake.output.vcf}
 
-# Run Clair3 and generate gVCF files as well as haplotagged BAM.
-run_clair3.sh \
-  --gvcf \
-  --sample_name={snakemake.wildcards.library_name} \
-  --bam_fn={snakemake.input.bam} \
-  --ref_fn={snakemake.config[static_data_config][reference][path]} \
-  --threads={snakemake.config[step_config][variant_calling][clair3][num_threads]} \
-  --platform={platform} \
-  --model_path="{model_base_path}/{caller_model}" \
-  --use_whatshap_for_final_output_haplotagging \
-  --output=$TMPDIR/out
-
-# Fix the gVCF file and create index
-pbgzip -d -c $TMPDIR/out/merge_output.gvcf.gz \
-| sed '/^##FORMAT=<ID=GT/i ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">' \
-| sed '/^##FORMAT=<ID=GT/i ##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum DP observed within the GVCF block">' \
-| pbgzip -c \
-> {snakemake.output.gvcf}
-
-tabix -f {snakemake.output.gvcf}
-
-# Copy out the phased BAM file.
-cp -a $TMPDIR/out/phased_output.bam {snakemake.output.bam}
-cp -a $TMPDIR/out/phased_output.bam.bai {snakemake.output.bam_bai}
-
-# Copy out the phased VCF files.
-cp -a $TMPDIR/out/merge_output.vcf.gz {snakemake.output.vcf}
-cp -a $TMPDIR/out/merge_output.vcf.gz.tbi {snakemake.output.vcf_tbi}
+tabix -f {snakemake.output.vcf}
 
 # Compute MD5 sums on output files
-compute-md5 {snakemake.output.bam} {snakemake.output.bam_md5}
-compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_tbi_md5}
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 compute-md5 {snakemake.output.gvcf} {snakemake.output.gvcf_md5}

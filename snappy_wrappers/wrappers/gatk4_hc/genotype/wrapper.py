@@ -79,7 +79,6 @@ awk -v PADDING=1000 '
     }}
 ' $TMPDIR/raw.interval_list \
 > $TMPDIR/final_intervals.txt
-echo -e "chr2:178525989-178807423" > $TMPDIR/final_intervals.txt
 wc -l $TMPDIR/final_intervals.txt
 
 # Create per-shard output directory

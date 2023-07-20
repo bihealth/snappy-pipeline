@@ -94,28 +94,7 @@ rule variant_calling_clair3_discover:
         wf.wrapper_path("clair3/discover")
 
 
-# Combine the gVCF files from the pedigree with CombineGVCFs
-rule variant_calling_clair3_combine_gvcfs:
-    input:
-        unpack(wf.get_input_files("clair3", "combine_gvcfs")),
-    output:
-        **wf.get_output_files("clair3", "combine_gvcfs"),
-    threads: wf.get_resource("clair3", "combine_gvcfs", "threads")
-    resources:
-        time=wf.get_resource("clair3", "combine_gvcfs", "time"),
-        memory=wf.get_resource("clair3", "combine_gvcfs", "memory"),
-        partition=wf.get_resource("clair3", "combine_gvcfs", "partition"),
-        tmpdir=wf.get_resource("clair3", "combine_gvcfs", "tmpdir"),
-    params:
-        step_key="variant_calling",
-        caller_key="clair3",
-    log:
-        **wf.get_log_file("clair3", "combine_gvcfs"),
-    wrapper:
-        wf.wrapper_path("gatk4_hc/combine_gvcfs")
-
-
-# Perform GenotypeGVCFs genotyping of all samples in each pedigree
+# Combine the gVCF files from the pedigree with GLNexus 
 rule variant_calling_clair3_genotype:
     input:
         unpack(wf.get_input_files("clair3", "genotype")),
@@ -133,7 +112,7 @@ rule variant_calling_clair3_genotype:
     log:
         **wf.get_log_file("clair3", "genotype"),
     wrapper:
-        wf.wrapper_path("gatk4_hc/genotype")
+        wf.wrapper_path("clair3/genotype")
 
 
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
