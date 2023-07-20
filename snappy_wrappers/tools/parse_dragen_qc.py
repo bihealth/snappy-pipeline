@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Generate json file for varfish import from DRAGEN json.
 """
-import re
-import csv
-import json
-from collections import defaultdict
-from pathlib import Path
-from typing import List, Optional, Tuple
-
-from dataclasses import dataclass
 from argparse import ArgumentParser
-
+from collections import defaultdict
+import csv
+from dataclasses import dataclass
+import json
+from pathlib import Path
+import re
+from typing import List, Optional, Tuple
 
 COVERAGE_PATTERNS = {
     "overall_mean_cov": "**/*_overall_mean_cov.csv",
@@ -47,7 +45,7 @@ def find_coverage_files(path: Path) -> dict:
     for pattern_type, pattern in COVERAGE_PATTERNS.items():
         for matched_path in path.glob(pattern):
             if not any(b in matched_path.name for b in BLACKLIST):
-                if region_id :=  get_region_id(matched_path.name):
+                if region_id := get_region_id(matched_path.name):
                     files[region_id][pattern_type] = matched_path
     return files
 
@@ -75,8 +73,7 @@ def load_bed(path: Path) -> list:
 
 
 def get_target_metrics(target_report_path: Path) -> dict:
-    """Load report bed file and extract the target count and total target size.
-    """
+    """Load report bed file and extract the target count and total target size."""
     report_data = load_bed(target_report_path)
 
     total_target_size = 0
@@ -90,9 +87,10 @@ def get_target_metrics(target_report_path: Path) -> dict:
     }
 
 
-def get_cumulative(fine_hist: List[Histogram], start: int = 0, end: int = 200, step: int = 10) -> Tuple[dict, dict]:
-    """Get total and relative cumulative histograms.
-    """
+def get_cumulative(
+    fine_hist: List[Histogram], start: int = 0, end: int = 200, step: int = 10
+) -> Tuple[dict, dict]:
+    """Get total and relative cumulative histograms."""
     counts = {i: 0 for i in range(start, end, step)}
 
     total_count = 0
@@ -102,9 +100,7 @@ def get_cumulative(fine_hist: List[Histogram], start: int = 0, end: int = 200, s
             if hist.depth >= i:
                 counts[i] += hist.count
 
-    ratios = {
-        i: c / total_count for i, c in counts.items()
-    }
+    ratios = {i: c / total_count for i, c in counts.items()}
 
     return counts, ratios
 
@@ -138,14 +134,20 @@ def create_varfish_json(sample_id: str, region_coverage_paths: dict) -> dict:
         "min_cov_base": relative_fmt,
         "min_cov_target": relative_fmt,
     }
-    return { sample_id: output_data }
+    return {sample_id: output_data}
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Extract DRAGEN QC Information into a format importable into Varfish.")
+    parser = ArgumentParser(
+        description="Extract DRAGEN QC Information into a format importable into Varfish."
+    )
     parser.add_argument("--sample", required=True, help="sample id used for varfish import")
-    parser.add_argument("--region", default="3", help="region id pointing to relevant region qc for import")
-    parser.add_argument("input_dir", type=Path, help="Input directory containing the file tree for a single case.")
+    parser.add_argument(
+        "--region", default="3", help="region id pointing to relevant region qc for import"
+    )
+    parser.add_argument(
+        "input_dir", type=Path, help="Input directory containing the file tree for a single case."
+    )
 
     args = parser.parse_args()
     region_coverage_files = find_coverage_files(args.input_dir)[args.region]
