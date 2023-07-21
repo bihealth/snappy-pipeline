@@ -268,7 +268,7 @@ def create_varfish_json(sample_id: str, region_coverage_paths: dict) -> dict:
     )
     idxstats_fmt = get_idxstats(region_coverage_paths["idxstats"])
 
-    relative_fmt = {str(k): v for k, v in relative.items()}
+    relative_fmt = {str(k): round(v * 100, 2) for k, v in relative.items()}
 
     output_data = {
         "summary": {
@@ -283,20 +283,50 @@ def create_varfish_json(sample_id: str, region_coverage_paths: dict) -> dict:
     return {sample_id: output_data}
 
 
+def run_dir(args):
+    region_coverage_files = find_coverage_files(args.input_dir)[args.region]
+    result_data = create_varfish_json(args.sample, region_coverage_files)
+    return result_data
+
+
+def run_files(args):
+    region_coverage_files = {
+        "overall_mean_cov": args.overall_mean_cov,
+        "cov_report": args.cov_report,
+        "fine_hist": args.fine_hist,
+        "fastqc_metrics": args.fastqc_metrics,
+        "mapping_metrics": args.mapping_metrics,
+        "idxstats": args.idxstats,
+    }
+    result_data = create_varfish_json(args.sample, region_coverage_files)
+    return result_data
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Extract DRAGEN QC Information into a format importable into Varfish."
     )
     parser.add_argument("--sample", required=True, help="sample id used for varfish import")
-    parser.add_argument(
+
+    subparsers = parser.add_subparsers()
+    parser_dir = subparsers.add_parser("dir", help="Find files in directory by itself.")
+    parser_dir.add_argument(
         "--region", default="3", help="region id pointing to relevant region qc for import"
     )
-    parser.add_argument(
+    parser_dir.add_argument(
         "input_dir", type=Path, help="Input directory containing the file tree for a single case."
     )
+    parser_dir.set_defaults(func=run_dir)
+
+    parser_files = subparsers.add_parser("files", help="Explicitly list files to be used")
+    parser_files.add_argument("--overall_mean_cov", type=Path, required=True)
+    parser_files.add_argument("--cov_report", type=Path, required=True)
+    parser_files.add_argument("--fine_hist", type=Path, required=True)
+    parser_files.add_argument("--fastqc_metrics", type=Path, required=True)
+    parser_files.add_argument("--mapping_metrics", type=Path, required=True)
+    parser_files.add_argument("--idxstats", type=Path, required=True)
+    parser_files.set_defaults(func=run_files)
 
     args = parser.parse_args()
-    region_coverage_files = find_coverage_files(args.input_dir)[args.region]
-    result_data = create_varfish_json(args.sample, region_coverage_files)
-
+    result_data = args.func(args)
     print(json.dumps(result_data))

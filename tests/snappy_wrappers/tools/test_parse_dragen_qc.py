@@ -141,8 +141,8 @@ def test_create_varfish_json():
         "TEST": {
             "summary": {"mean coverage": 42.134, "target_count": 3, "total_target_size": 100101},
             "min_cov_base": {
-                "0": 1.0,
-                "10": 0.05242933884697617,
+                "0": 100.00,
+                "10": 5.24,
                 "20": 0.0,
                 "30": 0.0,
                 "40": 0.0,
@@ -163,8 +163,8 @@ def test_create_varfish_json():
                 "190": 0.0,
             },
             "min_cov_target": {
-                "0": 1.0,
-                "10": 0.05242933884697617,
+                "0": 100.00,
+                "10": 5.24,
                 "20": 0.0,
                 "30": 0.0,
                 "40": 0.0,
