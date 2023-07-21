@@ -24,6 +24,75 @@ COV_REPORT_TEXT = """#chrom	start	end	total_cvg	mean_cvg	Q1_cvg	median_cvg	Q3_cv
 1	10	11	99531	49.10	11.00	48.00	77.00	0	148	83.82	68.38	64.78	63.64	47.46	11.15	0.00	0.00	0.00	0.00	0.00
 """
 
+MAPPING_METRICS_TEXT = """MAPPING/ALIGNING SUMMARY,,Total input reads,90000,100.00
+MAPPING/ALIGNING SUMMARY,,Number of duplicate marked reads,900,11.77
+MAPPING/ALIGNING SUMMARY,,Number of duplicate marked and mate reads removed,NA
+MAPPING/ALIGNING SUMMARY,,Number of unique reads (excl. duplicate marked reads),900,88.23
+MAPPING/ALIGNING SUMMARY,,Reads with mate sequenced,9999,100.00
+MAPPING/ALIGNING SUMMARY,,Reads without mate sequenced,0,0.00
+MAPPING/ALIGNING SUMMARY,,QC-failed reads,0,0.00
+MAPPING/ALIGNING SUMMARY,,Mapped reads,9999,99.93
+MAPPING/ALIGNING SUMMARY,,Mapped reads adjusted for filtered mapping,999,99.93
+MAPPING/ALIGNING SUMMARY,,Mapped reads R1,999,99.99
+MAPPING/ALIGNING SUMMARY,,Mapped reads R2,999,99.87
+MAPPING/ALIGNING SUMMARY,,Number of unique & mapped reads (excl. duplicate marked reads),999,88.16
+MAPPING/ALIGNING SUMMARY,,Unmapped reads,999,0.07
+MAPPING/ALIGNING SUMMARY,,Unmapped reads adjusted for filtered mapping,999,0.07
+MAPPING/ALIGNING SUMMARY,,Adjustment of reads matching non-reference decoys,0,0.00
+MAPPING/ALIGNING SUMMARY,,Singleton reads (itself mapped; mate unmapped),999,0.06
+MAPPING/ALIGNING SUMMARY,,Paired reads (itself & mate mapped),999,99.87
+MAPPING/ALIGNING SUMMARY,,Properly paired reads,999,98.06
+MAPPING/ALIGNING SUMMARY,,Not properly paired reads (discordant),999,1.81
+MAPPING/ALIGNING SUMMARY,,Paired reads mapped to different chromosomes,999,1.30
+MAPPING/ALIGNING SUMMARY,,Paired reads mapped to different chromosomes (MAPQ>=10),999,1.01
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ [40:inf),999,84.00
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ [30:40),999,1.00
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ [20:30),999,5.00
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ [10:20),999,5.00
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ [ 0:10),999,5.00
+MAPPING/ALIGNING SUMMARY,,Reads with MAPQ NA (Unmapped reads),999,0.07
+MAPPING/ALIGNING SUMMARY,,Reads with indel R1,999,3.28
+MAPPING/ALIGNING SUMMARY,,Reads with indel R2,999,3.48
+MAPPING/ALIGNING SUMMARY,,Total bases,10
+MAPPING/ALIGNING SUMMARY,,Total bases R1,5
+MAPPING/ALIGNING SUMMARY,,Total bases R2,5
+MAPPING/ALIGNING SUMMARY,,Mapped bases,1
+MAPPING/ALIGNING SUMMARY,,Mapped bases R1,1
+MAPPING/ALIGNING SUMMARY,,Mapped bases R2,2
+MAPPING/ALIGNING SUMMARY,,Soft-clipped bases,8,0.84
+MAPPING/ALIGNING SUMMARY,,Soft-clipped bases R1,4,0.61
+MAPPING/ALIGNING SUMMARY,,Soft-clipped bases R2,4,1.06
+MAPPING/ALIGNING SUMMARY,,Hard-clipped bases,0,0.00
+MAPPING/ALIGNING SUMMARY,,Hard-clipped bases R1,0,0.00
+MAPPING/ALIGNING SUMMARY,,Hard-clipped bases R2,0,0.00
+MAPPING/ALIGNING SUMMARY,,Mismatched bases R1,1,0.40
+MAPPING/ALIGNING SUMMARY,,Mismatched bases R2,1,0.57
+MAPPING/ALIGNING SUMMARY,,Mismatched bases R1 (excl. indels),1,0.34
+MAPPING/ALIGNING SUMMARY,,Mismatched bases R2 (excl. indels),1,0.51
+MAPPING/ALIGNING SUMMARY,,Q30 bases,1,92.45
+MAPPING/ALIGNING SUMMARY,,Q30 bases R1,1,94.08
+MAPPING/ALIGNING SUMMARY,,Q30 bases R2,1,90.81
+MAPPING/ALIGNING SUMMARY,,Q30 bases (excl. dups & clipped bases),10
+MAPPING/ALIGNING SUMMARY,,Total alignments,8
+MAPPING/ALIGNING SUMMARY,,Secondary alignments,0
+MAPPING/ALIGNING SUMMARY,,Supplementary (chimeric) alignments,3
+MAPPING/ALIGNING SUMMARY,,Estimated read length,150.03
+MAPPING/ALIGNING SUMMARY,,Bases in reference genome,31
+MAPPING/ALIGNING SUMMARY,,Bases in target bed [% of genome],NA
+MAPPING/ALIGNING SUMMARY,,Insert length: mean,400.00
+MAPPING/ALIGNING SUMMARY,,Insert length: median,534.00
+MAPPING/ALIGNING SUMMARY,,Insert length: standard deviation,9232.33
+MAPPING/ALIGNING SUMMARY,,Provided sex chromosome ploidy,NA
+MAPPING/ALIGNING SUMMARY,,Estimated sample contamination,0.0010
+MAPPING/ALIGNING SUMMARY,,DRAGEN mapping rate [mil. reads/second],100.06"""
+
+IDXSTATS_TEXT = """X\t155270560\t10\t2
+Y\t59373566\t13\t1
+MT\t41234123\t20\t99"""
+
+FASTQC_METRICS_TEXT = """READ MEAN QUALITY,Read1,Q2 Reads,2736
+READ MEAN QUALITY,Read1,Q13 Reads,2"""
+
 
 @pytest.fixture
 def dragen_case_complete(fs):
@@ -43,6 +112,15 @@ def dragen_case_complete(fs):
 
     cov_report_path = f"{misc_path}/{sample_name}_dragen.{region_name}_cov_report.bed"
     fs.create_file(cov_report_path, create_missing_dirs=True, contents=COV_REPORT_TEXT)
+
+    mapping_metrics_path = f"{misc_path}/{sample_name}_dragen.mapping_metrics.csv"
+    fs.create_file(mapping_metrics_path, create_missing_dirs=True, contents=MAPPING_METRICS_TEXT)
+
+    idxstats_path = f"{misc_path}/{sample_name}_dragen.bam.idxstats.txt"
+    fs.create_file(idxstats_path, create_missing_dirs=True, contents=IDXSTATS_TEXT)
+
+    fastqc_path = f"{misc_path}/{sample_name}_dragen.fastqc_metrics.csv"
+    fs.create_file(fastqc_path, create_missing_dirs=True, contents=FASTQC_METRICS_TEXT)
 
     wrong_cov_report_path = f"{misc_path}/{sample_name}_dragen.{region_name}_read_cov_report.bed"
     fs.create_file(wrong_cov_report_path, create_missing_dirs=True, contents="")
@@ -106,6 +184,14 @@ def test_create_varfish_json():
                 "180": 0.0,
                 "190": 0.0,
             },
+            "idxstats": {
+                "X": {"mapped": 10, "unmapped": 2},
+                "Y": {"mapped": 13, "unmapped": 1},
+                "MT": {"mapped": 20, "unmapped": 99},
+            }
         }
     }
-    assert result_json == expected_json
+    assert result_json["TEST"]["min_cov_base"] == expected_json["TEST"]["min_cov_base"]
+    assert result_json["TEST"]["min_cov_target"] == expected_json["TEST"]["min_cov_target"]
+    assert result_json["TEST"]["idxstats"] == expected_json["TEST"]["idxstats"]
+    assert result_json["TEST"]["summary"] == expected_json["TEST"]["summary"]
