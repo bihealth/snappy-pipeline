@@ -188,7 +188,7 @@ def test_create_varfish_json():
                 "X": {"mapped": 10, "unmapped": 2},
                 "Y": {"mapped": 13, "unmapped": 1},
                 "MT": {"mapped": 20, "unmapped": 99},
-            }
+            },
         }
     }
     assert result_json["TEST"]["min_cov_base"] == expected_json["TEST"]["min_cov_base"]

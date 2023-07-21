@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Generate json file for varfish import from DRAGEN json.
 """
-import math
 from argparse import ArgumentParser
 from collections import defaultdict
 import csv
 from dataclasses import dataclass
 import json
+import math
 from pathlib import Path
 import re
 from typing import List, Optional, Tuple
@@ -114,6 +114,7 @@ def get_cumulative(
     ratios = {i: c / total_count for i, c in counts.items()}
 
     return counts, ratios
+
 
 def compute_average_quality(fastqc_metrics: dict) -> float:
     total_qual = 0.0
@@ -227,7 +228,7 @@ def get_bamstats(metrics_path: Path, fastqc_path: Path) -> dict:
         "outward oriented pairs": 0,  # does not exist on DRAGEN
         "pairs with other orientation": pair_not_proper,
         "pairs on different chromosomes": pair_diff_chrom,
-        "percentage of properly paired reads (%)": float(summary[("", "Properly paired reads")][1])
+        "percentage of properly paired reads (%)": float(summary[("", "Properly paired reads")][1]),
     }
 
 
@@ -262,7 +263,9 @@ def create_varfish_json(sample_id: str, region_coverage_paths: dict) -> dict:
     target_metrics = get_target_metrics(region_coverage_paths["cov_report"])
     _, relative = get_cumulative(load_coverage_histogram(region_coverage_paths["fine_hist"]))
 
-    bamstats_fmt = get_bamstats(region_coverage_paths["mapping_metrics"], region_coverage_paths["fastqc_metrics"])
+    bamstats_fmt = get_bamstats(
+        region_coverage_paths["mapping_metrics"], region_coverage_paths["fastqc_metrics"]
+    )
     idxstats_fmt = get_idxstats(region_coverage_paths["idxstats"])
 
     relative_fmt = {str(k): v for k, v in relative.items()}
