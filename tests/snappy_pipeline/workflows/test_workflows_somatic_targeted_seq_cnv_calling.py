@@ -472,8 +472,8 @@ def test_cnvkit_postprocess_step_part_get_input_files(somatic_targeted_seq_cnv_c
 
 
 def test_cnvkit_postprocess_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
-    expected = {"final": base_name_out, "final_md5": base_name_out + ".md5"}
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.bed.gz"
+    expected = {"final": base_name_out, "final_tbi": base_name_out + ".tbi", "final_md5": base_name_out + ".md5", "final_tbi_md5": base_name_out + ".tbi.md5"}
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "postprocess")
     assert actual == expected
 
@@ -582,7 +582,7 @@ def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calli
     # Define expected
     expected = {}
     base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}"
-    for key, ext in (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi")):
+    for key, ext in (("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi")):
         expected[key] = base_name_out + "." + ext
         expected[key + "_md5"] = expected[key] + ".md5"
     # Get actual
@@ -870,7 +870,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     expected += [
         tpl.format(i=i, t=t, ext=ext, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("cnr", "cns", "bed", "seg", "vcf.gz", "vcf.gz.tbi")
+        for ext in ("cnr", "bed.gz", "bed.gz.tbi", "seg", "vcf.gz", "vcf.gz.tbi")
         for md5 in ("", ".md5")
     ]
     tpl = (
