@@ -84,13 +84,13 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --ob-priors $tmpdir/read-orientation-model.tar.gz \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
-    --output {snakemake.output.full}
+    --output {snakemake.output.full_vcf}
 
 # Index & move to final dest
-tabix -f {snakemake.output.full}
+tabix -f {snakemake.output.full_vcf}
 
 # Keep only PASS variants in main output
-bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full}
+bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}
 tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
@@ -98,7 +98,7 @@ fn=$(basename {snakemake.output.vcf})
 md5sum $fn > $fn.md5
 fn=$(basename {snakemake.output.vcf_tbi})
 md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.full})
+fn=$(basename {snakemake.output.full_vcf})
 md5sum $fn > $fn.md5
 fn=$(basename {snakemake.output.full_vcf_tbi})
 md5sum $fn > $fn.md5
