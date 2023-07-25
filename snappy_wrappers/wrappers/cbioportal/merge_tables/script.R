@@ -107,6 +107,10 @@ merge_segments <- function(fns) {
     for (sample_id in names(fns)) {
         cat("Loading", fns[sample_id], "for sample", sample_id, "\n")
         tmp <- read.table(fns[sample_id], sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
+        if (!all(col_names %in% colnames(tmp))) {
+            i <- match(names(col_names), colnames(tmp))
+            if (any(!is.na(i))) colnames(tmp)[i[!is.na(i)]] <- col_names[!is.na(i)]
+        }
         stopifnot(all(names(col_names) %in% colnames(tmp)))
         tmp <- tmp[,names(col_names)]
         colnames(tmp) <- col_names    

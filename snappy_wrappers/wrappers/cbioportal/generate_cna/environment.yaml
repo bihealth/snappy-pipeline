@@ -1,4 +1,4 @@
-name: merge_tables
+name: generate_cna
 
 channels:
 - conda-forge
