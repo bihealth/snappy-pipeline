@@ -1,5 +1,3 @@
-require(magrittr)
-
 #' Read & merge sample files into cBioPortal gene-based data table.
 #'
 #' Used for expression tables, log2 CNA, pseudo-Gistic table.
