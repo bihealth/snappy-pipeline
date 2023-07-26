@@ -151,7 +151,7 @@ compute_rpkm <- function(counts, tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.
     if (verbose) cat("Create DESeq2 object ... ")
     genes <- GenomicFeatures::exonsBy(tx_obj, "gene")
     genes <- genes[names(genes) %in% rownames(counts)]
-    counts <- counts[names(genes),]
+    counts <- counts[names(genes),,drop=FALSE]
     donors <- data.frame(Donor=colnames(counts), stringsAsFactors=FALSE)
     dds <- DESeq2::DESeqDataSetFromMatrix(counts, colData=donors, design=as.formula("~ 1"), rowRanges=genes)
     if (verbose) cat("Done\n")
