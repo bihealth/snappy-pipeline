@@ -36,14 +36,17 @@ def get_contigs_from_bed_file(bedfile):
 
 
 def get_variant_type(ref, alt):
-    if (len(alt) == 1) and (len(ref) == len(alt)):
-        return "snp"
-    elif len(alt) != len(ref):
-        return "indels"
+    if len(ref) == len(alt):
+        if len(alt) == 1:
+            return "SNV"
+        else:
+            return "ONV"
+    elif len(alt) < len(ref):
+        return "indel"
 
 
-def check_sp_read(variant, minimal, limited):
-    dp = variant.format("AD")[1][1]
+def check_sp_read(variant, pos_sample, minimal, limited):
+    dp = variant.format("AD")[1][pos_sample]
     if dp <= minimal:
         return "minimal"
     elif (dp > minimal) and (dp <= limited):
@@ -72,6 +75,7 @@ def assign_class_snvs(variant, mt_mat):
 
 def process_vcf_file(
     vcf_file,
+    pos_sample=1,
     contigs=[],
     hard_contigs=[],
     minimal=1,
@@ -88,6 +92,7 @@ def process_vcf_file(
         "v_outside_exom": 0,
         "v_in_hard_regions": 0,
         "n_snps": 0,
+        "n_onvs": 0,
         "n_indels": 0,
         "minimal_rp_snvs_exom": 0,
         "minimal_rp_snvs_nexom": 0,
@@ -114,19 +119,25 @@ def process_vcf_file(
                     variant.CHROM, variant.start, variant.end, bed_file, padding
                 ):
                     infor["v_inside_exom"] += 1
-                    infor[str(check_sp_read(variant, minimal, limited)) + "_rp_snvs_exom"] += 1
+                    infor[
+                        str(check_sp_read(variant, pos_sample, minimal, limited)) + "_rp_snvs_exom"
+                    ] += 1
                 else:
                     infor["v_outside_exom"] += 1
-                    infor[str(check_sp_read(variant, minimal, limited)) + "_rp_snvs_nexom"] += 1
+                    infor[
+                        str(check_sp_read(variant, pos_sample, minimal, limited)) + "_rp_snvs_nexom"
+                    ] += 1
 
                 # Need to check multi allelic. Users shouldn't input multi allelic vcf file.
-                if get_variant_type(variant.REF, variant.ALT[0]) == "snp":
+                if get_variant_type(variant.REF, variant.ALT[0]) == "SNV":
                     infor["n_snps"] += 1
                     infor["mt_classes"] = assign_class_snvs(variant, infor["mt_classes"])
-                else:
+                elif get_variant_type(variant.REF, variant.ALT[0]) == "indel":
                     # More for indels
                     infor["n_indels"] += 1
                     infor["indels_length"].append(abs(len(variant.REF) - len(variant.ALT[0])))
+                elif get_variant_type(variant.REF, variant.ALT[0]) == "ONV":
+                    infor["n_onvs"] += 1
             # Gathering information of variants in comparison to hard mapped regions
             else:
                 infor["v_outside_exom"] += 1
@@ -151,6 +162,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "--filtered-vcf", help="vcf file containing somatic variants passing all filters", required=True
+)
+parser.add_argument(
+    "--sample",
+    help="Name of tumor sample",
 )
 parser.add_argument("--exom-bedfile", help="exom regions bed file", required=True)
 parser.add_argument("--padding", type=int, help="Size of padding around exom regions", default=0)
@@ -189,7 +204,7 @@ def main():
     # reading input
     full_vcf = VCF(args.rawvcf)
     filter_vcf = VCF(args.filtered_vcf)
-    sample = filter_vcf.samples[1]
+    pos_sample = filter_vcf.samples.index(args.sample)
     ######################
     bed_intervals = tabix.open(args.exom_bedfile)
     contigs = get_contigs_from_bed_file(args.exom_bedfile)
@@ -201,6 +216,7 @@ def main():
         hard_contigs = get_contigs_from_bed_file(path_hard_regions)
         infor = process_vcf_file(
             filter_vcf,
+            pos_sample,
             contigs,
             hard_contigs,
             args.minimal,
@@ -214,6 +230,7 @@ def main():
     else:
         infor = process_vcf_file(
             filter_vcf,
+            pos_sample,
             contigs,
             [],
             args.minimal,
@@ -226,13 +243,14 @@ def main():
         )
 
     summary = {
-        "sample": sample,
+        "sample": args.sample,
         "total_variants_number": full_v_count,
         "number_variants_passing_filters": infor["total_v_count"],
         "number_variants_in_enrichment_regions": infor["v_inside_exom"],
         "number_variants_outside_enrichment_regions": infor["v_outside_exom"],
         "number_variants_in_masked_regions": infor["v_in_hard_regions"],
         "number_snvs": infor["n_snps"],
+        "number_onvs": infor["n_onvs"],
         "number_indels": infor["n_indels"],
         "number_variants_in_enriched_with_minimal_support": infor["minimal_rp_snvs_exom"],
         "number_variants_outside_enriched_with_minimal_support": infor["minimal_rp_snvs_nexom"],
@@ -250,7 +268,7 @@ def main():
         "VAF": infor["vaf"],
     }
     if not args.ignore_regions:
-        del summary["number_snvs_in_hard_regions"]
+        del summary["number_variants_in_masked_regions"]
     json_object = json.dumps(summary)
     if args.output:
         with open(args.output, "w") as outfile:

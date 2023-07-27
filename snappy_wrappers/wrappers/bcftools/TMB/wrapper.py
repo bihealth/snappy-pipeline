@@ -37,7 +37,7 @@ number_snvs=$(bcftools view -R $bed_file -v snps --threads 2 -H {snakemake.input
 number_indels=$(bcftools view -R $bed_file -v indels --threads 2 -H {snakemake.input.vcf}| wc -l)
 number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| wc -l)
 
-TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
+TMB=$(echo "1000000*($number_variants/$total_exom_length)" | bc -l | xargs printf "%.17g")
 cat << EOF > {snakemake.output.json}
 {{
   "Library_name": "{snakemake.wildcards.tumor_library}",

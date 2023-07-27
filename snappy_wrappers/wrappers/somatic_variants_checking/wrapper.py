@@ -24,6 +24,7 @@ conda info > {snakemake.log.conda_info}
 
 python {base_dir}/summarize-vcf.py --rawvcf {snakemake.input.full_vcf} \
     --filtered-vcf {snakemake.input.passed_vcf} \
+    --sample {snakemake.wildcards.tumor_library} \
     --exom-bedfile {snakemake.config[step_config][somatic_variant_checking][target_regions]} \
     --padding {snakemake.config[step_config][somatic_variant_checking][padding]} \
     --minimal {snakemake.config[step_config][somatic_variant_checking][minimal_support_read]} \
