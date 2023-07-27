@@ -80,15 +80,13 @@ def write_clinical_samples_tsv(donors):
     """
 
     sample_info_getters = []
-    for extra_info in snakemake.config["step_config"]["cbioportal_export"]["sample_info"]:
-        step = extra_info["step"]
+    config = snakemake.config["step_config"]["cbioportal_export"]
+    for step, extra_info in config["sample_info"].items():
         if step == "tumor_mutational_burden":
             sample_info_getters.append(
                 SampleInfoTMB(
                     extra_info,
-                    somatic_variant_tool=snakemake.config["step_config"]["cbioportal_export"][
-                        "somatic_variant_calling_tool"
-                    ],
+                    somatic_variant_tool=config["somatic_variant_calling_tool"],
                 )
             )
         else:

@@ -1,5 +1,3 @@
-require(magrittr)
-
 #' Read & merge sample files into cBioPortal gene-based data table.
 #'
 #' Used for expression tables, log2 CNA, pseudo-Gistic table.
@@ -39,7 +37,7 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "gistic") {
-        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
+        stopifnot(all(c("pipeline_id") %in% names(args)))
         # Copy numbers (in "cn" column) are transformed into (pseudo-) gistic codes:
         # 0: Deep deletion, 1: heterozygous deletion, 2: copy number neutral, 3: gain, 4: amplification
         # In https://doi.org/10.1038/s41586-022-04738-6, the amplification is defined as 
@@ -59,7 +57,7 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "log2") {
-        stopifnot(all(c("pipeline_id") %in% names(args)))
+        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
         tmp <- read_sample_files(fns, args$pipeline_id, "log2")
         method <- "max"
     }
@@ -107,6 +105,10 @@ merge_segments <- function(fns) {
     for (sample_id in names(fns)) {
         cat("Loading", fns[sample_id], "for sample", sample_id, "\n")
         tmp <- read.table(fns[sample_id], sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
+        if (!all(col_names %in% colnames(tmp))) {
+            i <- match(names(col_names), colnames(tmp))
+            if (any(!is.na(i))) colnames(tmp)[i[!is.na(i)]] <- col_names[!is.na(i)]
+        }
         stopifnot(all(names(col_names) %in% colnames(tmp)))
         tmp <- tmp[,names(col_names)]
         colnames(tmp) <- col_names    
@@ -147,7 +149,7 @@ compute_rpkm <- function(counts, tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.
     if (verbose) cat("Create DESeq2 object ... ")
     genes <- GenomicFeatures::exonsBy(tx_obj, "gene")
     genes <- genes[names(genes) %in% rownames(counts)]
-    counts <- counts[names(genes),]
+    counts <- counts[names(genes),,drop=FALSE]
     donors <- data.frame(Donor=colnames(counts), stringsAsFactors=FALSE)
     dds <- DESeq2::DESeqDataSetFromMatrix(counts, colData=donors, design=as.formula("~ 1"), rowRanges=genes)
     if (verbose) cat("Done\n")

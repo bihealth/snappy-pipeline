@@ -104,9 +104,9 @@ step_config:
       study_description: REQUIRED               # REQUIRED
       study_name: REQUIRED                      # REQUIRED
       study_name_short: REQUIRED                # REQUIRED
-    patient_info: []              # Unimplemented
-    sample_info: []               # Each entry must have a path & a step associated, see example below
-    # - step: tumor_mutational_burden
+    patient_info: {}              # Unimplemented
+    sample_info: {}               # Each additional sample column must have a name and a (possibly empty) config attached.
+    # tumor_mutational_burden:
     #   path: ../tumor_mutational_burden
 """
 

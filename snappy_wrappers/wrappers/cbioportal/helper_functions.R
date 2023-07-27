@@ -1,5 +1,3 @@
-require(magrittr)
-
 #' Extracts the feature names & one column of values from tab-delimited sample files
 #' and return a data.frame with the values for each sample in the columns, and 
 #' the feature names as row name.
@@ -34,7 +32,7 @@ read_sample_files <- function(fns, featureCol, valueCol, header=TRUE) {
         if (is.null(tbl)) {
             tbl <- tmp
         } else {
-            tbl <- tbl %>% dplyr::full_join(tmp, by=featureCol)
+            tbl <- tbl |> dplyr::full_join(tmp, by=featureCol)
         }
     }
     tbl <- tbl[!grepl("_PAR_Y$", tbl[[featureCol]]),,drop=FALSE]
@@ -75,7 +73,7 @@ map_feature_id <- function(mat, mappings, from, to, method=c("sum", "max", "maxa
     if (!all(c(from, to) %in% colnames(mappings)))
         stop("Feature id type ", from, " or ", to, " not in mappings table")
 
-    mappings <- mappings[,c(from, to)] %>% dplyr::distinct()
+    mappings <- mappings[,c(from, to)] |> dplyr::distinct()
     mappings <- mappings[mappings[[from]] %in% rownames(mat),,drop=FALSE]
     
     n <- sum(rownames(mat) %in% mappings[[from]])
@@ -189,7 +187,7 @@ get_id_mappings <- function(org_obj, verbose=FALSE) {
             if (verbose) cat("Gene id mappings taken from file ", org_obj)
             id_mappings <- read.table(org_obj, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE, quote="", comment="")
             if (all(c("hgnc_symbol", "ensembl_canonical_gene", "entrez_gene_id") %in% colnames(id_mappings)))
-                id_mappings <- id_mappings %>%
+                id_mappings <- id_mappings |>
                     dplyr::select(ENSEMBL=ensembl_canonical_gene, SYMBOL=hgnc_symbol, ENTREZ_ID=entrez_gene_id)
             stopifnot(all(c("ENSEMBL", "SYMBOL", "ENTREZ_ID") %in% colnames(id_mappings)))
             id_mappings <- id_mappings[,c("ENSEMBL", "SYMBOL", "ENTREZ_ID")]
@@ -205,12 +203,12 @@ get_id_mappings <- function(org_obj, verbose=FALSE) {
             )
         }
     }
-    id_mappings <- id_mappings %>%
-        dplyr::select(ENSEMBL, SYMBOL, ENTREZ_ID) %>%
-        dplyr::mutate(ENTREZ_ID=as.character(ENTREZ_ID)) %>%
-        dplyr::filter(!is.na(ENSEMBL) & ENSEMBL!="") %>%
-        dplyr::filter(!is.na(SYMBOL) & SYMBOL!="") %>%
-        dplyr::filter(!is.na(ENTREZ_ID) & ENTREZ_ID!="" & grepl("^[0-9]+$", ENTREZ_ID)) %>%
+    id_mappings <- id_mappings |>
+        dplyr::select(ENSEMBL, SYMBOL, ENTREZ_ID) |>
+        dplyr::mutate(ENTREZ_ID=as.character(ENTREZ_ID)) |>
+        dplyr::filter(!is.na(ENSEMBL) & ENSEMBL!="") |>
+        dplyr::filter(!is.na(SYMBOL) & SYMBOL!="") |>
+        dplyr::filter(!is.na(ENTREZ_ID) & ENTREZ_ID!="" & grepl("^[0-9]+$", ENTREZ_ID)) |>
         dplyr::distinct()
 
     id_mappings

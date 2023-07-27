@@ -10,7 +10,16 @@ step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
 
 vcf_to_table = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vcf_to_table.py")
-vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.yaml")
+if config["somatic_variant_annotation_tool"] == "vep":
+    vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vep.yaml")
+elif config["somatic_variant_annotation_tool"] == "jannovar_annotate_somatic_vcf":
+    vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "jannovar.yaml")
+else:
+    raise Exception(
+        "vcf to maf conversion error: unimplemented conversion from annotation tool {}".format(
+            config["somatic_variant_annotation_tool"]
+        )
+    )
 
 params = snakemake.params.args
 

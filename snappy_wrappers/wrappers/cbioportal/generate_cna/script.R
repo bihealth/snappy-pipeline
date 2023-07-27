@@ -1,5 +1,3 @@
-require(magrittr)
-
 #' Compute discrete copy number & log2 on genes
 #'
 #' @param fn names of the cns file
