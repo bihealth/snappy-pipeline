@@ -3,5 +3,5 @@ channels:
 - anaconda
 - bioconda
 dependencies:
-- numpy ==1.6.2
+- numpy ==1.7.2
 - pysam ==0.8.3
