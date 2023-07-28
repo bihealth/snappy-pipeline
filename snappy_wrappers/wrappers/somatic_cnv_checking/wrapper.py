@@ -50,21 +50,34 @@ md5 {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 #
 R --vanilla --slave << __EOF
 source("{rscript}")
-x <- vcf_to_table("{snakemake.input.vcf}", sample="{snakemake.params[args][library_name]}")
-genome_lengths <- chromosome_lengths("{reference}")
+
+genome_lengths <- chromosome_lengths("{reference}") |> dplyr::mutate(n=dplyr::row_number())
+
+x <- vcf_to_table("{snakemake.input.vcf}", sample="{snakemake.wildcards[library_name]}")
 x <- x |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(x=POS + Offset)
+
+y <- read.table("{snakemake.input.tsv}", sep="\t", header=1, check.names=FALSE)
+y <- y |> dplyr::mutate(Call=cn_to_call(CN))
+y <- y |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(from=start + Offset, to=stop + Offset)
+
 pdf("{snakemake.output.cnv}", height=6.22, width=9.33)
-plot_cnv(x, scale="log2") + ggplot2::ggtitle("{snakemake.params[args][library_name]}")
-plot_cnv(x, scale="sqrt") + ggplot2::ggtitle("{snakemake.params[args][library_name]}")
+plot_cnv(x, scale="log2") + ggplot2::ggtitle("{snakemake.wildcards[library_name]}")
+plot_cnv(x, scale="sqrt") + ggplot2::ggtitle("{snakemake.wildcards[library_name]}")
 dev.off()
+
 pdf("{snakemake.output.locus}", height=6.22, width=12.44)
-plot_locus(x, genome_lengths |> dplyr::mutate(n=dplyr::row_number()) |> dplyr::filter(CHROM %in% x$CHROM)) +
-    ggplot2::ggtitle("{snakemake.params[args][library_name]}")
+plot_locus(x, genome_lengths |> dplyr::filter(CHROM %in% x[["CHROM"]])) +
+    ggplot2::ggtitle("{snakemake.wildcards[library_name]}")
+dev.off()
+
+pdf("{snakemake.output.segment}", height=6.22, width=12.44)
+plot_segment(y, genome_lengths |> dplyr::filter(CHROM %in% y[["CHROM"]]))
 dev.off()
 __EOF
 
 md5 {snakemake.output.cnv} > {snakemake.output.cnv_md5}
 md5 {snakemake.output.locus} > {snakemake.output.locus_md5}
+md5 {snakemake.output.segment} > {snakemake.output.segment_md5}
 """
 )
 

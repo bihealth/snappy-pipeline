@@ -4,5 +4,6 @@ channels:
 dependencies:
 - r-base
 - r-dplyr
+- r-ggplot2
 - bioconductor-variantannotation
 - bioconductor-biostrings
