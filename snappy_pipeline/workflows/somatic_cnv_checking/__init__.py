@@ -57,13 +57,13 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -72,6 +72,10 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
+    SomaticTargetedSeqCnvCallingWorkflow,
+)
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -88,7 +92,7 @@ step_config:
   somatic_cnv_checking:
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     path_cnv_calling: ""              # Can use for instance ../somatic_targeted_seq_cnv_calling
-    cnv_calling_tool: ""              # Can use "cnvkit"
+    cnv_assay_type: ""                # Empty: no CNV, WES for somatic_targeted_seq_snv_calling step, WGS for somatic_wgs_cnv_calling step
     excluded_regions: ""              # Bed file of regions to be excluded
     max_depth: 10000                  # Max depth for pileups
     min_cov: 20                       # Minimum depth for reference and alternative alleles to consider variant
@@ -98,32 +102,10 @@ step_config:
 
 class SomaticCnvCheckingStepPart(BaseStepPart):
     """Base class for CNV checking sub-steps"""
-        
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-        # Get shorcut to Snakemake sub workflow
-        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            pair = self.tumor_ngs_library_to_sample_pair[wildcards.library]
-            return {"library_name": pair.tumor_sample.dna_ngs_library.name}
-
-        return input_function
 
     @dictify
     def _get_log_file(self, prefix):
         """Return dict of log files."""
-        # Validate action
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -140,14 +122,17 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     name = "pileup"
     actions = ("normal", "tumor")
 
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
 
         def input_function_normal(wildcards):
-            pair = self.tumor_ngs_library_to_sample_pair[wildcards.library]
-            base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                normal_library=pair.normal_sample.dna_ngs_library.name, **wildcards
+            base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
+                **wildcards
             )
             return {
                 "bam": self.ngs_mapping(base_path + ".bam"),
@@ -155,16 +140,15 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             }
 
         def input_function_tumor(wildcards):
-            pair = self.tumor_ngs_library_to_sample_pair[wildcards.library]
-            base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
-                tumor_library=pair.tumor_sample.dna_ngs_library.name, **wildcards
+            base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
+                **wildcards
             )
             return {
-                "vcf": "work/{mapper}.{library}/out/{mapper}.{library}.normal.vcf.gz".format(
-                    **wildcards
+                "locii": "work/{mapper}.{normal_library}/out/{mapper}.{normal_library}.normal.vcf.gz".format(
+                    normal_library=self.parent.tumor_to_normal[wildcards.library_name], **wildcards
                 ),
-                "tbi": "work/{mapper}.{library}/out/{mapper}.{library}.normal.vcf.gz.tbi".format(
-                    **wildcards
+                "locii_tbi": "work/{mapper}.{normal_library}/out/{mapper}.{normal_library}.normal.vcf.gz.tbi".format(
+                    normal_library=self.parent.tumor_to_normal[wildcards.library_name], **wildcards
                 ),
                 "bam": self.ngs_mapping(base_path + ".bam"),
                 "bai": self.ngs_mapping(base_path + ".bam.bai"),
@@ -181,13 +165,17 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        base_path_out = "work/{{mapper}}.{{library}}/out/{{mapper}}.{{library}}.{action}{ext}"
+        base_path_out = (
+            "work/{{mapper}}.{{library_name}}/out/{{mapper}}.{{library_name}}.{action}{ext}"
+        )
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return self._get_log_file("work/{mapper}.{library}/log/{mapper}.{library}." + action)
+        return self._get_log_file(
+            "work/{mapper}.{library_name}/log/{mapper}.{library_name}." + action
+        )
 
     def get_resource_usage(self, action):
         # Validate action
@@ -208,40 +196,44 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
-        filenames = {}
-        filenames["normal"] = "work/{mapper}.{library}/out/{mapper}.{library}.normal.vcf.gz"
-        filenames["normal_tbi"] = filenames["normal"] + ".tbi"
-        filenames["tumor"] = "work/{mapper}.{library}/out/{mapper}.{library}.tumor.vcf.gz"
-        filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-        if self.config["path_cnv_calling"]:
-            tpl = "{{mapper}}.{caller}.{{library}}".format(caller=self.config["cnv_calling_tool"])
-            filenames["cnv"] = os.path.join(
-                self.config["path_cnv_calling"], "output", tpl, "out", tpl + ".bed.gz"
-            )
-            filenames["cnv_tbi"] = filenames["cnv"] + ".tbi"
-        return filenames
 
+        def input_function(wildcards):
+            normal_library = self.parent.tumor_to_normal[wildcards.library_name]
+            filenames = {}
+            name_pattern = "{mapper}.{normal_library}"
+            tpl = os.path.join("work", name_pattern, "out", name_pattern + ".normal.vcf.gz")
+            filenames["normal"] = tpl.format(normal_library=normal_library, **wildcards)
+            filenames["normal_tbi"] = filenames["normal"] + ".tbi"
+            name_pattern = "{mapper}.{library_name}"
+            tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
+            filenames["tumor"] = tpl.format(**wildcards)
+            filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
+            cnv_calling = self.parent.sub_workflows["cnv_calling"]
+            base_path = "output/{mapper}.{caller}.{library_name}/out/{mapper}.{caller}.{library_name}".format(
+                **wildcards
+            )
+            filenames["cnv"] = cnv_calling(base_path + ".bed.gz")
+            filenames["cnv_tbi"] = filenames["cnv"] + ".tbi"
+            return filenames
+
+        return input_function
+
+    @dictify
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        if self.config["path_cnv_calling"] and self.config["cnv_calling_tool"]:
-            name_pattern = "{{mapper}}.{caller}.{{library}}".format(
-                caller=self.config["cnv_calling_tool"]
-            )
-        else:
-            name_pattern = "{mapper}.{library}"
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
+        name_pattern = "{mapper}.{caller}.{library_name}"
+        key_ext["tsv"] = ".tsv"
         base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-        return dict(zip(EXT_NAMES, [base_path_out + ext for ext in EXT_VALUES]))
+        for key, ext in key_ext.items():
+            yield (key, base_path_out + ext)
+            yield (key + "_md5", base_path_out + ext + ".md5")
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        if self.config["path_cnv_calling"] and self.config["cnv_calling_tool"]:
-            name_pattern = "{{mapper}}.{caller}.{{library}}".format(
-                caller=self.config["cnv_calling_tool"]
-            )
-        else:
-            name_pattern = "{mapper}.{library}"
+        name_pattern = "{mapper}.{caller}.{library_name}"
         return self._get_log_file(os.path.join("work", name_pattern, "log", name_pattern))
 
 
@@ -254,33 +246,35 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{{mapper}}.{caller}.{{library}}".format(
-            caller=self.config["cnv_calling_tool"]
-        )
-        base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-        return {"vcf": base_path_out + ".vcf.gz"}
+
+        def input_function(wildcards):
+            name_pattern = "{mapper}.{caller}.{library_name}".format(**wildcards)
+            base_path_out = "work/" + name_pattern + "/out/" + name_pattern
+            return {"vcf": base_path_out + ".vcf.gz", "tsv": base_path_out + ".tsv"}
+
+        return input_function
 
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{{mapper}}.{caller}.{{library}}".format(
-            caller=self.config["cnv_calling_tool"]
-        )
+        name_pattern = "{mapper}.{caller}.{library_name}"
         base_path_out = "work/" + name_pattern + "/report/" + name_pattern
         return {
             "cnv": base_path_out + ".cnv.pdf",
             "cnv_md5": base_path_out + ".cnv.pdf.md5",
             "locus": base_path_out + ".locus.pdf",
             "locus_md5": base_path_out + ".locus.pdf.md5",
+            "segment": base_path_out + ".segment.pdf",
+            "segment_md5": base_path_out + ".segment.pdf.md5",
         }
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{{mapper}}.{caller}.{{library}}".format(
-            caller=self.config["cnv_calling_tool"]
+        name_pattern = "{mapper}.{caller}.{library_name}"
+        return self._get_log_file(
+            os.path.join("work", name_pattern, "log", name_pattern + ".report")
         )
-        return self._get_log_file(os.path.join("work", name_pattern, "log", name_pattern + ".report"))
 
 
 class SomaticCnvCheckingWorkflow(BaseStep):
@@ -308,8 +302,24 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            (
+                SomaticTargetedSeqCnvCallingWorkflow,
+                SomaticWgsCnvCallingWorkflow,
+                NgsMappingWorkflow,
+            ),
         )
+        if self.config["path_cnv_calling"] and self.config["cnv_assay_type"]:
+            if self.config["cnv_assay_type"] == "WES":
+                cnv_calling = "somatic_targeted_seq_cnv_calling"
+            elif self.config["cnv_assay_type"] == "WES":
+                cnv_calling = "somatic_wgs_cnv_calling"
+            else:
+                raise InvalidConfiguration(
+                    "Illegal cnv_assay_type {}, must be either WES or WGS".format(
+                        self.config["cnv_assay_type"]
+                    )
+                )
+            self.register_sub_workflow(cnv_calling, self.config["path_cnv_calling"], "cnv_calling")
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -320,57 +330,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        if self.config["path_cnv_calling"] and self.config["cnv_calling_tool"]:
-            name_pattern = "{{mapper}}.{caller}.{{tumor_library.name}}".format(
-                caller=self.config["cnv_calling_tool"]
-            )
-        else:
-            name_pattern = "{mapper}.{tumor_library.name}"
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            ext=EXT_VALUES,
-        )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            ext=[
-                part + "." + ext + chksum
-                for part in ("", ".normal", ".tumor")
-                for ext in ("log", "conda_info.txt", "conda_list.txt")
-                for chksum in ("", ".md5")
-            ],
-        )
-        if self.config["path_cnv_calling"] and self.config["cnv_calling_tool"]:
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "report", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                ext=(".cnv.pdf", ".cnv.pdf.md5", ".locus.pdf", ".locus.pdf.md5"),
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + ".report" + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                ext=[
-                    "." + ext + chksum
-                    for ext in ("log", "conda_info.txt", "conda_list.txt")
-                    for chksum in ("", ".md5")
-                ],
-            )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
+        # Assemble normal/tumor pairs
+        self.tumor_to_normal = {}
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (
@@ -383,9 +344,59 @@ class SomaticCnvCheckingWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+                tumor_library = sample_pair.tumor_sample.dna_ngs_library.name
+                normal_library = sample_pair.normal_sample.dna_ngs_library.name
+                self.tumor_to_normal[tumor_library] = normal_library
+
+    @listify
+    def get_result_files(self):
+        """Return list of result files for the NGS mapping workflow
+
+        We will process all NGS libraries of all bio samples in all sample sheets.
+        """
+        # Log files from normal pileups
+        name_pattern = "{mapper}.{library_name}"
+        chksum = ("", ".md5")
+        ext = ("log", "conda_info.txt", "conda_list.txt")
+        yield from expand(
+            os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
+            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            library_name=set(self.tumor_to_normal.values()),
+            ext=ext,
+            chksum=chksum,
+        )
+        yield from expand(
+            os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
+            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            library_name=self.tumor_to_normal.keys(),
+            ext=ext,
+            chksum=chksum,
+        )
+        # Main result: vcf & optionally segment table if CNV available
+        ext = {"out": [".vcf.gz", ".vcf.gz.tbi"]}
+        if self.config["path_cnv_calling"]:
+            # CNV avaliable
+            name_pattern = "{mapper}.{caller}.{library_name}"
+            callers = self.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
+            ext["out"] += [".tsv"]
+            ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
+            ext["log"] = [
+                suffix + "." + e
+                for suffix in ("", ".report")
+                for e in ("log", "conda_info.txt", "conda_list.txt")
+            ]
+        else:
+            name_pattern = "{mapper}.{library_name}"
+            callers = []
+        for subdir, exts in ext.items():
+            yield from expand(
+                os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                caller=callers,
+                library_name=self.tumor_to_normal.keys(),
+                ext=exts,
+                chksum=chksum,
+            )
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
@@ -393,3 +404,5 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             ("step_config", "somatic_cnv_checking", "path_ngs_mapping"),
             "Path to NGS mapping not configured but required for somatic variant calling",
         )
+        if self.config["path_cnv_calling"]:
+            assert self.config["cnv_assay_type"] in ("WES", "WGS")
