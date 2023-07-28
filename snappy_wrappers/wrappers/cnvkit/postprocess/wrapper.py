@@ -59,7 +59,7 @@ stopifnot(!any(duplicated(S4Vectors::queryHits(i))))
 
 # Default value: diploid segment (number of copies = 2)
 segments[,"cn"] <- 2
-segments[S4Vectors::queryHits(i),"cn"] <- calls[S4Vectors::subjectHits(i),"cn"]
+segments[S4Vectors::queryHits(i),"cn"] <- round(calls[S4Vectors::subjectHits(i),"cn"])
 
 # Reset segment boundaries to original values
 segments[,"start"] <- segments[["start"]]-1

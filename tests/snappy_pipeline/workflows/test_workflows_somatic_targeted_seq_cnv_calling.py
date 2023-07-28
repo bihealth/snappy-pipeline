@@ -473,7 +473,12 @@ def test_cnvkit_postprocess_step_part_get_input_files(somatic_targeted_seq_cnv_c
 
 def test_cnvkit_postprocess_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
     base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.bed.gz"
-    expected = {"final": base_name_out, "final_tbi": base_name_out + ".tbi", "final_md5": base_name_out + ".md5", "final_tbi_md5": base_name_out + ".tbi.md5"}
+    expected = {
+        "final": base_name_out,
+        "final_tbi": base_name_out + ".tbi",
+        "final_md5": base_name_out + ".md5",
+        "final_tbi_md5": base_name_out + ".tbi.md5",
+    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "postprocess")
     assert actual == expected
 

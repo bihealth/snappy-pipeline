@@ -622,7 +622,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_output_files_postprocess():
         name_pattern = "{mapper}.cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".bed.gz")
-        return {"final": tpl, "final_tbi": tpl + ".tbi", "final_md5": tpl + ".md5", "final_tbi_md5": tpl + ".tbi.md5"}
+        return {
+            "final": tpl,
+            "final_tbi": tpl + ".tbi",
+            "final_md5": tpl + ".md5",
+            "final_tbi_md5": tpl + ".tbi.md5",
+        }
 
     @dictify
     def _get_output_files_plot(self):
