@@ -9,9 +9,9 @@ config = snakemake.config["step_config"][step]
 
 if "args" in snakemake.params and "intervals" in snakemake.params["args"]:
     locii = "-r " + snakemake.params["args"]["intervals"]
-elif "locii" in snakemake.input:
+elif "locii" in snakemake.input.keys():
     locii = "-R " + snakemake.input.locii
-elif config["locii"]:
+elif "locii" in config and config["locii"]:
     locii = "-R " + config["locii"]
 else:
     locii = ""
