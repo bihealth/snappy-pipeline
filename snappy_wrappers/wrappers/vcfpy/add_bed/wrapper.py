@@ -40,7 +40,7 @@ ps += [
 ]
 ps[nProc - 1].stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
 nProc += 1
-if config["excluded_regions"]:
+if "excluded_regions" in config and config["excluded_regions"]:
     ps += [
         subprocess.Popen(
             ["bcftools", "view", "--targets-file", "^" + config["excluded_regions"]],
@@ -124,10 +124,21 @@ for variant in reader:
                 "start": locus[1],
                 "stop": locus[2],
                 "BAFs": [],
+                "NoData": 0,
             }
         depth = variant.call_for_sample[sample].data["AD"]
-        baf = min(depth[0], depth[1]) / (depth[0] + depth[1])
-        segments[locus[3]]["BAFs"] += [baf]
+        if len(depth) == 0:
+            segments[locus[3]]["NoData"] += 1
+        else:
+            if depth[0] is None:
+                depth[0] = 0
+            if depth[1] is None:
+                depth[1] = 0
+            if depth[0] + depth[1] == 0:
+                segments[locus[3]]["NoData"] += 1
+            else:
+                baf = min(depth[0], depth[1]) / (depth[0] + depth[1])
+                segments[locus[3]]["BAFs"] += [baf]
 
 writer.close()
 
@@ -174,7 +185,7 @@ def quantile(x, probs, na_rm=False, method=7):
 
 with open(snakemake.output.tsv, "wt") as f:
     print(
-        "Number\tCHROM\tstart\tstop\tCN\tLFC\tNvariants\tMin\t1st quartile\tMedian\t3rd quartile\tMax",
+        "Number\tCHROM\tstart\tstop\tCN\tLFC\tNvariants\tMin\t1st quartile\tMedian\t3rd quartile\tMax\tNoData",
         file=f,
     )
     for segId, segment in segments.items():
@@ -186,21 +197,30 @@ with open(snakemake.output.tsv, "wt") as f:
         nVar = len(segment["BAFs"])
         bafs = sorted(segment["BAFs"])
 
-        qs = quantile(segment["BAFs"], (0.25, 0.5, 0.75), method=8)
-        values = [
-            n,
-            segment["CHROM"],
-            segment["start"],
-            segment["stop"],
-            cn,
-            segment["logFoldChange"],
-            nVar,
-            bafs[0],
-            qs[0],
-            qs[1],
-            qs[2],
-            bafs[nVar - 1],
-        ]
+        if nVar > 1:
+            qs = (
+                [bafs[0]]
+                + quantile(segment["BAFs"], (0.25, 0.5, 0.75), method=8)
+                + [bafs[nVar - 1]]
+            )
+        elif nVar == 1:
+            qs = [bafs[0]] * 5
+        else:
+            qs = [""] * 5
+
+        values = (
+            [
+                n,
+                segment["CHROM"],
+                segment["start"],
+                segment["stop"],
+                cn,
+                segment["logFoldChange"],
+                nVar,
+            ]
+            + qs
+            + [segment["NoData"]]
+        )
         print("\t".join(map(str, values)), file=f)
 
 shell(
