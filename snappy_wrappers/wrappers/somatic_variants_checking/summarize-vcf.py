@@ -36,13 +36,17 @@ def get_contigs_from_bed_file(bedfile):
 
 
 def get_variant_type(ref, alt):
+    ref = ref.replace("-", "")
+    alt = alt.replace("-", "")
+    variant_type = "unknown"
     if len(ref) == len(alt):
-        if len(alt) == 1:
-            return "SNV"
+        if len(ref) == 1:
+            variant_type = "snv"
         else:
-            return "ONV"
-    elif len(alt) < len(ref):
-        return "indel"
+            variant_type = "onv"
+    else:
+        variant_type = "indel"
+    return variant_type
 
 
 def check_sp_read(variant, pos_sample, minimal, limited):
@@ -70,7 +74,6 @@ def assign_class_snvs(variant, mt_mat):
         mt_mat[4] += 1
     elif temp in ["G>T", "C>A"]:
         mt_mat[5] += 1
-    return mt_mat
 
 
 def process_vcf_file(
@@ -129,14 +132,14 @@ def process_vcf_file(
                     ] += 1
 
                 # Need to check multi allelic. Users shouldn't input multi allelic vcf file.
-                if get_variant_type(variant.REF, variant.ALT[0]) == "SNV":
+                if get_variant_type(variant.REF, variant.ALT[0]) == "snv":
                     infor["n_snps"] += 1
-                    infor["mt_classes"] = assign_class_snvs(variant, infor["mt_classes"])
+                    assign_class_snvs(variant, infor["mt_classes"])
                 elif get_variant_type(variant.REF, variant.ALT[0]) == "indel":
                     # More for indels
                     infor["n_indels"] += 1
                     infor["indels_length"].append(abs(len(variant.REF) - len(variant.ALT[0])))
-                elif get_variant_type(variant.REF, variant.ALT[0]) == "ONV":
+                elif get_variant_type(variant.REF, variant.ALT[0]) == "onv":
                     infor["n_onvs"] += 1
             # Gathering information of variants in comparison to hard mapped regions
             else:
