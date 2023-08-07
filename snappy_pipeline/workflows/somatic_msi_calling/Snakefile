@@ -53,6 +53,7 @@ rule somatic_msi_calling_link_out_run:
 
 # Run MANTIS_msi2 ------------------------------------------------------------------
 
+
 rule somatic_msi_calling_mantis_msi2:
     input:
         unpack(wf.get_input_files("mantis_msi2", "run")),
