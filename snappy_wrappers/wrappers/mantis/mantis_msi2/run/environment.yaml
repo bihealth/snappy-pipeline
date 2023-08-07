@@ -1,0 +1,6 @@
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- mantis-msi2 ==2.0.0
+- conda-forge::libgcc-ng ==13.1.0
