@@ -35,7 +35,7 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 only_one_variant="N_ALT=2 & FORMAT/AD[:2]=0"
-min_coverage="FORMAT/AD[:0]>{config[min_cov]} & FORMAT/AD[:1]>{config[min_cov]}"
+min_depth="FORMAT/AD[:0]>{config[min_depth]} & FORMAT/AD[:1]>{config[min_depth]}"
 hetero="{min_ratio}*FORMAT/AD[:0]<=FORMAT/AD[:1] & FORMAT/AD[:1]<={max_ratio}*FORMAT/AD[:0]"
 
 bcftools mpileup \
@@ -45,7 +45,7 @@ bcftools mpileup \
     -a "FORMAT/AD" \
     {snakemake.input.bam} \
     | bcftools filter \
-    --include "$only_one_variant & $min_coverage & $hetero" \
+    --include "$only_one_variant & $min_depth & $hetero" \
     -O z -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 

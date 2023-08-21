@@ -95,7 +95,7 @@ step_config:
     cnv_assay_type: ""                # Empty: no CNV, WES for somatic_targeted_seq_snv_calling step, WGS for somatic_wgs_cnv_calling step
     excluded_regions: ""              # Bed file of regions to be excluded
     max_depth: 10000                  # Max depth for pileups
-    min_cov: 20                       # Minimum depth for reference and alternative alleles to consider variant
+    min_depth: 20                     # Minimum depth for reference and alternative alleles to consider variant
     min_baf: 0.4                      # Maximum BAF to consider variant as heterozygous (between 0 & 1/2)
 """
 

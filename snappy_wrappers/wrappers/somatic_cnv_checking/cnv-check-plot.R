@@ -33,7 +33,7 @@ cnv_to_table <- function(cnv) {
     y <- read.table(cnv, sep="\t", header=0)
     colnames(y) <- c("CHROM", "start", "stop", "name", "LFC", "strand")
     y <- y |>
-        dplyr::mutate(LFC=replace(LFC, strand == "-", LFC[strand=="-"])) |>
+        dplyr::mutate(LFC=replace(LFC, strand == "-", -abs(LFC[strand=="-"]))) |>
         dplyr::mutate(start=start + 1)
     y
 }
