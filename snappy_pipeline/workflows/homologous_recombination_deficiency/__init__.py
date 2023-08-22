@@ -9,7 +9,7 @@ but it is not part of CRAN, Bioconductor or bioconda (currently).
 The implementation also relies on versions of `sequenza<https://github.com/oicr-gsi/sequenza/tree/master>` &
 `copynumber<https://github.com/aroneklund/copynumber>` which are not part of CRAN or Bioconductor anymore.
 The most recent version of sequanza is downloaded from anaconda (for the R scripts),
-and from bioconda for the python utilities. Note that anaconda lists the r-sequenza package in the 
+and from bioconda for the python utilities. Note that anaconda lists the r-sequenza package in the
 bioconda directory, while this package is not found when searching `bioconda<https://bioconda.github.io/index.html>`.
 copynumber is obtained from a fork of the official Bioconductor deprecated package.
 
