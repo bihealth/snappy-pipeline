@@ -1,0 +1,105 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline homologous_recombination_deficiency step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.homologous_recombination_deficiency import (
+    HomologousRecombinationDeficiencyWorkflow,
+)
+
+__author__ = "Eric Blanc"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = HomologousRecombinationDeficiencyWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    homologous_recombination_deficiency_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule homologous_recombination_deficiency_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Homologous Recombination Deficiency score ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run scarHRD -----------------------------------------------------------------
+
+
+rule homologous_recombination_deficiency_scarHRD_install:
+    output:
+        **wf.get_output_files("scarHRD", "install"),
+    threads: wf.get_resource("scarHRD", "install", "threads")
+    resources:
+        time=wf.get_resource("scarHRD", "install", "time"),
+        memory=wf.get_resource("scarHRD", "install", "memory"),
+        partition=wf.get_resource("scarHRD", "install", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
+    log:
+        **wf.get_log_file("scarHRD", "install"),
+    wrapper:
+        wf.wrapper_path("scarHRD/install")
+
+
+rule homologous_recombination_deficiency_scarHRD_gcreference:
+    output:
+        **wf.get_output_files("scarHRD", "gcreference"),
+    threads: wf.get_resource("scarHRD", "gcreference", "threads")
+    resources:
+        time=wf.get_resource("scarHRD", "gcreference", "time"),
+        memory=wf.get_resource("scarHRD", "gcreference", "memory"),
+        partition=wf.get_resource("scarHRD", "gcreference", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "gcreference", "tmpdir"),
+    log:
+        **wf.get_log_file("scarHRD", "gcreference"),
+    wrapper:
+        wf.wrapper_path("scarHRD/gcreference")
+
+
+rule homologous_recombination_deficiency_scarHRD_run:
+    input:
+        unpack(wf.get_input_files("scarHRD", "run")),
+    output:
+        **wf.get_output_files("scarHRD", "run"),
+    threads: wf.get_resource("scarHRD", "run", "threads")
+    resources:
+        time=wf.get_resource("scarHRD", "run", "time"),
+        memory=wf.get_resource("scarHRD", "run", "memory"),
+        partition=wf.get_resource("scarHRD", "run", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("scarHRD", "run"),
+    wrapper:
+        wf.wrapper_path("scarHRD/run")
