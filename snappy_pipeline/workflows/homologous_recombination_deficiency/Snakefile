@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.homologous_recombination_deficiency import HomologousRecombinationDeficiencyWorkflow
+from snappy_pipeline.workflows.homologous_recombination_deficiency import (
+    HomologousRecombinationDeficiencyWorkflow,
+)
 
 __author__ = "Eric Blanc"
 
@@ -20,7 +22,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = HomologousRecombinationDeficiencyWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = HomologousRecombinationDeficiencyWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 
@@ -86,7 +90,7 @@ rule homologous_recombination_deficiency_scarHRD_gcreference:
 
 rule homologous_recombination_deficiency_scarHRD_run:
     input:
-        unpack(wf.get_input_files("scarHRD", "run"))
+        unpack(wf.get_input_files("scarHRD", "run")),
     output:
         **wf.get_output_files("scarHRD", "run"),
     threads: wf.get_resource("scarHRD", "run", "threads")
