@@ -1,0 +1,129 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_cnv_checking step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_cnv_checking import SomaticCnvCheckingWorkflow
+
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticCnvCheckingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_cnv_checking_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_cnv_checking_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic CNV Checking ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run pileup to identify heterozygous variants in normal sample ---------------
+
+
+rule somatic_cnv_checking_pileup_normal:
+    input:
+        unpack(wf.get_input_files("pileup", "normal")),
+    output:
+        **wf.get_output_files("pileup", "normal"),
+    threads: wf.get_resource("pileup", "normal", "threads")
+    resources:
+        time=wf.get_resource("pileup", "normal", "time"),
+        memory=wf.get_resource("pileup", "normal", "memory"),
+        partition=wf.get_resource("pileup", "normal", "partition"),
+        tmpdir=wf.get_resource("pileup", "normal", "tmpdir"),
+    log:
+        **wf.get_log_file("pileup", "normal"),
+    wrapper:
+        wf.wrapper_path("bcftools/heterozygous_variants")
+
+
+# Run pileup to add read counts in the tumor sample ---------------------------
+
+
+rule somatic_cnv_checking_pileup_tumor:
+    input:
+        unpack(wf.get_input_files("pileup", "tumor")),
+    output:
+        **wf.get_output_files("pileup", "tumor"),
+    threads: wf.get_resource("pileup", "tumor", "threads")
+    resources:
+        time=wf.get_resource("pileup", "tumor", "time"),
+        memory=wf.get_resource("pileup", "tumor", "memory"),
+        partition=wf.get_resource("pileup", "tumor", "partition"),
+        tmpdir=wf.get_resource("pileup", "tumor", "tmpdir"),
+    log:
+        **wf.get_log_file("pileup", "tumor"),
+    wrapper:
+        wf.wrapper_path("bcftools/pileups")
+
+
+# Add CNV status at the locii -------------------------------------------------
+
+if config["step_config"]["somatic_cnv_checking"]["path_cnv_calling"]:
+
+    rule somatic_cnv_checking_cnv_run:
+        input:
+            unpack(wf.get_input_files("cnv", "run")),
+        output:
+            **wf.get_output_files("cnv", "run"),
+        threads: wf.get_resource("cnv", "run", "threads")
+        resources:
+            time=wf.get_resource("cnv", "run", "time"),
+            memory=wf.get_resource("cnv", "run", "memory"),
+            partition=wf.get_resource("cnv", "run", "partition"),
+            tmpdir=wf.get_resource("cnv", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("cnv", "run"),
+        wrapper:
+            wf.wrapper_path("vcfpy/add_bed")
+
+    # Generate report & plots -----------------------------------------------------
+
+    rule somatic_cnv_checking_cnv_report:
+        input:
+            unpack(wf.get_input_files("report", "run")),
+        output:
+            **wf.get_output_files("report", "run"),
+        threads: wf.get_resource("report", "run", "threads")
+        resources:
+            time=wf.get_resource("report", "run", "time"),
+            memory=wf.get_resource("report", "run", "memory"),
+            partition=wf.get_resource("report", "run", "partition"),
+            tmpdir=wf.get_resource("report", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("report", "run"),
+        wrapper:
+            wf.wrapper_path("somatic_cnv_checking")
