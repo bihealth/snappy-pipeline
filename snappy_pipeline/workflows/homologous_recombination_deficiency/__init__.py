@@ -6,9 +6,12 @@ loss-of-heterozygocity, large-scale transitions and telomeric imbalances.
 The score is a proxy for holomogous recombination deficiencies scores produced from SNP arrays.
 The software is described in `Sztupinszki et al.<https://doi.org/10.1038/s41523-018-0066-6>`,
 but it is not part of CRAN, Bioconductor or bioconda (currently).
-The implementation also relies on obsolete version of `sequenza<https://github.com/oicr-gsi/sequenza/tree/master>` &
-`copynumber<https://github.com/aroneklund/copynumber>`, which are not part of CRAN or Bioconductor anymore.
-These software are downloaded directly from their github repo.
+The implementation also relies on versions of `sequenza<https://github.com/oicr-gsi/sequenza/tree/master>` &
+`copynumber<https://github.com/aroneklund/copynumber>` which are not part of CRAN or Bioconductor anymore.
+The most recent version of sequanza is downloaded from anaconda (for the R scripts),
+and from bioconda for the python utilities. Note that anaconda lists the r-sequenza package in the 
+bioconda directory, while this package is not found when searching `bioconda<https://bioconda.github.io/index.html>`.
+copynumber is obtained from a fork of the official Bioconductor deprecated package.
 
 ==========
 Step Input
@@ -268,7 +271,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                     or not sample_pair.normal_sample.dna_ngs_library
                 ):
                     msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
+                        "INFO: sample pair for cancer bio sample {} is missing primary"
                         "normal or primary cancer NGS library"
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
