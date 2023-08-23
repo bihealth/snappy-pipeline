@@ -14,7 +14,7 @@ step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["picard"]
 
 reference = re.sub("\.fa(sta)?(\.b?gz)?$", ".dict", reference)
-assert os.exists(reference), "Missing dict of reference fasta"
+assert os.path.exists(reference), "Missing dict of reference fasta"
 
 baits = config["path_to_baits"]
 targets = config.get("path_to_targets", "")
@@ -25,8 +25,8 @@ shell(
     r"""
 set -x
 
-picard_jar=$(ls $CONDA_PREFIX/share | grep picard)
-picard_jar="$CONDA_PREFIX/share/${{picard_jar}}/picard.jar"
+d=$(ls $CONDA_PREFIX/share | grep picard)
+picard_jar="$CONDA_PREFIX/share/$d/picard.jar"
 if [[ ! -r $picard_jar ]]
 then
     echo "Can't find picar jar"
@@ -54,18 +54,21 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-bed_to_interval_list() {
+# Can't pipe to BedToIntervalList (https://github.com/broadinstitute/picard/issues/1890)
+bed_to_interval_list() {{
     fn=$1
-    cut -f 3 $fn \
-        bedtools sort -i - \
-        bedtools merge -i - \
-        java -jar $picard_jar BedToIntervalList \
-            I=/dev/stdin \
-            O=/dev/stdout \
-            SD={reference}
-}
+    f=$(basename $fn)
+    cut -f 1-3 $fn \
+        | bedtools sort -i - \
+        | bedtools merge -i - \
+        > $tmpdir/$f
+    java -jar $picard_jar BedToIntervalList \
+        -I $tmpdir/$f \
+        -O /dev/stdout \
+        -SD {reference}
+}}
 
-md5() {
+md5() {{
     fn=$1
     d=$(dirname $fn)
     f=$(basename $fn)
@@ -73,7 +76,7 @@ md5() {
     checksum=$(md5sum $f)
     popd 1> /dev/null 2>&1
     echo $checksum
-}
+}}
 
 bed_to_interval_list {baits} > {snakemake.output.baits}
 md5 {snakemake.output.baits} > {snakemake.output.baits}.md5

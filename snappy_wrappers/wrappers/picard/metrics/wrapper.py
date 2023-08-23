@@ -27,6 +27,15 @@ collect_multiple_metrics = " ".join(
     ]
 )
 
+# TODO: understand why snakemake.params is a list...
+prefix = ""
+if "prefix" in snakemake.params[0].keys() and snakemake.params[0]["prefix"]:
+    prefix = snakemake.params[0]["prefix"] + "."
+
+name = "null"
+if "bait_name" in config.keys() and config["bait_name"]:
+    name = config["bait_name"]
+
 shell.executable("/bin/bash")
 
 shell(
@@ -69,7 +78,7 @@ then
     # Setting METRIC_ACCUMULATION_LEVEL causes issues for some programs
     java -jar $picard_jar CollectMultipleMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectMultipleMetrics \
+        -O $d/{prefix}CollectMultipleMetrics \
         -R {reference} \
         -FILE_EXTENSION .txt \
         -PROGRAM null \
@@ -80,14 +89,14 @@ if [[ "{config[programs]}" == *"EstimateLibraryComplexity"* ]]
 then
     java -jar $picard_jar EstimateLibraryComplexity \
         -I {snakemake.input.bam} \
-        -O $d/EstimateLibraryComplexity.txt
+        -O $d/{prefix}EstimateLibraryComplexity.txt
 fi
 
 if [[ "{config[programs]}" == *"CollectJumpingLibraryMetrics"* ]]
 then
     java -jar $picard_jar CollectJumpingLibraryMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectJumpingLibraryMetrics.txt
+        -O $d/{prefix}CollectJumpingLibraryMetrics.txt
 fi
 
 if [[ "{config[programs]}" == *"CollectOxoGMetrics"* ]]
@@ -100,7 +109,7 @@ then
     fi
     java -jar $picard_jar CollectOxoGMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectOxoGMetrics.txt \
+        -O $d/{prefix}CollectOxoGMetrics.txt \
         -R {reference} \
         $dbsnp
 fi
@@ -109,17 +118,18 @@ if [[ "{config[programs]}" == *"CollectHsMetrics"* ]]
 then
     java -jar $picard_jar CollectHsMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectHsMetrics.txt \
+        -O $d/{prefix}CollectHsMetrics.txt \
         -R {reference} \
-        -BAIT_INTERVALS config[baits] \
-        -TARGET_INTERVALS config[targets]
+        -BAIT_SET_NAME {name} \
+        -BAIT_INTERVALS {snakemake.input.baits} \
+        -TARGET_INTERVALS {snakemake.input.targets}
 fi
 
 if [[ "{config[programs]}" == *"CollectRawWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectRawWgsMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectRawWgsMetrics.txt \
+        -O $d/{prefix}CollectRawWgsMetrics.txt \
         -R {reference}
 fi
 
@@ -127,7 +137,7 @@ if [[ "{config[programs]}" == *"CollectWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectWgsMetrics \
         -I {snakemake.input.bam} \
-        -O $d/CollectWgsMetrics.txt \
+        -O $d/{prefix}CollectWgsMetrics.txt \
         -R {reference}
 fi
 
@@ -135,8 +145,8 @@ if [[ "{config[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
 then
     java -jar $picard_jar CollectWgsMetricsWithNonZeroCoverage \
         -I {snakemake.input.bam} \
-        -O $d/CollectWgsMetricsWithNonZeroCoverage.txt \
-        -CHART $d/CollectWgsMetricsWithNonZeroCoverage.pdf \
+        -O $d/{prefix}CollectWgsMetricsWithNonZeroCoverage.txt \
+        -CHART $d/{prefix}CollectWgsMetricsWithNonZeroCoverage.pdf \
         -R {reference}
 fi
 

@@ -40,6 +40,7 @@ step_config:
       path_ngs_mapping: ../ngs_mapping  # REQUIRED
       path_to_baits: ""                 # Required when CollectHsMetrics is among the programs
       path_to_targets: ""               # When missing, same as baits
+      bait_name: ""                     # Exon enrichment kit name (optional)
       programs: []  # Available metrics:
                     # * Generic metrics [* grouped into CollectMultipleMetrics]
       #                 - CollectAlignmentSummaryMetrics      *
@@ -238,6 +239,15 @@ class PicardStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
+    def get_params(self, action):
+        self._validate_action(action)
+
+        return self._get_params
+
+    @dictify
+    def _get_params(self, wildcards):
+        return {"prefix": f"{wildcards.mapper}.{wildcards.library_name}"}
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -249,7 +259,7 @@ class PicardStepPart(BaseStepPart):
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         if action == "prepare":
-            return super.get_resource_usage(action)
+            return super().get_resource_usage(action)
         elif action == "metrics":
             return ResourceUsage(threads=1, time="24:00:00", memory="24G")
         else:
