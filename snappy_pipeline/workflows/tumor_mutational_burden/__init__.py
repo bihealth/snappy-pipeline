@@ -16,6 +16,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
     ANNOTATION_TOOLS,
     SomaticVariantAnnotationWorkflow,
 )
+
 #: Extensions of files to create as main payload
 EXT_VALUES = (".json", ".json.md5")
 
@@ -61,8 +62,8 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         self._validate_action(action)
-        #Adding part for runnng with annotation file instead of with variant calling file
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        # Adding part for runnng with annotation file instead of with variant calling file
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             tpl = (
                 "output/{mapper}.{var_caller}.{anno_tool}.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_tool}.{tumor_library}"
@@ -74,8 +75,8 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             )
 
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        #Adding part for runnng with annotation file instead of with variant calling file
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        # Adding part for runnng with annotation file instead of with variant calling file
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             variant_path = self.parent.sub_workflows["somatic_variant_annotation"]
         else:
             variant_path = self.parent.sub_workflows["somatic_variant_calling"]
@@ -86,7 +87,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}"
@@ -104,7 +105,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}"
@@ -154,24 +155,30 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow,SomaticVariantAnnotationWorkflow, NgsMappingWorkflow),
+            (SomaticVariantCallingWorkflow, SomaticVariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
         # Register sub workflows
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             self.register_sub_workflow(
                 "somatic_variant_annotation",
-                self.w_config["step_config"]["tumor_mutational_burden"]["path_somatic_variant_annotation"],
+                self.w_config["step_config"]["tumor_mutational_burden"][
+                    "path_somatic_variant_annotation"
+                ],
             )
-            if not self.w_config["step_config"]["tumor_mutational_burden"]["tools_somatic_variant_annotation"]:
+            if not self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_somatic_variant_annotation"
+            ]:
                 self.w_config["step_config"]["tumor_mutational_burden"][
                     "tools_somatic_variant_annotation"
                 ] = self.w_config["step_config"]["somatic_variant_annotation"]["tools"]
         else:
             self.register_sub_workflow(
                 "somatic_variant_calling",
-                self.w_config["step_config"]["tumor_mutational_burden"]["path_somatic_variant_calling"],
+                self.w_config["step_config"]["tumor_mutational_burden"][
+                    "path_somatic_variant_calling"
+                ],
             )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.w_config["step_config"]["tumor_mutational_burden"]["tools_ngs_mapping"]:
@@ -189,10 +196,12 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     def get_result_files(self):
         callers = set(
             self.w_config["step_config"]["tumor_mutational_burden"]["tools_somatic_variant_calling"]
-            )
-        if (self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'):
+        )
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             anno_callers = set(
-                self.w_config["step_config"]["tumor_mutational_burden"]["tools_somatic_variant_annotation"]
+                self.w_config["step_config"]["tumor_mutational_burden"][
+                    "tools_somatic_variant_annotation"
+                ]
             )
             name_pattern = "{mapper}.{caller}.{anno_caller}.tmb.{tumor_library.name}"
             yield from self._yield_result_files_matched(
@@ -268,18 +277,15 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             ("step_config", "tumor_mutational_burden", "path_somatic_variant_calling"),
             "Path to variant calling not configured but required for tmb calculation",
         )
-        
+
         self.ensure_w_config(
             ("step_config", "tumor_mutational_burden", "target_regions"),
             "Path to target_regions file (bed format)"
             "not configured but required for tmb calculation",
         )
 
-        if (
-            self.w_config['step_config']['tumor_mutational_burden']['annotation_file'] == 'TRUE'
-            ):
+        if self.w_config["step_config"]["tumor_mutational_burden"]["annotation_file"] == "TRUE":
             self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "path_somatic_variant_annotation"),
-            "Path to variant annotation not configured but required for tmb calculation",
+                ("step_config", "tumor_mutational_burden", "path_somatic_variant_annotation"),
+                "Path to variant annotation not configured but required for tmb calculation",
             )
-
