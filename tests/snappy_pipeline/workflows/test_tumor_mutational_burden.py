@@ -98,7 +98,9 @@ def tumor_mutational_burden_workflow_calling(
 # Tests for TumorMutationalBurdenCalculationStepPart -----------------------------------------------------
 
 
-def test_tumor_mutational_step_part_get_input_files_calling(tumor_mutational_burden_workflow_calling):
+def test_tumor_mutational_step_part_get_input_files_calling(
+    tumor_mutational_burden_workflow_calling,
+):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
         "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
@@ -112,7 +114,9 @@ def test_tumor_mutational_step_part_get_input_files_calling(tumor_mutational_bur
     assert actual == expected
 
 
-def test_tumor_mutational_step_part_get_output_files_calling(tumor_mutational_burden_workflow_calling):
+def test_tumor_mutational_step_part_get_output_files_calling(
+    tumor_mutational_burden_workflow_calling,
+):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
     base_out = (
         "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
@@ -143,7 +147,9 @@ def test_tumor_mutational_step_part_get_resource_usage_calling(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = tumor_mutational_burden_workflow_calling.get_resource("tmb_gathering", "run", resource)
+        actual = tumor_mutational_burden_workflow_calling.get_resource(
+            "tmb_gathering", "run", resource
+        )
         assert actual == expected, msg_error
 
 
@@ -282,7 +288,9 @@ def tumor_mutational_burden_workflow_annotation(
 # Tests for TumorMutationalBurdenCalculationStepPart -----------------------------------------------------
 
 
-def test_tumor_mutational_step_part_get_input_files_annotation(tumor_mutational_burden_workflow_annotation):
+def test_tumor_mutational_step_part_get_input_files_annotation(
+    tumor_mutational_burden_workflow_annotation,
+):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
         "SOMATIC_VARIANT_ANNOTATION/output/{mapper}.{var_caller}.{anno_tool}.{tumor_library}/out/"
@@ -296,7 +304,9 @@ def test_tumor_mutational_step_part_get_input_files_annotation(tumor_mutational_
     assert actual == expected
 
 
-def test_tumor_mutational_step_part_get_output_files_annotation(tumor_mutational_burden_workflow_annotation):
+def test_tumor_mutational_step_part_get_output_files_annotation(
+    tumor_mutational_burden_workflow_annotation,
+):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
     base_out = (
         "work/{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}/out/"
@@ -307,7 +317,9 @@ def test_tumor_mutational_step_part_get_output_files_annotation(tumor_mutational
     assert actual == expected
 
 
-def test_tumor_mutational_step_part_get_log_files_annotation(tumor_mutational_burden_workflow_annotation):
+def test_tumor_mutational_step_part_get_log_files_annotation(
+    tumor_mutational_burden_workflow_annotation,
+):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
     base_out = (
         "work/{mapper}.{var_caller}.{anno_tool}.tmb.{tumor_library}/log/"
@@ -327,7 +339,9 @@ def test_tumor_mutational_step_part_get_resource_usage_annotation(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = tumor_mutational_burden_workflow_annotation.get_resource("tmb_gathering", "run", resource)
+        actual = tumor_mutational_burden_workflow_annotation.get_resource(
+            "tmb_gathering", "run", resource
+        )
         assert actual == expected, msg_error
 
 
@@ -347,7 +361,9 @@ def test_tumor_mutational_burden_workflow_annotation(tumor_mutational_burden_wor
         "{mapper}.{var_caller}.{anno_tool}.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
-        tpl.format(mapper=mapper, var_caller=var_caller, anno_tool=anno_tool, i=i, t=t, ext=ext, dir_="out")
+        tpl.format(
+            mapper=mapper, var_caller=var_caller, anno_tool=anno_tool, i=i, t=t, ext=ext, dir_="out"
+        )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("json", "json.md5")
         for mapper in ("bwa",)
@@ -355,7 +371,9 @@ def test_tumor_mutational_burden_workflow_annotation(tumor_mutational_burden_wor
         for anno_tool in ("jannovar", "vep")
     ]
     expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, anno_tool=anno_tool, i=i, t=t, ext=ext, dir_="log")
+        tpl.format(
+            mapper=mapper, var_caller=var_caller, anno_tool=anno_tool, i=i, t=t, ext=ext, dir_="log"
+        )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in (
             "conda_info.txt",
