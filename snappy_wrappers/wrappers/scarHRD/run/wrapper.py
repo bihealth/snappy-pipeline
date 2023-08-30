@@ -7,7 +7,7 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-lib_path = os.path.dirname(snakemake.input.lib_path)
+lib_path = os.path.dirname(snakemake.input.done)
 
 step = snakemake.config["pipeline_step"]["name"]
 genome = snakemake.config["static_data_config"]["reference"]["path"]
@@ -46,20 +46,13 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-sequenza-utils bam2seqz \
-    -gc {snakemake.input.gc} --fasta {genome} \
-    -n {snakemake.input.normal_bam} --tumor {snakemake.input.tumor_bam} \
-    -C {chromosomes} \
-    | sequenza-utils seqz_binning -w {length} -s - \
-    | gzip > {snakemake.output.sequenza}
-
-export R_LIBS_PATH="{lib_path}"
+export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
 cat << __EOF | R --vanilla --slave
 library("scarHRD")
 
-tbl <- scar_score("{snakemake.output.sequenza}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
+tbl <- scar_score("{snakemake.input.seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name}, outputdir=dirname("{snakemake.output.scarHRD}"))
 cat('{{\n', file="{snakemake.output.scarHRD}")
 cat('    "HRD": ', tbl[1,1], ',\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
 cat('    "Telomeric AI": ', tbl[1,2], ',\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
@@ -69,7 +62,6 @@ cat('}}\n', file="{snakemake.output.scarHRD}", append=TRUE)
 
 __EOF
 
-pushd $(dirname {snakemake.output.sequenza}) ; f=$(basename {snakemake.output.sequenza}) ; md5sum $f > $f.md5 ; popd
 pushd $(dirname {snakemake.output.scarHRD}) ; f=$(basename {snakemake.output.scarHRD}) ; md5sum $f > $f.md5 ; popd
 """
 )
