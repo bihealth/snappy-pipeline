@@ -879,7 +879,6 @@ def test_sequenza_step_part_get_log_file_run(somatic_targeted_seq_cnv_calling_wo
 
 def test_sequenza_step_part_get_input_files_report(somatic_targeted_seq_cnv_calling_workflow):
     """Tests SequenzaStepPart.get_input_files() - action 'report'"""
-    # wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "packages": "work/R_packages/out/sequenza.done",
         "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
@@ -892,6 +891,14 @@ def test_sequenza_step_part_get_output_files_report(somatic_targeted_seq_cnv_cal
     """Tests SequenzaStepPart.get_output_files() - action 'report'"""
     expected = {"done": "work/{mapper}.sequenza.{library_name}/report/.done"}
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("sequenza", "report")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_params_report(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_params() - action 'report'"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    expected = "P001-T1-DNA1-WGS1"
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_params("sequenza", "report")(wildcards)
     assert actual == expected
 
 

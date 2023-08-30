@@ -121,7 +121,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_targeted_seq_cnv_calling
 step_config:
   somatic_targeted_seq_cnv_calling:
-    tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'sequenza', 'cnvetti_on_target' and 'cnvetti_off_target'
+    tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'sequenza', 'cnvetti_on_target', 'cnvetti_off_target' and 'copywriter' (deprecated)
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     cnvkit:
       path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
@@ -165,14 +165,25 @@ step_config:
       smooth_bootstrap: False           # [segmetrics] Smooth bootstrap results
     sequenza:
       length: 50
-      extra_args: {} # Extra arguments for sequenza bam2seqz, valid values:
-      # hom: 0.9     # Threshold to select homozygous positions
-      # het: 0.25    # Threshold to select heterozygous positions
-      # qlimit: 20   # Minimum nucleotide quality score for inclusion in the counts
-      # qformat: "sanger" # Quality format, options are "sanger" or "illumina". This will add an offset of 33 or 64 respectively to the qlimit value
+      assembly: "hg19"     # Must be hg38 for GRCh38. See copynumber for complete list (augmented with hg38)
+      extra_args: {}       # Extra arguments for sequenza bam2seqz, valid values:
+      # hom: 0.9           # Threshold to select homozygous positions
+      # het: 0.25          # Threshold to select heterozygous positions
+      # qlimit: 20         # Minimum nucleotide quality score for inclusion in the counts
+      # qformat: "sanger"  # Quality format, options are "sanger" or "illumina". This will add an offset of 33 or 64 respectively to the qlimit value
       ignore_chroms: # patterns of chromosome names to ignore
         [X, Y, MT, NC_007605. hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']  # Genome hs37d5
       # [chrX, chrY, chrM, '*_random', 'chrUn_*', chrEBV, '*_decoy', 'HPV*', CMV, HBV, KSHV, MCV, SV40, 'HCV-*', 'HIV-*', 'HTLV-*']  # Genome GRch38.d1.vd1
+      extra_args_extract:        # Valid arguments: see ?sequenza::sequenza.extract in R
+        gamma: 60                # scarHRD value
+        kmin: 50                 # scarHRD value
+      extra_args_fit:            # Valid arguments: see ?sequenza::sequenza.fit in R
+        N.ratio.filter: 10       # scarHRD value
+        N.BAF.filter: 1          # scarHRD value
+        segment.filter: 3000000  # scarHRD value
+        mufreq.treshold: 0.1     # scarHRD value
+        ratio.priority: False    # scarHRD value
+        ploidy: [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0, 5.1, 5.2, 5.3, 5.4, 5.5]
     copywriter:
       path_target_regions: REQUIRED # REQUIRED
       bin_size: 20000 # TODO: make actually configurable
@@ -518,6 +529,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     action=action, valid=", ".join(self.actions)
                 )
             )
+
+    def get_params(self, action):
+        self._validate_action(action)
+        return self._get_params_report
+
+    def _get_params_report(self, wildcards):
+        return wildcards["library_name"]
 
     @dictify
     def get_log_file(self, action):
