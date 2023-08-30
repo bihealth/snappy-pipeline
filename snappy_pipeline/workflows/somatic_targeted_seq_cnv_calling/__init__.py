@@ -104,6 +104,7 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -120,7 +121,7 @@ DEFAULT_CONFIG = r"""
 # Default configuration somatic_targeted_seq_cnv_calling
 step_config:
   somatic_targeted_seq_cnv_calling:
-    tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'copywriter', 'cnvetti_on_target' and 'cnvetti_off_target'
+    tools: ['cnvkit']  # REQUIRED - available: 'cnvkit', 'sequenza', 'cnvetti_on_target' and 'cnvetti_off_target'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
     cnvkit:
       path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
@@ -162,6 +163,16 @@ step_config:
       segmetrics_alpha: 0.05            # [segmetrics] Significance cutoff
       segmetrics_bootstrap: 100         # [segmetrics] Number of bootstraps
       smooth_bootstrap: False           # [segmetrics] Smooth bootstrap results
+    sequenza:
+      length: 50
+      extra_args: {} # Extra arguments for sequenza bam2seqz, valid values:
+      # hom: 0.9     # Threshold to select homozygous positions
+      # het: 0.25    # Threshold to select heterozygous positions
+      # qlimit: 20   # Minimum nucleotide quality score for inclusion in the counts
+      # qformat: "sanger" # Quality format, options are "sanger" or "illumina". This will add an offset of 33 or 64 respectively to the qlimit value
+      ignore_chroms: # patterns of chromosome names to ignore
+        [X, Y, MT, NC_007605. hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']  # Genome hs37d5
+      # [chrX, chrY, chrM, '*_random', 'chrUn_*', chrEBV, '*_decoy', 'HPV*', CMV, HBV, KSHV, MCV, SV40, 'HCV-*', 'HIV-*', 'HTLV-*']  # Genome GRch38.d1.vd1
     copywriter:
       path_target_regions: REQUIRED # REQUIRED
       bin_size: 20000 # TODO: make actually configurable
@@ -420,6 +431,127 @@ def format_id(*args):
     return {key: "{{{}}}".format(key) for key in args}
 
 
+class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
+    """Perform somatic targeted CNV calling using sequenza"""
+
+    #: Step name
+    name = "sequenza"
+
+    #: Class available actions
+    actions = (
+        "install",
+        "gcreference",
+        "run",
+        "report",
+    )
+
+    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
+    resource_usage = {
+        "run": ResourceUsage(
+            threads=4,
+            time="24:00:00",  # 1 day
+            memory="16G",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_input_files(self, action):
+        """Return input paths input function, dependent on rule"""
+        # Validate action
+        self._validate_action(action)
+
+        method_mapping = {
+            "run": self._get_input_files_run(),
+            "report": self._get_input_files_report(),
+        }
+        return method_mapping[action]
+
+    def _get_input_files_run(self):
+        @dictify
+        def input_function(wildcards):
+            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
+                )
+            )
+            tumor_base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
+                **wildcards
+            )
+            yield "gc", "work/static_data/out/sequenza.{length}.wig.gz".format(
+                length=self.config["sequenza"]["length"],
+            )
+            yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
+            yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
+            yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
+            yield "tumor_bai", ngs_mapping(tumor_base_path + ".bam.bai")
+
+        return input_function
+
+    def _get_input_files_report(self):
+        return {
+            "packages": "work/R_packages/out/sequenza.done",
+            "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
+        }
+
+    def get_output_files(self, action):
+        if action == "install":
+            return {"done": "work/R_packages/out/sequenza.done"}
+        elif action == "gcreference":
+            return {
+                "gc": "work/static_data/out/sequenza.{length}.wig.gz".format(
+                    length=self.config["sequenza"]["length"],
+                )
+            }
+        elif action == "run":
+            return {
+                "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
+                "seqz_md5": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz.md5",
+            }
+        elif action == "report":
+            return {"done": "work/{mapper}.sequenza.{library_name}/report/.done"}
+        else:
+            raise UnsupportedActionException(
+                "Action '{action}' is not supported. Valid options: {valid}".format(
+                    action=action, valid=", ".join(self.actions)
+                )
+            )
+
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files."""
+        if action == "install":
+            prefix = "work/R_packages/log/sequenza"
+        elif action == "gcreference":
+            prefix = "work/static_data/log/sequenza.{length}".format(
+                length=self.config["sequenza"]["length"],
+            )
+        elif action == "run":
+            prefix = (
+                "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.run"
+            )
+        elif action == "report":
+            prefix = (
+                "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.report"
+            )
+        else:
+            raise UnsupportedActionException(
+                "Action '{action}' is not supported. Valid options: {valid}".format(
+                    action=action, valid=", ".join(self.actions)
+                )
+            )
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+
 class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using cnvkit"""
 
@@ -438,8 +570,11 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "report",
     )
 
+    # Overwrite defaults
+    default_resource_usage = ResourceUsage(threads=1, time="03:59:59", memory="7680M")  # 4h
+
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
+    resource_usage = {
         "plot": ResourceUsage(
             threads=1,
             time="08:00:00",  # 1 day
@@ -449,11 +584,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             threads=8,
             time="08:00:00",  # 8 hours
             memory=f"{16 * 1024}M",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            time="03:59:59",  # 1 day
-            memory=f"{int(7.5 * 1024)}M",
         ),
     }
 
@@ -700,23 +830,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        if action == "plot":
-            return self.resource_usage_dict.get("plot")
-        elif action == "coverage":
-            return self.resource_usage_dict.get("coverage")
-        else:
-            return self.resource_usage_dict.get("default")
-
 
 class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using CopywriteR"""
@@ -731,7 +844,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
     actions_w_in_out = ("run", "call")
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
+    resource_usage = {
         "prepare": ResourceUsage(
             threads=1,
             time="02:00:00",  # 2 hours
@@ -868,18 +981,6 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             for key, ext in key_ext:
                 yield key, tpl + ext
 
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
-
 
 class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     """Perform somatic targeted sequencing CNV calling"""
@@ -915,6 +1016,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 CnvettiOnTargetStepPart,
                 CnvKitStepPart,
                 CopywriterStepPart,
+                SequenzaStepPart,
                 LinkOutStepPart,
             )
         )
@@ -926,6 +1028,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
             "cnvkit": ["fix", "postprocess", "report", "export"],
+            "sequenza": ("run",),
             "copywriter": ("call",),
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
@@ -951,7 +1054,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                         except AttributeError:
                             tpls = [self.sub_steps[tool].get_output_files(action)]
                         try:
-                            tpls += self.sub_steps[tool].get_log_file(action).values()
+                            tpls += list(self.sub_steps[tool].get_log_file(action).values())
                         except AttributeError:
                             tpls += [self.sub_steps[tool].get_log_file(action)]
                         for tpl in tpls:
@@ -961,7 +1064,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:
-                                if ".tmp." not in f:
+                                if ".tmp." not in f and not f.endswith("/.done"):
                                     yield f.replace("work/", "output/")
 
     def check_config(self):
