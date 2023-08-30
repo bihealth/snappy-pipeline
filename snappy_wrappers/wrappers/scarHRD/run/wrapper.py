@@ -53,9 +53,10 @@ sequenza-utils bam2seqz \
     | sequenza-utils seqz_binning -w {length} -s - \
     | gzip > {snakemake.output.sequenza}
 
+export R_LIBS_PATH="{lib_path}"
+export VROOM_CONNECTION_SIZE=2000000000
+
 cat << __EOF | R --vanilla --slave
-.libPaths(c("{lib_path}", .libPaths()))
-Sys.setenv(VROOM_CONNECTION_SIZE=2000000000)
 library("scarHRD")
 
 tbl <- scar_score("{snakemake.output.sequenza}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
