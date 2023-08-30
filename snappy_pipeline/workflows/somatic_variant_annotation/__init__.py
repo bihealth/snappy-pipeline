@@ -75,7 +75,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the annotator tools
-TOOLS = ("jannovar", "vep")
+ANNOTATION_TOOLS = ("jannovar", "vep")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
@@ -336,7 +336,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         annotators = list(
             map(
                 lambda x: x.replace("jannovar", "jannovar_annotate_somatic_vcf"),
-                set(self.config["tools"]) & set(TOOLS),
+                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
             )
         )
         callers = set(self.config["tools_somatic_variant_calling"])
