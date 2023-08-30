@@ -32,11 +32,11 @@ total_exom_length=$(zcat $bed_file | \
 number_snvs=$(bcftools view -R $bed_file -v snps --threads 2 -H {snakemake.input.vcf}| wc -l)
 number_indels=$(bcftools view -R $bed_file -v indels --threads 2 -H {snakemake.input.vcf}| wc -l)
 number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| wc -l)
-number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| grep 'missense_variant'| wc -l)
+number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| grep -E '{snakemake.params.args[missense_re]}' | wc -l)
 
 TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
 missense_TMB=`echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l `
-if [[ {snakemake.config[step_config][tumor_mutational_burden][annotation_file]} == "TRUE" ]]
+if [[ {snakemake.config[step_config][tumor_mutational_burden][has_annotation]} == "TRUE" ]]
 then
     out_file=$(cat << EOF 
     {{

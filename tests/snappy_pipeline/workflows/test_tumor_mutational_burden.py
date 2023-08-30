@@ -47,9 +47,9 @@ def minimal_config_calling():
               path_target_regions: /path/to/target/regions.bed
 
           tumor_mutational_burden:
-            path_somatic_variant_calling: ../somatic_variant_calling
+            path_somatic_variant: ../somatic_variant_calling
             tools_ngs_mapping: []
-            annotation_file: 'FALSE' # REQUIRED
+            has_annotation: 'FALSE' # REQUIRED
             tools_somatic_variant_calling: []
             target_regions: /path/to/regions.bed
 
@@ -234,9 +234,8 @@ def minimal_config_annotation():
               path_dir_cache: /path/to/dir/cache
 
           tumor_mutational_burden:
-            path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
-            annotation_file: 'TRUE' # REQUIRED
-            path_somatic_variant_annotation: ../somatic_variant_annotation  # REQUIRED
+            path_somatic_variant: ../somatic_variant_annotation   # REQUIRED
+            has_annotation: 'TRUE' # REQUIRED
             tools_ngs_mapping: []      # default to those configured for ngs_mapping
             tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
             tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
