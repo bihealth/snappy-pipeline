@@ -295,7 +295,7 @@ rule somatic_targeted_seq_cnv_calling_sequenza_report:
     output:
         **wf.get_output_files("sequenza", "report"),
     params:
-        sample_id = wf.get_params("sequenza", "report")
+        sample_id=wf.get_params("sequenza", "report"),
     threads: wf.get_resource("sequenza", "report", "threads")
     resources:
         time=wf.get_resource("sequenza", "report", "time"),
