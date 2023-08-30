@@ -63,8 +63,9 @@ rule homologous_recombination_deficiency_scarHRD_install:
         **wf.get_output_files("scarHRD", "install"),
     params:
         packages=[
-            {"name": "sztup/scarHRD", "repo": "github"},
             {"name": "aroneklund/copynumber", "repo": "github"},
+            {"name": "sequenzatools/sequenza", "repo": "bitbucket"},
+            {"name": "sztup/scarHRD", "repo": "github"},
         ],
     resources:
         time=wf.get_resource("scarHRD", "install", "time"),
