@@ -256,6 +256,7 @@ rule somatic_targeted_seq_cnv_calling_sequenza_install:
     wrapper:
         wf.wrapper_path("r")
 
+
 rule somatic_targeted_seq_cnv_calling_sequenza_gcreference:
     output:
         **wf.get_output_files("sequenza", "gcreference"),
@@ -269,6 +270,7 @@ rule somatic_targeted_seq_cnv_calling_sequenza_gcreference:
         **wf.get_log_file("sequenza", "gcreference"),
     wrapper:
         wf.wrapper_path("sequenza/gcreference")
+
 
 rule somatic_targeted_seq_cnv_calling_sequenza_run:
     input:
@@ -285,6 +287,7 @@ rule somatic_targeted_seq_cnv_calling_sequenza_run:
         **wf.get_log_file("sequenza", "run"),
     wrapper:
         wf.wrapper_path("sequenza/run")
+
 
 rule somatic_targeted_seq_cnv_calling_sequenza_report:
     input:
