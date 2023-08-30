@@ -26,7 +26,9 @@ for package in packages:
         to_install[package["repo"]].append(package["name"])
     else:
         to_install["cran"].append(package["name"])
-to_install = {k: "c({})".format(", ".join(['"{}"'.format(vv) for vv in v])) for k, v in to_install.items()}
+to_install = {
+    k: "c({})".format(", ".join(['"{}"'.format(vv) for vv in v])) for k, v in to_install.items()
+}
 
 shell.executable("/bin/bash")
 
