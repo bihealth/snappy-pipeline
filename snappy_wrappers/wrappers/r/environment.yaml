@@ -1,0 +1,7 @@
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - r-base
+    - r-remotes
+    - r-biocmanager
