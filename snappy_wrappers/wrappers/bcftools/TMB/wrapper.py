@@ -7,6 +7,12 @@ from snakemake.shell import shell
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
+missense_re = (
+    snakemake.params.args["missense_re"]
+    if "args" in snakemake.params.keys() and "missense_re" in snakemake.params.args.keys()
+    else ""
+)
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -32,7 +38,11 @@ total_exom_length=$(zcat $bed_file | \
 number_snvs=$(bcftools view -R $bed_file -v snps --threads 2 -H {snakemake.input.vcf}| wc -l)
 number_indels=$(bcftools view -R $bed_file -v indels --threads 2 -H {snakemake.input.vcf}| wc -l)
 number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| wc -l)
-number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| grep -E '{snakemake.params.args[missense_re]}' | wc -l)
+
+if [[ -n "{missense_re}" ]]
+then
+    number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| grep -E '{missense_re}' | wc -l)
+fi
 
 TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
 missense_TMB=`echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l `
