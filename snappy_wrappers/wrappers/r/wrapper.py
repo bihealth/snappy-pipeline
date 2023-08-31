@@ -19,16 +19,11 @@ assert packages is not None
 assert isinstance(packages, list)
 assert len(packages) > 0
 
-to_install = {"github": [], "bitbucket": [], "local": [], "bioconductor": [], "cran": []}
+to_install = []
 for package in packages:
     package = dict(package)
-    if "repo" in package.keys() and package["repo"] in to_install.keys():
-        to_install[package["repo"]].append(package["name"])
-    else:
-        to_install["cran"].append(package["name"])
-to_install = {
-    k: "c({})".format(", ".join(['"{}"'.format(vv) for vv in v])) for k, v in to_install.items()
-}
+    to_install.append('list(name="{}", repo="{}")'.format(package["name"], package["repo"]))
+to_install = "list({})".format(", ".join(to_install))
 
 shell.executable("/bin/bash")
 
@@ -54,20 +49,12 @@ if [[ -n "{snakemake.log.log}" ]]; then
 fi
 
 R --vanilla --slave << __EOF
-if (length({to_install[cran]}) > 0) {{
-    install.packages({to_install[cran]}, lib=dirname("{snakemake.output.done}"), update=FALSE, ask=FALSE)
-}}
-if (length({to_install[bioconductor]}) > 0) {{
-    BiocManager::install({to_install[bioconductor]}, lib=dirname("{snakemake.output.done}"), update=FALSE, ask=FALSE)
-}}
-if (length({to_install[github]}) > 0) {{
-    remotes::install_github({to_install[github]}, lib=dirname("{snakemake.output.done}"), upgrade="never")
-}}
-if (length({to_install[bitbucket]}) > 0) {{
-    remotes::install_bitbucket({to_install[bitbucket]}, lib=dirname("{snakemake.output.done}"), upgrade="never")
-}}
-if (length({to_install[local]}) > 0) {{
-    remotes::install_local({to_install[local]}, lib=dirname("{snakemake.output.done}"), upgrade="never")
+for (pkg in {to_install}) {{
+    if (pkg[["repo"]] == "cran") install.packages(pkg[["name"]], lib=dirname("{snakemake.output.done}"), update=FALSE, ask=FALSE)
+    if (pkg[["repo"]] == "bioconductor") BiocManager::install(pkg[["name"]], lib=dirname("{snakemake.output.done}"), update=FALSE, ask=FALSE)
+    if (pkg[["repo"]] == "github") remotes::install_github(pkg[["name"]], lib=dirname("{snakemake.output.done}"), upgrade="never")
+    if (pkg[["repo"]] == "bitbucket") remotes::install_bitbucket(pkg[["name"]], lib=dirname("{snakemake.output.done}"), upgrade="never")
+    if (pkg[["repo"]] == "local") remotes::install_local(pkg[["name"]], lib=dirname("{snakemake.output.done}"), upgrade="never")
 }}
 __EOF
 touch {snakemake.output.done}

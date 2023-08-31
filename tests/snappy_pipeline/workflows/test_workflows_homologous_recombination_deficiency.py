@@ -31,12 +31,12 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-              dna: ['bwa']
-            bwa:
-              path_index: /path/to/bwa/index.fasta
+              dna: [bwa]
+          somatic_targeted_seq_cnv_calling:
+            tools: ['sequenza']
           homologous_recombination_deficiency:
             tools: ['scarHRD']
-            path_ngs_mapping: ../ngs_mapping  # REQUIRED
+            path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
 
         data_sets:
           first_batch:
@@ -64,7 +64,7 @@ def homologous_recombination_deficiency_workflow(
     """Return HomologousRecombinationDeficiencyWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    dummy_workflow.globals = {"cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x}
     # Construct the workflow object
     return HomologousRecombinationDeficiencyWorkflow(
         dummy_workflow,
@@ -80,14 +80,12 @@ def homologous_recombination_deficiency_workflow(
 
 def test_scarHRD_step_part_get_input_files_run(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_input_files() - run"""
-    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    wildcards = Wildcards(
+        fromdict={"mapper": "bwa", "caller": "sequenza", "library_name": "P001-T1-DNA1-WGS1"}
+    )
     expected = {
-        "lib_path": "work/R_packages/out/.done",
-        "gc": "work/static_data/out/grch37_50.wig.gz",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "done": "work/R_packages/out/scarHRD.done",
+        "seqz": "SOMATIC_CNV_CALLING/output/bwa.sequenza.P001-T1-DNA1-WGS1/out/bwa.sequenza.P001-T1-DNA1-WGS1.seqz.gz",
     }
     actual = homologous_recombination_deficiency_workflow.get_input_files("scarHRD", "run")(
         wildcards
@@ -98,10 +96,12 @@ def test_scarHRD_step_part_get_input_files_run(homologous_recombination_deficien
 def test_scarHRD_step_part_get_output_files_run(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_output_files() - run"""
     # Define expected
-    base_name_out = "work/{mapper}.scarHRD.{library_name}/out/{mapper}.scarHRD.{library_name}"
+    base_name_out = (
+        "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}"
+    )
     expected = {
-        "sequenza": base_name_out + ".seqz.gz",
         "scarHRD": base_name_out + ".json",
+        "scarHRD_md5": base_name_out + ".json.md5",
     }
     # Get actual
     actual = homologous_recombination_deficiency_workflow.get_output_files("scarHRD", "run")
@@ -110,7 +110,9 @@ def test_scarHRD_step_part_get_output_files_run(homologous_recombination_deficie
 
 def test_scarHRD_step_part_get_log_file_run(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_log_file() - run"""
-    base_name = "work/{mapper}.scarHRD.{library_name}/log/{mapper}.scarHRD.{library_name}"
+    base_name = (
+        "work/{mapper}.{caller}.scarHRD.{library_name}/log/{mapper}.{caller}.scarHRD.{library_name}"
+    )
     expected = get_expected_log_files_dict(base_out=base_name)
     actual = homologous_recombination_deficiency_workflow.get_log_file("scarHRD", "run")
     assert actual == expected
@@ -119,7 +121,7 @@ def test_scarHRD_step_part_get_log_file_run(homologous_recombination_deficiency_
 def test_scarHRD_step_part_get_resource_usage_run(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_resource() - run"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "48:00:00", "memory": "32G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "32G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -132,7 +134,7 @@ def test_scarHRD_step_part_get_resource_usage_run(homologous_recombination_defic
 def test_scarHRD_step_part_get_output_files_install(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_output_files() - install"""
     # Define expected
-    expected = {"lib_path": "work/R_packages/out/.done"}
+    expected = {"done": "work/R_packages/out/scarHRD.done"}
     # Get actual
     actual = homologous_recombination_deficiency_workflow.get_output_files("scarHRD", "install")
     assert actual == expected
@@ -140,7 +142,7 @@ def test_scarHRD_step_part_get_output_files_install(homologous_recombination_def
 
 def test_scarHRD_step_part_get_log_file_install(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_log_file() - install"""
-    base_name = "work/R_packages/log/R_packages"
+    base_name = "work/R_packages/log/scarHRD"
     expected = get_expected_log_files_dict(base_out=base_name)
     actual = homologous_recombination_deficiency_workflow.get_log_file("scarHRD", "install")
     assert actual == expected
@@ -149,7 +151,7 @@ def test_scarHRD_step_part_get_log_file_install(homologous_recombination_deficie
 def test_scarHRD_step_part_get_resource_usage_install(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_resource() - install"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "4096M", "partition": "short"}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -157,25 +159,6 @@ def test_scarHRD_step_part_get_resource_usage_install(homologous_recombination_d
             "scarHRD", "install", resource
         )
         assert actual == expected, msg_error
-
-
-def test_scarHRD_step_part_get_output_files_gcreference(
-    homologous_recombination_deficiency_workflow,
-):
-    """Tests ScarHRDStepPart.get_output_files() - gcreference"""
-    # Define expected
-    expected = {"gc": "work/static_data/out/grch37_50.wig.gz"}
-    # Get actual
-    actual = homologous_recombination_deficiency_workflow.get_output_files("scarHRD", "gcreference")
-    assert actual == expected
-
-
-def test_scarHRD_step_part_get_log_file_gcreference(homologous_recombination_deficiency_workflow):
-    """Tests ScarHRDStepPart.get_log_file() - gcreference"""
-    base_name = "work/static_data/log/grch37_50"
-    expected = get_expected_log_files_dict(base_out=base_name)
-    actual = homologous_recombination_deficiency_workflow.get_log_file("scarHRD", "gcreference")
-    assert actual == expected
 
 
 # Tests for SomaticMsiCallingWorkflow --------------------------------------------------------------
@@ -188,12 +171,18 @@ def test_homologous_recombination_deficiency_workflow(homologous_recombination_d
     assert list(sorted(homologous_recombination_deficiency_workflow.sub_steps.keys())) == expected
     # Check result file construction
     expected = [
-        "output/bwa.scarHRD.P001-T1-DNA1-WGS1/out/bwa.scarHRD.P001-T1-DNA1-WGS1.json",
-        "output/bwa.scarHRD.P001-T1-DNA1-WGS1/out/bwa.scarHRD.P001-T1-DNA1-WGS1.seqz.gz",
-        "output/bwa.scarHRD.P002-T1-DNA1-WGS1/out/bwa.scarHRD.P002-T1-DNA1-WGS1.json",
-        "output/bwa.scarHRD.P002-T1-DNA1-WGS1/out/bwa.scarHRD.P002-T1-DNA1-WGS1.seqz.gz",
-        "output/bwa.scarHRD.P002-T2-DNA1-WGS1/out/bwa.scarHRD.P002-T2-DNA1-WGS1.json",
-        "output/bwa.scarHRD.P002-T2-DNA1-WGS1/out/bwa.scarHRD.P002-T2-DNA1-WGS1.seqz.gz",
+        "output/bwa.sequenza.scarHRD.P001-T1-DNA1-WGS1/out/bwa.sequenza.scarHRD.P001-T1-DNA1-WGS1.json",
+        "output/bwa.sequenza.scarHRD.P002-T1-DNA1-WGS1/out/bwa.sequenza.scarHRD.P002-T1-DNA1-WGS1.json",
+        "output/bwa.sequenza.scarHRD.P002-T2-DNA1-WGS1/out/bwa.sequenza.scarHRD.P002-T2-DNA1-WGS1.json",
+        "output/bwa.sequenza.scarHRD.P001-T1-DNA1-WGS1/out/bwa.sequenza.scarHRD.P001-T1-DNA1-WGS1.json.md5",
+        "output/bwa.sequenza.scarHRD.P002-T1-DNA1-WGS1/out/bwa.sequenza.scarHRD.P002-T1-DNA1-WGS1.json.md5",
+        "output/bwa.sequenza.scarHRD.P002-T2-DNA1-WGS1/out/bwa.sequenza.scarHRD.P002-T2-DNA1-WGS1.json.md5",
+    ]
+    expected += [
+        f"output/bwa.sequenza.scarHRD.P00{i[0]}-T{i[1]}-DNA1-WGS1/log/bwa.sequenza.scarHRD.P00{i[0]}-T{i[1]}-DNA1-WGS1.{ext}{chksum}"
+        for i in ((1, 1), (2, 1), (2, 2))
+        for ext in ("log", "conda_list.txt", "conda_info.txt")
+        for chksum in ("", ".md5")
     ]
     actual = set(homologous_recombination_deficiency_workflow.get_result_files())
     expected = set(expected)
