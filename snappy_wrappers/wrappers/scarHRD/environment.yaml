@@ -3,6 +3,4 @@ channels:
   - bioconda
 dependencies:
   - python =3.9
-  - r-sequenza
-  - r-devtools
-  - r-data.table
+  - r-base
