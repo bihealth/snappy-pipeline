@@ -109,6 +109,7 @@ EOF
 cat $TMPDIR/feature-effects.tsv \
 | tr '\n' '\t' \
 | sed -e 's/\t$/\n/g' \
+| gzip \
 >{snakemake.output.feature_effects}
 
 # Perform Mehari structural variant annotation.
