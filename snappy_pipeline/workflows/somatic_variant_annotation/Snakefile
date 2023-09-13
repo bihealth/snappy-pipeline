@@ -92,7 +92,7 @@ rule somatic_variant_annotation_jannovar_annotate_somatic_vcf:
     log:
         **wf.get_log_file("jannovar", "annotate_somatic_vcf"),
     wrapper:
-        wf.wrapper_path("jannovar_par/annotate_somatic_vcf")
+        wf.wrapper_path("jannovar/annotate_somatic_vcf")
 
 
 # Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -9,7 +9,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Get shortcuts to static data and step configuration
 static_config = snakemake.config["static_data_config"]
-anno_config = snakemake.config["step_config"]["somatic_variant_annotation"]
+anno_config = snakemake.config["step_config"]["somatic_variant_annotation"]["jannovar"]
 
 # Build list of arguments to pass to Jannovar
 annotation_args = []
@@ -83,7 +83,7 @@ annotation_snippet = " \\\n    ".join(annotation_args)
 # Build intervals argument
 arg_intervals = " ".join(
     ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
-)
+) if "args" in snakemake.params and "intervals" in snakemake.params["args"] else ""
 
 shell(
     r"""
@@ -113,8 +113,8 @@ jannovar \
     -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf {snakemake.output.vcf} \
-    --database {snakemake.config[step_config][somatic_variant_annotation][path_jannovar_ser]} \
-    --ref-fasta {snakemake.config[static_data_config][reference][path]} \
+    --database {anno_config[path_jannovar_ser]} \
+    --ref-fasta {static_config[reference][path]} \
     {arg_intervals} \
     {annotation_snippet}
 
