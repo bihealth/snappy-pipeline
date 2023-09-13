@@ -81,9 +81,13 @@ for conf in anno_config["annotation_tracks_vcf"]:
 annotation_snippet = " \\\n    ".join(annotation_args)
 
 # Build intervals argument
-arg_intervals = " ".join(
-    ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
-) if "args" in snakemake.params and "intervals" in snakemake.params["args"] else ""
+arg_intervals = (
+    " ".join(
+        ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+    )
+    if "args" in snakemake.params and "intervals" in snakemake.params["args"]
+    else ""
+)
 
 shell(
     r"""
