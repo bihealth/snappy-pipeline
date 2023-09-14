@@ -26,12 +26,12 @@ The variant annotation step uses Snakemake sub workflows for using the result of
 Step Output
 ===========
 
-Annotations can be done on all genes & transcripts overlapping with the variant locus, or
+Users can annotate all genes & transcripts overlapping with the variant locus, or
 they can select one representative gene and transcript for annotation.
 In the latter case, the output vcf file will only contain one annotation per variant, while
 in the former case, there might be over 100 annotations for each variant.
 
-The ordering of features drinving the representative annotation choice is under user control.
+The ordering of features driving the representative annotation choice is under user control.
 The default order is:
 
 1. ``biotype``: protein coding genes come first, it is unclear what is the order for other types of genes
