@@ -22,7 +22,7 @@ Step Input
 ==========
 
 ``homologous_recombination_deficiency`` starts off the ``sequenza`` copy number output.
-Some steps performed by ``sequenza`` are repeated by ``scanHRD``, as ``scanHRD`` uses a specific 
+Some steps performed by ``sequenza`` are repeated by ``scanHRD``, as ``scanHRD`` uses a specific
 set of arguments. This is the reason why ``sequenza`` is required by the step.
 
 ===========
