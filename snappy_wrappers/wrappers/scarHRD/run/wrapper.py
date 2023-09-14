@@ -49,6 +49,9 @@ fi
 export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
+export R_LIBS_PATH="{lib_path}"
+export VROOM_CONNECTION_SIZE=2000000000
+
 cat << __EOF | R --vanilla --slave
 library("scarHRD")
 
