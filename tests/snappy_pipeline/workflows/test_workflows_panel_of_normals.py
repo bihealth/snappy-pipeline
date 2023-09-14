@@ -518,8 +518,12 @@ def test_purecn_step_part_get_input_files_prepare(panel_of_normals_workflow):
 def test_purecn_step_part_get_output_files_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_prepare()"""
     expected = {
-        "intervals": "work/static_data/out/PureCN.list",
-        "optimized": "work/static_data/out/PureCN.optimized_intervals.bed.gz",
+        "intervals": "work/PureCN/out/unknown_unknown.list",
+        "optimized": "work/PureCN/out/unknown_unknown.bed.gz",
+        "tbi": "work/PureCN/out/unknown_unknown.bed.gz.tbi",
+        "intervals_md5": "work/PureCN/out/unknown_unknown.list.md5",
+        "optimized_md5": "work/PureCN/out/unknown_unknown.bed.gz.md5",
+        "tbi_md5": "work/PureCN/out/unknown_unknown.bed.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("purecn", "prepare")
     assert actual == expected
@@ -527,7 +531,7 @@ def test_purecn_step_part_get_output_files_prepare(panel_of_normals_workflow):
 
 def test_purecn_step_part_get_log_file_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_prepare()"""
-    expected = get_expected_log_files_dict(base_out="work/static_data/log/PureCN")
+    expected = get_expected_log_files_dict(base_out="work/PureCN/log/unknown_unknown")
     actual = panel_of_normals_workflow.get_log_file("purecn", "prepare")
     assert actual == expected
 
@@ -542,7 +546,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
     )
     expected = {
         "packages": "work/R_packages/out/PureCN.done",
-        "intervals": "work/static_data/out/PureCN.list",
+        "intervals": "work/PureCN/out/unknown_unknown.list",
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "coverage")(wildcards)
@@ -606,6 +610,8 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     """Tests PureCnStepPart.get_resource_usage() for all actions"""
     expected = {
         "coverage": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "prepare": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "create_panel": {"threads": 1, "memory": "24G", "time": "04:00:00"},
     }
     for action, resources in expected.items():
         for resource, value in resources.items():
@@ -677,6 +683,15 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     ]
     expected += get_expected_log_files_dict(
         base_out="output/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals".format(mapper="bwa")
+    ).values()
+    tpl = "output/PureCN/out/unknown_unknown.{ext}{chksum}"
+    expected += [
+        tpl.format(ext=ext, chksum=chksum)
+        for ext in ("list", "bed.gz", "bed.gz.tbi")
+        for chksum in ("", ".md5")
+    ]
+    expected += get_expected_log_files_dict(
+        base_out="output/PureCN/log/unknown_unknown".format(mapper="bwa")
     ).values()
 
     expected = list(sorted(expected))
