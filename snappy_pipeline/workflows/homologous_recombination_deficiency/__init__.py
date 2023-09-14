@@ -13,12 +13,17 @@ and from bioconda for the python utilities. Note that anaconda lists the r-seque
 bioconda directory, while this package is not found when searching `bioconda<https://bioconda.github.io/index.html>`.
 copynumber is obtained from a fork of the official Bioconductor deprecated package.
 
+TODO: The implementation needs to uncouple ``scarHRD`` from ``sequenza``.
+It should be possible as ``scarHRD`` could use the output from other CNV callers.
+However, it is poorly documented, and will require significant work.
+
 ==========
 Step Input
 ==========
 
-``homologous_recombination_deficiency`` starts off the aligned reads, i.e. ``ngs_mapping``.
-Both the normal & tumor samples are required to generate the score.
+``homologous_recombination_deficiency`` starts off the ``sequenza`` copy number output.
+Some steps performed by ``sequenza`` are repeated by ``scanHRD``, as ``scanHRD`` uses a specific 
+set of arguments. This is the reason why ``sequenza`` is required by the step.
 
 ===========
 Step Output
@@ -32,9 +37,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.scarHRD.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
-    - ``{mapper}.scarHRD.{lib_name}-{lib_pk}.json``
+- ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}/out/``
+    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
+    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.json``
 
 =====================
 Default Configuration
@@ -223,7 +228,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:
-                                if ".tmp." not in f and not f.endswith("/.done"):
+                                if ".tmp." not in f and not f.endswith(".done"):
                                     yield f.replace("work/", "output/")
 
     def check_config(self):
