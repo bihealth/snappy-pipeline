@@ -211,3 +211,69 @@ rule panel_of_normals_cnvkit_report:
         args=wf.substep_dispatch("cnvkit", "get_args", "report"),
     wrapper:
         wf.wrapper_path("cnvkit/report")
+
+
+# Panel of normals (PureCN) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# Install the annotation R package --------------------------
+
+
+rule panel_of_normals_purecn_install:
+    output:
+        **wf.get_output_files("purecn", "install"),
+    params:
+        **wf.get_params("purecn", "install"),
+    resources:
+        time=wf.get_resource("purecn", "install", "time"),
+        memory=wf.get_resource("purecn", "install", "memory"),
+        partition=wf.get_resource("purecn", "install", "partition"),
+    log:
+        **wf.get_log_file("purecn", "install"),
+    wrapper:
+        wf.wrapper_path("r")
+
+
+rule panel_of_normals_purecn_prepare:
+    input:
+        **wf.get_input_files("purecn", "prepare"),
+    output:
+        **wf.get_output_files("purecn", "prepare"),
+    resources:
+        time=wf.get_resource("purecn", "prepare", "time"),
+        memory=wf.get_resource("purecn", "prepare", "memory"),
+        partition=wf.get_resource("purecn", "prepare", "partition"),
+    log:
+        **wf.get_log_file("purecn", "prepare"),
+    wrapper:
+        wf.wrapper_path("purecn/prepare")
+
+
+rule panel_of_normals_purecn_coverage:
+    input:
+        unpack(wf.get_input_files("purecn", "coverage")),
+    output:
+        **wf.get_output_files("purecn", "coverage"),
+    resources:
+        time=wf.get_resource("purecn", "coverage", "time"),
+        memory=wf.get_resource("purecn", "coverage", "memory"),
+        partition=wf.get_resource("purecn", "coverage", "partition"),
+    log:
+        **wf.get_log_file("purecn", "coverage"),
+    wrapper:
+        wf.wrapper_path("purecn/coverage")
+
+
+rule panel_of_normals_purecn_create_panel:
+    input:
+        unpack(wf.get_input_files("purecn", "create_panel")),
+    output:
+        **wf.get_output_files("purecn", "create_panel"),
+    resources:
+        time=wf.get_resource("purecn", "create_panel", "time"),
+        memory=wf.get_resource("purecn", "create_panel", "memory"),
+        partition=wf.get_resource("purecn", "create_panel", "partition"),
+    log:
+        **wf.get_log_file("purecn", "create_panel"),
+    wrapper:
+        wf.wrapper_path("purecn/create_panel")

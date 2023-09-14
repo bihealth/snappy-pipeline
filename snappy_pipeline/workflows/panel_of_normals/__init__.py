@@ -105,7 +105,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Names of the tools that might use panel of normals
-TOOLS = ["mutect2", "cnvkit", "access"]
+TOOLS = ("mutect2", "cnvkit", "access", "purecn")
 
 #: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = r"""
@@ -163,6 +163,19 @@ step_config:
     access:                       # Creates access file for cnvkit, based on genomic sequence & excluded regions (optionally)
       exclude: []                 # [access] Bed file of regions to exclude (mappability, blacklisted, ...)
       min_gap_size: 0             # [access] Minimum gap size between accessible sequence regions (0: use default value)
+    purecn:
+      path_normals_list: ""       # Optional file listing libraries to include in panel
+      path_bait_regions: REQUIRED # Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect), recommended by PureCN author
+      genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
+      enrichment_kit_name: "v8"   # For filename only...
+      packages:
+      - name: TxDb.Hsapiens.UCSC.hg19.knownGene # GRCh38: TxDb.Hsapiens.UCSC.hg38.knownGene
+        repo: bioconductor
+      - name: lima1/PSCBS         # PSCBS (without weighting) is installed by by environment.yaml
+        repo: github
+      mappability: "" # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
+      reptiming: ""   # Nothing for GRCh38
+      seed: 1234567
 """
 
 
@@ -173,13 +186,18 @@ class PanelOfNormalsStepPart(BaseStepPart):
     merges all the individual results in the the panel.
     """
 
-    #: Class available actions
-    actions = ("prepare_panel", "create_panel")
+    #: Step name (default, must be overwritten)
+    name = None
 
     def __init__(self, parent):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.normal_libraries = list(self._get_normal_libraries())
+        if self.name and self.config[self.name].get("path_normals_list"):
+            self.normal_libraries = []
+            with open(self.config[self.name]["path_normals_list"], "rt") as f:
+                for line in f:
+                    self.normal_libraries.append(line.strip())
 
     def _get_normal_libraries(self):
         for sheet in self.parent.shortcut_sheets:
@@ -193,6 +211,115 @@ class PanelOfNormalsStepPart(BaseStepPart):
                             for _, ngs_library in test_sample.ngs_libraries.items():
                                 yield ngs_library.name
 
+    @staticmethod
+    @dictify
+    def _get_log_file(tpl):
+        """Return all log files files"""
+        ext_dict = {
+            "conda_list": "conda_list.txt",
+            "conda_list_md5": "conda_list.txt.md5",
+            "conda_info": "conda_info.txt",
+            "conda_info_md5": "conda_info.txt.md5",
+            "log": "log",
+            "log_md5": "log.md5",
+        }
+        for key, ext in ext_dict.items():
+            yield key, tpl + "." + ext
+
+
+class PureCnStepPart(PanelOfNormalsStepPart):
+    """Creating a panel of normals with GC-corrected coverage"""
+
+    #: Step name
+    name = "purecn"
+
+    #: Actions
+    actions = ("install", "prepare", "coverage", "create_panel")
+
+    #: Resources
+    resource_usage = {
+        "prepare": ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory="24G",
+        ),
+        "coverage": ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory="24G",
+        ),
+    }
+
+    def get_input_files(self, action):
+        self._validate_action(action)
+        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        if action == "prepare":
+            return {"packages": "work/R_packages/out/PureCN.done"}
+        if action == "coverage":
+            return self._get_input_files_coverage
+        if action == "create_panel":
+            return self._get_input_files_create
+
+    @dictify
+    def _get_input_files_coverage(self, wildcards):
+        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
+        yield "packages", "work/R_packages/out/PureCN.done"
+        yield "intervals", "work/static_data/out/PureCN.list"
+        yield "bam", self.ngs_mapping(tpl.format(**wildcards))
+
+    @dictify
+    def _get_input_files_create(self, wildcards):
+        tpl = "work/{mapper}.PureCN.{lib}/out/{mapper}.{lib}_coverage_loess.txt.gz"
+        yield "packages", "work/R_packages/out/PureCN.done"
+        yield "normals", [
+            tpl.format(mapper=wildcards.mapper, lib=lib) for lib in self.normal_libraries
+        ]
+
+    def get_output_files(self, action):
+        self._validate_action(action)
+
+        if action == "install":
+            return {"done": "work/R_packages/out/PureCN.done"}
+        if action == "prepare":
+            return {
+                "intervals": "work/static_data/out/PureCN.list",
+                "optimized": "work/static_data/out/PureCN.optimized_intervals.bed.gz",
+            }
+        if action == "coverage":
+            return {
+                "coverage": "work/{mapper}.PureCN.{normal_library}/out/{mapper}.{normal_library}_coverage_loess.txt.gz"
+            }
+        if action == "create_panel":
+            return {
+                "rds": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds",
+                "rds_md5": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds.md5",
+                "bed": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.bed",
+                "png": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.png",
+            }
+
+    @classmethod
+    def get_log_file(cls, action):
+        tpls = {
+            "install": "work/R_packages/log/PureCN",
+            "prepare": "work/static_data/log/PureCN",
+            "coverage": "work/{mapper}.PureCN.{normal_library}/log/{mapper}.{normal_library}",
+            "create_panel": "work/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals",
+        }
+        assert action in cls.actions
+        return cls._get_log_file(tpls[action])
+
+    def get_params(self, action):
+        self._validate_action(action)
+        return {"packages": self.config["purecn"]["packages"]}
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return  # PureCN not enabled, skip
+        self.parent.ensure_w_config(
+            ("step_config", "panel_of_normals", self.name, "path_bait_regions"),
+            "Path to exome panel bait regions not defined for tool {}".format(self.name),
+        )
+
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
@@ -200,8 +327,11 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     #: Step name
     name = "mutect2"
 
+    #: Class available actions
+    actions = ("prepare_panel", "create_panel")
+
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
+    resource_usage = {
         "prepare_panel": ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
@@ -214,14 +344,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ),
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        if self.config["mutect2"]["path_normals_list"]:
-            self.normal_libraries = []
-            with open(self.config["mutect2"]["path_normals_list"], "rt") as f:
-                for line in f:
-                    self.normal_libraries.append(line.strip())
-
     def check_config(self):
         if self.name not in self.config["tools"]:
             return  # Mutect not enabled, skip
@@ -229,18 +351,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
 
     def get_input_files(self, action):
         """Return input files for mutect2 variant calling"""
@@ -279,30 +389,21 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "vcf_tbi_md5": "vcf.gz.tbi.md5",
         }
         tpls = {
-            "prepare_panel": "work/{{mapper}}.{tool}/out/{{mapper}}.{tool}.{{normal_library}}.prepare.{ext}",
-            "create_panel": "work/{{mapper}}.{tool}/out/{{mapper}}.{tool}.panel_of_normals.{ext}",
+            "prepare_panel": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare",
+            "create_panel": "work/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals",
         }
         for key, ext in ext_dict.items():
-            yield key, tpls[action].format(tool=self.name, ext=ext)
+            yield key, tpls[action] + "." + ext
 
-    @dictify
-    def get_log_file(self, action):
+    @classmethod
+    def get_log_file(cls, action):
         """Return panel of normal files"""
-        self._validate_action(action)
-        ext_dict = {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
-        }
         tpls = {
-            "prepare_panel": "work/{{mapper}}.{tool}/log/{{mapper}}.{tool}.{{normal_library}}.prepare.{ext}",
-            "create_panel": "work/{{mapper}}.{tool}/log/{{mapper}}.{tool}.panel_of_normals.{ext}",
+            "prepare_panel": "work/{mapper}.mutect2/log/{mapper}.mutect2.{normal_library}.prepare",
+            "create_panel": "work/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals",
         }
-        for key, ext in ext_dict.items():
-            yield key, tpls[action].format(tool=self.name, ext=ext)
+        assert action in cls.actions
+        return cls._get_log_file(tpls[action])
 
 
 class CnvkitStepPart(PanelOfNormalsStepPart):
@@ -321,7 +422,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     )
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
+    resource_usage = {
         "target": ResourceUsage(
             threads=2,
             time="02:00:00",  # 2 hours
@@ -351,11 +452,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.config["cnvkit"]["path_normals_list"]:
-            self.normal_libraries = []
-            with open(self.config["cnvkit"]["path_normals_list"], "rt") as f:
-                for line in f:
-                    self.normal_libraries.append(line.strip())
         self.is_wgs = self.config["cnvkit"]["path_target_regions"] == ""
 
     def check_config(self):
@@ -373,18 +469,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         else:
             method = "hybrid"
         return {"method": method, "flat": (len(self.normal_libraries) == 0)}
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
@@ -527,33 +611,19 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "access_md5": "work/cnvkit.access/out/cnvkit.access.bed.md5",
         }
 
-    @dictify
-    def get_log_file(self, action):
+    @classmethod
+    def get_log_file(cls, action):
         """Return panel of normal files"""
-        ext_dict = {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
+        tpls = {
+            "target": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.target",
+            "antitarget": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.antitarget",
+            "coverage": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.{normal_library}.coverage",
+            "create_panel": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.panel_of_normals",
+            "report": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.report",
+            "access": "work/cnvkit.access/log/cnvkit.access",
         }
-        if action == "target":
-            tpl = "work/{{mapper}}.cnvkit/log/{{mapper}}.cnvkit.target.{ext}"
-        elif action == "antitarget":
-            tpl = "work/{{mapper}}.cnvkit/log/{{mapper}}.cnvkit.antitarget.{ext}"
-        elif action == "coverage":
-            tpl = "work/{{mapper}}.cnvkit/log/{{mapper}}.cnvkit.{{normal_library}}.coverage.{ext}"
-        elif action == "create_panel":
-            tpl = "work/{{mapper}}.cnvkit/log/{{mapper}}.cnvkit.panel_of_normals.{ext}"
-        elif action == "report":
-            tpl = "work/{{mapper}}.cnvkit/log/{{mapper}}.cnvkit.report.{ext}"
-        elif action == "access":
-            tpl = "work/cnvkit.access/log/cnvkit.access.{ext}"
-        else:
-            self._validate_action(action)
-        for key, ext in ext_dict.items():
-            yield key, tpl.format(ext=ext)
+        assert action in cls.actions
+        return cls._get_log_file(tpls[action])
 
 
 class AccessStepPart(PanelOfNormalsStepPart):
@@ -582,22 +652,11 @@ class AccessStepPart(PanelOfNormalsStepPart):
         tpl = "work/cnvkit.access/out/cnvkit.access.bed"
         return {"access": tpl, "access_md5": tpl + ".md5"}
 
-    @dictify
-    def get_log_file(self, action):
+    @classmethod
+    def get_log_file(cls, action):
         """Return log files"""
-        # Validate action
-        self._validate_action(action)
-        ext_dict = {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
-        }
-        tpl = "work/cnvkit.access/log/cnvkit.access.{ext}"
-        for key, ext in ext_dict.items():
-            yield key, tpl.format(ext=ext)
+        assert action in cls.actions
+        return cls._get_log_file("work/cnvkit.access/log/cnvkit.access")
 
 
 class PanelOfNormalsWorkflow(BaseStep):
@@ -627,17 +686,18 @@ class PanelOfNormalsWorkflow(BaseStep):
             workdir,
             (NgsMappingWorkflow,),
         )
+        # Initialize sub-workflows
+        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
                 Mutect2StepPart,
                 CnvkitStepPart,
                 AccessStepPart,
+                PureCnStepPart,
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
 
     @listify
     def get_result_files(self):
@@ -695,6 +755,13 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"
             result_files.extend([tpl + md5 for md5 in ("", ".md5")])
             tpl = "output/cnvkit.access/log/cnvkit.access.{ext}"
+            result_files.extend(self._expand_result_files(tpl, log_ext_list))
+
+        if "purecn" in set(self.config["tools"]) & set(TOOLS):
+            tpl = "output/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.{ext}"
+            ext_list = ("rds", "rds.md5")
+            result_files.extend(self._expand_result_files(tpl, ext_list))
+            tpl = "output/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         return result_files
