@@ -5,9 +5,6 @@ This step takes as input a wide range of files previously produced by the
 snappy_pipeline. It does the necessary data transformations to comply with the
 formats expected by cBioPortal and writes out the necessary metadata and data
 files.
-
-The output is a archive (tarball) that can be uploaded to a cbioportal instance
-for import.
 """
 
 from collections import OrderedDict
@@ -436,11 +433,11 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
-        if action == "gistic":
-            return {"action_type": "gistic", "extra_args": {"pipeline_id": "ENSEMBL"}}
         if action == "log2":
+            return {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
+        if action == "gistic":
             return {
-                "action_type": "log2",
+                "action_type": "gistic",
                 "extra_args": {
                     "pipeline_id": "ENSEMBL",
                     "amplification": "9",

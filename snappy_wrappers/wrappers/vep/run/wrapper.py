@@ -10,7 +10,10 @@ __email__ = "eric.blanc@bih-charite.de"
 # Get shortcuts to step configuration
 current_step = snakemake.config["pipeline_step"]["name"]
 vep_config = snakemake.config["step_config"][current_step]["vep"]
+pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
+
+full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
 shell(
     r"""
@@ -27,6 +30,28 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+if [[ -n "{full}" ]]
+then
+    vep --verbose --force_overwrite --offline --cache \
+        --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
+        --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
+        $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
+            echo --dir_cache {vep_config[cache_dir]}
+        fi) \
+        {script_output_options} \
+        --{vep_config[tx_flag]} \
+        --fasta {snakemake.config[static_data_config][reference][path]} \
+        --input_file {snakemake.input.vcf} --format vcf \
+        --output_file {full} --vcf --compress_output bgzip
+    tabix {full}
+
+    pushd $(dirname {full})
+    f=$(basename {full})
+    md5sum $f > $f.md5
+    md5sum $f.tbi > $f.tbi.md5
+    popd
+fi
+
 vep --verbose --force_overwrite --offline --cache \
     --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
     --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
@@ -34,14 +59,11 @@ vep --verbose --force_overwrite --offline --cache \
         echo --dir_cache {vep_config[cache_dir]}
     fi) \
     {script_output_options} \
-    $(if [[ "{vep_config[pick]}" = "yes" ]]; then \
-        echo "--pick"
-    fi) \
+    --pick --pick_order {pick_order} \
     --{vep_config[tx_flag]} \
     --fasta {snakemake.config[static_data_config][reference][path]} \
     --input_file {snakemake.input.vcf} --format vcf \
     --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
-
 tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})

@@ -230,6 +230,25 @@ def _build_protein_pattern():
     return re.compile(pattern)
 
 
+@functools.lru_cache
+def _build_silent_dinucleotide():
+    prefix = "^(([A-z0-9_\.\(\)-]+):)?p\.\(?"  # noqa: W605
+    postfix = "\)?$"  # noqa: W605
+
+    aa = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + ")"
+    aaTer = (
+        "("
+        + "|".join(aa_codes_short)
+        + "|"
+        + "|".join(aa_codes_long)
+        + "|\*|Ter"  # noqa: W605
+        + ")"
+    )
+    nb = "([0-9]+)"
+
+    return re.compile(prefix + aa + aaTer + "*" + nb + "=" + postfix)
+
+
 def _aa(aa, want_short=True, want_long=False):
     if want_short and aa in long_to_short.keys():
         return long_to_short[aa]
@@ -361,7 +380,7 @@ def _parse_mutation_groups(groups, want_short=True, want_long=False):
             + "1ext"
             + groups[iGroup + 1]
         )
-    iGroup += 3
+    iGroup += 2
 
     if groups[iGroup] is not None:
         # Extension C terminus
@@ -414,10 +433,12 @@ def parse_protein_mutation(x, args):
     add_sequence = False
     want_short = True
     want_long = False
+    illegal = True
     if args is not None and isinstance(args, dict):
         add_sequence = args.get("add_sequence", add_sequence)
         want_short = args.get("want_short", want_short)
         want_long = args.get("want_long", want_long)
+        illegal = args.get("illegal", illegal)
     if want_short and want_long:
         raise Exception("Cannot force both short & long amino-acide representations")
 
@@ -429,7 +450,14 @@ def parse_protein_mutation(x, args):
             )
             rslts.append(rslt)
         except ProteinMutationFormatException as e:
-            raise Exception(e)
+            if not illegal:
+                m = _build_silent_dinucleotide().match(mut)
+                if not m:
+                    rslts.append("")
+                else:
+                    raise Exception(e)
+            else:
+                raise Exception(e)
 
     return rslts
 

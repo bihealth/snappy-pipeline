@@ -348,6 +348,7 @@ output:                                               # Output columns definitio
             add_sequence: False                       # The arguments "add_sequence", "want_short" & "want_long"
             want_short: True                          # allow the user to change this behaviour.
             want_long: False
+            illegal: True                             # Skip variant when HGVSp is illegal
         on_missing: skip
         # default: ""
 
