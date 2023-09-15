@@ -106,9 +106,6 @@ rule variant_calling_clair3_genotype:
         memory=wf.get_resource("clair3", "genotype", "memory"),
         partition=wf.get_resource("clair3", "genotype", "partition"),
         tmpdir=wf.get_resource("clair3", "genotype", "tmpdir"),
-    params:
-        step_key="variant_calling",
-        caller_key="clair3",
     log:
         **wf.get_log_file("clair3", "genotype"),
     wrapper:

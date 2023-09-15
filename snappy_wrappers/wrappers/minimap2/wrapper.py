@@ -95,7 +95,7 @@ run_minimap2()
         -t {snakemake.config[step_config][ngs_mapping][minimap2][mapping_threads]} \
         -x $preset \
         -a {snakemake.config[step_config][ngs_mapping][minimap2][path_index]} \
-        -Y \
+        -y \
         --MD \
         /dev/stdin \
     | samtools addreplacerg \

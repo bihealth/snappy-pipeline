@@ -101,12 +101,12 @@ cp -a $TMPDIR/out/phased_output.bam {snakemake.output.bam}
 cp -a $TMPDIR/out/phased_output.bam.bai {snakemake.output.bam_bai}
 
 # Copy out the phased VCF files.
-cp -a $TMPDIR/out/merge_output.vcf.gz {snakemake.output.vcf}
-cp -a $TMPDIR/out/merge_output.vcf.gz.tbi {snakemake.output.vcf_tbi}
+mv $TMPDIR/out/merge_output.vcf.gz {snakemake.output.vcf}
+mv $TMPDIR/out/merge_output.vcf.gz.tbi {snakemake.output.vcf_tbi}
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.bam} {snakemake.output.bam_md5}
-compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_tbi_md5}
+compute-md5 {snakemake.output.bam_bai} {snakemake.output.bam_bai_md5}
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 compute-md5 {snakemake.output.gvcf} {snakemake.output.gvcf_md5}

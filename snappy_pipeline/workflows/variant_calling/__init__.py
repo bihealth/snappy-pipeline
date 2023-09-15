@@ -496,7 +496,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
             msg = "INFO: pedigree without index (names: {})"
             donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
             yield "bam", []
             yield "ped", None
         else:
@@ -564,7 +563,6 @@ class GvcfStepPartMixin:
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
             msg = "INFO: pedigree without index (names: {})"
             donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
             yield "ped", None
             yield "gvcf", []
         else:
@@ -632,10 +630,11 @@ class GvcfStepPartMixin:
         ]
 
 
-class Clair3StepPart(GvcfStepPartMixin, VariantCallingStepPart):
+class Clair3StepPart(VariantCallingStepPart):
     """Clair 3 variant calling"""
 
     name = "clair3"
+    actions = ("discover", "genotype")
 
     def check_config(self):
         if self.__class__.name not in self.config["tools"]:
@@ -687,7 +686,6 @@ class Clair3StepPart(GvcfStepPartMixin, VariantCallingStepPart):
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
             msg = "INFO: pedigree without index (names: {})"
             donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
             yield "ped", None
             yield "gvcf", []
         else:
@@ -700,6 +698,7 @@ class Clair3StepPart(GvcfStepPartMixin, VariantCallingStepPart):
                     continue  # skip
                 infix = f"{wildcards.mapper}.%s_discover.{donor.dna_ngs_library.name}" % self.name
                 gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
+            yield "gvcf", gvcfs
 
     @dictify
     def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
