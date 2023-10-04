@@ -143,6 +143,9 @@ def test_mutect2_step_part_get_output_files_create_panel(panel_of_normals_workfl
     """Tests Mutect2StepPart._get_output_files_create_panel()"""
     base_name_out = "work/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    base_name_out = "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB"
+    expected["db"] = base_name_out + ".tar.gz"
+    expected["db_md5"] = expected["db"] + ".md5"
     actual = panel_of_normals_workflow.get_output_files("mutect2", "create_panel")
     assert actual == expected
 
@@ -482,35 +485,23 @@ def test_access_step_part_get_resource_usage(panel_of_normals_workflow):
 # Tests for PureCnStepPart -------------------------------------------------------------------------
 
 
-def test_purecn_step_part_get_params_install(panel_of_normals_workflow):
-    """Tests PureCnStepPart._get_params_install()"""
-    expected = {
-        "packages": [
-            OrderedDict([("name", "TxDb.Hsapiens.UCSC.hg19.knownGene"), ("repo", "bioconductor")]),
-            OrderedDict([("name", "lima1/PSCBS"), ("repo", "github")]),
-        ]
-    }
-    actual = panel_of_normals_workflow.get_params("purecn", "install")
-    assert actual == expected
-
-
 def test_purecn_step_part_get_output_files_install(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_install()"""
-    expected = {"done": "work/R_packages/out/PureCN.done"}
+    expected = {"container": "work/containers/out/purecn.simg"}
     actual = panel_of_normals_workflow.get_output_files("purecn", "install")
     assert actual == expected
 
 
 def test_purecn_step_part_get_log_file_install(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_install()"""
-    expected = get_expected_log_files_dict(base_out="work/R_packages/log/PureCN")
+    expected = get_expected_log_files_dict(base_out="work/containers/log/purecn")
     actual = panel_of_normals_workflow.get_log_file("purecn", "install")
     assert actual == expected
 
 
 def test_purecn_step_part_get_input_files_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_input_files_prepare()"""
-    expected = {"packages": "work/R_packages/out/PureCN.done"}
+    expected = {"container": "work/containers/out/purecn.simg"}
     actual = panel_of_normals_workflow.get_input_files("purecn", "prepare")
     assert actual == expected
 
@@ -518,8 +509,12 @@ def test_purecn_step_part_get_input_files_prepare(panel_of_normals_workflow):
 def test_purecn_step_part_get_output_files_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_prepare()"""
     expected = {
-        "intervals": "work/static_data/out/PureCN.list",
-        "optimized": "work/static_data/out/PureCN.optimized_intervals.bed.gz",
+        "intervals": "work/purecn/out/unknown_unknown.list",
+        "optimized": "work/purecn/out/unknown_unknown.bed.gz",
+        "tbi": "work/purecn/out/unknown_unknown.bed.gz.tbi",
+        "intervals_md5": "work/purecn/out/unknown_unknown.list.md5",
+        "optimized_md5": "work/purecn/out/unknown_unknown.bed.gz.md5",
+        "tbi_md5": "work/purecn/out/unknown_unknown.bed.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("purecn", "prepare")
     assert actual == expected
@@ -527,7 +522,7 @@ def test_purecn_step_part_get_output_files_prepare(panel_of_normals_workflow):
 
 def test_purecn_step_part_get_log_file_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_prepare()"""
-    expected = get_expected_log_files_dict(base_out="work/static_data/log/PureCN")
+    expected = get_expected_log_files_dict(base_out="work/purecn/log/unknown_unknown")
     actual = panel_of_normals_workflow.get_log_file("purecn", "prepare")
     assert actual == expected
 
@@ -541,8 +536,8 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
         }
     )
     expected = {
-        "packages": "work/R_packages/out/PureCN.done",
-        "intervals": "work/static_data/out/PureCN.list",
+        "container": "work/containers/out/purecn.simg",
+        "intervals": "work/purecn/out/unknown_unknown.list",
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "coverage")(wildcards)
@@ -552,7 +547,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
 def test_purecn_step_part_get_output_files_coverage(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_coverage()"""
     expected = {
-        "coverage": "work/{mapper}.PureCN.{normal_library}/out/{mapper}.{normal_library}_coverage_loess.txt.gz"
+        "coverage": "work/{mapper}.purecn/out/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}_coverage_loess.txt.gz"
     }
     actual = panel_of_normals_workflow.get_output_files("purecn", "coverage")
     assert actual == expected
@@ -561,7 +556,7 @@ def test_purecn_step_part_get_output_files_coverage(panel_of_normals_workflow):
 def test_purecn_step_part_get_log_file_coverage(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_coverage()"""
     expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.PureCN.{normal_library}/log/{mapper}.{normal_library}"
+        base_out="work/{mapper}.purecn/log/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}"
     )
     actual = panel_of_normals_workflow.get_log_file("purecn", "coverage")
     assert actual == expected
@@ -572,10 +567,10 @@ def test_purecn_step_part_get_input_files_create_panel(panel_of_normals_workflow
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "normals": [
-            "work/bwa.PureCN.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1_coverage_loess.txt.gz",
-            "work/bwa.PureCN.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1_coverage_loess.txt.gz",
+            "work/bwa.purecn/out/bwa.P001-N1-DNA1-WGS1_coverage_loess.txt.gz",
+            "work/bwa.purecn/out/bwa.P002-N1-DNA1-WGS1_coverage_loess.txt.gz",
         ],
-        "packages": "work/R_packages/out/PureCN.done",
+        "container": "work/containers/out/purecn.simg",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "create_panel")(wildcards)
     assert actual == expected
@@ -584,10 +579,13 @@ def test_purecn_step_part_get_input_files_create_panel(panel_of_normals_workflow
 def test_purecn_step_part_get_output_files_create_panel(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_create_panel()"""
     expected = {
-        "rds": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds",
-        "rds_md5": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds.md5",
-        "bed": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.bed",
-        "png": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.png",
+        "db": "work/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.rds",
+        "db_md5": "work/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.rds.md5",
+        "mapbias": "work/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.rds",
+        "mapbias_md5": "work/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.rds.md5",
+        "lowcov": "work/{mapper}.purecn/out/{mapper}.purecn.low_coverage_targets.bed",
+        "hq": "work/{mapper}.purecn/out/{mapper}.purecn.hq_sites.bed",
+        "plot": "work/{mapper}.purecn/out/{mapper}.purecn.interval_weights.png",
     }
     actual = panel_of_normals_workflow.get_output_files("purecn", "create_panel")
     assert actual == expected
@@ -596,7 +594,7 @@ def test_purecn_step_part_get_output_files_create_panel(panel_of_normals_workflo
 def test_purecn_step_part_get_log_file_create_panel(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_create_panel()"""
     expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals"
+        base_out="work/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals"
     )
     actual = panel_of_normals_workflow.get_log_file("purecn", "create_panel")
     assert actual == expected
@@ -606,6 +604,8 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     """Tests PureCnStepPart.get_resource_usage() for all actions"""
     expected = {
         "coverage": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "prepare": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "create_panel": {"threads": 1, "memory": "24G", "time": "04:00:00"},
     }
     for action, resources in expected.items():
         for resource, value in resources.items():
@@ -629,6 +629,12 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     expected += [
         tpl.format(mapper=mapper, ext=ext)
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for mapper in ("bwa",)
+    ]
+    tpl = "output/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.{ext}"
+    expected += [
+        tpl.format(mapper=mapper, ext=ext)
+        for ext in ("tar.gz", "tar.gz.md5")
         for mapper in ("bwa",)
     ]
     # add log files
@@ -671,12 +677,25 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     ).values()
 
     # PureCN
-    tpl = "output/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds{chksum}"
+    tpl = "output/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.rds{chksum}"
+    expected += [
+        tpl.format(mapper=mapper, chksum=chksum) for mapper in ("bwa",) for chksum in ("", ".md5")
+    ]
+    tpl = "output/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.rds{chksum}"
     expected += [
         tpl.format(mapper=mapper, chksum=chksum) for mapper in ("bwa",) for chksum in ("", ".md5")
     ]
     expected += get_expected_log_files_dict(
-        base_out="output/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals".format(mapper="bwa")
+        base_out="output/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals".format(mapper="bwa")
+    ).values()
+    tpl = "output/purecn/out/unknown_unknown.{ext}{chksum}"
+    expected += [
+        tpl.format(ext=ext, chksum=chksum)
+        for ext in ("list", "bed.gz", "bed.gz.tbi")
+        for chksum in ("", ".md5")
+    ]
+    expected += get_expected_log_files_dict(
+        base_out="output/purecn/log/unknown_unknown".format(mapper="bwa")
     ).values()
 
     expected = list(sorted(expected))

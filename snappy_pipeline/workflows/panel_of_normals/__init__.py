@@ -114,6 +114,9 @@ step_config:
   panel_of_normals:
     tools: ['mutect2']  # REQUIRED - available: 'mutect2'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
+    ignore_chroms: []   # patterns of chromosome names to ignore
+                        # hs37d5: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']
+                        # GRCh38.d1.vd1: [chrEBV, 'HPV*', CMV, HBV, 'HCV-*', 'HIV-*', KSHV, 'HTLV-1', MCV, '*_decoy', 'chrUn_GL00220*', SV40]
     # Configuration for mutect2
     mutect2:
       path_normals_list: null    # Optional file listing libraries to include in panel
@@ -134,13 +137,6 @@ step_config:
       job_mult_time: 1           # running time multiplier
       merge_mult_memory: 1       # memory multiplier for merging
       merge_mult_time: 1         # running time multiplier for merging
-      ignore_chroms:             # patterns of chromosome names to ignore
-      - NC_007605    # herpes virus
-      - hs37d5       # GRCh37 decoy
-      - chrEBV       # Eppstein-Barr Virus
-      - '*_decoy'    # decoy contig
-      - 'HLA-*'      # HLA genes
-      - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
     cnvkit:
       path_normals_list: ""       # Optional file listing libraries to include in panel
       path_target_regions: ""     # Bed files of targetted regions (Missing when creating a panel of normals for WGS data)
@@ -167,12 +163,7 @@ step_config:
       path_normals_list: ""       # Optional file listing libraries to include in panel
       path_bait_regions: REQUIRED # Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect), recommended by PureCN author
       genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
-      enrichment_kit_name: "v8"   # For filename only...
-      packages:
-      - name: TxDb.Hsapiens.UCSC.hg19.knownGene # GRCh38: TxDb.Hsapiens.UCSC.hg38.knownGene
-        repo: bioconductor
-      - name: lima1/PSCBS         # PSCBS (without weighting) is installed by by environment.yaml
-        repo: github
+      enrichment_kit_name: "unknown" # For filename only...
       mappability: "" # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
       reptiming: ""   # Nothing for GRCh38
       seed: 1234567
@@ -248,13 +239,18 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             time="04:00:00",  # 4 hours
             memory="24G",
         ),
+        "create_panel": ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory="24G",
+        ),
     }
 
     def get_input_files(self, action):
         self._validate_action(action)
         self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         if action == "prepare":
-            return {"packages": "work/R_packages/out/PureCN.done"}
+            return {"container": "work/containers/out/purecn.simg"}
         if action == "coverage":
             return self._get_input_files_coverage
         if action == "create_panel":
@@ -262,55 +258,67 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
+        yield "container", "work/containers/out/purecn.simg"
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
-        yield "packages", "work/R_packages/out/PureCN.done"
-        yield "intervals", "work/static_data/out/PureCN.list"
+        yield "intervals", "work/purecn/out/{}_{}.list".format(
+            self.config["purecn"]["enrichment_kit_name"],
+            self.config["purecn"]["genome_name"],
+        )
         yield "bam", self.ngs_mapping(tpl.format(**wildcards))
 
     @dictify
     def _get_input_files_create(self, wildcards):
-        tpl = "work/{mapper}.PureCN.{lib}/out/{mapper}.{lib}_coverage_loess.txt.gz"
-        yield "packages", "work/R_packages/out/PureCN.done"
+        yield "container", "work/containers/out/purecn.simg"
+        tpl = "work/{mapper}.purecn/out/{mapper}.{normal_library}_coverage_loess.txt.gz"
         yield "normals", [
-            tpl.format(mapper=wildcards.mapper, lib=lib) for lib in self.normal_libraries
+            tpl.format(mapper=wildcards.mapper, normal_library=lib) for lib in self.normal_libraries
         ]
 
     def get_output_files(self, action):
         self._validate_action(action)
 
         if action == "install":
-            return {"done": "work/R_packages/out/PureCN.done"}
+            return {"container": "work/containers/out/purecn.simg"}
         if action == "prepare":
+            base_out = "{}_{}".format(
+                self.config["purecn"]["enrichment_kit_name"],
+                self.config["purecn"]["genome_name"],
+            )
             return {
-                "intervals": "work/static_data/out/PureCN.list",
-                "optimized": "work/static_data/out/PureCN.optimized_intervals.bed.gz",
+                "intervals": "work/purecn/out/" + base_out + ".list",
+                "optimized": "work/purecn/out/" + base_out + ".bed.gz",
+                "tbi": "work/purecn/out/" + base_out + ".bed.gz.tbi",
+                "intervals_md5": "work/purecn/out/" + base_out + ".list.md5",
+                "optimized_md5": "work/purecn/out/" + base_out + ".bed.gz.md5",
+                "tbi_md5": "work/purecn/out/" + base_out + ".bed.gz.tbi.md5",
             }
         if action == "coverage":
             return {
-                "coverage": "work/{mapper}.PureCN.{normal_library}/out/{mapper}.{normal_library}_coverage_loess.txt.gz"
+                "coverage": "work/{mapper}.purecn/out/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}_coverage_loess.txt.gz"
             }
         if action == "create_panel":
             return {
-                "rds": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds",
-                "rds_md5": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.rds.md5",
-                "bed": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.bed",
-                "png": "work/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.png",
+                "db": "work/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.rds",
+                "db_md5": "work/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.rds.md5",
+                "mapbias": "work/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.rds",
+                "mapbias_md5": "work/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.rds.md5",
+                "lowcov": "work/{mapper}.purecn/out/{mapper}.purecn.low_coverage_targets.bed",
+                "hq": "work/{mapper}.purecn/out/{mapper}.purecn.hq_sites.bed",
+                "plot": "work/{mapper}.purecn/out/{mapper}.purecn.interval_weights.png",
             }
 
-    @classmethod
-    def get_log_file(cls, action):
+    def get_log_file(self, action):
         tpls = {
-            "install": "work/R_packages/log/PureCN",
-            "prepare": "work/static_data/log/PureCN",
-            "coverage": "work/{mapper}.PureCN.{normal_library}/log/{mapper}.{normal_library}",
-            "create_panel": "work/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals",
+            "install": "work/containers/log/purecn",
+            "prepare": "work/purecn/log/{}_{}".format(
+                self.config["purecn"]["enrichment_kit_name"],
+                self.config["purecn"]["genome_name"],
+            ),
+            "coverage": "work/{mapper}.purecn/log/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}",
+            "create_panel": "work/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals",
         }
-        assert action in cls.actions
-        return cls._get_log_file(tpls[action])
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return {"packages": self.config["purecn"]["packages"]}
+        assert action in self.actions
+        return self._get_log_file(tpls[action])
 
     def check_config(self):
         if self.name not in self.config["tools"]:
@@ -394,6 +402,9 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         }
         for key, ext in ext_dict.items():
             yield key, tpls[action] + "." + ext
+        if action == "create_panel":
+            yield "db", "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz"
+            yield "db_md5", "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz.md5"
 
     @classmethod
     def get_log_file(cls, action):
@@ -720,6 +731,9 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals.{ext}"
             ext_list = ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
+            tpl = "output/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.{ext}"
+            ext_list = ("tar.gz", "tar.gz.md5")
+            result_files.extend(self._expand_result_files(tpl, ext_list))
             tpl = "output/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
@@ -758,10 +772,24 @@ class PanelOfNormalsWorkflow(BaseStep):
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         if "purecn" in set(self.config["tools"]) & set(TOOLS):
-            tpl = "output/{mapper}.PureCN/out/{mapper}.PureCN.panel_of_normals.{ext}"
+            tpl = "output/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.{ext}"
             ext_list = ("rds", "rds.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/{mapper}.PureCN/log/{mapper}.PureCN.panel_of_normals.{ext}"
+            tpl = "output/{mapper}.purecn/out/{mapper}.purecn.mapping_bias.{ext}"
+            ext_list = ("rds", "rds.md5")
+            result_files.extend(self._expand_result_files(tpl, ext_list))
+            tpl = "output/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals.{ext}"
+            result_files.extend(self._expand_result_files(tpl, log_ext_list))
+            tpl = "output/purecn/out/{}_{}.{{ext}}".format(
+                self.config["purecn"]["enrichment_kit_name"],
+                self.config["purecn"]["genome_name"],
+            )
+            ext_list = ("list", "list.md5", "bed.gz", "bed.gz.md5", "bed.gz.tbi", "bed.gz.tbi.md5")
+            result_files.extend(self._expand_result_files(tpl, ext_list))
+            tpl = "output/purecn/log/{}_{}.{{ext}}".format(
+                self.config["purecn"]["enrichment_kit_name"],
+                self.config["purecn"]["genome_name"],
+            )
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         return result_files
