@@ -2,6 +2,7 @@
 """CUBI+Snakemake wrapper code for preparing PureCN panel of normals
 """
 
+import os
 import tempfile
 
 from snakemake import shell
@@ -11,63 +12,85 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["purecn"]
 
+if "genomicsDB" in config.keys() and config["genomicsDB"]:
+    genomicsDB = config["genomicsDB"]
+else:
+    genomicsDB = ""
+
 shell.executable("/bin/bash")
 
-with tempfile.NamedTemporaryFile("wt") as tmpf:
-    print("\n".join(snakemake.input.normals), file=tmpf)
-    tmpf.flush()
+shell(
+    r"""
+set -x
 
-    shell(
-        r"""
-    set -x
-
-    # Also pipe everything to log file
-    if [[ -n "{snakemake.log.log}" ]]; then
-        if [[ "$(set +e; tty; set -e)" != "" ]]; then
-            rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-            exec &> >(tee -a "{snakemake.log.log}" >&2)
-        else
-            rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-            echo "No tty, logging disabled" >"{snakemake.log.log}"
-        fi
+# Also pipe everything to log file
+if [[ -n "{snakemake.log.log}" ]]; then
+    if [[ "$(set +e; tty; set -e)" != "" ]]; then
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
+    else
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
+fi
 
-    # Write out information about conda installation.
-    conda list >{snakemake.log.conda_list}
-    conda info >{snakemake.log.conda_info}
-    md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-    md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+# Write out information about conda installation.
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-    # Setup auto-cleaned tmpdir
-    export tmpdir=$(mktemp -d)
-    trap "rm -rf $tmpdir" EXIT
+# Setup auto-cleaned tmpdir
+export tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
 
-    export R_LIBS_USER=$(dirname {snakemake.input.packages})
+# MD5 checksums without dirname
+md5() {{
+    fn=$1
+    d=$(dirname $fn)
+    f=$(basename $fn)
+    pushd $d 1> /dev/null 2>&1
+    checksum=$(md5sum $f)
+    popd 1> /dev/null 2>&1
+    echo $checksum
+}}
 
-    # Find PureCN scripts in extdata
-    pkg_folders=$(R --quiet --vanilla -e 'cat(.libPaths(), sep="\n")' | grep -v '^>')
-    PURECN=$(for folder in $pkg_folders ; do ls -1 $folder | grep -E '^PureCN$' | sed -e "s#^#$folder/#" ; done)
-    PURECN="$PURECN/extdata"
+outdir=$tmpdir/out
+mkdir -p $outdir
 
-    # Create panel
-    Rscript $PURECN/NormalDB.R \
-        --out-dir $(dirname {snakemake.output.rds}) \
-        --coverage-files {tmpf.name} \
-        --genome {config[genome_name]} --assay {config[enrichment_kit_name]}
+mkdir $tmpdir/extra
+echo "{snakemake.input.normals}" | tr " " "\n" > $tmpdir/extra/filenames.txt
 
-    # Rename output
-    d=$(dirname {snakemake.output.rds})
-    mv $d/normalDB_{config[enrichment_kit_name]}_{config[genome_name]}.rds {snakemake.output.rds}
-    mv $d/low_coverage_targets_{config[enrichment_kit_name]}_{config[genome_name]}.bed {snakemake.output.bed}
-    mv $d/interval_weights_{config[enrichment_kit_name]}_{config[genome_name]}.png {snakemake.output.png}
+# Extract Mutect2 genomicsDB when present
+if [[ -n "{genomicsDB}" ]]
+then
+    pushd $tmpdir ; tar -zxvf {genomicsDB} ; popd
+    normal_panel=" --normal-panel /pon_db "
+else
+    mkdir $tmpdir/pon_db
+    normal_panel=""
+fi
 
-    # MD5 checksum for main result only
-    pushd $(dirname {snakemake.output.rds})
-    f=$(basename {snakemake.output.rds})
-    md5sum $f > $f.md5
-    popd
-    """
-    )
+# Create panel
+cmd="/usr/local/bin/Rscript /opt/PureCN/NormalDB.R \
+    --out-dir /output \
+    --coverage-files /extra/filenames.txt $normal_panel \
+    --genome {config[genome_name]} --assay {config[enrichment_kit_name]}
+"
+apptainer exec --home $PWD -B $outdir:/output -B $tmpdir/pon_db:/pon_db:ro -B $tmpdir/extra:/extra:ro {snakemake.input.container} $cmd
+
+# Move output to destination
+mv $outdir/normalDB_{config[enrichment_kit_name]}_{config[genome_name]}.rds {snakemake.output.db}
+mv $outdir/mapping_bias_{config[enrichment_kit_name]}_{config[genome_name]}.rds {snakemake.output.mapbias}
+mv $outdir/mapping_bias_hq_sites_{config[enrichment_kit_name]}_{config[genome_name]}.bed {snakemake.output.hq}
+mv $outdir/low_coverage_targets_{config[enrichment_kit_name]}_{config[genome_name]}.bed {snakemake.output.lowcov}
+mv $outdir/interval_weights_{config[enrichment_kit_name]}_{config[genome_name]}.png {snakemake.output.plot}
+
+# MD5 checksum for main result only
+md5 {snakemake.output.db} > {snakemake.output.db}.md5
+md5 {snakemake.output.mapbias} > {snakemake.output.mapbias}.md5
+"""
+)
 
 # Compute MD5 sums of logs.
 shell(

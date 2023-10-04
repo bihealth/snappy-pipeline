@@ -223,7 +223,7 @@ rule panel_of_normals_purecn_install:
     output:
         **wf.get_output_files("purecn", "install"),
     params:
-        **wf.get_params("purecn", "install"),
+        container="docker://markusriester/purecn",
     resources:
         time=wf.get_resource("purecn", "install", "time"),
         memory=wf.get_resource("purecn", "install", "memory"),
@@ -231,7 +231,7 @@ rule panel_of_normals_purecn_install:
     log:
         **wf.get_log_file("purecn", "install"),
     wrapper:
-        wf.wrapper_path("r")
+        wf.wrapper_path("singularity")
 
 
 rule panel_of_normals_purecn_prepare:

@@ -2,6 +2,8 @@
 """CUBI+Snakemake wrapper code for computing PureCN coverage
 """
 
+import os
+
 from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -10,6 +12,21 @@ step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["purecn"]
 
 shell.executable("/bin/bash")
+
+# Prepare files and directories that must be accessible by the container
+bound_files = {
+    "bam": os.path.realpath(snakemake.input.bam),
+}
+
+keys = list(bound_files.keys())
+bindings = []
+for i in range(len(keys)):
+    k = keys[i]
+    if bound_files[k]:
+        # Binding directory to /bindings/d<i>
+        bindings.append(" -B {}:/bindings/d{}:ro".format(os.path.dirname(bound_files[k]), i))
+        bound_files[k] = "/bindings/d{}/{}".format(i, os.path.basename(bound_files[k]))
+bindings = " ".join(bindings)
 
 shell(
     r"""
@@ -36,19 +53,19 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-export R_LIBS_USER=$(dirname {snakemake.input.packages})
-
-# Find PureCN scripts in extdata
-pkg_folders=$(R --quiet --vanilla -e 'cat(.libPaths(), sep="\n")' | grep -v '^>')
-PURECN=$(for folder in $pkg_folders ; do ls -1 $folder | grep -E '^PureCN$' | sed -e "s#^#$folder/#" ; done)
-PURECN="$PURECN/extdata"
-
 # Create coverage
-Rscript $PURECN/Coverage.R --force \
+cmd="/usr/local/bin/Rscript /opt/PureCN/Coverage.R --force \
     --seed {config[seed]} \
     --out-dir $(dirname {snakemake.output.coverage}) \
-    --bam {snakemake.input.bam} \
+    --bam {bound_files[bam]} \
     --intervals {snakemake.input.intervals}
+"
+mkdir -p $(dirname {snakemake.output.coverage})
+apptainer exec --home $PWD {bindings} {snakemake.input.container} $cmd
+
+pushd $(dirname {snakemake.output.coverage})
+md5sum $(basename {snakemake.output.coverage}) > $(basename {snakemake.output.coverage}).md5
+popd
 """
 )
 
