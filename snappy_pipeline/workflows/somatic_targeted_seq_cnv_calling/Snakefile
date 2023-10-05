@@ -306,3 +306,40 @@ rule somatic_targeted_seq_cnv_calling_sequenza_report:
         **wf.get_log_file("sequenza", "report"),
     wrapper:
         wf.wrapper_path("sequenza/report")
+
+
+# Run PureCN ------------------------------------------------------
+
+
+rule somatic_targeted_seq_cnv_calling_purecn_coverage:
+    input:
+        unpack(wf.get_input_files("purecn", "coverage")),
+    output:
+        **wf.get_output_files("purecn", "coverage"),
+    threads: wf.get_resource("purecn", "coverage", "threads")
+    resources:
+        time=wf.get_resource("purecn", "coverage", "time"),
+        memory=wf.get_resource("purecn", "coverage", "memory"),
+        partition=wf.get_resource("purecn", "coverage", "partition"),
+        tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
+    log:
+        **wf.get_log_file("purecn", "coverage"),
+    wrapper:
+        wf.wrapper_path("purecn/coverage")
+
+
+rule somatic_targeted_seq_cnv_calling_purecn_run:
+    input:
+        unpack(wf.get_input_files("purecn", "run")),
+    output:
+        **wf.get_output_files("purecn", "run"),
+    threads: wf.get_resource("purecn", "run", "threads")
+    resources:
+        time=wf.get_resource("purecn", "run", "time"),
+        memory=wf.get_resource("purecn", "run", "memory"),
+        partition=wf.get_resource("purecn", "run", "partition"),
+        tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("purecn", "run"),
+    wrapper:
+        wf.wrapper_path("purecn/run")

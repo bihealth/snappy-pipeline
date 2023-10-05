@@ -192,6 +192,24 @@ step_config:
       features: EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75
       prefix: ''
       nThread: 8
+    purecn:
+      genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
+      enrichment_kit_name: "unknown" # For filename only...
+      mappability: ""             # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
+      reptiming: ""               # Nothing for GRCh38
+      seed: 1234567
+      extra_commands:             # Recommended extra arguments for PureCN, extra_arguments: [] to clear them all
+        model: betabin
+        "fun-segmentation": PSCBS
+        "post-optimize": ""       # post-optimize is a flag
+      # A PureCN panel of normals is required, with the container, the intervals & the PON rds file
+      path_container: REQUIRED    # ../panel_of_normals/work/containers/out/purecn.simg
+      path_intervals: REQUIRED    # ../panel_of_normals/output/purecn/out/<enrichement_kit_name>_<genome_name>.list
+      path_panel_of_normals: REQUIRED # ../panel_of_normals/output/bwa.purecn/out/bwa.purecn.panel_of_normals.rds
+      path_mapping_bias: REQUIRED # ../panel_of_normals/output/bwa.purecn/out/bwa.purecn.mapping_bias.rds
+      # IMPORTANT NOTE: Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true"
+      somatic_variant_caller: "mutect2"
+      path_somatic_variants: ../somatic_variant_calling_for_purecn
     cnvetti_on_target:
       path_target_regions: REQUIRED # REQUIRED
     cnvetti_off_target:
@@ -236,6 +254,18 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
         """Return name of normal (non-cancer) library"""
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.library_name]
         return pair.normal_sample.dna_ngs_library.name
+
+    @staticmethod
+    @dictify
+    def _get_log_file_from_prefix(prefix):
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
 
 class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
@@ -373,19 +403,13 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
             "Path to target regions is missing for {}".format(self.name),
         )
 
-    @dictify
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
         # Validate action
         self._validate_action(action)
         name_pattern = self.name_pattern.format(action=action)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
+        prefix = os.path.join("work", name_pattern, "log", name_pattern)
+        return self._get_log_file_from_prefix(prefix)
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -537,37 +561,128 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_params_report(self, wildcards):
         return wildcards["library_name"]
 
-    @dictify
     def get_log_file(self, action):
         """Return dict of log files."""
+        # Validate action
+        self._validate_action(action)
         if action == "install":
             prefix = "work/R_packages/log/sequenza"
         elif action == "gcreference":
             prefix = "work/static_data/log/sequenza.{length}".format(
                 length=self.config["sequenza"]["length"],
             )
-        elif action == "run":
-            prefix = (
-                "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.run"
-            )
-        elif action == "report":
-            prefix = (
-                "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.report"
-            )
         else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
+            name_pattern = "{mapper}.sequenza.{library_name}"
+            prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
+        return self._get_log_file_from_prefix(prefix)
+
+
+class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
+    """Perform somatic targeted CNV calling using PureCN"""
+
+    #: Step name
+    name = "purecn"
+
+    #: Class available actions
+    actions = ("coverage", "run")
+
+    resource_usage = {
+        "coverage": ResourceUsage(
+            threads=1,
+            time="04:00:00",  # 4 hours
+            memory="24G",
+        ),
+        "run": ResourceUsage(
+            threads=4,
+            time="24:00:00",  # 4 hours
+            memory="24G",
+        ),
+    }
+
+    def get_input_files(self, action):
+        """Return input paths input function, dependent on rule"""
+        # Validate action
+        self._validate_action(action)
+        action_mapping = {
+            "coverage": self._get_input_files_coverage,
+            "run": self._get_input_files_run,
+        }
+        return action_mapping[action]
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        name_pattern = "{mapper}.purecn.{library_name}".format(**wildcards)
+        yield "tumor", os.path.join(
+            "work",
+            name_pattern,
+            "out",
+            "{mapper}.{library_name}_coverage_loess.txt.gz".format(**wildcards),
         )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        name_pattern = "{mapper}.{caller}.{library_name}".format(
+            caller=self.config["purecn"]["somatic_variant_caller"],
+            **wildcards,
+        )
+        base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
+        variant_calling = self.parent.sub_workflows["somatic_variants"]
+        yield "vcf", variant_calling(base_path)
+
+    @dictify
+    def _get_input_files_coverage(self, wildcards):
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        name_pattern = "{mapper}.{library_name}".format(**wildcards)
+        base_path = os.path.join("output", name_pattern, "out", name_pattern)
+        yield "bam", ngs_mapping(base_path + ".bam")
+        yield "bai", ngs_mapping(base_path + ".bam.bai")
+
+    def get_output_files(self, action):
+        """Return output paths, dependent on rule"""
+        # Validate action
+        self._validate_action(action)
+        name_pattern = "{mapper}.purecn.{library_name}"
+        prefix = os.path.join("work", name_pattern, "out", name_pattern)
+        action_mapping = {
+            "coverage": {
+                "coverage": os.path.join(
+                    "work", name_pattern, "out", "{mapper}.{library_name}_coverage_loess.txt.gz"
+                )
+            },
+            "run": {
+                "segments": prefix + "_dnacopy.seg",
+                "ploidy": prefix + ".csv",
+                "pvalues": prefix + "_amplification_pvalues.csv",
+                "vcf": prefix + ".vcf.gz",
+                "vcf_tbi": prefix + ".vcf.gz.tbi",
+                "loh": prefix + "_loh.csv",
+                "segments_md5": prefix + "_dnacopy.seg.md5",
+                "ploidy_md5": prefix + ".csv.md5",
+                "pvalues_md5": prefix + "_amplification_pvalues.csv.md5",
+                "vcf_md5": prefix + ".vcf.gz.md5",
+                "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
+                "loh_md5": prefix + "_loh.csv.md5",
+            },
+        }
+        return action_mapping[action]
+
+    def get_log_file(self, action):
+        """Return dict of log files."""
+        # Validate action
+        self._validate_action(action)
+
+        name_pattern = "{mapper}.purecn.{library_name}"
+        prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
+        return self._get_log_file_from_prefix(prefix)
+
+    def check_config(self):
+        if self.name not in self.config["tools"]:
+            return  # skip check
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_targeted_seq_cnv_calling", self.name, "path_panel_of_normals"),
+            "Path to the PureCN panel of normal is missing",
+        )
+        self.parent.ensure_w_config(
+            ("step_config", "somatic_targeted_seq_cnv_calling", self.name, "path_mapping_bias"),
+            "Path to the PureCN mapping bias file is missing (created in the panel_of_normals step)",
+        )
 
 
 class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
@@ -837,16 +952,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "work/{{mapper}}.cnvkit.{{library_name}}/log/"
             "{{mapper}}.cnvkit.{action}.{{library_name}}"
         ).format(action=action)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        log_files = {}
-        for key, ext in key_ext:
-            log_files[key] = prefix + ext
-            log_files[key + "_md5"] = prefix + ext + ".md5"
-        return log_files
+        return self._get_log_file_from_prefix(prefix)
 
 
 class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
@@ -975,29 +1081,18 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "Path to target regions is missing",
         )
 
-    @dictify
-    def _get_log_file(self, action):
+    def get_log_file(self, action):
         """Return path to log file for the given action"""
         # Validate action
         self._validate_action(action)
 
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-
         if action == "prepare":
             log_file = "work/copywriter.prepare/log/snakemake.log"
-            yield "log", log_file
-            yield "log_md5", log_file + ".md5"
-        elif action in ("call", "run"):
-            tpl = (
-                "work/{mapper}.copywriter.{library_name}/log/{mapper}.copywriter.{library_name}."
-                + action
-            )
-            for key, ext in key_ext:
-                yield key, tpl + ext
+            return {"log": log_file, "log_md5": log_file + ".md5"}
+        else:
+            name_pattern = "{mapper}.copywriter.{library_name}"
+            prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
+            return self._get_log_file_from_prefix(prefix)
 
 
 class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
@@ -1035,11 +1130,18 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 CnvKitStepPart,
                 CopywriterStepPart,
                 SequenzaStepPart,
+                PureCNStepPart,
                 LinkOutStepPart,
             )
         )
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        if "purecn" in self.config["tools"]:
+            self.register_sub_workflow(
+                "somatic_variant_calling",
+                self.config["purecn"]["path_somatic_variants"],
+                "somatic_variants",
+            )
 
     @listify
     def get_result_files(self):
@@ -1047,6 +1149,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         tool_actions = {
             "cnvkit": ["fix", "postprocess", "report", "export"],
             "sequenza": ("run",),
+            "purecn": ("run",),
             "copywriter": ("call",),
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
