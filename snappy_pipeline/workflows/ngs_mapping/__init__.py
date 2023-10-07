@@ -417,6 +417,7 @@ step_config:
     # Configuration for Minimap2
     minimap2:
       mapping_threads: 16
+      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
 """
 
 
@@ -1068,7 +1069,7 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
-                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
+                if ngs_library.extra_infos["seqPlatform"] in ("ONT", "PacBio"):
                     suffix = "_long"
                 else:
                     suffix = ""
@@ -1464,7 +1465,8 @@ class NgsMappingWorkflow(BaseStep):
 
         # Validate DNA project
         dna_tool_list = tools_dict.get("dna", [])
-        if dna_analysis and not dna_tool_list:
+        dna_long_tool_list = tools_dict.get("dna_long", [])
+        if dna_analysis and not (dna_tool_list + dna_long_tool_list):
             raise InvalidConfiguration(
                 "Sample sheet contains DNA but configuration has no DNA "
                 "mapper defined in tool list."

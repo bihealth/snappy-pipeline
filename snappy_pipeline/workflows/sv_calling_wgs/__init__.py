@@ -1,4 +1,4 @@
-"""Implementation of the ``sv_calling_wgs`` step
+"""I
 """
 
 from itertools import chain
@@ -6,6 +6,7 @@ import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -16,6 +17,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.common import (
     ForwardResourceUsageMixin,
     ForwardSnakemakeFilesMixin,
+    augment_work_dir_with_output_links,
 )
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
@@ -96,7 +98,8 @@ step_config:
 
     # Long-read SV calling tool configuration
     sniffles2:
-      tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed  # REQUIRED
+      num_threads: 16
+      tandem_repeats: REQUIRED
       # Skip processing of the following libraries.  If the library is in
       # family/pedigree then all of the family/pedigree will be skipped.
       skip_libraries: []
@@ -278,17 +281,32 @@ class PopDelStepPart(
         )
 
 
-class Sniffles2StepPart(BaseStepPart):
+class Sniffles2StepPart(
+    SvCallingGetResultFilesMixin,
+    SvCallingGetLogFileMixin,
+    ForwardSnakemakeFilesMixin,
+    ForwardResourceUsageMixin,
+    BaseStepPart,
+):
     """WGS SV identification using Sniffles 2"""
+
+    ngs_mapping_tools_section = "dna_long"
 
     name = "sniffles2"
     actions = ("bam_to_snf", "snf_to_vcf")
 
-    _resource_usage = ResourceUsage(threads=2, time="0-02:00:00", memory="4G")
-    resource_usage_dict = {
-        "bam_to_snf": _resource_usage,
-        "snf_to_vcf": _resource_usage,
-    }
+    def get_resource_usage(self, action):
+        if action not in self.actions:
+            actions_str = ", ".join(self.actions)
+            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
+            raise UnsupportedActionException(error_message)
+        num_threads = self.config["sniffles2"]["num_threads"]
+        resource_usage = ResourceUsage(
+            threads=num_threads,
+            time="0-02:00:00",
+            memory=f"{int(2.0 * 1024 * num_threads)}M",
+        )
+        return resource_usage
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -296,10 +314,14 @@ class Sniffles2StepPart(BaseStepPart):
             "work/{mapper}.sniffles2.{index_ngs_library}/out/"
             "{mapper}.sniffles2.{index_ngs_library}{ext}"
         )
-        # Build shortcut from index library name to pedigree
+
         self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+
+        self.donor_ngs_library_to_pedigree = {}
+        for sheet in self.parent.shortcut_sheets:
+            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
@@ -311,21 +333,34 @@ class Sniffles2StepPart(BaseStepPart):
     def _get_output_files_bam_to_snf(self):
         infix = "{mapper}.sniffles2_bam_to_snf.{library_name}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
+        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
+        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
+        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
+        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
     @dictify
     def _get_input_files_snf_to_vcf(self, wildcards):
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         snfs = []
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.sniffles2_bam_to_snf.{donor.dna_ngs_library.name}.snf"
+                infix = f"{wildcards.mapper}.sniffles2_bam_to_snf.{donor.dna_ngs_library.name}"
                 snfs.append(f"work/{infix}/out/{infix}.snf")
         yield "snf", snfs
 
     @dictify
     def _get_output_files_snf_to_vcf(self):
-        infix = "{mapper}.sniffles2.{index_ngs_library}"
-        yield "snf", f"work/{infix}/out/{infix}.snf"
+        infix = "{mapper}.sniffles2.{library_name}"
+        work_files = {
+            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+        }
+        xs = augment_work_dir_with_output_links(
+            work_files, self.get_log_file("snf_to_vcf").values()
+        ).items()
+        yield from xs
 
 
 class SvCallingWgsWorkflow(BaseStep):
@@ -356,7 +391,7 @@ class SvCallingWgsWorkflow(BaseStep):
                 PopDelStepPart,
                 GcnvWgsStepPart,
                 MeltStepPart,
-                # Sniffles2StepPart,
+                Sniffles2StepPart,
                 WritePedigreeStepPart,
             )
         )

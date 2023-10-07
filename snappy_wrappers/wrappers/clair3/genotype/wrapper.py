@@ -52,21 +52,20 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-sniffles \
-    --reference {snakemake.config[static_data_config][reference][path]} \
-    --input {snakemake.input.bam} \
-    --tandem-repeats {snakemake.config[step_config][sv_calling_wgs][sniffles2][tandem_repeats]} \
-    --vcf $TMPDIR/tmp.vcf \
-    --snf {snakemake.output.snf} \
-    --threads {snakemake.threads}
+glnexus_cli \
+    --config $(dirname {__file__})/glnexus_config.yml \
+    {snakemake.input.gvcf} \
+| bcftools view - \
+| bgzip -@ 4 -c \
+> {snakemake.output.vcf}
 
-bgzip -c $TMPDIR/tmp.vcf >{snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 
 # Compute MD5 sums on output files
-compute-md5 {snakemake.output.snf} {snakemake.output.snf}.md5
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
+compute-md5 {snakemake.output.gvcf} {snakemake.output.gvcf_md5}
+compute-md5 {snakemake.output.gvcf_tbi} {snakemake.output.gvcf_tbi_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

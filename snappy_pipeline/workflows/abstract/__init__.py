@@ -1227,6 +1227,7 @@ class LinkInVcfExternalStepPart(LinkInStep):
         """
         self._validate_action(action)
         # Define path generator
+        import pdb; pdb.set_trace()
         path_gen = LinkInPathGenerator(
             self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
         )

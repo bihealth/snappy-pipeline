@@ -117,6 +117,10 @@ The following germline variant callers are currently available.
 
     Disabled by default.
 
+``clair3
+
+    Variant calling with Clair3, followed by genotyping with GLNexus.
+
 =======
 Reports
 =======
@@ -283,6 +287,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 #: Available germline variant callers
 VARIANT_CALLERS = (
     "bcftools_call",
+    "clair3",
     "gatk3_hc",
     "gatk3_ug",
     "gatk4_hc_gvcf",
@@ -348,6 +353,12 @@ step_config:
       window_length: 10000000
       num_threads: 16
       allow_seq_dict_incompatibility: false
+    clair3:
+      num_threads: 16
+      model_base_path: REQUIRED  # path to the Clair 3 models
+      model_map: # mapping from base caller model to clair3 model.
+        - caller_model: guppy/dna_r10.4.1_e8.2_400bps_hac_prom
+          clair3_model: r1041_e82_400bps_hac_g632
 """
 
 
@@ -375,7 +386,10 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        "mapper": chain(
+                            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna_long"],
+                        )
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
@@ -482,7 +496,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
             msg = "INFO: pedigree without index (names: {})"
             donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
             yield "bam", []
             yield "ped", None
         else:
@@ -532,6 +545,201 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         )
 
 
+class GvcfStepPartMixin:
+
+    actions = ("discover", "combine_gvcfs", "genotype")
+
+    @dictify
+    def _get_input_files_discover(self, wildcards):
+        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        bam_path = f"output/{infix}/out/{infix}.bam"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        yield "bam", ngs_mapping(bam_path)
+
+    @dictify
+    def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+
+        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
+            msg = "INFO: pedigree without index (names: {})"
+            donor_names = list(sorted(d.name for d in pedigree.donors))
+            yield "ped", None
+            yield "gvcf", []
+        else:
+            library_name = pedigree.index.dna_ngs_library.name
+            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+
+            gvcfs = []
+            for donor in pedigree.donors:
+                if not donor.dna_ngs_library:
+                    continue  # skip
+                infix = f"{wildcards.mapper}.%s_discover.{donor.dna_ngs_library.name}" % self.name
+                gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
+            yield "gvcf", gvcfs
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
+        infix = f"{wildcards.mapper}.%s_combine_gvcfs.{wildcards.library_name}" % self.name
+        yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
+        yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
+        yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
+        yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
+
+    @dictify
+    def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
+        infix = "{mapper}.%s_discover.{library_name}" % self.name
+        result = {
+            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+            "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
+            "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
+            "gvcf_tbi": f"work/{infix}/out/{infix}.g.vcf.gz.tbi",
+            "gvcf_tbi_md5": f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5",
+            "output_links": [],
+        }
+        yield from result.items()
+
+    @dictify
+    def _get_output_files_combine_gvcfs(self) -> SnakemakeDictItemsGenerator:
+        infix = "{mapper}.%s_combine_gvcfs.{library_name}" % self.name
+        yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
+        yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
+        yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
+        yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
+        yield "output_links", []
+
+    @dictify
+    def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
+        infix = "{mapper}.%s.{library_name}" % self.name
+        result = {
+            "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
+            "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
+            "gvcf_tbi": f"work/{infix}/out/{infix}.g.vcf.gz.tbi",
+            "gvcf_tbi_md5": f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5",
+            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+        }
+        yield from result.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(result.values(), self.get_log_file("genotype").values())
+        ]
+
+
+class Clair3StepPart(VariantCallingStepPart):
+    """Clair 3 variant calling"""
+
+    name = "clair3"
+    actions = ("discover", "genotype")
+
+    def check_config(self):
+        if self.__class__.name not in self.config["tools"]:
+            return  # caller not enabled, skip  # pragma: no cover
+
+    def get_args(self, action):
+        """Return function that maps wildcards to dict for input files"""
+
+        assert action in self.actions, f"invalid action: {action}"
+
+        def args_function(wildcards):
+            library_name = wildcards.library_name
+            extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
+            caller_model = None
+            for entry in self.config[self.name]["model_map"]:
+                if entry["caller_model"] == extra_infos["libraryKit"]:
+                    caller_model = entry["clair3_model"]
+                    break
+            if not caller_model:
+                raise ValueError(
+                    f"Could not find model for caller/model aka libraryKit of {caller_model}"
+                )
+            return {"seq_platform": extra_infos["seqPlatform"], "caller_model": caller_model}
+
+        return args_function
+
+    def get_resource_usage(self, action) -> ResourceUsage:
+        self._validate_action(action)
+        num_threads = self.config[self.name]["num_threads"]
+        mem_per_thread = 2.5
+        mem_total = int(mem_per_thread * num_threads + 0.5)
+        return ResourceUsage(
+            threads=num_threads,
+            time="2-00:00:00",
+            memory=f"{mem_total}G",
+        )
+
+    @dictify
+    def _get_input_files_discover(self, wildcards):
+        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        bam_path = f"output/{infix}/out/{infix}.bam"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        yield "bam", ngs_mapping(bam_path)
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+
+        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
+            msg = "INFO: pedigree without index (names: {})"
+            donor_names = list(sorted(d.name for d in pedigree.donors))
+            yield "ped", None
+            yield "gvcf", []
+        else:
+            library_name = pedigree.index.dna_ngs_library.name
+            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+
+            gvcfs = []
+            for donor in pedigree.donors:
+                if not donor.dna_ngs_library:
+                    continue  # skip
+                infix = f"{wildcards.mapper}.%s_discover.{donor.dna_ngs_library.name}" % self.name
+                gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
+            yield "gvcf", gvcfs
+
+    @dictify
+    def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
+        infix = "{mapper}.%s_discover.{library_name}" % self.name
+        result = {
+            "bam": f"work/{infix}/out/{infix}.bam.gz",
+            "bam_md5": f"work/{infix}/out/{infix}.bam.gz.md5",
+            "bam_bai": f"work/{infix}/out/{infix}.bam.gz.bai",
+            "bam_bai_md5": f"work/{infix}/out/{infix}.bam.gz.bai.md5",
+            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+            "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
+            "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
+            "gvcf_tbi": f"work/{infix}/out/{infix}.g.vcf.gz.tbi",
+            "gvcf_tbi_md5": f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5",
+        }
+        yield from result.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for key, work_path in result.items()
+            if key.startswith("bam")
+        ]
+
+    @dictify
+    def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
+        infix = "{mapper}.%s.{library_name}" % self.name
+        result = {
+            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
+            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
+            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+        }
+        yield from result.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(result.values(), self.get_log_file("genotype").values())
+        ]
+
+
 class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
 
@@ -575,86 +783,10 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
     name = "gatk4_hc_joint"
 
 
-class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
+class Gatk4HaplotypeCallerGvcfStepPart(GvcfStepPartMixin, GatkCallerStepPartBase):
     """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow"""
 
     name = "gatk4_hc_gvcf"
-
-    actions = ("discover", "combine_gvcfs", "genotype")
-
-    @dictify
-    def _get_input_files_discover(self, wildcards):
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
-        bam_path = f"output/{infix}/out/{infix}.bam"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        yield "bam", ngs_mapping(bam_path)
-
-    @dictify
-    def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-
-        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
-            msg = "INFO: pedigree without index (names: {})"
-            donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
-            yield "ped", None
-            yield "gvcf", []
-        else:
-            library_name = pedigree.index.dna_ngs_library.name
-            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
-
-            gvcfs = []
-            for donor in pedigree.donors:
-                if not donor.dna_ngs_library:
-                    continue  # skip
-                infix = f"{wildcards.mapper}.gatk4_hc_gvcf_discover.{donor.dna_ngs_library.name}"
-                gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
-            yield "gvcf", gvcfs
-
-    @dictify
-    def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
-        infix = f"{wildcards.mapper}.gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
-        yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
-        yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
-        yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
-        yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-
-    @dictify
-    def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_discover.{library_name}"
-        yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
-        yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
-        yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
-        yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
-
-    @dictify
-    def _get_output_files_combine_gvcfs(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_combine_gvcfs.{library_name}"
-        yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
-        yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
-        yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
-        yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
-
-    @dictify
-    def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf.{library_name}"
-        result = {
-            "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
-            "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
-            "gvcf_tbi": f"work/{infix}/out/{infix}.g.vcf.gz.tbi",
-            "gvcf_tbi_md5": f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5",
-            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
-            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
-            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
-        }
-        yield from result.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(result.values(), self.get_log_file("genotype").values())
-        ]
 
 
 class ReportGetLogFileMixin:
@@ -931,6 +1063,7 @@ class VariantCallingWorkflow(BaseStep):
             (
                 WritePedigreeStepPart,
                 BcftoolsCallStepPart,
+                Clair3StepPart,
                 Gatk3HaplotypeCallerStepPart,
                 Gatk3UnifiedGenotyperStepPart,
                 Gatk4HaplotypeCallerJointStepPart,
@@ -943,6 +1076,27 @@ class VariantCallingWorkflow(BaseStep):
         )
         # Register sub workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        # Create shortcut from library to all extra infos.
+        self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
+
+    def _build_ngs_library_to_extra_infos(self):
+        result = {}
+        for donor in self._all_donors():
+            for bio_sample in donor.bio_samples.values():
+                for test_sample in bio_sample.test_samples.values():
+                    for library in test_sample.ngs_libraries.values():
+                        result.setdefault(library.name, {}).update(test_sample.extra_infos)
+                        result.setdefault(library.name, {}).update(library.extra_infos)
+        return result
+
+    @listify
+    def _all_donors(self, include_background=True):
+        """Return list of all donors in sample sheet."""
+        sheets = self.shortcut_sheets
+        if not include_background:
+            sheets = filter(is_not_background, sheets)
+        for sheet in sheets:
+            yield from sheet.donors
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

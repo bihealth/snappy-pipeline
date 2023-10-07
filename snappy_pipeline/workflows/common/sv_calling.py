@@ -10,6 +10,8 @@ from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
 class SvCallingGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for SV calling steps"""
 
+    ngs_mapping_tools_section = "dna"
+
     @listify
     def get_result_files(self):
         """Return list of concrete output paths in ``output/``.
@@ -19,12 +21,12 @@ class SvCallingGetResultFilesMixin:
         """
         if self.name not in self.config["tools"] and not (
             hasattr(self.config["tools"], "get")
-            and self.name in self.config["tools"].get("dna", {})
+            and self.name in self.config["tools"].get(self.ngs_mapping_tools_section, {})
         ):
             return  # tool not enabled, no result files
 
         ngs_mapping_config = DictQuery(self.w_config).get("step_config/ngs_mapping")
-        for mapper in ngs_mapping_config["tools"]["dna"]:
+        for mapper in ngs_mapping_config["tools"][self.ngs_mapping_tools_section]:
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])
             if isinstance(output_files_tmp, dict):

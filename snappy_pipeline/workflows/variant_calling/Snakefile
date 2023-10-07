@@ -71,6 +71,47 @@ rule variant_calling_bcftools_call_run:
         wf.wrapper_path("bcftools_call")
 
 
+# Run Clair 3 -----------------------------------------------------------------
+
+
+# Discover variants with Clair 3, create per-sample gVCF file
+rule variant_calling_clair3_discover:
+    input:
+        unpack(wf.get_input_files("clair3", "discover")),
+    output:
+        **wf.get_output_files("clair3", "discover"),
+    threads: wf.get_resource("clair3", "discover", "threads")
+    resources:
+        time=wf.get_resource("clair3", "discover", "time"),
+        memory=wf.get_resource("clair3", "discover", "memory"),
+        partition=wf.get_resource("clair3", "discover", "partition"),
+        tmpdir=wf.get_resource("clair3", "discover", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("clair3", "get_args", "discover"),
+    log:
+        **wf.get_log_file("clair3", "discover"),
+    wrapper:
+        wf.wrapper_path("clair3/discover")
+
+
+# Combine the gVCF files from the pedigree with GLNexus
+rule variant_calling_clair3_genotype:
+    input:
+        unpack(wf.get_input_files("clair3", "genotype")),
+    output:
+        **wf.get_output_files("clair3", "genotype"),
+    threads: wf.get_resource("clair3", "genotype", "threads")
+    resources:
+        time=wf.get_resource("clair3", "genotype", "time"),
+        memory=wf.get_resource("clair3", "genotype", "memory"),
+        partition=wf.get_resource("clair3", "genotype", "partition"),
+        tmpdir=wf.get_resource("clair3", "genotype", "tmpdir"),
+    log:
+        **wf.get_log_file("clair3", "genotype"),
+    wrapper:
+        wf.wrapper_path("clair3/genotype")
+
+
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 

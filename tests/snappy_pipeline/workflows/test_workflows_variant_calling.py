@@ -488,6 +488,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "bcftools_call",
         "bcftools_roh",
         "bcftools_stats",
+        "clair3",
         "gatk3_hc",
         "gatk3_ug",
         "gatk4_hc_gvcf",
