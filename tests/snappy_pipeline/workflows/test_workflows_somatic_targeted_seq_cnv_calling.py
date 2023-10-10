@@ -981,7 +981,7 @@ def test_purecn_step_part_get_input_files_run(somatic_targeted_seq_cnv_calling_w
 
 def test_purecn_step_part_get_output_files_run(somatic_targeted_seq_cnv_calling_workflow):
     """Tests PureCNStepPart.get_output_files() - action 'run'"""
-    base_name = "work/{mapper}.purecn.{library_name}/out/{mapper}.purecn.{library_name}"
+    base_name = "work/{mapper}.purecn.{library_name}/out/{library_name}"
     expected = {
         "segments": base_name + "_dnacopy.seg",
         "ploidy": base_name + ".csv",
@@ -1008,7 +1008,7 @@ def test_purecn_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_wo
     # Define expected
     expected_dicts = {
         "coverage": {"threads": 1, "time": "04:00:00", "memory": "24G", "partition": "medium"},
-        "run": {"threads": 4, "time": "24:00:00", "memory": "24G", "partition": "medium"},
+        "run": {"threads": 4, "time": "24:00:00", "memory": "96G", "partition": "medium"},
     }
     # Evaluate
     for action, resources in expected_dicts.items():
@@ -1146,10 +1146,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         )
     ]
     # purecn
-    tpl = (
-        "output/bwa.purecn.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.purecn.P00{i}-T{t}-DNA1-WGS1{ext}{checksum}"
-    )
+    tpl = "output/bwa.purecn.P00{i}-T{t}-DNA1-WGS1/out/P00{i}-T{t}-DNA1-WGS1{ext}{checksum}"
     expected += [
         tpl.format(i=i, t=t, ext=ext, checksum=checksum)
         for i, t in ((1, 1), (2, 1), (2, 2))

@@ -82,7 +82,18 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-outdir=$(dirname {snakemake.output.done})
+# Compute md5 checksum
+md5() {{
+    fn=$1
+    d=$(dirname $fn)
+    f=$(basename $fn)
+    pushd $d 1> /dev/null 2>&1
+    checksum=$(md5sum $f)
+    popd 1> /dev/null 2>&1
+    echo "$checksum"
+}}
+
+outdir=$(dirname {snakemake.output.segments})
 mkdir -p $outdir
 
 # Run PureCN with a panel of normals
@@ -99,6 +110,13 @@ cmd="/usr/local/bin/Rscript PureCN.R \
     {extra_commands}
 "
 apptainer exec --home $PWD {bindings} {config[path_container]} $cmd
+
+md5 {snakemake.output.segments} > {snakemake.output.segments_md5}
+md5 {snakemake.output.ploidy} > {snakemake.output.ploidy_md5}
+md5 {snakemake.output.pvalues} > {snakemake.output.pvalues_md5}
+md5 {snakemake.output.vcf} > {snakemake.output.vcf_md5}
+md5 {snakemake.output.vcf_tbi} > {snakemake.output.vcf_tbi_md5}
+md5 {snakemake.output.loh} > {snakemake.output.loh_md5}
 """
 )
 

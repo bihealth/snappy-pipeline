@@ -595,7 +595,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "run": ResourceUsage(
             threads=4,
             time="24:00:00",  # 4 hours
-            memory="24G",
+            memory="96G",
         ),
     }
 
@@ -639,7 +639,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.purecn.{library_name}"
-        prefix = os.path.join("work", name_pattern, "out", name_pattern)
+        prefix = os.path.join("work", name_pattern, "out", "{library_name}")
         action_mapping = {
             "coverage": {
                 "coverage": os.path.join(
