@@ -3,7 +3,3 @@ channels:
     - bioconda
 dependencies:
     - htslib
-    - bioconductor-org.Hs.eg.db
-    - bioconductor-purecn
-    - r-optparse
-    - r-pscbs
