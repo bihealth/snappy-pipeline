@@ -1,4 +1,4 @@
-"""CUBI+Snakemake wrapper code for scarHRD (sequenza GC reference file)
+"""CUBI+Snakemake wrapper code for sequenza GC reference file
 """
 
 import os
@@ -9,7 +9,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 step = snakemake.config["pipeline_step"]["name"]
 genome = snakemake.config["static_data_config"]["reference"]["path"]
-length = snakemake.config["step_config"][step]["scarHRD"]["length"]
+length = snakemake.config["step_config"][step]["sequenza"]["length"]
 
 shell.executable("/bin/bash")
 
@@ -34,10 +34,11 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-sequenza-utils gc_wiggle --fasta {genome} -w {length} -o {snakemake.output}
+sequenza-utils gc_wiggle --fasta {genome} -w {length} -o {snakemake.output.gc}
 
-pushd $(dirname {snakemake.output})
-md5sum $(basename {snakemake.output}) > $(basename {snakemake.output}).md5
+pushd $(dirname {snakemake.output.gc})
+md5sum $(basename {snakemake.output.gc}) > $(basename {snakemake.output.gc}).md5
+popd
 """
 )
 

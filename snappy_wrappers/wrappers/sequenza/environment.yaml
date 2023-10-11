@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python =3.9
+  - sequenza-utils
+  - r-sequenza
+  - r-devtools
+  - r-data.table
+  - samtools

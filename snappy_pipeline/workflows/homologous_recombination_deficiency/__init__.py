@@ -13,12 +13,17 @@ and from bioconda for the python utilities. Note that anaconda lists the r-seque
 bioconda directory, while this package is not found when searching `bioconda<https://bioconda.github.io/index.html>`.
 copynumber is obtained from a fork of the official Bioconductor deprecated package.
 
+TODO: The implementation needs to uncouple ``scarHRD`` from ``sequenza``.
+It should be possible as ``scarHRD`` could use the output from other CNV callers.
+However, it is poorly documented, and will require significant work.
+
 ==========
 Step Input
 ==========
 
-``homologous_recombination_deficiency`` starts off the aligned reads, i.e. ``ngs_mapping``.
-Both the normal & tumor samples are required to generate the score.
+``homologous_recombination_deficiency`` starts off the ``sequenza`` copy number output.
+Some steps performed by ``sequenza`` are repeated by ``scanHRD``, as ``scanHRD`` uses a specific
+set of arguments. This is the reason why ``sequenza`` is required by the step.
 
 ===========
 Step Output
@@ -32,9 +37,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.scarHRD.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
-    - ``{mapper}.scarHRD.{lib_name}-{lib_pk}.json``
+- ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}/out/``
+    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
+    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.json``
 
 =====================
 Default Configuration
@@ -52,7 +57,6 @@ Available HRD tools
 
 """
 
-from collections import OrderedDict
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
@@ -66,7 +70,9 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
+    SomaticTargetedSeqCnvCallingWorkflow,
+)
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -75,8 +81,8 @@ DEFAULT_CONFIG = r"""
 # Default configuration homologous_recombination_deficiency
 step_config:
   homologous_recombination_deficiency:
-    tools: ['scarHRD']  # REQUIRED - available: 'mantis'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
+    tools: ['scarHRD']  # REQUIRED - available: 'scarHRD'
+    path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
     scarHRD:
       genome_name: "grch37"  # Must be either "grch37", "grch38" or "mouse"
       chr_prefix: False
@@ -93,81 +99,31 @@ class ScarHRDStepPart(BaseStepPart):
     #: Class available actions
     actions = (
         "install",
-        "gcreference",
         "run",
     )
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.scarHRD.{{library_name}}/out/{{mapper}}.scarHRD.{{library_name}}{ext}"
-        )
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.library_name]
-        return pair.normal_sample.dna_ngs_library.name
 
     def get_input_files(self, action):
-        def input_function_run(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
-            return {
-                "lib_path": "work/R_packages/out/.done",
-                "gc": "work/static_data/out/{genome_name}_{length}.wig.gz".format(
-                    genome_name=self.config["scarHRD"]["genome_name"],
-                    length=self.config["scarHRD"]["length"],
-                ),
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+        self._validate_action(action)
 
-        if action == "install":
-            return None
-        elif action == "gcreference":
-            return None
-        elif action == "run":
-            return input_function_run
-        else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
+        return self._get_input_files_run
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        self.cnv_calling = self.parent.sub_workflows["cnv_calling"]
+        base_name = f"{wildcards.mapper}.{wildcards.caller}.{wildcards.library_name}"
+        yield "done", "work/R_packages/out/scarHRD.done"
+        yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
 
     def get_output_files(self, action):
         if action == "install":
-            return {"lib_path": "work/R_packages/out/.done"}
-        elif action == "gcreference":
-            return {
-                "gc": "work/static_data/out/{genome_name}_{length}.wig.gz".format(
-                    genome_name=self.config["scarHRD"]["genome_name"],
-                    length=self.config["scarHRD"]["length"],
-                )
-            }
+            return {"done": "work/R_packages/out/scarHRD.done"}
         elif action == "run":
             return {
-                "sequenza": "work/{mapper}.scarHRD.{library_name}/out/{mapper}.scarHRD.{library_name}.seqz.gz",
-                "scarHRD": "work/{mapper}.scarHRD.{library_name}/out/{mapper}.scarHRD.{library_name}.json",
+                "scarHRD": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json",
+                "scarHRD_md5": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json.md5",
             }
         else:
             raise UnsupportedActionException(
@@ -180,14 +136,9 @@ class ScarHRDStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return dict of log files."""
         if action == "install":
-            prefix = "work/R_packages/log/R_packages"
-        elif action == "gcreference":
-            prefix = "work/static_data/log/{genome_name}_{length}".format(
-                genome_name=self.config["scarHRD"]["genome_name"],
-                length=self.config["scarHRD"]["length"],
-            )
+            prefix = "work/R_packages/log/scarHRD"
         elif action == "run":
-            prefix = "work/{mapper}.scarHRD.{library_name}/log/{mapper}.scarHRD.{library_name}"
+            prefix = "work/{mapper}.{caller}.scarHRD.{library_name}/log/{mapper}.{caller}.scarHRD.{library_name}"
         else:
             raise UnsupportedActionException(
                 "Action '{action}' is not supported. Valid options: {valid}".format(
@@ -204,32 +155,15 @@ class ScarHRDStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        if action == "install" or action == "gcreference":
+        self._validate_action(action)
+        if action == "run":
             return ResourceUsage(
                 threads=1,
-                time="02:00:00",  # 2 hours
-                memory="4096M",
-                partition="short",
-            )
-        elif action == "run":
-            return ResourceUsage(
-                threads=2,
-                time="48:00:00",  # 2 hours
                 memory="32G",
+                time="24:00:00",
             )
         else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
+            return super().get_resource_usage(action)
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):
@@ -253,16 +187,18 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            (SomaticTargetedSeqCnvCallingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow(
+            "somatic_targeted_seq_cnv_calling", self.config["path_cnv_calling"], "cnv_calling"
+        )
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the somatic targeted sequencing CNV calling step"""
+        """Return list of result files for the homologous recombination deficiency step"""
         tool_actions = {"scarHRD": ("run",)}
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
@@ -282,14 +218,17 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                             tpls = self.sub_steps[tool].get_output_files(action).values()
                         except AttributeError:
                             tpls = self.sub_steps[tool].get_output_files(action)
+                        tpls = list(tpls)
+                        tpls += list(self.sub_steps[tool].get_log_file(action).values())
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
                                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                                caller=["sequenza"],
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:
-                                if ".tmp." not in f:
+                                if ".tmp." not in f and not f.endswith(".done"):
                                     yield f.replace("work/", "output/")
 
     def check_config(self):
@@ -297,4 +236,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
+        )
+        assert (
+            "sequenza" in self.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
         )
