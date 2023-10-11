@@ -97,7 +97,7 @@ def resource_chunk_memory(wildcards, attempt):
 
 def resource_chunk_time(wildcards, attempt):
     '''Return the time to use for running one chunk.'''
-    return multiply_time('3:00:00', attempt)
+    return multiply_time('12:00:00', attempt)
 
 
 rule all:
