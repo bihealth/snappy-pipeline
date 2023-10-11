@@ -62,7 +62,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+#trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
@@ -81,9 +81,9 @@ for vcf in {snakemake.input.vcf}; do
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
 
     # Fixup SVLEN=1 to SVLEN=.
-    sed -i -e 's/ID=SVLEN,Number=1/ID=SVLEN,Number=./g' $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
+    sed -i -e 's/ID=SVLEN,Number=1/ID=SVLEN,Number=./g' $TMPDIR/fixed_bnd_to_inv.$num.vcf
     # Fixup MELT header
-    sed -i -e "s/seperated by '..'/separated by '\\\\\\\\|'/" $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
+    sed -i -e "s/seperated by '..'/separated by '\\\\\\\\|'/" $TMPDIR/fixed_bnd_to_inv.$num.vcf
 
     # Add the missing "GT" tag
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
