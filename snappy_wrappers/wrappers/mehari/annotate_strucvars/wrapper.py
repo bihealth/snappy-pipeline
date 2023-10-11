@@ -62,7 +62,7 @@ fi
 
 # Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
-#trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
