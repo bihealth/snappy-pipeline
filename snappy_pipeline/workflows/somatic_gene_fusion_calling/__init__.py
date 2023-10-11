@@ -90,7 +90,6 @@ step_config:
       path_dataset_directory: REQUIRED
     arriba:
       path_index: REQUIRED       # REQUIRED  STAR path index (preferably 2.7.10 or later)
-      features: REQUIRED         # REQUIRED  Gene features (for ex. ENCODE or ENSEMBL) in gtf format
       blacklist: ""              # optional (provided in the arriba distribution, see /fast/work/groups/cubi/projects/biotools/static_data/app_support/arriba/v2.3.0)
       known_fusions: ""          # optional
       tags: ""                   # optional (can be set to the same path as known_fusions)
@@ -422,10 +421,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         self.parent.ensure_w_config(
             config_keys=("step_config", "somatic_gene_fusion_calling", "arriba", "path_index"),
             msg="Path to STAR indices is required",
-        )
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "somatic_gene_fusion_calling", "arriba", "features"),
-            msg="Path to genomic features gtf file is required",
         )
 
         # Check that the path to the STAR index is valid.

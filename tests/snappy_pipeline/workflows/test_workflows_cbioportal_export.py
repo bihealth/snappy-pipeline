@@ -23,11 +23,12 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
             star:
-              path_features: /path/to/gtf
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
             path_ngs_mapping: /NGS_MAPPING
@@ -449,7 +450,7 @@ def test_cbioportal_cns2cna_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_cns2cna_step_part_get_args(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_args()"""
     expected = {
-        "features": "/path/to/gtf",
+        "features": "/path/to/features.gtf",
         "pipeline_id": "ENSEMBL",
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_cns2cna", "run")
@@ -646,7 +647,7 @@ def test_cbioportal_expression_step_part_get_args(cbioportal_export_workflow):
     """Tests cbioportalExpressionStepPart.get_args()"""
     expected = {
         "action_type": "expression",
-        "extra_args": {"tx_obj": "/path/to/gtf", "pipeline_id": "ENSEMBL"},
+        "extra_args": {"tx_obj": "/path/to/features.gtf", "pipeline_id": "ENSEMBL"},
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_expression", "run")
     assert actual == expected

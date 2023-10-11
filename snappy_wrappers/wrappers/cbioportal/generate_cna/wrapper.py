@@ -44,7 +44,7 @@ R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
-    cns_to_cna("{snakemake.input}", "{snakemake.params[features]}", "{snakemake.params[pipeline_id]}"),
+    cns_to_cna("{snakemake.input}", "{snakemake.config[static_data_config][features][path]}", "{snakemake.params[pipeline_id]}"),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF

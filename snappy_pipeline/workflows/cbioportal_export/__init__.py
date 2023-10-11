@@ -390,10 +390,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         return {
-            "features": self.parent.w_config["step_config"]["ngs_mapping"][
-                self.config["expression_tool"]
-            ]["path_features"],
             "pipeline_id": "ENSEMBL",
+            "features": self.parent.w_config["static_data_config"]["features"]["path"],
         }
 
     def get_resource_usage(self, action):
@@ -537,9 +535,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             "action_type": "expression",
             "extra_args": {
                 "pipeline_id": "ENSEMBL",
-                "tx_obj": self.parent.w_config["step_config"]["ngs_mapping"][
-                    self.config["expression_tool"]
-                ]["path_features"],
+                "tx_obj": self.parent.w_config["static_data_config"]["features"]["path"],
             },
         }
 
