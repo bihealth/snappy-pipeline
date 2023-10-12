@@ -212,7 +212,7 @@ def _build_protein_pattern():
         + "("
         + "|".join(
             [
-                "(0|=|\?)",  # noqa: W605
+                "(0\??|=|\?)",  # noqa: W605
                 substitution,  # 4: ref, 5: position, 6: alt
                 duplication,  # 7: start, 8: start pos, 10: end, 11: end pos
                 deletion,  # 12: start, 13: start pos, 15: end, 16: end pos
