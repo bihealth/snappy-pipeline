@@ -5,6 +5,7 @@ pytest
 coverage
 pytest-cov
 pytest-mock
+pytest-subprocess
 
 # Fake file system for testing
 pyfakefs
