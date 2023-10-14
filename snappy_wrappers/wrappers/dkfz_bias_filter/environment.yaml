@@ -3,4 +3,5 @@ channels:
 - bioconda
 dependencies:
 - dkfz-bias-filter ==1.2.3a
-- bcftools
+# bcftools incompatible with dkfz-bias-filter in bioconda (2023-10-13)
+# - bcftools
