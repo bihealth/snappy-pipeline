@@ -97,7 +97,7 @@ outdir=$(dirname {snakemake.output.segments})
 mkdir -p $outdir
 
 # Run PureCN with a panel of normals
-cmd="/usr/local/bin/Rscript PureCN.R \
+cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
     --sampleid {snakemake.wildcards[library_name]} \
     --tumor {snakemake.input.tumor} \
     --vcf {bound_files[vcf]} \
