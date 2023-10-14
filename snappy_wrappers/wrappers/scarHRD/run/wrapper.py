@@ -7,7 +7,7 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-lib_path = os.path.dirname(snakemake.input.done)
+lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
 
 step = snakemake.config["pipeline_step"]["name"]
 genome = snakemake.config["static_data_config"]["reference"]["path"]
@@ -49,23 +49,30 @@ fi
 export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
-export R_LIBS_PATH="{lib_path}"
-export VROOM_CONNECTION_SIZE=2000000000
+# Necessary because scarHRD litters the current directory
+pushd $(dirname {snakemake.output.scarHRD})
+
+fn=$(basename "{snakemake.output.scarHRD}")
 
 cat << __EOF | R --vanilla --slave
 library("scarHRD")
 
-tbl <- scar_score("{snakemake.input.seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name}, outputdir=dirname("{snakemake.output.scarHRD}"))
-cat('{{\n', file="{snakemake.output.scarHRD}")
-cat('    "HRD": ', tbl[1,1], ',\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
-cat('    "Telomeric AI": ', tbl[1,2], ',\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
-cat('    "LST": ', tbl[1,3], ',\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
-cat('    "HRD-sum": ', tbl[1,4], '\n', sep="", file="{snakemake.output.scarHRD}", append=TRUE)
-cat('}}\n', file="{snakemake.output.scarHRD}", append=TRUE)
+tbl <- scar_score("{snakemake.input.seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
+
+warnings()
+
+cat('{{\n', file="$fn")
+cat('    "HRD": ', tbl[1,1], ',\n', sep="", file="$fn", append=TRUE)
+cat('    "Telomeric AI": ', tbl[1,2], ',\n', sep="", file="$fn", append=TRUE)
+cat('    "LST": ', tbl[1,3], ',\n', sep="", file="$fn", append=TRUE)
+cat('    "HRD-sum": ', tbl[1,4], '\n', sep="", file="$fn", append=TRUE)
+cat('}}\n', file="$fn", append=TRUE)
 
 __EOF
 
-pushd $(dirname {snakemake.output.scarHRD}) ; f=$(basename {snakemake.output.scarHRD}) ; md5sum $f > $f.md5 ; popd
+md5sum $fn > $fn.md5
+
+popd
 """
 )
 
