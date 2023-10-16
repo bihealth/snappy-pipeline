@@ -46,8 +46,8 @@ dkfzbiasfilter.py \
 
 # bcftools incompatible with dkfzbiasfilter.py in bioconda (2023-10-13)
 if [[ ! -s ${{out%.gz}} ]]; then
-    # bcftools view --header-only {snakemake.input.vcf} \
-    zgrep '^#' {snakemake.input.vcf} \
+    # zgrep '^#' {snakemake.input.vcf} \
+    bcftools view --header-only {snakemake.input.vcf} \
     > ${{out%.gz}}
 fi
 
