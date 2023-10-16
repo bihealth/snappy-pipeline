@@ -99,19 +99,14 @@ merge_segments <- function(fns) {
     if (is.null(names(fns)))
         stop("Missing sample names")
 
-    col_names <- c("chromosome"="chrom", "start"="loc.start", "end"="loc.end", "probes"="num.mark", "log2"="seg.mean")
+    col_names <- c("chrom", "loc.start", "loc.end", "num.marks", "seg.mean")
     tbl <- NULL
     for (sample_id in names(fns)) {
         cat("Loading", fns[sample_id], "for sample", sample_id, "\n")
         tmp <- read.table(fns[sample_id], sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
-        if (!all(col_names %in% colnames(tmp))) {
-            i <- match(names(col_names), colnames(tmp))
-            if (any(!is.na(i))) colnames(tmp)[i[!is.na(i)]] <- col_names[!is.na(i)]
-        }
-        stopifnot(all(names(col_names) %in% colnames(tmp)))
-        tmp <- tmp[,names(col_names)]
-        colnames(tmp) <- col_names    
-        tmp <- cbind(ID=rep(sample_id, nrow(tmp)), tmp)
+        stopifnot(all(col_names %in% colnames(tmp)))
+        tmp <- tmp[,col_names]
+        tmp$ID <- sample_id
         tbl <- rbind(tbl, tmp)
     }
 

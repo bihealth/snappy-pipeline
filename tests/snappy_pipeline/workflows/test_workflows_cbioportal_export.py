@@ -418,7 +418,7 @@ def test_cbioportal_mutations_step_part_get_resource_usage(cbioportal_export_wor
 def test_cbioportal_cns2cna_step_part_get_input_files(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_input_files()"""
     expected = {
-        "cns": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}.cns"
+        "DNAcopy": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}_dnacopy.seg"
     }
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cns2cna", "run")
     assert actual == expected
@@ -568,7 +568,7 @@ def test_cbioportal_segment_step_part_get_input_files(cbioportal_export_workflow
     """Tests cbioportalSegmentStepPart.get_input_files()"""
     # Define expected
     sample = "P00{i}-T{t}"
-    base_name = "/COPY_NUMBER/output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.cns"
+    base_name = "/COPY_NUMBER/output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1_dnacopy.seg"
     expected = {
         sample.format(i=i, t=t): base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))
     }

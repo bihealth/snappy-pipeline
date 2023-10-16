@@ -358,8 +358,12 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
-        yield "cns", os.path.join(
-            self.config["path_copy_number"], "output", name_pattern, "out", name_pattern + ".cns"
+        yield "DNAcopy", os.path.join(
+            self.config["path_copy_number"],
+            "output",
+            name_pattern,
+            "out",
+            name_pattern + "_dnacopy.seg",
         )
 
     @dictify
@@ -482,7 +486,11 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         super().__init__(parent)
         name_pattern = "bwa." + self.config["copy_number_tool"] + ".{library_name}"
         self.input_tpl = os.path.join(
-            self.config["path_copy_number"], "output", name_pattern, "out", name_pattern + ".cns"
+            self.config["path_copy_number"],
+            "output",
+            name_pattern,
+            "out",
+            name_pattern + "_dnacopy.seg",
         )
 
     def get_resource_usage(self, action):

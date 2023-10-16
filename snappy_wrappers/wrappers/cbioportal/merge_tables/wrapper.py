@@ -11,9 +11,12 @@ r_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "script.R"))
 helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functions.R")
 
 filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.input.items()])
-extra_args = ", ".join(
-    ['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.params["extra_args"].items()]
-)
+if "extra_args" in snakemake.params.keys():
+    extra_args = ", ".join(
+        ['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.params["extra_args"].items()]
+    )
+else:
+    extra_args = ""
 
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
