@@ -40,7 +40,20 @@ fi
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
 if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
-    filter='FILTER == "germline" || FILTER == "weak_evidence" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
+    filter=""
+    for f in $(echo "germline weak_evidence OffExome" | tr ' ' '\n')
+    do
+        use="Yes"
+        zgrep -q "^##FILTER=<ID=$f," {snakemake.input.vcf} || use="No"
+        if [[ $use = "Yes" ]]
+        then
+            filter="$filter || FILTER == \"$f\""
+        fi
+    done
+    filter=$(echo "$filter" | sed -e "s/^ || //")
+    ann="CSQ"
+    zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
+    filter="$filter || $ann ~ \"stream_gene_variant\""
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \

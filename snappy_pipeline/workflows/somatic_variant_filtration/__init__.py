@@ -64,7 +64,10 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
+from snappy_pipeline.workflows.somatic_variant_annotation import (
+    ANNOTATION_TOOLS,
+    SomaticVariantAnnotationWorkflow,
+)
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
@@ -87,6 +90,7 @@ step_config:
     path_ngs_mapping: ../ngs_mapping
     tools_ngs_mapping: null
     tools_somatic_variant_calling: null
+    tools_somatic_variant_annotation: null
     filter_sets:
     # no_filter: no_filters    # implicit, always defined
       dkfz_only: ''  # empty
@@ -135,7 +139,7 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.log_path = (
-            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"work/{mapper}.{var_caller}.{annotator}."
             r"dkfz_bias_filter.{tumor_library,[^\.]+}/log/snakemake.dkfz_bias_filter.log"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
@@ -201,10 +205,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.token = (
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.{tumor_library}"
-        )
+        self.token = "{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}"
 
     @dictify
     def get_input_files(self, action):
@@ -213,8 +214,8 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         # VCF file and index
         tpl = (
-            "output/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
+            "output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
+            "{mapper}.{var_caller}.{annotator}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
@@ -233,9 +234,9 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
         prefix = (
-            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"work/{mapper}.{var_caller}.{annotator}."
             r"dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
-            r"jannovar_annotate_somatic_vcf.dkfz_bias_filter.{tumor_library}"
+            r"{annotator}.dkfz_bias_filter.{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
@@ -274,10 +275,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.token = (
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
-            "dkfz_bias_filter.eb_filter.{tumor_library}"
-        )
+        self.token = "{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}"
 
     def get_input_files(self, action):
         # Validate action
@@ -288,9 +286,9 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
     def _get_input_files_run(self, wildcards):
         # VCF file and index
         tpl = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            "work/{mapper}.{var_caller}.{annotator}."
             "dkfz_bias_filter.{tumor_library}/out/{mapper}.{var_caller}."
-            "jannovar_annotate_somatic_vcf.dkfz_bias_filter."
+            "{annotator}.dkfz_bias_filter."
             "{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -318,9 +316,9 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
     @dictify
     def _get_output_files_run(self):
         prefix = (
-            r"work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"work/{mapper}.{var_caller}.{annotator}."
             r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/out/"
-            r"{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            r"{mapper}.{var_caller}.{annotator}."
             r"dkfz_bias_filter.eb_filter.{tumor_library}"
         )
         key_ext = {
@@ -393,7 +391,7 @@ class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = (
-            "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            "{mapper}.{var_caller}.{annotator}."
             "dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
         )
         self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern + "{ext}")
@@ -440,9 +438,9 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
         # Validate action
         self._validate_action(action)
         tpl = (
-            "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+            "work/{mapper}.{var_caller}.{annotator}."
             "dkfz_bias_filter.eb_filter.{tumor_library}/out/{mapper}.{var_caller}."
-            "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+            "{annotator}.dkfz_bias_filter.eb_filter."
             "{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -554,6 +552,10 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
                 "somatic_variant_calling"
             ]["tools"]
+        if not self.config["tools_somatic_variant_annotation"]:
+            self.config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
+                "somatic_variant_annotation"
+            ]["tools"]
 
     @listify
     def get_result_files(self):
@@ -561,8 +563,9 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
         callers = set(self.config["tools_somatic_variant_calling"])
+        annotators = set(self.config["tools_somatic_variant_annotation"])
         name_pattern = (
-            "{mapper}.{caller}.jannovar_annotate_somatic_vcf."
+            "{mapper}.{caller}.{annotator}."
             "dkfz_bias_filter.eb_filter.{tumor_library.name}."
             "{filter_set}.{exon_list}"
         )
@@ -574,6 +577,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            annotator=annotators & set(ANNOTATION_TOOLS),
             filter_set=filter_sets,
             exon_list=exon_lists,
             ext=EXT_VALUES,
