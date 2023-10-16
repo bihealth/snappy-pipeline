@@ -32,7 +32,11 @@ bed_md5=$(md5sum $bed_file | awk '{{print $1}}')
 name_vcf=$(basename {snakemake.input.vcf})
 vcf_md5=$(md5sum {snakemake.input.vcf} | awk '{{print $1}}')
 
-total_exom_length=$(zcat $bed_file | \
+# Avoids script failing with gzip error status
+cmd=zcat
+gzip -t $bed_file || cmd=cat
+
+total_exom_length=$($cmd $bed_file | \
     awk '{{dis+=$3-$2}} END {{print dis}}') #TMB_rounded=`printf "%.3f" $TMB`
 
 number_snvs=$(bcftools view -R $bed_file -v snps --threads 2 -H {snakemake.input.vcf}| wc -l)
@@ -48,8 +52,8 @@ TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
 missense_TMB=`echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l `
 if [[ {snakemake.config[step_config][tumor_mutational_burden][has_annotation]} == "TRUE" ]]
 then
-    out_file=$(cat << EOF 
-    {{
+    cat << EOF > {snakemake.output.json}
+{{
     "Library_name": {snakemake.wildcards.tumor_library},
     "VCF_file": $name_vcf,
     "VCF_md5": $vcf_md5,
@@ -61,13 +65,11 @@ then
     "Number_snvs": $number_snvs,
     "Number_indels": $number_indels,
     "Total_regions_length": $total_exom_length
-    }}
+}}
 EOF
-    )
-    echo $out_file > {snakemake.output.json}
 else
-    out_file=$(cat << EOF 
-    {{
+    cat << EOF > {snakemake.output.json}
+{{
     "Library_name": {snakemake.wildcards.tumor_library},
     "VCF_file": $name_vcf,
     "VCF_md5": $vcf_md5,
@@ -78,10 +80,8 @@ else
     "Number_snvs": $number_snvs,
     "Number_indels": $number_indels,
     "Total_regions_length": $total_exom_length
-    }}
+}}
 EOF
-    )
-    echo $out_file > {snakemake.output.json}
 fi
 
 pushd $(dirname {snakemake.output.json})
