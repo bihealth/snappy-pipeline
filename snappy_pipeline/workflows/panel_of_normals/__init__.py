@@ -162,6 +162,7 @@ step_config:
     purecn:
       path_normals_list: ""       # Optional file listing libraries to include in panel
       path_bait_regions: REQUIRED # Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect), recommended by PureCN author
+      path_genomicsDB: REQUIRED   # Mutect2 genomicsDB created during panel_of_normals
       genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
       enrichment_kit_name: "unknown" # For filename only...
       mappability: "" # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
