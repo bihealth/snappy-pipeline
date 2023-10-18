@@ -7,9 +7,14 @@ from snakemake.shell import shell
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
+step = snakemake.config["pipeline_step"]["name"]
+config = snakemake.config["step_config"][step]
+
 missense_re = (
     snakemake.params.args["missense_re"]
-    if "args" in snakemake.params.keys() and "missense_re" in snakemake.params.args.keys()
+    if "args" in snakemake.params.keys()
+    and "missense_re" in snakemake.params.args.keys()
+    and config["has_annotation"] == "TRUE"
     else ""
 )
 
@@ -25,7 +30,7 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-bed_file={snakemake.config[step_config][tumor_mutational_burden][target_regions]}
+bed_file={config[target_regions]}
 bed_file_name=$(basename $bed_file)
 bed_md5=$(md5sum $bed_file | awk '{{print $1}}')
 
@@ -45,20 +50,22 @@ number_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf
 
 if [[ -n "{missense_re}" ]]
 then
-    number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf}| grep -E '{missense_re}' | wc -l)
+    number_missense_variants=$(bcftools view -R $bed_file --threads 2 -H {snakemake.input.vcf} | grep -E '{missense_re}' | wc -l || true)
+else
+    number_missense_variants=0
 fi
 
-TMB=`echo "1000000*($number_variants/$total_exom_length)" | bc -l `
-missense_TMB=`echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l `
-if [[ {snakemake.config[step_config][tumor_mutational_burden][has_annotation]} == "TRUE" ]]
+TMB=$(printf "%f" $(echo "1000000*($number_variants/$total_exom_length)" | bc -l))
+missense_TMB=$(printf "%f" $(echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l))
+if [[ {config[has_annotation]} == "TRUE" ]]
 then
     cat << EOF > {snakemake.output.json}
 {{
-    "Library_name": {snakemake.wildcards.tumor_library},
-    "VCF_file": $name_vcf,
-    "VCF_md5": $vcf_md5,
-    "BED_file": $bed_file_name,
-    "BED_md5": $bed_md5,
+    "Library_name": "{snakemake.wildcards.tumor_library}",
+    "VCF_file": "$name_vcf",
+    "VCF_md5": "$vcf_md5",
+    "BED_file": "$bed_file_name",
+    "BED_md5": "$bed_md5",
     "TMB": $TMB,
     "missense_TMB": $missense_TMB,
     "Number_variants": $number_variants,
@@ -70,11 +77,11 @@ EOF
 else
     cat << EOF > {snakemake.output.json}
 {{
-    "Library_name": {snakemake.wildcards.tumor_library},
-    "VCF_file": $name_vcf,
-    "VCF_md5": $vcf_md5,
-    "BED_file": $bed_file_name,
-    "BED_md5": $bed_md5,
+    "Library_name": "{snakemake.wildcards.tumor_library}",
+    "VCF_file": "$name_vcf",
+    "VCF_md5": "$vcf_md5",
+    "BED_file": "$bed_file_name",
+    "BED_md5": "$bed_md5",
     "TMB": $TMB,
     "Number_variants": $number_variants,
     "Number_snvs": $number_snvs,
