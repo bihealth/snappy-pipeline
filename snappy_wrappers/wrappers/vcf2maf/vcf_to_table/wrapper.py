@@ -12,7 +12,7 @@ config = snakemake.config["step_config"][step]
 vcf_to_table = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vcf_to_table.py")
 if config["somatic_variant_annotation_tool"] == "vep":
     vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vep.yaml")
-elif config["somatic_variant_annotation_tool"] == "jannovar_annotate_somatic_vcf":
+elif config["somatic_variant_annotation_tool"] == "jannovar":
     vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "jannovar.yaml")
 else:
     raise Exception(
