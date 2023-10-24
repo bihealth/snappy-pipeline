@@ -86,6 +86,15 @@ cmd="/usr/local/bin/Rscript /opt/PureCN/Coverage.R --force \
 mkdir -p $(dirname {snakemake.output.coverage})
 apptainer exec --home $PWD {bindings} {container} $cmd
 
+# Rename coverage file name
+d=$(dirname {snakemake.output.coverage})
+mapper="{snakemake.wildcards[mapper]}"
+libname="{snakemake.wildcards[library_name]}"
+fn="$d/$mapper.${{libname}}_coverage_loess.txt.gz"
+
+test -e $fn
+mv $fn {snakemake.output.coverage}
+
 pushd $(dirname {snakemake.output.coverage})
 md5sum $(basename {snakemake.output.coverage}) > $(basename {snakemake.output.coverage}).md5
 popd
