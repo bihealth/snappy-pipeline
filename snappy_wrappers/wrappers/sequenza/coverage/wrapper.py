@@ -1,4 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (R part, post-processing)
+"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)
 """
 
 import os
@@ -17,32 +17,18 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
-def config_to_r(x):
-    if x is None:
-        return "NULL"
-    if isinstance(x, str):
-        return f'"{x}"'
-    if isinstance(x, bool):
-        return "TRUE" if x else "FALSE"
-    if isinstance(x, list):
-        return "c({})".format(", ".join([config_to_r(xx) for xx in x]))
-    if isinstance(x, dict):
-        return "list({})".format(
-            ", ".join(['"{}"={}'.format(k, config_to_r(v)) for k, v in x.items()])
-        )
-    return str(x)
-
-
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["sequenza"]
 genome = snakemake.config["static_data_config"]["reference"]["path"]
+length = config["length"]
 
 f = open(genome + ".fai", "rt")
-contigs = config_to_r(list(yield_contigs(f, config.get("ignore_chroms"))))
+contigs = " ".join(yield_contigs(f, config.get("ignore_chroms")))
 f.close()
 
-args_extract = config_to_r(dict(config["extra_args_extract"]))
-args_fit = config_to_r(dict(config["extra_args_fit"]))
+extra_arguments = " ".join(
+    ["--{} {}".format(k, v) for k, v in config.get("extra_arguments", {}).items()]
+)
 
 shell.executable("/bin/bash")
 
@@ -67,27 +53,14 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-export R_LIBS_USER=$(dirname {snakemake.input.packages})
-export VROOM_CONNECTION_SIZE=2000000000
+sequenza-utils bam2seqz \
+    -gc {snakemake.input.gc} --fasta {genome} \
+    -n {snakemake.input.normal_bam} --tumor {snakemake.input.tumor_bam} \
+    -C {contigs} {extra_arguments} \
+    | sequenza-utils seqz_binning -s - \
+        -w {length} -o {snakemake.output.seqz}
 
-R --vanilla --slave << __EOF
-library(sequenza)
-
-args <- list(file="{snakemake.input.seqz}", assembly="{config[assembly]}", chromosome.list={contigs})
-args <- c(args, {args_extract})
-seqz <- do.call(sequenza.extract, args=args)
-
-args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
-args <- c(args, {args_fit})
-CP <- do.call(sequenza.fit, args=args)
-
-sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{snakemake.wildcards[library_name]}", out.dir=dirname("{snakemake.output.done}"))
-
-__EOF
-
-pushd $(dirname {snakemake.output.done}) ; fns=$(ls) ; for f in $fns ; do md5sum $f > $f.md5 ; done ; popd
-
-touch {snakemake.output.done}
+pushd $(dirname {snakemake.output.seqz}) ; f=$(basename {snakemake.output.seqz}) ; md5sum $f > $f.md5 ; popd
 """
 )
 

@@ -1,4 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)
+"""CUBI+Snakemake wrapper code for sequenza (coverage analysis in R)
 """
 
 import os
@@ -16,18 +16,35 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+
+def config_to_r(x):
+    if x is None:
+        return "NULL"
+    if isinstance(x, str):
+        return f'"{x}"'
+    if isinstance(x, bool):
+        return "TRUE" if x else "FALSE"
+    if isinstance(x, list):
+        # TODO: verify that all elements are either bool, str or numeric
+        return "c({})".format(", ".join([config_to_r(xx) for xx in x]))
+    if isinstance(x, dict):
+        return "list({})".format(
+            ", ".join(['"{}"={}'.format(k, config_to_r(v)) for k, v in x.items()])
+        )
+    return str(x)
+
+
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]["sequenza"]
 genome = snakemake.config["static_data_config"]["reference"]["path"]
 length = config["length"]
 
 f = open(genome + ".fai", "rt")
-contigs = " ".join(yield_contigs(f, config.get("ignore_chroms")))
+contigs = config_to_r(list(yield_contigs(f, config.get("ignore_chroms"))))
 f.close()
 
-extra_arguments = " ".join(
-    ["--{} {}".format(k, v) for k, v in config.get("extra_arguments", {}).items()]
-)
+args_extract = config_to_r(dict(config["extra_args_extract"]))
+args_fit = config_to_r(dict(config["extra_args_fit"]))
 
 shell.executable("/bin/bash")
 
@@ -52,14 +69,52 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-sequenza-utils bam2seqz \
-    -gc {snakemake.input.gc} --fasta {genome} \
-    -n {snakemake.input.normal_bam} --tumor {snakemake.input.tumor_bam} \
-    -C {contigs} {extra_arguments} \
-    | sequenza-utils seqz_binning -s - \
-        -w {length} -o {snakemake.output.seqz}
+export R_LIBS_USER=$(dirname {snakemake.input.packages})
+export VROOM_CONNECTION_SIZE=2000000000
 
-pushd $(dirname {snakemake.output.seqz}) ; f=$(basename {snakemake.output.seqz}) ; md5sum $f > $f.md5 ; popd
+R --vanilla --slave << __EOF
+library(sequenza)
+
+# Follow sequenza documentation https://bitbucket.org/sequenzatools/sequenza/src/master/
+args <- list(file="{snakemake.input.seqz}", assembly="{config[assembly]}", chromosome.list={contigs})
+args <- c(args, {args_extract})
+seqz <- do.call(sequenza.extract, args=args)
+
+args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
+args <- c(args, {args_fit})
+CP <- do.call(sequenza.fit, args=args)
+
+sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{snakemake.wildcards[library_name]}", out.dir=dirname("{snakemake.output.done}"))
+
+warnings()
+
+# Convert *_segment.txt to *_dnacopy.seg to follow pipeline output format
+segments <- file.path(dirname("{snakemake.output.done}"), sprintf("%s_segments.txt", "{snakemake.wildcards[library_name]}"))
+stopifnot(file.exists(segments))
+dnacopy <- read.table(segments, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
+
+dnacopy[,"ID"] <- "{snakemake.wildcards[library_name]}"
+dnacopy[,"depth.ratio"] <- log2(dnacopy[,"depth.ratio"])
+
+col_names <- c(
+    "ID"="ID",
+    "chromosome"="chrom",
+    "start.pos"="loc.start",
+    "end.pos"="loc.end",
+    "N.BAF"="num.mark",
+    "depth.ratio"="seg.mean",
+    "CNt"="C"
+)
+stopifnot(all(names(col_names) %in% colnames(dnacopy)))
+dnacopy <- dnacopy[,names(col_names)]
+colnames(dnacopy) <- col_names
+
+write.table(dnacopy, file="{snakemake.output.seg}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
+__EOF
+
+pushd $(dirname {snakemake.output.seg}) ; f=$(basename {snakemake.output.seg}) ; md5sum $f > $f.md5 ; popd
+pushd $(dirname {snakemake.output.done}) ; fns=$(ls) ; for f in $fns ; do md5sum $f > $f.md5 ; done ; popd
+touch {snakemake.output.done}
 """
 )
 
