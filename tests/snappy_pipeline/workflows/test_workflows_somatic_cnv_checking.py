@@ -167,8 +167,7 @@ def test_cnv_run_step_part_get_input_files(somatic_cnv_checking_workflow):
         fromdict={"mapper": "bwa", "caller": "cnvkit", "library_name": "P001-T1-DNA1-WGS1"}
     )
     expected = {
-        "cnv": "CNV_CALLING/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.bed.gz",
-        "cnv_tbi": "CNV_CALLING/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.bed.gz.tbi",
+        "cnv": "CNV_CALLING/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1_dnacopy.seg",
         "normal": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz",
         "normal_tbi": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz.tbi",
         "tumor": "work/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.tumor.vcf.gz",
