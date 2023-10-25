@@ -59,6 +59,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 # Extract around BED file, if given.
+VCFPATH="{snakemake.input.vcf}"
 if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
     set -e
     bcftools view \
@@ -69,6 +70,7 @@ if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
+    VCFPATH="$TMPDIR/tmp.vcf.gz"
 else
     set -e
     ln -sr {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
@@ -76,12 +78,12 @@ else
 fi
 
 # Perform Mehari sequence variant annotation.
-mehari \
+/data/cephfs-1/work/groups/cubi/users/zhaom_c/Git/mehari/target/release/mehari \
     annotate \
     seqvars \
     --path-db {export_config[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
-    --path-input-vcf $TMPDIR/tmp.vcf.gz \
+    --path-input-vcf "$VCFPATH" \
     --path-output-tsv {snakemake.output.gts}
 
 cat <<EOF | gzip -c > {snakemake.output.db_infos}
