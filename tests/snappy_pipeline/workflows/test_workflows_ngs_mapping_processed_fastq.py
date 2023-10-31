@@ -651,6 +651,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "bwa_mem2",
         "external",
         "link_in",
+        "mbcs",
         "minimap2",
         "ngs_chew",
         "star",

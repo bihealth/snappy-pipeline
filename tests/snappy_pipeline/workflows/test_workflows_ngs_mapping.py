@@ -42,6 +42,17 @@ def minimal_config():
             compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta
+            bwa_mem2:
+              path_index: /path/to/bwa_mem2/index.fasta
+            mbcs:
+              mapping_tool: bwa
+              agent:
+                prepare:
+                  path: /path/to/trimmer
+                  lib_prep_type: v2
+                mark_duplicates:
+                  path: /path/to/creak
+                  consensus_mode: HYBRID
             bam_collect_doc:
               enabled: true
 
@@ -254,7 +265,7 @@ def test_project_validation_germline(
     assert exec_info.value.args[0] is not None, error_msg
 
 
-# Tests for BwaStepPart ----------------------------------------------------------------------------
+# Tests for BwaStepPart, BwaMem2StepPart & MBCsStepPart -----------------------
 
 
 def test_bwa_step_part_get_args(ngs_mapping_workflow):
@@ -312,12 +323,29 @@ def test_bwa_step_part_get_log_file(ngs_mapping_workflow):
 def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     """Tests BaseStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "3-00:00:00", "memory": "73728M", "partition": "medium"}
+    expected_dict = {
+        "bwa": {"threads": 16, "time": "3-00:00:00", "memory": "73728M", "partition": "medium"},
+        "bwa_mem2": {
+            "threads": 16,
+            "time": "3-00:00:00",
+            "memory": "73728M",
+            "partition": "medium",
+        },
+        "mbcs": {"threads": 1, "time": "24:00:00", "memory": "4G", "partition": "medium"},
+    }
     # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)
-        assert actual == expected, msg_error
+    for tool, v in expected_dict.items():
+        for resource, expected in v.items():
+            msg_error = f"Assertion error for tool '{tool}' & resource '{resource}'."
+            actual = ngs_mapping_workflow.get_resource(tool, "run", resource)
+            assert actual == expected, msg_error
+
+
+def test_bwa_step_part_check_config(ngs_mapping_workflow):
+    """Tests BaseStepPart.check_config()"""
+    # Define expected
+    for tool in ("bwa", "bwa_mem2", "mbcs"):
+        ngs_mapping_workflow.sub_steps[tool].check_config()
 
 
 # Tests for StarStepPart --------------------------------------------------------------------------
@@ -700,6 +728,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "bwa_mem2",
         "external",
         "link_in",
+        "mbcs",
         "minimap2",
         "ngs_chew",
         "star",
