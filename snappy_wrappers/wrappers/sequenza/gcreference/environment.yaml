@@ -1,1 +1,7 @@
-../environment.yaml
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python =3.9
+  - sequenza-utils
+  - samtools

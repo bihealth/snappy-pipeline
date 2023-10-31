@@ -283,11 +283,11 @@ def test_mutect2_wrapper_run_preamble_resource_chunk_time(construct_preamble_mod
     """
     # Define (input, expected) pair
     input_expected_pairs = (
-        (1, "0-03:00:00"),
-        (2, "0-06:00:00"),
-        (3, "0-09:00:00"),
-        (4, "0-12:00:00"),
-        (5, "0-15:00:00"),
+        (1, "0-12:00:00"),
+        (2, "1-00:00:00"),
+        (3, "1-12:00:00"),
+        (4, "2-00:00:00"),
+        (5, "2-12:00:00"),
     )
     # Test all pairs
     for pair in input_expected_pairs:

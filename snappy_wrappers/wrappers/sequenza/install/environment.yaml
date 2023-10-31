@@ -5,14 +5,13 @@ dependencies:
   - python =3.9
   - r-base
   - r-remotes
-  # scarHRD requirements (+sequenza)
-  - r-data.table
   # sequenza requirements (+copynumber)
   - r-pbapply
   - r-squash
   - r-iotools
   - r-readr
   - r-seqminer
+  - r-data.table
   # copynumber requirements
   - bioconductor-S4Vectors
   - bioconductor-IRanges

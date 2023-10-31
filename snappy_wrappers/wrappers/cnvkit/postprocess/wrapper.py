@@ -30,11 +30,9 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-uncompressed=$(echo "{snakemake.output.final}" | sed -e "s/\.gz$//")
-
 cat << _EOF | R --vanilla --slave
 segments <- read.table("{snakemake.input.segment}", sep="\t", header=1, stringsAsFactors=FALSE)
-stopifnot(all(c("chromosome", "start", "end") %in% colnames(segments)))
+stopifnot(all(c("chromosome", "start", "end", "log2", "probes") %in% colnames(segments)))
 calls <- read.table("{snakemake.input.call}", sep="\t", header=1, stringsAsFactors=FALSE)
 stopifnot(all(c("chromosome", "start", "end", "cn") %in% colnames(calls)))
 
@@ -65,24 +63,22 @@ segments[S4Vectors::queryHits(i),"cn"] <- round(calls[S4Vectors::subjectHits(i),
 segments[,"start"] <- segments[["start"]]-1
 segments[,"end"]   <- segments[["end"]]+1
 
-# Create bed file (abusing name, score & strand to make it bed-6 compatible)
-segments[,"start"]  <- segments[["start"]]-1     # Bed files are 0-based, semi-open intervals
-segments[,"name"]   <- sprintf("seg_%d_cn_%d", 1:nrow(segments), segments[["cn"]])
-segments[,"score"]  <- pmin(1000, abs(segments[["log2"]]))
-segments[,"strand"] <- "+"
-segments[segments[["log2"]]<0,"strand"] <- "-"
+# Add library name
+segments[,"ID"] <- "{snakemake.wildcards[library_name]}"
 
-write.table(segments[,c("chromosome", "start", "end", "name", "score", "strand")], file="$uncompressed", sep="\t", col.names=FALSE, row.names=FALSE, quote=FALSE)
+# Rename columns to follow DNAcopy format (as implemented in PureCN)
+dna_copy_columns <- c(ID="ID", chromosome="chrom", start="loc.start", end="loc.end", probes="num.marks", log2="seg.mean", cn="C")
+segments <- segments[,colnames(segments) %in% names(dna_copy_columns)]
+colnames(segments) <- dna_copy_columns[colnames(segments)]
+segments <- segments[,dna_copy_columns]
+
+write.table(segments, file="{snakemake.output.final}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
 _EOF
-
-bgzip $uncompressed
-tabix {snakemake.output.final}
 
 d=$(dirname "{snakemake.output.final}")
 pushd $d
 fn=$(basename "{snakemake.output.final}")
 md5sum $fn > $fn.md5
-md5sum $fn.tbi > $fn.tbi.md5
 popd
 """
 )

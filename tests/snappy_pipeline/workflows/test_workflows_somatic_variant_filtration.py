@@ -34,6 +34,7 @@ def minimal_config():
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
+            tools_somatic_variant_annotation: ['jannovar']
 
         data_sets:
           first_batch:
@@ -82,8 +83,8 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
     """Tests DkfzBiasFilterStepPart.get_input_files()"""
     somatic_base_out = (
         "SOMATIC_VARIANT_ANNOTATION/output/"
-        "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
-        "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
+        "{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{annotator}.{tumor_library}"
     )
     expected = {
         "vcf": somatic_base_out + ".vcf.gz",
@@ -98,8 +99,8 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
 def test_dkfz_bias_filter_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter."
-        "{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
+        "{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.{annotator}."
         "dkfz_bias_filter.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -110,8 +111,8 @@ def test_dkfz_bias_filter_step_part_get_output_files(somatic_variant_filtration_
 def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_log_file()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.{tumor_library}/"
-        "log/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.{tumor_library}"
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}/"
+        "log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_log_file("dkfz_bias_filter", "run")
@@ -137,11 +138,16 @@ def test_dkfz_bias_filter_step_part_get_resource_usage(somatic_variant_filtratio
 def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_input_files_run()"""
     wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "var_caller": "mutect2", "tumor_library": "P001-T1-DNA1-WGS1"}
+        fromdict={
+            "mapper": "bwa",
+            "var_caller": "mutect2",
+            "annotator": "jannovar",
+            "tumor_library": "P001-T1-DNA1-WGS1",
+        }
     )
     base_out = (
-        "work/bwa.mutect2.jannovar_annotate_somatic_vcf.dkfz_bias_filter.P001-T1-DNA1-WGS1/out/"
-        "bwa.mutect2.jannovar_annotate_somatic_vcf.dkfz_bias_filter.P001-T1-DNA1-WGS1"
+        "work/bwa.mutect2.jannovar.dkfz_bias_filter.P001-T1-DNA1-WGS1/out/"
+        "bwa.mutect2.jannovar.dkfz_bias_filter.P001-T1-DNA1-WGS1"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
@@ -177,8 +183,8 @@ def test_eb_filter_step_part_get_input_files_write_panel(somatic_variant_filtrat
 def test_eb_filter_step_part_get_output_files_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_output_files_run()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter."
-        "eb_filter.{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
+        "eb_filter.{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.{annotator}."
         "dkfz_bias_filter.eb_filter.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -200,8 +206,8 @@ def test_eb_filter_step_part_get_output_files_write_panel(somatic_variant_filtra
 def test_eb_eb_filter_step_part_get_log_file_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_log_file_run()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
-        "{tumor_library}/log/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        "{tumor_library}/log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
         "eb_filter.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
@@ -236,8 +242,8 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
 def test_apply_filters_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_input_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
-        "{tumor_library}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        "{tumor_library}/out/{mapper}.{var_caller}.{annotator}."
         "dkfz_bias_filter.eb_filter.{tumor_library}"
     )
     expected = {
@@ -251,9 +257,9 @@ def test_apply_filters_step_part_get_input_files(somatic_variant_filtration_work
 def test_apply_filters_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
         "{tumor_library}.{filter_set}.genome_wide/out/{mapper}.{var_caller}."
-        "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
+        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
         "genome_wide"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -264,9 +270,9 @@ def test_apply_filters_step_part_get_output_files(somatic_variant_filtration_wor
 def test_apply_filters_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
         "{tumor_library}.{filter_set}.genome_wide/log/{mapper}.{var_caller}."
-        "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
+        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
         "genome_wide.log"
     )
     actual = somatic_variant_filtration_workflow.get_log_file("apply_filters", "run")
@@ -299,8 +305,8 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 #         }
 #     )
 #     base_out = (
-#         "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
-#         "{tumor_library}/out/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf."
+#         "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+#         "{tumor_library}/out/{mapper}.{var_caller}.{annotator}."
 #         "dkfz_bias_filter.eb_filter.{tumor_library}"
 #     )
 #     expected = {
@@ -315,9 +321,9 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 def test_filter_to_exons_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
         "{tumor_library}.{filter_set}.{exon_list}/out/{mapper}.{var_caller}."
-        "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
+        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
         "{exon_list}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
@@ -328,9 +334,9 @@ def test_filter_to_exons_step_part_get_output_files(somatic_variant_filtration_w
 def test_filter_to_exons_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.dkfz_bias_filter."
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
         "eb_filter.{tumor_library}.{filter_set}.{exon_list}/log/{mapper}.{var_caller}."
-        "jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
+        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
         "{exon_list}.log"
     )
     actual = somatic_variant_filtration_workflow.get_log_file("filter_to_exons", "run")
@@ -362,9 +368,9 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
 
     # Check result file construction
     tpl = (
-        "output/bwa.mutect2.jannovar_annotate_somatic_vcf.dkfz_bias_filter."
+        "output/bwa.mutect2.jannovar.dkfz_bias_filter."
         "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/out/"
-        "bwa.mutect2.jannovar_annotate_somatic_vcf.dkfz_bias_filter.eb_filter."
+        "bwa.mutect2.jannovar.dkfz_bias_filter.eb_filter."
         "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}"
     )
     expected = [

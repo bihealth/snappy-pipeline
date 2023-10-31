@@ -13,7 +13,7 @@ vcf_to_table <- function(vcf, sample, amplification=7) {
      stopifnot(all(lengths(VariantAnnotation::alt(vcf)) == 2))
      
      x <- data.frame(
-         CHROM=GenomicRanges::seqnames(SummarizedExperiment::rowRanges(vcf)),
+         CHROM=as.character(GenomicRanges::seqnames(SummarizedExperiment::rowRanges(vcf))),
          POS=GenomicRanges::start(SummarizedExperiment::rowRanges(vcf)),
          REF=VariantAnnotation::ref(vcf),
          ALT=unlist(lapply(VariantAnnotation::alt(vcf), function(a) a[1])),
@@ -34,7 +34,8 @@ cnv_to_table <- function(cnv) {
     colnames(y) <- c("CHROM", "start", "stop", "name", "LFC", "strand")
     y <- y |>
         dplyr::mutate(LFC=replace(LFC, strand == "-", -abs(LFC[strand=="-"]))) |>
-        dplyr::mutate(start=start + 1)
+        dplyr::mutate(start=start + 1) |>
+        dplyr::mutate(CHROM=as.character(CHROM))
     y
 }
 

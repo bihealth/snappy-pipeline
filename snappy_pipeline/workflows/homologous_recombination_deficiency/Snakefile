@@ -75,7 +75,7 @@ rule homologous_recombination_deficiency_scarHRD_install:
     log:
         **wf.get_log_file("scarHRD", "install"),
     wrapper:
-        wf.wrapper_path("r")
+        wf.wrapper_path("scarHRD/install")
 
 
 rule homologous_recombination_deficiency_scarHRD_run:

@@ -104,6 +104,10 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
 # See the following for the memory-related massaging
 #
 # http://bugs.java.com/view_bug.do?bug_id=8043516
@@ -122,6 +126,10 @@ jannovar \
     {arg_intervals} \
     {annotation_snippet}
 
+zgrep -v "ANN=|" {snakemake.output.vcf} \
+        | bgzip -c \
+        > $TMPDIR/tmp.vcf.gz
+mv $TMPDIR/tmp.vcf.gz {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \

@@ -93,11 +93,22 @@ md5() {{
     echo "$checksum"
 }}
 
+# Rename PureCN files to snappy conventions
+rename() {{
+    to=$1
+    d=$(dirname $to)
+    f=$(basename $to)
+    echo $f | grep -q "^{snakemake.wildcards[mapper]}.purecn.{snakemake.wildcards[library_name]}"
+    from=$(echo $f | sed -e "s/^{snakemake.wildcards[mapper]}.purecn.//")
+    test -e $d/$from
+    mv $d/$from $to
+}}
+
 outdir=$(dirname {snakemake.output.segments})
 mkdir -p $outdir
 
 # Run PureCN with a panel of normals
-cmd="/usr/local/bin/Rscript PureCN.R \
+cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
     --sampleid {snakemake.wildcards[library_name]} \
     --tumor {snakemake.input.tumor} \
     --vcf {bound_files[vcf]} \
@@ -106,10 +117,41 @@ cmd="/usr/local/bin/Rscript PureCN.R \
     --intervals {bound_files[intervals]} \
     --genome {config[genome_name]} \
     --out $outdir --out-vcf --force \
-    --seed {config[seed]} --parallel --cores={snakemake.threads} \
+    --seed {config[seed]} --parallel --cores {snakemake.threads} \
     {extra_commands}
 "
 apptainer exec --home $PWD {bindings} {config[path_container]} $cmd
+
+rename {snakemake.output.segments}
+rename {snakemake.output.ploidy}
+rename {snakemake.output.pvalues}
+rename {snakemake.output.vcf}
+rename {snakemake.output.vcf_tbi}
+rename {snakemake.output.loh}
+
+# Fix chromosome names (https://github.com/lima1/PureCN/issues/331)
+seg_chrnames=$(tail -n +2 {snakemake.output.segments} | cut -f 2 | sort | uniq)
+vcf_chrnames=$(zgrep '^##contig=<ID=' {snakemake.input.vcf} | sed -re "s/^##contig=<ID=([^,]*),.*/\1/" | sort | uniq)
+n_equal=0
+n_prefix=0
+n_diff=0
+n_tot=0
+for chrname in $seg_chrnames
+do
+    ((n_tot=n_tot + 1))
+    n=$(echo "$vcf_chrnames" | tr ' ' '\n' | grep -c "^$chrname$" || true)
+    n_equal=$(($n_equal + $n))
+    n=$(echo "$vcf_chrnames" | tr ' ' '\n' | grep -c "^chr$chrname$" || true)
+    n_prefix=$((n_prefix + $n))
+    n=$(echo "$vcf_chrnames" | tr ' ' '\n' | grep -Ec "^(chr)?$chrname$" || true)
+    n_diff=$(($n_diff + 1 - $n))
+done
+test $n_diff -eq 0
+if [[ $n_prefix -eq $n_tot ]]
+then
+    sed -ie $'s/\t/\tchr/' {snakemake.output.segments}
+    sed -ie "s/chrchrom/chrom/" {snakemake.output.segments}
+fi
 
 md5 {snakemake.output.segments} > {snakemake.output.segments_md5}
 md5 {snakemake.output.ploidy} > {snakemake.output.ploidy_md5}

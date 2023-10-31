@@ -212,8 +212,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             base_path = "output/{mapper}.{caller}.{library_name}/out/{mapper}.{caller}.{library_name}".format(
                 **wildcards
             )
-            filenames["cnv"] = cnv_calling(base_path + ".bed.gz")
-            filenames["cnv_tbi"] = filenames["cnv"] + ".tbi"
+            filenames["cnv"] = cnv_calling(base_path + "_dnacopy.seg")
             return filenames
 
         return input_function

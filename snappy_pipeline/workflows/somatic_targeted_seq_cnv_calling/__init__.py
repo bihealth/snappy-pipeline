@@ -476,16 +476,21 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     actions = (
         "install",
         "gcreference",
+        "coverage",
         "run",
-        "report",
     )
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
+        "coverage": ResourceUsage(
+            threads=1,
+            time="24:00:00",  # 1 day
+            memory="24G",
+        ),
         "run": ResourceUsage(
             threads=4,
             time="24:00:00",  # 1 day
-            memory="16G",
+            memory="64G",
         ),
     }
 
@@ -498,12 +503,12 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         self._validate_action(action)
 
         method_mapping = {
+            "coverage": self._get_input_files_coverage(),
             "run": self._get_input_files_run(),
-            "report": self._get_input_files_report(),
         }
         return method_mapping[action]
 
-    def _get_input_files_run(self):
+    def _get_input_files_coverage(self):
         @dictify
         def input_function(wildcards):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
@@ -525,11 +530,14 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
         return input_function
 
-    def _get_input_files_report(self):
-        return {
-            "packages": "work/R_packages/out/sequenza.done",
-            "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
-        }
+    def _get_input_files_run(self):
+        @dictify
+        def input_function(wildcards):
+            yield "packages", "work/R_packages/out/sequenza.done"
+            name_pattern = "{mapper}.sequenza.{library_name}"
+            yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
+
+        return input_function
 
     def get_output_files(self, action):
         if action == "install":
@@ -540,13 +548,19 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     length=self.config["sequenza"]["length"],
                 )
             }
-        elif action == "run":
+        elif action == "coverage":
+            name_pattern = "{mapper}.sequenza.{library_name}"
             return {
-                "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
-                "seqz_md5": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz.md5",
+                "seqz": f"work/{name_pattern}/out/{name_pattern}.seqz.gz",
+                "seqz_md5": f"work/{name_pattern}/out/{name_pattern}.seqz.gz.md5",
             }
-        elif action == "report":
-            return {"done": "work/{mapper}.sequenza.{library_name}/report/.done"}
+        elif action == "run":
+            name_pattern = "{mapper}.sequenza.{library_name}"
+            return {
+                "seg": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg",
+                "seg_md5": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg.md5",
+                "done": f"work/{name_pattern}/report/.done",
+            }
         else:
             raise UnsupportedActionException(
                 "Action '{action}' is not supported. Valid options: {valid}".format(
@@ -616,8 +630,8 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "work",
             name_pattern,
             "out",
-            "{mapper}.{library_name}_coverage_loess.txt.gz".format(**wildcards),
-        )
+            name_pattern + "_coverage_loess.txt.gz",
+        ).format(**wildcards)
         name_pattern = "{mapper}.{caller}.{library_name}".format(
             caller=self.config["purecn"]["somatic_variant_caller"],
             **wildcards,
@@ -639,13 +653,9 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.purecn.{library_name}"
-        prefix = os.path.join("work", name_pattern, "out", "{library_name}")
+        prefix = os.path.join("work", name_pattern, "out", name_pattern)
         action_mapping = {
-            "coverage": {
-                "coverage": os.path.join(
-                    "work", name_pattern, "out", "{mapper}.{library_name}_coverage_loess.txt.gz"
-                )
-            },
+            "coverage": {"coverage": prefix + "_coverage_loess.txt.gz"},
             "run": {
                 "segments": prefix + "_dnacopy.seg",
                 "ploidy": prefix + ".csv",
@@ -884,12 +894,10 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     @staticmethod
     def _get_output_files_postprocess():
         name_pattern = "{mapper}.cnvkit.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".bed.gz")
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + "_dnacopy.seg")
         return {
             "final": tpl,
-            "final_tbi": tpl + ".tbi",
             "final_md5": tpl + ".md5",
-            "final_tbi_md5": tpl + ".tbi.md5",
         }
 
     @dictify
@@ -920,7 +928,13 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_export():
-        exports = (("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
+        exports = (
+            ("bed", "bed.gz"),
+            ("bed_tbi", "bed.gz.tbi"),
+            ("seg", "seg"),
+            ("vcf", "vcf.gz"),
+            ("vcf_tbi", "vcf.gz.tbi"),
+        )
         output_files = {}
         tpl = (
             "work/{{mapper}}.cnvkit.{{library_name}}/out/"
@@ -1148,7 +1162,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
             "cnvkit": ["fix", "postprocess", "report", "export"],
-            "sequenza": ("run",),
+            "sequenza": ("coverage", "run"),
             "purecn": ("run",),
             "copywriter": ("call",),
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
@@ -1185,7 +1199,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:
-                                if ".tmp." not in f and not f.endswith("/.done"):
+                                if ".tmp." not in f:
                                     yield f.replace("work/", "output/")
 
     def check_config(self):

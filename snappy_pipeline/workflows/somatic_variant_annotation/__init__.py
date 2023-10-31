@@ -249,7 +249,7 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     name = "jannovar"
 
     #: Annotator name to construct output paths
-    annotator = "jannovar_annotate_somatic_vcf"
+    annotator = "jannovar"
 
     #: Class available actions
     actions = ("annotate_somatic_vcf",)
@@ -371,12 +371,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        annotators = list(
-            map(
-                lambda x: x.replace("jannovar", "jannovar_annotate_somatic_vcf"),
-                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
-            )
-        )
+        annotators = set(self.config["tools"]) & set(ANNOTATION_TOOLS)
         callers = set(self.config["tools_somatic_variant_calling"])
         name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
@@ -402,13 +397,10 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         )
         # Annotators with full output
         full = list(
-            map(
-                lambda x: x.replace("jannovar", "jannovar_annotate_somatic_vcf"),
-                filter(
-                    lambda x: self.sub_steps[x].has_full,
-                    set(self.config["tools"]) & set(ANNOTATION_TOOLS),
-                ),
-            )
+            filter(
+                lambda x: self.sub_steps[x].has_full,
+                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
+            ),
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),

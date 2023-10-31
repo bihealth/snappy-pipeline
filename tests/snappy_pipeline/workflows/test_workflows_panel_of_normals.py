@@ -532,7 +532,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "normal_library": "P001-N1-DNA1-WGS1",
+            "library_name": "P001-N1-DNA1-WGS1",
         }
     )
     expected = {
@@ -547,7 +547,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
 def test_purecn_step_part_get_output_files_coverage(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_output_files_coverage()"""
     expected = {
-        "coverage": "work/{mapper}.purecn/out/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}_coverage_loess.txt.gz"
+        "coverage": "work/{mapper}.purecn/out/{mapper}.purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}_coverage_loess.txt.gz"
     }
     actual = panel_of_normals_workflow.get_output_files("purecn", "coverage")
     assert actual == expected
@@ -556,7 +556,7 @@ def test_purecn_step_part_get_output_files_coverage(panel_of_normals_workflow):
 def test_purecn_step_part_get_log_file_coverage(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_log_file_coverage()"""
     expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.purecn/log/{mapper}.{normal_library,.+-DNA[0-9]+-WES[0-9]+}"
+        base_out="work/{mapper}.purecn/log/{mapper}.purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}"
     )
     actual = panel_of_normals_workflow.get_log_file("purecn", "coverage")
     assert actual == expected
@@ -567,8 +567,8 @@ def test_purecn_step_part_get_input_files_create_panel(panel_of_normals_workflow
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "normals": [
-            "work/bwa.purecn/out/bwa.P001-N1-DNA1-WGS1_coverage_loess.txt.gz",
-            "work/bwa.purecn/out/bwa.P002-N1-DNA1-WGS1_coverage_loess.txt.gz",
+            "work/bwa.purecn/out/bwa.purecn.P001-N1-DNA1-WGS1_coverage_loess.txt.gz",
+            "work/bwa.purecn/out/bwa.purecn.P002-N1-DNA1-WGS1_coverage_loess.txt.gz",
         ],
         "container": "work/containers/out/purecn.simg",
     }

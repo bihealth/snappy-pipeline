@@ -23,11 +23,12 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
             star:
-              path_features: /path/to/gtf
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
             path_ngs_mapping: /NGS_MAPPING
@@ -417,7 +418,7 @@ def test_cbioportal_mutations_step_part_get_resource_usage(cbioportal_export_wor
 def test_cbioportal_cns2cna_step_part_get_input_files(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_input_files()"""
     expected = {
-        "cns": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}.cns"
+        "DNAcopy": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}_dnacopy.seg"
     }
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cns2cna", "run")
     assert actual == expected
@@ -449,7 +450,7 @@ def test_cbioportal_cns2cna_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_cns2cna_step_part_get_args(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_args()"""
     expected = {
-        "features": "/path/to/gtf",
+        "features": "/path/to/features.gtf",
         "pipeline_id": "ENSEMBL",
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_cns2cna", "run")
@@ -567,7 +568,7 @@ def test_cbioportal_segment_step_part_get_input_files(cbioportal_export_workflow
     """Tests cbioportalSegmentStepPart.get_input_files()"""
     # Define expected
     sample = "P00{i}-T{t}"
-    base_name = "/COPY_NUMBER/output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.cns"
+    base_name = "/COPY_NUMBER/output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1_dnacopy.seg"
     expected = {
         sample.format(i=i, t=t): base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))
     }
@@ -646,7 +647,7 @@ def test_cbioportal_expression_step_part_get_args(cbioportal_export_workflow):
     """Tests cbioportalExpressionStepPart.get_args()"""
     expected = {
         "action_type": "expression",
-        "extra_args": {"tx_obj": "/path/to/gtf", "pipeline_id": "ENSEMBL"},
+        "extra_args": {"tx_obj": "/path/to/features.gtf", "pipeline_id": "ENSEMBL"},
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_expression", "run")
     assert actual == expected

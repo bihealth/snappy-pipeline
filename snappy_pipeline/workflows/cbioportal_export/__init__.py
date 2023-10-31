@@ -77,6 +77,7 @@ step_config:
   cbioportal_export:
     # Required for RNA expression
     path_ngs_mapping: ""                                         # When missing, no expression data is uploaded to cBioPortal
+    mapping_tool: "bwa"
     expression_tool: "star"
     # Required for somatic variants
     path_somatic_variant: ../somatic_variant_filtration          # REQUIRED (before or after filtration)
@@ -334,7 +335,7 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
             name_pattern = "{mapper}.{caller}.{annotator}.{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
         self.input_tpl = tpl.format(
-            mapper="bwa",
+            mapper=self.config["mapping_tool"],
             caller=self.config["somatic_variant_calling_tool"],
             annotator=self.config["somatic_variant_annotation_tool"],
             filter_set=self.config["filter_set"],
@@ -358,8 +359,12 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
-        yield "cns", os.path.join(
-            self.config["path_copy_number"], "output", name_pattern, "out", name_pattern + ".cns"
+        yield "DNAcopy", os.path.join(
+            self.config["path_copy_number"],
+            "output",
+            name_pattern,
+            "out",
+            name_pattern + "_dnacopy.seg",
         )
 
     @dictify
@@ -390,10 +395,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         return {
-            "features": self.parent.w_config["step_config"]["ngs_mapping"][
-                self.config["expression_tool"]
-            ]["path_features"],
             "pipeline_id": "ENSEMBL",
+            "features": self.parent.w_config["static_data_config"]["features"]["path"],
         }
 
     def get_resource_usage(self, action):
@@ -427,7 +430,9 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "bwa." + self.config["copy_number_tool"] + ".{library_name}"
+        name_pattern = (
+            self.config["mapping_tool"] + "." + self.config["copy_number_tool"] + ".{library_name}"
+        )
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     def get_args(self, action):
@@ -482,9 +487,15 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "bwa." + self.config["copy_number_tool"] + ".{library_name}"
+        name_pattern = (
+            self.config["mapping_tool"] + "." + self.config["copy_number_tool"] + ".{library_name}"
+        )
         self.input_tpl = os.path.join(
-            self.config["path_copy_number"], "output", name_pattern, "out", name_pattern + ".cns"
+            self.config["path_copy_number"],
+            "output",
+            name_pattern,
+            "out",
+            name_pattern + "_dnacopy.seg",
         )
 
     def get_resource_usage(self, action):
@@ -537,9 +548,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             "action_type": "expression",
             "extra_args": {
                 "pipeline_id": "ENSEMBL",
-                "tx_obj": self.parent.w_config["step_config"]["ngs_mapping"][
-                    self.config["expression_tool"]
-                ]["path_features"],
+                "tx_obj": self.parent.w_config["static_data_config"]["features"]["path"],
             },
         }
 
@@ -813,13 +822,16 @@ class cbioportalExportWorkflow(BaseStep):
     def check_config(self):
         """Check config attributes for presence"""
         msg = []
-        if self.config["path_somatic_variant"] and (
-            not self.config["somatic_variant_calling_tool"]
-            or not self.config["somatic_variant_annotation_tool"]
-        ):
-            msg += [
-                "Somatic variant calling tool and somatic variant annotation tool must be defined"
-            ]
+        if self.config["path_somatic_variant"]:
+            if not self.config["mapping_tool"]:
+                msg += ["DNA mapping tool must be defined"]
+            if (
+                not self.config["somatic_variant_calling_tool"]
+                or not self.config["somatic_variant_annotation_tool"]
+            ):
+                msg += [
+                    "Somatic variant calling tool and somatic variant annotation tool must be defined"
+                ]
         if self.config["path_copy_number"] and not self.config["copy_number_tool"]:
             msg += [
                 "Somatic copy number calling tool must be defined when CNV results are available"

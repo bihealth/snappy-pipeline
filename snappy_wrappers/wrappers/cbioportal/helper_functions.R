@@ -186,10 +186,9 @@ get_id_mappings <- function(org_obj, verbose=FALSE) {
         if (file.exists(org_obj)) {
             if (verbose) cat("Gene id mappings taken from file ", org_obj)
             id_mappings <- read.table(org_obj, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE, quote="", comment="")
-            if (all(c("hgnc_symbol", "ensembl_canonical_gene", "entrez_gene_id") %in% colnames(id_mappings)))
+            if (all(c("symbol", "ensembl_gene_id", "entrez_id") %in% colnames(id_mappings)))
                 id_mappings <- id_mappings |>
-                    dplyr::select(ENSEMBL=ensembl_canonical_gene, SYMBOL=hgnc_symbol, ENTREZ_ID=entrez_gene_id)
-            stopifnot(all(c("ENSEMBL", "SYMBOL", "ENTREZ_ID") %in% colnames(id_mappings)))
+                    dplyr::select(ENSEMBL=ensembl_gene_id, SYMBOL=symbol, ENTREZ_ID=entrez_id)
             id_mappings <- id_mappings[,c("ENSEMBL", "SYMBOL", "ENTREZ_ID")]
         } else {
             if (grepl("::", org_obj)) {
@@ -203,6 +202,7 @@ get_id_mappings <- function(org_obj, verbose=FALSE) {
             )
         }
     }
+    stopifnot(all(c("ENSEMBL", "SYMBOL", "ENTREZ_ID") %in% colnames(id_mappings)))
     id_mappings <- id_mappings |>
         dplyr::select(ENSEMBL, SYMBOL, ENTREZ_ID) |>
         dplyr::mutate(ENTREZ_ID=as.character(ENTREZ_ID)) |>

@@ -76,7 +76,7 @@ rule somatic_variant_annotation_vep:
 # Run Jannovar ----------------------------------------------------------------
 
 
-rule somatic_variant_annotation_jannovar_annotate_somatic_vcf:
+rule somatic_variant_annotation_jannovar:
     input:
         **wf.get_input_files("jannovar", "annotate_somatic_vcf"),
     output:

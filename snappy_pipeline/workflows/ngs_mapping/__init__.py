@@ -171,13 +171,18 @@ The configuration provides the possibility to pass to `STAR` the location of a `
 This removes the need to include gene models into the generation of indices, so that the user can select the
 gene models (either from ENSEMBL or GENCODE, for example).
 
-When the configuration option `path_features` is set, the step will output a table of expression counts
-for all genes, in `output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
+The computation of gene counts relies on the features defined in the `static_data_config` section of the
+configuration file. The other steps relying of feature annotations should use this too.
+
+`STAR` outputs the counts for unstranded, forward and reverse strand protocols. When the user doesn't supply the
+protocol code (0 for unstranded, 1 for forward & 2 for reverse), the step runs `infer_experiment`
+(from the `rseqc` library) to infer the protocol strandedness. In both cases, the step generate a copy of
+the `STAR` output containing only the relevant column included.  This final version of the gene counts is found in
+`output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
 
 If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
 mapped to the transcriptome (`output/stat.{library_name}/out/star.{library_name}.toTranscriptome.bam`).
-`STAR` will rely on the `path_features` configuration option, or on the gene models embedded in
-the indices to generate the mappings. If both are absent, the step will fail.
+As with gene counts, `STAR` will rely on the static data configuration to generate the mappings.
 Note that the mappings to the transcriptome will not be indexes using `samtools index`, because the
 absence of the positional mappings.
 
@@ -387,7 +392,6 @@ step_config:
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
-      path_features: ""    # Required for computing gene counts
       num_threads_align: 16
       num_threads_trimming: 8
       num_threads_bam_view: 4
@@ -801,11 +805,10 @@ class StarStepPart(ReadMappingStepPart):
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run_work()
-        if self.config[self.name]["path_features"]:
-            output_files["gene_counts"] = self.base_path_out.format(
-                mapper=self.name, ext=".GeneCounts.tab"
-            )
-            output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
+        output_files["gene_counts"] = self.base_path_out.format(
+            mapper=self.name, ext=".GeneCounts.tab"
+        )
+        output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
         if self.config[self.name]["transcriptome"]:
             output_files["transcriptome"] = self.base_path_out.format(
                 mapper=self.name, ext=".toTranscriptome.bam"
@@ -900,27 +903,24 @@ class StrandednessStepPart(BaseStepPart):
 
     def get_result_files(self):
         for mapper in self.config["tools"]["rna"]:
-            if self.config[mapper]["path_features"]:
-                tpl_out = (
-                    "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
-                )
-                tpl_strandedness = "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
-                tpl_log = (
-                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
-                )
-                for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-                    if extra_info["extractionType"] == "RNA":
-                        yield tpl_out.format(mapper=mapper, library_name=library_name)
-                        yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
-                        yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
-                        yield tpl_strandedness.format(
-                            mapper=mapper, library_name=library_name
+            tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
+            tpl_strandedness = (
+                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
+            )
+            tpl_log = (
+                "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
+            )
+            for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+                if extra_info["extractionType"] == "RNA":
+                    yield tpl_out.format(mapper=mapper, library_name=library_name)
+                    yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
+                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
+                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name) + ".md5"
+                    for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                        yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                        yield tpl_log.format(
+                            mapper=mapper, library_name=library_name, ext=ext
                         ) + ".md5"
-                        for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                            yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
-                            yield tpl_log.format(
-                                mapper=mapper, library_name=library_name, ext=ext
-                            ) + ".md5"
 
     @dictify
     def get_log_file(self, action):

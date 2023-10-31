@@ -196,6 +196,12 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             self.w_config["step_config"]["tumor_mutational_burden"][
                 "tools_somatic_variant_calling"
             ] = self.w_config["step_config"]["somatic_variant_calling"]["tools"]
+        if not self.w_config["step_config"]["tumor_mutational_burden"][
+            "tools_somatic_variant_annotation"
+        ]:
+            self.w_config["step_config"]["tumor_mutational_burden"][
+                "tools_somatic_variant_annotation"
+            ] = self.w_config["step_config"]["somatic_variant_annotation"]["tools"]
 
     @listify
     def get_result_files(self):

@@ -58,7 +58,7 @@ x <- x |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(x=POS + 
 
 y <- read.table("{snakemake.input.tsv}", sep="\t", header=1, check.names=FALSE)
 y <- y |> dplyr::mutate(Call=cn_to_call(CN))
-y <- y |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(from=start + Offset, to=stop + Offset)
+y <- y |> dplyr::mutate(CHROM=as.character(CHROM)) |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(from=start + Offset, to=stop + Offset)
 
 pdf("{snakemake.output.cnv}", height=6.22, width=9.33)
 plot_cnv(x, scale="log2") + ggplot2::ggtitle("{snakemake.wildcards[library_name]}")

@@ -314,6 +314,8 @@ def write_snakemake_debug_helper(
     :type max_status_checks_per_second: str
     """
     with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
+        print("/bin/bash")
+        print("#SBATCH --output {}/slurm_log/%x-%J.log".format(os.getcwd()))
         print(
             " ".join(
                 map(
