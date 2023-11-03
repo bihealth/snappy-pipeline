@@ -17,8 +17,6 @@ import vcfpy
 
 #: Source program is GATK gCNV
 SOURCE_GATK_GCNV = "GCNV"
-#: Source program is CNVetti coverage with hom. DELs
-SOURCE_CNVETTI_HOM_DEL = "CNVETTI_HOM_DEL"
 
 #: Type of the CNV is DEL.
 CNV_DEL = "DEL"
@@ -28,7 +26,6 @@ CNV_DUP = "DUP"
 #: Mapping from VCF "source" header value to internal representation.
 SOURCE_MAP = {
     "PostprocessGermlineCNVCalls": SOURCE_GATK_GCNV,
-    "CNVetti::homdel": SOURCE_CNVETTI_HOM_DEL,
 }
 
 
@@ -205,7 +202,7 @@ def augment_header(header: vcfpy.Header) -> vcfpy.Header:
     return header
 
 
-def process_contig_gatk_gcnv(contig: str, reader: vcfpy.Reader) -> typing.List[CopyNumberVariant]:
+def process_contig_inner(contig: str, reader: vcfpy.Reader) -> typing.List[CopyNumberVariant]:
     try:
         _contig_iter = reader.fetch(contig)  # noqa: F841
     except ValueError as _e:  # noqa: F841
@@ -221,37 +218,6 @@ def process_contig_gatk_gcnv(contig: str, reader: vcfpy.Reader) -> typing.List[C
                 elif call.gt_alleles[0] == 0:
                     continue  # skip sample, does not carry variants
                 elif call.gt_bases[0] not in (CNV_DEL, CNV_DUP):
-                    raise Exception("Unexpected variant: %s" % call.gt_bases[0])
-                else:
-                    yield CopyNumberVariant(
-                        chrom=record.CHROM,
-                        pos_begin=record.affected_start,
-                        pos_end=record.INFO["END"],
-                        kind=call.gt_bases[0],
-                        source=SOURCE_GATK_GCNV,
-                        sample=sample,
-                        anno=call.data,
-                    )
-
-
-def process_contig_cnvetti_hom_del(
-    contig: str, reader: vcfpy.Reader
-) -> typing.List[CopyNumberVariant]:
-    try:
-        contig_iter = reader.fetch(contig)  # noqa: F841
-    except ValueError as _e:  # noqa: F841
-        return  # contig not in file, skip
-
-    for record in reader.fetch(contig):
-        if not record.ALT:
-            logger.debug("Skipping %s (no CNV)", ";".join(record.ID))
-        else:
-            for sample, call in record.call_for_sample.items():
-                if len(call.gt_alleles) != 1:
-                    raise Exception("Should only have one allele per sample")
-                elif call.gt_alleles[0] == 0:
-                    continue  # skip sample, does not carry variants
-                elif call.gt_bases[0] != CNV_DEL:
                     raise Exception("Unexpected variant: %s" % call.gt_bases[0])
                 else:
                     yield CopyNumberVariant(
@@ -342,12 +308,7 @@ def process_contig(
             raise Exception("Unknown source: %s" % source)
         source = SOURCE_MAP[source]
         logger.debug("File %s from source %s", reader.path, source)
-        if source == SOURCE_GATK_GCNV:
-            cnvs += list(process_contig_gatk_gcnv(contig, reader))
-        elif source == SOURCE_CNVETTI_HOM_DEL:
-            cnvs += list(process_contig_cnvetti_hom_del(contig, reader))
-        else:
-            raise Exception("Error picking source processor (should never happen)")
+        cnvs += list(process_contig_inner(contig, reader))
     if not cnvs:
         return []  # no CNVs for contig
     else:
@@ -371,7 +332,7 @@ def process_contig(
 
 
 def run(args):
-    logger.info("Starting exome CNV merging")
+    logger.info("Starting gCNV VCF merging")
     logger.info("config = %s", args)
 
     with contextlib.ExitStack() as stack:
@@ -384,8 +345,6 @@ def run(args):
         for contig_line in out_header.get_lines("contig"):
             records = process_contig(contig_line.mapping["ID"], readers, args.min_ovl, out_header)
             for record in records:
-                if args.sv_method and "SVMETHOD" not in record.INFO:
-                    record.INFO["SVMETHOD"] = args.sv_method
                 writer.write_record(record)
         logger.info("Done processing contig %s.", contig_line.mapping["ID"])
 
@@ -401,7 +360,6 @@ def main(argv=None):
     parser.add_argument(
         "--verbose", "-v", default=False, action="store_true", help="Enable verbose mode"
     )
-    parser.add_argument("--sv-method", default=None, help="Value for INFO/SVCALLER")
 
     args = parser.parse_args(argv)
     if args.verbose:

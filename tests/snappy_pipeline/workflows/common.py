@@ -102,18 +102,31 @@ def get_expected_gcnv_log_file(step_name: str, *, extended: bool = False):
     :return: Returns expected log file path for basic steps in gCNV.
     """
     # TODO: eventually, all steps should generate extended log files
-    if extended:
+    if extended and step_name == "gcnv_joint_segmentation":
         return {
-            "log": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log",
-            "log_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log.md5",
-            "conda_info": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
-            "conda_info_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
-            "conda_list": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
-            "conda_list_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
-            "wrapper": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py",
-            "wrapper_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py.md5",
-            "env_yaml": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml",
-            "env_yaml_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml.md5",
+            "log": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.log",
+            "log_md5": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.log.md5",
+            "conda_info": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.conda_info.txt",
+            "conda_info_md5": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
+            "conda_list": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.conda_list.txt",
+            "conda_list_md5": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
+            "wrapper": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.wrapper.py",
+            "wrapper_md5": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.wrapper.py.md5",
+            "env_yaml": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.environment.yaml",
+            "env_yaml_md5": "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/log/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}.joint_germline_segmentation.environment.yaml.md5",
+        }
+    elif extended and step_name == "merge_multikit_families":
+        return {
+            "log": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.log",
+            "log_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.log.md5",
+            "conda_info": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_info.txt",
+            "conda_info_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_info.txt.md5",
+            "conda_list": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_list.txt",
+            "conda_list_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_list.txt.md5",
+            "wrapper": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.wrapper.py",
+            "wrapper_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.wrapper.py.md5",
+            "env_yaml": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.environment.yaml",
+            "env_yaml_md5": "work/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.environment.yaml.md5",
         }
     else:
         return (
