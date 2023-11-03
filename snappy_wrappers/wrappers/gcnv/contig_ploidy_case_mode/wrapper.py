@@ -47,10 +47,16 @@ gatk DetermineGermlineContigPloidy \
 )
 
 ploidy_calls = out_path / "ploidy-calls"
-for sample_dir in ploidy_calls.glob("SAMPLE_*"):
+n_expected_results = len(snakemake.input.tsv)
+for n, sample_dir in enumerate(ploidy_calls.glob("SAMPLE_*")):
     path_name = sample_dir / "sample_name.txt"
     with path_name.open("rt") as inputf:
         sample_name = inputf.read().strip()
+    if n >= n_expected_results and sample_name not in sex_map:
+        with open(snakemake.log.log, "a") as log:
+            log.write((f"Skipping {sample_name} as it is not in the PED file"
+                       "and exceeds the number of expected samples.\n"))
+        continue
     sample_sex = sex_map[sample_name]
     path_call = sample_dir / "contig_ploidy.tsv"
     with path_call.open("rt") as inputf:

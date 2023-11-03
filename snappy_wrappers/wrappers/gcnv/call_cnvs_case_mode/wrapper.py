@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from snakemake.shell import shell
 
+#TODO: If the output folder `$(dirname {snakemake.output.done})` exists and was created by another
+# user this will fail. Running rm -rf `$(dirname {snakemake.output.done})` before gatk should fix
+# this issue and once this wrapper is running all previous output files become invalid anyway
+
 paths_tsv = " ".join(snakemake.input.tsv)
 shell(
     r"""
