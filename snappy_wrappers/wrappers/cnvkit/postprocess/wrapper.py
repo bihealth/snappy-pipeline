@@ -67,7 +67,7 @@ segments[,"end"]   <- segments[["end"]]+1
 segments[,"ID"] <- "{snakemake.wildcards[library_name]}"
 
 # Rename columns to follow DNAcopy format (as implemented in PureCN)
-dna_copy_columns <- c(ID="ID", chromosome="chrom", start="loc.start", end="loc.end", probes="num.marks", log2="seg.mean", cn="C")
+dna_copy_columns <- c(ID="ID", chromosome="chrom", start="loc.start", end="loc.end", probes="num.mark", log2="seg.mean", cn="C")
 segments <- segments[,colnames(segments) %in% names(dna_copy_columns)]
 colnames(segments) <- dna_copy_columns[colnames(segments)]
 segments <- segments[,dna_copy_columns]
