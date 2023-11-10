@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 
 from snakemake.shell import shell
 
@@ -54,8 +55,10 @@ for n, sample_dir in enumerate(ploidy_calls.glob("SAMPLE_*")):
         sample_name = inputf.read().strip()
     if n >= n_expected_results and sample_name not in sex_map:
         with open(snakemake.log.log, "a") as log:
-            log.write((f"Skipping {sample_name} as it is not in the PED file"
-                       "and exceeds the number of expected samples.\n"))
+            log.write(
+                f"Encountered a sample most likely leftover from previous snappy run {sample_name} (undefined in samplehseet and above number of expected samples). Purging to ensure later GCNV commands do not load this."
+            )
+        shutil.rmtree(ploidy_calls / sample_dir)
         continue
     sample_sex = sex_map[sample_name]
     path_call = sample_dir / "contig_ploidy.tsv"

@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 from snakemake.shell import shell
 
-#TODO: If the output folder `$(dirname {snakemake.output.done})` exists and was created by another
-# user this will fail. Running rm -rf `$(dirname {snakemake.output.done})` before gatk should fix
-# this issue and once this wrapper is running all previous output files become invalid anyway
-
 paths_tsv = " ".join(snakemake.input.tsv)
 shell(
     r"""
@@ -21,6 +17,13 @@ trap "rm -rf $TMPDIR" ERR EXIT
 export MKL_NUM_THREADS=16
 export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+
+# Force full replacement of previous results
+# (this also solves issues when gatk tries to shutil copy file ownership)
+if [ -d $(dirname {snakemake.output.done}) ]
+then
+    rm -rf $(dirname {snakemake.output.done})
+fi
 
 gatk GermlineCNVCaller \
     --run-mode CASE \
