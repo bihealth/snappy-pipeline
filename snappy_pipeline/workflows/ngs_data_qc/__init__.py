@@ -105,6 +105,8 @@ class FastQcReportStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    default_resource_usage = ResourceUsage(threads=1, memory="4G", time="03:59:59")
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
