@@ -389,21 +389,26 @@ step_config:
       trim_adapters: false
       mask_duplicates: true
       split_as_secondary: true  # -M flag
-    # Configuration for mbcs (meta sub-step to deal with Molecular Barcodes & base uqality recalibration)
-    mbcs:
+    # Configuration for somatic ngs_calling (separate read groups, molecular barcodes & base quality recalibration)
+    somatic:
       mapping_tool: REQUIRED  # Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config
-      mbc_tool: agent         # Only agent currently implemented
-      agent:
-        prepare:
-          path: REQUIRED
-          lib_prep_type: REQUIRED # One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)
-          extra_args: []      # Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data
-        mark_duplicates:
-          path: REQUIRED
-          consensus_mode: REQUIRED # One of "SINGLE", "HYBRID", "DUPLEX"
-          input_filter_args: []
-          consensus_filter_args: []
-          extra_args: []
+      barcode_tool: agent     # Only agent currently implemented
+      use_barcodes: false
+      recalibrate: true
+    bqsr:
+      common_variants: REQUIRED # Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)
+    agent:
+      prepare:
+        path: REQUIRED
+        lib_prep_type: REQUIRED # One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)
+        extra_args: []        # Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data
+      mark_duplicates:
+        path: REQUIRED
+        path_baits: REQUIRED
+        consensus_mode: REQUIRED # One of "SINGLE", "HYBRID", "DUPLEX"
+        input_filter_args: [] # Consider -mm 13 (min base qual) -mr 13 (min barcode base qual) -mq 30 (min map qual)
+        consensus_filter_args: []
+        extra_args: []        # Consider -d 1 (max nb barcode mismatch)
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
@@ -797,8 +802,9 @@ class MBCsStepPart(ReadMappingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="24:00:00",
+            time="72:00:00",
             memory="4G",
+            partition="medium",
         )
 
     def check_config(self):
@@ -813,33 +819,37 @@ class MBCsStepPart(ReadMappingStepPart):
             return  # mbcs not run, don't check configuration  # pragma: no cover
 
         # Check mapper
-        mapper = self.config["mbcs"]["mapping_tool"]
+        mapper = self.config["somatic"]["mapping_tool"]
         assert mapper != "mbcs" and mapper in READ_MAPPERS_DNA, f'Unknown mapper "{mapper}"'
         self.parent.sub_steps[mapper].check_config()
 
-        # Check trimmer & creak paths
-        path = self.config["mbcs"]["agent"]["prepare"]["path"]
-        if not os.path.exists(path):
-            raise InvalidConfiguration(
-                f"Expected agent's trimmer input path {path} does not exist!"
-            )
-        path = self.config["mbcs"]["agent"]["mark_duplicates"]["path"]
-        if not os.path.exists(path):
-            raise InvalidConfiguration(f"Expected agent's creak input path {path} does not exist!")
+        if self.config["somatic"]["use_barcodes"]:
+            assert self.config["somatic"]["barcode_tool"] == "agent"
+            # Check trimmer & creak paths
+            path = self.config["agent"]["prepare"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's trimmer input path {path} does not exist!"
+                )
+            path = self.config["agent"]["mark_duplicates"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's creak input path {path} does not exist!"
+                )
 
-        # Check mandatory options
-        option = self.config["mbcs"]["agent"]["prepare"]["lib_prep_type"]
-        if option not in self.__class__.LIB_PREP_TYPES:
-            options = '", "'.join(self.__class__.LIB_PREP_TYPES)
-            raise InvalidConfiguration(
-                f'Unkown library preparation type "{option}", valid options are "{options}"'
-            )
-        option = self.config["mbcs"]["agent"]["mark_duplicates"]["consensus_mode"]
-        if option not in self.__class__.CONSENSUS_MODES:
-            options = '", "'.join(self.__class__.CONSENSUS_MODES)
-            raise InvalidConfiguration(
-                f'Unkown consensus mode "{option}", valid options are "{options}"'
-            )
+            # Check mandatory options
+            option = self.config["agent"]["prepare"]["lib_prep_type"]
+            if option not in self.__class__.LIB_PREP_TYPES:
+                options = '", "'.join(self.__class__.LIB_PREP_TYPES)
+                raise InvalidConfiguration(
+                    f'Unkown library preparation type "{option}", valid options are "{options}"'
+                )
+            option = self.config["agent"]["mark_duplicates"]["consensus_mode"]
+            if option not in self.__class__.CONSENSUS_MODES:
+                options = '", "'.join(self.__class__.CONSENSUS_MODES)
+                raise InvalidConfiguration(
+                    f'Unkown consensus mode "{option}", valid options are "{options}"'
+                )
 
 
 class StarStepPart(ReadMappingStepPart):

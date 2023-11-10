@@ -46,13 +46,15 @@ def minimal_config():
               path_index: /path/to/bwa_mem2/index.fasta
             mbcs:
               mapping_tool: bwa
-              agent:
-                prepare:
-                  path: /path/to/trimmer
-                  lib_prep_type: v2
-                mark_duplicates:
-                  path: /path/to/creak
-                  consensus_mode: HYBRID
+            bsqr:
+              common_variants: /path/to/common/variants
+            agent:
+              prepare:
+                path: /path/to/trimmer
+                lib_prep_type: v2
+              mark_duplicates:
+                path: /path/to/creak
+                consensus_mode: HYBRID
             bam_collect_doc:
               enabled: true
 
@@ -331,7 +333,7 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
             "memory": "73728M",
             "partition": "medium",
         },
-        "mbcs": {"threads": 1, "time": "24:00:00", "memory": "4G", "partition": "medium"},
+        "mbcs": {"threads": 1, "time": "72:00:00", "memory": "4G", "partition": "medium"},
     }
     # Evaluate
     for tool, v in expected_dict.items():

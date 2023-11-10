@@ -21,9 +21,53 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-# Rules templates =============================================================
+# Helper functions ------------------------------------------------------------
+def pair_fastq_files(input_left, input_right):
+    r1s = input_left.copy()
 
-# Main rule: rule all ---------------------------------------------------------
+    pairs = {}
+    for r2 in input_right:
+        f = os.path.basename(r2).replace("_R2", "_R1")
+        r1 = None
+        for x in r1s:
+            if os.path.basename(x) == f:
+                r1 = x
+                break
+        assert r1 is not None
+        name = f[: f.index("_R1")]
+        assert name not in pairs.keys()
+        pairs[name] = (os.path.abspath(r1), os.path.abspath(r2))
+        r1s.remove(r1)
+
+    for r1 in r1s:
+        f = os.path.basename(r1)
+        assert "_R1" in f
+        name = f[: f.index("_R1")]
+        assert name not in pairs.keys()
+        pairs[name] = (os.path.abspath(r1),)
+
+    return pairs
+
+
+# Read snakemake input --------------------------------------------------------
+input_left = snakemake.params.args["input"]["reads_left"]
+input_right = snakemake.params.args["input"].get("reads_right", "")
+
+config = snakemake.config["step_config"]["ngs_mapping"]["somatic"]
+mapper = config["mapping_tool"]
+mapper_config = snakemake.config["step_config"]["ngs_mapping"][mapper]
+if mapper == "bwa_mem2":
+    mapper = "bwa-mem2"
+if config["use_barcodes"]:
+    barcoder = config["barcode_tool"]
+    config_barcodes = snakemake.config["step_config"]["ngs_mapping"][barcoder]
+if config["recalibrate"]:
+    config_bqsr = snakemake.config["step_config"]["ngs_mapping"]["bqsr"]
+
+# Group fastq files by lane ---------------------------------------------------
+pairs = pair_fastq_files(input_left, input_right)
+
+# Rules templates -------------------------------------------------------------
 head_rule = r"""
 shell.prefix("set -xeuo pipefail; ")
 
@@ -32,254 +76,255 @@ rule all:
         "{output_bam}"
 """
 
-# Trim UMIs & map one pair of fastq files -------------------------------------
-paired_rule = r"""
-rule trim_{iPair}:
+generic_rule = r"""
+rule {rule}:
     input:
-        r1 = "{r1}",
-        r2 = "{r2}"
+        {input}
     output:
-        r1 = "trimmed/{name}_R1.fastq.gz",
-        r2 = "trimmed/{name}_R2.fastq.gz"
-    log:
-        "log/{name}_trim.log"
-    resources:
-        mem_mb = "64000M",
-        time = "24:00:00"
-    shell:
-        r'''
-            java -Xmx60G -jar {trimmer} \
-                -{lib_prep_type} {extra_args} \
-                -out "trimmed/{name}" \
-                -fq1 {{input.r1}} -fq2 {{input.r2}}
-        '''
-
-rule map_{iPair}:
-    input:
-        r1 = "trimmed/{name}_R1.fastq.gz",
-        r2 = "trimmed/{name}_R2.fastq.gz"
-    output:
-        bam = "mapped/{name}.bam"
-    log:
-        "log/{name}_map.log"
-    resources:
-        mem_mb = "64000M",
-        time = "24:00:00"
-    threads: 16
-    params:
-        indices = "{indices}"
-    shell:
-        r'''
-            seqtk mergepe <(zcat {{input.r1}}) <(zcat {{input.r2}}) \
-                | {mapper} mem {{params.indices}} -t {{threads}} -p -R '@RG\tID:{name}\tSM:{sample}\tPL:ILLUMINA' -C /dev/stdin \
-                | samtools sort -O BAM -o {{output.bam}}
-            samtools index {{output.bam}}
-        '''
-"""
-
-# Trim & map one fastq file (unpaired) ----------------------------------------
-unpaired_rule = r"""
-rule trim_{iPair}:
-    input:
-        r1 = "{r1}"
-    output:
-        r1 = "trimmed/{name}_R1.fastq.gz"
-    log:
-        "log/{name}_trim.log"
-    resources:
-        mem_mb = "64000M",
-        time = "24:00:00"
-    shell:
-        r'''
-            java -Xmx60G -jar {trimmer} -fq1 {{input.r1}}
-        '''
-
-rule map_{iPair}:
-    input:
-        r1 = "trimmed/{name}_R1.fastq.gz"
-    output:
-        bam = "mapped/{name}.bam"
-    log:
-        "log/{name}_map.log"
-    resources:
-        mem_mb = "64000M",
-        time = "24:00:00"
+        {output}
     threads: {threads}
-    params:
-        indices = "{indices}"
-    shell:
-        r'''
-            seqtk mergepe <(zcat {{input.r1}}) \
-                | {mapper} mem {{params.indices}} -t {{threads}} -p -R '@RG\tID:{name}\tSM:{sample}\tPL:ILLUMINA' -C /dev/stdin \
-                | samtools sort -O BAM -o {{output.bam}}
-            samtools index {{output.bam}}
-        '''
-"""
-
-# Merge, mark duplicated and base quality recalibration on all data -----------
-merge_rule = r"""
-rule merge:
-    input:
-        pairs = [{pairs}]
-    output:
-        bam = "merged.bam"
-    log:
-        "log/merge.log"
-    shell:
-        r'''
-            samtools merge -O BAM -o {{output.bam}} -f -s 1234567 {{input.pairs}}
-            samtools index {{output.bam}}
-        '''
-
-rule mark:
-    input:
-        bam = "merged.bam"
-    output:
-        bam = "marked.bam"
-    log:
-        "log/marked.log"
     resources:
-        mem_mb = "64000M",
-        time = "24:00:00"
+        mem_mb = "{mem}",
+        time = "{time}",
+        partition = "critical"
     shell:
         r'''
-            java -Xmx60G -jar {marker} \
-                {extra_args} -c={consensus_mode} \
-                -o={{output.bam}} \
-                -f {input_filer_args} -F {consensus_filter_args} \
-                {{input.bam}}
-
-            samtools index {{output.bam}}
-        '''
-    
-rule bqsr:
-    input:
-        bam = "marked.bam"
-    output:
-        tbl = "bqsr.tbl"
-    log:
-        "log/bqsr.log"
-    params:
-        reference = "{reference}",
-        common_sites = "{common_sites}"
-    shell:
-        r'''
-            gatk BaseRecalibrator \
-                -I {{input.bam}} \
-                -R {{params.reference}} --known-sites {{params.common_sites}} \
-                -O {{output.tbl}}
-        '''
-
-rule apply:
-    input:
-        bam = "marked.bam",
-        tbl = "bqsr.tbl"
-    output:
-        bam = "{output_bam}"
-    log:
-        "log/apply.log"
-    params:
-        reference = "{reference}"
-    shell:
-        r'''
-            gatk ApplyBQSR \
-                -I {{input.bam}} --bqsr-recal-file {{input.tbl}} \
-                -R {{params.reference}} \
-                -O {{output.bam}}
-
-            samtools index {{output.bam}}
+{cmds}
         '''
 """
 
-# Main script =================================================================
-
-# Input fastqs are passed through snakemake.params.
-# snakemake.input is a .done file touched after linking files in.
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = snakemake.params.args["input"].get("reads_right", "")
-
-config = snakemake.config["step_config"]["ngs_mapping"]["mbcs"]
-
-# Group mate pairs
-r1s = input_left.copy()
-
-pairs = {}
-for r2 in input_right:
-    f = os.path.basename(r2).replace("_R2", "_R1")
-    r1 = None
-    for x in r1s:
-        if os.path.basename(x) == f:
-            r1 = x
-            break
-    assert r1 is not None
-    name = f[: f.index("_R1")]
-    assert name not in pairs.keys()
-    pairs[name] = (os.path.abspath(r1), os.path.abspath(r2))
-    r1s.remove(r1)
-
-for r1 in r1s:
-    f = os.path.basename(r1)
-    assert "_R1" in f
-    name = f[: f.index("_R1")]
-    assert name not in pairs.keys()
-    pairs[name] = (os.path.abspath(r1),)
-
-# Create Snakefile
-snakefile = []
-
-rule = head_rule.format(output_bam=os.path.abspath(snakemake.output.bam))
-snakefile.append(rule)
-
-mapper = config["mapping_tool"]
-tool = config["mbc_tool"]
+# Format input for each lane (r1 = ... & optionally r2 = ...) -----------------
+inputs = {}
 for iPair, name in enumerate(pairs.keys()):
-    kwargs = {
-        "iPair": iPair,
-        "name": name,
-        "r1": pairs[name][0],
-        "r2": pairs[name][1],
-        "trimmer": config[tool]["prepare"]["path"],
-        "lib_prep_type": config[tool]["prepare"]["lib_prep_type"],
-        "extra_args": " ".join(config[tool]["prepare"]["extra_args"]),
-        "mapper": mapper if mapper != "bwa_mem2" else "bwa-mem2",
-        "indices": snakemake.config["step_config"]["ngs_mapping"][mapper]["path_index"],
-        "sample": snakemake.params.args["sample_name"],
-        "threads": snakemake.config["step_config"]["ngs_mapping"][mapper]["num_threads_align"],
-    }
-    if len(pairs[name]) == 2:
-        rule = paired_rule.format(**kwargs)
-    else:
-        rule = unpaired_rule.format(**kwargs)
-    snakefile.append(rule)
+    pair = pairs[name]
+    in_ = 'r1 = "{}"'.format(pair[0])
+    if len(pair) == 2:
+        in_ += ',\n        r2 = "{}"'.format(pair[1])
+    inputs[name] = in_
 
-rule = merge_rule.format(
-    pairs='"' + '", "'.join(["mapped/{}.bam".format(name) for name in pairs.keys()]) + '"',
-    marker=config[tool]["mark_duplicates"]["path"],
-    consensus_mode=config[tool]["mark_duplicates"]["consensus_mode"],
-    input_filer_args=" ".join(config[tool]["mark_duplicates"]["input_filter_args"]),
-    consensus_filter_args=" ".join(config[tool]["mark_duplicates"]["consensus_filter_args"]),
-    extra_args=" ".join(config[tool]["mark_duplicates"]["extra_args"]),
-    reference=snakemake.config["static_data_config"]["reference"]["path"],
-    common_sites=snakemake.config["step_config"]["ngs_mapping"]["mbcs"]["agent"]["common_variants"],
-    output_bam=os.path.abspath(snakemake.output.bam),
+# Create snakefile chunks =====================================================
+snakefile = [head_rule.format(output_bam=os.path.abspath(snakemake.output.bam))]
+
+# Trimming barcodes -----------------------------------------------------------
+if config["use_barcodes"]:
+    for iPair, name in enumerate(pairs.keys()):
+        pair = pairs[name]
+
+        out = 'r1 = "trimmed/{}_R1.fastq.gz"'.format(name)
+        fq2 = ""
+        if len(pair) == 2:
+            out += ',\n        r2 = "trimmed/{}_R2.fastq.gz"'.format(name)
+            fq2 = "-fq2 {input.r2}"
+
+        cmd = (
+            "            java -Xmx60G -jar {trimmer} \\\n"
+            "                -{lib_prep_type} {extra_args} \\\n"
+            '                -out "trimmed/{name}" \\\n'
+            "                -fq1 {{input.r1}} {fq2}"
+        ).format(
+            trimmer=config_barcodes["prepare"]["path"],
+            lib_prep_type=config_barcodes["prepare"]["lib_prep_type"],
+            extra_args=" ".join(config_barcodes["prepare"]["extra_args"]),
+            name=name,
+            fq2=fq2,
+        )
+
+        kwargs = {
+            "rule": f"trim_{iPair}",
+            "input": inputs[name],
+            "output": out,
+            "cmds": cmd,
+            "mem": "64000M",
+            "time": "24:00:00",
+            "threads": "1",
+        }
+        snakefile.append(generic_rule.format(**kwargs))
+
+        inputs[name] = out
+
+# Mapping chunk ===============================================================
+
+# Prepare mapping command (many steps, with pipes) ----------------------------
+
+# Input depends on presence of R2
+cmd = "            {zcat}"
+
+# Optionally trim adapters
+if mapper_config["trim_adapters"]:
+    cmd += "            | trimadap-mt -p {} \\\n".format(mapper_config["num_threads_trimming"])
+
+# Map with read group (bwa & bwa-mem2 only)
+cmd += (
+    "            | {mapper} mem \\\n"
+    "                {indices} \\\n"
+    "                -R '@RG\tID:{{name}}\tSM:{sample_name}\tPL:ILLUMINA' \\\n"
+    "                -p {extra_args} -t {threads} /dev/stdin \\\n"
+).format(
+    mapper=mapper,
+    indices=mapper_config["path_index"],
+    sample_name=snakemake.params.args["sample_name"],
+    extra_args=" ".join(mapper_config.get("extra_args", [])),
+    threads=mapper_config["num_threads_align"],
 )
-snakefile.append(rule)
 
+# Optionally mask duplicates
+if mapper_config["mask_duplicates"]:
+    cmd += "            | samblaster --addMateTags \\\n"
+
+# Sort output bam - end of the pipe
+cmd += (
+    "            | samtools sort -T {{tmp}} \\\n"
+    "                -m {memory} -@ {threads} -O BAM -o {{{{output.bam}}}} /dev/stdin\n"
+).format(
+    memory=mapper_config["memory_bam_sort"],
+    threads=mapper_config["num_threads_bam_sort"],
+)
+
+# Index output bam
+cmd += "            samtools index {{output.bam}}"
+
+# Loop over lanes -------------------------------------------------------------
+for iPair, name in enumerate(pairs.keys()):
+    pair = pairs[name]
+
+    if len(pair) == 2:
+        zcat = "seqtk mergepe <(zcat {input.r1}) <(zcat {input.r2}) \\\n"
+    else:
+        zcat = "zcat {input.r1} \\\n"
+
+    if len(pairs.keys()) > 1 or config["use_barcodes"] or config["recalibrate"]:
+        out = f"mapped/{name}.bam"
+    else:
+        out = os.path.abspath(snakemake.output.bam)
+
+    kwargs = {
+        "rule": f"map_{iPair}",
+        "input": inputs[name],
+        "output": f'bam = "{out}"',
+        "cmds": cmd.format(zcat=zcat, name=name, out=out, tmp=f"sort/{name}"),
+        "threads": mapper_config["num_threads_align"] + mapper_config["num_threads_bam_sort"],
+        "mem": "64000M",
+        "time": "24:00:00",
+    }
+    snakefile.append(generic_rule.format(**kwargs))
+
+# Merge bam files when more than one lane -------------------------------------
+if len(pairs.keys()) > 1:
+    if config["use_barcodes"] or config["recalibrate"]:
+        out = "merged.bam"
+    else:
+        out = os.path.abspath(snakemake.output.bam)
+    cmd = (
+        "            samtools merge -O BAM -o {output.bam} -f -s 1234567 {input.bams} \n"
+        "            samtools index {output.bam}"
+    )
+    rule = generic_rule.format(
+        rule="merge",
+        input="bams = [{}]".format(
+            ", ".join(['"mapped/{}.bam"'.format(name) for name in pairs.keys()])
+        ),
+        output=f'bam = "{out}"',
+        cmds=cmd,
+        threads="1",
+        mem="16000M",
+        time="4:00:00",
+    )
+    snakefile.append(rule)
+in_ = out
+
+# Mark duplicates with barcodes -----------------------------------------------
+if config["use_barcodes"]:
+    if config["recalibrate"]:
+        out = "marked.bam"
+    else:
+        out = os.path.abspath(snakemake.output.bam)
+
+    cmd = (
+        "            java -Xmx60G -jar {marker} {extra_args} \\\n"
+        "                --bed-file={baits} \\\n"
+        "                -c={consensus_mode} \\\n"
+        "                -o={{output.bam}} \\\n"
+        "                -f {input_filter_args} -F {consensus_filter_args} \\\n"
+        "                {{input.bam}} \n"
+        "            samtools index {{output.bam}}"
+    ).format(
+        marker=config_barcodes["mark_duplicates"]["path"],
+        consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
+        baits=config_barcodes["mark_duplicates"]["path_to_baits"],
+        extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_args"]),
+        input_filter_args=" ".join(config_barcodes["mark_duplicates"]["input_filter_args"]),
+        consensus_filter_args=" ".join(config_barcodes["mark_duplicates"]["consensus_filter_args"]),
+    )
+
+    kwargs = {
+        "rule": "mark",
+        "input": f'bam = "{in_}"',
+        "output": f'bam = "{out}"',
+        "cmds": cmd,
+        "mem": "96000M",
+        "time": "24:00:00",
+        "threads": "1",
+    }
+    snakefile.append(generic_rule.format(**kwargs))
+in_ = out
+
+# Base quality recalibration --------------------------------------------------
+if config["recalibrate"]:
+    cmd = (
+        "            gatk BaseRecalibrator \\\n"
+        "                -I {{input.bam}} \\\n"
+        "                -R {reference} --known-sites {common_sites} \\\n"
+        "                -O {{output.tbl}}"
+    ).format(
+        reference=snakemake.config["static_data_config"]["reference"]["path"],
+        common_sites=config_bqsr["common_variants"],
+    )
+
+    kwargs = {
+        "rule": "bqsr",
+        "input": f'bam = "{in_}"',
+        "output": 'tbl = "bqsr.tbl"',
+        "cmds": cmd,
+        "mem": "32000M",
+        "time": "24:00:00",
+        "threads": "1",
+    }
+    snakefile.append(generic_rule.format(**kwargs))
+
+    cmd = (
+        "            gatk ApplyBQSR \\\n"
+        "                -I {{input.bam}} --bqsr-recal-file {{input.tbl}} \\\n"
+        "                -R {reference} \\\n"
+        "                -O {{output.bam}} \n"
+        "            samtools index {{output.bam}}"
+    ).format(reference=snakemake.config["static_data_config"]["reference"]["path"])
+
+    kwargs = {
+        "rule": "apply",
+        "input": f'bam = "{in_}",\n        tbl = "bqsr.tbl"',
+        "output": 'bam = "{}"'.format(os.path.abspath(snakemake.output.bam)),
+        "cmds": cmd,
+        "mem": "32000M",
+        "time": "24:00:00",
+        "threads": "1",
+    }
+    snakefile.append(generic_rule.format(**kwargs))
+
+# Create snakefile from chunks
 snakefile = "\n\n# =======================================================\n\n".join(snakefile)
 
-# Create temp directory, go there, write Snakefile and run
+# Start snakemake in temporary directory ======================================
 pwd = os.getcwd()
-
-# import pdb; pdb.set_trace()
 
 tempdir = tempfile.mkdtemp()
 os.chdir(tempdir)
+os.mkdir("sort", mode=0o750)
 
-# os.mkdir(os.path.join(tempdir, "slurm_log"), mode=0o750)
 with open("Snakefile", "wt") as f:
     f.write(snakefile)
 
 slurm_config = {
+    "cores": mapper_config["num_threads_align"] + mapper_config["num_threads_bam_sort"],
     "num_jobs": 10,
     "max_jobs_per_second": 10,
     "max_status_checks_per_second": 1,
@@ -288,6 +333,7 @@ slurm_config = {
 }
 config["use_profile"] = True
 config["restart_times"] = 1
+
 run_snakemake(
     config,
     **slurm_config,
@@ -295,7 +341,7 @@ run_snakemake(
 
 os.chdir(pwd)
 
-# Finish: write stats, logs & links
+# Finish: write stats, logs & links -------------------------------------------
 shell(
     r"""
 set -x
@@ -312,7 +358,10 @@ cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
 md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
 
 # Concatenate all log files into main log
-for fn in $(ls -tr {tempdir}/slurm_log/*/*.log)
+jobid=$(ls {tempdir}/slurm_log)
+fns=$(ls -tr {tempdir}/slurm_log/$jobid/*.log)
+ls -al $fns
+for fn in $fns
 do
     f=$(basename $fn)
     echo "# ==============================================================" >> {snakemake.log.log}
@@ -351,7 +400,7 @@ for path in {snakemake.output.output_links}; do
   src=work/${{dst#output/}}
   ln -sr $src $dst
 done
+
+rm -rf {tempdir}
 """
 )
-
-shutil.rmtree(tempdir)
