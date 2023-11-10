@@ -29,7 +29,7 @@ d=$(ls $CONDA_PREFIX/share | grep picard)
 picard_jar="$CONDA_PREFIX/share/$d/picard.jar"
 if [[ ! -r $picard_jar ]]
 then
-    echo "Can't find picar jar"
+    echo "Can't find picard jar"
     exit -1
 fi
 
@@ -58,7 +58,14 @@ trap "rm -rf $tmpdir" EXIT
 bed_to_interval_list() {{
     fn=$1
     f=$(basename $fn)
-    cut -f 1-3 $fn \
+    if [[ $(od -x -N 2 $fn | head -n 1 | sed -e "s/.* //") = "8b1f" ]]
+    then
+        extract=zcat
+    else
+        extract=cat
+    fi
+    $extract $fn \
+        | cut -f 1-3 \
         | bedtools sort -i - \
         | bedtools merge -i - \
         > $tmpdir/$f
