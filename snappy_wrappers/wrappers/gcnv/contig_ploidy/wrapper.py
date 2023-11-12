@@ -70,6 +70,8 @@ for sample_dir in ploidy_calls.glob("SAMPLE_*"):
     path_name = sample_dir / "sample_name.txt"
     with path_name.open("rt") as inputf:
         sample_name = inputf.read().strip()
+    if sample_name not in sex_map:
+        continue
     sample_sex = sex_map[sample_name]
     path_call = sample_dir / "contig_ploidy.tsv"
     with path_call.open("rt") as inputf:
