@@ -117,6 +117,15 @@ The following germline variant callers are currently available.
 
     Disabled by default.
 
+``bcftools_call``
+
+    Variant calling with Freebayes.
+
+    This caller is provided as it is useful to genereate variant calls with the same artifacts
+    as external pipelines.
+
+    Disabled by default.
+
 =======
 Reports
 =======
@@ -283,6 +292,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 #: Available germline variant callers
 VARIANT_CALLERS = (
     "bcftools_call",
+    "freebayes",
     "gatk3_hc",
     "gatk3_ug",
     "gatk4_hc_gvcf",
@@ -331,6 +341,14 @@ step_config:
       max_indel_depth: 250
       window_length: 10000000
       num_threads: 16
+    freebayes:
+      use_standard_filters: true
+      window_length: 10000000
+      num_threads: 16
+      min_alternate_fraction: 0.05  # FreeBayes default
+      min_mapping_quality: 1        # FreeBayes default
+      min_repeat_entropy: 1         # FreeBayes default
+      haplotype_length: 3           # FreeBayes default
     gatk3_hc:
       num_threads: 16
       window_length: 10000000
@@ -530,6 +548,38 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
             time="2-00:00:00",
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
+
+
+class FreebayesStepPart(VariantCallingStepPart):
+    """Germline variant calling with freebayes"""
+
+    #: Step name
+    name = "freebayes"
+
+    def get_resource_usage(self, action):
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=16,
+            time="2-00:00:00",  # 2 days
+            memory=f"{int(3.75 * 1024 * 16)}M",
+        )
+
+    def get_params(self, action):
+        """
+        :param action: Action (i.e., step) in the workflow. Currently only available for 'run'.
+        :type action: str
+        :return: Returns get parameters function.
+        :raises UnsupportedActionException: if action not 'run'.
+        """
+        self._validate_action(action)
+        parameters_key_list = [
+            "window_length",
+            "min_alternate_fraction",
+            "min_mapping_quality",
+            "min_repeat_entropy",
+            "haplotype_length",
+        ]
+        return {key: self.config["freebayes"][key] for key in parameters_key_list}
 
 
 class GatkCallerStepPartBase(VariantCallingStepPart):
