@@ -1,5 +1,6 @@
 import pathlib
 import shutil
+import sys
 
 from snakemake.shell import shell
 
@@ -48,16 +49,21 @@ gatk DetermineGermlineContigPloidy \
 )
 
 ploidy_calls = out_path / "ploidy-calls"
-n_expected_results = len(snakemake.input.tsv)
-for n, sample_dir in enumerate(ploidy_calls.glob("SAMPLE_*")):
+#GCNV will make one 'Sample_*' folder per case, we have one ped file per case
+n_expected_results = len(snakemake.input.ped)
+
+
+for sample_dir in ploidy_calls.glob("SAMPLE_*"):
+    n = int(str(sample_dir.name).split('_')[1])
     path_name = sample_dir / "sample_name.txt"
     with path_name.open("rt") as inputf:
         sample_name = inputf.read().strip()
+    print(n, sample_dir, sample_name)
     if n >= n_expected_results and sample_name not in sex_map:
-        with open(snakemake.log.log, "a") as log:
-            log.write(
-                f"Encountered a sample most likely leftover from previous snappy run {sample_name} (undefined in samplehseet and above number of expected samples). Purging to ensure later GCNV commands do not load this."
-            )
+        msg = f"Encountered a sample most likely leftover from previous snappy run {sample_name} (undefined in samplehseet and above number of expected samples). Purging to ensure later GCNV commands do not load this."
+        print(msg, file=sys.stderr) # for slurm log
+        with open(snakemake.log[0], "a") as log:
+            log.write(msg)
         shutil.rmtree(ploidy_calls / sample_dir)
         continue
     sample_sex = sex_map[sample_name]
