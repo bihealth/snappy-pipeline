@@ -55,7 +55,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 if [[ {num_input_files} -gt 1 ]]; then
-    python {__file__}/../../../tools/gcnv_merge_vcfs.py \
+    python $(dirname {__file__})/../../../tools/gcnv_merge_vcfs.py \
         {snakemake.output.vcf} \
         {snakemake.input.vcf}
     tabix -f {snakemake.output.vcf}

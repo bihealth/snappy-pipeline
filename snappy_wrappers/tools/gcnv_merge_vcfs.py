@@ -3,6 +3,7 @@
 
 import argparse
 import contextlib
+import os
 import logging
 from statistics import mean
 import sys
@@ -26,6 +27,7 @@ CNV_DUP = "DUP"
 #: Mapping from VCF "source" header value to internal representation.
 SOURCE_MAP = {
     "PostprocessGermlineCNVCalls": SOURCE_GATK_GCNV,
+    "JointGermlineCNVSegmentation": SOURCE_GATK_GCNV,
 }
 
 
@@ -100,7 +102,7 @@ class CopyNumberVariant:
             return False
         elif self.pos_begin <= other.pos_end and other.pos_begin <= self.pos_end:
             a = min(self.pos_end, other.pos_end) - max(self.pos_begin, other.pos_begin)
-            b = max(self.pos_end, other.pos_end) - min(self.pos_begin, other.pos_begin)
+            b = max(self.pos_end - self.pos_begin, other.pos_end - other.pos_begin)
             return a / b
         else:
             return 0.0
@@ -213,30 +215,25 @@ def process_contig_inner(contig: str, reader: vcfpy.Reader) -> typing.List[CopyN
             logger.debug("Skipping %s (no CNV)", ";".join(record.ID))
         else:
             for sample, call in record.call_for_sample.items():
-                if len(call.gt_alleles) != 1:
-                    raise Exception("Should only have one allele per sample")
-                elif call.gt_alleles[0] == 0:
-                    continue  # skip sample, does not carry variants
-                elif call.gt_bases[0] not in (CNV_DEL, CNV_DUP):
-                    raise Exception("Unexpected variant: %s" % call.gt_bases[0])
-                else:
-                    yield CopyNumberVariant(
-                        chrom=record.CHROM,
-                        pos_begin=record.affected_start,
-                        pos_end=record.INFO["END"],
-                        kind=call.gt_bases[0],
-                        source=SOURCE_GATK_GCNV,
-                        sample=sample,
-                        anno=call.data,
-                    )
+                yield CopyNumberVariant(
+                    chrom=record.CHROM,
+                    pos_begin=record.affected_start,
+                    pos_end=record.INFO["END"],
+                    kind=record.ALT[0].value,
+                    source=SOURCE_GATK_GCNV,
+                    sample=sample,
+                    anno=call.data,
+                )
 
 
 def cluster_cnvs(contig_cnvs: ContigCnvs, min_ovl: float) -> typing.Tuple[CnvCluster]:
+    logger.debug("overlapping for contig %s", contig_cnvs.contig)
     num_cnvs = len(contig_cnvs.cnvs)
     uf = UnionFind(range(num_cnvs))
     for i, cnv in enumerate(contig_cnvs.cnvs):
         for _start, _end, j in contig_cnvs.ncls.find_overlap(cnv.pos_begin, cnv.pos_end):
             other = contig_cnvs.cnvs[j]
+            logger.debug("TEST: %s / %s / %f", cnv, other, cnv.recip_ovl(other))
             if i != j and cnv.kind == other.kind and cnv.recip_ovl(other) >= min_ovl:
                 logger.debug("OVERLAP %s / %s", cnv, other)
                 uf.union(i, j)
@@ -246,6 +243,9 @@ def cluster_cnvs(contig_cnvs: ContigCnvs, min_ovl: float) -> typing.Tuple[CnvClu
     res = [list() for i in range(len(out_ids))]
     for i in range(num_cnvs):
         res[id_to_out[uf.find(i)]].append(contig_cnvs.cnvs[i])
+
+    for value in res:
+        logger.debug("RESULT (%d) / %s: %s", len(value), "|".join([v.sample for v in value]), value)
 
     return tuple([CnvCluster(tuple(x)) for x in res])
 
@@ -280,10 +280,12 @@ def cluster_to_record(cluster: CnvCluster, header: vcfpy.Header) -> vcfpy.Record
     for cnv in cluster.cnvs:
         fmt = list(cnv.anno.keys())
         sample_to_data[cnv.sample] = cnv.anno
-    calls = [
-        vcfpy.Call(sample, sample_to_data.get(sample, {"GT": "."}))
-        for sample in header.samples.names
-    ]
+    calls = []
+    for sample in header.samples.names:
+        if sample in sample_to_data:
+            calls.append(vcfpy.Call(sample, sample_to_data.get(sample)))
+        else:
+            calls.append(vcfpy.Call(sample, {"GT": "0/0", "CN": 2}))
     return vcfpy.Record(
         CHROM=first.chrom,
         POS=mean_pos_begin,
@@ -307,7 +309,7 @@ def process_contig(
         if source not in SOURCE_MAP:
             raise Exception("Unknown source: %s" % source)
         source = SOURCE_MAP[source]
-        logger.debug("File %s from source %s", reader.path, source)
+        logger.debug("File %s from source %s", os.path.basename(reader.path), source)
         cnvs += list(process_contig_inner(contig, reader))
     if not cnvs:
         return []  # no CNVs for contig
