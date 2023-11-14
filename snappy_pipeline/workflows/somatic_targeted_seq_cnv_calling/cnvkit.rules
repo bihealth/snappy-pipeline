@@ -66,6 +66,23 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_call:
         wf.wrapper_path("cnvkit/call")
 
 
+rule somatic_targeted_seq_cnv_calling_cnvkit_postprocess:
+    input:
+        unpack(wf.get_input_files("cnvkit", "postprocess")),
+    output:
+        **wf.get_output_files("cnvkit", "postprocess"),
+    threads: wf.get_resource("cnvkit", "postprocess", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "postprocess", "time"),
+        memory=wf.get_resource("cnvkit", "postprocess", "memory"),
+        partition=wf.get_resource("cnvkit", "postprocess", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "postprocess", "tmpdir"),
+    log:
+        **wf.get_log_file("cnvkit", "postprocess"),
+    wrapper:
+        wf.wrapper_path("cnvkit/postprocess")
+
+
 rule somatic_targeted_seq_cnv_calling_cnvkit_plot:
     input:
         unpack(wf.get_input_files("cnvkit", "plot")),

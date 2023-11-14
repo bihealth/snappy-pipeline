@@ -1,0 +1,7 @@
+type_of_cancer: {type_of_cancer}
+cancer_study_identifier: {cancer_study_id}
+name: {study_name}
+short_name: {study_name_short}
+description: {study_description}
+add_global_case_list: true
+reference_genome: {reference_genome}

@@ -139,8 +139,8 @@ def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
         "vcf_md5": base_name_out + ".vcf.gz.md5",
         "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
         "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
-        "full": base_name_out + ".full.vcf.gz",
-        "full_md5": base_name_out + ".full.vcf.gz.md5",
+        "full_vcf": base_name_out + ".full.vcf.gz",
+        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
         "txt": base_name_out + ".txt",
         "txt_md5": base_name_out + ".txt.md5",
         "wig": base_name_out + ".wig",
@@ -282,8 +282,8 @@ def test_mutect2_step_part_get_output_files_filter(
     """Tests Mutect2StepPart.get_output_files() - filter"""
     # Define expected
     expected = {
-        "full": mutect2_output_base_name + ".full.vcf.gz",
-        "full_md5": mutect2_output_base_name + ".full.vcf.gz.md5",
+        "full_vcf": mutect2_output_base_name + ".full.vcf.gz",
+        "full_vcf_md5": mutect2_output_base_name + ".full.vcf.gz.md5",
         "full_vcf_tbi": mutect2_output_base_name + ".full.vcf.gz.tbi",
         "full_vcf_tbi_md5": mutect2_output_base_name + ".full.vcf.gz.tbi.md5",
         "vcf": mutect2_output_base_name + ".vcf.gz",
@@ -562,8 +562,8 @@ def test_strelka2_step_part_get_output_files(somatic_variant_calling_workflow):
         "vcf_md5": base_name_out + ".vcf.gz.md5",
         "vcf_tbi": base_name_out + ".vcf.gz.tbi",
         "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-        "full": base_name_out + ".full.vcf.gz",
-        "full_md5": base_name_out + ".full.vcf.gz.md5",
+        "full_vcf": base_name_out + ".full.vcf.gz",
+        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
         "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
         "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
         "stats": base_name_out + ".tsv",

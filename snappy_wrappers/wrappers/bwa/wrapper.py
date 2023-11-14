@@ -74,7 +74,7 @@ trim_adapters()
     set -x
 
     if [[ "{snakemake.config[step_config][ngs_mapping][bwa][trim_adapters]}" == "True" ]]; then
-        trimadapt-mt -p {snakemake.config[step_config][ngs_mapping][bwa][num_threads_trimming]}
+        trimadap-mt -p {snakemake.config[step_config][ngs_mapping][bwa][num_threads_trimming]}
     else
         cat  # TODO: can we somehow remove this?
     fi

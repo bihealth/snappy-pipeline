@@ -1,9 +1,0 @@
-channels:
-- bioconda
-- conda-forge
-- anaconda
-dependencies:
-- r
-- r-dplyr
-- bioconductor-gsva
-- bioconductor-cqn

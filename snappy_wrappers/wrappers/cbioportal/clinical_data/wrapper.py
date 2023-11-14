@@ -5,9 +5,11 @@ input. Takes a dict from biomedsheets/snappy_pipeline, writes out tsv meta_clini
 
 
 import csv
+import json
+import os
 
 
-def write_clinical_patient_tsv(sheets):
+def write_clinical_patient_tsv(donors):
     """Takes a biomedsheet and writes a clinical patient tsv for cbioportal, see
     https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#the-patient-file
     for specification
@@ -25,11 +27,7 @@ def write_clinical_patient_tsv(sheets):
     # attribute columns
     COLUMNS = ["PATIENT_ID", "DUMMY"]
 
-    patients = []
-    for sheet in sheets:
-        patients += [bio_entity.name for bio_entity in sheet.bio_entities.values()]
-
-    with open(snakemake.output.patients_tsv, "w") as tsvfile:
+    with open(snakemake.output.patient, "w") as tsvfile:
         writer = csv.writer(tsvfile, delimiter="\t")
         # write header
         writer.writerow(NAMES)
@@ -38,15 +36,67 @@ def write_clinical_patient_tsv(sheets):
         writer.writerow(PRIORITY)
         writer.writerow(COLUMNS)
 
-        for p in patients:
-            writer.writerow([p, "UNKNOWN"])
+        for donor in donors.keys():
+            writer.writerow([donor, "UNKNOWN"])
 
 
-def write_clinical_samples_tsv(sheets):
+class SampleInfoTMB:
+    step = "tumor_mutational_burden"
+    name = "TMB"
+    description = "Tumor mutational burden computed on CDS regions"
+    datatype = "NUMBER"
+    priority = "2"
+    column = "TMB"
+
+    def __init__(self, config, **kwargs):
+        name_pattern = "bwa." + kwargs["somatic_variant_tool"]
+        if kwargs["somatic_variant_annotation_tool"]:
+            name_pattern += "." + kwargs["somatic_variant_annotation_tool"]
+        name_pattern += ".tmb.{library}"
+        self.tpl = os.path.join(
+            config["path"], "output", name_pattern, "out", name_pattern + ".json"
+        )
+
+    def get_data(self, lib_by_extraction):
+        if "DNA" in lib_by_extraction:
+            library = lib_by_extraction["DNA"]
+            path = self.tpl.format(library=library)
+            try:
+                with open(path, "r") as f:
+                    result = json.load(f)
+                return result.get("missense_TMB", result["TMB"])
+            except Exception as e:
+                print(
+                    "WARNING- error {} occured when extraction TMB for library {}".format(
+                        e, library
+                    )
+                )
+        else:
+            print("WARNING- no DNA data")
+        return ""
+
+
+def write_clinical_samples_tsv(donors):
     """Takes a biomedsheet and writes a clinical sample tsv for cbioportal, see
     https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#the-samples-file
     for specification
     """
+
+    sample_info_getters = []
+    config = snakemake.config["step_config"]["cbioportal_export"]
+    for step, extra_info in config["sample_info"].items():
+        if step == "tumor_mutational_burden":
+            sample_info_getters.append(
+                SampleInfoTMB(
+                    extra_info,
+                    somatic_variant_tool=config["somatic_variant_calling_tool"],
+                    somatic_variant_annotation_tool=config.get(
+                        "somatic_variant_annotation_tool", None
+                    ),
+                )
+            )
+        else:
+            raise Exception("Unknown sample info request")
 
     # Header lines, first item must start with #
     # attribute Display Names
@@ -60,7 +110,14 @@ def write_clinical_samples_tsv(sheets):
     # attribute columns
     COLUMNS = ["PATIENT_ID", "SAMPLE_ID"]
 
-    with open(snakemake.output.samples_tsv, "w") as tsvfile:
+    for extra_info in sample_info_getters:
+        NAMES += [extra_info.name]
+        DESC += [extra_info.description]
+        DATATYPE += [extra_info.datatype]
+        PRIORITY += [extra_info.priority]
+        COLUMNS += [extra_info.column]
+
+    with open(snakemake.output.sample, "w") as tsvfile:
         writer = csv.writer(tsvfile, delimiter="\t")
         # write header
         writer.writerow(NAMES)
@@ -69,12 +126,13 @@ def write_clinical_samples_tsv(sheets):
         writer.writerow(PRIORITY)
         writer.writerow(COLUMNS)
 
-        for sheet in sheets:
-            for p in sheet.bio_entities.values():
-                for s in p.bio_samples.values():
-                    if s.extra_infos["isTumor"]:
-                        writer.writerow([p.name, s.name])
+        for donor, v in donors.items():
+            for sample, vv in v.items():
+                row = [donor, sample]
+                for extra_info in sample_info_getters:
+                    row.append(extra_info.get_data(vv))
+                writer.writerow(row)
 
 
-write_clinical_patient_tsv(snakemake.params.sheet)
-write_clinical_samples_tsv(snakemake.params.sheet)
+write_clinical_patient_tsv(snakemake.params)
+write_clinical_samples_tsv(snakemake.params)

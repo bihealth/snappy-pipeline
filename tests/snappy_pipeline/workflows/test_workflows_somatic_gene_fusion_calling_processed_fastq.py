@@ -24,6 +24,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
@@ -49,7 +51,6 @@ def minimal_config():
                 path_dataset_directory: REQUIRED
               arriba:
                 path_index: /path/to/star/index
-                features: /path/to/features.gtf
 
         data_sets:
           first_batch:

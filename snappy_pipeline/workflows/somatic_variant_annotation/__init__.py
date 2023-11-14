@@ -26,7 +26,31 @@ The variant annotation step uses Snakemake sub workflows for using the result of
 Step Output
 ===========
 
-TODO
+Users can annotate all genes & transcripts overlapping with the variant locus, or
+they can select one representative gene and transcript for annotation.
+In the latter case, the output vcf file will only contain one annotation per variant, while
+in the former case, there might be over 100 annotations for each variant.
+
+The ordering of features driving the representative annotation choice is under user control.
+The default order is:
+
+1. ``biotype``: protein coding genes come first, it is unclear what is the order for other types of genes
+2. ``mane``: the `MANE transcript <https://www.ncbi.nlm.nih.gov/refseq/MANE/>`_ is selected before other transcripts
+3. ``appris``: the `APPRIS principal isoform <https://academic.oup.com/bioinformatics/article/38/Supplement_2/ii89/6701991>`_ is selected before alternates
+4. ``tsl``: `Transcript Support Level <http://www.ensembl.org/info/genome/genebuild/transcript_quality_tags.html>`_ values in increasing order
+5. ``ccds``: Transcripts with `CCDS <https://www.ncbi.nlm.nih.gov/projects/CCDS/CcdsBrowse.cgi>`_ ids are selected before those without
+6. ``canonical``: ENSEMBL canonical transcripts are selected before the others
+7. ``rank``: VEP internal ranking is used
+8. ``length``: longer transcripts are preferred to shorter ones
+
+This order is (hopefully) suitable for cBioPortal export, as well defined transcripts from protein-coding genes are selected when possible.
+However, it is recommended to check the full annotation for variants in or nearby disease-relevant genes.
+
+All annotators generate a vcf with one annotation per transcript, and some annotators
+(only ENSEMBL's Variant Effect Predictor in the current implementation) can also produce another
+output containing all annotations.
+The single annotation vcf is named ``<mapper>.<caller>.<annotator>.vcf.gz`` and
+the full annotation output is named ``<mapper>.<caller>.<annotator>.full.vcf.gz``
 
 ====================
 Global Configuration
@@ -75,7 +99,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the annotator tools
-TOOLS = ("jannovar", "vep")
+ANNOTATION_TOOLS = ("jannovar", "vep")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
@@ -115,7 +139,7 @@ step_config:
       assembly: GRCh38
       cache_version: 102        # WARNING- this must match the wrapper's vep version!
       tx_flag: "gencode_basic"  # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
-      pick: yes                 # Other option: no (report one or all consequences)
+      pick_order: ["biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length"]
       num_threads: 8
       buffer_size: 1000
       output_options:
@@ -130,6 +154,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
 
         The ``tumor_library`` wildcard can actually be the name of a donor!
     """
+
+    #: Only creates vcf with one annotation per variant
+    has_full = False
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -169,6 +196,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
         ).format(annotator=self.annotator)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
+        if self.has_full:
+            key_ext["full"] = ".full.vcf.gz"
+            key_ext["full_tbi"] = ".full.vcf.gz.tbi"
         for key, ext in key_ext.items():
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
@@ -219,7 +249,7 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     name = "jannovar"
 
     #: Annotator name to construct output paths
-    annotator = "jannovar_annotate_somatic_vcf"
+    annotator = "jannovar"
 
     #: Class available actions
     actions = ("annotate_somatic_vcf",)
@@ -261,6 +291,12 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     #: Class available actions
     actions = ("run",)
 
+    #: Also creates vcf with all annotations
+    has_full = True
+
+    #: Allowed keywords for pick order
+    PICK_ORDER = ("biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length")
+
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -282,8 +318,10 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
             return
         if not self.config["vep"]["tx_flag"] in ("merged", "refseq", "gencode_basic"):
             raise InvalidConfiguration("tx_flag must be 'gencode_basic', or 'merged' or 'refseq'")
-        if not self.config["vep"]["pick"] in ("yes", "no"):
-            raise InvalidConfiguration("pick must be either 'yes' or 'no'")
+        if not all([x in self.PICK_ORDER for x in self.config["vep"]["pick_order"]]):
+            raise InvalidConfiguration(
+                "pick order keywords must be in {}".format(", ".join(self.PICK_ORDER))
+            )
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
@@ -333,12 +371,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        annotators = list(
-            map(
-                lambda x: x.replace("jannovar", "jannovar_annotate_somatic_vcf"),
-                set(self.config["tools"]) & set(TOOLS),
-            )
-        )
+        annotators = set(self.config["tools"]) & set(ANNOTATION_TOOLS)
         callers = set(self.config["tools_somatic_variant_calling"])
         name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
@@ -361,6 +394,20 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
                 ".conda_list.txt",
                 ".conda_list.txt.md5",
             ),
+        )
+        # Annotators with full output
+        full = list(
+            filter(
+                lambda x: self.sub_steps[x].has_full,
+                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
+            ),
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
+            mapper=self.config["tools_ngs_mapping"],
+            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            annotator=full,
+            ext=EXT_VALUES,
         )
         # joint calling
         name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"

@@ -357,6 +357,8 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
     report_base_out = "work/star.{library_name}/report/bam_qc/star.{library_name}"
     log_base_out = "work/star.{library_name}/log/star.{library_name}"
     expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
+    expected["gene_counts"] = "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab"
+    expected["gene_counts_md5"] = expected["gene_counts"] + ".md5"
     # Get actual
     actual = ngs_mapping_workflow.get_output_files("star", "run")
     assert actual == expected
@@ -679,7 +681,7 @@ def test_generate_doc_files_step_part_run_get_log_file(ngs_mapping_workflow):
 
 def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2G", "partition": "medium"}
     for resource, expected in expected_dict.items():
         actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)
         assert actual == expected
@@ -701,6 +703,7 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
         "minimap2",
         "ngs_chew",
         "star",
+        "strandedness",
         "target_coverage_report",
     ]
     actual = ngs_mapping_workflow.sub_steps.keys()

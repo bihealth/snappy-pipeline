@@ -80,6 +80,11 @@ for vcf in {snakemake.input.vcf}; do
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
 
+    # Fixup SVLEN=1 to SVLEN=.
+    sed -i -e 's/ID=SVLEN,Number=1/ID=SVLEN,Number=./g' $TMPDIR/fixed_bnd_to_inv.$num.vcf
+    # Fixup MELT header
+    sed -i -e "s/seperated by '..'/separated by '\\\\\\\\|'/" $TMPDIR/fixed_bnd_to_inv.$num.vcf
+
     # Add the missing "GT" tag
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
     > $TMPDIR/header.gt.txt
@@ -91,6 +96,26 @@ for vcf in {snakemake.input.vcf}; do
         -o $TMPDIR/final_for_import.$num.vcf.gz
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
+
+cat <<"EOF" > $TMPDIR/feature-effects.tsv
+case_id
+set_id
+sv_uuid
+refseq_gene_id
+refseq_transcript_id
+refseq_transcript_coding
+refseq_effect
+ensembl_gene_id
+ensembl_transcript_id
+ensembl_transcript_coding
+ensembl_effect
+EOF
+
+cat $TMPDIR/feature-effects.tsv \
+| tr '\n' '\t' \
+| sed -e 's/\t$/\n/g' \
+| gzip \
+>{snakemake.output.feature_effects}
 
 # Perform Mehari structural variant annotation.
 mehari \
@@ -113,6 +138,7 @@ EOF
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.db_infos} {snakemake.output.db_infos_md5}
 compute-md5 {snakemake.output.gts} {snakemake.output.gts_md5}
+compute-md5 {snakemake.output.feature_effects} {snakemake.output.feature_effects_md5}
 
 # Create output links -----------------------------------------------------------------------------
 

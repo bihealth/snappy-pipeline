@@ -343,7 +343,7 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
 def test_panel_of_normals_workflow(panel_of_normals_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["access", "cnvkit", "link_out", "mutect2"]
+    expected = ["access", "cnvkit", "link_out", "mutect2", "purecn"]
     actual = list(sorted(panel_of_normals_workflow.sub_steps.keys()))
     assert actual == expected
     expected = []

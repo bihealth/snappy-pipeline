@@ -9,7 +9,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 # Get shortcuts to static data and step configuration
 static_config = snakemake.config["static_data_config"]
-anno_config = snakemake.config["step_config"]["somatic_variant_annotation"]
+anno_config = snakemake.config["step_config"]["somatic_variant_annotation"]["jannovar"]
 
 # Build list of arguments to pass to Jannovar
 annotation_args = []
@@ -81,8 +81,12 @@ for conf in anno_config["annotation_tracks_vcf"]:
 annotation_snippet = " \\\n    ".join(annotation_args)
 
 # Build intervals argument
-arg_intervals = " ".join(
-    ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+arg_intervals = (
+    " ".join(
+        ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+    )
+    if "args" in snakemake.params and "intervals" in snakemake.params["args"]
+    else ""
 )
 
 shell(
@@ -100,6 +104,10 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
+export TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
 # See the following for the memory-related massaging
 #
 # http://bugs.java.com/view_bug.do?bug_id=8043516
@@ -113,11 +121,15 @@ jannovar \
     -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf {snakemake.output.vcf} \
-    --database {snakemake.config[step_config][somatic_variant_annotation][path_jannovar_ser]} \
-    --ref-fasta {snakemake.config[static_data_config][reference][path]} \
+    --database {anno_config[path_jannovar_ser]} \
+    --ref-fasta {static_config[reference][path]} \
     {arg_intervals} \
     {annotation_snippet}
 
+zgrep -v "ANN=|" {snakemake.output.vcf} \
+        | bgzip -c \
+        > $TMPDIR/tmp.vcf.gz
+mv $TMPDIR/tmp.vcf.gz {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \
