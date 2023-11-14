@@ -3,8 +3,8 @@
 
 import argparse
 import contextlib
-import os
 import logging
+import os
 from statistics import mean
 import sys
 import typing
