@@ -432,22 +432,16 @@ class JointGermlineCnvSegmentationMixin:
 
     @dictify
     def _get_output_files_joint_germline_cnv_segmentation(self):
-        name_pattern = "{mapper}.gcnv.{library_name}"
+        name_pattern = "{mapper}.gcnv_joint_segmentation.{kit}.{library_name}"
         work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
             work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("joint_germline_cnv_segmentation").values()
-            )
-        ]
 
     @dictify
     def _get_log_file_joint_germline_cnv_segmentation(self):
         """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
-        name_pattern = "{mapper}.gcnv.{library_name}"
+        name_pattern = "{mapper}.gcnv_joint_segmentation.{kit}.{library_name}"
         for key, ext in LOG_EXTENSIONS.items():
             yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
 
@@ -456,7 +450,10 @@ class JointGermlineCnvSegmentationMixin:
         # Yield list of paths to input VCF files
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         ped_ngs_library_names = [
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+            donor.dna_ngs_library.name
+            for donor in pedigree.donors
+            if donor.dna_ngs_library
+            and self.ngs_library_to_kit[donor.dna_ngs_library.name] == wildcards.kit
         ]
         vcfs = []
         for library_name in sorted(ped_ngs_library_names):
@@ -464,12 +461,59 @@ class JointGermlineCnvSegmentationMixin:
             vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
         yield "vcf", vcfs
         # Yield path to interval list file
-        library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        name_pattern = f"gcnv_preprocess_intervals.{library_kit}"
+        name_pattern = f"gcnv_preprocess_intervals.{wildcards.kit}"
         yield "interval_list", f"work/{name_pattern}/out/{name_pattern}.interval_list"
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
+
+
+class MergeMultikitFamiliesMixin:
+    """Methods for merging families with multiple kits.
+
+    In the case of a single kit per family, we can simply copy the input
+    to the output.
+    """
+
+    @dictify
+    def _get_output_files_merge_multikit_families(self):
+        name_pattern = "{mapper}.gcnv.{library_name}"
+        work_files = {}
+        for key, suffix in RESULT_EXTENSIONS.items():
+            work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
+        yield from work_files.items()
+        yield "output_links", [
+            re.sub(r"^work/", "output/", work_path)
+            for work_path in chain(
+                work_files.values(), self.get_log_file("merge_multikit_families").values()
+            )
+        ]
+
+    @dictify
+    def _get_log_file_merge_multikit_families(self):
+        """Return log file **pattern** for the step ``merge_multikit_families``."""
+        name_pattern = "{mapper}.gcnv.{library_name}"
+        for key, ext in LOG_EXTENSIONS.items():
+            yield key, f"work/{name_pattern}/log/{name_pattern}.merge_multikit_families{ext}"
+
+    @dictify
+    def _get_input_files_merge_multikit_families(self, wildcards):
+        # Obtain all kits that we need to merge for this family.
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+        kits = []
+        for donor in pedigree.donors:
+            if donor.dna_ngs_library:
+                kit = self.ngs_library_to_kit[donor.dna_ngs_library.name]
+                if kit not in kits:
+                    kits.append(kit)
+        # Yield list of paths to input VCF files
+        vcfs = []
+        for kit in kits:
+            name_pattern = (
+                f"{wildcards.mapper}.gcnv_joint_segmentation.{kit}.{wildcards.library_name}"
+            )
+            vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
+        yield "vcf", vcfs
 
 
 class RunGcnvStepPart(
@@ -478,6 +522,7 @@ class RunGcnvStepPart(
     CallCnvsMixin,
     PostGermlineCallsMixin,
     JointGermlineCnvSegmentationMixin,
+    MergeMultikitFamiliesMixin,
     GcnvCommonStepPart,
 ):
     """Class with methods to run GATK4 gCNV calling in CASE mode"""
@@ -490,6 +535,7 @@ class RunGcnvStepPart(
         "call_cnvs",
         "post_germline_calls",
         "joint_germline_cnv_segmentation",
+        "merge_multikit_families",
     )
 
     def __init__(self, parent):
@@ -530,12 +576,12 @@ class RunGcnvStepPart(
         # Get list with all result path template strings.
         result_path_tpls = [
             path
-            for path in flatten(self._get_output_files_joint_germline_cnv_segmentation().values())
+            for path in flatten(self._get_output_files_merge_multikit_families().values())
             if path.startswith("output/")
         ]
 
         # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
-        # library kits within one pedigree, raise a warning and skip this pedigree.
+        # library kits within one pedigree, raise a warning about the quality in this pedigree.
         for index_library_name, pedigree in self.index_ngs_library_to_pedigree.items():
             # Obtain all library names
             library_names = [
@@ -546,17 +592,14 @@ class RunGcnvStepPart(
                 names_kits = list(zip(library_names, library_kits))
                 msg = (
                     "Found inconsistent library kits (more than one kit!) for pedigree with index "
-                    f"{index_library_name}.  The library name/kit pairs are {names_kits}.  This pedigree "
-                    "will be SKIPPED in CNV call generation."
+                    f"{index_library_name}.  The library name/kit pairs are {names_kits}.  SNAPPY "
+                    "will attempt to merge the results but the result may contain artifacts."
                 )
                 warnings.warn(InconsistentLibraryKitsWarning(msg))
-                continue
-            else:
-                # The library kits are consistent in the pedigree.  Yield all concrete output paths, replacing
-                # prefix "work/" by "output/".
-                for path_tpl in result_path_tpls:
-                    yield from expand(
-                        path_tpl,
-                        mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                        library_name=[index_library_name],
-                    )
+            # Yield all concrete output paths, replacing prefix "work/" by "output/".
+            for path_tpl in result_path_tpls:
+                yield from expand(
+                    path_tpl,
+                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                    library_name=[index_library_name],
+                )

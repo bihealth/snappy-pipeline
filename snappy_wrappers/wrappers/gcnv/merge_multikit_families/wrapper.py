@@ -15,6 +15,8 @@ compute-md5()
 }
 """
 
+num_input_files = len(snakemake.input.vcf)
+
 shell(
     r"""
 set -x
@@ -52,16 +54,27 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-gatk JointGermlineCNVSegmentation \
-    --reference {snakemake.config[static_data_config][reference][path]} \
-    $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
-    --model-call-intervals {snakemake.input.interval_list} \
-    --pedigree {snakemake.input.ped} \
-    --output {snakemake.output.vcf}
+if [[ {num_input_files} -gt 1 ]]; then
+    python $(dirname {__file__})/../../../tools/gcnv_merge_vcfs.py \
+        {snakemake.output.vcf} \
+        {snakemake.input.vcf}
+    tabix -f {snakemake.output.vcf}
+else
+    cp -a {snakemake.input.vcf} {snakemake.output.vcf}
+    cp -a {snakemake.input.vcf}.tbi {snakemake.output.vcf}.tbi
+fi
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
+
+# Create output links -----------------------------------------------------------------------------
+
+for path in {snakemake.output.output_links}; do
+  dst=$path
+  src=work/${{dst#output/}}
+  ln -sr $src $dst
+done
 """
 )
 

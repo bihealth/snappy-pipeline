@@ -258,7 +258,7 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
         pattern_log.format(i=i, tool=tool, step_name=step_name, ext=ext)
         for i in (1, 4)  # only index: P001, P004
         for tool, step_name in (
-            ("gcnv", "joint_germline_segmentation"),
+            ("gcnv", "merge_multikit_families"),
             ("manta", "sv_calling"),
             ("delly2", "sv_calling"),
         )
@@ -512,30 +512,30 @@ def test_gcnv_get_result_files(sv_calling_targeted_workflow):
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.md5",
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi",
         "output/bwa.gcnv.P001-N1-DNA1-WGS1/out/bwa.gcnv.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt.md5",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt.md5",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.log",
-        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.joint_germline_segmentation.log.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.conda_info.txt",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.conda_info.txt.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.conda_list.txt",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.conda_list.txt.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.wrapper.py",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.wrapper.py.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.environment.yaml",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.environment.yaml.md5",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.log",
+        "output/bwa.gcnv.P001-N1-DNA1-WGS1/log/bwa.gcnv.P001-N1-DNA1-WGS1.merge_multikit_families.log.md5",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.md5",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi",
         "output/bwa.gcnv.P004-N1-DNA1-WGS1/out/bwa.gcnv.P004-N1-DNA1-WGS1.vcf.gz.tbi.md5",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_info.txt.md5",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.conda_list.txt.md5",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.wrapper.py.md5",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.environment.yaml.md5",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log",
-        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.joint_germline_segmentation.log.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.conda_info.txt",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.conda_info.txt.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.conda_list.txt",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.conda_list.txt.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.wrapper.py",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.wrapper.py.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.environment.yaml",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.environment.yaml.md5",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.log",
+        "output/bwa.gcnv.P004-N1-DNA1-WGS1/log/bwa.gcnv.P004-N1-DNA1-WGS1.merge_multikit_families.log.md5",
     ]
     actual = sv_calling_targeted_workflow.substep_getattr("gcnv", "get_result_files")()
     assert actual == expected
@@ -816,9 +816,16 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_input_files(
         "vcf": [pattern_out.format(i=i) for i in range(1, 4)],  # P001 - P003
     }
     # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+            "kit": "Agilent_SureSelect_Human_All_Exon_V6",
+        }
+    )
     actual = sv_calling_targeted_workflow.get_input_files(
-        "gcnv", "joint_germline_cnv_segmentation"
+        "gcnv",
+        "joint_germline_cnv_segmentation",
     )(wildcards)
     assert actual == expected
 
@@ -828,24 +835,11 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_output_files(
 ):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_joint_germline_cnv_segmentation()"""
     # Define expected
-    pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
+    pattern_out = (
+        "work/{mapper}.gcnv_joint_segmentation.{kit}.{library_name}/out/"
+        "{mapper}.gcnv_joint_segmentation.{kit}.{library_name}"
+    )
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
-    expected["output_links"] = [
-        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz",
-        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.md5",
-        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi",
-        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi.md5",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_info.txt.md5",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.conda_list.txt.md5",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.wrapper.py.md5",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.environment.yaml.md5",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log",
-        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.joint_germline_segmentation.log.md5",
-    ]
     # Get actual
     actual = sv_calling_targeted_workflow.get_output_files(
         "gcnv", "joint_germline_cnv_segmentation"
@@ -858,7 +852,76 @@ def test_gcnv_joint_germline_cnv_segmentation_step_part_get_log_file(
 ):
     """Tests RunGcnvTargetSeqStepPart.get_log_file for 'joint_germline_cnv_segmentation' step"""
     # Define expected
-    expected = get_expected_gcnv_log_file(step_name="gcnv", extended=True)
+    expected = get_expected_gcnv_log_file(step_name="gcnv_joint_segmentation", extended=True)
     # Get actual
     actual = sv_calling_targeted_workflow.get_log_file("gcnv", "joint_germline_cnv_segmentation")
+    assert actual == expected
+
+
+# Tests for RunGcnvTargetSeqStepPart (merge_multikit_families) -------------------------------------
+
+
+def test_gcnv_merge_multikit_families_step_part_get_input_files(
+    sv_calling_targeted_workflow,
+):
+    """Tests RunGcnvTargetSeqStepPart._get_input_files_merge_multikit_families()"""
+    # Define expected
+    expected = {
+        "vcf": [
+            (
+                "work/bwa.gcnv_joint_segmentation.Agilent_SureSelect_Human_All_Exon_V6.P001-N1-DNA1-WGS1/out/"
+                "bwa.gcnv_joint_segmentation.Agilent_SureSelect_Human_All_Exon_V6.P001-N1-DNA1-WGS1.vcf.gz"
+            )
+        ],
+    }
+    # Get actual
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+        }
+    )
+    actual = sv_calling_targeted_workflow.get_input_files(
+        "gcnv",
+        "merge_multikit_families",
+    )(wildcards)
+    assert actual == expected
+
+
+def test_gcnv_merge_multikit_families_step_part_get_output_files(
+    sv_calling_targeted_workflow,
+):
+    """Tests RunGcnvTargetSeqStepPart._get_output_files_merge_multikit_families()"""
+    # Define expected
+    pattern_out = "work/{mapper}.gcnv.{library_name}/out/" "{mapper}.gcnv.{library_name}"
+    expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
+    expected["output_links"] = [
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.md5",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi",
+        "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz.tbi.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_info.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_info.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_list.txt",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.conda_list.txt.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.wrapper.py",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.wrapper.py.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.environment.yaml",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.environment.yaml.md5",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.log",
+        "output/{mapper}.gcnv.{library_name}/log/{mapper}.gcnv.{library_name}.merge_multikit_families.log.md5",
+    ]
+    # Get actual
+    actual = sv_calling_targeted_workflow.get_output_files("gcnv", "merge_multikit_families")
+    assert actual == expected
+
+
+def test_gcnv_merge_multikit_families_step_part_get_log_file(
+    sv_calling_targeted_workflow,
+):
+    """Tests RunGcnvTargetSeqStepPart.get_log_file for 'merge_multikit_families' step"""
+    # Define expected
+    expected = get_expected_gcnv_log_file(step_name="merge_multikit_families", extended=True)
+    # Get actual
+    actual = sv_calling_targeted_workflow.get_log_file("gcnv", "merge_multikit_families")
     assert actual == expected

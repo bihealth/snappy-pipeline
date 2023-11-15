@@ -4,6 +4,7 @@
 import argparse
 import contextlib
 import logging
+import os
 from statistics import mean
 import sys
 import typing
@@ -17,8 +18,6 @@ import vcfpy
 
 #: Source program is GATK gCNV
 SOURCE_GATK_GCNV = "GCNV"
-#: Source program is CNVetti coverage with hom. DELs
-SOURCE_CNVETTI_HOM_DEL = "CNVETTI_HOM_DEL"
 
 #: Type of the CNV is DEL.
 CNV_DEL = "DEL"
@@ -28,7 +27,7 @@ CNV_DUP = "DUP"
 #: Mapping from VCF "source" header value to internal representation.
 SOURCE_MAP = {
     "PostprocessGermlineCNVCalls": SOURCE_GATK_GCNV,
-    "CNVetti::homdel": SOURCE_CNVETTI_HOM_DEL,
+    "JointGermlineCNVSegmentation": SOURCE_GATK_GCNV,
 }
 
 
@@ -103,7 +102,7 @@ class CopyNumberVariant:
             return False
         elif self.pos_begin <= other.pos_end and other.pos_begin <= self.pos_end:
             a = min(self.pos_end, other.pos_end) - max(self.pos_begin, other.pos_begin)
-            b = max(self.pos_end, other.pos_end) - min(self.pos_begin, other.pos_begin)
+            b = max(self.pos_end - self.pos_begin, other.pos_end - other.pos_begin)
             return a / b
         else:
             return 0.0
@@ -205,7 +204,7 @@ def augment_header(header: vcfpy.Header) -> vcfpy.Header:
     return header
 
 
-def process_contig_gatk_gcnv(contig: str, reader: vcfpy.Reader) -> typing.List[CopyNumberVariant]:
+def process_contig_inner(contig: str, reader: vcfpy.Reader) -> typing.List[CopyNumberVariant]:
     try:
         _contig_iter = reader.fetch(contig)  # noqa: F841
     except ValueError as _e:  # noqa: F841
@@ -216,61 +215,25 @@ def process_contig_gatk_gcnv(contig: str, reader: vcfpy.Reader) -> typing.List[C
             logger.debug("Skipping %s (no CNV)", ";".join(record.ID))
         else:
             for sample, call in record.call_for_sample.items():
-                if len(call.gt_alleles) != 1:
-                    raise Exception("Should only have one allele per sample")
-                elif call.gt_alleles[0] == 0:
-                    continue  # skip sample, does not carry variants
-                elif call.gt_bases[0] not in (CNV_DEL, CNV_DUP):
-                    raise Exception("Unexpected variant: %s" % call.gt_bases[0])
-                else:
-                    yield CopyNumberVariant(
-                        chrom=record.CHROM,
-                        pos_begin=record.affected_start,
-                        pos_end=record.INFO["END"],
-                        kind=call.gt_bases[0],
-                        source=SOURCE_GATK_GCNV,
-                        sample=sample,
-                        anno=call.data,
-                    )
-
-
-def process_contig_cnvetti_hom_del(
-    contig: str, reader: vcfpy.Reader
-) -> typing.List[CopyNumberVariant]:
-    try:
-        contig_iter = reader.fetch(contig)  # noqa: F841
-    except ValueError as _e:  # noqa: F841
-        return  # contig not in file, skip
-
-    for record in reader.fetch(contig):
-        if not record.ALT:
-            logger.debug("Skipping %s (no CNV)", ";".join(record.ID))
-        else:
-            for sample, call in record.call_for_sample.items():
-                if len(call.gt_alleles) != 1:
-                    raise Exception("Should only have one allele per sample")
-                elif call.gt_alleles[0] == 0:
-                    continue  # skip sample, does not carry variants
-                elif call.gt_bases[0] != CNV_DEL:
-                    raise Exception("Unexpected variant: %s" % call.gt_bases[0])
-                else:
-                    yield CopyNumberVariant(
-                        chrom=record.CHROM,
-                        pos_begin=record.affected_start,
-                        pos_end=record.INFO["END"],
-                        kind=call.gt_bases[0],
-                        source=SOURCE_GATK_GCNV,
-                        sample=sample,
-                        anno=call.data,
-                    )
+                yield CopyNumberVariant(
+                    chrom=record.CHROM,
+                    pos_begin=record.affected_start,
+                    pos_end=record.INFO["END"],
+                    kind=record.ALT[0].value,
+                    source=SOURCE_GATK_GCNV,
+                    sample=sample,
+                    anno=call.data,
+                )
 
 
 def cluster_cnvs(contig_cnvs: ContigCnvs, min_ovl: float) -> typing.Tuple[CnvCluster]:
+    logger.debug("overlapping for contig %s", contig_cnvs.contig)
     num_cnvs = len(contig_cnvs.cnvs)
     uf = UnionFind(range(num_cnvs))
     for i, cnv in enumerate(contig_cnvs.cnvs):
         for _start, _end, j in contig_cnvs.ncls.find_overlap(cnv.pos_begin, cnv.pos_end):
             other = contig_cnvs.cnvs[j]
+            logger.debug("TEST: %s / %s / %f", cnv, other, cnv.recip_ovl(other))
             if i != j and cnv.kind == other.kind and cnv.recip_ovl(other) >= min_ovl:
                 logger.debug("OVERLAP %s / %s", cnv, other)
                 uf.union(i, j)
@@ -280,6 +243,9 @@ def cluster_cnvs(contig_cnvs: ContigCnvs, min_ovl: float) -> typing.Tuple[CnvClu
     res = [list() for i in range(len(out_ids))]
     for i in range(num_cnvs):
         res[id_to_out[uf.find(i)]].append(contig_cnvs.cnvs[i])
+
+    for value in res:
+        logger.debug("RESULT (%d) / %s: %s", len(value), "|".join([v.sample for v in value]), value)
 
     return tuple([CnvCluster(tuple(x)) for x in res])
 
@@ -314,10 +280,12 @@ def cluster_to_record(cluster: CnvCluster, header: vcfpy.Header) -> vcfpy.Record
     for cnv in cluster.cnvs:
         fmt = list(cnv.anno.keys())
         sample_to_data[cnv.sample] = cnv.anno
-    calls = [
-        vcfpy.Call(sample, sample_to_data.get(sample, {"GT": "."}))
-        for sample in header.samples.names
-    ]
+    calls = []
+    for sample in header.samples.names:
+        if sample in sample_to_data:
+            calls.append(vcfpy.Call(sample, sample_to_data.get(sample)))
+        else:
+            calls.append(vcfpy.Call(sample, {"GT": "0/0", "CN": 2}))
     return vcfpy.Record(
         CHROM=first.chrom,
         POS=mean_pos_begin,
@@ -341,13 +309,8 @@ def process_contig(
         if source not in SOURCE_MAP:
             raise Exception("Unknown source: %s" % source)
         source = SOURCE_MAP[source]
-        logger.debug("File %s from source %s", reader.path, source)
-        if source == SOURCE_GATK_GCNV:
-            cnvs += list(process_contig_gatk_gcnv(contig, reader))
-        elif source == SOURCE_CNVETTI_HOM_DEL:
-            cnvs += list(process_contig_cnvetti_hom_del(contig, reader))
-        else:
-            raise Exception("Error picking source processor (should never happen)")
+        logger.debug("File %s from source %s", os.path.basename(reader.path), source)
+        cnvs += list(process_contig_inner(contig, reader))
     if not cnvs:
         return []  # no CNVs for contig
     else:
@@ -371,7 +334,7 @@ def process_contig(
 
 
 def run(args):
-    logger.info("Starting exome CNV merging")
+    logger.info("Starting gCNV VCF merging")
     logger.info("config = %s", args)
 
     with contextlib.ExitStack() as stack:
@@ -384,8 +347,6 @@ def run(args):
         for contig_line in out_header.get_lines("contig"):
             records = process_contig(contig_line.mapping["ID"], readers, args.min_ovl, out_header)
             for record in records:
-                if args.sv_method and "SVMETHOD" not in record.INFO:
-                    record.INFO["SVMETHOD"] = args.sv_method
                 writer.write_record(record)
         logger.info("Done processing contig %s.", contig_line.mapping["ID"])
 
@@ -401,7 +362,6 @@ def main(argv=None):
     parser.add_argument(
         "--verbose", "-v", default=False, action="store_true", help="Enable verbose mode"
     )
-    parser.add_argument("--sv-method", default=None, help="Value for INFO/SVCALLER")
 
     args = parser.parse_args(argv)
     if args.verbose:
