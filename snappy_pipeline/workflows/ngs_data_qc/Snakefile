@@ -85,3 +85,42 @@ rule data_qc_fastqc_run:
         wf.get_log_file("fastqc", "run"),
     wrapper:
         wf.wrapper_path("fastqc")
+
+
+# Bam Data QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run picard ------------------------------------------------------------------
+
+
+rule data_qc_picard_prepare:
+    output:
+        **wf.get_output_files("picard", "prepare"),
+    threads: wf.get_resource("picard", "prepare", "threads")
+    resources:
+        time=wf.get_resource("picard", "prepare", "time"),
+        memory=wf.get_resource("picard", "prepare", "memory"),
+        partition=wf.get_resource("picard", "prepare", "partition"),
+        tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
+    log:
+        **wf.get_log_file("picard", "prepare"),
+    wrapper:
+        wf.wrapper_path("picard/prepare")
+
+
+rule data_qc_picard_metrics:
+    input:
+        unpack(wf.get_input_files("picard", "metrics")),
+    output:
+        **wf.get_output_files("picard", "metrics"),
+    params:
+        wf.get_params("picard", "metrics"),
+    threads: wf.get_resource("picard", "metrics", "threads")
+    resources:
+        time=wf.get_resource("picard", "metrics", "time"),
+        memory=wf.get_resource("picard", "metrics", "memory"),
+        partition=wf.get_resource("picard", "metrics", "partition"),
+        tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
+    log:
+        **wf.get_log_file("picard", "metrics"),
+    wrapper:
+        wf.wrapper_path("picard/metrics")

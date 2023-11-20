@@ -113,8 +113,8 @@ def test_jannovar_step_part_get_input_files(somatic_variant_annotation_workflow)
 def test_jannovar_step_part_get_output_files(somatic_variant_annotation_workflow):
     """Tests JannovarAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/out/"
-        "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
+        "work/{mapper}.{var_caller}.jannovar.{tumor_library}/out/"
+        "{mapper}.{var_caller}.jannovar.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_annotation_workflow.get_output_files(
@@ -126,8 +126,8 @@ def test_jannovar_step_part_get_output_files(somatic_variant_annotation_workflow
 def test_jannovar_step_part_get_log_file(somatic_variant_annotation_workflow):
     """Tests JannovarAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}/log/"
-        "{mapper}.{var_caller}.jannovar_annotate_somatic_vcf.{tumor_library}"
+        "work/{mapper}.{var_caller}.jannovar.{tumor_library}/log/"
+        "{mapper}.{var_caller}.jannovar.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_annotation_workflow.get_log_file("jannovar", "annotate_somatic_vcf")
@@ -181,6 +181,8 @@ def test_vep_step_part_get_output_files(somatic_variant_annotation_workflow):
         "{mapper}.{var_caller}.vep.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    full = {k.replace("vcf", "full"): v.replace(".vcf", ".full.vcf") for k, v in expected.items()}
+    expected = {**expected, **full}
     actual = somatic_variant_annotation_workflow.get_output_files("vep", "run")
     assert actual == expected
 
@@ -238,7 +240,17 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
         for var_caller in ("mutect", "scalpel")
-        for annotator in ("jannovar_annotate_somatic_vcf", "vep")
+        for annotator in ("jannovar", "vep")
+    ]
+    expected += [
+        tpl.format(
+            mapper=mapper, var_caller=var_caller, annotator=annotator, i=i, t=t, ext=ext, dir_="out"
+        )
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("full.vcf.gz", "full.vcf.gz.md5", "full.vcf.gz.tbi", "full.vcf.gz.tbi.md5")
+        for mapper in ("bwa",)
+        for var_caller in ("mutect", "scalpel")
+        for annotator in ("vep",)
     ]
     expected += [
         tpl.format(
@@ -255,7 +267,7 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         )
         for mapper in ("bwa",)
         for var_caller in ("mutect", "scalpel")
-        for annotator in ("jannovar_annotate_somatic_vcf", "vep")
+        for annotator in ("jannovar", "vep")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_annotation_workflow.get_result_files()))

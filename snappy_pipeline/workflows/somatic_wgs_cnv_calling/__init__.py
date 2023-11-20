@@ -140,6 +140,7 @@ step_config:
       path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
       path_antitarget: REQUIRED         # Usually ../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
       path_panel_of_normals: REQUIRED   # Usually ../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn
+      plot: True                        # Output plots (very slow)
       min_mapq: 0                       # [coverage] Mininum mapping quality score to count a read for coverage depth
       count: False                      # [coverage] Alternative couting algorithm
       gc_correction: True               # [fix] Use GC correction
@@ -448,6 +449,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "fix",
         "segment",
         "call",
+        "postprocess",
         "export",
         "plot",
         "report",
@@ -501,6 +503,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "call": self._get_input_files_call,
             "fix": self._get_input_files_fix,
             "segment": self._get_input_files_segment,
+            "postprocess": self._get_input_files_postprocess,
             "export": self._get_input_files_export,
             "plot": self._get_input_files_plot,
             "report": self._get_input_files_report,
@@ -542,8 +545,18 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         return input_files
 
     @staticmethod
+    def _get_input_files_postprocess(wildcards):
+        segment_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
+        )
+        input_files = {"call": segment_pattern.format(**wildcards)}
+        return input_files
+
+    @staticmethod
     def _get_input_files_export(wildcards):
-        cns_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
+        cns_pattern = (
+            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
+        )
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
@@ -552,7 +565,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
-            "cns": tpl.format(ext="cns", **wildcards),
+            "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
 
@@ -562,7 +575,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
             "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
             "cnr": tpl.format(ext="cnr", **wildcards),
-            "cns": tpl.format(ext="cns", **wildcards),
+            "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
 
@@ -574,6 +587,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "coverage": self._get_output_files_coverage,
             "fix": self._get_output_files_fix,
             "call": self._get_output_files_call,
+            "postprocess": self._get_output_files_postprocess,
             "segment": self._get_output_files_segment,
             "export": self._get_output_files_export,
             "plot": self._get_output_files_plot,
@@ -607,8 +621,14 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @staticmethod
     def _get_output_files_call():
         name_pattern = "{mapper}.cnvkit.{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
         return {"calls": tpl, "calls_md5": tpl + ".md5"}
+
+    @staticmethod
+    def _get_output_files_postprocess():
+        name_pattern = "{mapper}.cnvkit.{library_name}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        return {"final": tpl, "final_md5": tpl + ".md5"}
 
     @dictify
     def _get_output_files_plot(self):
@@ -909,16 +929,21 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
                 caller="cnvkit",
             )
-            plots = (("diagram", "pdf", False), ("heatmap", "pdf", True), ("scatter", "png", True))
-            yield from self._yield_report_files(
-                (
-                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
-                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
-                ),
-                plots,
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                caller="cnvkit",
-            )
+            if self.config["cnvkit"]["plot"]:
+                plots = (
+                    ("diagram", "pdf", False),
+                    ("heatmap", "pdf", True),
+                    ("scatter", "png", True),
+                )
+                yield from self._yield_report_files(
+                    (
+                        "output/{mapper}.{caller}.{cancer_library.name}/report/"
+                        "{mapper}.{caller}.{cancer_library.name}.{ext}"
+                    ),
+                    plots,
+                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                    caller="cnvkit",
+                )
         if "cnvetti" in bcf_tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:

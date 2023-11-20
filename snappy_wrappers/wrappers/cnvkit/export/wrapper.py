@@ -30,22 +30,25 @@ set -x
 
 export TMPDIR=$(mktemp -d)
 
-cnvkit.py export bed {snakemake.input} -o {snakemake.output.bed}
+cnvkit.py export bed {snakemake.input} -o $TMPDIR/out.bed
+bgzip -c $TMPDIR/out.bed > {snakemake.output.bed}
+tabix -f {snakemake.output.bed}
+
 cnvkit.py export seg {snakemake.input} -o {snakemake.output.seg}
 
 cnvkit.py export vcf {snakemake.input} -o $TMPDIR/out.vcf
-
 bgzip -c $TMPDIR/out.vcf > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 
 rm -rf $TMPDIR
 
-d=$(dirname "{snakemake.output.bed}")
+d=$(dirname "{snakemake.output.seg}")
 pushd $d
-fn=$(basename "{snakemake.output.bed}")
-md5sum $fn > $fn.md5
 fn=$(basename "{snakemake.output.seg}")
 md5sum $fn > $fn.md5
+fn=$(basename "{snakemake.output.bed}")
+md5sum $fn > $fn.md5
+md5sum $fn.tbi > $fn.tbi.md5
 fn=$(basename "{snakemake.output.vcf}")
 md5sum $fn > $fn.md5
 md5sum $fn.tbi > $fn.tbi.md5
