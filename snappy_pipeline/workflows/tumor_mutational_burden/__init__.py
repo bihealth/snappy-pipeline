@@ -12,7 +12,6 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
     ANNOTATION_TOOLS,
     SomaticVariantAnnotationWorkflow,
 )
-
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
