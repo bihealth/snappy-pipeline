@@ -40,6 +40,12 @@ export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
 set -x
 
+# Force full replacement of previous results
+if [ -d {out_path}/ploidy_calls ]
+then
+    rm -rf {out_path}/ploidy_calls
+fi
+
 gatk DetermineGermlineContigPloidy \
     --model {snakemake.params.args[model]} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
@@ -49,24 +55,16 @@ gatk DetermineGermlineContigPloidy \
 )
 
 ploidy_calls = out_path / "ploidy-calls"
-# GCNV will make one 'Sample_*' folder per case, we have one ped file per case
-# any additional folders (for which we also don't know anything about the sample name)
-# can be assumed to be from previous SNAPPY executions and should be purged
-n_expected_results = len(snakemake.input.ped)
-
-
 for sample_dir in ploidy_calls.glob("SAMPLE_*"):
-    n = int(str(sample_dir.name).split("_")[1])
     path_name = sample_dir / "sample_name.txt"
     with path_name.open("rt") as inputf:
         sample_name = inputf.read().strip()
-    if n >= n_expected_results and sample_name not in sex_map:
-        msg = f"Encountered a sample most likely leftover from previous snappy run {sample_name} (undefined in samplehseet and above number of expected samples). Purging to ensure later GCNV commands do not load this."
+    if sample_name not in sex_map:
+        msg = f"Encountered an unexpected sample {sample_name} (undefined in samplesheet)."
         print(msg, file=sys.stderr)  # for slurm log
         with open(snakemake.log[0], "a") as log:
             log.write(msg)
-        shutil.rmtree(sample_dir)
-        continue
+        sys.exit(0)
     sample_sex = sex_map[sample_name]
     path_call = sample_dir / "contig_ploidy.tsv"
     with path_call.open("rt") as inputf:
