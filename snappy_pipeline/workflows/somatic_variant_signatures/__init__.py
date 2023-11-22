@@ -19,10 +19,15 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.somatic_variant_annotation import (
+    ANNOTATION_TOOLS,
+    SomaticVariantAnnotationWorkflow,
+)
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
+from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
 __author__ = "Clemens Messerschmidt"
 
@@ -30,7 +35,13 @@ __author__ = "Clemens Messerschmidt"
 DEFAULT_CONFIG = r"""
 step_config:
   somatic_variant_signatures:
-    path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
+    is_filtered: false         # REQUIRED
+    path_somatic_variant: ../somatic_variant_filtration   # REQUIRED
+    tools_ngs_mapping: []      # default to those configured for ngs_mapping
+    tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
+    tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
+    filters: []                # When using variants after the somatic_variant_filtration step, use "no_filter", "dkfz_only", "dkfz_and_ebfilter" or "dkfz_and_ebfilter_and_oxog"
+    filtered_regions: []       # When using variants after the somatic_variant_filtration step, use "genome_wide" or ""
 """
 
 
@@ -42,10 +53,13 @@ class SignaturesStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.log_path = (
-            "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/"
-            "log/snakemake.tabulate_vcf.log"
-        )
+        self.config = parent.w_config["step_config"]["somatic_variant_signatures"]
+        self.name_pattern = "{mapper}.{var_caller}"
+        if self.config["is_filtered"]:
+            self.name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+        self.name_pattern += "." + self.name + ".{tumor_library}"
+        if self.config["is_filtered"]:
+            self.name_pattern += ".{filter}.{region}"
         # Build shortcut from cancer bio sample name to matched cancre sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -57,6 +71,11 @@ class SignaturesStepPart(BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             for donor in sheet.donors:
                 self.donors[donor.name] = donor
+
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
+        return os.path.join("work", self.name_pattern, "log", "snakemake." + self.name + ".log")
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -86,12 +105,15 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         """Return path to input file"""
         # Validate action
         self._validate_action(action)
-        tpl = (
-            "output/{mapper}.{var_caller}.{tumor_library}/out/"
-            "{mapper}.{var_caller}.{tumor_library}"
-        )
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["is_filtered"]:
+            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+        name_pattern += ".{tumor_library}"
+        if self.config["is_filtered"]:
+            name_pattern += ".{filter}.{region}"
+        tpl = os.path.join("output", name_pattern, "out", name_pattern)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
+        variant_calling = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -100,15 +122,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         """Return output files to tabulate vcf"""
         # Validate action
         self._validate_action(action)
-        yield "tsv", (
-            "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/out/"
-            "{mapper}.{var_caller}.tabulate_vcf.{tumor_library}.tsv"
-        )
-
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return self.log_path
+        yield "tsv", os.path.join("work", self.name_pattern, "out", self.name_pattern + ".tsv")
 
     def get_params(self, action):
         """Return arguments to pass down."""
@@ -140,42 +154,27 @@ class DeconstructSigsStepPart(SignaturesStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.log_path = (
-            "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/"
-            "log/snakemake.deconstruct_sigs.log"
-        )
 
     @dictify
     def get_input_files(self, action):
         """Return input files to deconstruct signatures"""
         # Validate action
         self._validate_action(action)
-        yield "tsv", (
-            "work/{mapper}.{var_caller}.tabulate_vcf.{tumor_library}/out/"
-            "{mapper}.{var_caller}.tabulate_vcf.{tumor_library}.tsv"
-        )
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["is_filtered"]:
+            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+        name_pattern += ".tabulate_vcf.{tumor_library}"
+        if self.config["is_filtered"]:
+            name_pattern += ".{filter}.{region}"
+        yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
 
     @dictify
     def get_output_files(self, action):
         """Return output files to deconstruct signatures"""
         # Validate action
         self._validate_action(action)
-        yield "tsv", (
-            "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/out/"
-            "{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}.tsv"
-        )
-        yield "pdf", (
-            "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/out/"
-            "{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}.pdf"
-        )
-
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return (
-            "work/{mapper}.{var_caller}.deconstruct_sigs.{tumor_library}/"
-            "log/snakemake.deconstruct_sigs.log"
-        )
+        yield "tsv", os.path.join("work", self.name_pattern, "out", self.name_pattern + ".tsv")
+        yield "pdf", os.path.join("work", self.name_pattern, "out", self.name_pattern + ".pdf")
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):
@@ -203,35 +202,94 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            (
+                SomaticVariantCallingWorkflow,
+                SomaticVariantAnnotationWorkflow,
+                SomaticVariantFiltrationWorkflow,
+                NgsMappingWorkflow,
+            ),
         )
+        # Register sub workflows
+        config = self.w_config["step_config"]["somatic_variant_signatures"]
+        sub_workflow = "somatic_variant_calling"
+        if config["is_filtered"]:
+            sub_workflow = "somatic_variant_filtration"
+        self.register_sub_workflow(sub_workflow, config["path_somatic_variant"], "somatic_variant")
+        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
+        if not config["tools_ngs_mapping"]:
+            config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
+                "dna"
+            ]
+        if not config["tools_somatic_variant_calling"]:
+            config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+                "somatic_variant_calling"
+            ]["tools"]
+        if not config["tools_somatic_variant_annotation"]:
+            config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
+                "somatic_variant_annotation"
+            ]["tools"]
+        if not config["filters"]:
+            config["filters"] = list(
+                self.w_config["step_config"]["somatic_variant_filtration"]["filter_sets"].keys()
+            )
+            config["filters"].append("no_filter")
+        if not config["filtered_regions"]:
+            config["filtered_regions"] = list(
+                self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
+            )
+            config["filtered_regions"].append("genome_wide")
+        self.w_config["step_config"]["somatic_variant_signatures"] = config
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (TabulateVariantsStepPart, DeconstructSigsStepPart, LinkOutStepPart)
         )
-        # Register sub workflows
-        self.register_sub_workflow(
-            "somatic_variant_calling", self.config["path_somatic_variant_calling"]
-        )
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config.get("tools_ngs_mapping"):
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config.get("tools_somatic_variant_calling"):
-            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
-                "somatic_variant_calling"
-            ]["tools"]
 
     @listify
     def get_result_files(self):
         """Return list of result files for workflow"""
-        callers = set(self.config["tools_somatic_variant_calling"])
-        name_pattern = "{mapper}.{caller}.deconstruct_sigs.{tumor_library.name}"
+        config = self.w_config["step_config"]["somatic_variant_signatures"]
+        name_pattern = "{mapper}.{caller}"
+        if config["is_filtered"]:
+            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+        name_pattern += ".deconstruct_sigs.{tumor_library.name}"
+        if config["is_filtered"]:
+            name_pattern += ".{filter}.{region}"
+
+        mappers = set(config["tools_ngs_mapping"]) & set(
+            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+        )
+        assert len(mappers) > 0, "No valid mapper"
+        callers = set(config["tools_somatic_variant_calling"]) & set(
+            SOMATIC_VARIANT_CALLERS_MATCHED
+        )
+        assert len(callers) > 0, "No valid somatic variant caller"
+        if config["is_filtered"]:
+            anno_callers = set(config["tools_somatic_variant_annotation"]) & set(ANNOTATION_TOOLS)
+            assert len(anno_callers) > 0, "No valid somatic variant annotation tool"
+            filters = list(
+                self.w_config["step_config"]["somatic_variant_filtration"]["filter_sets"].keys()
+            )
+            filters.append("no_filter")
+            filters = set(filters) & set(config["filters"])
+            assert len(filters) > 0, "No valid filter"
+            regions = list(
+                self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
+            )
+            regions.append("genome_wide")
+            regions = set(regions) & set(config["filtered_regions"])
+            assert len(regions) > 0, "No valid filtered region"
+        else:
+            anno_callers = []
+            filters = []
+            regions = []
+
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            mapper=mappers,
+            caller=callers,
+            anno_caller=anno_callers,
+            filter=filters,
+            region=regions,
         )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
@@ -259,6 +317,6 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "somatic_variant_signatures", "path_somatic_variant_calling"),
+            ("step_config", "somatic_variant_signatures", "path_somatic_variant"),
             "Path to variant calling not configured but required for somatic variant signatures",
         )
