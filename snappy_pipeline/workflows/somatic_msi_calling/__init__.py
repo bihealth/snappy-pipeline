@@ -150,7 +150,7 @@ class MantisStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=3,
-            time="02:00:00",  # 2 hours
+            time="08:00:00",  # 2 hours
             memory=f"{30 * 1024 * 3}M",
         )
 
