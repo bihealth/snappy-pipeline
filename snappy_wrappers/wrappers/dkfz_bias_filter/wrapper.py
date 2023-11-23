@@ -6,6 +6,10 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+filter_out = 0
+if "filter_nb" in snakemake.wildcards.keys():
+    filter_out = 1
+
 shell(
     r"""
 set -euo pipefail
@@ -36,6 +40,13 @@ fi
 
 out={snakemake.output.vcf}
 
+if [[ {filter_out} -eq 1 ]]
+then
+    d=$(dirname $out)
+    out=$(basename -s .vcf.gz $out)
+    out="$d/$out.full.vcf.gz"
+fi
+
 dkfzbiasfilter.py \
     --tempFolder $TMPDIR \
     --writeQC \
@@ -46,9 +57,17 @@ dkfzbiasfilter.py \
 
 # bcftools incompatible with dkfzbiasfilter.py in bioconda (2023-10-13)
 if [[ ! -s ${{out%.gz}} ]]; then
-    # zgrep '^#' {snakemake.input.vcf} \
-    bcftools view --header-only {snakemake.input.vcf} \
+    zgrep '^#' {snakemake.input.vcf} \
+    # bcftools view --header-only {snakemake.input.vcf} \
     > ${{out%.gz}}
+fi
+
+if [[ {filter_out} -eq 1 ]]
+then
+    full=$out
+    out={snakemake.output.vcf}
+    awk -F'\t' '$0 ~ /^#/ || $7 == "PASS" {{print $0}}' ${{full%.gz}} > ${{out%.gz}}
+    # bcftools filter --include 'FILTER="PASS"' -O u -o ${{out%.gz}} ${{full%.gz}}
 fi
 
 bgzip ${{out%.gz}}

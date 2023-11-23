@@ -13,6 +13,13 @@ if snakemake.params["args"]["interval"]:
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
 
+filter_cmd = "cat"
+if "filter_nb" in snakemake.wildcards.keys():
+    filter_nb = int(snakemake.wildcards["filter_nb"])
+    filter_cmd = "bcftools view -e 'INFO/EB < {}'".format(
+        config["filter_list"][filter_nb - 1]["ebfilter"]["ebfilter_threshold"]
+    )
+
 shell(
     r"""
 set -x
@@ -93,6 +100,7 @@ fi
 bcftools concat \
     $TMPDIR/after_eb_filter.vcf \
     $TMPDIR/not_for_eb_filter.vcf.gz \
+| {filter_cmd} \
 | bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}

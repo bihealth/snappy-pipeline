@@ -159,6 +159,101 @@ rule variant_filtration_filter_to_exons_run:
         wf.wrapper_path("somatic_variant_filtration/filter_to_exons")
 
 
+# Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+checkpoint one_dkfz:
+    input:
+        unpack(wf.get_input_files("one_dkfz", "run")),
+    output:
+        **wf.get_output_files("one_dkfz", "run"),
+    threads: wf.get_resource("one_dkfz", "run", "threads")
+    resources:
+        time=wf.get_resource("one_dkfz", "run", "time"),
+        memory=wf.get_resource("one_dkfz", "run", "memory"),
+        partition=wf.get_resource("one_dkfz", "run", "partition"),
+        tmpdir=wf.get_resource("one_dkfz", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_dkfz", "run"),
+    wrapper:
+        wf.wrapper_path("dkfz_bias_filter")
+
+
+checkpoint one_ebfilter:
+    input:
+        unpack(wf.get_input_files("one_ebfilter", "run")),
+    output:
+        **wf.get_output_files("one_ebfilter", "run"),
+    threads: wf.get_resource("one_ebfilter", "run", "threads")
+    resources:
+        time=wf.get_resource("one_ebfilter", "run", "time"),
+        memory=wf.get_resource("one_ebfilter", "run", "memory"),
+        partition=wf.get_resource("one_ebfilter", "run", "partition"),
+        tmpdir=wf.get_resource("one_ebfilter", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_ebfilter", "run"),
+    wrapper:
+        wf.wrapper_path("eb_filter_par")
+
+
+checkpoint one_bcftools:
+    input:
+        unpack(wf.get_input_files("one_bcftools", "run")),
+    output:
+        **wf.get_output_files("one_bcftools", "run"),
+    threads: wf.get_resource("one_bcftools", "run", "threads")
+    resources:
+        time=wf.get_resource("one_bcftools", "run", "time"),
+        memory=wf.get_resource("one_bcftools", "run", "memory"),
+        partition=wf.get_resource("one_bcftools", "run", "partition"),
+        tmpdir=wf.get_resource("one_bcftools", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_bcftools", "run"),
+    wrapper:
+        wf.wrapper_path("bcftools/filter")
+
+
+checkpoint one_regions:
+    input:
+        unpack(wf.get_input_files("one_regions", "run")),
+    output:
+        **wf.get_output_files("one_regions", "run"),
+    threads: wf.get_resource("one_regions", "run", "threads")
+    resources:
+        time=wf.get_resource("one_regions", "run", "time"),
+        memory=wf.get_resource("one_regions", "run", "memory"),
+        partition=wf.get_resource("one_regions", "run", "partition"),
+        tmpdir=wf.get_resource("one_regions", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_regions", "run"),
+    wrapper:
+        wf.wrapper_path("bcftools/regions")
+
+
+rule last_filter:
+    input:
+        wf.get_input_files("last_filter", "run"),
+    output:
+        **wf.get_output_files("last_filter", "run"),
+    threads: wf.get_resource("last_filter", "run", "threads")
+    resources:
+        time=wf.get_resource("last_filter", "run", "time"),
+        memory=wf.get_resource("last_filter", "run", "memory"),
+        partition=wf.get_resource("last_filter", "run", "partition"),
+        tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
+    shell:
+        r"""
+            input_base=$(basename -s .vcf.gz {input})
+            output_base=$(basename -s .vcf.gz {output[vcf]})
+            input_dir=$(dirname {input})
+            output_dir=$(dirname {output[vcf]})
+            for ext in $(echo "vcf.gz vcf.gz.tbi vcf.gz.md5 vcf.gz.tbi.md5" | tr ' ' '\n')
+            do
+                ln -sr $input_dir/${{input_base}}.$ext $output_dir/${{output_base}}.$ext
+            done
+        """
+
+
 # Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run Jannovar statistics -----------------------------------------------------
 # TODO
