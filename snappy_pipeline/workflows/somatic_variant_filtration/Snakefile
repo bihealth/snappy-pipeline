@@ -184,6 +184,8 @@ checkpoint one_ebfilter:
         unpack(wf.get_input_files("one_ebfilter", "run")),
     output:
         **wf.get_output_files("one_ebfilter", "run"),
+    params:
+        wf.get_params("one_ebfilter", "run"),
     threads: wf.get_resource("one_ebfilter", "run", "threads")
     resources:
         time=wf.get_resource("one_ebfilter", "run", "time"),
@@ -241,17 +243,10 @@ rule last_filter:
         memory=wf.get_resource("last_filter", "run", "memory"),
         partition=wf.get_resource("last_filter", "run", "partition"),
         tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
-    shell:
-        r"""
-            input_base=$(basename -s .vcf.gz {input})
-            output_base=$(basename -s .vcf.gz {output[vcf]})
-            input_dir=$(dirname {input})
-            output_dir=$(dirname {output[vcf]})
-            for ext in $(echo "vcf.gz vcf.gz.tbi vcf.gz.md5 vcf.gz.tbi.md5" | tr ' ' '\n')
-            do
-                ln -sr $input_dir/${{input_base}}.$ext $output_dir/${{output_base}}.$ext
-            done
-        """
+    log:
+        **wf.get_log_file("last_filter", "run"),
+    wrapper:
+        wf.wrapper_path("somatic_variant_filtration/apply_all_filters")
 
 
 # Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

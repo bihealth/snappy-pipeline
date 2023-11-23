@@ -135,23 +135,11 @@ step_config:
     # Available filters
     # dkfz: {}                    # Not parametrisable (?)
     # ebfilter:
+    #   ebfilter_threshold: 2.4
     #   shuffle_seed: 1
     #   panel_of_normals_size: 25
     #   min_mapq: 20
     #   min_baseq: 15
-    #   # Parallelization configuration
-    #   window_length: 10000000   # split input into windows of this size, each triggers a job
-    #   num_jobs: 500             # number of windows to process in parallel
-    #   use_profile: true         # use Snakemake profile for parallel processing
-    #   restart_times: 5          # number of times to re-launch jobs in case of failure
-    #   max_jobs_per_second: 2    # throttling of job creation
-    #   max_status_checks_per_second: 10   # throttling of status checks
-    #   debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-    #   keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-    #   job_mult_memory: 1        # memory multiplier
-    #   job_mult_time: 1          # running time multiplier
-    #   merge_mult_memory: 1      # memory multiplier for merging
-    #   merge_mult_time: 1        # running time multiplier for merging
     # bcftools:
     #   include: ""               # Expression to be used in bcftools view --include
     #   exclude: ""               # Expression to be used in bcftools view --exclude
@@ -319,7 +307,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
             elif filter_name == "ebfilter":
                 return "24:00:00"
             else:
-                return "2:00:00"
+                return "02:00:00"
 
         def memory_usage(wildcards):
             filter_nb = int(wildcards["filter_nb"]) - 1
@@ -353,6 +341,16 @@ class OneFilterEbfilterStepPart(OneFilterStepPart):
             "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
             "panel_of_normals.txt"
         )
+
+    def get_params(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            yield "args", {"filter_nb": wildcards["filter_nb"]}
+
+        return input_function
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):
@@ -395,12 +393,34 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
         name_pattern += ".filtered.{tumor_library}"
-        vcf = os.path.join("work", name_pattern, "out", name_pattern + ".vcf.gz")
+        vcf = os.path.join("work", name_pattern, "out", name_pattern)
         return {
-            "vcf": vcf,
-            "vcf_tbi": vcf + ".tbi",
-            "vcf_md5": vcf + ".md5",
-            "vcf_tbi_md5": vcf + ".tbi.md5",
+            "vcf": vcf + ".vcf.gz",
+            "vcf_tbi": vcf + ".vcf.gz.tbi",
+            "vcf_md5": vcf + ".vcf.gz.md5",
+            "vcf_tbi_md5": vcf + ".vcf.gz.tbi.md5",
+            "full": vcf + ".full.vcf.gz",
+            "full_tbi": vcf + ".full.vcf.gz.tbi",
+            "full_md5": vcf + ".full.vcf.gz.md5",
+            "full_tbi_md5": vcf + ".full.vcf.gz.tbi.md5",
+        }
+
+    @dictify
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+        name_pattern += ".filtered.{tumor_library}"
+        tpl = os.path.join("work", name_pattern, "log", name_pattern)
+        return {
+            "log": tpl + ".log",
+            "log_md5": tpl + ".log.md5",
+            "conda_list": tpl + ".conda_list.txt",
+            "conda_list_md5": tpl + ".conda_list.txt.md5",
+            "conda_info": tpl + ".conda_info.txt",
+            "conda_info_md5": tpl + ".conda_info.txt.md5",
         }
 
 

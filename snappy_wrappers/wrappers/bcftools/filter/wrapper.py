@@ -25,6 +25,14 @@ if include:
 if exclude:
     exclude = '--exclude "' + exclude + '"'
 
+if "filter_name" in config:
+    filter_name = config.get("filter_name", "")
+elif "bcftools" in config and "filter_name" in config["bcftools"]:
+    filter_name = config["bcftools"].get("filter_name", "")
+elif "filter_nb" in snakemake.wildcards.keys():
+    filter_name = "bcftools_{}".format(int(snakemake.wildcards["filter_nb"]))
+else:
+    filter_name = "+"
 
 # Actually run the script.
 shell(
@@ -41,7 +49,7 @@ trap "rm -rf $TMPDIR" EXIT
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-bcftools view \
+bcftools filter --soft-filter {filter_name} --mode + \
     {include} {exclude} \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}

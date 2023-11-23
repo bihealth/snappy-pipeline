@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for oxo-G flagging.
+"""CUBI+Snakemake wrapper code for applying the filter list.
 """
 
 from snakemake import shell
@@ -34,25 +33,13 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-out={snakemake.output.vcf}
+ln -sr {snakemake.input} {snakemake.output.full}
+ln -sr {snakemake.input}.tbi {snakemake.output.full}.tbi
+ln -sr {snakemake.input}.md5 {snakemake.output.full}.md5
+ln -sr {snakemake.input}.tbi.md5 {snakemake.output.full}.tbi.md5
 
-dkfzbiasfilter.py \
-    --tempFolder $TMPDIR \
-    --writeQC \
-    {snakemake.input.vcf} \
-    {snakemake.input.bam} \
-    {snakemake.config[static_data_config][reference][path]} \
-    ${{out%.gz}}
-
-# bcftools incompatible with dkfzbiasfilter.py in bioconda (2023-10-13)
-if [[ ! -s ${{out%.gz}} ]]; then
-    zgrep '^#' {snakemake.input.vcf} \
-    # bcftools view --header-only {snakemake.input.vcf} \
-    > ${{out%.gz}}
-fi
-
-bgzip ${{out%.gz}}
-tabix -f {snakemake.output.vcf}
+bcftools view --include 'FILTER = "PASS"' -O z -o {snakemake.output.vcf} {snakemake.input}
+tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \
     md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \

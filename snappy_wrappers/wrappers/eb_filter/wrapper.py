@@ -13,12 +13,33 @@ if snakemake.params["args"]["interval"]:
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
 
-filter_cmd = "cat"
-if "filter_nb" in snakemake.wildcards.keys():
-    filter_nb = int(snakemake.wildcards["filter_nb"])
-    filter_cmd = "bcftools view -e 'INFO/EB < {}'".format(
-        config["filter_list"][filter_nb - 1]["ebfilter"]["ebfilter_threshold"]
-    )
+step = snakemake.config["pipeline_step"]["name"]
+config = snakemake.config["step_config"][step]
+
+if "ebfilter_threshold" in config:
+    threshold = config.get("ebfilter_threshold", 0)
+elif "eb_filter" in config and "ebfilter_threshold" in config["eb_filter"]:
+    threshold = config["eb_filter"].get("ebfilter_threshold", 0)
+elif "ebfilter" in config and "ebfilter_threshold" in config["ebfilter"]:
+    threshold = config["ebfilter"].get("ebfilter_threshold", 0)
+else:
+    try:
+        filter_nb = int(snakemake.params["args"]["filter_nb"]) - 1
+        threshold = config["filter_list"][filter_nb]["ebfilter"].get("ebfilter_threshold", 0)
+    except:
+        threshold = 0
+
+if "filter_name" in config:
+    filter_name = config.get("filter_name", "")
+elif "eb_filter" in config and "filter_name" in config["eb_filter"]:
+    filter_name = config["eb_filter"].get("filter_name", "")
+elif "ebfilter" in config and "filter_name" in config["ebfilter"]:
+    filter_name = config["ebfilter"].get("filter_name", "")
+else:
+    try:
+        filter_name = "ebfilter_{}".format(int(snakemake.params["args"]["filter_nb"]))
+    except:
+        filter_name = "+"
 
 shell(
     r"""
@@ -91,16 +112,18 @@ if [[ $lines -gt 0 ]]; then
         $TMPDIR/for_eb_filter.vcf.gz \
         {snakemake.input.bam} \
         {snakemake.input.txt} \
-        $TMPDIR/after_eb_filter.vcf
+        $TMPDIR/after_running_eb_filter.vcf
+    bcftools filter --soft-filter {filter_name} --mode + \
+        --exclude "INFO/EB < {threshold}" \
+        -O z -o $TMPDIR/after_eb_filter.vcf.gz \
+        $TMPDIR/after_running_eb_filter.vcf
 else
-    zcat $TMPDIR/for_eb_filter.vcf.gz \
-    > $TMPDIR/after_eb_filter.vcf
+    mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
 fi
 
 bcftools concat \
-    $TMPDIR/after_eb_filter.vcf \
+    $TMPDIR/after_eb_filter.vcf.gz \
     $TMPDIR/not_for_eb_filter.vcf.gz \
-| {filter_cmd} \
 | bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}
