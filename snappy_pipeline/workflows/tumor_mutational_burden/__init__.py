@@ -72,7 +72,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         if self.config["has_annotation"]:
             additional_steps += ".{anno_caller}"
         if self.config["is_filtered"]:
-            additional_steps += ".dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                additional_steps += ".filtered"
+            else:
+                additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".{tumor_library}"
         if self.config["filters"]:
             base_name += ".{filter}"
@@ -94,7 +97,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         if self.config["has_annotation"]:
             additional_steps += ".{anno_caller}"
         if self.config["is_filtered"]:
-            additional_steps += ".dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                additional_steps += ".filtered"
+            else:
+                additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".tmb.{tumor_library}"
         if self.config["filters"]:
             base_name += ".{filter}"
@@ -115,7 +121,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         if self.config["has_annotation"]:
             additional_steps += ".{anno_caller}"
         if self.config["is_filtered"]:
-            additional_steps += ".dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                additional_steps += ".filtered"
+            else:
+                additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".tmb.{tumor_library}"
         if self.config["filters"]:
             base_name += ".{filter}"
@@ -199,16 +208,25 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
                 "somatic_variant_annotation"
             ]["tools"]
-        if not config["filters"]:
-            config["filters"] = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["filter_sets"].keys()
-            )
-            config["filters"].append("no_filter")
-        if not config["filtered_regions"]:
-            config["filtered_regions"] = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
-            )
-            config["filtered_regions"].append("genome_wide")
+        if config["is_filtered"]:
+            if len(self.w_config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
+                config["filters"] = []
+                config["filtered_regions"] = []
+            else:
+                if not config["filters"]:
+                    config["filters"] = list(
+                        self.w_config["step_config"]["somatic_variant_filtration"][
+                            "filter_sets"
+                        ].keys()
+                    )
+                    config["filters"].append("no_filter")
+                if not config["filtered_regions"]:
+                    config["filtered_regions"] = list(
+                        self.w_config["step_config"]["somatic_variant_filtration"][
+                            "exon_lists"
+                        ].keys()
+                    )
+                    config["filtered_regions"].append("genome_wide")
         # Register sub step classes so the sub steps are available
         self.w_config["step_config"]["tumor_mutational_burden"] = config
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
@@ -220,9 +238,12 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         if config["has_annotation"]:
             name_pattern += ".{anno_caller}"
         if config["is_filtered"]:
-            name_pattern += ".dkfz_bias_filter.eb_filter"
+            if len(config["filters"]) > 0:
+                name_pattern += ".dkfz_bias_filter.eb_filter"
+            else:
+                name_pattern += ".filtered"
         name_pattern += ".tmb.{tumor_library.name}"
-        if config["is_filtered"]:
+        if config["is_filtered"] and len(config["filters"]) > 0:
             name_pattern += ".{filter}.{region}"
 
         mappers = set(config["tools_ngs_mapping"]) & set(

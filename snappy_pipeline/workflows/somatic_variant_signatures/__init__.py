@@ -36,7 +36,7 @@ DEFAULT_CONFIG = r"""
 step_config:
   somatic_variant_signatures:
     is_filtered: false         # REQUIRED
-    path_somatic_variant: ../somatic_variant_filtration   # REQUIRED
+    path_somatic_variant: ../somatic_variant_calling   # REQUIRED
     tools_ngs_mapping: []      # default to those configured for ngs_mapping
     tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
     tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
@@ -56,9 +56,12 @@ class SignaturesStepPart(BaseStepPart):
         self.config = parent.w_config["step_config"]["somatic_variant_signatures"]
         self.name_pattern = "{mapper}.{var_caller}"
         if self.config["is_filtered"]:
-            self.name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                self.name_pattern += ".{anno_caller}.filtered"
+            else:
+                self.name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
         self.name_pattern += "." + self.name + ".{tumor_library}"
-        if self.config["is_filtered"]:
+        if self.config["is_filtered"] and len(self.config["filters"]) > 0:
             self.name_pattern += ".{filter}.{region}"
         # Build shortcut from cancer bio sample name to matched cancre sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -107,9 +110,12 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         self._validate_action(action)
         name_pattern = "{mapper}.{var_caller}"
         if self.config["is_filtered"]:
-            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                name_pattern += ".{anno_caller}.filtered"
+            else:
+                name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
         name_pattern += ".{tumor_library}"
-        if self.config["is_filtered"]:
+        if self.config["is_filtered"] and len(self.config["filters"]) > 0:
             name_pattern += ".{filter}.{region}"
         tpl = os.path.join("output", name_pattern, "out", name_pattern)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -162,9 +168,12 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         self._validate_action(action)
         name_pattern = "{mapper}.{var_caller}"
         if self.config["is_filtered"]:
-            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+            if len(self.config["filters"]) == 0:
+                name_pattern += ".{anno_caller}.filtered"
+            else:
+                name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
         name_pattern += ".tabulate_vcf.{tumor_library}"
-        if self.config["is_filtered"]:
+        if self.config["is_filtered"] and len(self.config["filters"]) > 0:
             name_pattern += ".{filter}.{region}"
         yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
 
@@ -228,16 +237,25 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
                 "somatic_variant_annotation"
             ]["tools"]
-        if not config["filters"]:
-            config["filters"] = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["filter_sets"].keys()
-            )
-            config["filters"].append("no_filter")
-        if not config["filtered_regions"]:
-            config["filtered_regions"] = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
-            )
-            config["filtered_regions"].append("genome_wide")
+        if config["is_filtered"]:
+            if len(self.w_config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
+                config["filters"] = []
+                config["filtered_regions"] = []
+            else:
+                if not config["filters"]:
+                    config["filters"] = list(
+                        self.w_config["step_config"]["somatic_variant_filtration"][
+                            "filter_sets"
+                        ].keys()
+                    )
+                    config["filters"].append("no_filter")
+                if not config["filtered_regions"]:
+                    config["filtered_regions"] = list(
+                        self.w_config["step_config"]["somatic_variant_filtration"][
+                            "exon_lists"
+                        ].keys()
+                    )
+                    config["filtered_regions"].append("genome_wide")
         self.w_config["step_config"]["somatic_variant_signatures"] = config
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -250,9 +268,12 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         config = self.w_config["step_config"]["somatic_variant_signatures"]
         name_pattern = "{mapper}.{caller}"
         if config["is_filtered"]:
-            name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+            if len(config["filters"]) > 0:
+                name_pattern += ".{anno_caller}.dkfz_bias_filter.eb_filter"
+            else:
+                name_pattern += ".{anno_caller}.filtered"
         name_pattern += ".deconstruct_sigs.{tumor_library.name}"
-        if config["is_filtered"]:
+        if config["is_filtered"] and len(config["filters"]) > 0:
             name_pattern += ".{filter}.{region}"
 
         mappers = set(config["tools_ngs_mapping"]) & set(
@@ -271,13 +292,11 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             )
             filters.append("no_filter")
             filters = set(filters) & set(config["filters"])
-            assert len(filters) > 0, "No valid filter"
             regions = list(
                 self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
             )
             regions.append("genome_wide")
             regions = set(regions) & set(config["filtered_regions"])
-            assert len(regions) > 0, "No valid filtered region"
         else:
             anno_callers = []
             filters = []
