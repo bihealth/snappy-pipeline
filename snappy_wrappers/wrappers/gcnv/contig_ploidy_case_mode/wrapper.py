@@ -1,4 +1,5 @@
 import pathlib
+import sys
 
 from snakemake.shell import shell
 
@@ -38,6 +39,12 @@ export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
 set -x
 
+# Force full replacement of previous results
+if [ -d {out_path}/ploidy_calls ]
+then
+    rm -rf {out_path}/ploidy_calls
+fi
+
 gatk DetermineGermlineContigPloidy \
     --model {snakemake.params.args[model]} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
@@ -51,6 +58,12 @@ for sample_dir in ploidy_calls.glob("SAMPLE_*"):
     path_name = sample_dir / "sample_name.txt"
     with path_name.open("rt") as inputf:
         sample_name = inputf.read().strip()
+    if sample_name not in sex_map:
+        msg = f"Encountered an unexpected sample {sample_name} (undefined in samplesheet)."
+        print(msg, file=sys.stderr)  # for slurm log
+        with open(snakemake.log[0], "a") as log:
+            log.write(msg)
+        sys.exit(0)
     sample_sex = sex_map[sample_name]
     path_call = sample_dir / "contig_ploidy.tsv"
     with path_call.open("rt") as inputf:
