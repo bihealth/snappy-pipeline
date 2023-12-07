@@ -4,8 +4,8 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.tumor_mutational_burden import (
-    TumorMutationalBurdenCalculationWorkflow,
+from snappy_pipeline.workflows.somatic_variant_checking import (
+    SomaticVariantQCWorkflow,
 )
 
 __author__ = "Gia Cuong Pham"
@@ -22,14 +22,12 @@ configfile: "config.yaml"
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
-wf = TumorMutationalBurdenCalculationWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticVariantQCWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
 localrules:
     # Linking files from work/ to output/ should be done locally
-    tumor_mutational_burden_link_out_run,
+    somatic_variant_qc_link_out_run,
 
 
 rule all:
@@ -40,7 +38,7 @@ rule all:
 # Generic linking out ---------------------------------------------------------
 
 
-rule tumor_mutational_burden_link_out_run:
+rule somatic_variant_qc_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:
@@ -49,20 +47,18 @@ rule tumor_mutational_burden_link_out_run:
         shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
-rule tumor_mutational_burden_calculation:
+rule somatic_variant_qc:
     input:
-        **wf.get_input_files("tmb_gathering", "run"),
+        **wf.get_input_files("SVQC_step", "run"),
     output:
-        **wf.get_output_files("tmb_gathering", "run"),
-    threads: wf.get_resource("tmb_gathering", "run", "threads")
+        **wf.get_output_files("SVQC_step", "run"),
+    threads: wf.get_resource("SVQC_step", "run", "threads")
     resources:
-        time=wf.get_resource("tmb_gathering", "run", "time"),
-        memory=wf.get_resource("tmb_gathering", "run", "memory"),
-        partition=wf.get_resource("tmb_gathering", "run", "partition"),
-        tmpdir=wf.get_resource("tmb_gathering", "run", "tmpdir"),
-    params:
-        **{"args": wf.get_params("tmb_gathering", "run")},
+        time=wf.get_resource("SVQC_step", "run", "time"),
+        memory=wf.get_resource("SVQC_step", "run", "memory"),
+        partition=wf.get_resource("SVQC_step", "run", "partition"),
+        tmpdir=wf.get_resource("SVQC_step", "run", "tmpdir"),
     log:
-        **wf.get_log_file("tmb_gathering", "run"),
+        **wf.get_log_file("SVQC_step", "run"),
     wrapper:
-        wf.wrapper_path("bcftools/TMB")
+        wf.wrapper_path("somatic_variants_checking")
