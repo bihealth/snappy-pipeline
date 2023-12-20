@@ -87,7 +87,9 @@ step_config:
   somatic_msi_calling:
     tools: ['mantis_msi2']  # REQUIRED - available: 'mantis_msi2'
     path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    loci_bed: /fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed  # REQUIRED
+    loci_bed: "" # REQUIRED
+                 # hg19: /fast/work/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed
+                 # hg38: /fast/work/groups/cubi/projects/biotools/Mantis/appData/hg38/GRCh38.d1.vd1.all_loci.bed
 """
 
 
@@ -181,7 +183,7 @@ class Mantis2StepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=3,
-            time="02:00:00",  # 2 hours
+            time="08:00:00",  # 8 hours
             memory=f"{30 * 1024 * 3}M",
         )
 
