@@ -14,7 +14,7 @@ missense_re = (
     snakemake.params.args["missense_re"]
     if "args" in snakemake.params.keys()
     and "missense_re" in snakemake.params.args.keys()
-    and config["has_annotation"] == "TRUE"
+    and config["has_annotation"]
     else ""
 )
 
@@ -57,7 +57,7 @@ fi
 
 TMB=$(printf "%f" $(echo "1000000*($number_variants/$total_exom_length)" | bc -l))
 missense_TMB=$(printf "%f" $(echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l))
-if [[ {config[has_annotation]} == "TRUE" ]]
+if [[ $(echo "{config[has_annotation]}" | tr '[a-z]' '[A-Z]') = "TRUE" ]]
 then
     cat << EOF > {snakemake.output.json}
 {{
@@ -71,6 +71,7 @@ then
     "Number_variants": $number_variants,
     "Number_snvs": $number_snvs,
     "Number_indels": $number_indels,
+    "Number_missense": $number_missense_variants,
     "Total_regions_length": $total_exom_length
 }}
 EOF

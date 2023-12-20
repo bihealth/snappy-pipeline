@@ -64,7 +64,7 @@ def somatic_variant_filtration_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_annotation": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
+        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
     }
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
@@ -227,7 +227,7 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     # All actions
     actions = ("run", "write_panel")
     # Define expected
-    expected_dict = {"threads": 1, "time": "6-00:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for action in actions:
         for resource, expected in expected_dict.items():
@@ -362,7 +362,18 @@ def test_filter_to_exons_step_part_get_resource_usage(somatic_variant_filtration
 def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["apply_filters", "dkfz_bias_filter", "eb_filter", "filter_to_exons", "link_out"]
+    expected = [
+        "apply_filters",
+        "dkfz_bias_filter",
+        "eb_filter",
+        "filter_to_exons",
+        "last_filter",
+        "link_out",
+        "one_bcftools",
+        "one_dkfz",
+        "one_ebfilter",
+        "one_regions",
+    ]
     actual = list(sorted(somatic_variant_filtration_workflow.sub_steps.keys()))
     assert actual == expected
 
@@ -388,4 +399,185 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_filtration_workflow.get_result_files()))
+    assert expected == actual
+
+
+# Tests for filtration using filter_list -----------------------------------------------------------
+
+
+@pytest.fixture(scope="module")  # otherwise: performance issues
+def minimal_config_list():
+    """Return YAML parsing result for configuration"""
+    yaml = ruamel_yaml.YAML()
+    return yaml.load(
+        textwrap.dedent(
+            r"""
+        static_data_config:
+          reference:
+            path: /path/to/ref.fa
+
+        step_config:
+          ngs_mapping:
+            tools:
+              dna: ['bwa']
+            bwa:
+              path_index: /path/to/bwa/index.fasta
+
+          somatic_variant_filtration:
+            tools_ngs_mapping: ['bwa']
+            tools_somatic_variant_calling: ['mutect2']
+            tools_somatic_variant_annotation: ['jannovar']
+            filter_list:
+            - bcftools:
+                include: "include_statment"
+            - dkfz:
+            - ebfilter:
+                threshold: 2.3
+            - regions:
+                path_bed: /path/to/regions.bed
+
+        data_sets:
+          first_batch:
+            file: sheet.tsv
+            search_patterns:
+            - {'left': '*/*/*_R1.fastq.gz', 'right': '*/*/*_R2.fastq.gz'}
+            search_paths: ['/path']
+            type: matched_cancer
+            naming_scheme: only_secondary_id
+        """
+        ).lstrip()
+    )
+
+
+@pytest.fixture
+def somatic_variant_filtration_workflow_list(
+    dummy_workflow,
+    minimal_config_list,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    cancer_sheet_fake_fs,
+    mocker,
+):
+    """Return SomaticVariantFiltrationWorkflow object pre-configured with cancer sheet"""
+    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
+    }
+    # Construct the workflow object
+    return SomaticVariantFiltrationWorkflow(
+        dummy_workflow,
+        minimal_config_list,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+    )
+
+
+# Tests for one_filter --------------------------------------------------------
+
+
+def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_input_files()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "var_caller": "mutect2",
+            "annotator": "jannovar",
+            "tumor_library": "P001-T1-DNA1-WGS1",
+            "filter_nb": 1,
+        }
+    )
+    expected = {
+        "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
+        "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
+        "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
+    }
+    actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_output_files()"""
+    base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_{filter_nb}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    actual = somatic_variant_filtration_workflow_list.get_output_files("one_dkfz", "run")
+    assert actual == expected
+
+
+def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_log_file()"""
+    base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/log/{mapper}.{var_caller}.{annotator}.{tumor_library}.ebfilter_{filter_nb}"
+    expected = get_expected_log_files_dict(base_out=base_out)
+    actual = somatic_variant_filtration_workflow_list.get_log_file("one_ebfilter", "run")
+    assert actual == expected
+
+
+def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_resource()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "var_caller": "mutect2",
+            "annotator": "jannovar",
+            "tumor_library": "P001-T1-DNA1-WGS1",
+            "filter_nb": 3,
+        }
+    )
+    # Define expected
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2048M", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        if resource == "threads" or resource == "partition":
+            actual = somatic_variant_filtration_workflow_list.get_resource(
+                "one_regions", "run", resource
+            )
+        else:
+            actual = somatic_variant_filtration_workflow_list.get_resource(
+                "one_regions", "run", resource
+            )(wildcards)
+        assert actual == expected, msg_error
+
+
+# Tests for last_filter -------------------------------------------------------
+
+
+def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_input_files()"""
+    expected = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.regions_4.vcf.gz"
+    actual = somatic_variant_filtration_workflow_list.get_input_files("last_filter", "run")
+    assert actual == expected
+
+
+def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
+    """Tests ApplyFiltersStepPart.get_output_files()"""
+    base_out = "work/{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}"
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    expected["full"] = base_out + ".full.vcf.gz"
+    expected["full_tbi"] = expected["full"] + ".tbi"
+    expected["full_md5"] = expected["full"] + ".md5"
+    expected["full_tbi_md5"] = expected["full_tbi"] + ".md5"
+    actual = somatic_variant_filtration_workflow_list.get_output_files("last_filter", "run")
+    assert actual == expected
+
+
+# Tests for SomaticVariantFiltrationWorkflow (filter_list) ---------------------
+
+
+def test_somatic_variant_filtration_workflow_list(somatic_variant_filtration_workflow_list):
+    """Test simple functionality of the workflow"""
+    # Check result file construction
+    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}"
+    expected = [
+        tpl.format(i=i, t=t, ext=ext)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+    ]
+    expected = list(sorted(expected))
+    actual = list(sorted(somatic_variant_filtration_workflow_list.get_result_files()))
     assert expected == actual

@@ -45,7 +45,9 @@ class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
     def construct_parallel_rules(self):
         """Construct the rules for parallel processing to generate."""
         for jobno, region in enumerate(self.get_regions()):
-            params = dict(self.snakemake.params)
+            params = {}
+            for p in self.snakemake.params:
+                params.update(p)
             params.setdefault("args", {}).update({"interval": region.human_readable(False)})
             output = {
                 key: "job_out.{jobno}.d/out/tmp_{jobno}.{ext}".format(jobno=jobno, ext=ext)
