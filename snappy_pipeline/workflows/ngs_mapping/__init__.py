@@ -323,7 +323,7 @@ EXT_VALUES = (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5")
 EXT_NAMES = ("bam", "bai", "bam_md5", "bai_md5")
 
 #: Available read mappers for (short/Illumina) DNA-seq data
-READ_MAPPERS_DNA = ("bwa", "bwa_mem2")
+READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "mbcs")
 
 #: Available read mappers for (short/Illumina) RNA-seq data
 READ_MAPPERS_RNA = ("star",)
@@ -389,6 +389,26 @@ step_config:
       trim_adapters: false
       mask_duplicates: true
       split_as_secondary: true  # -M flag
+    # Configuration for somatic ngs_calling (separate read groups, molecular barcodes & base quality recalibration)
+    somatic:
+      mapping_tool: REQUIRED  # Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config
+      barcode_tool: agent     # Only agent currently implemented
+      use_barcodes: false
+      recalibrate: true
+    bqsr:
+      common_variants: REQUIRED # Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)
+    agent:
+      prepare:
+        path: REQUIRED
+        lib_prep_type: REQUIRED # One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)
+        extra_args: []        # Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data
+      mark_duplicates:
+        path: REQUIRED
+        path_baits: REQUIRED
+        consensus_mode: REQUIRED # One of "SINGLE", "HYBRID", "DUPLEX"
+        input_filter_args: [] # Consider -mm 13 (min base qual) -mr 13 (min barcode base qual) -mq 30 (min map qual)
+        consensus_filter_args: []
+        extra_args: []        # Consider -d 1 (max nb barcode mismatch)
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
@@ -757,6 +777,78 @@ class BwaMem2StepPart(ReadMappingStepPart):
             if not os.path.exists(expected_path):  # pragma: no cover
                 raise InvalidConfiguration(
                     f"Expected BWA-MEM2 input path {expected_path} does not exist!"
+                )
+
+
+class MBCsStepPart(ReadMappingStepPart):
+    """Support for performing NGS alignment on MBC data"""
+
+    name = "mbcs"
+    tool_category = "dna"
+
+    LIB_PREP_TYPES = ("halo", "hs", "xt", "v2", "qxt")
+    CONSENSUS_MODES = ("SINGLE", "HYBRID", "DUPLEX")
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="72:00:00",
+            memory="4G",
+            partition="medium",
+        )
+
+    def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA-MEM2 are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]["dna"]:
+            return  # mbcs not run, don't check configuration  # pragma: no cover
+
+        # Check mapper
+        mapper = self.config["somatic"]["mapping_tool"]
+        assert mapper != "mbcs" and mapper in READ_MAPPERS_DNA, f'Unknown mapper "{mapper}"'
+        self.parent.sub_steps[mapper].check_config()
+
+        if self.config["somatic"]["use_barcodes"]:
+            assert self.config["somatic"]["barcode_tool"] == "agent"
+            # Check trimmer & creak paths
+            path = self.config["agent"]["prepare"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's trimmer input path {path} does not exist!"
+                )
+            path = self.config["agent"]["mark_duplicates"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's creak input path {path} does not exist!"
+                )
+
+            # Check mandatory options
+            option = self.config["agent"]["prepare"]["lib_prep_type"]
+            if option not in self.__class__.LIB_PREP_TYPES:
+                options = '", "'.join(self.__class__.LIB_PREP_TYPES)
+                raise InvalidConfiguration(
+                    f'Unkown library preparation type "{option}", valid options are "{options}"'
+                )
+            option = self.config["agent"]["mark_duplicates"]["consensus_mode"]
+            if option not in self.__class__.CONSENSUS_MODES:
+                options = '", "'.join(self.__class__.CONSENSUS_MODES)
+                raise InvalidConfiguration(
+                    f'Unkown consensus mode "{option}", valid options are "{options}"'
                 )
 
 
@@ -1362,6 +1454,7 @@ class NgsMappingWorkflow(BaseStep):
             (
                 BwaStepPart,
                 BwaMem2StepPart,
+                MBCsStepPart,
                 ExternalStepPart,
                 LinkInStep,
                 Minimap2StepPart,

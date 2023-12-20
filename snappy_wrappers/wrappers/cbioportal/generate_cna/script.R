@@ -16,6 +16,7 @@ cns_to_cna <- function(fn, tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapie
     stopifnot(all(c("chrom", "loc.start", "loc.end", "seg.mean", "C") %in% colnames(segments)))
 
     seg <- GenomicRanges::makeGRangesFromDataFrame(segments, seqnames.field="chrom", start.field="loc.start", end.field="loc.end", strand="*", keep.extra.columns=FALSE)
+    GenomeInfoDb::seqlevelsStyle(seg) <- GenomeInfoDb::seqlevelsStyle(genes)
 
     i <- GenomicRanges::findOverlaps(genes, seg)
     i <- split(S4Vectors::subjectHits(i), S4Vectors::queryHits(i))

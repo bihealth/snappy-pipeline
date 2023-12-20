@@ -99,7 +99,7 @@ merge_segments <- function(fns) {
     if (is.null(names(fns)))
         stop("Missing sample names")
 
-    col_names <- c("chrom", "loc.start", "loc.end", "num.marks", "seg.mean")
+    col_names <- c("chrom", "loc.start", "loc.end", "num.mark", "seg.mean")
     tbl <- NULL
     for (sample_id in names(fns)) {
         cat("Loading", fns[sample_id], "for sample", sample_id, "\n")
@@ -110,7 +110,7 @@ merge_segments <- function(fns) {
         tbl <- rbind(tbl, tmp)
     }
 
-    return(tbl)
+    return(tbl[,c("ID", col_names)])
 }
 
 #' Aggregates counts and computes RPKM
