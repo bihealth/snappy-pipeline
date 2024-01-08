@@ -184,66 +184,26 @@ rule ngs_mapping_minimap2_run:
 
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Generate target region coverage report --------------------------------------
+# Generate coverage-related reports -------------------------------------------
 
 
-rule ngs_mapping_target_coverage_report_run:
+rule ngs_mapping_mosdepth_run:
     input:
-        unpack(wf.get_input_files("target_coverage_report", "run")),
+        unpack(wf.get_input_files("mosdepth", "run")),
     output:
-        **wf.get_output_files("target_coverage_report", "run"),
-    threads: wf.get_resource("target_coverage_report", "run", "threads")
+        **wf.get_output_files("mosdepth", "run"),
+    threads: wf.get_resource("mosdepth", "run", "threads")
     resources:
-        time=wf.get_resource("target_coverage_report", "run", "time"),
-        memory=wf.get_resource("target_coverage_report", "run", "memory"),
-        partition=wf.get_resource("target_coverage_report", "run", "partition"),
-        tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
+        time=wf.get_resource("mosdepth", "run", "time"),
+        memory=wf.get_resource("mosdepth", "run", "memory"),
+        partition=wf.get_resource("mosdepth", "run", "partition"),
+        tmpdir=wf.get_resource("mosdepth", "run", "tmpdir"),
     params:
-        **{"args": wf.get_params("target_coverage_report", "run")},
+        **{"args": wf.get_params("mosdepth", "run")},
     log:
-        **wf.get_log_file("target_coverage_report", "run"),
+        **wf.get_log_file("mosdepth", "run"),
     wrapper:
-        wf.wrapper_path("target_cov_report/run")
-
-
-# Collect target region reports -----------------------------------------------
-
-
-rule ngs_mapping_target_coverage_report_collect:
-    input:
-        wf.get_input_files("target_coverage_report", "collect"),
-    output:
-        **wf.get_output_files("target_coverage_report", "collect"),
-    threads: wf.get_resource("target_coverage_report", "run", "threads")
-    resources:
-        time=wf.get_resource("target_coverage_report", "run", "time"),
-        memory=wf.get_resource("target_coverage_report", "run", "memory"),
-        partition=wf.get_resource("target_coverage_report", "run", "partition"),
-        tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("target_coverage_report", "collect"),
-    wrapper:
-        wf.wrapper_path("target_cov_report/collect")
-
-
-# Compute depth of coverage files (VCF and bigWig) ----------------------------
-
-
-rule ngs_mapping_bam_collect_doc_run:
-    input:
-        **wf.get_input_files("bam_collect_doc", "run")(),
-    output:
-        **wf.get_output_files("bam_collect_doc", "run"),
-    threads: wf.get_resource("bam_collect_doc", "run", "threads")
-    resources:
-        time=wf.get_resource("bam_collect_doc", "run", "time"),
-        memory=wf.get_resource("bam_collect_doc", "run", "memory"),
-        partition=wf.get_resource("bam_collect_doc", "run", "partition"),
-        tmpdir=wf.get_resource("bam_collect_doc", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bam_collect_doc", "run"),
-    wrapper:
-        wf.wrapper_path("maelstrom/bam_collect_doc")
+        wf.wrapper_path("mosdepth/run")
 
 
 # Compute fingerprint ---------------------------------------------------------
