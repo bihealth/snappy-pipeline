@@ -1314,8 +1314,10 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         yield "vcf_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5"
         yield "vcf_tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
         yield "vcf_tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
-        yield "bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
-        yield "bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
+        yield "cov_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
+        yield "cov_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
+        yield "mq_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw"
+        yield "mq_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5"
 
     @dictify
     def get_log_file(self, action):

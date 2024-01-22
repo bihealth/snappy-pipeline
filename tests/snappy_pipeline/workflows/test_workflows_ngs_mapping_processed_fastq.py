@@ -714,10 +714,19 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for stats in ("bamstats", "flagstats", "idxstats")
     ]
     expected += [
-        "output/bwa.{library_name}/report/cov/bwa.{library_name}.cov.{ext}".format(
+        "output/bwa.{library_name}/report/cov/bwa.{library_name}.{ext}".format(
             library_name=library_name, ext=ext
         )
-        for ext in ("bw", "bw.md5", "vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for ext in (
+            "cov.bw",
+            "cov.bw.md5",
+            "cov.vcf.gz",
+            "cov.vcf.gz.md5",
+            "cov.vcf.gz.tbi",
+            "cov.vcf.gz.tbi.md5",
+            "mq.bw",
+            "mq.bw.md5",
+        )
         for library_name in dna
     ]
     expected += [
