@@ -44,9 +44,9 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
     for sample in data["samples"]:
         sample_name = sample["id"]
 
-        cols = data["summary"]["data"]["columns"]
-        rows = data["summary"]["data"]["rows"]
-        data0 = zip(cols, rows[0])
+        cols = sample["summary"]["data"]["columns"]
+        rows = sample["summary"]["data"]["rows"]
+        data0 = dict(zip(cols, rows[0]))
         total_aligned_in_target = data0["#AlignedBasesInBed"]
         total_target_size = data0["#TotalBedBp"]
         for metric in sample["readGroups"][0]["metrics"]:
@@ -169,7 +169,7 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
     echo -en "case_id\tset_id\tbam_stats\n.\t.\t" \
     >${{out_bam_qc%.gz}}
 
-    jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' {tmpdir}/alfred_qc/* $TMPDIR/* \
+    jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' {tmpdir}/alfred_qc.* $TMPDIR/* \
     | sed -e 's/"/\"""/g' \
     >> ${{out_bam_qc%.gz}}
 
