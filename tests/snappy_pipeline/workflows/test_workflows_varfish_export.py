@@ -132,7 +132,7 @@ def test_mehari_step_part_get_input_files_bam_qc(varfish_export_workflow):
         "bamstats": [base_name_bam.format(i=i, ext="bam.bamstats.txt") for i in donor_indices],
         "flagstats": [base_name_bam.format(i=i, ext="bam.flagstats.txt") for i in donor_indices],
         "idxstats": [base_name_bam.format(i=i, ext="bam.idxstats.txt") for i in donor_indices],
-        "cov_qc": [base_name_cov.format(i=i) for i in donor_indices],
+        "alfred_qc": [base_name_cov.format(i=i) for i in donor_indices],
     }
     # Get actual
     actual = varfish_export_workflow.get_input_files("mehari", "bam_qc")(wildcards)

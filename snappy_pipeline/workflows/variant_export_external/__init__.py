@@ -162,7 +162,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
         mapper_lib = "{mapper}.{library_name}"
-        yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.txt"
+        yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
 
     @dictify
     def _get_output_files_bam_qc_work(self):
@@ -327,7 +327,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 result[key].append(tpl % key)
             if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
-            path = f"work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.txt"
+            path = f"work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
             result["cov_qc"].append(path)
 
         return result
