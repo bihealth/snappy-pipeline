@@ -65,6 +65,7 @@ bedtools sort \
 
 # Run "alfred qc".
 alfred qc \
+    --ignore \
     --reference {snakemake.config[static_data_config][reference][path]} \
     --bed $TMPDIR/targets.bed \
     --jsonout {snakemake.output.json} \
