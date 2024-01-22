@@ -425,7 +425,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 continue
             path = (
                 f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/alfred_qc/"
-                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.txt"
+                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.json.gz"
             )
             result["alfred_qc"].append(ngs_mapping(path))
         return result
