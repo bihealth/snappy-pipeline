@@ -62,10 +62,6 @@ fi
 
 # Run actual tools --------------------------------------------------------------------------------
 
-basedir=$(dirname $(dirname {snakemake.output.vcf}))
-workdir=$basedir/work
-outdir=$basedir/out
-
 # Get sorted targets BED file.
 zcat --force {snakemake.params.args[path_targets_bed]} \
 | awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \
