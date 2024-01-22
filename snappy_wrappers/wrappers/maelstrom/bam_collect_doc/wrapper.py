@@ -69,7 +69,6 @@ cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
 
 wigToBigWig $TMPDIR/out_cov.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.cov_bw})
 md5sum $(basename {snakemake.output.cov_bw}) >$(basename {snakemake.output.cov_bw_md5})
-popd
 
 # Convert mapping quality to bigWig file
 
@@ -90,6 +89,7 @@ cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
 
 wigToBigWig $TMPDIR/out_mq.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.mq_bw})
 md5sum $(basename {snakemake.output.mq_bw}) >$(basename {snakemake.output.mq_bw_md5})
+
 popd
 
 # Create output links -----------------------------------------------------------------------------

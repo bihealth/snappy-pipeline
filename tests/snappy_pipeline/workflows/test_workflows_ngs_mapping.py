@@ -664,8 +664,10 @@ def test_generate_doc_files_step_part_run_get_input_files(ngs_mapping_workflow):
 def test_generate_doc_files_step_part_get_output_files(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_output_files() - run"""
     expected = {
-        "bw": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw",
-        "bw_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5",
+        "cov_bw": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw",
+        "cov_bw_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5",
+        "mq_bw": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw",
+        "mq_bw_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5",
         "vcf": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz",
         "vcf_md5": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5",
         "vcf_tbi": "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi",
@@ -677,6 +679,8 @@ def test_generate_doc_files_step_part_get_output_files(ngs_mapping_workflow):
             "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5",
             "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw",
             "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5",
+            "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw",
+            "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc.log",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc.log.md5",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc.conda_info.txt",
@@ -779,10 +783,19 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for stats in ("bamstats", "flagstats", "idxstats")
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.cov.{ext}".format(
+        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
             i=i, ext=ext
         )
-        for ext in ("bw", "bw.md5", "vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for ext in (
+            "cov.bw",
+            "cov.bw.md5",
+            "cov.vcf.gz",
+            "cov.vcf.gz.md5",
+            "cov.vcf.gz.tbi",
+            "cov.vcf.gz.tbi.md5",
+            "mq.bw",
+            "mq.bw.md5",
+        )
         for i in range(1, 7)
     ]
     expected += [
