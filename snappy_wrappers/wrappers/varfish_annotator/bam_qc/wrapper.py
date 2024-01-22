@@ -1,3 +1,5 @@
+import gzip
+import json
 import tempfile
 
 from snakemake.shell import shell
@@ -17,7 +19,9 @@ compute-md5()
 }
 """
 
-with tempfile.NamedTemporaryFile("wt") as json_tmpf:
+COV_THRESHOLDS = [5, 15, 20, 30, 50, 100, 200, 300, 400, 500, 1000]
+
+with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") as json_tmpf:
     # Write library name to identifier that should be used in output file into a JSON file.
     # Dictionary expected structure. Key: library name; Value: identifier to be used in file.
     # For snappy-based analysis, both keys and values will be the library name. For analysis using
@@ -31,6 +35,49 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
     for library_name, identifier in snakemake.params.args.items():
         print(f"{library_name} {identifier}", file=json_tmpf)
         json_tmpf.flush()
+
+    # Extract the coverage data from the alfred qc files.
+    result = {}
+    for alfred_qc in snakemake.input.alfred_qc:
+        with gzip.open(alfred_qc, "rt") as inputf:
+            data = json.load(inputf)
+
+        for sample in data["samples"]:
+            sample_name = sample["id"]
+
+            cols = sample["summary"]["data"]["columns"]
+            rows = sample["summary"]["data"]["rows"]
+            data0 = dict(zip(cols, rows[0]))
+            total_aligned_in_target = data0["#AlignedBasesInBed"]
+            total_target_size = data0["#TotalBedBp"]
+            for metric in sample["readGroups"][0]["metrics"]:
+                if metric["id"] == "targetCoverage":
+                    target_cov_thresholds = {cov: 0 for cov in COV_THRESHOLDS}
+                    idx_to_cov = {}
+                    for idx, cov in enumerate(metric["x"]["data"][0]["values"]):
+                        if cov in COV_THRESHOLDS:
+                            idx_to_cov[idx] = cov
+                    cov_to_frac = {}
+                    for idx, frac in enumerate(metric["y"]["data"][0]["values"]):
+                        if idx in idx_to_cov:
+                            cov_to_frac[idx_to_cov[idx]] = frac * 100
+                    break
+            else:
+                raise RuntimeError("Could not find targetCoverage metric")
+
+        with open(f"{tmpdir}/alfred_qc.{sample_name}", "wt") as outputf:
+            json.dump(
+                {
+                    sample_name: {
+                        "summary": {
+                            "mean coverage": total_aligned_in_target / total_target_size,
+                            "total target size": total_target_size,
+                        },
+                        "min_cov_target": cov_to_frac,
+                    }
+                },
+                outputf,
+            )
 
     # Actually run the script.
     shell(
@@ -117,45 +164,13 @@ with tempfile.NamedTemporaryFile("wt") as json_tmpf:
         > $TMPDIR/idxstats.$sample
     done
 
-    # Extract coverage statistics into JSON.
-    for cov_qc in {snakemake.input.cov_qc}; do
-        # Define identifier to be used in output
-        sample=$(get_output_identifier $cov_qc {json_tmpf.name})
-
-        grep '^SN' $cov_qc \
-        | cut -f 2-4 \
-        | awk -F $'\t' -v sample=$sample 'BEGIN {{ nout=1; print "{{ \"" sample "\": {{ \"summary\": {{" }}
-            ($1 == "mean coverage") {{ if (nout > 1) print ","; print "\"" $1 "\":" $2; nout += 1; }}
-            ($1 == "number of BED intervals") {{ if (nout > 1) print ","; print "\"target count\":" $2; nout += 1; }}
-            ($1 == "total target size") {{ if (nout > 1) print ","; print "\"total target size\":" $2; nout += 1; }}
-            END {{ print "}} }} }}" }}' \
-        | jq '.' \
-        > $TMPDIR/cov_qc.summary.$sample
-
-        grep '^MBC' $cov_qc \
-        | cut -f 2-4 \
-        | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"min_cov_base\": {{"; }}
-            {{ if (NR > 1) print ","; print "\"" $1 "\":" $2 }}
-            END {{ print "}} }} }}" }}' \
-        | jq '.' \
-        > $TMPDIR/cov_qc.mbc.$sample
-
-        grep '^AMC' $cov_qc \
-        | cut -f 2-4 \
-        | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"min_cov_target\": {{"; }}
-            {{ if (NR > 1) print ","; print "\"" $1 "\":" $2 }}
-            END {{ print "}} }} }}" }}' \
-        | jq '.' \
-        > $TMPDIR/cov_qc.amc.$sample
-    done
-
     # Merge JSON files
     out_bam_qc={snakemake.output.bam_qc}
 
     echo -en "case_id\tset_id\tbam_stats\n.\t.\t" \
     >${{out_bam_qc%.gz}}
 
-    jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' $TMPDIR/* \
+    jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' {tmpdir}/alfred_qc.* $TMPDIR/* \
     | sed -e 's/"/\"""/g' \
     >> ${{out_bam_qc%.gz}}
 
