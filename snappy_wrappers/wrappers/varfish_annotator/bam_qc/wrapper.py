@@ -37,32 +37,33 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
         json_tmpf.flush()
 
     # Extract the coverage data from the alfred qc files.
+    result = {}
     for alfred_qc in snakemake.input.alfred_qc:
         with gzip.open(alfred_qc, "rt") as inputf:
             data = json.load(inputf)
 
-    for sample in data["samples"]:
-        sample_name = sample["id"]
+        for sample in data["samples"]:
+            sample_name = sample["id"]
 
-        cols = sample["summary"]["data"]["columns"]
-        rows = sample["summary"]["data"]["rows"]
-        data0 = dict(zip(cols, rows[0]))
-        total_aligned_in_target = data0["#AlignedBasesInBed"]
-        total_target_size = data0["#TotalBedBp"]
-        for metric in sample["readGroups"][0]["metrics"]:
-            if metric["id"] == "targetCoverage":
-                target_cov_thresholds = {cov: 0 for cov in COV_THRESHOLDS}
-                idx_to_cov = {}
-                for idx, cov in enumerate(metric["x"]["data"][0]["values"]):
-                    if cov in COV_THRESHOLDS:
-                        idx_to_cov[idx] = cov
-                cov_to_frac = {}
-                for idx, frac in enumerate(metric["y"]["data"][0]["values"]):
-                    if idx in idx_to_cov:
-                        cov_to_frac[idx_to_cov[idx]] = frac * 100
-                break
-        else:
-            raise RuntimeError("Could not find targetCoverage metric")
+            cols = sample["summary"]["data"]["columns"]
+            rows = sample["summary"]["data"]["rows"]
+            data0 = dict(zip(cols, rows[0]))
+            total_aligned_in_target = data0["#AlignedBasesInBed"]
+            total_target_size = data0["#TotalBedBp"]
+            for metric in sample["readGroups"][0]["metrics"]:
+                if metric["id"] == "targetCoverage":
+                    target_cov_thresholds = {cov: 0 for cov in COV_THRESHOLDS}
+                    idx_to_cov = {}
+                    for idx, cov in enumerate(metric["x"]["data"][0]["values"]):
+                        if cov in COV_THRESHOLDS:
+                            idx_to_cov[idx] = cov
+                    cov_to_frac = {}
+                    for idx, frac in enumerate(metric["y"]["data"][0]["values"]):
+                        if idx in idx_to_cov:
+                            cov_to_frac[idx_to_cov[idx]] = frac * 100
+                    break
+            else:
+                raise RuntimeError("Could not find targetCoverage metric")
 
         with open(f"{tmpdir}/alfred_qc.{sample_name}", "wt") as outputf:
             json.dump(
