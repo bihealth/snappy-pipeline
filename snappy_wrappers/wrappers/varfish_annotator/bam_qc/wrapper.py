@@ -37,8 +37,8 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
         json_tmpf.flush()
 
     # Extract the coverage data from the alfred qc files.
-    for cov_qc in snakemake.input.cov_qc:
-        with gzip.open(cov_qc, "rt") as inputf:
+    for alfred_qc in snakemake.input.alfred_qc:
+        with gzip.open(alfred_qc, "rt") as inputf:
             data = json.load(inputf)
 
     for sample in data["samples"]:
