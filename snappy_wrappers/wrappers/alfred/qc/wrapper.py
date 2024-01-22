@@ -1,29 +1,41 @@
-# -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for target coverage report: Snakemake wrapper.py
-"""
-
 from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
+DEF_HELPER_FUNCS = r"""
+compute-md5()
+{
+    if [[ $# -ne 2 ]]; then
+        >&2 echo "Invalid number of arguments: $#"
+        exit 1
+    fi
+    md5sum $1 \
+    | awk '{ gsub(/.*\//, "", $2); print; }' \
+    > $2
+}
+"""
 
 shell(
     r"""
 set -x
 
+# Write files for reproducibility -----------------------------------------------------------------
+
+{DEF_HELPER_FUNCS}
+
 # Write out information about conda and save a copy of the wrapper with picked variables
 # as well as the environment.yaml file.
 conda list >{snakemake.log.conda_list}
 conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
+compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
 cp {__real_file__} {snakemake.log.wrapper}
-md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
+compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
 cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
+compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
 
-# Also pipe stderr to log file
+# Also pipe stderr to log file --------------------------------------------------------------------
+
 if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
@@ -34,8 +46,15 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
+# Create auto-cleaned temporary directory
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
+
+# Run actual tools --------------------------------------------------------------------------------
+
+basedir=$(dirname $(dirname {snakemake.output.vcf}))
+workdir=$basedir/work
+outdir=$basedir/out
 
 # Get sorted targets BED file.
 zcat --force {snakemake.params.args[path_targets_bed]} \
@@ -48,23 +67,15 @@ bedtools sort \
 | uniq \
 > $TMPDIR/targets.bed
 
-bedtools coverage \
-    -a $TMPDIR/targets.bed \
-    -b {snakemake.input.bam} \
-    -g {snakemake.config[static_data_config][reference][path]}.genome \
-    -hist \
-    -sorted \
-| python $(dirname {__file__})/../../../tools/bam_cov_stats.py \
-    --bed-path $TMPDIR/targets.bed \
-    --min-cov-warning {snakemake.params.args[min_cov_warning]} \
-    --min-cov-ok {snakemake.params.args[min_cov_ok]} \
-    --max-coverage {snakemake.params.args[max_coverage]} \
-    $(if [[ "{snakemake.params.args[detailed_reporting]}" == "True" ]]; then \
-        echo --report dec; \
-    fi) \
-> {snakemake.output.txt}
+# Run "alfred qc".
+alfred qc \
+    --reference {snakemake.config[static_data_config][reference][path]} \
+    --bed $TMPDIR/targets.bed \
+    --jsonout {snakemake.output.json} \
+    --input-file {snakemake.input.bam}
 
-md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+# Compute MD5 sums on output files
+compute-md5 {snakemake.output.json} {snakemake.output.json_md5}
 
 # Create output links -----------------------------------------------------------------------------
 
@@ -79,7 +90,9 @@ done
 # Compute MD5 sums of logs.
 shell(
     r"""
+{DEF_HELPER_FUNCS}
+
 sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
 """
 )

@@ -3,6 +3,5 @@ channels:
 - bioconda
 dependencies:
 - bedtools
-- bedops
-- python =3
-- htslib
+- alfred >=0.2.8,<0.3.0
+- jq

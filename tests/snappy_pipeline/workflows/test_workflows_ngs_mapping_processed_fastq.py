@@ -562,30 +562,14 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
     assert actual == expected
 
 
-def test_target_coverage_report_step_part_collect_get_input_files(ngs_mapping_workflow):
-    """Tests TargetCoverageReportStepPart.get_input_files() - collect"""
-    # Define expected
-    expected = [
-        "work/bwa.P001-N1-DNA1-WGS1/report/cov_qc/bwa.P001-N1-DNA1-WGS1.txt",
-        "work/bwa.P001-T1-DNA1-WGS1/report/cov_qc/bwa.P001-T1-DNA1-WGS1.txt",
-        "work/bwa.P002-N1-DNA1-WGS1/report/cov_qc/bwa.P002-N1-DNA1-WGS1.txt",
-        "work/bwa.P002-T1-DNA1-WGS1/report/cov_qc/bwa.P002-T1-DNA1-WGS1.txt",
-        "work/bwa.P002-T2-DNA1-WGS1/report/cov_qc/bwa.P002-T2-DNA1-WGS1.txt",
-    ]
-    # Get actual
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    actual = ngs_mapping_workflow.get_input_files("target_coverage_report", "collect")(wildcards)
-    assert actual == expected
-
-
 def test_target_coverage_report_step_part_get_output_files(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_output_files() - run"""
     expected = {
-        "txt": "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt",
-        "txt_md5": "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5",
+        "json": "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz",
+        "json_md5": "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5",
         "output_links": [
-            "output/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt",
-            "output/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5",
+            "output/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz",
+            "output/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.log.md5",
             "output/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report.conda_info.txt",
@@ -619,16 +603,10 @@ def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow)
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
 
-def test_target_coverage_report_step_part_collect_get_log_file(ngs_mapping_workflow):
-    """Tests TargetCoverageReportStepPart.get_log_file() - collect"""
-    expected = {"log": "work/target_cov_report/log/snakemake.target_coverage.log"}
-    assert ngs_mapping_workflow.get_log_file("target_coverage_report", "collect") == expected
-
-
 def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_resource()"""
     # Define expected
-    actions = ("run", "collect")
+    actions = ("run",)
     expected_dict = {"threads": 2, "time": "04:00:00", "memory": "20G", "partition": "medium"}
     # Evaluate
     for action in actions:
@@ -737,16 +715,11 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for library_name in dna
     ]
     expected += [
-        "output/bwa.{library_name}/report/cov_qc/bwa.{library_name}.{ext}".format(
+        "output/bwa.{library_name}/report/alfred_qc/bwa.{library_name}.{ext}".format(
             library_name=library_name, ext=ext
         )
-        for ext in ("txt", "txt.md5")
+        for ext in ("alfred.json.gz", "alfred.json.gz.md5")
         for library_name in dna
-    ]
-    expected += [
-        "output/target_cov_report/log/snakemake.target_coverage.log",
-        "output/target_cov_report/out/target_cov_report.txt",
-        "output/target_cov_report/out/target_cov_report.txt.md5",
     ]
 
     # Check result file construction (rna/star)

@@ -341,8 +341,7 @@ step_config:
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
       dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'.
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
-    # the path_arget_regions setting above
+    # Thresholds for targeted sequencing coverage QC.
     target_coverage_report:
       # Mapping from enrichment kit to target region BED file, for either computing per--target
       # region coverage or selecting targeted exons.
@@ -354,11 +353,6 @@ step_config:
       #   pattern: "xGen Exome Research Panel V1\\.0*"
       #   path: "path/to/targets.bed"
       path_target_interval_list_mapping: []
-      # Maximal/minimal/warning coverage
-      max_coverage: 200
-      min_cov_warning: 20  # >= 20x for WARNING
-      min_cov_ok: 50  # >= 50x for OK
-      detailed_reporting: false  # per-exon details (cannot go into multiqc)
     # Depth of coverage collection, mainly useful for genomes.
     bam_collect_doc:
       enabled: false
@@ -1128,7 +1122,7 @@ class ExternalStepPart(ReadMappingStepPart):
         )
 
 
-class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
+class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Build target coverage report"""
 
     #: Step name
@@ -1138,7 +1132,7 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     tool_categories = ("dna", "dna_long")
 
     #: Class available actions
-    actions = ("run", "collect")
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1153,25 +1147,6 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
-
-    @listify
-    def _get_input_files_collect(self, wildcards):
-        _ = wildcards
-        for sheet in self.parent.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
-                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
-                    suffix = "_long"
-                else:
-                    suffix = ""
-                for mapper in self.config["tools"][extraction_type.lower() + suffix]:
-                    if (
-                        self.parent.default_kit_configured
-                        or ngs_library.name in self.parent.ngs_library_to_kit
-                    ):
-                        yield self._get_output_files_run_work()["txt"].format(
-                            mapper=mapper, library_name=ngs_library.name
-                        )
 
     @dictify
     def get_output_files(self, action):
@@ -1193,13 +1168,8 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_run_work(self):
-        yield "txt", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"
-        yield "txt_md5", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5"
-
-    @dictify
-    def _get_output_files_collect_work(self):
-        yield "txt", "work/target_cov_report/out/target_cov_report.txt"
-        yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
+        yield "json", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
+        yield "json_md5", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5"
 
     @dictify
     def get_log_file(self, action):
@@ -1235,10 +1205,6 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
         return {
             "path_targets_bed": path_targets_bed,
-            "max_coverage": self.config["target_coverage_report"]["max_coverage"],
-            "min_cov_warning": self.config["target_coverage_report"]["min_cov_warning"],
-            "min_cov_ok": self.config["target_coverage_report"]["min_cov_ok"],
-            "detailed_reporting": self.config["target_coverage_report"]["detailed_reporting"],
         }
 
     def get_resource_usage(self, action):
@@ -1462,7 +1428,7 @@ class NgsMappingWorkflow(BaseStep):
                 Minimap2StepPart,
                 StarStepPart,
                 StrandednessStepPart,
-                TargetCoverageReportStepPart,
+                TargetCovReportStepPart,
                 BamCollectDocStepPart,
                 NgsChewStepPart,
             )

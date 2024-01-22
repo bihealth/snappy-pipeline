@@ -1,4 +1,0 @@
-name: target_cov_report
-description: Tool for computing BED coverage of BAM file
-authors:
-  - Manuel Holtgrewe

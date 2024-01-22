@@ -256,7 +256,9 @@ def test_bam_reports_step_part_call_get_input_files_collect(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_input_files_collect()"""
-    expected = ["work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"]
+    expected = [
+        "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
+    ]
     actual = variant_export_external_workflow.get_input_files("bam_reports", "collect")(None)
     assert actual == expected
 
@@ -288,10 +290,6 @@ def test_bam_reports_step_part_call_get_params_run(
         "bam": [],
         "bam_count": 0,
         "path_targets_bed": "/path/to/targets.bed",
-        "max_coverage": 200,
-        "min_cov_warning": 20,
-        "min_cov_ok": 50,
-        "detailed_reporting": False,
     }
     actual = variant_export_external_workflow.get_params("bam_reports", "run")(wildcards)
     assert actual == expected
@@ -528,7 +526,9 @@ def test_varfish_annotator_step_part_get_input_files_bam_qc(variant_export_exter
     # Define expected
     donor_indices = (1, 2, 3)
     base_name_bam = "work/dragen.P00{i}-N1-DNA1-WGS1/report/bam_qc/dragen.P00{i}-N1-DNA1-WGS1.{ext}"
-    base_name_cov = "work/dragen.P00{i}-N1-DNA1-WGS1/report/cov_qc/dragen.P00{i}-N1-DNA1-WGS1.txt"
+    base_name_cov = (
+        "work/dragen.P00{i}-N1-DNA1-WGS1/report/alfred_qc/dragen.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
+    )
     expected = {
         "bamstats": [base_name_bam.format(i=i, ext="bam.bamstats.txt") for i in donor_indices],
         "flagstats": [base_name_bam.format(i=i, ext="bam.flagstats.txt") for i in donor_indices],

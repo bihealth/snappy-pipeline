@@ -94,7 +94,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
-from snappy_pipeline.workflows.ngs_mapping import TargetCoverageReportStepPart
+from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = r"""
@@ -119,14 +119,10 @@ step_config:
       # region coverage or selecting targeted exons. Only used if 'bam_available_flag' is True.
       # It will not generated detailed reporting.
       path_targets_bed: OPTIONAL # OPTIONAL
-      # Maximal/minimal/warning coverage
-      max_coverage: 200
-      min_cov_warning: 20  # >= 20x for WARNING
-      min_cov_ok: 50  # >= 50x for OK
 """
 
 
-class BamReportsExternalStepPart(TargetCoverageReportStepPart):
+class BamReportsExternalStepPart(TargetCovReportStepPart):
     """Build target coverage report and QC report for external BAM files"""
 
     #: Step name
@@ -166,7 +162,7 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
         mapper_lib = "{mapper}.{library_name}"
-        yield f"work/{mapper_lib}/report/cov_qc/{mapper_lib}.txt"
+        yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.txt"
 
     @dictify
     def _get_output_files_bam_qc_work(self):
@@ -214,10 +210,6 @@ class BamReportsExternalStepPart(TargetCoverageReportStepPart):
             "bam": sorted(list(self._collect_bam_files(wildcards))),
             "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
             "path_targets_bed": self.config["target_coverage_report"]["path_targets_bed"],
-            "max_coverage": self.config["target_coverage_report"]["max_coverage"],
-            "min_cov_warning": self.config["target_coverage_report"]["min_cov_warning"],
-            "min_cov_ok": self.config["target_coverage_report"]["min_cov_ok"],
-            "detailed_reporting": False,
         }
 
     def _get_params_bam_qc(self, wildcards):
@@ -335,7 +327,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 result[key].append(tpl % key)
             if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
-            path = f"work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"
+            path = f"work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.txt"
             result["cov_qc"].append(path)
 
         return result
