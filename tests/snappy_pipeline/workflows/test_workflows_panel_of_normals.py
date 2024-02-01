@@ -605,7 +605,7 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     expected = {
         "coverage": {"threads": 1, "memory": "24G", "time": "04:00:00"},
         "prepare": {"threads": 1, "memory": "24G", "time": "04:00:00"},
-        "create_panel": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "create_panel": {"threads": 1, "memory": "32G", "time": "12:00:00"},
     }
     for action, resources in expected.items():
         for resource, value in resources.items():
