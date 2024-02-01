@@ -213,11 +213,14 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         super().__init__(parent)
         self.name_pattern = None
         if self.config["filter_set"]:
-            self.name_pattern = (
-                "{mapper}.{caller}.{annotator}."
-                "dkfz_bias_filter.eb_filter.{tumor_library}."
-                "{filter_set}.{exon_list}"
-            )
+            if self.config["filter_set"] == "filter_list":
+                self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
+            else:
+                self.name_pattern = (
+                    "{mapper}.{caller}.{annotator}."
+                    "dkfz_bias_filter.eb_filter.{tumor_library}."
+                    "{filter_set}.{exon_list}"
+                )
         else:
             self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
         # Build shortcut from cancer bio sample name to matched cancer sample
@@ -326,11 +329,14 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         if self.config["filter_set"]:
-            name_pattern = (
-                "{mapper}.{caller}.{annotator}."
-                "dkfz_bias_filter.eb_filter.{{library_name}}."
-                "{filter_set}.{exon_list}"
-            )
+            if self.config["filter_set"] == "filter_list":
+                name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{library_name}}"
+            else:
+                name_pattern = (
+                    "{mapper}.{caller}.{annotator}."
+                    "dkfz_bias_filter.eb_filter.{{library_name}}."
+                    "{filter_set}.{exon_list}"
+                )
         else:
             name_pattern = "{mapper}.{caller}.{annotator}.{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
