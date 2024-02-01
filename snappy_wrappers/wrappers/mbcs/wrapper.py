@@ -86,7 +86,7 @@ rule {rule}:
     resources:
         mem_mb = "{mem}",
         time = "{time}",
-        partition = "critical"
+        partition = "medium"
     shell:
         r'''
 {cmds}
