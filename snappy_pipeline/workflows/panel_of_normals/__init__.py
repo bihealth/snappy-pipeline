@@ -230,6 +230,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Resources
     resource_usage = {
+        "install": ResourceUsage(
+            threads=1,
+            time="01:00:00",
+            memory="24G",
+        ),
         "prepare": ResourceUsage(
             threads=1,
             time="04:00:00",  # 4 hours
@@ -242,8 +247,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         ),
         "create_panel": ResourceUsage(
             threads=1,
-            time="04:00:00",  # 4 hours
-            memory="24G",
+            time="12:00:00",  # 12 hours
+            memory="32G",
         ),
     }
 
