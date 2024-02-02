@@ -377,6 +377,8 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         filter_nb = len(self.config["filter_list"])
+        if filter_nb == 0:
+            return []
         filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
         return os.path.join(
             "work",
@@ -740,8 +742,10 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield key, self.base_path_out.format(
                     step="apply_filters",
+                    tumor_library=wildcards.tumor_library,
                     mapper=wildcards.mapper,
                     var_caller=wildcards.var_caller,
+                    annotator=wildcards.get("annotator", ""),
                     filter_set=wildcards.filter_set,
                     exon_list="genome_wide",
                     ext=ext,
