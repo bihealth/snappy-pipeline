@@ -2,7 +2,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - attr
+  - attrs
   - logzero
   - ncls
   - pandas
