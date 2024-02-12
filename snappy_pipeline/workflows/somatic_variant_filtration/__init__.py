@@ -638,7 +638,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="01:00:00",  # 6 days
+            time="04:00:00",  # 4 hours
             memory=f"{8 * 1024}M",
         )
 
