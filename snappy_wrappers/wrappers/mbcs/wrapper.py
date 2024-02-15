@@ -250,7 +250,7 @@ if config["use_barcodes"]:
     ).format(
         marker=config_barcodes["mark_duplicates"]["path"],
         consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
-        baits=config_barcodes["mark_duplicates"]["path_to_baits"],
+        baits=config_barcodes["mark_duplicates"]["path_baits"],
         extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_args"]),
         input_filter_args=" ".join(config_barcodes["mark_duplicates"]["input_filter_args"]),
         consensus_filter_args=" ".join(config_barcodes["mark_duplicates"]["consensus_filter_args"]),
