@@ -227,7 +227,7 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     # All actions
     actions = ("run", "write_panel")
     # Define expected
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for action in actions:
         for resource, expected in expected_dict.items():
