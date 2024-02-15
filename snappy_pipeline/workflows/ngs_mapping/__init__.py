@@ -895,6 +895,10 @@ class StarStepPart(ReadMappingStepPart):
             mapper=self.name, ext=".GeneCounts.tab"
         )
         output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
+        output_files["junctions"] = self.base_path_out.format(
+            mapper=self.name, ext=".Junctions.tab"
+        )
+        output_files["junctions_md5"] = output_files["junctions"] + ".md5"
         if self.config[self.name]["transcriptome"]:
             output_files["transcriptome"] = self.base_path_out.format(
                 mapper=self.name, ext=".toTranscriptome.bam"
