@@ -48,13 +48,26 @@ class SampleInfoTMB:
     priority = "2"
     column = "TMB"
 
-    def __init__(self, config, **kwargs):
-        name_pattern = "bwa." + kwargs["somatic_variant_tool"]
-        if kwargs["somatic_variant_annotation_tool"]:
-            name_pattern += "." + kwargs["somatic_variant_annotation_tool"]
+    def __init__(self, config, wildcards, params):
+        name_pattern = "{mapping_tool}.{variant_calling_tool}.{variant_annotation_tool}".format(
+            mapping_tool=config["mapping_tool"],
+            variant_calling_tool=config["somatic_variant_calling_tool"],
+            variant_annotation_tool=config["somatic_variant_annotation_tool"],
+        )
+        if config["filter_set"]:
+            if config["filter_set"] == "filter_list":
+                name_pattern += ".filtered"
+            else:
+                name_pattern += ".dkfz_bias_filter.eb_filter"
         name_pattern += ".tmb.{library}"
+        if config["filter_set"] and config["filter_set"] != "filter_list":
+            name_pattern += f".{config['filter_set']}.{config['exon_list']}"
         self.tpl = os.path.join(
-            config["path"], "output", name_pattern, "out", name_pattern + ".json"
+            config["sample_info"]["tumor_mutational_burden"]["path"],
+            "output",
+            name_pattern,
+            "out",
+            name_pattern + ".json",
         )
 
     def get_data(self, lib_by_extraction):
@@ -86,15 +99,7 @@ def write_clinical_samples_tsv(donors):
     config = snakemake.config["step_config"]["cbioportal_export"]
     for step, extra_info in config["sample_info"].items():
         if step == "tumor_mutational_burden":
-            sample_info_getters.append(
-                SampleInfoTMB(
-                    extra_info,
-                    somatic_variant_tool=config["somatic_variant_calling_tool"],
-                    somatic_variant_annotation_tool=config.get(
-                        "somatic_variant_annotation_tool", None
-                    ),
-                )
-            )
+            sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))
         else:
             raise Exception("Unknown sample info request")
 
