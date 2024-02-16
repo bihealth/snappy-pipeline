@@ -44,9 +44,9 @@ export OMP_NUM_THREADS={snakemake.threads}
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
 # Get contig name style
-grep "SN:chr" {snakemake.input.interval_list} && true
+grep "SN:chr" {snakemake.input.interval_list} > /dev/null && true
 exit_status=$?
-if [[ exit_status == 0]] ; then
+if [[ $exit_status == 0 ]]; then
     STYLE="chr"
 else
     STYLE=""
@@ -59,8 +59,8 @@ echo -e "CONTIG_NAME\tPLOIDY_PRIOR_0\tPLOIDY_PRIOR_1\tPLOIDY_PRIOR_2\tPLOIDY_PRI
 for i in {{1..22}}; do
     echo -e "$STYLE$i\t0\t0.01\t0.98\t0.01" >> $PRIORS
 done
-echo -e "${STYLE}X\t0.01\t0.49\t0.49\t0.01" >> $PRIORS
-echo -e "${STYLE}Y\t0.495\t0.495\t0.01\t0" >> $PRIORS
+echo -e "${{STYLE}}X\t0.01\t0.49\t0.49\t0.01" >> $PRIORS
+echo -e "${{STYLE}}Y\t0.495\t0.495\t0.01\t0" >> $PRIORS
 
 set -x
 
