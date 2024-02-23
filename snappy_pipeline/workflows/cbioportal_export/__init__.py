@@ -793,8 +793,10 @@ class cbioportalExportWorkflow(BaseStep):
         if self.config["path_copy_number"]:
             if self.config["copy_number_tool"] in [
                 "cnvetti_on_target_postprocess",
-                "copywriter",
                 "cnvkit",
+                "copywriter",
+                "purecn",
+                "sequenza",
             ]:
                 self.register_sub_workflow(
                     "somatic_targeted_seq_cnv_calling",
