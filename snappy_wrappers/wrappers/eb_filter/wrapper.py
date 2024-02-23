@@ -6,7 +6,7 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-if snakemake.params["args"]["interval"]:
+if "args" in snakemake.params and snakemake.params["args"].get("interval", None):
     cmd_fetch = "tabix --print-header {} {}".format(
         snakemake.input.vcf, snakemake.params["args"]["interval"]
     )
@@ -24,7 +24,7 @@ elif "ebfilter" in config and "ebfilter_threshold" in config["ebfilter"]:
     threshold = config["ebfilter"].get("ebfilter_threshold", 0)
 else:
     try:
-        filter_nb = int(snakemake.params["args"]["filter_nb"]) - 1
+        filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
         threshold = config["filter_list"][filter_nb]["ebfilter"].get("ebfilter_threshold", 0)
     except:
         threshold = 0
@@ -37,7 +37,7 @@ elif "ebfilter" in config and "filter_name" in config["ebfilter"]:
     filter_name = config["ebfilter"].get("filter_name", "")
 else:
     try:
-        filter_name = "ebfilter_{}".format(int(snakemake.params["args"]["filter_nb"]))
+        filter_name = "ebfilter_{}".format(int(snakemake.wildcards["filter_nb"]))
     except:
         filter_name = "+"
 
@@ -121,7 +121,11 @@ else
     mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
 fi
 
+bcftools index --force $TMPDIR/after_eb_filter.vcf.gz
+bcftools index --force $TMPDIR/not_for_eb_filter.vcf.gz
+
 bcftools concat \
+    --allow-overlaps \
     $TMPDIR/after_eb_filter.vcf.gz \
     $TMPDIR/not_for_eb_filter.vcf.gz \
 | bcftools sort --output {snakemake.output.vcf} --output-type z

@@ -114,7 +114,7 @@ rule somatic_variant_filtration_eb_filter_run:
     log:
         **wf.get_log_file("eb_filter", "run"),
     wrapper:
-        wf.wrapper_path("eb_filter_par")
+        wf.wrapper_path("eb_filter")
 
 
 # Apply Filters ---------------------------------------------------------------
@@ -195,7 +195,7 @@ checkpoint one_ebfilter:
     log:
         **wf.get_log_file("one_ebfilter", "run"),
     wrapper:
-        wf.wrapper_path("eb_filter_par")
+        wf.wrapper_path("eb_filter")
 
 
 checkpoint one_bcftools:
