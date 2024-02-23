@@ -231,6 +231,22 @@ checkpoint one_regions:
     wrapper:
         wf.wrapper_path("bcftools/regions")
 
+checkpoint one_protected:
+    input:
+        unpack(wf.get_input_files("one_protected", "run")),
+    output:
+        **wf.get_output_files("one_protected", "run"),
+    threads: wf.get_resource("one_protected", "run", "threads")
+    resources:
+        time=wf.get_resource("one_protected", "run", "time"),
+        memory=wf.get_resource("one_protected", "run", "memory"),
+        partition=wf.get_resource("one_protected", "run", "partition"),
+        tmpdir=wf.get_resource("one_protected", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_protected", "run"),
+    wrapper:
+        wf.wrapper_path("bcftools/protected")
+
 
 rule last_filter:
     input:

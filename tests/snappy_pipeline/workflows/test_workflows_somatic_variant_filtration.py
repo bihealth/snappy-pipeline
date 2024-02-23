@@ -372,6 +372,7 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
         "one_bcftools",
         "one_dkfz",
         "one_ebfilter",
+        "one_protected",
         "one_regions",
     ]
     actual = list(sorted(somatic_variant_filtration_workflow.sub_steps.keys()))
@@ -435,6 +436,8 @@ def minimal_config_list():
                 threshold: 2.3
             - regions:
                 path_bed: /path/to/regions.bed
+            - protected:
+                path_bed: /path/to/protected.bed
 
         data_sets:
           first_batch:
@@ -549,7 +552,7 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
 
 def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
     """Tests ApplyFiltersStepPart.get_input_files()"""
-    expected = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.regions_4.vcf.gz"
+    expected = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_5.vcf.gz"
     actual = somatic_variant_filtration_workflow_list.get_input_files("last_filter", "run")
     assert actual == expected
 

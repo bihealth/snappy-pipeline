@@ -363,6 +363,11 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
     filter_name = "regions"
 
 
+class OneFilterProtectedStepPart(OneFilterStepPart):
+    name = "one_protected"
+    filter_name = "protected"
+
+
 class LastFilterStepPart(SomaticVariantFiltrationStepPart):
     """Mark last filter as final output"""
 
@@ -802,6 +807,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 ApplyFiltersStepPart,
                 FilterToExonsStepPart,
@@ -860,7 +866,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 mapper=mappers,
                 caller=callers,
                 annotator=annotators,
-                ext=EXT_VALUES,
+                ext=[f+e for f in ("", ".full") for e in EXT_VALUES],
             )
         else:
             filter_sets = ["no_filter"]

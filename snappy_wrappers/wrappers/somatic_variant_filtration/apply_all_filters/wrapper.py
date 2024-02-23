@@ -38,7 +38,15 @@ ln -sr {snakemake.input}.tbi {snakemake.output.full}.tbi
 ln -sr {snakemake.input}.md5 {snakemake.output.full}.md5
 ln -sr {snakemake.input}.tbi.md5 {snakemake.output.full}.tbi.md5
 
-bcftools view --include 'FILTER = "PASS"' -O z -o {snakemake.output.vcf} {snakemake.input}
+# Add the "PROTECTED" filter to the vcf header if necessary
+filter="FILTER='PASS'"
+n=$(bcftools view -h {snakemake.input} | grep -c '^##FILTER=<ID=PROTECTED,Description="' || true)
+if [[ $n -eq 0 ]]
+then
+    filter="$filter | FILTER~'PROTECTED'"
+fi
+
+bcftools view --include "$filter" -O z -o {snakemake.output.vcf} {snakemake.input}
 tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf}) && \
