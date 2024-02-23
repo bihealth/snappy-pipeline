@@ -29,8 +29,8 @@ if [[ $sample_index == -1 ]]; then
     exit 1
 fi
 
-# Get contig name style
-tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_${{sample_index}}/contig_ploidy.tsv | grep "chr" > /dev/null && true
+# Get contig name style; SAMPLE_0  is guaranteed to exist
+tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | grep "chr" > /dev/null && true
 exit_status=$?
 if [[ $exit_status == 0 ]]; then
     STYLE="chr"
