@@ -44,7 +44,7 @@ gatk PostprocessGermlineCNVCalls \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --sample-index $sample_index \
     --autosomal-ref-copy-number 2 \
-    --allosomal-contig ${{SYTLE}}X \
+    --allosomal-contig ${{STYLE}}X \
     --allosomal-contig ${{STYLE}}Y \
     --output-genotyped-intervals ${{itv_vcf%.gz}} \
     --output-genotyped-segments ${{seg_vcf%.gz}} \
