@@ -92,9 +92,9 @@ working directory
 
 .. _pipeline_projects:
 
-------------------
-An Example Project
-------------------
+------------------------
+A Simple Example Project
+------------------------
 
 The above part of this chapter is quite abstract.
 Let us draw some pictures and go from the abstract description to a concrete example.
@@ -166,14 +166,6 @@ In its ``data_sets`` section, the project-level configuration file provides sear
     <configuration search path>/<sample-specific folder>/../<search pattern>
 
 The search will loop over provided search paths & search patterns. Paired reads files are coupled by similarity of their path. Note that when the ``Folder`` entry is absent from the sample sheet, the library name is used instead.
-
-However, this default behaviour can be overriden using the ``path_link_in`` option (which is available only for steps that use FASTQ files as input). When this configuration option is not empty, ``snappy`` will use it instead of the list of search paths defined in the ``data_set`` part. It will also ignore the folder information, and rely instead on the library names to search FASTQ files. The search path becomes:
-
-::
-
-    <path_link_in>/<library_name>/../<search_pattern>
-
-This mechanism enables steps that generate FASTQ files on output, for example adapter trimming. In that case, the input of the mapping step can be redirected towards the ouput of the adapter trimming step using this method.
 
 
 Overview of the Somatic Variant Pipeline
