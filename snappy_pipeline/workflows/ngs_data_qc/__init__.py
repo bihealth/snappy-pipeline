@@ -17,6 +17,7 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import Namedlist, expand, touch
 
+from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -24,6 +25,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStep,
     LinkOutStepPart,
+    ResourceUsage,
     get_ngs_library_folder_name,
 )
 
@@ -33,8 +35,65 @@ DEFAULT_CONFIG = r"""
 step_config:
   ngs_data_qc:
     path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [fastqc]  # REQUIRED - available: 'fastqc'
+    tools: [fastqc, picard]  # REQUIRED - available: 'fastqc' & 'picard' (for QC on bam files)
+    picard:
+      path_ngs_mapping: ../ngs_mapping  # REQUIRED
+      path_to_baits: ""                 # Required when CollectHsMetrics is among the programs
+      path_to_targets: ""               # When missing, same as baits
+      bait_name: ""                     # Exon enrichment kit name (optional)
+      programs: []  # Available metrics:
+                    # * Generic metrics [* grouped into CollectMultipleMetrics]
+      #                 - CollectAlignmentSummaryMetrics      *
+      #                 - CollectBaseDistributionByCycle      *
+      #                 - CollectGcBiasMetrics                *
+      #                 - CollectInsertSizeMetrics            *
+      #                 - CollectJumpingLibraryMetrics
+      #                 - CollectOxoGMetrics
+      #                 - CollectQualityYieldMetrics          *
+      #                 - CollectSequencingArtifactMetrics    *
+      #                 - EstimateLibraryComplexity
+      #                 - MeanQualityByCycle                  *
+      #                 - QualityScoreDistribution            *
+                    # * WGS-specific metrics
+      #                 - CollectRawWgsMetrics
+      #                 - CollectWgsMetrics
+      #                 - CollectWgsMetricsWithNonZeroCoverage
+                    # * Other assay-specific metrics
+      #                 - CollectHsMetrics                    Whole Exome Sequencing
+      #                 - CollectTargetedPcrMetrics           Panel sequencing
+      #                 - CollectRnaSeqMetrics                mRNA sequencing, not implemented yet
+      #                 - CollectRbsMetrics                   bi-sulfite sequencing, not implemented yet
 """
+
+MULTIPLE_METRICS = {
+    "CollectAlignmentSummaryMetrics": ["alignment_summary_metrics"],
+    "CollectBaseDistributionByCycle": ["base_distribution_by_cycle_metrics"],
+    "CollectGcBiasMetrics": ["gc_bias.summary_metrics", "gc_bias.detail_metrics"],
+    "CollectInsertSizeMetrics": ["insert_size_metrics"],
+    "CollectQualityYieldMetrics": ["quality_yield_metrics"],
+    "CollectSequencingArtifactMetrics": [
+        "pre_adapter_detail_metrics",
+        "pre_adapter_summary_metrics",
+        "bait_bias_summary_metrics",
+        "bait_bias_detail_metrics",
+    ],
+    "MeanQualityByCycle": ["quality_by_cycle_metrics"],
+    "QualityScoreDistribution": ["quality_distribution_metrics"],
+}
+ADDITIONAL_METRICS = (
+    "CollectJumpingLibraryMetrics",
+    "CollectOxoGMetrics",
+    "EstimateLibraryComplexity",
+)
+WGS_METRICS = (
+    "CollectRawWgsMetrics",
+    "CollectWgsMetrics",
+    "CollectWgsMetricsWithNonZeroCoverage",
+)
+WES_METRICS = ("CollectHsMetrics",)
+PANEL_METRICS = ("CollectTargetedPcrMetrics",)
+RNA_METRICS = ("CollectRnaSeqMetrics",)
+BISULFITE_METRICS = ("CollectRbsMetrics",)
 
 
 class FastQcReportStepPart(BaseStepPart):
@@ -45,6 +104,8 @@ class FastQcReportStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    default_resource_usage = ResourceUsage(threads=1, memory="4G", time="03:59:59")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -109,6 +170,107 @@ class FastQcReportStepPart(BaseStepPart):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
 
+class PicardStepPart(BaseStepPart):
+    """Collect Picard metrics"""
+
+    name = "picard"
+    actions = ("prepare", "metrics")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def get_input_files(self, action):
+        self._validate_action(action)
+        if action == "prepare":
+            raise UnsupportedActionException(
+                'Action "prepare" input files must be defined in config'
+            )
+
+        return self._get_input_files_metrics
+
+    @dictify
+    def _get_input_files_metrics(self, wildcards):
+        if "CollectHsMetrics" in self.config["picard"]["programs"]:
+            yield "baits", "work/static_data/picard/out/baits.interval_list"
+            yield "targets", "work/static_data/picard/out/targets.interval_list"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+
+    @dictify
+    def get_output_files(self, action):
+        if action == "prepare":
+            yield "baits", "work/static_data/picard/out/baits.interval_list"
+            yield "targets", "work/static_data/picard/out/targets.interval_list"
+        elif action == "metrics":
+            base_out = "work/{mapper}.{library_name}/report/picard/{mapper}.{library_name}."
+            for pgm in self.config["picard"]["programs"]:
+                if pgm in MULTIPLE_METRICS.keys():
+                    first = MULTIPLE_METRICS[pgm][0]
+                    yield pgm, base_out + f"CollectMultipleMetrics.{first}.txt"
+                    yield pgm + "_md5", base_out + f"CollectMultipleMetrics.{first}.txt.md5"
+                else:
+                    yield pgm, base_out + pgm + ".txt"
+                    yield pgm + "_md5", base_out + pgm + ".txt.md5"
+        else:
+            actions_str = ", ".join(self.actions)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
+
+    @dictify
+    def get_log_file(self, action):
+        if action == "prepare":
+            prefix = "work/static_data/picard/log/prepare"
+        elif action == "metrics":
+            prefix = "work/{mapper}.{library_name}/log/picard/{mapper}.{library_name}"
+        else:
+            actions_str = ", ".join(self.actions)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
+
+        key_ext = (
+            ("wrapper", ".wrapper.py"),
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+            ("env_yaml", ".environment.yaml"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+    def get_params(self, action):
+        self._validate_action(action)
+
+        return self._get_params
+
+    @dictify
+    def _get_params(self, wildcards):
+        return {"prefix": f"{wildcards.mapper}.{wildcards.library_name}"}
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        if action == "prepare":
+            return super().get_resource_usage(action)
+        elif action == "metrics":
+            return ResourceUsage(threads=1, time="24:00:00", memory="24G")
+        else:
+            actions_str = ", ".join(self.actions)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
+
+
 class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
@@ -124,7 +286,11 @@ class NgsDataQcWorkflow(BaseStep):
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
-        self.register_sub_step_classes((LinkInStep, LinkOutStepPart, FastQcReportStepPart))
+        self.register_sub_step_classes(
+            (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
+        )
+        if "picard" in self.config["tools"]:
+            self.register_sub_workflow("ngs_mapping", self.config["picard"]["path_ngs_mapping"])
 
     @listify
     def get_result_files(self):
@@ -133,17 +299,58 @@ class NgsDataQcWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        from os.path import join
+        if "fastqc" in self.config["tools"]:
+            yield from self._yield_result_files(
+                tpl="output/{ngs_library.name}/report/fastqc/.done",
+                allowed_extraction_types=(
+                    "DNA",
+                    "RNA",
+                ),
+            )
+        if "picard" in self.config["tools"]:
+            tpl = (
+                "output/{mapper}.{ngs_library.name}/report/picard/{mapper}.{ngs_library.name}.{ext}"
+            )
+            exts = []
+            for pgm in self.config["picard"]["programs"]:
+                if pgm in MULTIPLE_METRICS.keys():
+                    first = MULTIPLE_METRICS[pgm][0]
+                    exts.append(f"CollectMultipleMetrics.{first}.txt")
+                    exts.append(f"CollectMultipleMetrics.{first}.txt.md5")
+                else:
+                    exts.append(pgm + ".txt")
+                    exts.append(pgm + ".txt.md5")
+            yield from self._yield_result_files(
+                tpl=tpl,
+                allowed_extraction_types=("DNA",),
+                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                ext=exts,
+            )
 
-        name_pattern = "{ngs_library.name}"
-        # TODO: actually link out report files
-        yield from self._yield_result_files(
-            join("output", name_pattern, "report", "fastqc", ".done")
-        )
-
-    def _yield_result_files(self, tpl, **kwargs):
+    def _yield_result_files(self, tpl, allowed_extraction_types, **kwargs):
         """Build output paths from path template and extension list"""
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                # extraction_type = ngs_library.test_sample.extra_infos['extractionType']
-                yield from expand(tpl, ngs_library=[ngs_library], **kwargs)
+                extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
+                if extraction_type in allowed_extraction_types:
+                    yield from expand(tpl, ngs_library=[ngs_library], **kwargs)
+
+    def check_config(self):
+        if "picard" in self.config["tools"]:
+            self.ensure_w_config(
+                ("step_config", "ngs_data_qc", "picard", "path_ngs_mapping"),
+                "Path to ngs_mapping not configured but required for picard",
+            )
+            programs = self.config["picard"]["programs"]
+            assert len(programs) > 0, "No selected programs for collecting metrics"
+            assert all(
+                pgm in MULTIPLE_METRICS.keys()
+                or pgm in ADDITIONAL_METRICS
+                or pgm in WES_METRICS
+                or pgm in WGS_METRICS
+                for pgm in programs
+            ), "Some requested metrics programs are not implemented"
+            if "CollectHsMetrics" in programs:
+                assert self.config["picard"][
+                    "path_to_baits"
+                ], "Path to baits must be specified when using CollectHsMetrics"

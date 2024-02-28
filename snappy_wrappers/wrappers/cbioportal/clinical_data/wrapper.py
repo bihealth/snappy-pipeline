@@ -49,7 +49,10 @@ class SampleInfoTMB:
     column = "TMB"
 
     def __init__(self, config, **kwargs):
-        name_pattern = "bwa." + kwargs["somatic_variant_tool"] + ".tmb.{library}"
+        name_pattern = "bwa." + kwargs["somatic_variant_tool"]
+        if kwargs["somatic_variant_annotation_tool"]:
+            name_pattern += "." + kwargs["somatic_variant_annotation_tool"]
+        name_pattern += ".tmb.{library}"
         self.tpl = os.path.join(
             config["path"], "output", name_pattern, "out", name_pattern + ".json"
         )
@@ -61,7 +64,7 @@ class SampleInfoTMB:
             try:
                 with open(path, "r") as f:
                     result = json.load(f)
-                return result["TMB"]
+                return result.get("missense_TMB", result["TMB"])
             except Exception as e:
                 print(
                     "WARNING- error {} occured when extraction TMB for library {}".format(
@@ -87,6 +90,9 @@ def write_clinical_samples_tsv(donors):
                 SampleInfoTMB(
                     extra_info,
                     somatic_variant_tool=config["somatic_variant_calling_tool"],
+                    somatic_variant_annotation_tool=config.get(
+                        "somatic_variant_annotation_tool", None
+                    ),
                 )
             )
         else:

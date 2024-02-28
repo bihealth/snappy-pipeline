@@ -14,6 +14,7 @@ from .common import get_expected_log_files_dict, get_expected_output_json_files_
 from .conftest import patch_module_fs
 
 
+# Test tumor mutational burden calculation with vcf file from somatic variant calling step
 @pytest.fixture(scope="module")  # otherwise: performance issues
 def minimal_config():
     """Return YAML parsing result for configuration"""
@@ -45,9 +46,26 @@ def minimal_config():
             scalpel:
               path_target_regions: /path/to/target/regions.bed
 
+          somatic_variant_annotation:
+            tools: ["vep", "jannovar"]
+            jannovar:
+              path_jannovar_ser: /path/to/jannover.ser
+            vep:
+              path_dir_cache: /path/to/dir/cache
+
+          somatic_variant_filtration:
+            filters:
+              dkfz_only: ~
+              dkfz_and_ebfilter: ~
+              dkfz_and_oxog: ~
+              dkfz_and_ebfilter_and_oxog: ~
+            exon_lists: {}
+
           tumor_mutational_burden:
-            path_somatic_variant_calling: ../somatic_variant_calling
+            path_somatic_variant: ../somatic_variant_filtration
             tools_ngs_mapping: []
+            has_annotation: True # REQUIRED
+            is_filtered: True
             tools_somatic_variant_calling: []
             target_regions: /path/to/regions.bed
 
@@ -81,7 +99,7 @@ def tumor_mutational_burden_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
     }
     # Construct the workflow object
     return TumorMutationalBurdenCalculationWorkflow(
@@ -99,8 +117,8 @@ def tumor_mutational_burden_workflow(
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{tumor_library}"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
@@ -113,8 +131,8 @@ def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_work
 def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.tmb.{tumor_library}/out/"
-        "{mapper}.{var_caller}.tmb.{tumor_library}"
+        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}"
     )
     expected = get_expected_output_json_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_output_files("tmb_gathering", "run")
@@ -124,17 +142,15 @@ def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_wor
 def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.tmb.{tumor_library}/log/"
-        "{mapper}.{var_caller}.tmb.{tumor_library}"
+        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}/log/"
+        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_log_file("tmb_gathering", "run")
     assert actual == expected
 
 
-def test_tumor_mutational_step_part_get_resource_usage(
-    tumor_mutational_burden_workflow,
-):
+def test_tumor_mutational_step_part_get_resource_usage(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 2, "time": "1:00:00", "memory": "4096M"}
@@ -157,18 +173,47 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
-        "{mapper}.{var_caller}.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.P00{i}-T{t}-DNA1-WGS1.{filt}.{region}/{dir_}/"
+        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.P00{i}-T{t}-DNA1-WGS1.{filt}.{region}.{ext}"
     )
     expected = [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="out")
+        tpl.format(
+            mapper=mapper,
+            var_caller=var_caller,
+            anno_caller=anno_caller,
+            filt=filt,
+            region=region,
+            i=i,
+            t=t,
+            ext=ext,
+            dir_="out",
+        )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("json", "json.md5")
         for mapper in ("bwa",)
         for var_caller in ("mutect2", "scalpel")
+        for anno_caller in ("vep", "jannovar")
+        for filt in (
+            "no_filter",
+            "dkfz_only",
+            "dkfz_and_ebfilter",
+            "dkfz_and_ebfilter_and_oxog",
+            "dkfz_and_oxog",
+        )
+        for region in ("genome_wide",)
     ]
     expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext, dir_="log")
+        tpl.format(
+            mapper=mapper,
+            var_caller=var_caller,
+            anno_caller=anno_caller,
+            filt=filt,
+            region=region,
+            i=i,
+            t=t,
+            ext=ext,
+            dir_="log",
+        )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in (
             "conda_info.txt",
@@ -180,6 +225,15 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         )
         for mapper in ("bwa",)
         for var_caller in ("mutect2", "scalpel")
+        for anno_caller in ("vep", "jannovar")
+        for filt in (
+            "no_filter",
+            "dkfz_only",
+            "dkfz_and_ebfilter",
+            "dkfz_and_ebfilter_and_oxog",
+            "dkfz_and_oxog",
+        )
+        for region in ("genome_wide",)
     ]
     expected = list(sorted(expected))
     actual = list(sorted(tumor_mutational_burden_workflow.get_result_files()))

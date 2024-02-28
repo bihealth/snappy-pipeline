@@ -80,6 +80,11 @@ for vcf in {snakemake.input.vcf}; do
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
 
+    # Fixup SVLEN=1 to SVLEN=.
+    sed -i -e 's/ID=SVLEN,Number=1/ID=SVLEN,Number=./g' $TMPDIR/fixed_bnd_to_inv.$num.vcf
+    # Fixup MELT header
+    sed -i -e "s/seperated by '..'/separated by '\\\\\\\\|'/" $TMPDIR/fixed_bnd_to_inv.$num.vcf
+
     # Add the missing "GT" tag
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
     > $TMPDIR/header.gt.txt
@@ -109,6 +114,7 @@ EOF
 cat $TMPDIR/feature-effects.tsv \
 | tr '\n' '\t' \
 | sed -e 's/\t$/\n/g' \
+| gzip \
 >{snakemake.output.feature_effects}
 
 # Perform Mehari structural variant annotation.

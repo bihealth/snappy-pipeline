@@ -62,14 +62,6 @@ gatk JointGermlineCNVSegmentation \
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
 """
 )
 

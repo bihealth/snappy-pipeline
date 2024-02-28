@@ -50,6 +50,7 @@ mkdir -p ${{tmpdir}}/out
 mkdir -p ${{tmpdir}}/vcfs
 
 out_base=${{tmpdir}}/out/$(basename {snakemake.output.vcf} .vcf.gz)
+mkdir -p $out_base
 
 vcfs=$(echo "{snakemake.input.normals}" | tr ' ' '\n')
 
@@ -67,7 +68,7 @@ done
 sort ${{tmpdir}}/contigs_all.list | uniq > ${{tmpdir}}/contigs.list
 
 # Create the genomicsdb
-rm -rf pon_db
+rm -rf ${{tmpdir}}/pon_db
 gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
     --tmp-dir ${{tmpdir}} \
     --reference {snakemake.config[static_data_config][reference][path]} \
@@ -86,13 +87,28 @@ gatk CreateSomaticPanelOfNormals \
 bgzip ${{out_base}}.vcf
 tabix -f ${{out_base}}.vcf.gz
 
-pushd $tmpdir && \
-    for f in ${{out_base}}.*; do \
-        md5sum $f >$f.md5; \
-    done && \
-    popd
+# Make a copy of the genomics database for PureCN
+# NOTE: the sleep & true commands are required to work around 
+#       a tar error triggered by a cephfs bug/feature
+#       (https://ceph-users.ceph.narkive.com/th0JxsKR/cephfs-tar-archiving-immediately-after-writing)
+#       The bug is probably triggered because GATK genomicsdb is large is size & can contain 100000s files 
+sleep 10
+tar -zcvf {snakemake.output.db} -C ${{tmpdir}} pon_db || true
 
-mv ${{out_base}}.* $(dirname {snakemake.output.vcf})
+# Copy the results to destination & compute checksums
+cp ${{out_base}}.vcf.gz {snakemake.output.vcf}
+cp ${{out_base}}.vcf.gz.tbi {snakemake.output.vcf}.tbi
+
+pushd $(dirname {snakemake.output.vcf})
+f=$(basename {snakemake.output.vcf})
+md5sum $f > $f.md5
+md5sum $f.tbi > $f.tbi.md5
+popd
+
+pushd $(dirname {snakemake.output.db})
+f=$(basename {snakemake.output.db})
+md5sum $f > $f.md5
+popd
 """
 )
 

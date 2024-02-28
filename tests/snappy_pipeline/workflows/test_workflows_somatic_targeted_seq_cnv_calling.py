@@ -46,10 +46,17 @@ def minimal_config():
             - cnvetti_on_target
             - cnvkit
             - copywriter
+            - sequenza
+            - purecn
             cnvkit:
               path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+            purecn:
+              path_container: /path/to/purecn/container
+              path_intervals: /path/to/interval/list
+              path_panel_of_normals: /path/to/purecn/pon
+              path_mapping_bias: /path/to/mapping/bias
 
         data_sets:
           first_batch:
@@ -79,7 +86,10 @@ def somatic_targeted_seq_cnv_calling_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "somatic_variants": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+    }
     # Construct the workflow object
     return SomaticTargetedSeqCnvCallingWorkflow(
         dummy_workflow,
@@ -472,8 +482,11 @@ def test_cnvkit_postprocess_step_part_get_input_files(somatic_targeted_seq_cnv_c
 
 
 def test_cnvkit_postprocess_step_part_get_output_files(somatic_targeted_seq_cnv_calling_workflow):
-    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"
-    expected = {"final": base_name_out, "final_md5": base_name_out + ".md5"}
+    base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}"
+    expected = {
+        "final": base_name_out + "_dnacopy.seg",
+        "final_md5": base_name_out + "_dnacopy.seg.md5",
+    }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("cnvkit", "postprocess")
     assert actual == expected
 
@@ -582,7 +595,13 @@ def test_cnvkit_export_step_part_get_output_files(somatic_targeted_seq_cnv_calli
     # Define expected
     expected = {}
     base_name_out = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}"
-    for key, ext in (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi")):
+    for key, ext in (
+        ("bed", "bed.gz"),
+        ("bed_tbi", "bed.gz.tbi"),
+        ("seg", "seg"),
+        ("vcf", "vcf.gz"),
+        ("vcf_tbi", "vcf.gz.tbi"),
+    ):
         expected[key] = base_name_out + "." + ext
         expected[key + "_md5"] = expected[key] + ".md5"
     # Get actual
@@ -806,21 +825,233 @@ def test_copywriter_step_part_get_resource_usage_call(somatic_targeted_seq_cnv_c
         assert actual == expected, msg_error
 
 
+# Tests for SequenzaStepPart ----------------------------------------------------------------------
+
+
+def test_sequenza_step_part_get_output_files_install(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_output_files() - action 'install'"""
+    expected = {"done": "work/R_packages/out/sequenza.done"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("sequenza", "install")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_log_file_install(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_log_file() - action 'install'"""
+    base_name = "work/R_packages/log/sequenza"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("sequenza", "install")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_output_files_gcreference(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_output_files() - action 'gcreference'"""
+    expected = {"gc": "work/static_data/out/sequenza.50.wig.gz"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("sequenza", "gcreference")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_log_file_gcreference(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_log_file() - action 'gcreference'"""
+    base_name = "work/static_data/log/sequenza.50"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("sequenza", "gcreference")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_input_files_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_input_files() - action 'coverage'"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    expected = {
+        "gc": "work/static_data/out/sequenza.50.wig.gz",
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("sequenza", "coverage")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_output_files_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_output_files() - action 'coverage'"""
+    base_name = "{mapper}.sequenza.{library_name}"
+    expected = {
+        "seqz": f"work/{base_name}/out/{base_name}.seqz.gz",
+        "seqz_md5": f"work/{base_name}/out/{base_name}.seqz.gz.md5",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("sequenza", "coverage")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_log_file_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_log_file() - action 'coverage'"""
+    base_name = (
+        "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.coverage"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("sequenza", "coverage")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_input_files_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_input_files() - action 'run'"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    expected = {
+        "packages": "work/R_packages/out/sequenza.done",
+        "seqz": "work/{mapper}.sequenza.{library_name}/out/{mapper}.sequenza.{library_name}.seqz.gz",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("sequenza", "run")(wildcards)
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_output_files_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_output_files() - action 'run'"""
+    base_name = "{mapper}.sequenza.{library_name}"
+    expected = {
+        "seg": f"work/{base_name}/out/{base_name}_dnacopy.seg",
+        "seg_md5": f"work/{base_name}/out/{base_name}_dnacopy.seg.md5",
+        "done": f"work/{base_name}/report/.done",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("sequenza", "run")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_log_file_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_log_file() - action 'run'"""
+    base_name = "work/{mapper}.sequenza.{library_name}/log/{mapper}.sequenza.{library_name}.run"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("sequenza", "run")
+    assert actual == expected
+
+
+def test_sequenza_step_part_get_resource_usage_call(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests SequenzaStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dicts = {
+        "coverage": {"threads": 1, "time": "24:00:00", "memory": "24G", "partition": "medium"},
+        "run": {"threads": 4, "time": "24:00:00", "memory": "64G", "partition": "medium"},
+    }
+    # Evaluate
+    for action, resources in expected_dicts.items():
+        for resource, expected in resources.items():
+            msg_error = f"Assertion error for resource '{resource}' in '{action}'."
+            actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
+                "sequenza", action, resource
+            )
+            assert actual == expected, msg_error
+
+
+# Tests for PureCNStepPart ----------------------------------------------------------------------
+
+
+def test_purecn_step_part_get_input_files_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_input_files() - action 'coverage'"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("purecn", "coverage")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_purecn_step_part_get_output_files_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_output_files() - action 'coverage'"""
+    name_pattern = "{mapper}.purecn.{library_name}"
+    expected = {"coverage": f"work/{name_pattern}/out/{name_pattern}_coverage_loess.txt.gz"}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("purecn", "coverage")
+    assert actual == expected
+
+
+def test_purecn_step_part_get_log_file_coverage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_log_file() - action 'coverage'"""
+    base_name = "work/{mapper}.purecn.{library_name}/log/{mapper}.purecn.{library_name}.coverage"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("purecn", "coverage")
+    assert actual == expected
+
+
+def test_purecn_step_part_get_input_files_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_input_files() - action 'run'"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
+    expected = {
+        "tumor": "work/bwa.purecn.P001-T1-DNA1-WGS1/out/bwa.purecn.P001-T1-DNA1-WGS1_coverage_loess.txt.gz",
+        "vcf": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.full.vcf.gz",
+    }
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("purecn", "run")(wildcards)
+    assert actual == expected
+
+
+def test_purecn_step_part_get_output_files_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_output_files() - action 'run'"""
+    base_name = "work/{mapper}.purecn.{library_name}/out/{mapper}.purecn.{library_name}"
+    expected = {
+        "segments": base_name + "_dnacopy.seg",
+        "ploidy": base_name + ".csv",
+        "pvalues": base_name + "_amplification_pvalues.csv",
+        "vcf": base_name + ".vcf.gz",
+        "vcf_tbi": base_name + ".vcf.gz.tbi",
+        "loh": base_name + "_loh.csv",
+    }
+    expected = {**expected, **{k + "_md5": v + ".md5" for k, v in expected.items()}}
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_output_files("purecn", "run")
+    assert actual == expected
+
+
+def test_purecn_step_part_get_log_file_run(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_log_file() - action 'run'"""
+    base_name = "work/{mapper}.purecn.{library_name}/log/{mapper}.purecn.{library_name}.run"
+    expected = get_expected_log_files_dict(base_out=base_name)
+    actual = somatic_targeted_seq_cnv_calling_workflow.get_log_file("purecn", "run")
+    assert actual == expected
+
+
+def test_purecn_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_workflow):
+    """Tests PureCNStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dicts = {
+        "coverage": {"threads": 1, "time": "04:00:00", "memory": "24G", "partition": "medium"},
+        "run": {"threads": 4, "time": "24:00:00", "memory": "96G", "partition": "medium"},
+    }
+    # Evaluate
+    for action, resources in expected_dicts.items():
+        for resource, expected in resources.items():
+            msg_error = f"Assertion error for resource '{resource}' in '{action}'."
+            actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
+                "purecn", action, resource
+            )
+            assert actual == expected, msg_error
+
+
 # Tests for SomaticTargetedSeqCnvCallingWorkflow --------------------------------------------------
 
 
 def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_calling_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["cnvetti_off_target", "cnvetti_on_target", "cnvkit", "copywriter", "link_out"]
+    expected = [
+        "cnvetti_off_target",
+        "cnvetti_on_target",
+        "cnvkit",
+        "copywriter",
+        "link_out",
+        "purecn",
+        "sequenza",
+    ]
     actual = list(sorted(somatic_targeted_seq_cnv_calling_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction
+    name_pattern = "bwa.{method}.P00{{i}}-T{{t}}-DNA1-WGS1"
+
     # cnvetti
     tpl = (
-        "output/bwa.cnvetti_on_target_coverage.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvetti_on_target_coverage.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        f"output/{name_pattern}/out/{name_pattern}".format(method="cnvetti_on_target_coverage")
+        + ".{ext}"
     )
     expected = [
         tpl.format(i=i, t=t, ext=ext)
@@ -828,8 +1059,8 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         for ext in ("bcf", "bcf.md5", "bcf.csi", "bcf.csi.md5")
     ]
     tpl = (
-        "output/bwa.cnvetti_on_target_segment.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvetti_on_target_segment.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        f"output/{name_pattern}/out/{name_pattern}".format(method="cnvetti_on_target_segment")
+        + ".{ext}"
     )
     expected += [
         tpl.format(i=i, t=t, ext=ext)
@@ -846,8 +1077,8 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         )
     ]
     tpl = (
-        "output/bwa.cnvetti_on_target_postprocess.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.cnvetti_on_target_postprocess.P00{i}-T{t}-DNA1-WGS1_{ext}"
+        f"output/{name_pattern}/out/{name_pattern}".format(method="cnvetti_on_target_postprocess")
+        + "_{ext}"
     )
     expected += [
         tpl.format(i=i, t=t, ext=ext)
@@ -866,16 +1097,24 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         )
     ]
     # cnvkit
-    tpl = "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{ext}{md5}"
+    tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="cnvkit") + "{ext}{md5}"
     expected += [
         tpl.format(i=i, t=t, ext=ext, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("cnr", "cns", "bed", "seg", "vcf.gz", "vcf.gz.tbi")
+        for ext in (
+            ".cnr",
+            "_dnacopy.seg",
+            ".bed.gz",
+            ".bed.gz.tbi",
+            ".seg",
+            ".vcf.gz",
+            ".vcf.gz.tbi",
+        )
         for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.{ext}{md5}"
+        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+        + ".{plot}.{ext}{md5}"
     )
     expected += [
         tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
@@ -884,8 +1123,8 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.chr{chrom}.{ext}{md5}"
+        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+        + ".{plot}.chr{chrom}.{ext}{md5}"
     )
     expected += [
         tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
@@ -895,8 +1134,8 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         for md5 in ("", ".md5")
     ]
     tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{report}.txt{md5}"
+        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+        + ".{report}.txt{md5}"
     )
     expected += [
         tpl.format(i=i, t=t, report=report, md5=md5)
@@ -905,24 +1144,43 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         for md5 in ("", ".md5")
     ]
     # copywriter
-    tpl = (
-        "output/bwa.copywriter.P00{i}-T{t}-DNA1-WGS1/out/"
-        "bwa.copywriter.P00{i}-T{t}-DNA1-WGS1_{ext}"
-    )
+    tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="copywriter") + "_{ext}{md5}"
     expected += [
-        tpl.format(i=i, t=t, ext=ext)
+        tpl.format(i=i, t=t, ext=ext, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in (
             "bins.txt",
             "gene_call.txt",
             "gene_log2.txt",
             "segments.txt",
-            "bins.txt.md5",
-            "gene_call.txt.md5",
-            "gene_log2.txt.md5",
-            "segments.txt.md5",
         )
+        for md5 in ("", ".md5")
     ]
+    # purecn
+    tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="purecn") + "{ext}{md5}"
+    expected += [
+        tpl.format(i=i, t=t, ext=ext, md5=md5)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in (
+            ".csv",
+            ".vcf.gz",
+            ".vcf.gz.tbi",
+            "_dnacopy.seg",
+            "_amplification_pvalues.csv",
+            "_loh.csv",
+        )
+        for md5 in ("", ".md5")
+    ]
+    # sequenza
+    tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="sequenza") + "{ext}{md5}"
+    expected += [
+        tpl.format(i=i, t=t, ext=ext, md5=md5)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("_dnacopy.seg", ".seqz.gz")
+        for md5 in ("", ".md5")
+    ]
+    tpl = f"output/{name_pattern}/report/.done".format(method="sequenza")
+    expected += [tpl.format(i=i, t=t) for i, t in ((1, 1), (2, 1), (2, 2))]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_targeted_seq_cnv_calling_workflow.get_result_files()))
     # HACK TODO

@@ -32,7 +32,7 @@ set -x
 
 cat << _EOF | R --vanilla --slave
 segments <- read.table("{snakemake.input.segment}", sep="\t", header=1, stringsAsFactors=FALSE)
-stopifnot(all(c("chromosome", "start", "end") %in% colnames(segments)))
+stopifnot(all(c("chromosome", "start", "end", "log2", "probes") %in% colnames(segments)))
 calls <- read.table("{snakemake.input.call}", sep="\t", header=1, stringsAsFactors=FALSE)
 stopifnot(all(c("chromosome", "start", "end", "cn") %in% colnames(calls)))
 
@@ -57,11 +57,20 @@ stopifnot(!any(duplicated(S4Vectors::queryHits(i))))
 
 # Default value: diploid segment (number of copies = 2)
 segments[,"cn"] <- 2
-segments[S4Vectors::queryHits(i),"cn"] <- calls[S4Vectors::subjectHits(i),"cn"]
+segments[S4Vectors::queryHits(i),"cn"] <- round(calls[S4Vectors::subjectHits(i),"cn"])
 
 # Reset segment boundaries to original values
 segments[,"start"] <- segments[["start"]]-1
 segments[,"end"]   <- segments[["end"]]+1
+
+# Add library name
+segments[,"ID"] <- "{snakemake.wildcards[library_name]}"
+
+# Rename columns to follow DNAcopy format (as implemented in PureCN)
+dna_copy_columns <- c(ID="ID", chromosome="chrom", start="loc.start", end="loc.end", probes="num.mark", log2="seg.mean", cn="C")
+segments <- segments[,colnames(segments) %in% names(dna_copy_columns)]
+colnames(segments) <- dna_copy_columns[colnames(segments)]
+segments <- segments[,dna_copy_columns]
 
 write.table(segments, file="{snakemake.output.final}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
 _EOF

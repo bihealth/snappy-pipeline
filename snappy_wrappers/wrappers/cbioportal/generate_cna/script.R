@@ -13,10 +13,10 @@ cns_to_cna <- function(fn, tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapie
     stopifnot("gene_id" %in% colnames(GenomicRanges::mcols(genes)))
 
     segments <- read.table(fn, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
-    if ("chromosome" %in% colnames(segments)) colnames(segments)[colnames(segments)=="chromosome"] <- "chrom"
-    stopifnot(all(c("cn", "log2", "chrom", "start", "end") %in% colnames(segments)))
+    stopifnot(all(c("chrom", "loc.start", "loc.end", "seg.mean", "C") %in% colnames(segments)))
 
-    seg <- GenomicRanges::makeGRangesFromDataFrame(segments, seqnames.field="chrom", start.field="start", end.field="end", strand="*", keep.extra.columns=FALSE)
+    seg <- GenomicRanges::makeGRangesFromDataFrame(segments, seqnames.field="chrom", start.field="loc.start", end.field="loc.end", strand="*", keep.extra.columns=FALSE)
+    GenomeInfoDb::seqlevelsStyle(seg) <- GenomeInfoDb::seqlevelsStyle(genes)
 
     i <- GenomicRanges::findOverlaps(genes, seg)
     i <- split(S4Vectors::subjectHits(i), S4Vectors::queryHits(i))
@@ -24,7 +24,7 @@ cns_to_cna <- function(fn, tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapie
 
     tbl <- data.frame(FeatureID=as.character(genes$gene_id), cn=NA, log2=NA)
     colnames(tbl)[1] <- pipeline_id
-    tbl[as.numeric(names(i)),c("cn", "log2")] <- segments[i,c("cn", "log2")]
+    tbl[as.numeric(names(i)),c("cn", "log2")] <- segments[i,c("C", "seg.mean")]
 
     tbl
 }

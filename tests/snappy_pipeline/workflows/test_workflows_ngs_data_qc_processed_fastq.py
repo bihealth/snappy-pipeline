@@ -120,7 +120,7 @@ def test_fastqc_step_part_get_log_file(ngs_data_qc):
 def test_fastqc_step_part_get_resource_usage(ngs_data_qc):
     """Tests FastQcReportStepPart.get_resource_usage()"""
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "03:59:59", "memory": "4G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -134,7 +134,7 @@ def test_fastqc_step_part_get_resource_usage(ngs_data_qc):
 def test_ngs_data_qc_workflow_steps(ngs_data_qc):
     """Tests simple functionality of the workflow: checks if sub steps are created."""
     # Check created sub steps
-    expected = ["fastqc", "link_in", "link_out"]
+    expected = ["fastqc", "link_in", "link_out", "picard"]
     actual = list(sorted(ngs_data_qc.sub_steps.keys()))
     assert actual == expected
 

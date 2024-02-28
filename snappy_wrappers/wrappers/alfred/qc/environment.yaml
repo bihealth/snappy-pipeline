@@ -1,0 +1,7 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bedtools
+- alfred >=0.2.8,<0.3.0
+- jq

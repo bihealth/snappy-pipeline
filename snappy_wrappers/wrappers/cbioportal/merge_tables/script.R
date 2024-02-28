@@ -37,13 +37,13 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "gistic") {
-        stopifnot(all(c("pipeline_id") %in% names(args)))
+        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
         # Copy numbers (in "cn" column) are transformed into (pseudo-) gistic codes:
         # 0: Deep deletion, 1: heterozygous deletion, 2: copy number neutral, 3: gain, 4: amplification
         # In https://doi.org/10.1038/s41586-022-04738-6, the amplification is defined as 
         # copy number greater or equal to 9 copies (args$amplification = 9).
         args$amplification <- as.numeric(args$amplification)
-        cn <- read_sample_files(fns, args$pipeline_id, "cn")
+        cn <- round(read_sample_files(fns, args$pipeline_id, "cn"))
         cn[args$amplification<=cn] <- args$amplification
         cn[2<cn & cn<args$amplification] <- 3
         cn[cn==args$amplification] <- 4
@@ -57,7 +57,7 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     }
 
     if (type == "log2") {
-        stopifnot(all(c("pipeline_id", "amplification") %in% names(args)))
+        stopifnot(all(c("pipeline_id") %in% names(args)))
         tmp <- read_sample_files(fns, args$pipeline_id, "log2")
         method <- "max"
     }
@@ -65,7 +65,6 @@ merge_tables <- function(fns, mappings, type=c("log2", "gistic", "segment", "exp
     if (remove_feature_version) rownames(tmp) <- sub("\\.[0-9]+$", "", rownames(tmp))
 
     rslt <- map_feature_id(tmp, mappings, from=args$pipeline_id, to="SYMBOL", method=method)
-    if (type == "gistic") rslt <- rslt+2
 
     rslt <- data.frame(
         Hugo_Symbol=rownames(rslt),
@@ -100,23 +99,18 @@ merge_segments <- function(fns) {
     if (is.null(names(fns)))
         stop("Missing sample names")
 
-    col_names <- c("chromosome"="chrom", "start"="loc.start", "end"="loc.end", "probes"="num.mark", "log2"="seg.mean")
+    col_names <- c("chrom", "loc.start", "loc.end", "num.mark", "seg.mean")
     tbl <- NULL
     for (sample_id in names(fns)) {
         cat("Loading", fns[sample_id], "for sample", sample_id, "\n")
         tmp <- read.table(fns[sample_id], sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
-        if (!all(col_names %in% colnames(tmp))) {
-            i <- match(names(col_names), colnames(tmp))
-            if (any(!is.na(i))) colnames(tmp)[i[!is.na(i)]] <- col_names[!is.na(i)]
-        }
-        stopifnot(all(names(col_names) %in% colnames(tmp)))
-        tmp <- tmp[,names(col_names)]
-        colnames(tmp) <- col_names    
-        tmp <- cbind(ID=rep(sample_id, nrow(tmp)), tmp)
+        stopifnot(all(col_names %in% colnames(tmp)))
+        tmp <- tmp[,col_names]
+        tmp$ID <- sample_id
         tbl <- rbind(tbl, tmp)
     }
 
-    return(tbl)
+    return(tbl[,c("ID", col_names)])
 }
 
 #' Aggregates counts and computes RPKM

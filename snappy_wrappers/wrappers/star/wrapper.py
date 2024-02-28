@@ -139,7 +139,7 @@ run_star()
     fi
 
     quant_mode=""
-    if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]
+    if [[ -n "{snakemake.config[static_data_config][features][path]}" ]]
     then
         quant_mode="$quant_mode GeneCounts"
     fi
@@ -175,8 +175,8 @@ run_star()
         $(if [[ -n "$quant_mode" ]]; then \
             echo "--quantMode $quant_mode"
         fi) \
-        $(if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]; then \
-            echo --sjdbGTFfile "{snakemake.config[step_config][ngs_mapping][star][path_features]}"
+        $(if [[ -n "{snakemake.config[static_data_config][features][path]}" ]]; then \
+            echo --sjdbGTFfile "{snakemake.config[static_data_config][features][path]}"
         fi) \
         $(if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then \
             echo " --outStd SAM " ; \
@@ -200,12 +200,10 @@ fi
 
 index_bam {snakemake.output.bam}
 
-# Optional output: gene counts & mapping on transcriptome -----------------------------------------
+mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
+compute-md5 {out_gc} {out_gc}.md5
 
-if [[ -n "{snakemake.config[step_config][ngs_mapping][star][path_features]}" ]]; then
-    mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
-    compute-md5 {out_gc} {out_gc}.md5
-fi
+# Optional output: mapping on transcriptome -------------------------------------------------------
 
 if [[ "{snakemake.config[step_config][ngs_mapping][star][transcriptome]}" = "True" ]]; then
     if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then

@@ -33,7 +33,7 @@ class ParallelMutect2Wrapper(ParallelMutect2BaseWrapper):
         self.job_resources = ResourceUsage(
             threads=1,
             memory=gib_to_string(14.0 * self.get_job_mult_memory()),
-            time=hours(1 * self.get_job_mult_time()),
+            time=hours(4 * self.get_job_mult_time()),
             partition=os.getenv("SNAPPY_PIPELINE_PARTITION"),
         )
         self.merge_resources = ResourceUsage(

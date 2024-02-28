@@ -1,3 +1,6 @@
+# Pipfiles created by VC Code
+/Pipfile*
+
 # Mac
 .*DS_Store
 

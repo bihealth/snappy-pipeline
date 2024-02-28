@@ -411,7 +411,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
+        result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for donor in pedigree.donors:
             if not donor.dna_ngs_library:
                 continue
@@ -424,10 +424,10 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
                 continue
             path = (
-                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/cov_qc/"
-                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.txt"
+                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/alfred_qc/"
+                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.alfred.json.gz"
             )
-            result["cov_qc"].append(ngs_mapping(path))
+            result["alfred_qc"].append(ngs_mapping(path))
         return result
 
     @dictify

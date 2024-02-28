@@ -99,6 +99,9 @@ Usually, you define a :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseS
 The current configuration is passed into the constructor of this class and it then "takes over" and applies default setting, generating cluster resource settings, etc.
 Then, you pass the result of method calls to your :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` instance as the values for the ``input:``, ``output:``, etc. sections of your ``Snakefile``.
 
+.. warning::
+   By convention your new Workflow step should be instantiated as ``wf = StepClass(...)`` in the ``Snakefile`` during object setup. Otherwise tools including cubi-tk might not be able to detect and parse your step. See existing workflow ``Snakefile`` for reference.
+
 The :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` sub class itself uses :class:`BaseStepPart <snappy_pipeline.workflows.abstract.BaseStepPart>` sub classes for the implementation of the individual parts.
 One part might be linking in FASTQ files from the raw input directory or linking from the ``work/`` to the ``output/`` directory.
 Another part might be the somatic variant calling using mutect or WGS SV calling using Delly2.

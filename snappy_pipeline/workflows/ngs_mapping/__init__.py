@@ -171,13 +171,18 @@ The configuration provides the possibility to pass to `STAR` the location of a `
 This removes the need to include gene models into the generation of indices, so that the user can select the
 gene models (either from ENSEMBL or GENCODE, for example).
 
-When the configuration option `path_features` is set, the step will output a table of expression counts
-for all genes, in `output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
+The computation of gene counts relies on the features defined in the `static_data_config` section of the
+configuration file. The other steps relying of feature annotations should use this too.
+
+`STAR` outputs the counts for unstranded, forward and reverse strand protocols. When the user doesn't supply the
+protocol code (0 for unstranded, 1 for forward & 2 for reverse), the step runs `infer_experiment`
+(from the `rseqc` library) to infer the protocol strandedness. In both cases, the step generate a copy of
+the `STAR` output containing only the relevant column included.  This final version of the gene counts is found in
+`output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
 
 If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
 mapped to the transcriptome (`output/stat.{library_name}/out/star.{library_name}.toTranscriptome.bam`).
-`STAR` will rely on the `path_features` configuration option, or on the gene models embedded in
-the indices to generate the mappings. If both are absent, the step will fail.
+As with gene counts, `STAR` will rely on the static data configuration to generate the mappings.
 Note that the mappings to the transcriptome will not be indexes using `samtools index`, because the
 absence of the positional mappings.
 
@@ -318,7 +323,7 @@ EXT_VALUES = (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5")
 EXT_NAMES = ("bam", "bai", "bam_md5", "bai_md5")
 
 #: Available read mappers for (short/Illumina) DNA-seq data
-READ_MAPPERS_DNA = ("bwa", "bwa_mem2")
+READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "mbcs")
 
 #: Available read mappers for (short/Illumina) RNA-seq data
 READ_MAPPERS_RNA = ("star",)
@@ -336,8 +341,7 @@ step_config:
       rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
       dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'.
     path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    # Thresholds for targeted sequencing coverage QC.  Enabled by specifying
-    # the path_arget_regions setting above
+    # Thresholds for targeted sequencing coverage QC.
     target_coverage_report:
       # Mapping from enrichment kit to target region BED file, for either computing per--target
       # region coverage or selecting targeted exons.
@@ -349,11 +353,6 @@ step_config:
       #   pattern: "xGen Exome Research Panel V1\\.0*"
       #   path: "path/to/targets.bed"
       path_target_interval_list_mapping: []
-      # Maximal/minimal/warning coverage
-      max_coverage: 200
-      min_cov_warning: 20  # >= 20x for WARNING
-      min_cov_ok: 50  # >= 50x for OK
-      detailed_reporting: false  # per-exon details (cannot go into multiqc)
     # Depth of coverage collection, mainly useful for genomes.
     bam_collect_doc:
       enabled: false
@@ -384,10 +383,29 @@ step_config:
       trim_adapters: false
       mask_duplicates: true
       split_as_secondary: true  # -M flag
+    # Configuration for somatic ngs_calling (separate read groups, molecular barcodes & base quality recalibration)
+    somatic:
+      mapping_tool: REQUIRED  # Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config
+      barcode_tool: agent     # Only agent currently implemented
+      use_barcodes: false
+      recalibrate: true
+    bqsr:
+      common_variants: REQUIRED # Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)
+    agent:
+      prepare:
+        path: REQUIRED
+        lib_prep_type: REQUIRED # One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)
+        extra_args: []        # Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data
+      mark_duplicates:
+        path: REQUIRED
+        path_baits: REQUIRED
+        consensus_mode: REQUIRED # One of "SINGLE", "HYBRID", "DUPLEX"
+        input_filter_args: [] # Consider -mm 13 (min base qual) -mr 13 (min barcode base qual) -mq 30 (min map qual)
+        consensus_filter_args: []
+        extra_args: []        # Consider -d 1 (max nb barcode mismatch)
     # Configuration for STAR
     star:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
-      path_features: ""    # Required for computing gene counts
       num_threads_align: 16
       num_threads_trimming: 8
       num_threads_bam_view: 4
@@ -756,6 +774,78 @@ class BwaMem2StepPart(ReadMappingStepPart):
                 )
 
 
+class MBCsStepPart(ReadMappingStepPart):
+    """Support for performing NGS alignment on MBC data"""
+
+    name = "mbcs"
+    tool_category = "dna"
+
+    LIB_PREP_TYPES = ("halo", "hs", "xt", "v2", "qxt")
+    CONSENSUS_MODES = ("SINGLE", "HYBRID", "DUPLEX")
+
+    def get_resource_usage(self, action):
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=1,
+            time="72:00:00",
+            memory="4G",
+            partition="medium",
+        )
+
+    def check_config(self):
+        """Check parameters in configuration.
+
+        Method checks that all parameters required to execute BWA-MEM2 are present in the
+        configuration. It further checks that the provided index has all the expected file
+        extensions. If invalid configuration, it raises InvalidConfiguration exception.
+        """
+        # Check if tool is at all included in workflow
+        if self.__class__.name not in self.config["tools"]["dna"]:
+            return  # mbcs not run, don't check configuration  # pragma: no cover
+
+        # Check mapper
+        mapper = self.config["somatic"]["mapping_tool"]
+        assert mapper != "mbcs" and mapper in READ_MAPPERS_DNA, f'Unknown mapper "{mapper}"'
+        self.parent.sub_steps[mapper].check_config()
+
+        if self.config["somatic"]["use_barcodes"]:
+            assert self.config["somatic"]["barcode_tool"] == "agent"
+            # Check trimmer & creak paths
+            path = self.config["agent"]["prepare"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's trimmer input path {path} does not exist!"
+                )
+            path = self.config["agent"]["mark_duplicates"]["path"]
+            if not os.path.exists(path):
+                raise InvalidConfiguration(
+                    f"Expected agent's creak input path {path} does not exist!"
+                )
+
+            # Check mandatory options
+            option = self.config["agent"]["prepare"]["lib_prep_type"]
+            if option not in self.__class__.LIB_PREP_TYPES:
+                options = '", "'.join(self.__class__.LIB_PREP_TYPES)
+                raise InvalidConfiguration(
+                    f'Unkown library preparation type "{option}", valid options are "{options}"'
+                )
+            option = self.config["agent"]["mark_duplicates"]["consensus_mode"]
+            if option not in self.__class__.CONSENSUS_MODES:
+                options = '", "'.join(self.__class__.CONSENSUS_MODES)
+                raise InvalidConfiguration(
+                    f'Unkown consensus mode "{option}", valid options are "{options}"'
+                )
+
+
 class StarStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using STAR"""
 
@@ -801,11 +891,10 @@ class StarStepPart(ReadMappingStepPart):
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run_work()
-        if self.config[self.name]["path_features"]:
-            output_files["gene_counts"] = self.base_path_out.format(
-                mapper=self.name, ext=".GeneCounts.tab"
-            )
-            output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
+        output_files["gene_counts"] = self.base_path_out.format(
+            mapper=self.name, ext=".GeneCounts.tab"
+        )
+        output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
         if self.config[self.name]["transcriptome"]:
             output_files["transcriptome"] = self.base_path_out.format(
                 mapper=self.name, ext=".toTranscriptome.bam"
@@ -900,27 +989,24 @@ class StrandednessStepPart(BaseStepPart):
 
     def get_result_files(self):
         for mapper in self.config["tools"]["rna"]:
-            if self.config[mapper]["path_features"]:
-                tpl_out = (
-                    "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
-                )
-                tpl_strandedness = "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
-                tpl_log = (
-                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
-                )
-                for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-                    if extra_info["extractionType"] == "RNA":
-                        yield tpl_out.format(mapper=mapper, library_name=library_name)
-                        yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
-                        yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
-                        yield tpl_strandedness.format(
-                            mapper=mapper, library_name=library_name
+            tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
+            tpl_strandedness = (
+                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
+            )
+            tpl_log = (
+                "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
+            )
+            for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+                if extra_info["extractionType"] == "RNA":
+                    yield tpl_out.format(mapper=mapper, library_name=library_name)
+                    yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
+                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
+                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name) + ".md5"
+                    for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                        yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                        yield tpl_log.format(
+                            mapper=mapper, library_name=library_name, ext=ext
                         ) + ".md5"
-                        for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                            yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
-                            yield tpl_log.format(
-                                mapper=mapper, library_name=library_name, ext=ext
-                            ) + ".md5"
 
     @dictify
     def get_log_file(self, action):
@@ -1036,7 +1122,7 @@ class ExternalStepPart(ReadMappingStepPart):
         )
 
 
-class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
+class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Build target coverage report"""
 
     #: Step name
@@ -1046,7 +1132,7 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     tool_categories = ("dna", "dna_long")
 
     #: Class available actions
-    actions = ("run", "collect")
+    actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1061,25 +1147,6 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
-
-    @listify
-    def _get_input_files_collect(self, wildcards):
-        _ = wildcards
-        for sheet in self.parent.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
-                if ngs_library.extra_infos["seqPlatform"] in ("ONP", "PacBio"):
-                    suffix = "_long"
-                else:
-                    suffix = ""
-                for mapper in self.config["tools"][extraction_type.lower() + suffix]:
-                    if (
-                        self.parent.default_kit_configured
-                        or ngs_library.name in self.parent.ngs_library_to_kit
-                    ):
-                        yield self._get_output_files_run_work()["txt"].format(
-                            mapper=mapper, library_name=ngs_library.name
-                        )
 
     @dictify
     def get_output_files(self, action):
@@ -1101,13 +1168,8 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_run_work(self):
-        yield "txt", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt"
-        yield "txt_md5", "work/{mapper}.{library_name}/report/cov_qc/{mapper}.{library_name}.txt.md5"
-
-    @dictify
-    def _get_output_files_collect_work(self):
-        yield "txt", "work/target_cov_report/out/target_cov_report.txt"
-        yield "txt_md5", "work/target_cov_report/out/target_cov_report.txt.md5"
+        yield "json", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
+        yield "json_md5", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5"
 
     @dictify
     def get_log_file(self, action):
@@ -1143,10 +1205,6 @@ class TargetCoverageReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
         return {
             "path_targets_bed": path_targets_bed,
-            "max_coverage": self.config["target_coverage_report"]["max_coverage"],
-            "min_cov_warning": self.config["target_coverage_report"]["min_cov_warning"],
-            "min_cov_ok": self.config["target_coverage_report"]["min_cov_ok"],
-            "detailed_reporting": self.config["target_coverage_report"]["detailed_reporting"],
         }
 
     def get_resource_usage(self, action):
@@ -1222,8 +1280,10 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         yield "vcf_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5"
         yield "vcf_tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
         yield "vcf_tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
-        yield "bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
-        yield "bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
+        yield "cov_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
+        yield "cov_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
+        yield "mq_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw"
+        yield "mq_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5"
 
     @dictify
     def get_log_file(self, action):
@@ -1362,12 +1422,13 @@ class NgsMappingWorkflow(BaseStep):
             (
                 BwaStepPart,
                 BwaMem2StepPart,
+                MBCsStepPart,
                 ExternalStepPart,
                 LinkInStep,
                 Minimap2StepPart,
                 StarStepPart,
                 StrandednessStepPart,
-                TargetCoverageReportStepPart,
+                TargetCovReportStepPart,
                 BamCollectDocStepPart,
                 NgsChewStepPart,
             )

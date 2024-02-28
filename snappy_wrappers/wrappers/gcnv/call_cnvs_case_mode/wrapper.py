@@ -18,6 +18,13 @@ export MKL_NUM_THREADS=16
 export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
+# Force full replacement of previous results
+# (this also solves issues when gatk tries to shutil copy file ownership)
+if [ -d $(dirname {snakemake.output.done}) ]
+then
+    rm -rf $(dirname {snakemake.output.done})
+fi
+
 gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \

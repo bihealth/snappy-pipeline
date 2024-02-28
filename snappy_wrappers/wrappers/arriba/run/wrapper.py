@@ -75,7 +75,7 @@ STAR \
     -x /dev/stdin \
     -o $TMPDIR/fusions.tsv -O $TMPDIR/fusions.discarded.tsv \
     -a {snakemake.config[static_data_config][reference][path]} \
-    -g {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][features]} \
+    -g {snakemake.config[static_data_config][features][path]} \
     $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][blacklist]}" ]]; then \
         echo -b {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][blacklist]}
     fi) \

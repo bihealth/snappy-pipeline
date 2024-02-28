@@ -220,6 +220,7 @@ class SnakemakeExecutionFailed(Exception):
 def run_snakemake(
     config,
     snakefile="Snakefile",
+    cores=1,
     num_jobs=0,
     max_jobs_per_second=0,
     max_status_checks_per_second=0,
@@ -253,7 +254,7 @@ def run_snakemake(
             snakefile,
             workdir=os.getcwd(),
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
-            cores=1,
+            cores=cores,
             nodes=num_jobs or config["num_jobs"],
             max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
             max_status_checks_per_second=max_status_checks_per_second
@@ -314,6 +315,8 @@ def write_snakemake_debug_helper(
     :type max_status_checks_per_second: str
     """
     with open(os.path.join(os.getcwd(), "snakemake_call.sh"), "wt") as f_call:
+        print("/bin/bash")
+        print("#SBATCH --output {}/slurm_log/%x-%J.log".format(os.getcwd()))
         print(
             " ".join(
                 map(

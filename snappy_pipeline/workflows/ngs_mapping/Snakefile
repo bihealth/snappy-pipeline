@@ -118,6 +118,28 @@ rule ngs_mapping_bwa_mem2_run:
         wf.wrapper_path("bwa_mem2")
 
 
+# Run Molecular Barcodes meta-tool --------------------------------------------
+
+
+rule ngs_mapping_mbcs_run:
+    input:
+        wf.get_input_files("mbcs", "run"),
+    output:
+        **wf.get_output_files("mbcs", "run"),
+    threads: wf.get_resource("mbcs", "run", "threads")
+    resources:
+        time=wf.get_resource("mbcs", "run", "time"),
+        memory=wf.get_resource("mbcs", "run", "memory"),
+        partition=wf.get_resource("mbcs", "run", "partition"),
+        tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("mbcs", "get_args", "run"),
+    log:
+        **wf.get_log_file("mbcs", "run"),
+    wrapper:
+        wf.wrapper_path("mbcs")
+
+
 # Run STAR --------------------------------------------------------------------
 
 
@@ -181,27 +203,7 @@ rule ngs_mapping_target_coverage_report_run:
     log:
         **wf.get_log_file("target_coverage_report", "run"),
     wrapper:
-        wf.wrapper_path("target_cov_report/run")
-
-
-# Collect target region reports -----------------------------------------------
-
-
-rule ngs_mapping_target_coverage_report_collect:
-    input:
-        wf.get_input_files("target_coverage_report", "collect"),
-    output:
-        **wf.get_output_files("target_coverage_report", "collect"),
-    threads: wf.get_resource("target_coverage_report", "run", "threads")
-    resources:
-        time=wf.get_resource("target_coverage_report", "run", "time"),
-        memory=wf.get_resource("target_coverage_report", "run", "memory"),
-        partition=wf.get_resource("target_coverage_report", "run", "partition"),
-        tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("target_coverage_report", "collect"),
-    wrapper:
-        wf.wrapper_path("target_cov_report/collect")
+        wf.wrapper_path("alfred/qc")
 
 
 # Compute depth of coverage files (VCF and bigWig) ----------------------------

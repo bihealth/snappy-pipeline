@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - bbmap =39
+  - openjdk >= 8 
