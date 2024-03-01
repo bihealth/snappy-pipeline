@@ -46,7 +46,7 @@ The pattern matching remains unchainged, as the ``adapter_trimming`` step does *
 Barcodes & UMIs
 ===============
 
-The handling of barcodes in generally done in 3 distinct opreations:
+The handling of barcodes in generally done in 3 distinct operations:
 
 1. The barcodes (typically stored as the first few bases of the read) are clipped from the read sequencce and added to the read name or as comments to the description on the sequence identifer line of the read record.
 2. Mapping is carried out as normal, but depending on the downstream tool, the MBC sequences & their qualities must be added as tags in the output ``bam`` file.
