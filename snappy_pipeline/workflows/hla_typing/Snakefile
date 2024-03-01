@@ -80,7 +80,7 @@ rule hla_typing_optitype_run:
         partition=wf.get_resource("optitype", "run", "partition"),
         tmpdir=wf.get_resource("optitype", "run", "tmpdir"),
     log:
-        wf.get_log_file("optitype", "run"),
+        **wf.get_log_file("optitype", "run"),
     params:
         args=wf.substep_dispatch("optitype", "get_args", "run"),
     wrapper:
