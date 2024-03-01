@@ -547,6 +547,12 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         antitargets = [
             tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
         ]
+        tpl = "work/{mapper}.cnvkit/log/{mapper}.cnvkit.{normal_library}.coverage.{ext}"
+        logs = [
+            tpl.format(mapper=wildcards["mapper"], normal_library=x, ext=ext)
+            for x in self.normal_libraries
+            for ext in ("log", "conda_list.txt", "conda_info.txt")
+        ]
         return {
             "target": targets
             if targets
@@ -554,6 +560,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "antitarget": antitargets
             if antitargets
             else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards),
+            "logs": logs if targets or antitargets else [],
         }
 
     def _get_input_files_report(self, wildcards):
@@ -612,6 +619,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return {
             "panel": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn",
             "panel_md5": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn.md5",
+            "log": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz",
+            "log_md5": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz.md5",
         }
 
     def _get_output_files_report(self):
@@ -770,6 +779,8 @@ class PanelOfNormalsWorkflow(BaseStep):
             ]
             for tpl in tpls:
                 result_files.extend(self._expand_result_files(tpl, log_ext_list))
+            tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz{ext}"
+            result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
         if "access" in set(self.config["tools"]) & set(TOOLS):
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"
