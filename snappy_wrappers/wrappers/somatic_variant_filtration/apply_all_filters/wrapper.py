@@ -33,25 +33,30 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-ln -sr {snakemake.input} {snakemake.output.full}
-ln -sr {snakemake.input}.tbi {snakemake.output.full}.tbi
-ln -sr {snakemake.input}.md5 {snakemake.output.full}.md5
-ln -sr {snakemake.input}.tbi.md5 {snakemake.output.full}.tbi.md5
+ln -sr {snakemake.input.vcf} {snakemake.output.full}
+ln -sr {snakemake.input.vcf}.tbi {snakemake.output.full}.tbi
+ln -sr {snakemake.input.vcf}.md5 {snakemake.output.full}.md5
+ln -sr {snakemake.input.vcf}.tbi.md5 {snakemake.output.full}.tbi.md5
 
 # Add the "PROTECTED" filter to the vcf header if necessary
 filter="FILTER='PASS'"
-n=$(bcftools view -h {snakemake.input} | grep -c '^##FILTER=<ID=PROTECTED,Description="' || true)
-if [[ $n -eq 0 ]]
+n=$(bcftools view -h {snakemake.input.vcf} | grep -c '^##FILTER=<ID=PROTECTED,Description="' || true)
+if [[ $n -ne 0 ]]
 then
     filter="$filter | FILTER~'PROTECTED'"
 fi
 
-bcftools view --include "$filter" -O z -o {snakemake.output.vcf} {snakemake.input}
+bcftools view --include "$filter" -O z -o {snakemake.output.vcf} {snakemake.input.vcf}
 tabix {snakemake.output.vcf}
+
+tar -zcvf {snakemake.output.log} {snakemake.input.logs}
 
 pushd $(dirname {snakemake.output.vcf}) && \
     md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
     md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5 && \
+    popd
+pushd $(dirname {snakemake.output.log}) && \
+    md5sum $(basename {snakemake.output.log}) >$(basename {snakemake.output.log}).md5 && \
     popd
 """
 )

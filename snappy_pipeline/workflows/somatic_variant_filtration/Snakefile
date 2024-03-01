@@ -250,7 +250,7 @@ checkpoint one_protected:
 
 rule last_filter:
     input:
-        wf.get_input_files("last_filter", "run"),
+        **wf.get_input_files("last_filter", "run"),
     output:
         **wf.get_output_files("last_filter", "run"),
     threads: wf.get_resource("last_filter", "run", "threads")
