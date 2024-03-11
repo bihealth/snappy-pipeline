@@ -14,6 +14,10 @@ by coordinate, an indexing using a BAI file.  For short reads, this can include 
 duplicates using Samblaster and depends on the actual configuration (see below for the default
 configuration).
 
+An additional ``somatic`` meta-tool for DNA mapping data with UMIs or molecular barcodes (MBCs),
+and that can also optionally perform Base Quality Score Re-calibration (BQSR).
+Its usage & implementation is detailed below, as its design is different from the other tools.
+
 ==========
 Properties
 ==========
@@ -88,8 +92,30 @@ After finding, the relative paths ``42KF5AAXX/L001/P001-N1-DNA1-WES1_R1.fastq.gz
 ``42KF5AAXX/L001/P001-N1-DNA1-WES1_R2.fastq.gz`` will be found and used for the left/right parts of
 a paired read set.
 
+------------------------------
+Mapping after adapter trimming
+------------------------------
+
+When the data is trimmed prior to mapping, the step must take its input from the output of the ``adapter_trimming`` step,
+rather than from the raw ``fastq`` files. 
+When not empty, the configuration option ``path_link_in`` overrides the search paths defined in the ``data_sets`` section.
+In the following example, the input fastq files are taken from the output of the ``adapter_trimming`` step, after the
+latter has been run with the ``bbduk`` adapter trimming tool:
+
+.. code-block:: yaml
+
+    ngs_mapping:
+      path_link_in: <absolute path to adapter_trimming/output/bbduk>
+      tools:
+        dna: [bwa]
+      [...]
+
+Note that only the search paths are overriden, the search patterns defined in the ``data_sets`` section are still used 
+to find the input files. The adapter trimming tools do not rename fastq files.
+
+--------------------------------------
 Mixing Single-End and Paired-End Reads
-======================================
+--------------------------------------
 
 By default, it is checked that for each ``search_pattern``, the same number of matching files
 has to be found, otherwise directories are ignored.  The reason is to reduce the number of
@@ -98,6 +124,60 @@ possible errors when linking in files.  You can change this behaviour by specify
 for the ``right`` entry to be empty.  However, you will need to consistently have either SE or
 PE data for each library; it is allowed to mix SE and PE libraries within one project but not
 to have PE and SE data for one library.
+
+--------------------
+Exome enrichment kit
+--------------------
+
+The configuration allows for the mapping of cohorts sequenced on different exome enrichment kits.
+However, each sample must be assigned to the correct kit for the target coverage report to be accurate.
+The configuration and the sample sheet must prepared in the following way:
+
+The sample sheet must contain the optional column ``libraryKit``, defined at the library level.
+The column is filled with the name of the kit for each sample. These names are defined by the user
+(choose wisely!), ``__default__`` is a reserved name. The sample sheet would look like:
+
+::
+
+    [Custom Fields]
+    key     annotatedEntity docs    type    minimum maximum unit    choices pattern
+    extractionType  bioSample       extraction type string  0       0       0       0       0
+    libraryKit      ngsLibrary      exome enrichment kit    string  0       0       0       0       0
+
+    [Data]
+    patientName     sampleName      isTumor extractionType  libraryType     folderName      libraryKit
+    case001 N1      N       DNA     WES     case001-N1-DNA1-WES1    V5_noUTR
+    case001 T1      Y       DNA     WES     case001-T1-DNA1-WES1    V5_noUTR
+    case002 N1      N       DNA     WES     case002-N1-DNA1-WES1    V5_UTR
+    case002 T1      Y       DNA     WES     case002-T1-DNA1-WES1    V5_UTR
+    case003 N1      N       DNA     WES     case003-N1-DNA1-WES1    __default__
+    [...]
+
+
+The library kit name is mapped to a kit *via* regular expression pattern recognition: the configuration
+stores a list of enrichment kit classes, each with a name, a regex pattern & the path to the bed file describing
+the kit locii. The ``__default__`` kit name matches the ``__default__`` class, without requiring a pattern.
+
+The configuration would be:
+
+.. code-block:: yaml
+
+    ngs_mapping:
+      target_coverage_report:
+        path_target_interval_list_mapping:
+        - name: "Agilent SureSelect V5"
+          pattern: "V5_noUTR"
+          path: <absolute path to the Agilent V5 bed file>
+        - name: Agilent SureSelect V5 + UTRs"
+          patten: "V5_UTR"
+          path: <absolute path to the Agilent V5 + UTRs bed file>
+        - name: __default__
+          path: <absolute path to another exome panel bed file>
+
+Note that it is not possible to name the Agilent V5 library kit simply "V5" in the sample sheet, because "V5" would also match "V5_UTR".
+
+This pattern matching mechanism is usually not required for exome enrichment kits, but it may be very convenient with panels,
+which can have several revisions.
 
 ===========
 Step Output
@@ -147,6 +227,7 @@ The following read mappers are available for the alignment of DNA-seq and RNA-se
 - (short/Illumina) DNA
     - ``"bwa"``
     - ``"bwa_mem2"``
+    - ``"somatic"``
     - ``"external"``
 
 - (short/Illumina) RNA-seq
@@ -178,13 +259,65 @@ configuration file. The other steps relying of feature annotations should use th
 protocol code (0 for unstranded, 1 for forward & 2 for reverse), the step runs `infer_experiment`
 (from the `rseqc` library) to infer the protocol strandedness. In both cases, the step generate a copy of
 the `STAR` output containing only the relevant column included.  This final version of the gene counts is found in
-`output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`.
+`output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`. Note that for `infer_experiment` to work efficiently,
+a 12-columns bed file must be provided (6-columns appears to work too), with locii of well-defined, ubiquitously expressed genes. 
+The intervals must be non-overlapping & sorted.
 
 If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
 mapped to the transcriptome (`output/stat.{library_name}/out/star.{library_name}.toTranscriptome.bam`).
 As with gene counts, `STAR` will rely on the static data configuration to generate the mappings.
 Note that the mappings to the transcriptome will not be indexes using `samtools index`, because the
 absence of the positional mappings.
+
+==================================
+Notes on the ``somatic`` meta-tool
+==================================
+
+The ``somatic`` mapping tool should be used in presence of Molecular BarCodes (MBCs), or 
+when Base Quality Score Re-calibration (BQSR) must be carried out.
+The mapping itself is done by one of the short DNA mappers (``bwa`` or ``bwa-mem2``). 
+The MBCs handling is optional (*via* option ``use_barcodes``), as is the BQSR (option ``recalibrate``).
+
+The current implementation only implements the proprietary `AGeNT software <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ for MBCs.
+Because it isn't open source, and not in ``bioconda``, it must be installed separately from the pipeline.
+Eventually, ``AGeNT`` should be replaced by open source software, such as `UMI-tools <https://umi-tools.readthedocs.io/en/latest/index.html>`_.
+
+Another shortcominig of the current implementation is that multiple exome kits is not supported. Only one kit per cohort is allowed.
+
+.. code-block:: yaml
+
+    ngs_mapping:
+      tools:
+        dna: [mbcs]
+      somatic:
+        mapping_tool: bwa_mem2
+        barcode_tool: agent         # Only agent is currently implemented
+        use_barcodes: true
+        recalibrate: true
+      bwa_mem2:
+        path_index: <path_to_bwa-mem2 indices>
+        [...]                       # Select bwa-mem2 options
+        extra_args: ["-C"]          # Use ["-C"] when UMI/MBC are present, and processed with AGeNT, otherwise [""]
+      agent:
+        prepare:
+          path: <path to AGeNT trimmer software>
+          [...]                     # Check AGeNT documentation for the "trimmer" program
+        mark_duplicates:
+          path: <path to AGeNT creak software>
+          [...]                     # Check AGeNT documentation for the "trimmer" program
+      bqsr:
+        common_variants: <path to common germline variants>  # For example small_exac_common_3.vcf from the GATK bucket
+
+.. note::
+
+    This meta-tool is currently implemented by delegating execution of the different sub-steps (trimming barcodes, mapping, consensus merging, bqsr)
+    to a Snakefile. This is different from the other tools, with shell scripts wrappers. 
+    This experimental implementation was chosen to avoid over-complex shell scripts, as the ``bwa`` & ``bwa-mem2`` wrappers already perform multiple operations.
+    Splitting the meta-tool into different sub-steps was also considered, but as sub-steps cannot share the same temporary directory,
+    that solution was not efficient enough.
+
+    Finally, the choice of names for the meta-tool (``somatic``) and for the file prefix (``mbcs``) are both unfortunate, as might be changed in the future.
+
 
 =======
 Reports
@@ -225,15 +358,15 @@ For example, it will look as follows for the example bam files shown above:
     |           `-- bwa.P001-N1-DNA1-WES1.bam.idxstats.txt.md5
     [...]
 
-Target Coverage Report (.txt)
+Target Coverage Report (.alfred.json.gz)
   If ``ngs_mapping/path_target_regions`` is set to a BED file with the target regions
   (either capture regions of capture kits in the case of targeted sequencing or exons for WES/WGS
   sequencing) a target coverage report is generated and linked out into the
-  ``output/{mapper}.{library_name}/report/cov_qc``
+  ``output/{mapper}.{library_name}/report/alfred_qc``
   directory. The file names for these reports (and their MD5s) use the following naming convention:
 
-  - ``{mapper}.{library_name}.txt``
-  - ``{mapper}.{library_name}.txt.md5``
+  - ``{mapper}.{library_name}.alfred.json.gz``
+  - ``{mapper}.{library_name}.alfred.json.gz.md5``
 
   For example, it will look as follows for the example bam files shown above:
 
@@ -244,9 +377,9 @@ Target Coverage Report (.txt)
     |   `-- report
     |       |-- bam_qc
     |       |   [...]
-    |       `-- cov_qc
-    |           |-- bwa.P001-N1-DNA1-WES1.txt
-    |           `-- bwa.P001-N1-DNA1-WES1.txt.md5
+    |       `-- alfred_qc
+    |           |-- bwa.P001-N1-DNA1-WES1.alfred.json.gz
+    |           `-- bwa.P001-N1-DNA1-WES1.alfred.json.gz.md5
     [...]
 
 
@@ -290,7 +423,13 @@ Genome-wide Coverage Count (.bed.gz)
     |           [...]
     [...]
 
-
+Fingerprinting (.npz)
+  When the ``ngs_chew_fingerprint`` is enabled, a ``fingerprint`` report folder is created by the `ngs_chew tool <https://github.com/bihealth/ngs-chew>`_,
+  which contains a fingerprint of the sample based on carefully selected germline variants.
+  This fingerprint allows comparison between samples to check against sample swaps.
+  For assignment of a sample to a patient, it is a more sensitive tool than HLA typing, because
+  in stem-cell treatments, HLA types are matched between donor & recepient, and because the
+  fingerprints can detect contamination in samples.
 """
 
 from itertools import chain
@@ -371,6 +510,7 @@ step_config:
       trim_adapters: false
       mask_duplicates: true
       split_as_secondary: false  # -M flag
+      extra_flags: []            # [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode
     # Configuration for BWA-MEM2
     bwa_mem2:
       path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
@@ -383,6 +523,7 @@ step_config:
       trim_adapters: false
       mask_duplicates: true
       split_as_secondary: true  # -M flag
+      extra_flags: []           # [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode
     # Configuration for somatic ngs_calling (separate read groups, molecular barcodes & base quality recalibration)
     somatic:
       mapping_tool: REQUIRED  # Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config

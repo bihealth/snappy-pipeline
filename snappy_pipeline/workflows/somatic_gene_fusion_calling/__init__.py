@@ -14,11 +14,20 @@ Gene fusion calling starts at the raw RNA-seq reads.  Thus, the input is very si
 
 See :ref:`ngs_mapping_step_input` for more information.
 
+.. note::
+
+    The step requires a ``cancer_matched`` configuration & samplesheet files.
+    This is an unnecessary requirement, as might be dropped in the future.
+
 ===========
 Step Output
 ===========
 
-.. note:: TODO
+There is no standard for reporting gene fusions, and therefore the output is different for all implemented tools.
+
+``arriba`` returns two tab-separated files: ``arriba.<library name>.fusions.tsv`` & ``arriba.<library name>.discarded_fusions.tsv.gz``.
+Both files list the affected genes, reads supporting the fusion & a confidence level.
+Obviously, the discarded fusion file contains all hints of fusion that have been discarded because of insufficient evidence.
 
 =====================
 Default Configuration
@@ -32,7 +41,10 @@ The default configuration is as follows.
 Available Gene Fusion Callers
 =============================
 
-- ``fusioncatcher``
+- ``arriba``
+- ``fusioncatcher`` implementation is broken. The tool's computational resources requirements are so enormous that it might not be advisable to try re-enable it.
+- the status of ``defuse``, ``hera``, ``jaffa`` & ``pizzly`` is unknown, they are probably currently broken or not implemented.
+- the status of ``star_fusion`` is also unknown, but it apparently returns results fairly similar to ``arriba``, but not quite as accurate. ``arriba`` should be preferred.
 
 """
 
@@ -495,7 +507,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["arriba"]["num_threads"], time="24:00:00", memory=f"{64 * 1024}M"
+            threads=self.config["arriba"]["num_threads"], time="24:00:00", memory=f"{96 * 1024}M"
         )  # 1 day
 
 
