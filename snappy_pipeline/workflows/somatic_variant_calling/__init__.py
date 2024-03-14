@@ -28,7 +28,7 @@ with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
-Two ``vcf`` files are produced: 
+Two ``vcf`` files are produced:
 
 - ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
 - ``{mapper}.{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
@@ -46,7 +46,7 @@ For example, it might look as follows for the example from above:
     |       `-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
     [...]
 
-Generally, the callers are set up to return many variants to avoid missing clinically important ones. 
+Generally, the callers are set up to return many variants to avoid missing clinically important ones.
 They are likely to contain low-quality variants and for some callers variants flagged as being non-somatic.
 
 =====================
@@ -75,7 +75,7 @@ The recommended caller ``mutect2`` is implemented using a parallelisation mechan
 During parallelisation, the genome is split into small chunks, and parallel jobs perform the somatic variant calling in their region only.
 All results are then assembled to generate the final output files.
 
-There is at least one chunk by contig defined in the reference genome, with the chunk size upper limit given by the ``window_length`` configuration option. 
+There is at least one chunk by contig defined in the reference genome, with the chunk size upper limit given by the ``window_length`` configuration option.
 So large chromosomes can be split into several chunks, while smaller contigs are left in one chunk.
 Even for large chunk size, this parallelisation can create hundreds of jobs when the reference genome contains many contigs
 (unplaced or unlocalized contigs, viral sequences, decoys, HLA alleles, ...).

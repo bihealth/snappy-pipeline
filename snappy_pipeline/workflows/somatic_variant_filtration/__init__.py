@@ -3,7 +3,7 @@
 
 The current implementation supports two filtration schema:
 
-- the *legacy* schema, now deprecated, always runs the `DKFZBiasFilter <https://github.com/DKFZ-ODCF/DKFZBiasFilter>`_ & 
+- the *legacy* schema, now deprecated, always runs the `DKFZBiasFilter <https://github.com/DKFZ-ODCF/DKFZBiasFilter>`_ &
   `EBFilter <https://doi.org/10.1093/nar/gkt126>`_, and produces files for all combinations of available filters.
 - the *new* schema focuses on flexibility, allows any combination of filters, and returns a single fitlered file for each sample.
 
@@ -28,7 +28,7 @@ For each tumor DNA NGS library with name ``lib_name`` and each read mapper
 pipeline step will create a directory ``output/{mapper}.{var_caller}.{annotator}.{lib_name}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-Two ``vcf`` files are produced: 
+Two ``vcf`` files are produced:
 
 - ``{mapper}.{var_caller}.{annotator}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
 - ``{mapper}.{var_caller}.{annotator}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
@@ -166,7 +166,7 @@ step_config:
       dkfz_and_oxog:
         vaf_threshold: 0.08
         coverage_threshold: 5
-    exon_lists: {}                                     # Deprecated filtration method, use filter_list  
+    exon_lists: {}                                     # Deprecated filtration method, use filter_list
     # genome_wide: null                                # implicit, always defined
     # ensembl74: path/to/ensembl47.bed
     eb_filter:                                         # Deprecated filter, use in filter_list

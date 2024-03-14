@@ -532,7 +532,9 @@ class ParallelBaseWrapper:
         :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
         If not defined, the default is an empty list.
         """
-        return self._get_config().get("ignore_chroms", self._get_step_config().get("ignore_chroms", []))
+        return self._get_config().get(
+            "ignore_chroms", self._get_step_config().get("ignore_chroms", [])
+        )
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
@@ -724,10 +726,7 @@ class ParallelBaseWrapper:
 
         with open(log_filename + ".md5", "wt") as f:
             print(
-                "{}  {}".format(
-                    compute_md5_checksum(log_filename), 
-                    os.path.basename(log_filename)
-                ),
+                "{}  {}".format(compute_md5_checksum(log_filename), os.path.basename(log_filename)),
                 file=f,
             )
 

@@ -231,6 +231,7 @@ checkpoint one_regions:
     wrapper:
         wf.wrapper_path("bcftools/regions")
 
+
 checkpoint one_protected:
     input:
         unpack(wf.get_input_files("one_protected", "run")),

@@ -97,7 +97,7 @@ Mapping after adapter trimming
 ------------------------------
 
 When the data is trimmed prior to mapping, the step must take its input from the output of the ``adapter_trimming`` step,
-rather than from the raw ``fastq`` files. 
+rather than from the raw ``fastq`` files.
 When not empty, the configuration option ``path_link_in`` overrides the search paths defined in the ``data_sets`` section.
 In the following example, the input fastq files are taken from the output of the ``adapter_trimming`` step, after the
 latter has been run with the ``bbduk`` adapter trimming tool:
@@ -110,7 +110,7 @@ latter has been run with the ``bbduk`` adapter trimming tool:
         dna: [bwa]
       [...]
 
-Note that only the search paths are overriden, the search patterns defined in the ``data_sets`` section are still used 
+Note that only the search paths are overriden, the search patterns defined in the ``data_sets`` section are still used
 to find the input files. The adapter trimming tools do not rename fastq files.
 
 --------------------------------------
@@ -260,7 +260,7 @@ protocol code (0 for unstranded, 1 for forward & 2 for reverse), the step runs `
 (from the `rseqc` library) to infer the protocol strandedness. In both cases, the step generate a copy of
 the `STAR` output containing only the relevant column included.  This final version of the gene counts is found in
 `output/star.{library_name}/out/star.{library_name}.GeneCounts.tab`. Note that for `infer_experiment` to work efficiently,
-a 12-columns bed file must be provided (6-columns appears to work too), with locii of well-defined, ubiquitously expressed genes. 
+a 12-columns bed file must be provided (6-columns appears to work too), with locii of well-defined, ubiquitously expressed genes.
 The intervals must be non-overlapping & sorted.
 
 If the configuration option `transcriptome` is set to `true`, the step will output a bam file of reads
@@ -273,9 +273,9 @@ absence of the positional mappings.
 Notes on the ``somatic`` meta-tool
 ==================================
 
-The ``somatic`` mapping tool should be used in presence of Molecular BarCodes (MBCs), or 
+The ``somatic`` mapping tool should be used in presence of Molecular BarCodes (MBCs), or
 when Base Quality Score Re-calibration (BQSR) must be carried out.
-The mapping itself is done by one of the short DNA mappers (``bwa`` or ``bwa-mem2``). 
+The mapping itself is done by one of the short DNA mappers (``bwa`` or ``bwa-mem2``).
 The MBCs handling is optional (*via* option ``use_barcodes``), as is the BQSR (option ``recalibrate``).
 
 The current implementation only implements the proprietary `AGeNT software <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ for MBCs.
@@ -311,7 +311,7 @@ Another shortcominig of the current implementation is that multiple exome kits i
 .. note::
 
     This meta-tool is currently implemented by delegating execution of the different sub-steps (trimming barcodes, mapping, consensus merging, bqsr)
-    to a Snakefile. This is different from the other tools, with shell scripts wrappers. 
+    to a Snakefile. This is different from the other tools, with shell scripts wrappers.
     This experimental implementation was chosen to avoid over-complex shell scripts, as the ``bwa`` & ``bwa-mem2`` wrappers already perform multiple operations.
     Splitting the meta-tool into different sub-steps was also considered, but as sub-steps cannot share the same temporary directory,
     that solution was not efficient enough.
