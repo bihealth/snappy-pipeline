@@ -273,7 +273,7 @@ popd
 rule merge_all:
     input: **{'vcf': ['merge_out.0.d/out/merge_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'merge_out.1.d/out/merge_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz'], 'vcf_md5': ['merge_out.0.d/out/merge_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'merge_out.1.d/out/merge_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5'], 'vcf_tbi': ['merge_out.0.d/out/merge_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'merge_out.1.d/out/merge_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi'], 'vcf_tbi_md5': ['merge_out.0.d/out/merge_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5', 'merge_out.1.d/out/merge_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5']}
     output: **{'vcf': '/work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': '/work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': '/work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': '/work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
-    log: **{'conda_info': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_info.txt', 'conda_info_md5': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_info.txt.md5', 'conda_list': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt', 'conda_list_md5': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt.md5', 'log': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.log', 'log_md5': '/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.log.md5'}
+    log: "/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.log.merge.log"
     threads: resource_merge_threads
     resources:
         time=resource_merge_time,
@@ -281,6 +281,7 @@ rule merge_all:
         partition=resource_merge_partition,
     shell:
         r'''
+        set -x
         set -euo pipefail  # Unofficial Bash strict mode
 
         # Merge chunks output ------------------------------------------
@@ -308,6 +309,15 @@ popd
         pushd $(dirname /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.log.merge.tar.gz)
         f=$(basename /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.log.merge.tar.gz)
         md5sum $f > $f.md5
+        popd
+
+        # Write out information about conda installation ---------------
+        conda list >/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt
+        conda info >/work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_info.txt
+
+        pushd $(dirname /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt)
+        md5sum $(basename /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt) >$(basename /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_list.txt).md5
+        md5sum $(basename /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_info.txt) >$(basename /work/bwa.mutect2/log/bwa.mutect2.P001-N1-DNA1-WGS1.conda_info.txt).md5
         popd
         '''
 

@@ -398,6 +398,26 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
             "no_filter.genome_wide",
         )
     ]
+    tpl = (
+        "output/bwa.mutect2.jannovar.dkfz_bias_filter."
+        "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/log/"
+        "bwa.mutect2.jannovar.dkfz_bias_filter.eb_filter."
+        "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}{chksum}"
+    )
+    expected += [
+        tpl.format(mapper=mapper, filter=filter_, i=i, t=t, ext=ext, chksum=chksum)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("log", "conda_list.txt", "conda_info.txt")
+        for chksum in ("", ".md5")
+        for mapper in ("bwa",)
+        for filter_ in (
+            "dkfz_and_ebfilter.genome_wide",
+            "dkfz_and_ebfilter_and_oxog.genome_wide",
+            "dkfz_and_oxog.genome_wide",
+            "dkfz_only.genome_wide",
+            "no_filter.genome_wide",
+        )
+    ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_filtration_workflow.get_result_files()))
     assert expected == actual
@@ -552,19 +572,33 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
 
 def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
     """Tests ApplyFiltersStepPart.get_input_files()"""
-    expected = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_5.vcf.gz"
+    base_tpl = "{{mapper}}.{{var_caller}}.{{annotator}}.{{tumor_library}}"
+    log_tpl = "work/" + base_tpl + "/log/" + base_tpl + ".{filt}.{ext}{chksum}"
+    expected = {
+        "logs": [
+            log_tpl.format(filt=filt, ext=ext, chksum=chksum)
+            for filt in ("bcftools_1", "dkfz_2", "ebfilter_3", "regions_4", "protected_5")
+            for ext in ("log", "conda_list.txt", "conda_info.txt")
+            for chksum in ("", ".md5")
+        ],
+        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_5.vcf.gz",
+    }
     actual = somatic_variant_filtration_workflow_list.get_input_files("last_filter", "run")
     assert actual == expected
 
 
 def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
     """Tests ApplyFiltersStepPart.get_output_files()"""
-    base_out = "work/{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}"
+    base_name = "{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}"
+    base_out = "work/" + base_name + "/out/" + base_name
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     expected["full"] = base_out + ".full.vcf.gz"
     expected["full_tbi"] = expected["full"] + ".tbi"
     expected["full_md5"] = expected["full"] + ".md5"
     expected["full_tbi_md5"] = expected["full_tbi"] + ".md5"
+    base_out = "work/" + base_name + "/log/" + base_name
+    expected["log"] = base_out + ".merged.tar.gz"
+    expected["log_md5"] = expected["log"] + ".md5"
     actual = somatic_variant_filtration_workflow_list.get_output_files("last_filter", "run")
     assert actual == expected
 
@@ -575,11 +609,19 @@ def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workf
 def test_somatic_variant_filtration_workflow_list(somatic_variant_filtration_workflow_list):
     """Test simple functionality of the workflow"""
     # Check result file construction
-    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}"
+    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
     expected = [
-        tpl.format(i=i, t=t, ext=ext)
+        tpl.format(i=i, t=t, ext=ext, chksum=chksum)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
+        for ext in ("vcf.gz", "vcf.gz.tbi", "full.vcf.gz", "full.vcf.gz.tbi")
+        for chksum in ("", ".md5")
+    ]
+    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/log/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
+    expected += [
+        tpl.format(i=i, t=t, ext=ext, chksum=chksum)
+        for i, t in ((1, 1), (2, 1), (2, 2))
+        for ext in ("log", "merged.tar.gz", "conda_list.txt", "conda_info.txt")
+        for chksum in ("", ".md5")
     ]
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_filtration_workflow_list.get_result_files()))
