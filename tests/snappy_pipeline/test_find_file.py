@@ -10,6 +10,7 @@ from pyfakefs import fake_filesystem
 
 from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 
+
 # TODO: test the invalidation_paths parameter/feature
 
 

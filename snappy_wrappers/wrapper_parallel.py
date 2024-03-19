@@ -22,11 +22,40 @@ import textwrap
 import time
 from collections.abc import MutableMapping, MutableSequence
 
-from snakemake import get_profile_file, snakemake
+from snakemake.api import ResourceSettings, SnakemakeApi
+from snakemake.cli import get_profile_dir
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+
+def get_appdirs():
+    global APPDIRS
+    if APPDIRS is None:
+        from appdirs import AppDirs
+
+        APPDIRS = AppDirs("snakemake", "snakemake")
+    return APPDIRS
+
+
+def get_profile_file(profile: str, file: str, return_default=False):
+    profile_dir, profile_candidate = get_profile_dir(profile)
+    dirs = get_appdirs()
+    search_dirs = [profile_dir, os.getcwd(), dirs.user_config_dir, dirs.site_config_dir]
+    print(search_dirs, profile_candidate, file=sys.stderr)
+
+    def get_path(d):
+        return os.path.join(d, profile, file)
+
+    for d in search_dirs:
+        p = get_path(d)
+        if os.path.exists(p):
+            return p
+
+    if return_default:
+        return file
+    return None
 
 
 @contextlib.contextmanager
@@ -252,8 +281,8 @@ def run_snakemake(
             ),
         )
 
-        result = snakemake(
-            snakefile,
+        result = SnakemakeApi.workflow(
+            snakefile=snakefile,
             workdir=os.getcwd(),
             jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
             cores=cores,
@@ -276,14 +305,15 @@ def run_snakemake(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
-        result = snakemake(
-            snakefile,
-            cores=config["num_jobs"],
-            max_jobs_per_second=config["max_jobs_per_second"],
-            max_status_checks_per_second=config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
+        result = SnakemakeApi.workflow(
+            snakefile=snakefile,
+            resource_settings=ResourceSettings(cores=config["num_jobs"]),
+            # TODO properly choose remaining *_settings, if needed
+            # config_settings=None,
+            # storage_settings=None,
+            # workflow_settings=None,
+            # deployment_settings=None,
+            # storage_provider_settings=None,
         )
     if not result:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
