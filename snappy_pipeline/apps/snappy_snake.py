@@ -181,8 +181,9 @@ def run(wrapper_args):  # noqa: C901
     if wrapper_args.conda_create_envs_only:
         snakemake_argv.append("--conda-create-envs-only")
         wrapper_args.use_conda = True
+    # TODO replace with --software-deployment-method conda
     if wrapper_args.use_conda:
-        snakemake_argv.append("--use-conda")
+        snakemake_argv += ["--software-deployment-method", "conda"]
         if mamba_available and wrapper_args.use_mamba:
             snakemake_argv += ["--conda-frontend", "mamba"]
         else:
