@@ -1100,7 +1100,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         return getattr(self, f"_get_input_files_{action}")
 
     @dictify
-    def _get_input_files_run(self, wildcards):
+    def _get_input_files_run(self, wildcards, **kwargs):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
