@@ -13,8 +13,8 @@ import subprocess
 import sys
 
 import ruamel.yaml as ruamel_yaml
-from snakemake import RERUN_TRIGGERS
-from snakemake import main as snakemake_main
+from snakemake.settings import RerunTrigger
+from snakemake.cli import main as snakemake_main
 
 from .. import __version__
 from ..workflows import (
@@ -60,6 +60,8 @@ from ..workflows import (
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+# snakemake v8 now has an explicit enum for rerun triggers
+RERUN_TRIGGERS = RerunTrigger.all()
 
 #: Configuration file names
 CONFIG_FILES = ("config.yaml", "config.json")
