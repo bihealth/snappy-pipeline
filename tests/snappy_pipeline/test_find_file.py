@@ -54,6 +54,7 @@ def test_file_system_crawler_result_with_names():
     assert obj.names == ("first", "second")
     assert obj.named_files == {"first": "foo_R1.fastq.gz", "second": "foo_R2.fastq.gz"}
     assert obj.to_dict() == {"first": "foo_R1.fastq.gz", "second": "foo_R2.fastq.gz"}
+    # OrderedDict str representation changes depending on python implementation
     assert str(obj) == (
         "FileSystemCrawlerResult('/base', "
         "('foo_R1.fastq.gz', 'foo_R2.fastq.gz'), "
