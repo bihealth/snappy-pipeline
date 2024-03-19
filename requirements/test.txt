@@ -11,15 +11,15 @@ pytest-subprocess
 pyfakefs
 
 # "Black" code formatter and checker.
-black ==22.8.0
+black
 # "snakefmt" code formatter and checker.
-snakefmt >=0.8.0,<0.9.0
+snakefmt
 # isort code formatter - import order
-isort ==5.10.1
-
+isort
 flake8
 flake8-import-order
 pytest-flake8
+ruff
 
 # coveralls.io tooling
 coveralls

@@ -5,19 +5,19 @@ attrs
 ruamel.yaml>=0.15.35
 
 # File-based locks
-fasteners==0.17.3
+fasteners>=0.17.3
 
 # We're trying to keep the PyPi package up to date, you might have to install
 # from source, though.
 biomedsheets >=0.11.7
 
 # Helpful for CLIs
-termcolor==1.1.0
+termcolor>=1.1.0
 
 # Snakemake is used for providing the actual wrapper calling functionality
-snakemake==7.26.0
+snakemake>=8.8.0
 # Snakemake needs manual install of PyYAML to make YAML configuration loading work
-PyYAML>=6.0
+#PyYAML>=6.0
 
 # Required for plotting
 matplotlib>=2.1.2
