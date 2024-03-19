@@ -351,7 +351,8 @@ def write_snakemake_debug_helper(
                         "--cores",
                         "--printshellcmds",
                         "--verbose",
-                        "--use-conda",  # sic!
+                        "--software-deployment-method",  # sic! <- ?
+                        "conda",
                         "--profile",
                         shlex.quote(profile),
                         "--jobs",
