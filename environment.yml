@@ -8,31 +8,41 @@ name: snappy_env
 dependencies:
 
   # Fundamentals
-  - python
+  - python >=3.11.0
   - pip
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=7.0.2
+  - snakemake >=8.8.0
 
   # Additional libraries used by snappy
-  - ruamel.yaml             # Nice, round-trip enabled YAML parsing
-  - fasteners               # File-based locks
-  - termcolor               # Helpful for CLIs
-  - matplotlib              # Required for plotting
-  - jinja2                  # Jinja 2 template rendering
+  - ruamel.yaml >=0.15.35              # Nice, round-trip enabled YAML parsing
+  - fasteners >=0.17.3                 # File-based locks
+  - termcolor >=1.1.0                  # Helpful for CLIs
+  - matplotlib >=2.1.2                 # Required for plotting
+  - jinja2 >=3.1.2                     # Jinja 2 template rendering
 
   # Bioinformatics-related libraries used by snappy
   - htslib >=1.15
   - bcftools >=1.15
   - samtools >=1.15
-  - vcfpy                   # Library for working with VCF files
-  - pysam                   # Support for vcfpy
+  # both vcfpy and pysam are only used in wrappers -- and tools, which should probably be wrappers in their own regard?
+  # current versions compatible with py>=3.11 aren't yet available from bioconda, so install via pip instead
+  # - vcfpy >=0.13.8                   # Library for working with VCF files
+  # - pysam                            # Support for vcfpy
+  # pytabix seems not to be used anywhere (and hasn't been updated in 9 years)
+  # - pytabix
 
   # Parsing of ISA-tab
-  - altamisa
+  - altamisa >=0.2.6
+
+  - attrs >=23.2.0
+
+  - pytest-sugar >=1.0.0
 
   # CUBI libraries required by snappy (installed through pip)
   - pip:
-    - varfish-cli
+    - varfish-cli >=0.2.0
     - biomedsheets >=0.11.7
+    - pysam >=0.22
+    - vcfpy >=0.13.8
