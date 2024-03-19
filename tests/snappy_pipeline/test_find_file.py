@@ -10,6 +10,7 @@ import pytest
 
 from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 
+
 # TODO: test the invalidation_paths parameter/feature
 
 

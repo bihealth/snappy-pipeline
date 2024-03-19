@@ -5,7 +5,6 @@ Parallel running is performed in a fork/join parallelism manner.  The user can s
 a "work", and a "merge" task.
 """
 
-from collections.abc import MutableMapping, MutableSequence
 import contextlib
 import datetime
 import functools
@@ -19,12 +18,42 @@ import shutil
 import sys
 import tempfile
 import textwrap
+from collections.abc import MutableMapping, MutableSequence
 
-from snakemake import get_profile_file, snakemake
+from snakemake.api import ResourceSettings, SnakemakeApi
+from snakemake.cli import get_profile_dir
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+
+def get_appdirs():
+    global APPDIRS
+    if APPDIRS is None:
+        from appdirs import AppDirs
+
+        APPDIRS = AppDirs("snakemake", "snakemake")
+    return APPDIRS
+
+
+def get_profile_file(profile: str, file: str, return_default=False):
+    profile_dir, profile_candidate = get_profile_dir(profile)
+    dirs = get_appdirs()
+    search_dirs = [profile_dir, os.getcwd(), dirs.user_config_dir, dirs.site_config_dir]
+    print(search_dirs, profile_candidate, file=sys.stderr)
+
+    def get_path(d):
+        return os.path.join(d, profile, file)
+
+    for d in search_dirs:
+        p = get_path(d)
+        if os.path.exists(p):
+            return p
+
+    if return_default:
+        return file
+    return None
 
 
 @contextlib.contextmanager
@@ -218,15 +247,15 @@ class SnakemakeExecutionFailed(Exception):
 
 
 def run_snakemake(
-    config,
-    snakefile="Snakefile",
-    cores=1,
-    num_jobs=0,
-    max_jobs_per_second=0,
-    max_status_checks_per_second=0,
-    job_name_token="",
-    partition=None,
-    profile=None,
+        config,
+        snakefile="Snakefile",
+        cores=1,
+        num_jobs=0,
+        max_jobs_per_second=0,
+        max_status_checks_per_second=0,
+        job_name_token="",
+        partition=None,
+        profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
     if config["use_profile"]:
@@ -250,23 +279,16 @@ def run_snakemake(
             ),
         )
 
-        result = snakemake(
-            snakefile,
+        result = SnakemakeApi.workflow(
+            snakefile=snakefile,
             workdir=os.getcwd(),
-            jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
-            cores=cores,
-            nodes=num_jobs or config["num_jobs"],
-            max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
-            max_status_checks_per_second=max_status_checks_per_second
-            or config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
-            cluster=get_profile_file(profile, "slurm-submit.py"),
-            cluster_status=get_profile_file(profile, "slurm-status.py"),
-            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
-            cluster_cancel="scancel",
+            resource_settings=ResourceSettings(cores=cores, nodes=num_jobs or config["num_jobs"]),
+            # TODO properly choose remaining *_settings, if needed
+            # config_settings=None,
+            # storage_settings=None,
+            # workflow_settings=None,
+            # deployment_settings=None,
+            # storage_provider_settings=None,
         )
     else:
         print(
@@ -274,21 +296,22 @@ def run_snakemake(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
-        result = snakemake(
-            snakefile,
-            cores=config["num_jobs"],
-            max_jobs_per_second=config["max_jobs_per_second"],
-            max_status_checks_per_second=config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
+        result = SnakemakeApi.workflow(
+            snakefile=snakefile,
+            resource_settings=ResourceSettings(cores=config["num_jobs"]),
+            # TODO properly choose remaining *_settings, if needed
+            # config_settings=None,
+            # storage_settings=None,
+            # workflow_settings=None,
+            # deployment_settings=None,
+            # storage_provider_settings=None,
         )
     if not result:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
 
 
 def write_snakemake_debug_helper(
-    profile, jobs, restart_times, job_name_token, max_jobs_per_second, max_status_checks_per_second
+        profile, jobs, restart_times, job_name_token, max_jobs_per_second, max_status_checks_per_second
 ):
     """Write Snakemake debug helper file
 
@@ -1433,7 +1456,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
         return (merge_input, merge_output, merge_log)
 
     def _construct_level_one_merge_rule(
-        self, chunk_no, merge_input, merge_output, chunk_logs, merge_log
+            self, chunk_no, merge_input, merge_output, chunk_logs, merge_log
     ):
         return (
             textwrap.dedent(
