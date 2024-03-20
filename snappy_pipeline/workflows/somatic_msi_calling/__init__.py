@@ -5,6 +5,11 @@ This step allows for the detection of microsatellite instability for cancer samp
 whole genomes, exomes or large panels).  MANTIS starts from the aligned reads
 (thus off ``ngs_mapping``) and generates a result file per tumor/normal pair.
 
+As MANTIS is not maintained anymore, the pipeline now supports only
+`MANTIS2 <https://github.com/nh13/MANTIS2>`_.
+The new version appears to be very silimar to the old one, both in terms of input & output files,
+and in terms of requirements.
+
 ==========
 Step Input
 ==========
@@ -19,7 +24,7 @@ Generally, the following links are generated to ``output/``.
 
 .. note:: Tool-Specific Output
 
-    As the only integrated tool is MANTIS at the moment, the output is very tailored to the result
+    As the only integrated tool is MANTIS2 at the moment, the output is very tailored to the result
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 

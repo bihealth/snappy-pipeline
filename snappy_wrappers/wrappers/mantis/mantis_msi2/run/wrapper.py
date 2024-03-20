@@ -14,15 +14,20 @@ shell(
 set -x
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec &> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
+
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
+md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
 
 # Setup auto-cleaned TMPDIR
 export TMPDIR=$(mktemp -d)
@@ -32,6 +37,8 @@ mkdir -p $TMPDIR/out
 # The following config is recommended by the authors for WES,
 # but should also work for reasonable deep WGS according to them.
 # https://github.com/OSU-SRLab/MANTIS/issues/25
+#
+# Only one thread is used, see https://github.com/OSU-SRLab/MANTIS/issues/57
 
 mantis-msi2 \
     -t {snakemake.input.tumor_bam}  \
@@ -43,7 +50,7 @@ mantis-msi2 \
     --min-locus-quality 25.0 \
     --min-locus-coverage 20 \
     --min-repeat-reads 1 \
-    --threads 3 \
+    --threads 1 \
     -o $TMPDIR/out/$(basename {snakemake.output.result})
 
 pushd $TMPDIR/out
@@ -53,5 +60,13 @@ done
 popd
 
 mv $TMPDIR/out/* $(dirname {snakemake.output.result})
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+sleep 1s  # try to wait for log file flush
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
