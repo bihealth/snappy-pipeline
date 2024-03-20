@@ -7,7 +7,7 @@ Somatic CNV calling
 Somatic variant calling is implemented differently for exome and whole genome data.
 
 The whole genome data "branch" is currently under review, as GRCh38 support in ``Control-FREEC`` (the main workhorse for WGS CNV calling) is not complete.
-CNV calling in WGS data can aslo be done using ``cnvkit``, but its pipeline implementation is also incomplete.
+CNV calling in WGS data can also be done using ``cnvkit``, but its pipeline implementation is also incomplete.
 
 The following documentation is restricted to the tools currently implemented to process exome data: ``cnvkit``, ``purecn`` & ``sequenza``.
 

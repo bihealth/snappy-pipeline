@@ -380,9 +380,9 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
 
     # Check result file construction
     tpl = (
-        "output/bwa.mutect2.jannovar.dkfz_bias_filter."
+        "output/{mapper}.mutect2.jannovar.dkfz_bias_filter."
         "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/out/"
-        "bwa.mutect2.jannovar.dkfz_bias_filter.eb_filter."
+        "{mapper}.mutect2.jannovar.dkfz_bias_filter.eb_filter."
         "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}"
     )
     expected = [
@@ -399,9 +399,9 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
         )
     ]
     tpl = (
-        "output/bwa.mutect2.jannovar.dkfz_bias_filter."
+        "output/{mapper}.mutect2.jannovar.dkfz_bias_filter."
         "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/log/"
-        "bwa.mutect2.jannovar.dkfz_bias_filter.eb_filter."
+        "{mapper}.mutect2.jannovar.dkfz_bias_filter.eb_filter."
         "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}{chksum}"
     )
     expected += [

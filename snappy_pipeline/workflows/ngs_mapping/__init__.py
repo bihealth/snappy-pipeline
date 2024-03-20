@@ -169,7 +169,7 @@ The configuration would be:
           pattern: "V5_noUTR"
           path: <absolute path to the Agilent V5 bed file>
         - name: Agilent SureSelect V5 + UTRs"
-          patten: "V5_UTR"
+          pattern: "V5_UTR"
           path: <absolute path to the Agilent V5 + UTRs bed file>
         - name: __default__
           path: <absolute path to another exome panel bed file>

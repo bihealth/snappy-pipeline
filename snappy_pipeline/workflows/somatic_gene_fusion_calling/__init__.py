@@ -17,7 +17,7 @@ See :ref:`ngs_mapping_step_input` for more information.
 .. note::
 
     The step requires a ``cancer_matched`` configuration & samplesheet files.
-    This is an unnecessary requirement, as might be dropped in the future.
+    This is an unnecessary requirement, which might be dropped in the future.
 
 ===========
 Step Output
