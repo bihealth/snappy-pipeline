@@ -9,6 +9,7 @@ from collections.abc import MutableMapping, MutableSequence
 import contextlib
 import datetime
 import functools
+import hashlib
 import itertools
 import json
 import logging
@@ -19,6 +20,7 @@ import shutil
 import sys
 import tempfile
 import textwrap
+import time
 
 from snakemake import get_profile_file, snakemake
 
@@ -364,6 +366,17 @@ def to_plain_python(obj):
         return obj
 
 
+def compute_md5_checksum(filename, buffer_size=65_536):
+    the_hash = None
+    with open(filename, "rb") as f:
+        the_hash = hashlib.md5()
+        chunk = f.read(buffer_size)
+        while chunk:
+            the_hash.update(chunk)
+            chunk = f.read(buffer_size)
+    return the_hash.hexdigest()
+
+
 class ParallelBaseWrapper:
     """Base class for parallel wrapper classes.
 
@@ -519,7 +532,9 @@ class ParallelBaseWrapper:
         :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
         If not defined, the default is an empty list.
         """
-        return self._get_step_config().get("ignore_chroms", [])
+        return self._get_config().get(
+            "ignore_chroms", self._get_step_config().get("ignore_chroms", [])
+        )
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
@@ -700,6 +715,20 @@ class ParallelBaseWrapper:
 
     def shutdown_logging(self):
         logging.shutdown()
+        time.sleep(1)
+
+        # Ideally, the filename might be retrieved from the logger itself:
+        # logging.getLoggerClass().root.handlers[0].baseFilename
+        if hasattr(self.snakemake.log, "log"):
+            log_filename = os.path.realpath(str(self.snakemake.log.log))
+        else:
+            log_filename = os.path.realpath(str(self.snakemake.log))
+
+        with open(log_filename + ".md5", "wt") as f:
+            print(
+                "{}  {}".format(compute_md5_checksum(log_filename), os.path.basename(log_filename)),
+                file=f,
+            )
 
     def _do_run(self, tmpdir):
         """Actual processing in ``tmpdir``.
@@ -1110,13 +1139,6 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
             for key, relative_path in dict(self.snakemake.output).items()
         }
 
-    def get_all_log(self):
-        """Return dict with all log"""
-        return {
-            key: os.path.join(self.main_cwd, relative_path)
-            for key, relative_path in dict(self.snakemake.log).items()
-        }
-
     def allow_resources_increase(self):
         """Returns true if chunks restarted with increased resources upon fail"""
         raise NotImplementedError("Override me!")
@@ -1481,7 +1503,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: **{all_input}
                 output: **{all_output}
-                log: **{all_log}
+                log: "{log.log}.merge.log"
                 threads: resource_merge_threads
                 resources:
                     time=resource_merge_time,
@@ -1489,6 +1511,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     partition=resource_merge_partition,
                 shell:
                     r'''
+                    set -x
                     set -euo pipefail  # Unofficial Bash strict mode
 
                     # Merge chunks output ------------------------------------------
@@ -1501,6 +1524,15 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     f=$(basename {merge_log})
                     md5sum $f > $f.md5
                     popd
+
+                    # Write out information about conda installation ---------------
+                    conda list >{log.conda_list}
+                    conda info >{log.conda_info}
+
+                    pushd $(dirname {log.conda_list})
+                    md5sum $(basename {log.conda_list}) >$(basename {log.conda_list}).md5
+                    md5sum $(basename {log.conda_info}) >$(basename {log.conda_info}).md5
+                    popd
                     '''
                 """
             )
@@ -1508,9 +1540,9 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
             .format(
                 all_input=repr(merge_input),
                 all_output=self.get_all_output(),
-                all_log=self.get_all_log(),
                 merge_code=self.merge_code_final(),
                 chunk_logs=" ".join(chunk_logs),
+                log=self.snakemake.log,
                 merge_log=merge_log,
             )
         )

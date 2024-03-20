@@ -121,9 +121,9 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
     mkdir -p $TMPDIR/report/$report
 
     fastp \
-        --in1 $in --out1 $out --unpaired1 $unpaired \
+        --in1 $in --out1 $out \
         $(if [[ $paired -eq 1 ]]; then \
-            echo --in2 $in2 --out2 $out2 --unpaired2 $unpaired2
+            echo --unpaired1 $unpaired --in2 $in2 --out2 $out2 --unpaired2 $unpaired2
         fi) \
         --failed_out $failed \
         --json $TMPDIR/report/$report/report.json \
@@ -197,9 +197,9 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
             echo --overrepresentation_analysis
         fi)
 
-    fns="$out $unpaired $failed"
+    fns="$out $failed"
     if [[ $paired -eq 1 ]]; then
-        fns="$fns $out2 $unpaired2"
+        fns="$unpaired $fns $out2 $unpaired2"
     fi
     fns=$(echo "$fns" | tr ' ' '\n')
     for fn in $fns ; do

@@ -8,4 +8,9 @@ dependencies:
 - htslib >=1.9
 - bcftools >=1.9
 - datrie
+# snakemake needed by the parallel wrapper
 - snakemake-minimal =7
+# needed by snakemake
+- cffi
+- numpy
+- pandas

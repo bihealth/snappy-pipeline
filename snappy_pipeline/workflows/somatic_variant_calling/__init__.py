@@ -28,30 +28,26 @@ with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
+Two ``vcf`` files are produced:
+
+- ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{mapper}.{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- bwa.mutect.P001-N1-DNA1-WES1-4
+    +-- bwa.mutect2.P001-N1-DNA1-WES1-4
     |   `-- out
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.tbi
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.md5
-    |       `-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.md5
+    |       `-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
     [...]
 
-Generally, these files will be unfiltered, i.e., contain low-quality variants and also variants
-flagged as being non-somatic.
-
-====================
-Global Configuration
-====================
-
-- If the somatic variant caller MuTect is used, then the global settings
-  ``static_data_config/dbsnp`` and ``static_data_config/cosmic`` must be given
-  as MuTect uses this in its algorithm.
-- ``static_data_config/reference/path`` must be set appropriately
+Generally, the callers are set up to return many variants to avoid missing clinically important ones.
+They are likely to contain low-quality variants and for some callers variants flagged as being non-somatic.
 
 =====================
 Default Configuration
@@ -67,8 +63,33 @@ Available Somatic Variant Callers
 
 The following somatic variant callers are currently available
 
-- ``"mutect"``
-- ``"scalpel"``
+- ``mutect2`` is the recommended caller
+- ``mutect`` & ``scalpel`` are deprecated
+- the joint variant callers ``bcftools``, ``platypus``, ``gatk`` & ``varscan`` are unsupported.
+
+==========================
+Efficient usage of mutect2
+==========================
+
+The recommended caller ``mutect2`` is implemented using a parallelisation mechanism to reduce execution time.
+During parallelisation, the genome is split into small chunks, and parallel jobs perform the somatic variant calling in their region only.
+All results are then assembled to generate the final output files.
+
+There is at least one chunk by contig defined in the reference genome, with the chunk size upper limit given by the ``window_length`` configuration option.
+So large chromosomes can be split into several chunks, while smaller contigs are left in one chunk.
+Even for large chunk size, this parallelisation can create hundreds of jobs when the reference genome contains many contigs
+(unplaced or unlocalized contigs, viral sequences, decoys, HLA alleles, ...).
+Somatic variant calling is generally meaningless for many of these small contigs.
+It is possible to configure the somatic variant calling to avoid the contigs irrelevant for downstream analysis, for example:
+
+.. code-block:: yaml
+
+  mutect2:
+    ignore_chroms: ['*_random', 'chrUn_*', '*_decoy', "EBV", "HPV*", "HBV", "HCV-*", "HIV-*", "HTLV-1", "CMV", "KSHV", "MCV", "SV40"] # GRCh38.d1.vd1
+    window_length: 300000000   # OK for WES, too large for WGS
+    keep_tmpdir: onerror       # Facilitates debugging
+    ...
+
 
 =======
 Reports

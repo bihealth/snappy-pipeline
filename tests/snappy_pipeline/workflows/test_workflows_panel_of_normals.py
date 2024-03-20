@@ -257,6 +257,14 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
             "work/bwa.cnvkit/out/bwa.cnvkit.P001-N1-DNA1-WGS1.antitargetcoverage.cnn",
             "work/bwa.cnvkit/out/bwa.cnvkit.P002-N1-DNA1-WGS1.antitargetcoverage.cnn",
         ],
+        "logs": [
+            "work/bwa.cnvkit/log/bwa.cnvkit.P001-N1-DNA1-WGS1.coverage.log",
+            "work/bwa.cnvkit/log/bwa.cnvkit.P001-N1-DNA1-WGS1.coverage.conda_list.txt",
+            "work/bwa.cnvkit/log/bwa.cnvkit.P001-N1-DNA1-WGS1.coverage.conda_info.txt",
+            "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.log",
+            "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_list.txt",
+            "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_info.txt",
+        ],
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
     assert actual == expected
@@ -320,6 +328,8 @@ def test_cnvkit_step_part_get_output_files_create_panel(panel_of_normals_workflo
     expected = {
         "panel": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn",
         "panel_md5": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn.md5",
+        "log": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz",
+        "log_md5": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("cnvkit", "create_panel")
     assert actual == expected
@@ -605,7 +615,7 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     expected = {
         "coverage": {"threads": 1, "memory": "24G", "time": "04:00:00"},
         "prepare": {"threads": 1, "memory": "24G", "time": "04:00:00"},
-        "create_panel": {"threads": 1, "memory": "24G", "time": "04:00:00"},
+        "create_panel": {"threads": 1, "memory": "32G", "time": "12:00:00"},
     }
     for action, resources in expected.items():
         for resource, value in resources.items():
@@ -668,6 +678,11 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
             expected += get_expected_log_files_dict(
                 base_out=tpl.format(mapper=mapper, substep=substep)
             ).values()
+    # add merged log
+    tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz{chksum}"
+    for mapper in ("bwa",):
+        for chksum in ("", ".md5"):
+            expected += [tpl.format(mapper=mapper, chksum=chksum)]
 
     # Access
     tpl = "output/cnvkit.access/out/cnvkit.access.{ext}"

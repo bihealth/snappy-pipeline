@@ -108,7 +108,14 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
 
 def test_optitype_step_part_get_log_file(hla_typing_workflow):
     """Tests OptiTypeStepPart.get_log_file()"""
-    expected = "work/optitype.{library_name}/log/snakemake.hla_typing.log"
+    expected = {
+        "conda_info": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt",
+        "conda_info_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt.md5",
+        "conda_list": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt",
+        "conda_list_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt.md5",
+        "log": "work/optitype.{library_name}/log/optitype.{library_name}.log",
+        "log_md5": "work/optitype.{library_name}/log/optitype.{library_name}.log.md5",
+    }
     actual = hla_typing_workflow.get_log_file("optitype", "run")
     assert actual == expected
 
@@ -176,21 +183,31 @@ def test_hla_typing_workflow(hla_typing_workflow):
     assert actual == expected
 
     # Check result file construction
-    expected = [
-        "output/optitype.P001-N1-DNA1-WGS1/out/optitype.P001-N1-DNA1-WGS1.txt",
-        "output/optitype.P001-N1-DNA1-WGS1/out/optitype.P001-N1-DNA1-WGS1.txt.md5",
-        "output/optitype.P001-T1-DNA1-WGS1/out/optitype.P001-T1-DNA1-WGS1.txt",
-        "output/optitype.P001-T1-DNA1-WGS1/out/optitype.P001-T1-DNA1-WGS1.txt.md5",
-        "output/optitype.P001-T1-RNA1-mRNA_seq1/out/optitype.P001-T1-RNA1-mRNA_seq1.txt",
-        "output/optitype.P001-T1-RNA1-mRNA_seq1/out/optitype.P001-T1-RNA1-mRNA_seq1.txt.md5",
-        "output/optitype.P002-N1-DNA1-WGS1/out/optitype.P002-N1-DNA1-WGS1.txt",
-        "output/optitype.P002-N1-DNA1-WGS1/out/optitype.P002-N1-DNA1-WGS1.txt.md5",
-        "output/optitype.P002-T1-DNA1-WGS1/out/optitype.P002-T1-DNA1-WGS1.txt",
-        "output/optitype.P002-T1-DNA1-WGS1/out/optitype.P002-T1-DNA1-WGS1.txt.md5",
-        "output/optitype.P002-T2-DNA1-WGS1/out/optitype.P002-T2-DNA1-WGS1.txt",
-        "output/optitype.P002-T2-DNA1-WGS1/out/optitype.P002-T2-DNA1-WGS1.txt.md5",
-        "output/optitype.P002-T2-RNA1-mRNA_seq1/out/optitype.P002-T2-RNA1-mRNA_seq1.txt",
-        "output/optitype.P002-T2-RNA1-mRNA_seq1/out/optitype.P002-T2-RNA1-mRNA_seq1.txt.md5",
+    samples = (
+        "P001-N1-DNA1-WGS1",
+        "P001-T1-DNA1-WGS1",
+        "P001-T1-RNA1-mRNA_seq1",
+        "P002-N1-DNA1-WGS1",
+        "P002-T1-DNA1-WGS1",
+        "P002-T2-DNA1-WGS1",
+        "P002-T2-RNA1-mRNA_seq1",
+    )
+    expected = []
+    expected += [
+        "output/optitype.{sample}/out/optitype.{sample}.{ext}{chksum}".format(
+            sample=sample, ext=ext, chksum=chksum
+        )
+        for sample in samples
+        for ext in ("txt",)
+        for chksum in ("", ".md5")
+    ]
+    expected += [
+        "output/optitype.{sample}/log/optitype.{sample}.{ext}{chksum}".format(
+            sample=sample, ext=ext, chksum=chksum
+        )
+        for sample in samples
+        for ext in ("log", "conda_list.txt", "conda_info.txt")
+        for chksum in ("", ".md5")
     ]
     actual = hla_typing_workflow.get_result_files()
     assert actual == expected

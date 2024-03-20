@@ -21,63 +21,29 @@ Gene somatic CNV calling for targeted sequencing starts off the aligned reads, i
 Step Output
 ===========
 
-Generally, the following links are generated to ``output/``.
-
-.. note:: Tool-Specific Output
-
-    As the only integrated tool is cnvkit at the moment, the output is very tailored to the result
-    of this tool.  In the future, this section will contain "common" output and tool-specific
-    output sub sections.
-
-- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.bed``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.seg``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.vcf.gz``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/report``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.diagram.pdf``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.scatter.pdf``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.heatmap.pdf``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.heatmap.chr1.pdf``
-    - ...
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.scatter.chrX.pdf``
-- ``{mapper}.cnvkit.{lib_name}-{lib_pk}/report``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.breaks.txt``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.genemetrics.txt``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.gender.txt``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.metrics.txt``
-    - ``{mapper}.cnvkit.{lib_name}-{lib_pk}.segmetrics.txt``
-
-For example:
+There is no widely used standard to report copy number alterations.
+In absence of a better solution, all CNV tools implemented in somatic pipeline output the segmentation table loosely following the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.`
+The copy number call may or may not be present, and the chromosome number is replaced by its name.
+The segmentation output is in file ``output/<mapper>.<cnv caller>.<lib name>/out/<mapper>.<cnv caller>.<lib name>_dnacopy.seg``.
 
 ::
 
     output/
-    |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007
-    |   `-- out
-    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.bed
-    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.seg
-    |       `-- bwa.cnvkit.P001-T1-DNA1-WES1-000007.vcf
-    |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016
-    |   `-- report
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.diagram.pdf
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.heatmap.pdf
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.scatter.pdf
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.heatmap.chr1.pdf
-    |       |-- ...
-    |       `-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.scatter.chrX.pdf
-    |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016
-    |   `-- report
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.breaks.txt
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.genemetrics.txt
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.gender.txt
-    |       |-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.metrics.txt
-    |       `-- bwa.cnvkit.P002-T1-DNA1-WES1-000016.segmetrics.txt
-    [...]
+    +-- bwa.cnvkit.P001-N1-DNA1-WES1
+    |   |-- out
+    |   |   |-- bwa.cnvkitP001-N1-DNA1-WES1_dnacopy.seg
+            [...]
 
 Note that tool ``cnvetti`` doesn't follow the snappy convention above:
 the tool name is followed by an underscore & the action, where the action is one of ``coverage``, ``segment`` and ``postprocess``.
-For example, the output directory would contain a directory named ``bwa.cnvetti_coverage.P002-T1-DNA1-WES1-000016``.
+For example, the output directory would contain a directory named ``bwa.cnvetti_coverage.P002-T1-DNA1-WES1``.
+
+.. note:: Tool-Specific Output
+
+    Each tool produces its own set of outputs, generally not in standard format.
+    Some of these files are linked from ``work`` to ``output``, but not necessarily all of them.
+    Some tools (for example ``cnvkit``) also produces a report, with tables and figures.
+
 
 =====================
 Default Configuration
@@ -92,6 +58,10 @@ Available Somatic Targeted CNV Caller
 =====================================
 
 - ``cnvkit``
+- ``sequenza``
+- ``purecn``. Note that ``purecn`` requires a panel of normals and a second set of variants called by ``mutect2``, that includes germline ones.
+- ``copywriter`` (deprecated, the `R` package was removed with Bioconductor release 3.18)
+- ``cnvetti_on_target`` & ``cnvetti_off_target`` upsupported
 
 """
 

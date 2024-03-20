@@ -1,6 +1,59 @@
 # -*- coding: utf-8 -*-
 """Implementation of the ``somatic_variant_filtration`` step
 
+The current implementation supports two filtration schema:
+
+- the *legacy* schema, now deprecated, always runs the `DKFZBiasFilter <https://github.com/DKFZ-ODCF/DKFZBiasFilter>`_ &
+  `EBFilter <https://doi.org/10.1093/nar/gkt126>`_, and produces files for all combinations of available filters.
+- the *new* schema focuses on flexibility, allows any combination of filters, and returns a single fitlered file for each sample.
+
+The *new* schema is used when the configuration option ``filter_list`` is not empty.
+The following document describes only this *new* schema.
+
+==========
+Step Input
+==========
+
+The step requires ``vcf`` files from either the ``somatic_variant_calling`` or ``somatic_variant_annotation`` steps.
+In the former case, the configuration option ``has_annotation`` must be set to ``False``.
+
+In both cases, it will use the regular output ``vcf`` file, not ``*.full.vcf.gz``.
+
+===========
+Step Output
+===========
+
+For each tumor DNA NGS library with name ``lib_name`` and each read mapper
+``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
+pipeline step will create a directory ``output/{mapper}.{var_caller}.{annotator}.{lib_name}/out``
+with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
+
+Two ``vcf`` files are produced:
+
+- ``{mapper}.{var_caller}.{annotator}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{mapper}.{var_caller}.{annotator}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+
+When the ``somatic_variant_annotation`` step has been omitted, and the filtration is done directly from the output of the ``somatic_variant_calling`` step,
+then the output files are stored in the ``output/{mapper}.{var_caller}.{lib_name}/out`` directory, under the names ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` &
+``{mapper}.{var_caller}.{lib_name}.full.vcf.gz``
+
+For example, it might look as follows for the example from above:
+
+::
+
+    output/
+    +-- bwa.mutect2.vep.filtered.P001-N1-DNA1-WES1
+    |   `-- out
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.md5
+    |       `-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.tbi
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.md5
+    |       `-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.tbi.md5
+    [...]
+
 =====================
 Default Configuration
 =====================
@@ -9,43 +62,53 @@ The default configuration is as follows.
 
 .. include:: DEFAULT_CONFIG_somatic_variant_filtration.rst
 
-=========
-Important
-=========
-
-Because the EB Filter step is so time consuming, the data going
-can be heavily prefiltered! (e.g. using Jannovar with the offExome flag).
-
-TODO: document filter, for now see the eb_filter wrapper!
-
 =======
-Concept
+Filters
 =======
-All variants are annotated with the dkfz-bias-filter to remove sequencing
-and PCR artifacts. The variants annotatated with EBFilter are variable, i.e.
-only variants that have the PASS flag set because we assume only those will
-be kept.
 
-We borrowed the general workflow from variant_filtration, i.e. working with
-pre-defined filter sets and exon/region lists.
+The following filters are implemented:
 
-========
-Workflow
-========
+- ``dkfz``: uses orientiation biases to remove sequencing & PCR artifacts.
+  The current implementation doesn't allow any parametrisation of this filter.
+  This filter will add ``bSeq`` or ``bPcr`` to the FILTER column of rejected variants.
+- ``ebfilter``: Bayesian statistical model to score variants.
+  Variants with a score lower than ``ebfilter_threshold`` are rejected.
+  The scoring algorithm can be parameterised from the coniguration.
+  This filter will add ``ebfilter_<n>`` to the FILTER column of rejected variants.
+- ``bcftools``: flexible filter based on `bcftools expressions <https://samtools.github.io/bcftools/bcftools.html#expressions>`_.
+  The expression can be designed to ``include`` or ``exclude`` variants.
+  This filter will add ``bcftools_<n>`` to the FILTER column of rejected variants.
+- ``regions``: filter to exclude variants outside of user's defined regions.
+  Typically used to reject variants outside of coding regions.
+  This filter will add ``regions_<n>`` to the FILTER column of rejected variants.
+- ``protected``: anti-filter to avoid variants in protected regions to be otherwise filtered out.
+  This filter "whitelists" variants in specific regions. This is valuable to protect
+  known drivers against being filtered out, even if there is little experimental support for them.
+  This filter will add ``PROTECTED`` to the FILTER column of rejected variants.
 
-* 1. Do the filtering genome wide (this file needs to be there, always)
+In the above description, ``<n>`` is here the sequence number of the filter in the filter list.
 
-    - dkfz-ebfilter-filterset1-genomewide
+The filters can be used or not, and can be used multiple times. For example, it is possible to
+use the ``bcftools`` filter to reject differentially potential FFPE artifacts. The filter list would then be:
 
-* 2. optionally, subset to regions defined in bed file, which return
+.. code-block:: yaml
 
-    - dkfz-ebfilter-filterset1-regions1
+  filter_list:
+  - dkfz: {}
+  - ebfilter:
+    ebfilter_threshold: 2.4
+  - bcftools:
+    exclude: "AD[1:0]+AD[1:1]<50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.05"
+  - bcftools:
+    exclude: "((REF='C' & ALT='T') | (REF='G' & ALT='A')) & AD[1:1]/(AD[1:0]+AD[1:1])<0.10"
+  - protected:
+    path_bed: hotspots_locii.bed
 
-and so on for filterset1 to n
+This list of filters would apply the DKFZBiasFilter, the EBFilter, reject all variants with depth lower than 50, less than 5 reads supporting the alternative allele, or with a variant allele fraction below 5%.
+It would also reject all C-to-T and G-to-A variants with a VAF lower than 10%, because they might be FFPE artifacts.
+All variants overlapping with hotspots locii would be protected against filtration.
 
-filterset1: filter bPcr, bSeq flags from dkfz-bias-filter
-
-filterset2: additionally filter variants with EBscore < x, x is configurable
+Note that the parallelisation of ``ebfilter`` has been removed, even though this operation can be slow when there are many variants (from WGS data for example).
 """
 
 from collections import OrderedDict
@@ -86,14 +149,14 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   somatic_variant_filtration:
-    path_somatic_variant: ../somatic_variant_annotation
-    path_ngs_mapping: ../ngs_mapping
-    tools_ngs_mapping: null
-    tools_somatic_variant_calling: null
-    tools_somatic_variant_annotation: null
+    path_somatic_variant: ../somatic_variant_annotation # When annotations are present, otherwise ../somatic_variant_calling
+    path_ngs_mapping: ../ngs_mapping                    # Needed for dkfz & ebfilter
+    tools_ngs_mapping: null                             # Default: use those defined in ngs_mapping step
+    tools_somatic_variant_calling: null                 # Default: use those defined in somatic_variant_calling step
+    tools_somatic_variant_annotation: null              # Default: use those defined in somatic_variant_annotation step
     has_annotation: True
-    filter_sets:
-    # no_filter: no_filters    # implicit, always defined
+    filter_sets:                                        # Deprecated filtration method, use filter_list
+    # no_filter: no_filters                             # implicit, always defined
       dkfz_only: ''  # empty
       dkfz_and_ebfilter:
         ebfilter_threshold: 2.4
@@ -103,37 +166,17 @@ step_config:
       dkfz_and_oxog:
         vaf_threshold: 0.08
         coverage_threshold: 5
-    exon_lists: {}
-    # genome_wide: null         # implicit, always defined
+    exon_lists: {}                                     # Deprecated filtration method, use filter_list
+    # genome_wide: null                                # implicit, always defined
     # ensembl74: path/to/ensembl47.bed
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605    # herpes virus
-    - hs37d5       # GRCh37 decoy
-    - chrEBV       # Eppstein-Barr Virus
-    - '*_decoy'    # decoy contig
-    - 'HLA-*'      # HLA genes
-    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
-    eb_filter:
+    eb_filter:                                         # Deprecated filter, use in filter_list
       shuffle_seed: 1
       panel_of_normals_size: 25
       min_mapq: 20
       min_baseq: 15
-      # Parallelization configuration
-      window_length: 10000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
     filter_list: []
     # Available filters
-    # dkfz: {}                    # Not parametrisable (?)
+    # dkfz: {}                                         # Not parametrisable
     # ebfilter:
     #   ebfilter_threshold: 2.4
     #   shuffle_seed: 1
@@ -141,10 +184,12 @@ step_config:
     #   min_mapq: 20
     #   min_baseq: 15
     # bcftools:
-    #   include: ""               # Expression to be used in bcftools view --include
-    #   exclude: ""               # Expression to be used in bcftools view --exclude
+    #   include: ""                                   # Expression to be used in bcftools view --include
+    #   exclude: ""                                   # Expression to be used in bcftools view --exclude
     # regions:
-    #   path_bed: REQUIRED        # Bed file of regions to be considered (variants outside are filtered out)
+    #   path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    # protected:
+    #   path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
 """
 
 
@@ -363,6 +408,11 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
     filter_name = "regions"
 
 
+class OneFilterProtectedStepPart(OneFilterStepPart):
+    name = "one_protected"
+    filter_name = "protected"
+
+
 class LastFilterStepPart(SomaticVariantFiltrationStepPart):
     """Mark last filter as final output"""
 
@@ -377,13 +427,24 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         filter_nb = len(self.config["filter_list"])
-        filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
-        return os.path.join(
+        if filter_nb == 0:
+            return {}
+        filter_names = [list(filter_name.keys())[0] for filter_name in self.config["filter_list"]]
+        filter_name = filter_names[filter_nb - 1]
+        vcf = os.path.join(
             "work",
             self.name_pattern,
             "out",
             self.name_pattern + f".{filter_name}_{filter_nb}.vcf.gz",
         )
+        prefix = os.path.join("work", self.name_pattern, "log", self.name_pattern)
+        logs = [
+            prefix + "." + filter_name + "_" + str(filter_nb + 1) + "." + e + m
+            for filter_nb, filter_name in enumerate(filter_names)
+            for e in ("log", "conda_list.txt", "conda_info.txt")
+            for m in ("", ".md5")
+        ]
+        return {"vcf": vcf, "logs": logs}
 
     @dictify
     def get_output_files(self, action):
@@ -394,6 +455,7 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
             name_pattern += ".{annotator}"
         name_pattern += ".filtered.{tumor_library}"
         vcf = os.path.join("work", name_pattern, "out", name_pattern)
+        merged_log = os.path.join("work", name_pattern, "log", name_pattern + ".merged.tar.gz")
         return {
             "vcf": vcf + ".vcf.gz",
             "vcf_tbi": vcf + ".vcf.gz.tbi",
@@ -403,6 +465,8 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
             "full_tbi": vcf + ".full.vcf.gz.tbi",
             "full_md5": vcf + ".full.vcf.gz.md5",
             "full_tbi_md5": vcf + ".full.vcf.gz.tbi.md5",
+            "log": merged_log,
+            "log_md5": merged_log + ".md5",
         }
 
     @dictify
@@ -636,7 +700,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="01:00:00",  # 6 days
+            time="04:00:00",  # 4 hours
             memory=f"{8 * 1024}M",
         )
 
@@ -740,8 +804,10 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield key, self.base_path_out.format(
                     step="apply_filters",
+                    tumor_library=wildcards.tumor_library,
                     mapper=wildcards.mapper,
                     var_caller=wildcards.var_caller,
+                    annotator=wildcards.get("annotator", ""),
                     filter_set=wildcards.filter_set,
                     exon_list="genome_wide",
                     ext=ext,
@@ -798,6 +864,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 ApplyFiltersStepPart,
                 FilterToExonsStepPart,
@@ -845,6 +912,8 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         else:
             annotators = []
 
+        log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
+
         if len(self.config["filter_list"]) > 0:
             name_pattern = "{mapper}.{caller}"
             if self.config["has_annotation"]:
@@ -856,7 +925,21 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 mapper=mappers,
                 caller=callers,
                 annotator=annotators,
-                ext=EXT_VALUES,
+                ext=[f + e for f in ("", ".full") for e in EXT_VALUES],
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                ext=log_ext,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".merged.tar.gz{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                ext=("", ".md5"),
             )
         else:
             filter_sets = ["no_filter"]
@@ -879,6 +962,15 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 filter_set=filter_sets,
                 exon_list=exon_lists,
                 ext=EXT_VALUES,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                filter_set=filter_sets,
+                exon_list=exon_lists,
+                ext=log_ext,
             )
 
         # TODO: filtration for joint calling not implemented yet
