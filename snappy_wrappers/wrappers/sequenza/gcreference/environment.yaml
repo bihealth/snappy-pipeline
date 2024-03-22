@@ -2,6 +2,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python =3.9
-  - sequenza-utils
-  - samtools
+  - python==3.9.19
+  - sequenza-utils==3.0.0
+  - samtools==1.19.2

@@ -1,5 +1,4 @@
 channels:
   - bioconda
 dependencies:
-  - expansionhunter
-
+  - expansionhunter==3.2.2

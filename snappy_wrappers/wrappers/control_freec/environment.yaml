@@ -1,8 +1,8 @@
 channels:
-- conda-forge
-- bioconda
-- base
+  - conda-forge
+  - bioconda
+  - base
 dependencies:
-- control-freec
-- sambamba
-- bcftools
+  - control-freec==11.6
+  - sambamba==1.0
+  - bcftools==1.19

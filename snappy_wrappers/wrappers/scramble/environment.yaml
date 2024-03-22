@@ -1,6 +1,7 @@
 channels:
+  - conda-forge
   - bioconda
 dependencies:
-  - scramble >=1.0.2
-  - bcftools ==1.15.1
-  - htslib ==1.15.1
+  - scramble==1.0.2
+  - bcftools==1.15.1
+  - htslib==1.15.1

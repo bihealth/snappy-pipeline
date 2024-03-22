@@ -1,8 +1,8 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
+  - r
 dependencies:
-- bcftools >=1.9
-- htslib >=1.9
-- delly ==1.1.3
+  - bcftools==1.19
+  - htslib==1.19.1
+  - delly==1.1.3

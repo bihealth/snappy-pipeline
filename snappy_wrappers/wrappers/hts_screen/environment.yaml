@@ -1,9 +1,9 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
+  - r
 dependencies:
-- bwa
-- seqtk
-- kraken
-- gawk
+  - bwa==0.7.17
+  - seqtk==1.4
+  - kraken==1.1.1
+  - gawk==5.3.0

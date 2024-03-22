@@ -1,11 +1,11 @@
 channels:
-- conda-forge
-- bioconda
-- r
-- http://conda.cubi.bihealth.org/cubiconda
+  - conda-forge
+  - bioconda
+  - r
+  - http://conda.cubi.bihealth.org/cubiconda
 dependencies:
-- gatk_nonfree ==3.7
-- bcftools ==1.9
-- samtools ==1.9
-- htslib ==1.9
-- bedtools =2.27.1
+  - gatk_nonfree==3.7
+  - bcftools==1.9
+  - samtools==1.9
+  - htslib==1.9
+  - bedtools==2.27.1

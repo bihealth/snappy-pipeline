@@ -1,5 +1,5 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- peddy ==0.4.8
+  - peddy==0.4.8

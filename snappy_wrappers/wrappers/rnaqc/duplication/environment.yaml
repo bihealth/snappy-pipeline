@@ -1,6 +1,6 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- samtools
-- rseqc
+  - samtools==1.19.2
+  - rseqc==5.0.3

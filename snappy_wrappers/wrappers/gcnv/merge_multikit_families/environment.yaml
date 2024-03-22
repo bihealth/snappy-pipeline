@@ -2,10 +2,10 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - attrs
-  - logzero
-  - ncls
-  - pandas
-  - vcfpy
-  - htslib
-  - python=3.10
+  - attrs==23.2.0
+  - logzero==1.7.0
+  - ncls==0.0.68
+  - pandas==2.2.1
+  - vcfpy==0.13.8
+  - htslib==1.19.1
+  - python==3.10.14

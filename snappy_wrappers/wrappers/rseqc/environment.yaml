@@ -1,4 +1,4 @@
 channels:
-- bioconda
+  - bioconda
 dependencies:
-- rseqc
+  - rseqc==5.0.3

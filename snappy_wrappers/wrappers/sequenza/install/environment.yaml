@@ -2,17 +2,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python =3.9
-  - r-base
-  - r-remotes
-  # sequenza requirements (+copynumber)
-  - r-pbapply
-  - r-squash
-  - r-iotools ==0.3-2    # See https://groups.google.com/g/sequenza-user-group/c/UA5bBNBeN18?pli=1
-  - r-readr
-  - r-seqminer
-  - r-data.table
-  # copynumber requirements
-  - bioconductor-S4Vectors
-  - bioconductor-IRanges
-  - bioconductor-GenomicRanges
+  - python==3.9.19
+  - r-base==4.3.3
+  - r-remotes==2.5.0
+  - r-pbapply==1.7_2
+  - r-squash==1.0.9
+  - r-iotools==0.3_2
+  - r-readr==2.1.5
+  - r-seqminer==9.4
+  - r-data.table==1.15.2
+  - bioconductor-s4vectors==0.40.2
+  - bioconductor-iranges==2.36.0
+  - bioconductor-genomicranges==1.54.1

@@ -1,5 +1,5 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- ensembl-vep ==109.3-0
+  - ensembl-vep==109.3

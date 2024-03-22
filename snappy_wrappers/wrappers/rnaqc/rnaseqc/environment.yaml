@@ -1,7 +1,7 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- samtools
-- rna-seqc ==1.1.8
-- openjdk=7
+  - samtools==1.19.2
+  - rna-seqc==1.1.8
+  - openjdk==7.0.161

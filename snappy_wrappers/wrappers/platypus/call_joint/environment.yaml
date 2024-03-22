@@ -1,7 +1,7 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- python =2
-- platypus-variant ==0.8.1.1
-- htslib ==1.5
+  - python==2.7.15
+  - platypus-variant==0.8.1.1
+  - htslib==1.5

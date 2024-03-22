@@ -1,6 +1,6 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
+  - r
 dependencies:
-- manta ==1.5.0
+  - manta==1.5.0
