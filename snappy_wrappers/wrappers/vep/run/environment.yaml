@@ -1,5 +1,4 @@
 channels:
-    - bioconda
+  - bioconda
 dependencies:
-    - ensembl-vep=102
-
+  - ensembl-vep==102.0

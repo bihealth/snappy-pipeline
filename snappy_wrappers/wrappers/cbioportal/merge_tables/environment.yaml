@@ -1,14 +1,14 @@
 name: merge_tables
 
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
+  - r
 
 dependencies:
-- r-base
-- r-tidyverse
-- r-igraph
-- bioconductor-genomicranges
-- bioconductor-genomicfeatures
-- bioconductor-deseq2
+  - r-base==4.3.3
+  - r-tidyverse==2.0.0
+  - r-igraph==2.0.2
+  - bioconductor-genomicranges==1.54.1
+  - bioconductor-genomicfeatures==1.54.1
+  - bioconductor-deseq2==1.42.0
