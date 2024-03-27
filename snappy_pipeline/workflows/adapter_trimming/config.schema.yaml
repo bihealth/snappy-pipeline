@@ -2,6 +2,11 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 
 description: configuration file for adapter_trimming step
 
+definitions:
+  tfbool:
+    type: string
+    enum: ["t", "f"]
+
 type: object
 properties:
   adapter_trimming:
@@ -39,10 +44,10 @@ properties:
           interleaved:
             description: "(int) t/f overrides interleaved autodetection."
             oneOf:
-              - type: boolean
+              - $ref: #/definitions/tfbool
               - type: string
-                enum: [ "auto" ]
-            default: auto
+                enum: [ "auto"]
+            default: "auto"
           qin:
             description: "Input quality offset: 33 (Sanger), 64, or auto."
             type: string
@@ -53,12 +58,12 @@ properties:
               (cu) Process non-AGCT IUPAC reference bases by making all
               possible unambiguous copies.  Intended for short motifs
               or adapter barcodes, as time/memory use is exponential.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           nzo:
             description: "Only write statistics about ref sequences with nonzero hits."
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           qout:
             description: "Output quality offset: 33 (Sanger), 64, or auto."
             type: string
@@ -71,20 +76,20 @@ properties:
             default: 3
           rename:
             description: "Rename reads to indicate which sequences they matched."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           refnames:
             description: "Use names of reference files rather than scaffold IDs."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           trd:
             description: "Truncate read and ref names at the first whitespace."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           ordered:
             description: "Set to true to output reads in same order as input."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
 
           # Histogram output parameters:
           gcbins:
@@ -108,8 +113,8 @@ properties:
           # Histograms for mapped sam/bam files only:
           histbefore:
             description: "Calculate histograms from reads before processing."
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           idbins:
             description: "Number idhist bins.  Set to 'auto' to use read length."
             oneOf:
@@ -128,16 +133,16 @@ properties:
             default: 21
           rcomp:
             description: "Look for reverse-complements of kmers in addition to forward kmers."
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
 
           # Processing parameters:
           maskmiddle:
             description: >
               (mm) Treat the middle base of a kmer as a wildcard, to
               increase sensitivity in the presence of errors.
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           minkmerhits:
             description: >
               (mkh) Reads need at least this many matching kmers
@@ -192,41 +197,41 @@ properties:
               (fn) Forbids matching of read kmers containing N.
               By default, these will match a reference 'A' if
               hdist>0 or edist>0, to increase sensitivity.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           removeifeitherbad:
             description: >
               (rieb) Paired reads get sent to 'outmatch' if either is
               match (or either is trimmed shorter than minlen).
               Set to false to require both.
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           trimfailures:
             description: >
               Instead of discarding failed reads, trim them to 1bp.
               This makes the statistics a bit odd.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           findbestmatch:
             description: >
               (fbm) If multiple matches, associate read with sequence
               sharing most kmers.  Reduces speed.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           skipr1:
             description: "Don't do kmer-based operations on read 1."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           skipr2:
             description: "Don't do kmer-based operations on read 2."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           ecco:
             description: >
               For overlapping paired reads only.  Performs error-
               correction with BBMerge prior to kmer operations.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           # Trimming/Filtering/Masking parameters:
           # Note - if ktrim, kmask, and ksplit are unset, the default behavior is kfilter.
           # All kmer processing modes are mutually exclusive.
@@ -251,8 +256,8 @@ properties:
             default: ""
           maskfullycovered:
             description: "(mfc) Only mask bases that are fully covered by kmers."
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           ksplit:
             description: >
               For single-ended reads only.  Reads will be split into
@@ -260,8 +265,8 @@ properties:
               read, it will be trimmed instead.  Singletons will go to
               out, and pairs will go to outm.  Do not use ksplit with
               other operations such as quality-trimming or filtering.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           mink:
             description: >
               Look for shorter kmers at read tips down to this length,
@@ -334,8 +339,8 @@ properties:
             description: >
               (outputtrimmedtomatch) Output reads trimmed to shorter
               than minlength to outm rather than discarding.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           tp:
             description: >
               (trimpad) Trim this much extra around matching kmers.
@@ -344,13 +349,13 @@ properties:
           tbo:
             description: >
               (trimbyoverlap) Trim adapters based on where paired reads overlap.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           strictoverlap:
             description: >
               Adjust sensitivity for trimbyoverlap mode.
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           minoverlap:
             description: >
               Require this many bases of overlap for detection.
@@ -366,8 +371,8 @@ properties:
             description: >
               (trimpairsevenly) When kmer right-trimming, trim both
               reads to the minimum length of either.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           forcetrimleft:
             description: >
               (ftl) If positive, trim bases to the left of this position
@@ -417,25 +422,25 @@ properties:
             description: >
               Use average GC of paired reads.    Deprecated option?
               Also affects gchist.
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           tossjunk:
             description: >
               Discard reads with invalid characters as bases.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           swift:
             description: >
               Trim Swift sequences: Trailing C/T/N R1, leading G/A/N R2.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
 
           # Header-parsing parameters - these require Illumina headers:
           chastityfilter:
             description: >
               (cf) Discard reads with id containing ' 1:Y:' or ' 2:Y:'.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           barcodefilter:
             description: |
               Remove reads with unexpected barcodes if barcodes is set,
@@ -445,11 +450,9 @@ properties:
                 t:     Remove reads with bad barcodes.
                 f:     Ignore barcodes.
                 crash: Crash upon encountering bad barcodes.
-            oneOf:
-              - type: boolean
-              - type: string
-                enum: [ "crash" ]
-            default: false
+            type: string
+            enum: [ "t", "f", "crash" ]
+            default: f
           barcodes:
             description: >
               File of barcodes.
@@ -538,11 +541,9 @@ properties:
                 l:  (left) Trim low entropy on the left end only.
                 rl: (both) Trim low entropy on both ends.
               NOTE: If set, entropytrim overrides entropymask.
-            oneOf:
-              - type: boolean
-              - type: string
-                enum: [ "f", "r", "l", "rl" ]
-            default: false
+            type: string
+            enum: [ "f", "r", "l", "rl" ]
+            default: f
           entropymask:
             description: |
               Values:
@@ -558,19 +559,19 @@ properties:
               of 0-41 and is reported as quality scores, so the output
               should be fastq or fasta+qual.
               NOTE: If set, entropytrim overrides entropymask.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           # Cardinality estimation:
           cardinality:
             description: >
               (loglog) Count unique kmers using the LogLog algorithm.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           cardinalityout:
             description: >
               (loglogout) Count unique kmers in output reads.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           loglogk:
             description: >
               Use this kmer length for counting.
@@ -624,8 +625,8 @@ properties:
           dedup:
             description: >
               enable deduplication to drop the duplicated reads/pairs
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           dup_calc_accuracy:
             description: >
               accuracy level to calculate duplication (1~6), higher level uses more memory (1G, 2G, 4G, 8G, 16G, 24G). Default 1 for no-dedup mode, and 3 for dedup mode. (int [=0])
@@ -636,13 +637,13 @@ properties:
           dont_eval_duplication:
             description: >
               don't evaluate duplication rate to save time and use less memory.
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           trim_poly_g:
             description: >
               force polyG tail trimming, by default trimming is automatically enabled for Illumina NextSeq/NovaSeq data
-            type: boolean
-            default: true
+            $ref: #/definitions/tfbool
+            default: t
           poly_g_min_len:
             description: >
               the minimum length to detect polyG in the read tail. 10 by default. (int [=10])
@@ -651,8 +652,8 @@ properties:
           trim_poly_x:
             description: >
               enable polyX trimming in 3' ends.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           poly_x_min_len:
             description: >
               the minimum length to detect polyX in the read tail. 10 by default. (int [=10])
@@ -661,18 +662,18 @@ properties:
           cut_front:
             description: >
               move a sliding window from front (5') to tail, drop the bases in the window if its mean quality < threshold, stop otherwise.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           cut_tail:
             description: >
               move a sliding window from tail (3') to front, drop the bases in the window if its mean quality < threshold, stop otherwise.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           cut_right:
             description: >
               move a sliding window from front to tail, if meet one window with mean quality < threshold, drop the bases in the window and the right part, and then stop.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           cut_front_window_size:
             description: >
               the window size option of cut_front, default to cut_window_size if not specified (int [=4])
@@ -706,8 +707,8 @@ properties:
           disable_quality_filtering:
             description: >
               quality filtering is enabled by default. If this option is specified, quality filtering is disabled
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           qualified_quality_phred:
             description: >
               the quality value that a base is qualified. Default 15 means phred quality >=Q15 is qualified. (int [=15])
@@ -731,8 +732,8 @@ properties:
           disable_length_filtering:
             description: >
               length filtering is enabled by default. If this option is specified, length filtering is disabled
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           length_required:
             description: >
               reads shorter than length_required will be discarded, default is 15. (int [=15])
@@ -746,8 +747,8 @@ properties:
           low_complexity_filter:
             description: >
               enable low complexity filter. The complexity is defined as the percentage of base that is different from its next base (base[i] != base[i+1]).
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           complexity_threshold:
             description: >
               the threshold for low complexity filter (0~100). Default is 30, which means 30% complexity is required. (int [=30])
@@ -771,8 +772,8 @@ properties:
           correction:
             description: >
               enable base correction in overlapped regions (only for PE data), default is disabled
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           overlap_len_require:
             description: >
               the minimum length to detect overlapped region of PE reads. This will affect overlap analysis based PE merge, adapter trimming and correction. 30 by default. (int [=30])
@@ -791,8 +792,8 @@ properties:
           umi:
             description: >
               enable unique molecular identifier (UMI) preprocessing
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
           umi_loc:
             description: >
               specify the location of UMI, can be (index1/index2/read1/read2/per_index/per_read, default is none (string [=])
@@ -819,8 +820,8 @@ properties:
           overrepresentation_analysis:
             description: >
               enable overrepresented sequence analysis.
-            type: boolean
-            default: false
+            $ref: #/definitions/tfbool
+            default: f
 
 required:
   - adapter_trimming
