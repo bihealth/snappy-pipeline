@@ -1,0 +1,120 @@
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.varfish_export_external import VarfishExportExternalWorkflow
+
+__author__ = "Max Xiaohang Zhao <max.zhao@charite.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VarfishExportExternalWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    varfish_export_write_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# Export for VarFish ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run link in external dragen files
+rule varfish_export_link_in_external_run:
+    input:
+        wf.get_input_files("link_in_external", "run")
+    output:
+        wf.get_output_files("link_in_external", "run")
+    run:
+        wf.substep_dispatch("link_in_external", "run", wildcards, output)
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule varfish_export_write_pedigree_run:
+    input:
+        unpack(wf.get_input_files("write_pedigree_with_sample_name", "run")),
+    output:
+        wf.get_output_files("write_pedigree_with_sample_name", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree_with_sample_name", "run", wildcards, output)
+
+
+# Run varfish-annotator-cli annotate-seqvars -----------------------------------
+
+
+rule varfish_export_mehari_annotate_seqvars:
+    input:
+        unpack(wf.get_input_files("mehari", "annotate_seqvars")),
+    output:
+        **wf.get_output_files("mehari", "annotate_seqvars"),
+    threads: wf.get_resource("mehari", "annotate_seqvars", "threads")
+    resources:
+        time=wf.get_resource("mehari", "annotate_seqvars", "time"),
+        memory=wf.get_resource("mehari", "annotate_seqvars", "memory"),
+        partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
+        tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
+    log:
+        **wf.get_log_file("mehari", "annotate_seqvars"),
+    params:
+        **{"args": wf.get_params("mehari", "annotate_seqvars")},
+    wrapper:
+        wf.wrapper_path("mehari/annotate_seqvars")
+
+
+# Run varfish-annotator-cli annotate-strucvars ---------------------------------
+
+
+rule varfish_export_mehari_annotate_strucvars:
+    input:
+        unpack(wf.get_input_files("mehari", "annotate_strucvars")),
+    output:
+        **wf.get_output_files("mehari", "annotate_strucvars"),
+    threads: wf.get_resource("mehari", "annotate_strucvars", "threads")
+    resources:
+        time=wf.get_resource("mehari", "annotate_strucvars", "time"),
+        memory=wf.get_resource("mehari", "annotate_strucvars", "memory"),
+        partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
+        tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
+    log:
+        **wf.get_log_file("mehari", "annotate_strucvars"),
+    params:
+        **{"args": wf.get_params("mehari", "annotate_strucvars")},
+    wrapper:
+        wf.wrapper_path("mehari/annotate_strucvars")
+
+
+# Gather statistics about the alignment ---------------------------------------
+
+
+# rule varfish_export_mehari_bam_qc:
+#     input:
+#         unpack(wf.get_input_files("mehari", "bam_qc")),
+#     output:
+#         **wf.get_output_files("mehari", "bam_qc"),
+#     threads: wf.get_resource("mehari", "bam_qc", "threads")
+#     resources:
+#         time=wf.get_resource("mehari", "bam_qc", "time"),
+#         memory=wf.get_resource("mehari", "bam_qc", "memory"),
+#         partition=wf.get_resource("mehari", "bam_qc", "partition"),
+#         tmpdir=wf.get_resource("mehari", "bam_qc", "tmpdir"),
+#     log:
+#         **wf.get_log_file("mehari", "bam_qc"),
+#     params:
+#         **{"args": wf.get_params("mehari", "bam_qc")},
+#     wrapper:
+#         wf.wrapper_path("mehari/bam_qc")
