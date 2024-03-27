@@ -142,8 +142,8 @@ import os
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.base import validate_config
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
