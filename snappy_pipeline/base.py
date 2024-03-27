@@ -7,9 +7,11 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 import os
 import sys
+from typing import Any
 import warnings
 
 import ruamel.yaml as ruamel_yaml
+from snakemake.utils import validate
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -66,6 +68,11 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
             if dirname not in lookup_paths:
                 lookup_paths.append(dirname)
     return resolved, tuple(lookup_paths), tuple(config_files)
+
+
+def validate_config(config: dict[Any, Any], schema_path: str, file=sys.stderr):
+    print(f"\nValidating config.yaml using {schema_path}", file=file)
+    validate(config, schema_path)
 
 
 def print_config(config, file=sys.stderr):
