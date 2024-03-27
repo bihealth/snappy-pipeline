@@ -437,7 +437,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{trimmer}.{{library_name}}"
-        validate_config({"adapter_trimming": self.config}, "adapter_trimming")
+        schema_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "config.schema.yaml"))
+        validate_config({"adapter_trimming": self.config}, schema_path)
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
