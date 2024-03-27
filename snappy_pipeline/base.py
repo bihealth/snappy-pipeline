@@ -2,14 +2,16 @@
 """Basic utility code for snappy_pipeline
 """
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
-from copy import deepcopy
 import os
 import sys
 import warnings
+from collections import OrderedDict
+from collections.abc import MutableMapping
+from copy import deepcopy
+from typing import Any
 
 import ruamel.yaml as ruamel_yaml
+from snakemake.utils import validate
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -66,6 +68,13 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
             if dirname not in lookup_paths:
                 lookup_paths.append(dirname)
     return resolved, tuple(lookup_paths), tuple(config_files)
+
+
+def validate_config(config: dict[Any, Any], workflow: str, file=sys.stderr):
+    print(f"\nValidating config.yaml for {workflow}", file=file)
+    config_schema_path = os.path.join(os.path.dirname(snakefile_path(workflow)),
+                                      "config.schema.yaml")
+    validate(config, config_schema_path)
 
 
 def print_config(config, file=sys.stderr):

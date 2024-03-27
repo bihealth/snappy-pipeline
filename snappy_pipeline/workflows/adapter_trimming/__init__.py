@@ -143,6 +143,7 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.base import validate_config
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -436,6 +437,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{trimmer}.{{library_name}}"
+        validate_config({"adapter_trimming": self.config}, "adapter_trimming")
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
