@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - base
 dependencies:
   - control-freec==11.6
   - sambamba==1.0
