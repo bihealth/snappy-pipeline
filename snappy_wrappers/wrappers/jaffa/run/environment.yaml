@@ -1,7 +1,6 @@
 channels:
 - conda-forge
 - bioconda
-- r
 dependencies:
 - jaffa==1.09
 - r-base==4.2.2
