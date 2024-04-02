@@ -3,6 +3,6 @@ channels:
   - bioconda
 dependencies:
   - samtools==1.12
-  - r==4.0
+  - r-base==4.0
   - bioconductor-dupradar==1.20.0
   - freetype==2.9.1

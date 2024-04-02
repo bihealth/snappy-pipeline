@@ -3,7 +3,7 @@ channels:
   - bioconda
   - r
 dependencies:
-  - r==4.2
+  - r-base==4.2
   - r-rcpp==1.0.12
   - r-dplyr==1.1.4
   - r-assertthat==0.2.1

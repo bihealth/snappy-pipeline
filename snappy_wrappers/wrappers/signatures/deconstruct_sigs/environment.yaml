@@ -2,7 +2,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - r==4.3
+  - r-base==4.3
   - r-tidyverse==2.0.0
   - r-deconstructsigs==1.9.0
   - bioconductor-bsgenome.hsapiens.ucsc.hg19==1.4.3

@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
   - popdel==1.1.2
   - htslib==1.19.1

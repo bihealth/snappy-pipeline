@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - r
   - http://conda.cubi.bihealth.org/cubiconda
 dependencies:
   - mutect_nonfree==1.1.7

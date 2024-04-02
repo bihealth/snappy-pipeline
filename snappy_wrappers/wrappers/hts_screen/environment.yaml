@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
   - bwa==0.7.17
   - seqtk==1.4

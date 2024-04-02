@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
   - gatk4==4.3.0.0
   - bcftools==1.10.2
