@@ -3,7 +3,6 @@ name: merge_tables
 channels:
   - conda-forge
   - bioconda
-  - r
 
 dependencies:
   - r-base==4.3.3

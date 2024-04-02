@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
   - r-base==4.2
   - r-rcpp==1.0.12

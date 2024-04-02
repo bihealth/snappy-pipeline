@@ -3,7 +3,6 @@ name: generate_cna
 channels:
   - conda-forge
   - bioconda
-  - r
 
 dependencies:
   - r-base==4.3.3
