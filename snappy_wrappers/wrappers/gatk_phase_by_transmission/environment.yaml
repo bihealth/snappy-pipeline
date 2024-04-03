@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - defaults
   - http://conda.cubi.bihealth.org/cubiconda
 dependencies:
   - gatk_nonfree==3.7
