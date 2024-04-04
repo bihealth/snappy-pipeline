@@ -10,6 +10,7 @@ import sys
 from typing import Any
 import warnings
 
+import pydantic
 import ruamel.yaml as ruamel_yaml
 from snakemake.utils import validate
 
@@ -70,9 +71,11 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
     return resolved, tuple(lookup_paths), tuple(config_files)
 
 
-def validate_config(config: dict[Any, Any], schema_path: str, file=sys.stderr):
-    print(f"\nValidating config.yaml using {schema_path}", file=file)
-    validate(config, schema_path)
+def validate_config(config: dict[Any, Any],
+                    model: pydantic.BaseModel,
+                    file=sys.stderr, ):
+    print(f"\nValidating config using {model.__class__.__name__}", file=file)
+    model.model_validate(config)
 
 
 def print_config(config, file=sys.stderr):

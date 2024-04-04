@@ -7,6 +7,7 @@ import contextlib
 import datetime
 from fnmatch import fnmatch
 from functools import lru_cache
+from importlib import import_module
 from io import StringIO
 import itertools
 import os
@@ -16,6 +17,7 @@ import tempfile
 import typing
 
 import attr
+import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -36,7 +38,7 @@ from snappy_pipeline.base import (
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path,
+    snakefile_path, validate_config,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
@@ -642,6 +644,22 @@ class BaseStep:
         self.w_config = config
         self.w_config.update(self._update_config(config))
         self.config = self.w_config["step_config"].get(self.name, OrderedDict())
+
+        #: Validate workflow configuration using its accompanying pydantic model
+        #: This assumes the existence of a model.py in the module directory
+        #: with the model class' name being the camelCased version of the workflow name
+        model_name = self.name.title().replace("_", "")
+        try:
+            module = import_module(f".model", package=self.__module__)
+            model = getattr(module, model_name)
+            validate_config(self.config, model())
+        except ModuleNotFoundError:
+            print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",
+                  file=sys.stderr)
+        except pydantic.ValidationError as ve:
+            print(f"{self.name} failed validation", file=sys.stderr)
+            raise ve
+
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = config_lookup_paths
         self.sub_steps = {}

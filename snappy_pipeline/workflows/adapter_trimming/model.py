@@ -866,7 +866,7 @@ class AdapterTrimming(BaseModel):
         extra="forbid",
     )
     path_link_in: str | None = None
-    tools: conlist(Tool, min_length=1)
+    tools: conlist(Tool, min_length=1) = None
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
 
