@@ -8,12 +8,12 @@ name: snappy_env
 dependencies:
 
   # Fundamentals
-  - python
+  - python >=3.10.0
   - pip
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=7.0.2
+  - snakemake >=7.0.2,<8.0.0
 
   # Additional libraries used by snappy
   - ruamel.yaml             # Nice, round-trip enabled YAML parsing
