@@ -17,21 +17,17 @@ import tempfile
 import typing
 
 import attr
-import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
-from biomedsheets.naming import (
-    NAMING_SCHEMES,
-    NAMING_SECONDARY_ID_PK,
-    name_generator_for_scheme,
-)
+from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
     donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
+import pydantic
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import touch
 
