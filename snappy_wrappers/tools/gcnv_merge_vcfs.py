@@ -43,7 +43,7 @@ class UnionFind:
         self._sz = [1] * len(vertex_names)
 
     def find(self, v):
-        assert type(v) is int
+        assert type(v) is int  # noqa: E721
         j = v
 
         while j != self._id[j]:
@@ -59,8 +59,8 @@ class UnionFind:
         self.union(self.find_by_name(v_name), self.find_by_name(w_name))
 
     def union(self, v, w):
-        assert type(v) is int
-        assert type(w) is int
+        assert type(v) is int  # noqa: E721
+        assert type(w) is int  # noqa: E721
         i = self.find(v)
         j = self.find(w)
 

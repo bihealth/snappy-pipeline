@@ -1012,7 +1012,7 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     def get_params(self, action):
         assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
+        return self._get_params_run
 
     def _get_params_run(self, wildcards):
         return {"extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]}
@@ -1154,7 +1154,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     def get_params(self, action):
         assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
+        return self._get_params_run
 
     def _get_params_run(self, wildcards):
         # Find bed file associated with library kit

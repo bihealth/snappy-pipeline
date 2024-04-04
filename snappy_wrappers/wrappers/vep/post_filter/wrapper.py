@@ -2,8 +2,8 @@
 
 import re
 
-from snakemake import shell
 import vcfpy
+from snakemake import shell
 
 inp = snakemake.input.vcf
 out = snakemake.output.vcf

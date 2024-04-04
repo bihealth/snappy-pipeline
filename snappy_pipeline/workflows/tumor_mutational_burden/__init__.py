@@ -140,7 +140,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_params_run")
+        return self._get_params_run
 
     def _get_params_run(self, wildcards):
         return {"missense_re": self.w_config.step_config["tumor_mutational_burden"].missense_regex}

@@ -125,7 +125,7 @@ def test_picard_step_part_get_input_files(ngs_data_qc):
     assert actual == expected
 
 
-def test_picard_step_part_get_output_files(ngs_data_qc):
+def test_picard_step_part_get_output_files_metrics(ngs_data_qc):
     """Tests PicardStepPart.get_output_files() - metrics"""
     # Define expected
     base_out = "work/{mapper}.{library_name}/report/picard/{mapper}.{library_name}."
@@ -146,7 +146,7 @@ def test_picard_step_part_get_output_files(ngs_data_qc):
     assert actual == expected
 
 
-def test_picard_step_part_get_log_file(ngs_data_qc):
+def test_picard_step_part_get_log_file_metrics(ngs_data_qc):
     """Tests PicardStepPart.get_log_file() - metrics"""
     # Define expected
     expected = get_expected_log_files_dict(

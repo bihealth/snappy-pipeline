@@ -1137,13 +1137,13 @@ class LinkInPathGenerator:
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
             # Search paths - expects a list already
-            out_list.extend(getattr(info, "search_paths"))
+            out_list.extend(info.search_paths)
 
             # Sheet path
             # Only name of file is stored in config file (relative path used),
             # hence we need to find it in the base paths
-            sheet_file_name = getattr(info, "sheet_path")  # expects a string
-            base_paths = getattr(info, "base_paths")  # expects a list
+            sheet_file_name = info.sheet_path  # expects a string
+            base_paths = info.base_paths  # expects a list
             sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
             # Append if not None
             if sheet_path:

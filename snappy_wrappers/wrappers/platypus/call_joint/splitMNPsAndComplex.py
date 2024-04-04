@@ -6,8 +6,6 @@ chip calls, as these complex variants are generally treated as multiple SNPs in 
 calls.
 """
 
-from __future__ import print_statement
-
 import sys
 
 ###################################################################################################
