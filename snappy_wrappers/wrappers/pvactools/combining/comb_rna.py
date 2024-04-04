@@ -299,9 +299,7 @@ def parse_expression_file(args, vcf_reader, vcf_writer):
 def add_AD_rna_file(entry, is_multi_sample, sample_name, rna_vcf):
     RAD_temp = []
     ROT = []
-    for rna_record in rna_vcf.fetch(
-        entry.CHROM, entry.affected_start, entry.affected_end
-    ):
+    for rna_record in rna_vcf.fetch(entry.CHROM, entry.affected_start, entry.affected_end):
         rna_alt = [alt.value for alt in rna_record.ALT]
         rna_AD = [c.data.get("AD") for c in rna_record.calls][0]
         ROT_temp = sum(rna_AD) - rna_AD[0]
@@ -344,9 +342,7 @@ def add_expressions(
     for item in items:
         entry_count += 1
         if ignore_ensembl_id_version:
-            subset = df.loc[
-                df["transcript_without_version"] == re.sub(r"\.[0-9]+$", "", item)
-            ]
+            subset = df.loc[df["transcript_without_version"] == re.sub(r"\.[0-9]+$", "", item)]
         else:
             subset = df.loc[df[id_column] == item]
         if len(subset) > 0:
@@ -373,12 +369,8 @@ def define_parser():
     )
 
     parser.add_argument("--input_vcf", help="A VEP-annotated VCF file")
-    parser.add_argument(
-        "--expression_file", help="A TSV file containing expression estimates"
-    )
-    parser.add_argument(
-        "--genecode", help="A genecode file for calculate TPM from star gene count"
-    )
+    parser.add_argument("--expression_file", help="A TSV file containing expression estimates")
+    parser.add_argument("--genecode", help="A genecode file for calculate TPM from star gene count")
     parser.add_argument(
         "--rna-vcf",
         help="A VCF file of RNA-seq data",
@@ -437,9 +429,7 @@ def args_check(args):
             )
     if args.format == "star":
         if args.genecode is None:
-            raise Exception(
-                "--genecode is not set. This is required when using the `star` format"
-            )
+            raise Exception("--genecode is not set. This is required when using the `star` format")
         exp_col = ["unstranded", "rf", "fr"]
         if args.expression_column not in exp_col:
             raise Exception(
@@ -463,9 +453,7 @@ def adding_extra_information(args):
     )
 
     vcf_writer = create_vcf_writer(args, vcf_reader)
-    (df, id_column, expression_column) = parse_expression_file(
-        args, vcf_reader, vcf_writer
-    )
+    (df, id_column, expression_column) = parse_expression_file(args, vcf_reader, vcf_writer)
     missing_expressions_count = 0
     entry_count = 0
     for entry in vcf_reader:
@@ -522,9 +510,7 @@ def adding_extra_information(args):
         # Add RAD and ROT
         if rna_vcf_reader is not None:
             if (entry.CHROM in CONTIGS) and (entry.is_snv()):
-                entry = add_AD_rna_file(
-                    entry, is_multi_sample, args.sample_name, rna_vcf_reader
-                )
+                entry = add_AD_rna_file(entry, is_multi_sample, args.sample_name, rna_vcf_reader)
         vcf_writer.write_record(entry)
 
     vcf_reader.close()

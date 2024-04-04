@@ -18,9 +18,7 @@ preparation_vcf = os.path.join(
     "comb_rna.py",
 )
 ensemble_id = (
-    "--ignore-ensembl-id-version"
-    if config["preparation"]["ignore-ensembl-id-version"]
-    else ""
+    "--ignore-ensembl-id-version" if config["preparation"]["ignore-ensembl-id-version"] else ""
 )
 
 shell(

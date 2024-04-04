@@ -83,6 +83,7 @@ def minimal_config():
         ).lstrip()
     )
 
+
 @pytest.fixture
 def somatic_neoepitope_prediction_workflow(
     dummy_workflow,
@@ -110,6 +111,7 @@ def somatic_neoepitope_prediction_workflow(
         work_dir,
     )
 
+
 def test_neoepitope_preparation_step_part_get_input_files(somatic_neoepitope_prediction_workflow):
     # Define expected
     vcf_base_out = (
@@ -129,32 +131,42 @@ def test_neoepitope_preparation_step_part_get_input_files(somatic_neoepitope_pre
     actual = somatic_neoepitope_prediction_workflow.get_input_files("neoepitope_preparation", "run")
     assert actual == expected
 
+
 def test_neoepitope_preparation_step_part_get_output_files(somatic_neoepitope_prediction_workflow):
     base_out = (
-                "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
-                "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
-            )
+        "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
+    )
     expected = get_expected_output_vcf_files_dict(base_out)
-    actual = somatic_neoepitope_prediction_workflow.get_output_files("neoepitope_preparation", "run")
+    actual = somatic_neoepitope_prediction_workflow.get_output_files(
+        "neoepitope_preparation", "run"
+    )
     assert actual == expected
+
 
 def test_neoepitope_preparation_step_part_get_log_files(somatic_neoepitope_prediction_workflow):
     base_out = (
         "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/log/"
-                "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
+        "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_neoepitope_prediction_workflow.get_log_file("neoepitope_preparation", "run")
     assert actual == expected
 
-def test_neoepitope_preparation_step_part_get_resource_usage(somatic_neoepitope_prediction_workflow):
+
+def test_neoepitope_preparation_step_part_get_resource_usage(
+    somatic_neoepitope_prediction_workflow,
+):
     # Define expected
     expected_dict = {"threads": 2, "time": "1:00:00", "memory": "6144M"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_neoepitope_prediction_workflow.get_resource("neoepitope_preparation", "run", resource)
+        actual = somatic_neoepitope_prediction_workflow.get_resource(
+            "neoepitope_preparation", "run", resource
+        )
         assert actual == expected, msg_error
+
 
 def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_workflow):
     """Test simple functionality of the workflow"""
@@ -178,14 +190,9 @@ def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_wo
             ext=ext,
             dir_="out",
         )
-        for i,t in ((1, 1), (2, 2))
-        for ext in (
-            "vcf.gz",
-            "vcf.gz.tbi",
-            "vcf.gz.md5",
-            "vcf.gz.tbi.md5"
-        )
-        for mapper in("bwa",)
+        for i, t in ((1, 1), (2, 2))
+        for ext in ("vcf.gz", "vcf.gz.tbi", "vcf.gz.md5", "vcf.gz.tbi.md5")
+        for mapper in ("bwa",)
         for var_caller in ("mutect2", "scalpel")
         for anno_caller in ("vep",)
     ]
@@ -200,7 +207,7 @@ def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_wo
             ext=ext,
             dir_="log",
         )
-        for i,t in ((1, 1), (2, 2))
+        for i, t in ((1, 1), (2, 2))
         for ext in (
             "conda_info.txt",
             "conda_list.txt",
@@ -209,7 +216,7 @@ def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_wo
             "conda_list.txt.md5",
             "log.md5",
         )
-        for mapper in("bwa",)
+        for mapper in ("bwa",)
         for var_caller in ("mutect2", "scalpel")
         for anno_caller in ("vep",)
     ]

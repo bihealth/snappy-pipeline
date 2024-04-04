@@ -145,9 +145,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
                                         library_name=rna_library,
                                     )
                                     ext = {"expression", "bam", "bai"}
-                                    yield "expression", ngs_mapping(
-                                        rna_tpl + ".GeneCounts.tab"
-                                    )
+                                    yield "expression", ngs_mapping(rna_tpl + ".GeneCounts.tab")
                                     yield "bam", ngs_mapping(rna_tpl + ".bam")
                                     yield "bai", ngs_mapping(rna_tpl + ".bam.bai")
 
@@ -158,9 +156,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         # Need to add step for adding RAD also
         self._validate_action(action)
         if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "gene"
         ):
             prefix = (
@@ -168,9 +164,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
         elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "transcript"
         ):
             prefix = (
@@ -188,9 +182,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "gene"
         ):
             prefix = (
@@ -198,9 +190,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
         elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "transcript"
         ):
             prefix = (
@@ -237,16 +227,12 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             ]
         )
         if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "gene"
         ):
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library.name}"
         elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["mode"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
             == "transcript"
         ):
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
@@ -309,9 +295,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     name = "neoepitope_prediction"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(
-            allow_missing_normal=True, allow_missing_tumor=True
-        )
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
     @classmethod
@@ -342,14 +326,10 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         )
         self.register_sub_workflow(
             "ngs_mapping",
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "path_rna_ngs_mapping"
-            ],
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["path_rna_ngs_mapping"],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "tools_ngs_mapping"
-        ]:
+        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_ngs_mapping"]:
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
                 "tools_ngs_mapping"
             ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
@@ -365,18 +345,16 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
                 "tools_somatic_variant_annotation"
             ] = ["vep"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "tools_rna_mapping"
-        ]:
+        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_rna_mapping"]:
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
                 "tools_rna_mapping"
             ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "preparation"
-        ]["path_features"]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "preparation"
-            ]["path_features"] = self.w_config["static_data_config"]["features"]["path"]
+        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
+            "path_features"
+        ]:
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
+                "path_features"
+            ] = self.w_config["static_data_config"]["features"]["path"]
 
     def get_result_files(self):
         for sub_step in self.sub_steps.values():
