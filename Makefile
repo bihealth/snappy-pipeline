@@ -4,15 +4,15 @@ default: help
 .PHONY: help
 help:
 	@echo help      -- display this help
-	@echo black     -- apply ruff code formatter
+	@echo rufffmt   -- apply ruff code formatter
 	@echo snakefmt  -- apply snakefmt code formatter
 	@echo srcfmt    -- apply black and snakefmt formatters
 	@echo lint      -- run linters
 	@echo test      -- run tests through pytest
 
-.PHONY: black
-black:
-	ruff .
+.PHONY: rufffmt
+rufffmt:
+	ruff format .
 
 .PHONY: snakefmt
 snakefmt:
@@ -26,7 +26,7 @@ lint: lint-ruff lint-snakefmt
 
 .PHONY: lint-ruff
 lint-ruff:
-	ruff check --fix .
+	ruff check .
 
 .PHONY: lint-snakefmt
 lint-snakefmt:
