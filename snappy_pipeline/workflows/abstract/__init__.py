@@ -21,7 +21,11 @@ import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
-from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
+from biomedsheets.naming import (
+    NAMING_SCHEMES,
+    NAMING_SECONDARY_ID_PK,
+    name_generator_for_scheme,
+)
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
     donor_has_dna_ngs_library,
@@ -38,7 +42,8 @@ from snappy_pipeline.base import (
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path, validate_config,
+    snakefile_path,
+    validate_config,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
@@ -240,7 +245,11 @@ class WritePedigreeStepPart(BaseStepPart):
                         in_trio = set()
                         for donor in pedigree.donors:
                             if donor.father and donor.mother:
-                                in_trio |= {donor.name, donor.father.name, donor.mother.name}
+                                in_trio |= {
+                                    donor.name,
+                                    donor.father.name,
+                                    donor.mother.name,
+                                }
                         if not any((donor.name in in_trio for donor in pedigree.donors)):
                             continue  # ignore empty pedigree post filtration
                         pedigree = pedigree.with_filtered_donors(
@@ -278,7 +287,10 @@ class WritePedigreeStepPart(BaseStepPart):
                 library_name = donor.dna_ngs_library.name
                 for mapper in mappers:
                     path = tpl.format(
-                        library_name=library_name, mapper=mapper, ext=".bam", **wildcards
+                        library_name=library_name,
+                        mapper=mapper,
+                        ext=".bam",
+                        **wildcards,
                     )
                     yield ngs_mapping(path)
 
@@ -309,7 +321,8 @@ class WritePedigreeStepPart(BaseStepPart):
             write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
         else:
             write_pedigree_to_ped(
-                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library], str(output)
+                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
+                str(output),
             )
 
 
@@ -560,7 +573,10 @@ class DataSetInfo:
     def _set_is_background(cls, sheet, flag):
         """Override "is_background" flag"""
         # TODO: check whether is already there and fail if not compatible
-        sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
+        sheet.json_data["extraInfoDefs"]["is_background"] = {
+            "type": "boolean",
+            "default": False,
+        }
         sheet.extra_infos["is_background"] = flag
         return sheet
 
@@ -674,7 +690,8 @@ class BaseStep:
         #: Shortcut BioMed SampleSheet keyword arguments
         sheet_kwargs_list = [
             merge_kwargs(
-                first_kwargs=self.sheet_shortcut_kwargs, second_kwargs=info.pedigree_field_kwargs
+                first_kwargs=self.sheet_shortcut_kwargs,
+                second_kwargs=info.pedigree_field_kwargs,
             )
             for info in self.data_set_infos
         ]
@@ -957,7 +974,13 @@ class BaseStep:
         """Generate path to wrapper"""
         return "file://" + os.path.abspath(
             os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "snappy_wrappers", "wrappers", path
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "snappy_wrappers",
+                "wrappers",
+                path,
             )
         )
 
@@ -993,7 +1016,11 @@ class LinkInPathGenerator:
             os.path.join(self.work_dir, self.cache_file_name), invalidate_paths_list
         )
 
-    def run(self, folder_name, pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam")):
+    def run(
+        self,
+        folder_name,
+        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
+    ):
         """Yield (src_path, path_infix, filename) one-by-one
 
         Cache is saved after the last iteration
@@ -1059,7 +1086,8 @@ class LinkInPathGenerator:
             for search_path in info.search_paths:
                 yield os.path.abspath(
                     os.path.join(
-                        os.path.dirname(os.path.join(base_path, info.sheet_path)), search_path
+                        os.path.dirname(os.path.join(base_path, info.sheet_path)),
+                        search_path,
                     )
                 )
 
@@ -1210,7 +1238,10 @@ class LinkInStep(BaseStepPart):
             filenames[new_path] = src_path
             lines.append(
                 tpl.format(
-                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                    src_path=src_path,
+                    out_path=out_path,
+                    path_infix=path_infix,
+                    filename=filename,
                 )
             )
         if not lines:
@@ -1249,7 +1280,9 @@ class LinkInVcfExternalStepPart(LinkInStep):
         self._validate_action(action)
         # Define path generator
         path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_search_infos,
+            self.parent.config_lookup_paths,
         )
         # Get base out path
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
@@ -1273,7 +1306,10 @@ class LinkInVcfExternalStepPart(LinkInStep):
             filenames[new_path] = src_path
             lines.append(
                 tpl.format(
-                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                    src_path=src_path,
+                    out_path=out_path,
+                    path_infix=path_infix,
+                    filename=filename,
                 )
             )
         if not lines:
