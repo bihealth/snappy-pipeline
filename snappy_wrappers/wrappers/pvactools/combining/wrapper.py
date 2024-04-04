@@ -12,14 +12,14 @@ __email__ = "pham.gia-cuong@bih-charite.de"
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
 
-exp_format = config['preparation']['format']
+exp_format = config["preparation"]["format"]
 preparation_vcf = os.path.join(
     os.path.dirname(__file__),
     "comb_rna.py",
 )
 ensemble_id = (
     "--ignore-ensembl-id-version"
-    if config['preparation']['ignore-ensembl-id-version']
+    if config["preparation"]["ignore-ensembl-id-version"]
     else ""
 )
 

@@ -35,23 +35,25 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import (
+    CancerCaseSheet,
+    CancerCaseSheetOptions,
+    is_not_background,
+)
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import (
-    READ_MAPPERS_RNA,
     NgsMappingWorkflow,
-    ResourceUsage
+    ResourceUsage,
 )
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_annotation import (
-    ANNOTATION_TOOLS,
-    SomaticVariantAnnotationWorkflow
+    SomaticVariantAnnotationWorkflow,
 )
 
 
@@ -92,6 +94,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
     """
     Preparation VCF file for pvactool
     """
+
     #: Step name
     name = "neoepitope_preparation"
     actions = ("run",)
@@ -120,13 +123,13 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{anno_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{anno_caller}.{tumor_library}"
         )
-        #Need to change for work on many different tools
+        # Need to change for work on many different tools
         key_ext = {"vcf": ".full.vcf.gz", "vcf_tbi": ".full.vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        ngs_mapping = self.parent.sub_workflows['ngs_mapping']
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, variant_annotation(tpl + ext)
-        #Getting appropriate rna library
+        # Getting appropriate rna library
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
                 for biosample in donor.bio_samples.values():
@@ -141,24 +144,35 @@ class NeoepitopePreparationStepPart(BaseStepPart):
                                         mapper="star",
                                         library_name=rna_library,
                                     )
-                                    ext = {"expression","bam","bai"}
-                                    yield 'expression',ngs_mapping(rna_tpl + ".GeneCounts.tab")
-                                    yield 'bam',ngs_mapping(rna_tpl + ".bam")
-                                    yield 'bai',ngs_mapping(rna_tpl + ".bam.bai")
-
+                                    ext = {"expression", "bam", "bai"}
+                                    yield "expression", ngs_mapping(
+                                        rna_tpl + ".GeneCounts.tab"
+                                    )
+                                    yield "bam", ngs_mapping(rna_tpl + ".bam")
+                                    yield "bai", ngs_mapping(rna_tpl + ".bam.bai")
 
     @dictify
     def get_output_files(self, action):
-        """Return output files """
+        """Return output files"""
         # Validate action
         # Need to add step for adding RAD also
         self._validate_action(action)
-        if self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "gene":
+        if (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "gene"
+        ):
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
-        elif self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "transcript":
+        elif (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "transcript"
+        ):
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
@@ -173,12 +187,22 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
-        if self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "gene":
+        if (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "gene"
+        ):
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
-        elif self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "transcript":
+        elif (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "transcript"
+        ):
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
@@ -203,28 +227,44 @@ class NeoepitopePreparationStepPart(BaseStepPart):
     @listify
     def get_result_files(self):
         callers = set(
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_somatic_variant_calling"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_somatic_variant_calling"
+            ]
         )
         anno_callers = set(
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
                 "tools_somatic_variant_annotation"
             ]
         )
-        if self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "gene":
+        if (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "gene"
+        ):
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library.name}"
-        elif self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"] == "transcript":
+        elif (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["mode"]
+            == "transcript"
+        ):
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
 
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_ngs_mapping"],
+            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_ngs_mapping"
+            ],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,
-            ext=EXT_VALUES
+            ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_ngs_mapping"],
+            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_ngs_mapping"
+            ],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,
             ext=(
@@ -263,14 +303,15 @@ class NeoepitopePreparationStepPart(BaseStepPart):
                 )
 
 
-
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
     """Perform neoepitope prediction workflow"""
 
     name = "neoepitope_prediction"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+        "options": CancerCaseSheetOptions(
+            allow_missing_normal=True, allow_missing_tumor=True
+        )
     }
 
     @classmethod
@@ -285,20 +326,30 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, SomaticVariantAnnotationWorkflow, NgsMappingWorkflow),
+            (
+                SomaticVariantCallingWorkflow,
+                SomaticVariantAnnotationWorkflow,
+                NgsMappingWorkflow,
+            ),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((NeoepitopePreparationStepPart, LinkOutStepPart))
         self.register_sub_workflow(
             "somatic_variant_annotation",
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["path_somatic_variant_annotation"],
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "path_somatic_variant_annotation"
+            ],
         )
         self.register_sub_workflow(
             "ngs_mapping",
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["path_rna_ngs_mapping"]
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "path_rna_ngs_mapping"
+            ],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_ngs_mapping"]:
+        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
+            "tools_ngs_mapping"
+        ]:
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
                 "tools_ngs_mapping"
             ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
@@ -318,14 +369,14 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             "tools_rna_mapping"
         ]:
             self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "tools_rna_mapping"
+                "tools_rna_mapping"
             ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
-            "path_features"
-        ]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
-            "path_features"
-        ] = self.w_config["static_data_config"]["features"]["path"]
+        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
+            "preparation"
+        ]["path_features"]:
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "preparation"
+            ]["path_features"] = self.w_config["static_data_config"]["features"]["path"]
 
     def get_result_files(self):
         for sub_step in self.sub_steps.values():
@@ -335,16 +386,20 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "somatic_neoepitope_prediction", "path_somatic_variant_annotation"),
+            (
+                "step_config",
+                "somatic_neoepitope_prediction",
+                "path_somatic_variant_annotation",
+            ),
             "Path to variant (directory of vcf files) not configured but required for somatic neoepitope prediction",
         )
 
         self.ensure_w_config(
-            ("step_config", "somatic_neoepitope_prediction", "preparation","mode"),
+            ("step_config", "somatic_neoepitope_prediction", "preparation", "mode"),
             "The mode is required for adding gene expression data to somatic variant annotated file",
         )
 
         self.ensure_w_config(
-            ("step_config", "somatic_neoepitope_prediction", "preparation","format"),
+            ("step_config", "somatic_neoepitope_prediction", "preparation", "format"),
             "Format is required for adding ",
         )
