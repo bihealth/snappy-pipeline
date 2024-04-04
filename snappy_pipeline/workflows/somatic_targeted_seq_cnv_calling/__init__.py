@@ -65,11 +65,11 @@ Available Somatic Targeted CNV Caller
 
 """
 
-from collections import OrderedDict
-from itertools import chain
 import os
 import os.path
 import sys
+from collections import OrderedDict
+from itertools import chain
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -338,8 +338,9 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         for infix in ("targets", "segments"):
             for key, ext in BCF_KEY_EXTS:
                 name = "{}_{}".format(infix, key)
-                yield name, os.path.join(
-                    "work", name_pattern, "out", name_pattern + "." + infix + ext
+                yield (
+                    name,
+                    os.path.join("work", name_pattern, "out", name_pattern + "." + infix + ext),
                 )
 
     @dictify
@@ -360,8 +361,9 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         for infix in ("targets", "targets_segmented", "segments", "gene_call", "gene_log2"):
             for key, ext in (("txt", ".txt"), ("md5", ".txt.md5")):
                 name = "{}_{}".format(infix, key)
-                yield name, os.path.join(
-                    "work", name_pattern, "out", name_pattern + "_" + infix + ext
+                yield (
+                    name,
+                    os.path.join("work", name_pattern, "out", name_pattern + "_" + infix + ext),
                 )
 
     def check_config(self):
@@ -490,8 +492,11 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             tumor_base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
                 **wildcards
             )
-            yield "gc", "work/static_data/out/sequenza.{length}.wig.gz".format(
-                length=self.config["sequenza"]["length"],
+            yield (
+                "gc",
+                "work/static_data/out/sequenza.{length}.wig.gz".format(
+                    length=self.config["sequenza"]["length"],
+                ),
             )
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
@@ -596,12 +601,15 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         name_pattern = "{mapper}.purecn.{library_name}".format(**wildcards)
-        yield "tumor", os.path.join(
-            "work",
-            name_pattern,
-            "out",
-            name_pattern + "_coverage_loess.txt.gz",
-        ).format(**wildcards)
+        yield (
+            "tumor",
+            os.path.join(
+                "work",
+                name_pattern,
+                "out",
+                name_pattern + "_coverage_loess.txt.gz",
+            ).format(**wildcards),
+        )
         name_pattern = "{mapper}.{caller}.{library_name}".format(
             caller=self.config["purecn"]["somatic_variant_caller"],
             **wildcards,

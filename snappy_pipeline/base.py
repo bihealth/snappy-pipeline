@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Basic utility code for snappy_pipeline
-"""
+"""Basic utility code for snappy_pipeline"""
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
-from copy import deepcopy
 import os
 import sys
 import warnings
+from collections import OrderedDict
+from collections.abc import MutableMapping
+from copy import deepcopy
 
 import ruamel.yaml as ruamel_yaml
 

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI BEDVenn: Snakemake wrapper.py
-"""
+"""CUBI BEDVenn: Snakemake wrapper.py"""
 
 import itertools
 import textwrap
@@ -46,7 +45,7 @@ for id_set in id_sets:
     labels = "\\t".join(sorted(id_set))
     intersect_files = [snakemake.input[name] for name in id_set]
     subtract_files = [
-        snakemake.input[name] for name in snakemake.input.keys() if not name in id_set
+        snakemake.input[name] for name in snakemake.input.keys() if name not in id_set
     ]
     chunks.append(
         textwrap.dedent(

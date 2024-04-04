@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for ``yaml_utils``."""
+
 import pytest
 import ruamel.yaml as ruamel_yaml
 

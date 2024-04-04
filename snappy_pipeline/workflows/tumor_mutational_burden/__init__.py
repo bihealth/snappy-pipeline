@@ -1,6 +1,6 @@
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -151,7 +151,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_params_run")
+        return self._get_params_run
 
     def _get_params_run(self, wildcards):
         return {

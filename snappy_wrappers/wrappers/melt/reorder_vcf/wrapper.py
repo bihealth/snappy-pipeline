@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Melt genotype
-"""
+"""Wrapper for running Melt genotype"""
 
 from snakemake.shell import shell
 

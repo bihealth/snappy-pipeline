@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools merge - VCF files.
-"""
+"""Wrapper for running bcftools merge - VCF files."""
 
 import tempfile
 

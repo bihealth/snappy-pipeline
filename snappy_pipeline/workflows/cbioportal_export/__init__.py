@@ -7,9 +7,9 @@ formats expected by cBioPortal and writes out the necessary metadata and data
 files.
 """
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 
@@ -373,12 +373,15 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
-        yield "DNAcopy", os.path.join(
-            self.config["path_copy_number"],
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + "_dnacopy.seg",
+        yield (
+            "DNAcopy",
+            os.path.join(
+                self.config["path_copy_number"],
+                "output",
+                name_pattern,
+                "out",
+                name_pattern + "_dnacopy.seg",
+            ),
         )
 
     @dictify
@@ -486,7 +489,6 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
 
 class cbioportalSegmentStepPart(cbioportalExportStepPart):
-
     #: Step name
     name = "cbioportal_segment"
 

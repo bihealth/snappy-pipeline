@@ -18,6 +18,7 @@ Example (using space as the separator):
     6
 
 """
+
 import argparse
 import itertools
 import math

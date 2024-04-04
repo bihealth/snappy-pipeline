@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)
-"""
+"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)"""
 
 import os
 import sys
@@ -10,9 +9,9 @@ import sys
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snakemake import shell
+from snakemake import shell  # noqa: E402
 
-from snappy_wrappers.tools.genome_windows import yield_contigs
+from snappy_wrappers.tools.genome_windows import yield_contigs  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 

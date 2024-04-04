@@ -54,8 +54,8 @@ The following HLA typing tools are currently available
 
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -245,8 +245,11 @@ class ArcasHlaStepPart(BaseStepPart):
         def input_function(wildcards):
             yield "ref_done", "work/arcashla.prepare_reference/out/.done"
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-            yield "bam", self.parent.sub_workflows["ngs_mapping"](
-                tpl.format(mapper=self.mapper, **wildcards)
+            yield (
+                "bam",
+                self.parent.sub_workflows["ngs_mapping"](
+                    tpl.format(mapper=self.mapper, **wildcards)
+                ),
             )
 
         assert action == "run"

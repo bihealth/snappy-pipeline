@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Code for testing gatk_hc_par/run wrapper"""
-from pathlib import Path
+
 import textwrap
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml

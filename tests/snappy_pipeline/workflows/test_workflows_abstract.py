@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Code for testing the code in the "abstract" workflow
-"""
+"""Code for testing the code in the "abstract" workflow"""
+
 import filecmp
+import textwrap
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-import textwrap
 
-from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 import pytest
 import ruamel.yaml as ruamel_yaml
+from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from snakemake.io import OutputFiles, Wildcards
 
 from snappy_pipeline.base import MissingConfiguration

@@ -16,14 +16,13 @@ sys.path.insert(0, base_dir)
 
 from snappy_wrappers.resource_usage import ResourceUsage  # noqa: E402
 from snappy_wrappers.wrapper_parallel import (  # noqa: E402
+    ParallelMutect2BaseWrapper,
     gib_to_string,
     hours,
-    ParallelMutect2BaseWrapper,
 )
 
 
 class ParallelMutect2Wrapper(ParallelMutect2BaseWrapper):
-
     inner_wrapper = "mutect2/prepare_panel"
     step_name = "panel_of_normals"
     tool_name = "mutect2"

@@ -78,6 +78,7 @@ Parallel Execution
 Not available.
 
 """
+
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -220,8 +221,11 @@ class ScrambleStepPart(BaseStepPart):
         """Yield output files' patterns for scramble cluster call."""
         name_pattern = "{mapper}.scramble.{library_name}"
         ext = "txt"
-        yield ext, "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
-            name_pattern=name_pattern, ext=ext
+        yield (
+            ext,
+            "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            ),
         )
 
     @staticmethod
@@ -239,8 +243,11 @@ class ScrambleStepPart(BaseStepPart):
             "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in ext_dict.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     def _get_analysis_parameters(self, _wildcards):

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_phasing workflow module code"""
 
-
 import textwrap
 
 import pytest

@@ -5,8 +5,8 @@ import copy
 import json
 from unittest.mock import MagicMock, patch
 
-from pyfakefs import fake_filesystem
 import pytest
+from pyfakefs import fake_filesystem
 
 from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 
@@ -106,7 +106,6 @@ def test_file_system_crawler_invalidate_cache(sample_cache_dict):
     with patch("snappy_pipeline.find_file.os", fake_os), patch(
         "snappy_pipeline.find_file.InterProcessLock", mock_lock
     ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
-
         # Get the original modification time
         original_cache_file_time = fake_os.path.getmtime(CACHE_PATH)
 

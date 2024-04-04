@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the gCNV common methods.
-"""
+"""Implementation of the gCNV common methods."""
 
 from collections import OrderedDict
 

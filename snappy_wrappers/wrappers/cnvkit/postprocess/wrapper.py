@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py call
-"""
+"""Wrapper vor cnvkit.py call"""
 
 from snakemake.shell import shell
 

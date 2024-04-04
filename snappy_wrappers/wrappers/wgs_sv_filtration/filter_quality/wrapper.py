@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper for threshold-based filtration of WGS SV calls.
-"""
+"""CUBI+Snakemake wrapper for threshold-based filtration of WGS SV calls."""
 
 # TODO: works for trios, singletons, or if only one parent available but NOT FOR MORE COMPLICATED CASES
 

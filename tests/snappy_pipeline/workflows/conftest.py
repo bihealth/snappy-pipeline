@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """Shared fixtures for the workflows unit tests"""
 
-from collections import namedtuple
 import io
 import os
 import random
 import textwrap
+from collections import namedtuple
 from unittest.mock import MagicMock, patch
 
+import pytest
 from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from pyfakefs import fake_filesystem
-import pytest
 from ruamel.yaml.comments import CommentedMap
 
 from snappy_pipeline.workflows.abstract import BaseStep

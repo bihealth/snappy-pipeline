@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for preparing exome kit intervals for PureCN
-"""
+"""CUBI+Snakemake wrapper code for preparing exome kit intervals for PureCN"""
 
 import os
 

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for GATK HaplotypeCaller: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for GATK HaplotypeCaller: Snakemake wrapper.py"""
 
 from snakemake import shell
 

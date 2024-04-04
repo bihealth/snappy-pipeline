@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for inheritance filter for variant_filtration.
-"""
+"""CUBI+Snakemake wrapper code for inheritance filter for variant_filtration."""
 
 import os
 

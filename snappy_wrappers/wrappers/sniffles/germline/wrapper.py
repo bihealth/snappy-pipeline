@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Sniffles on germline data
-"""
+"""Wrapper for running Sniffles on germline data"""
 
 from snakemake.shell import shell
 

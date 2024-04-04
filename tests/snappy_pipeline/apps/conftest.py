@@ -9,9 +9,9 @@ import pytest
 import snappy_pipeline.apps
 import snappy_pipeline.workflows
 from tests.snappy_pipeline.workflows.conftest import (
-    fake_fs,
-    germline_sheet_fake_fs,
-    germline_sheet_tsv,
+    fake_fs,  # noqa: F401
+    germline_sheet_fake_fs,  # noqa: F401
+    germline_sheet_tsv,  # noqa: F401
 )
 
 
@@ -54,7 +54,10 @@ def germline_sheet_ngs_mapping_config_yaml():
 
 @pytest.fixture
 def germline_sheet_fake_noproject_fs(
-    fake_fs, germline_sheet_tsv, germline_sheet_fake_fs, germline_sheet_config_yaml
+    fake_fs,  # noqa: F811
+    germline_sheet_tsv,  # noqa: F811
+    germline_sheet_fake_fs,  # noqa: F811
+    germline_sheet_config_yaml,  # noqa: F811
 ):
     # Create /dev/null
     if not fake_fs.os.path.exists("/dev/null"):
@@ -69,7 +72,10 @@ def germline_sheet_fake_noproject_fs(
 
 @pytest.fixture
 def germline_sheet_fake_project_fs(
-    fake_fs, germline_sheet_tsv, germline_sheet_fake_fs, germline_sheet_config_yaml
+    fake_fs,  # noqa: F811
+    germline_sheet_tsv,  # noqa: F811
+    germline_sheet_fake_fs,  # noqa: F811
+    germline_sheet_config_yaml,  # noqa: F811
 ):
     fake_fs.fs.create_dir("/project-dir/.snappy_pipeline")
     # Create the configuration YAML file
@@ -96,7 +102,7 @@ def germline_sheet_fake_project_fs(
 def germline_sheet_fake_project_ngs_mapping_fs(
     germline_sheet_fake_project_fs, germline_sheet_ngs_mapping_config_yaml
 ):
-    fake_fs = germline_sheet_fake_project_fs
+    fake_fs = germline_sheet_fake_project_fs  # noqa: F811
     fake_fs.fs.create_dir("/project-dir/ngs_mapping")
     fake_fs.fs.create_file(
         "/project-dir/ngs_mapping/config.yaml",

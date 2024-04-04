@@ -9,7 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
 
-from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 

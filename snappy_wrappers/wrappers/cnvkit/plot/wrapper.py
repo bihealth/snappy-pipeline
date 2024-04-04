@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py plot
-"""
+"""Wrapper for cnvkit.py plot"""
 
 from snakemake.shell import shell
 

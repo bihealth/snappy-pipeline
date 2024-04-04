@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Installation driver (and development utility entry point) for snappy-pipeline
-"""
+"""Installation driver (and development utility entry point) for snappy-pipeline"""
 
-from itertools import chain
 import os
 import sys
+from itertools import chain
 
 from setuptools import find_packages, setup
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_calling workflow module code"""
 
-from copy import deepcopy
 import textwrap
+from copy import deepcopy
 
 import pytest
 import ruamel.yaml as ruamel_yaml

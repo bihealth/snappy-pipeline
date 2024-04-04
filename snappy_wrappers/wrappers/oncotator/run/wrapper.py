@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Oncotator
-"""
+"""Wrapper for running Oncotator"""
 
 from snakemake.shell import shell
 

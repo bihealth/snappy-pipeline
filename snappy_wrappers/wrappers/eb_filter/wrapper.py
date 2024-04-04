@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for EBFilter flagging.
-"""
+"""CUBI+Snakemake wrapper code for EBFilter flagging."""
 
 from snakemake import shell
 
@@ -26,7 +25,7 @@ else:
     try:
         filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
         threshold = config["filter_list"][filter_nb]["ebfilter"].get("ebfilter_threshold", 0)
-    except:
+    except (KeyError, ValueError):
         threshold = 0
 
 if "filter_name" in config:
@@ -38,7 +37,7 @@ elif "ebfilter" in config and "filter_name" in config["ebfilter"]:
 else:
     try:
         filter_name = "ebfilter_{}".format(int(snakemake.wildcards["filter_nb"]))
-    except:
+    except (KeyError, ValueError):
         filter_name = "+"
 
 shell(

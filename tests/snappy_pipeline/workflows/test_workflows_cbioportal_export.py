@@ -528,7 +528,6 @@ def test_cbioportal_cna_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_cna_step_part_get_args_log2(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_args() -action 'log2'"""
     # Define expected
-    base_name_out = "work/log/cbioportal_cna"
     expected = {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
     # Get actual
     actual = cbioportal_export_workflow.get_args("cbioportal_cna", "log2")
@@ -538,7 +537,6 @@ def test_cbioportal_cna_step_part_get_args_log2(cbioportal_export_workflow):
 def test_cbioportal_cna_step_part_get_args_gistic(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_args() -action 'gistic'"""
     # Define expected
-    base_name_out = "work/log/cbioportal_cna"
     expected = {
         "action_type": "gistic",
         "extra_args": {"amplification": "9", "pipeline_id": "ENSEMBL"},

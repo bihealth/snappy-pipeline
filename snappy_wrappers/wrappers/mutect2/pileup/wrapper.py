@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for GetPileupSummaries: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for GetPileupSummaries: Snakemake wrapper.py"""
 
 from snakemake import shell
 

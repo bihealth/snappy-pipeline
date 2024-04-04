@@ -111,10 +111,10 @@ All variants overlapping with hotspots locii would be protected against filtrati
 Note that the parallelisation of ``ebfilter`` has been removed, even though this operation can be slow when there are many variants (from WGS data for example).
 """
 
-from collections import OrderedDict
 import os
 import random
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -261,20 +261,26 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
 
         @dictify
         def input_function(wildcards):
-            yield "bam", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                "{mapper}.{tumor_library}",
-                "out",
-                "{mapper}.{tumor_library}.bam",
+            yield (
+                "bam",
+                os.path.join(
+                    self.config["path_ngs_mapping"],
+                    "output",
+                    "{mapper}.{tumor_library}",
+                    "out",
+                    "{mapper}.{tumor_library}.bam",
+                ),
             )
             normal_library = self.tumor_to_normal_library[wildcards["tumor_library"]]
-            yield "normal", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                f"{{mapper}}.{normal_library}",
-                "out",
-                f"{{mapper}}.{normal_library}.bam",
+            yield (
+                "normal",
+                os.path.join(
+                    self.config["path_ngs_mapping"],
+                    "output",
+                    f"{{mapper}}.{normal_library}",
+                    "out",
+                    f"{{mapper}}.{normal_library}.bam",
+                ),
             )
             filter_nb = int(wildcards["filter_nb"])
             filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
@@ -283,16 +289,22 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
             if filter_nb > 1:
                 prev = list(self.config["filter_list"][filter_nb - 2].keys())[0]
                 n = filter_nb - 1
-                yield "vcf", os.path.join(
-                    "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
+                yield (
+                    "vcf",
+                    os.path.join(
+                        "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
+                    ),
                 )
             else:
-                yield "vcf", os.path.join(
-                    self.config["path_somatic_variant"],
-                    "output",
-                    self.name_pattern,
-                    "out",
-                    self.name_pattern + ".vcf.gz",
+                yield (
+                    "vcf",
+                    os.path.join(
+                        self.config["path_somatic_variant"],
+                        "output",
+                        self.name_pattern,
+                        "out",
+                        self.name_pattern + ".vcf.gz",
+                    ),
                 )
 
         return input_function
@@ -327,17 +339,23 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
             ("conda_list", ".conda_list.txt"),
         )
         for key, ext in key_ext:
-            yield key, os.path.join(
-                "work",
-                self.name_pattern,
-                "log",
-                self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext,
+            yield (
+                key,
+                os.path.join(
+                    "work",
+                    self.name_pattern,
+                    "log",
+                    self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext,
+                ),
             )
-            yield key + "_md5", os.path.join(
-                "work",
-                self.name_pattern,
-                "log",
-                self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
+            yield (
+                key + "_md5",
+                os.path.join(
+                    "work",
+                    self.name_pattern,
+                    "log",
+                    self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
+                ),
             )
 
     def get_resource_usage(self, action):
@@ -382,9 +400,12 @@ class OneFilterEbfilterStepPart(OneFilterStepPart):
 
     @dictify
     def _get_output_files_write_panel(self):
-        yield "txt", (
-            "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-            "panel_of_normals.txt"
+        yield (
+            "txt",
+            (
+                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
+                "panel_of_normals.txt"
+            ),
         )
 
     def get_params(self, action):
@@ -636,9 +657,12 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_output_files_write_panel(self):
-        yield "txt", (
-            "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-            "panel_of_normals.txt"
+        yield (
+            "txt",
+            (
+                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
+                "panel_of_normals.txt"
+            ),
         )
 
     @dictify
@@ -777,9 +801,12 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
         # Validate action
         self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{step}", self.name).replace(
-                "{exon_list}", "genome_wide"
-            ).replace("{ext}", ext)
+            yield (
+                key,
+                self.base_path_out.replace("{step}", self.name)
+                .replace("{exon_list}", "genome_wide")
+                .replace("{ext}", ext),
+            )
 
     def get_log_file(self, action):
         # Validate action
@@ -802,15 +829,18 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
             # TODO: Possible bug, missing entry for `tumor_library`
             #  tests lead to "KeyError: 'tumor_library'"
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield key, self.base_path_out.format(
-                    step="apply_filters",
-                    tumor_library=wildcards.tumor_library,
-                    mapper=wildcards.mapper,
-                    var_caller=wildcards.var_caller,
-                    annotator=wildcards.get("annotator", ""),
-                    filter_set=wildcards.filter_set,
-                    exon_list="genome_wide",
-                    ext=ext,
+                yield (
+                    key,
+                    self.base_path_out.format(
+                        step="apply_filters",
+                        tumor_library=wildcards.tumor_library,
+                        mapper=wildcards.mapper,
+                        var_caller=wildcards.var_caller,
+                        annotator=wildcards.get("annotator", ""),
+                        filter_set=wildcards.filter_set,
+                        exon_list="genome_wide",
+                        ext=ext,
+                    ),
                 )
 
         return input_function

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the ngs_mapping workflow module code"""
 
-from collections import OrderedDict
-from copy import deepcopy
 import io
 import textwrap
+from collections import OrderedDict
+from copy import deepcopy
 
-from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
 import pytest
 import ruamel.yaml as ruamel_yaml
+from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow

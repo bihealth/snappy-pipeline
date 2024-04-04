@@ -364,7 +364,6 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "duplication"
 
@@ -389,7 +388,6 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "dupradar"
 
@@ -414,7 +412,6 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "rnaseqc"
 
@@ -439,7 +436,6 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "stats"
 

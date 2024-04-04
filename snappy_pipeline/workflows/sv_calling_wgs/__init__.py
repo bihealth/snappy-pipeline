@@ -1,8 +1,7 @@
-"""Implementation of the ``sv_calling_wgs`` step
-"""
+"""Implementation of the ``sv_calling_wgs`` step"""
 
-from itertools import chain
 import re
+from itertools import chain
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
@@ -265,10 +264,15 @@ class PopDelStepPart(
         work_files["vcf_tbi"] = f"work/{infix}/out/{infix}.vcf.gz.tbi"
         work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("reorder_vcf").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(
+                    work_files.values(), self.get_log_file("reorder_vcf").values()
+                )
+            ],
+        )
 
     def get_ped_members(self, wildcards):
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""

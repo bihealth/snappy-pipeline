@@ -11,8 +11,8 @@ The default configuration is as follows.
 
 """
 
-from itertools import chain
 import os
+from itertools import chain
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import Namedlist, expand, touch

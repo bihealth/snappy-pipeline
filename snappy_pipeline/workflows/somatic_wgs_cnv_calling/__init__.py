@@ -73,10 +73,10 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
-from itertools import chain
 import os
 import sys
+from collections import OrderedDict
+from itertools import chain
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -212,7 +212,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
                     )
 
     def get_input_files(self, action):
-
         # Validate action
         self._validate_action(action)
 
@@ -359,8 +358,11 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             name_pattern = "{mapper}.cnvetti_coverage.{library_name}".format(
                 library_name=library_name, **wildcards
             )
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=".bcf"
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=".bcf"
+                ),
             )
 
     @dictify
@@ -368,8 +370,11 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     def get_output_files(self, action):
@@ -382,24 +387,33 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_coverage(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_coverage.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify
     def _get_output_files_tumor_normal_ratio(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_segment.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify

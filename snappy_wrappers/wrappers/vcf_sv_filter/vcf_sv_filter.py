@@ -485,7 +485,7 @@ class HetSnvFilterStep(FilterStep):
     def _apply(self, record):
         # Handle cases of non-deletion or large deletions.
         assert self.reader
-        if not record.INFO.get("SIZE_CLASS") in ("SMALL", "MEDIUM"):
+        if record.INFO.get("SIZE_CLASS") not in ("SMALL", "MEDIUM"):
             return record  # ignore, LARGE or non-linear
         elif record.INFO.get("SVTYPE") != "DEL":
             return record  # ignore, not deletion
@@ -666,7 +666,7 @@ class AnnotateAluOverlapFilterStep(FilterStep):
     def _apply(self, record):
         if not self.tabix:
             return record  # no ALU database
-        if not record.INFO.get("SIZE_CLASS") in ("SMALL", "MEDIUM"):
+        if record.INFO.get("SIZE_CLASS") not in ("SMALL", "MEDIUM"):
             return record  # ignore, is LARGE or non-linear
         if not record.INFO.get("SVTYPE") == "DEL":
             return record  # ignore, is not deletion
@@ -707,7 +707,7 @@ class AnnotateDatabaseOverlapFilterStep(FilterStep):
             self.tabix = [tabix.open(p) for p in self.args.db_bed]
 
     def _apply(self, record):
-        if not record.INFO.get("SIZE_CLASS") in ("SMALL", "MEDIUM"):
+        if record.INFO.get("SIZE_CLASS") not in ("SMALL", "MEDIUM"):
             return record  # ignore, is LARGE or non-linear
         if not record.INFO.get("SVTYPE") == "DEL":
             return record  # ignore, is not deletion

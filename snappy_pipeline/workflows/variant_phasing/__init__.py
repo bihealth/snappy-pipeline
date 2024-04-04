@@ -60,8 +60,8 @@ Currently, no reports are generated.
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
@@ -238,8 +238,9 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         @dictify
         def input_function(wildcards):
             # Pedigree file required for PhaseByTransmission.
-            yield "ped", "work/write_pedigree.{index_library}/out/{index_library}.ped".format(
-                **wildcards
+            yield (
+                "ped",
+                "work/write_pedigree.{index_library}/out/{index_library}.ped".format(**wildcards),
             )
             # Get name of real index
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
