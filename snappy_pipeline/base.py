@@ -12,7 +12,6 @@ import warnings
 
 import pydantic
 import ruamel.yaml as ruamel_yaml
-from snakemake.utils import validate
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:

@@ -650,7 +650,7 @@ class BaseStep:
         #: with the model class' name being the camelCased version of the workflow name
         model_name = self.name.title().replace("_", "")
         try:
-            module = import_module(f".model", package=self.__module__)
+            module = import_module(".model", package=self.__module__)
             model = getattr(module, model_name)
             validate_config(self.config, model())
         except ModuleNotFoundError:
