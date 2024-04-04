@@ -21,6 +21,9 @@ flake8
 flake8-import-order
 pytest-flake8
 
+# ruff linter + formatter
+ruff >=0.3.4
+
 # coveralls.io tooling
 coveralls
 

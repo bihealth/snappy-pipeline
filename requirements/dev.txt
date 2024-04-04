@@ -5,6 +5,3 @@ ipython
 
 # Prettier CLI for py.test
 pytest-sugar
-
-# ruff linter + formatter
-ruff >=0.3.4
