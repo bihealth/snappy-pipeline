@@ -654,10 +654,13 @@ class BaseStep:
             model = getattr(module, model_name)
             validate_config(self.config, model())
         except ModuleNotFoundError:
-            print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",
-                  file=sys.stderr)
+            # TODO: use logging
+            # print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",
+            #       file=sys.stderr)
+            pass
         except pydantic.ValidationError as ve:
-            print(f"{self.name} failed validation", file=sys.stderr)
+            # TODO: use logging
+            # print(f"{self.name} failed validation", file=sys.stderr)
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
