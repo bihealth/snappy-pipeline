@@ -1,0 +1,5 @@
+line-length = 100
+
+[lint]
+select = ["E", "F", "B", "I"] # "COM"
+ignore = ["D", "F821", "E501"]  # E501: line too long, F821: name used but unknown (e.g. "snakemake" in wrapper files)
