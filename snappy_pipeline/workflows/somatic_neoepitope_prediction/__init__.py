@@ -35,27 +35,17 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import (
-    CancerCaseSheet,
-    CancerCaseSheetOptions,
-    is_not_background,
-)
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import (
-    NgsMappingWorkflow,
-    ResourceUsage,
-)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
-from snappy_pipeline.workflows.somatic_variant_annotation import (
-    SomaticVariantAnnotationWorkflow,
-)
-
 
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"

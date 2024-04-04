@@ -4,6 +4,7 @@ Wrapper for preparation the vcf file for somatic neoepitope prediction
 """
 
 import os
+
 from snakemake.shell import shell
 
 __author__ = "Pham Gia Cuong"

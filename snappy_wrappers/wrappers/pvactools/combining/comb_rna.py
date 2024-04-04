@@ -1,10 +1,11 @@
 import argparse
-import sys
-import vcfpy
-import pyranges as pr
-import pandas as pd
-import re
 import logging
+import re
+import sys
+
+import pandas as pd
+import pyranges as pr
+import vcfpy
 
 
 ########################## Reading vcf files ##########################
