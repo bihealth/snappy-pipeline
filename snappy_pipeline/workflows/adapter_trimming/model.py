@@ -869,10 +869,3 @@ class AdapterTrimming(BaseModel):
     tools: conlist(Tool, min_length=1) = None
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
-
-
-# class Model(BaseModel):
-#     model_config = ConfigDict(
-#         extra="forbid",
-#     )
-#     adapter_trimming: AdapterTrimming | None = None
