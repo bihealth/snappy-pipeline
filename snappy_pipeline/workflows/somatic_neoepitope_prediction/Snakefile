@@ -21,9 +21,7 @@ configfile: "config.yaml"
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
-wf = SomaticNeoepitopePredictionWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticNeoepitopePredictionWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
 localrules:
