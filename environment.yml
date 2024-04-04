@@ -8,7 +8,7 @@ name: snappy_env
 dependencies:
 
   # Fundamentals
-  - python >=3.10.0
+  - python
   - pip
   - git-lfs
 
