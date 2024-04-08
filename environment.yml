@@ -31,7 +31,8 @@ dependencies:
   # - vcfpy >=0.13.8                   # Library for working with VCF files
   # - pysam                            # Support for vcfpy
   # pytabix seems not to be used anywhere (and hasn't been updated in 9 years)
-  # - pytabix
+  # nvm, it does see use in wrappers/vcfpy/add_bed/wrapper.py and wrappers/vcf_sv_filter/vcf_sv_filter.py
+  - pytabix =0.1
 
   # Parsing of ISA-tab
   - altamisa =0.2.9
@@ -49,7 +50,7 @@ dependencies:
   - pyfakefs =5.4
   - snakefmt =0.10
   - ruff =0.3
-  - coveralls =3.3
+  - coveralls =1.8
 
   # Dependencies for documentation
   - sphinx =7
