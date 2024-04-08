@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for infer_experiment: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for infer_experiment: Snakemake wrapper.py"""
 
 import os
 

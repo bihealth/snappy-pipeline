@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for bbduk: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for bbduk: Snakemake wrapper.py"""
 
 from snakemake import shell
 
@@ -178,7 +177,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         ecco={config[ecco]}                           \
         ktrim={config[ktrim]}                         \
         $(if [[ -n "{config[kmask]}" ]] ; then \
-            echo kmask={config[kmask]} 
+            echo kmask={config[kmask]}
         fi) \
         maskfullycovered={config[maskfullycovered]}   \
         ksplit={config[ksplit]}                       \
@@ -212,7 +211,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         chastityfilter={config[chastityfilter]}       \
         barcodefilter={config[barcodefilter]}         \
         $(if [[ -n "{config[barcodes]}" ]]; then \
-            echo barcodes={config[barcodes]}  
+            echo barcodes={config[barcodes]}
         fi) \
         xmin={config[xmin]}                           \
         ymin={config[ymin]}                           \
@@ -233,7 +232,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         cardinality={config[cardinality]}             \
         cardinalityout={config[cardinalityout]}       \
         loglogk={config[loglogk]}                     \
-        loglogbuckets={config[loglogbuckets]} 
+        loglogbuckets={config[loglogbuckets]}
 
     fns="$out $outm"
     if [[ $paired -eq 1 ]]; then

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Definition for running EasyBayes-Filter in parallel, genome is split into windows
-"""
+"""Definition for running EasyBayes-Filter in parallel, genome is split into windows"""
 
 import os
 import sys
@@ -69,8 +68,9 @@ class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         vcf={input_vcf},
@@ -90,4 +90,7 @@ class ParallelEasyBayesFilterWrapper(ParallelVcfOutputBaseWrapper):
 
 
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )

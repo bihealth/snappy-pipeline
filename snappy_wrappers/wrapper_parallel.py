@@ -8,6 +8,7 @@ a "work", and a "merge" task.
 import contextlib
 import datetime
 import functools
+import hashlib
 import itertools
 import json
 import logging
@@ -18,6 +19,7 @@ import shutil
 import sys
 import tempfile
 import textwrap
+import time
 from collections.abc import MutableMapping, MutableSequence
 
 from snakemake.api import ResourceSettings, SnakemakeApi
@@ -247,15 +249,15 @@ class SnakemakeExecutionFailed(Exception):
 
 
 def run_snakemake(
-        config,
-        snakefile="Snakefile",
-        cores=1,
-        num_jobs=0,
-        max_jobs_per_second=0,
-        max_status_checks_per_second=0,
-        job_name_token="",
-        partition=None,
-        profile=None,
+    config,
+    snakefile="Snakefile",
+    cores=1,
+    num_jobs=0,
+    max_jobs_per_second=0,
+    max_status_checks_per_second=0,
+    job_name_token="",
+    partition=None,
+    profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
     if config["use_profile"]:
@@ -311,7 +313,7 @@ def run_snakemake(
 
 
 def write_snakemake_debug_helper(
-        profile, jobs, restart_times, job_name_token, max_jobs_per_second, max_status_checks_per_second
+    profile, jobs, restart_times, job_name_token, max_jobs_per_second, max_status_checks_per_second
 ):
     """Write Snakemake debug helper file
 
@@ -386,6 +388,17 @@ def to_plain_python(obj):
         return {key: to_plain_python(elem) for key, elem in obj.items()}
     else:
         return obj
+
+
+def compute_md5_checksum(filename, buffer_size=65_536):
+    the_hash = None
+    with open(filename, "rb") as f:
+        the_hash = hashlib.md5()
+        chunk = f.read(buffer_size)
+        while chunk:
+            the_hash.update(chunk)
+            chunk = f.read(buffer_size)
+    return the_hash.hexdigest()
 
 
 class ParallelBaseWrapper:
@@ -543,7 +556,9 @@ class ParallelBaseWrapper:
         :return: Returns list of chromosomes names to be ignored, as defined in the configuration.
         If not defined, the default is an empty list.
         """
-        return self._get_step_config().get("ignore_chroms", [])
+        return self._get_config().get(
+            "ignore_chroms", self._get_step_config().get("ignore_chroms", [])
+        )
 
     @functools.lru_cache(maxsize=16)
     def get_regions(self):
@@ -724,6 +739,20 @@ class ParallelBaseWrapper:
 
     def shutdown_logging(self):
         logging.shutdown()
+        time.sleep(1)
+
+        # Ideally, the filename might be retrieved from the logger itself:
+        # logging.getLoggerClass().root.handlers[0].baseFilename
+        if hasattr(self.snakemake.log, "log"):
+            log_filename = os.path.realpath(str(self.snakemake.log.log))
+        else:
+            log_filename = os.path.realpath(str(self.snakemake.log))
+
+        with open(log_filename + ".md5", "wt") as f:
+            print(
+                "{}  {}".format(compute_md5_checksum(log_filename), os.path.basename(log_filename)),
+                file=f,
+            )
 
     def _do_run(self, tmpdir):
         """Actual processing in ``tmpdir``.
@@ -943,8 +972,9 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         {input_bam},
@@ -960,7 +990,10 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -993,8 +1026,9 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         **{input_},
@@ -1010,7 +1044,10 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -1043,8 +1080,9 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         tumor_bam={tumor_bam},
@@ -1061,7 +1099,10 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -1094,8 +1135,9 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         **{input_},
@@ -1111,7 +1153,10 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
@@ -1132,13 +1177,6 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
         return {
             key: os.path.join(self.main_cwd, relative_path)
             for key, relative_path in dict(self.snakemake.output).items()
-        }
-
-    def get_all_log(self):
-        """Return dict with all log"""
-        return {
-            key: os.path.join(self.main_cwd, relative_path)
-            for key, relative_path in dict(self.snakemake.log).items()
         }
 
     def allow_resources_increase(self):
@@ -1321,8 +1359,9 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
             rule chunk_{jobno}:
                 input:
                     **{input}
@@ -1339,7 +1378,10 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     **{params}
                 wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
         """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
     def construct_merge_rule(self):
         """Join the overall result files.
@@ -1457,7 +1499,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
         return (merge_input, merge_output, merge_log)
 
     def _construct_level_one_merge_rule(
-            self, chunk_no, merge_input, merge_output, chunk_logs, merge_log
+        self, chunk_no, merge_input, merge_output, chunk_logs, merge_log
     ):
         return (
             textwrap.dedent(
@@ -1505,7 +1547,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
             rule merge_all:
                 input: **{all_input}
                 output: **{all_output}
-                log: **{all_log}
+                log: "{log.log}.merge.log"
                 threads: resource_merge_threads
                 resources:
                     time=resource_merge_time,
@@ -1513,6 +1555,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     partition=resource_merge_partition,
                 shell:
                     r'''
+                    set -x
                     set -euo pipefail  # Unofficial Bash strict mode
 
                     # Merge chunks output ------------------------------------------
@@ -1525,6 +1568,15 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     f=$(basename {merge_log})
                     md5sum $f > $f.md5
                     popd
+
+                    # Write out information about conda installation ---------------
+                    conda list >{log.conda_list}
+                    conda info >{log.conda_info}
+
+                    pushd $(dirname {log.conda_list})
+                    md5sum $(basename {log.conda_list}) >$(basename {log.conda_list}).md5
+                    md5sum $(basename {log.conda_info}) >$(basename {log.conda_info}).md5
+                    popd
                     '''
                 """
             )
@@ -1532,9 +1584,9 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
             .format(
                 all_input=repr(merge_input),
                 all_output=self.get_all_output(),
-                all_log=self.get_all_log(),
                 merge_code=self.merge_code_final(),
                 chunk_logs=" ".join(chunk_logs),
+                log=self.snakemake.log,
                 merge_log=merge_log,
             )
         )

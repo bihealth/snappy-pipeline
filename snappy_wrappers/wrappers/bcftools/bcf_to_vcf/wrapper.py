@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools convert - BCF to compressed VCF.
-"""
+"""Wrapper for running bcftools convert - BCF to compressed VCF."""
 
 from snakemake.shell import shell
 

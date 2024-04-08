@@ -1,4 +1,5 @@
 """CUBI+Snakemake wrapper code for scramble (analysis): Snakemake wrapper.py"""
+
 import os
 
 from snakemake import shell

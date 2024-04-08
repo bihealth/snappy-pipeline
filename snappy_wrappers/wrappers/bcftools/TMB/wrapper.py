@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for calculating tumor mutation burde with bcftools
-"""
+"""Wrapper for calculating tumor mutation burde with bcftools"""
 
 from snakemake.shell import shell
 

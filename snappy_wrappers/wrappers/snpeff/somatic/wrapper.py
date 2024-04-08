@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running SnpEff variant annotation
-"""
+"""Wrapper for running SnpEff variant annotation"""
 
 from snakemake.shell import shell
 

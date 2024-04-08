@@ -9,9 +9,9 @@ At the moment, these issues are:
 """
 
 import argparse
-from functools import reduce
 import gzip
 import sys
+from functools import reduce
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -136,9 +136,11 @@ def main(argv=None):
     group.add_argument(
         "--output-vcf", type=argparse.FileType("wt"), help="output VCF file", default=sys.stdout
     )
-    group.add_argument(
-        "--faidx", type=argparse.FileType("rt"), help="FAI file for generating ##contig lines"
-    ),
+    (
+        group.add_argument(
+            "--faidx", type=argparse.FileType("rt"), help="FAI file for generating ##contig lines"
+        ),
+    )
     group.add_argument("--sample", nargs="+", default=[], action="append", dest="samples")
 
     args = parser.parse_args(argv)

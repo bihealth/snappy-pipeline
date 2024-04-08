@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Convert match_vector.tsv file from snappy-hts_screen.sh
-"""
+"""Convert match_vector.tsv file from snappy-hts_screen.sh"""
 
 import argparse
 import sys

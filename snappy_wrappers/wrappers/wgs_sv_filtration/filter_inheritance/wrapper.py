@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper for filtering WGS SV results for mode of inheritance.
-"""
+"""CUBI+Snakemake wrapper for filtering WGS SV results for mode of inheritance."""
 
 # TODO: works for trios, singletons but NOT FOR MORE COMPLICATED CASES
 # TODO: how to make work if only one parent present?

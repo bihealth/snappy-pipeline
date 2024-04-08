@@ -125,7 +125,7 @@ def variant_classification_vep(x, args=None):
         inFrame = (abs(len(ref) - len(alt)) % 3) == 0
 
         found = False
-        for (k, v) in variant_classes_vep:
+        for k, v in variant_classes_vep:
             if ensembl == k:
                 tcga.append(v)
                 found = True
@@ -179,7 +179,7 @@ def variant_classification_jannovar(x, args=None):
         # inFrame = (abs(len(ref) - len(alt)) % 3) == 0
 
         found = False
-        for (k, v) in variant_classes_jannovar:
+        for k, v in variant_classes_jannovar:
             if jannovar == k:
                 tcga.append(v)
                 found = True

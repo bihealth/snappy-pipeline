@@ -88,9 +88,9 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import itertools
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
@@ -144,7 +144,6 @@ step_config:
 
 
 class FilterDeNovosBaseStepPart(BaseStepPart):
-
     #: Class available actions
     actions = ("run",)
 
@@ -448,8 +447,9 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
         yield "txt", "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt"
-        yield "txt_md5", (
-            "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"
+        yield (
+            "txt_md5",
+            ("work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"),
         )
 
     def get_log_file(self, action):

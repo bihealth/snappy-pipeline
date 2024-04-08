@@ -2,9 +2,9 @@ import logging
 import re
 import typing
 
-from annotation import Annotation
 import exceptions
 import vcfpy
+from annotation import Annotation
 
 
 class VcfParser:
@@ -37,12 +37,12 @@ class VcfParser:
         :param samples: samples mapping dict
         """
         if samples["normal"]:
-            if not samples["normal"] in header.samples.names:
+            if samples["normal"] not in header.samples.names:
                 raise exceptions.IllegalValue(
                     'Normal sample "{}" not found in vcf header'.format(samples["normal"])
                 )
         if samples["tumor"]:
-            if not samples["tumor"] in header.samples.names:
+            if samples["tumor"] not in header.samples.names:
                 raise exceptions.IllegalValue(
                     'Tumor sample "{}" not found in vcf header'.format(samples["tumor"])
                 )

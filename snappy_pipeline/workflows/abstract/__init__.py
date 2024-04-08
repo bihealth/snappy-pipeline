@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
 import contextlib
 import datetime
-from fnmatch import fnmatch
-from functools import lru_cache
-from io import StringIO
 import itertools
 import os
 import os.path
 import sys
 import tempfile
 import typing
+from collections import OrderedDict
+from collections.abc import MutableMapping
+from fnmatch import fnmatch
+from functools import lru_cache
+from io import StringIO
 
 import attr
+import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -26,7 +27,6 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import ruamel.yaml as ruamel_yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
@@ -105,7 +105,9 @@ class BaseStepPart:
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
-        threads=1, time="01:00:00", memory="2G"  # 1h
+        threads=1,
+        time="01:00:00",
+        memory="2G",  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
@@ -673,6 +675,7 @@ class BaseStep:
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
+
         # In the following, the "log" parameter to the handler functions is set to "_" as we
         # don't use them
         def on_start(_):
@@ -1056,15 +1059,14 @@ class LinkInPathGenerator:
         out_list = []
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
-
             # Search paths - expects a list already
-            out_list.extend(getattr(info, "search_paths"))
+            out_list.extend(info.search_paths)
 
             # Sheet path
             # Only name of file is stored in config file (relative path used),
             # hence we need to find it in the base paths
-            sheet_file_name = getattr(info, "sheet_path")  # expects a string
-            base_paths = getattr(info, "base_paths")  # expects a list
+            sheet_file_name = info.sheet_path  # expects a string
+            base_paths = info.base_paths  # expects a list
             sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
             # Append if not None
             if sheet_path:
@@ -1315,9 +1317,12 @@ class InputFilesStepPartMixin:
         @dictify
         def input_function(wildcards):
             if self.include_ped_file:
-                yield "ped", os.path.realpath(
-                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
-                ).format(**wildcards)
+                yield (
+                    "ped",
+                    os.path.realpath(
+                        "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                    ).format(**wildcards),
+                )
             name_pattern = self.prev_class.name_pattern.replace(r",[^\.]+", "")
             tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
             for key, ext in zip(self.ext_names, self.ext_values):

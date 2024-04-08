@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper vor cnvkit.py batch --method wgs
-"""
+"""Wrapper vor cnvkit.py batch --method wgs"""
 
 from snakemake.shell import shell
 

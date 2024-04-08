@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's "final vcf" step
-"""
+"""Wrapper for running Delly2's "final vcf" step"""
 
 from snakemake.shell import shell
 

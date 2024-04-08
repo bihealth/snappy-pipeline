@@ -73,9 +73,9 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -316,7 +316,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     def check_config(self):
         if self.name not in self.config["tools"]:
             return
-        if not self.config["vep"]["tx_flag"] in ("merged", "refseq", "gencode_basic"):
+        if self.config["vep"]["tx_flag"] not in ("merged", "refseq", "gencode_basic"):
             raise InvalidConfiguration("tx_flag must be 'gencode_basic', or 'merged' or 'refseq'")
         if not all([x in self.PICK_ORDER for x in self.config["vep"]["pick_order"]]):
             raise InvalidConfiguration(

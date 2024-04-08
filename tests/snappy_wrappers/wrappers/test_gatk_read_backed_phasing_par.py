@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Code for testing gatk_read_backed_phasing_par wrapper"""
-from pathlib import Path
+
 import textwrap
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml

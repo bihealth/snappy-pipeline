@@ -6,8 +6,6 @@ chip calls, as these complex variants are generally treated as multiple SNPs in 
 calls.
 """
 
-from __future__ import print_statement
-
 import sys
 
 ###################################################################################################
@@ -71,7 +69,6 @@ def splitMAVariant(chrom, pos, theId, ref, alts, qual, filters, info, theRest):
 ###################################################################################################
 
 for line in sys.stdin:
-
     if line.startswith("#"):
         print(line.strip())
         continue

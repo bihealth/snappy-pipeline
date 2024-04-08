@@ -3,6 +3,7 @@ from snakemake import shell
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 out_gc = snakemake.output.get("gene_counts", "__dummy__")
+out_sj = snakemake.output.get("junctions", "__dummy__")
 out_tx = snakemake.output.get("transcriptome", "__dummy__")
 
 DEF_HELPER_FUNCS = r"""
@@ -202,6 +203,8 @@ index_bam {snakemake.output.bam}
 
 mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
 compute-md5 {out_gc} {out_gc}.md5
+mv $TMPDIR/pre.d/out.SJ.out.tab {out_sj}
+compute-md5 {out_sj} {out_sj}.md5
 
 # Optional output: mapping on transcriptome -------------------------------------------------------
 

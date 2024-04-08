@@ -114,7 +114,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
-            **wildcards
+            **wildcards,
         )
         return prev_step(input_path + ".vcf.gz")
 
@@ -181,9 +181,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             r"""
             pushd $(dirname {output.xml})
             md5sum $(basename {output.xml}) >$(basename {output.xml}).md5
-            """.format(
-                output=output
-            )
+            """.format(output=output)
         )
 
 

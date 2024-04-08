@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for deconstructSigs
-"""
+"""CUBI+Snakemake wrapper code for deconstructSigs"""
 
 from snakemake import shell
 

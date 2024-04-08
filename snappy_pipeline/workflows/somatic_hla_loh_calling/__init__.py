@@ -21,9 +21,9 @@ Step Output
 A report file.
 """
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -68,7 +68,6 @@ class LohhlaStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
-
         # Validate action
         self._validate_action(action)
 

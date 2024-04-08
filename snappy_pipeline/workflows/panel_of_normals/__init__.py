@@ -33,6 +33,13 @@ The normals that have been used, as well as the individual files (for example
 vcf files for each normal) are kept in the ``work`` directory. This enables the
 augmentation of the panel by new files when they become available.
 
+.. warning::
+
+    Panel of normals are powerful tools to reduce systematic bias in the analysis of sequencing data.
+    However, they should be built using data generated as similarily as possible.
+    In particular, a panel of normals should only contain data collected with the **same** exome enrichment kit.
+    It is also essential to use such a panel on tumor samples collected in the same way.
+
 ================================
 Notes on the ``cnvkit`` workflow
 ================================
@@ -40,18 +47,88 @@ Notes on the ``cnvkit`` workflow
 ``cnvkit`` is a set of tools originally designed to call somatic copy number alterations from exome data.
 Its design is modular, which enables its use for whole genome and amplicon data.
 
-``cnvkit`` provides a tool to encapsulate common practice workflows (``batch``), depending on the type of data, and on the availability of optional inputs.
-The current implementation recapitulates the common practice, while still dispaching computations on multiple cluster nodes.
+Provided that sufficient normal samples are available, the ``cnvkit`` `documentation <https://cnvkit.readthedocs.io/en/stable/>`_
+recommends the creation of a panel of normal (called ``reference``) for exome and whole genome data.
 
-For exome and whole genome data, the ``cnvkit`` `documentation <https://cnvkit.readthedocs.io/en/stable/>`_
-recommends the creation of a panel of normal (called ``reference``).
-The actual workflow to generate this reference is slightly different between exome and whole genome data,
-and also changes depending whether an accessibility file is provided by the user or not.
+.. note::
 
-Therefore, the ``cnvkit`` tool to generate such accessibility file is implemented as a separate tool.
-If a user wants to create this accessibility file with ``cnvkit`` tools, then she must first run the ``access`` tool.
-Only after it has been created can she use it to generate the panel of normals.
-For that, she will need to modify the configuration file, adding ``cnvkit`` in the list of tools, and setting the ``access`` parameter to the output of the ``access`` tool.
+    ``cnvkit`` provides a tool to encapsulate common practice workflows (``batch``), depending on the type of data, and on the availability of optional inputs.
+    The actual workflow to generate this reference is slightly different between exome and whole genome data.
+    The current implementation recapitulates the common practice, while still dispaching computations on multiple cluster nodes.
+
+-----------
+Access file
+-----------
+
+``cnvkit`` can use a bed file describing the accessible regions for coverage computations.
+The ``cnvkit`` distribution provides it for the ``GRCh37`` human genome release, but incompletely only for ``GRCh38``.
+Therefore, a tentative ``access`` tool has been added, to generate this bed file when the user knows which locii should be excluded from coverage.
+Its output (``output/cnvkit.access/out/cnvkit.access.bed``) is optional, but its presence impacts of the way the target and antitarget regions are computed in whole genome mode.
+
+.. note::
+
+    In a nutshell, for exome data, the accessibility file is only used to create antitarget regions.
+    For genome data, it is used by the ``autobin`` tool to compute the average target size used during target regions creation.
+    If it is present, the target size is computed in amplicon mode, and when it is absent,
+    an accessibility file is created with default settings, which value is used by ``autobin`` is whole genome mode.
+
+To generate the access file from a bed file containing regions to exclude from further coverage computations,
+the user must proceed in two steps:
+
+First, she needs to run the ``access`` tool to create the desired access file
+
+.. code-block:: yaml
+
+    panel_of_normals:
+        tools: [access]
+        access:
+            exclude: <absolute path to excluded locii bed file>
+
+This will create ``output/cnvkit.access/out/cnvkit.access.bed`` from the genomic sequence & excluded regions.
+
+------------------------
+Panel of normal creation
+------------------------
+
+If the user wants to create her own access file, then the panel of normal can only be created after the ``access`` tool has been run.
+If she decides that the access file provided in the ``cnvkit`` distribution is suitable (no excluded region),
+then she can skip the ``access`` tool step and directly creates her panel of normals.
+
+In both cases, the configuration might read:
+
+.. code-block:: yaml
+
+    panel_of_normals:
+        tools: [cnvkit]                                               # , access]
+        access: <absolute path to access file>                        # Even when created by the ``access`` tool.
+        path_target_regions: <absolute path to baits>                 # Keep empty for WGS data
+        path_normals_list: <absolute path to list of normal samples>  # Keep empty to use all available normals
+
+Note that there is no provision (yet) to automatically create separate panel of normals for males & females.
+If the number of samples collected in the same fashion is large enough, it is nevertheless the way to achieve best results.
+
+-------
+Reports
+-------
+
+Report tables can be found in the ``output/{mapper}.cnvkit/report`` directory.
+Two tables are produced, grouping results for all normal samples together:
+
+- ``metrics.txt``: coverage metrics over target and antitarget regions.
+- ``sex.txt``: prediction of the donor's gender based on the coverage of chromosome X & Y target and antitarget regions.
+
+The cnvkit authors recommend to check these reports to ensure that all data is suitable for panel of normal creation.
+
+================
+Notes ``purecn``
+================
+
+In the current implementation, the ``purecn`` panel of normals is required when calling somatic copy numbers in the ``somatic_targeted_seq_cnv_calling`` step.
+In turn, the ``purecn`` panel of normals requires the availability of a ``mutect2`` panel of normals.
+This is because ``mutect2`` is used as somatic variant caller, rather than the older ``mutect`` which is the ``PureCN`` default.
+
+The ``PureCN`` docker container is used, rather than conda environments, because of the complexity of PureCN R packages requirements
+(including github-only changes to older packages).
 
 =====================
 Default Configuration
@@ -68,27 +145,6 @@ Panel of normals generation for tools
 - Panel of normal for ``mutect2`` somatic variant caller
 - Panel of normal for ``cvnkit`` somatic Copy Number Alterations caller
 
-``access`` is used to create a genome accessibility file that can be used for ``cnvkit`` panel of normals creation.
-Its output (``output/cnvkit.access/out/cnvkit.access.bed``) is optional, but its presence impacts of the way the target and antitarget regions are computed in whole genome mode.
-
-In a nutshell, for exome data, the accessibility file is only used to create antitarget regions.
-For genome data, it is used by the ``autobin`` tool to compute the average target size used during target regions creation.
-If it is present, the target size is computed in amplicon mode, and when it is absent,
-an accessibility file is created with default settings, which value is used by ``autobin`` is whole genome mode.
-
-This follows the internal ``batch`` code of ``cnvkit``.
-
-=======
-Reports
-=======
-
-Report tables can be found in the ``output/{mapper}.cnvkit/report`` directory.
-Two tables are produced, grouping results for all normal samples together:
-
-- ``metrics.txt``: coverage metrics over target and antitarget regions.
-- ``sex.txt``: prediction of the donor's gender based on the coverage of chromosome X & Y target and antitarget regions.
-
-The cnvkit authors recommend to check these reports to ensure that all data is suitable for panel of normal creation.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
@@ -230,6 +286,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Resources
     resource_usage = {
+        "install": ResourceUsage(
+            threads=1,
+            time="01:00:00",
+            memory="24G",
+        ),
         "prepare": ResourceUsage(
             threads=1,
             time="04:00:00",  # 4 hours
@@ -242,8 +303,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         ),
         "create_panel": ResourceUsage(
             threads=1,
-            time="04:00:00",  # 4 hours
-            memory="24G",
+            time="12:00:00",  # 12 hours
+            memory="32G",
         ),
     }
 
@@ -260,9 +321,12 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
-        yield "intervals", "work/purecn/out/{}_{}.list".format(
-            self.config["purecn"]["enrichment_kit_name"],
-            self.config["purecn"]["genome_name"],
+        yield (
+            "intervals",
+            "work/purecn/out/{}_{}.list".format(
+                self.config["purecn"]["enrichment_kit_name"],
+                self.config["purecn"]["genome_name"],
+            ),
         )
         tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bam", self.ngs_mapping(tpl.format(**wildcards))
@@ -271,9 +335,13 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/{mapper}.purecn/out/{mapper}.purecn.{library_name}_coverage_loess.txt.gz"
-        yield "normals", [
-            tpl.format(mapper=wildcards.mapper, library_name=lib) for lib in self.normal_libraries
-        ]
+        yield (
+            "normals",
+            [
+                tpl.format(mapper=wildcards.mapper, library_name=lib)
+                for lib in self.normal_libraries
+            ],
+        )
 
     def get_output_files(self, action):
         self._validate_action(action)
@@ -542,6 +610,12 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         antitargets = [
             tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
         ]
+        tpl = "work/{mapper}.cnvkit/log/{mapper}.cnvkit.{normal_library}.coverage.{ext}"
+        logs = [
+            tpl.format(mapper=wildcards["mapper"], normal_library=x, ext=ext)
+            for x in self.normal_libraries
+            for ext in ("log", "conda_list.txt", "conda_info.txt")
+        ]
         return {
             "target": targets
             if targets
@@ -549,6 +623,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "antitarget": antitargets
             if antitargets
             else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards),
+            "logs": logs if targets or antitargets else [],
         }
 
     def _get_input_files_report(self, wildcards):
@@ -607,6 +682,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return {
             "panel": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn",
             "panel_md5": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn.md5",
+            "log": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz",
+            "log_md5": "work/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz.md5",
         }
 
     def _get_output_files_report(self):
@@ -765,6 +842,8 @@ class PanelOfNormalsWorkflow(BaseStep):
             ]
             for tpl in tpls:
                 result_files.extend(self._expand_result_files(tpl, log_ext_list))
+            tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz{ext}"
+            result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
         if "access" in set(self.config["tools"]) & set(TOOLS):
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"

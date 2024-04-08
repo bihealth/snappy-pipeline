@@ -13,7 +13,7 @@ dependencies:
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=8.8.0
+  - snakemake =8
 
   # Additional libraries used by snappy
   - ruamel.yaml >=0.15.35              # Nice, round-trip enabled YAML parsing
@@ -34,15 +34,15 @@ dependencies:
   # - pytabix
 
   # Parsing of ISA-tab
-  - altamisa >=0.2.6
+  - altamisa >=0.2.6,<0.3.0
 
-  - attrs >=23.2.0
+  - attrs =23.2
 
-  - pytest-sugar >=1.0.0
+  - pytest-sugar =1
 
   # CUBI libraries required by snappy (installed through pip)
   - pip:
-    - varfish-cli >=0.2.0
-    - biomedsheets >=0.11.7
-    - pysam >=0.22
-    - vcfpy >=0.13.8
+    - varfish-cli >=0.2.0,<0.3.0
+    - biomedsheets >=0.11.7,<0.12.0
+    - pysam >=0.22,<0.23
+    - vcfpy >=0.13.8,<0.14.0

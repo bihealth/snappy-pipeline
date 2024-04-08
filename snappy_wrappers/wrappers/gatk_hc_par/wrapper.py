@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running GATK HC variant caller in parallel
-"""
+"""Wrapper for running GATK HC variant caller in parallel"""
 
 import os
 

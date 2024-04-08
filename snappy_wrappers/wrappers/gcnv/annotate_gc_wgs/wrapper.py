@@ -11,7 +11,7 @@ from snakemake.shell import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_pipeline.utils import DictQuery
+from snappy_pipeline.utils import DictQuery  # noqa: E402
 
 
 # Although optional for the tool, GATK recommend a providing a mappability track

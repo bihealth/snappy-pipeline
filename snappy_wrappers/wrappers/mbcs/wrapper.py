@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for MTB-aware exome data
-"""
+"""CUBI+Snakemake wrapper code for MTB-aware exome data"""
 
 import os
-import shutil
 import sys
 import tempfile
 
@@ -15,11 +13,12 @@ from snakemake import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import run_snakemake
+from snappy_wrappers.wrapper_parallel import run_snakemake  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
+
 
 # Helper functions ------------------------------------------------------------
 def pair_fastq_files(input_left, input_right):
@@ -86,7 +85,7 @@ rule {rule}:
     resources:
         mem_mb = "{mem}",
         time = "{time}",
-        partition = "critical"
+        partition = "medium"
     shell:
         r'''
 {cmds}
@@ -250,7 +249,7 @@ if config["use_barcodes"]:
     ).format(
         marker=config_barcodes["mark_duplicates"]["path"],
         consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
-        baits=config_barcodes["mark_duplicates"]["path_to_baits"],
+        baits=config_barcodes["mark_duplicates"]["path_baits"],
         extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_args"]),
         input_filter_args=" ".join(config_barcodes["mark_duplicates"]["input_filter_args"]),
         consensus_filter_args=" ".join(config_barcodes["mark_duplicates"]["consensus_filter_args"]),

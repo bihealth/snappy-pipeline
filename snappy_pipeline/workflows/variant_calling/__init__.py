@@ -246,12 +246,12 @@ bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/jannovar_stats/bwa.gatk4_hc_gvcf.ind
 ```
 """
 
-from collections import OrderedDict
-from itertools import chain
 import re
 import sys
 import typing
 import warnings
+from collections import OrderedDict
+from itertools import chain
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snakemake.io import Wildcards, expand
@@ -511,10 +511,13 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
 
 class BcftoolsCallStepPart(VariantCallingStepPart):
@@ -651,10 +654,13 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
         }
         yield from result.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(result.values(), self.get_log_file("genotype").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(result.values(), self.get_log_file("genotype").values())
+            ],
+        )
 
 
 class ReportGetLogFileMixin:
@@ -706,9 +712,12 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
 
     @dictify
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
-        yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_library_name}/out/"
-            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+        yield (
+            "vcf",
+            (
+                "work/{mapper}.{var_caller}.{index_library_name}/out/"
+                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+            ),
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -725,10 +734,13 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_resource_usage(self, action: str) -> ResourceUsage:
         """Get Resource Usage
@@ -760,9 +772,12 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
 
     @dictify
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
-        yield "vcf", (
-            "output/{mapper}.{var_caller}.{index_library_name}/out/"
-            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+        yield (
+            "vcf",
+            (
+                "output/{mapper}.{var_caller}.{index_library_name}/out/"
+                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+            ),
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -779,10 +794,13 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_resource_usage(self, action: str) -> ResourceUsage:
         """Get Resource Usage
@@ -814,9 +832,12 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
     def get_input_files(self, action) -> SnakemakeDictItemsGenerator:
         """Return path to input files"""
         self._validate_action(action)
-        yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_library_name}/out/"
-            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+        yield (
+            "vcf",
+            (
+                "work/{mapper}.{var_caller}.{index_library_name}/out/"
+                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+            ),
         )
 
     def get_output_files(self, action) -> SnakemakeDict:
@@ -836,10 +857,13 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_resource_usage(self, action: str) -> ResourceUsage:
         """Get Resource Usage
@@ -875,9 +899,12 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     @dictify
     def get_input_files(self, action: str) -> SnakemakeDictItemsGenerator:
         self._validate_action(action)
-        yield "vcf", (
-            "work/{mapper}.{var_caller}.{index_library_name}/out/"
-            "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+        yield (
+            "vcf",
+            (
+                "work/{mapper}.{var_caller}.{index_library_name}/out/"
+                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+            ),
         )
 
     @dictify
@@ -892,10 +919,13 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         for key, ext in ext_names.items():
             work_files[key] = f"work/{base_path}{ext}"
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_resource_usage(self, action: str) -> ResourceUsage:
         self._validate_action(action)

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``gene_expression_report`` step
+"""Implementation of the ``gene_expression_report`` step"""
 
-"""
-
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

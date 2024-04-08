@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for Optitype: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for Optitype: Snakemake wrapper.py"""
 
 from snakemake import shell
 
@@ -23,15 +22,20 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
 # Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec 2> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
+
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
+md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
 
 if [[ -z "{reads_right}" ]]; then
     paired=0
@@ -121,5 +125,12 @@ tail -n +2 {snakemake.output.tsv} \
     | sort \
     > {snakemake.output.txt}
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

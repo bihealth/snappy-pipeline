@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running postprocessing of CNVetti-based segmentation.
-"""
+"""Wrapper for running postprocessing of CNVetti-based segmentation."""
 
 import os
 

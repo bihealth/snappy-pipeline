@@ -43,8 +43,8 @@ Available Somatic Targeted CNV Caller
 
 """
 
-from collections import OrderedDict
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
@@ -127,10 +127,13 @@ class MantisStepPart(BaseStepPart):
         assert action == "run", "Unsupported actions"
         exts = {"result": "results.txt", "status": "results.txt.status"}
         for key, ext in exts.items():
-            yield key, (
-                "work/mantis.{{mapper}}.{{library_name}}/out/"
-                "mantis.{{mapper}}.{{library_name}}_{sfx}"
-            ).format(sfx=ext)
+            yield (
+                key,
+                (
+                    "work/mantis.{{mapper}}.{{library_name}}/out/"
+                    "mantis.{{mapper}}.{{library_name}}_{sfx}"
+                ).format(sfx=ext),
+            )
 
     @staticmethod
     def get_log_file(action):

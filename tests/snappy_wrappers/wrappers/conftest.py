@@ -1,15 +1,14 @@
 """Support code for the snappy pipeline wrapper tests."""
 
-from collections import namedtuple
-from itertools import chain
 import os
 import shutil
 import subprocess
+from collections import namedtuple
+from itertools import chain
 from unittest.mock import MagicMock, patch
 
-from pyfakefs import fake_filesystem
 import pytest
-import yaml
+from pyfakefs import fake_filesystem
 
 FORCE_RUN = os.environ.get("FORCE_RUN", "false") == "true"
 DIFF_MASTER = os.environ.get("DIFF_MASTER", "false") == "true"

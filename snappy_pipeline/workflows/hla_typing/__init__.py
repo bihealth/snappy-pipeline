@@ -54,8 +54,8 @@ The following HLA typing tools are currently available
 
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -143,11 +143,20 @@ class OptiTypeStepPart(BaseStepPart):
         for name, ext in {"tsv": "_result.tsv", "cov_pdf": "_coverage_plot.pdf"}.items():
             yield name, self.base_path_out.format(ext=ext)
 
-    @staticmethod
-    def get_log_file(action):
-        """Return path to log file"""
-        _ = action
-        return "work/optitype.{library_name}/log/snakemake.hla_typing.log"
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files."""
+        self._validate_action(action)
+
+        prefix = "work/{name}.{{library_name}}/log/{name}.{{library_name}}".format(name=self.name)
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
@@ -236,8 +245,11 @@ class ArcasHlaStepPart(BaseStepPart):
         def input_function(wildcards):
             yield "ref_done", "work/arcashla.prepare_reference/out/.done"
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-            yield "bam", self.parent.sub_workflows["ngs_mapping"](
-                tpl.format(mapper=self.mapper, **wildcards)
+            yield (
+                "bam",
+                self.parent.sub_workflows["ngs_mapping"](
+                    tpl.format(mapper=self.mapper, **wildcards)
+                ),
             )
 
         assert action == "run"
@@ -321,6 +333,10 @@ class HlaTypingWorkflow(BaseStep):
         name_pattern = "{prefix}{hla_typer}.{ngs_library.name}"
         yield from self._yield_result_files(
             join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
+        )
+        log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
+        yield from self._yield_result_files(
+            join("output", name_pattern, "log", name_pattern + ".{ext}"), ext=log_ext
         )
 
     def _yield_result_files(self, tpl, **kwargs):

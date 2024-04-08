@@ -1,8 +1,8 @@
 """Commonly used code and types"""
 
-from itertools import chain
 import re
 import typing
+from itertools import chain
 
 from snakemake.io import Wildcards
 
