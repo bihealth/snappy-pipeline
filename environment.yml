@@ -60,7 +60,10 @@ dependencies:
   # CUBI libraries required by snappy (installed through pip)
   - pip:
     - varfish-cli >=0.6.3
-#    - biomedsheets >=0.11.7  # 0.11.7 build will fail
+    # We're trying to keep the PyPi package up to date, you might have to install
+    # from source, though.
+    # - biomedsheets >=0.11.7
+    # … which is what we do here:
     - git+https://github.com/bihealth/biomedsheets.git@a355c396b6e6b2f52f96f73d58cd26c3f1f5e18c
     - pysam >=0.22
     - vcfpy >=0.13.8
