@@ -8,6 +8,7 @@ dependencies:
 - htslib >=1.9
 - bcftools >=1.9
 - datrie
+- gawk =5.1
 # snakemake needed by the parallel wrapper
 - snakemake-minimal =7
 # needed by snakemake
