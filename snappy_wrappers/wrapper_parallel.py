@@ -21,6 +21,7 @@ import tempfile
 import textwrap
 import time
 from collections.abc import MutableMapping, MutableSequence
+from pathlib import Path
 
 from snakemake.api import ResourceSettings, SnakemakeApi
 from snakemake.cli import get_profile_dir
@@ -260,12 +261,14 @@ def run_snakemake(
     profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
+    snakefile = Path(snakefile)
     if config["use_profile"]:
+        workdir = Path(os.getcwd())
         print(
             f"Running with Snakemake profile on {num_jobs or config['num_jobs']} "
-            f"cores in directory {os.getcwd()}"
+            f"cores in directory {workdir}"
         )
-        os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
+        os.mkdir(os.path.join(workdir, "slurm_log"))
         if partition:
             os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
 
@@ -281,40 +284,37 @@ def run_snakemake(
             ),
         )
 
-        result = SnakemakeApi.workflow(
-            snakefile=snakefile,
-            workdir=os.getcwd(),
-            jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
-            cores=cores,
-            nodes=num_jobs or config["num_jobs"],
-            max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
-            max_status_checks_per_second=max_status_checks_per_second
-            or config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
-            cluster=get_profile_file(profile, "slurm-submit.py"),
-            cluster_status=get_profile_file(profile, "slurm-status.py"),
-            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
-            cluster_cancel="scancel",
-        )
+        with SnakemakeApi() as api:
+            result = api.workflow(
+                snakefile=snakefile,
+                workdir=workdir,
+                resource_settings=ResourceSettings(
+                    cores=cores, nodes=num_jobs or config["num_jobs"]
+                ),
+                # TODO properly choose remaining *_settings, if needed
+                # config_settings=None,
+                # storage_settings=None,
+                # workflow_settings=None,
+                # deployment_settings=None,
+                # storage_provider_settings=None,
+            )
     else:
         print(
             "Running locally with {num_jobs} jobs in directory {cwd}".format(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
-        result = SnakemakeApi.workflow(
-            snakefile=snakefile,
-            resource_settings=ResourceSettings(cores=config["num_jobs"]),
-            # TODO properly choose remaining *_settings, if needed
-            # config_settings=None,
-            # storage_settings=None,
-            # workflow_settings=None,
-            # deployment_settings=None,
-            # storage_provider_settings=None,
-        )
+        with SnakemakeApi() as api:
+            result = api.workflow(
+                snakefile=snakefile,
+                resource_settings=ResourceSettings(cores=config["num_jobs"]),
+                # TODO properly choose remaining *_settings, if needed
+                # config_settings=None,
+                # storage_settings=None,
+                # workflow_settings=None,
+                # deployment_settings=None,
+                # storage_provider_settings=None,
+            )
     if not result:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
 
