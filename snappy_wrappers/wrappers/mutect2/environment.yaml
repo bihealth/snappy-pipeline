@@ -3,13 +3,15 @@ channels:
 - bioconda
 
 dependencies:
-- python =3.9
+- python =3.11
 - gatk4 =4.3
 - htslib >=1.9
 - bcftools >=1.9
+# gawk is needed because the awk expression uses a gawk specific version of `match(…)`
+- gawk
 - datrie
 # snakemake needed by the parallel wrapper
-- snakemake-minimal =7
+- snakemake-minimal =8.10
 # needed by snakemake
 - cffi
 - numpy

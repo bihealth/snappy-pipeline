@@ -15,7 +15,7 @@ biomedsheets >=0.11.7
 termcolor>=1.1.0
 
 # Snakemake is used for providing the actual wrapper calling functionality
-snakemake>=8.8.0
+snakemake>=8.10.6
 # Snakemake needs manual install of PyYAML to make YAML configuration loading work
 #PyYAML>=6.0
 

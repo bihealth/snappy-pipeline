@@ -13,7 +13,7 @@ dependencies:
   - git-lfs =3.5
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake =8
+  - snakemake >=8.10.6
 
   # Additional libraries used by snappy
   - ruamel.yaml =0.18               # Nice, round-trip enabled YAML parsing

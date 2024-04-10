@@ -32,6 +32,7 @@ from snakemake.io import touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
+    expand_ref,
     merge_dicts,
     merge_kwargs,
     print_config,
@@ -799,13 +800,24 @@ class BaseStep:
             abs_workdir = workdir
         else:
             abs_workdir = os.path.realpath(os.path.join(os.getcwd(), workdir))
-        self.workflow.subworkflow(
-            sub_workflow_name,
-            workdir=abs_workdir,
+
+        config_path = abs_workdir + "/" + "config.yaml"
+        config, *_ = expand_ref(config_path, self.w_config)
+
+        from pprint import pprint
+
+        pprint(config)
+        pprint(_)
+        print(snakefile_path(step_name))
+        print(abs_workdir)
+        self.workflow.module(
+            name=sub_workflow_name,
+            # workdir=abs_workdir,
+            prefix=step_name,
             snakefile=snakefile_path(step_name),
-            configfile=abs_workdir + "/" + "config.yaml",
+            config=config,
         )
-        self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
+        self.sub_workflows[sub_workflow_name] = self.workflow.modules[sub_workflow_name]
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards

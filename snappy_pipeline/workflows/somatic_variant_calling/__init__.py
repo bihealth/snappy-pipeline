@@ -574,7 +574,13 @@ class Mutect2StepPart(MutectBaseStepPart):
         :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
         """
         # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        module_info = self.parent.sub_workflows["ngs_mapping"]
+        module_info.use_rules(rules="*")
+        _parent_path = self.parent.workflow.overwrite_workdir.parent
+
+        def ngs_mapping(path: str) -> str:
+            return "../" + "ngs_mapping" + "/" + path
+
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
