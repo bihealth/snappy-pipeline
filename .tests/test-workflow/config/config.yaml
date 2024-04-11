@@ -1,0 +1,12 @@
+reference:
+  species: "homo_sapiens"
+  datatype: "dna"
+  build: "GRCh37"
+  release: 111
+  chromosome: "12"
+
+pipeline-configuration:
+  cancer_wes:
+    workdir: "pipelines/snappy-cancer_wes"
+    config: "pipelines/snappy-cancer_wes/.snappy_pipeline/config.yaml"
+    samplesheet: "pipelines/snappy-cancer_wes/.snappy_pipeline/samplesheet.tsv"
