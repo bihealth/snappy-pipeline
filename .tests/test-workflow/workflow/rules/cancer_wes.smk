@@ -17,9 +17,7 @@ rule render_cancer_wes_config:
         "logs/jinja/render_cancer_wes_config.log",
     params:
         reference=lambda wildcards, input: os.path.abspath(input.reference),
-        bwa_index=lambda wildcards, input: os.path.splitext(
-            os.path.abspath(input.bwa_index)
-        )[0],
+        bwa_index=lambda wildcards, input: os.path.splitext(os.path.abspath(input.bwa_index))[0],
         vep_cache=lambda wildcards, input: os.path.abspath(input.vep_cache),
     template_engine:
         "jinja2"
@@ -58,9 +56,7 @@ rule cancer_wes_execute_pipeline:
         profile_dir=lambda wildcards, input: os.path.abspath(
             os.path.dirname(input.snakemake_profile)
         ),
-        work_dir=lambda w, input: config["pipeline-configuration"]["cancer_wes"][
-            "workdir"
-        ],
+        work_dir=lambda w, input: config["pipeline-configuration"]["cancer_wes"]["workdir"],
     log:
         "logs/execute-pipeline/cancer_wes.log",
     conda:
