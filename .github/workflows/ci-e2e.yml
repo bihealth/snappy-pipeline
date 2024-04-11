@@ -19,8 +19,8 @@ jobs:
       uses: snakemake/snakemake-github-action@v1
       with:
         directory: .tests/test-workflow
-        snakefile: workflow/Snakefile
-        args: "--configfile config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
+        snakefile: .tests/test-workflow/workflow/Snakefile
+        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
         show-disk-usage-on-error: true
 
 
@@ -38,7 +38,7 @@ jobs:
       uses: snakemake/snakemake-github-action@v1
       with:
         directory: .tests/test-workflow
-        snakefile: workflow/Snakefile
-        args: "--configfile config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
+        snakefile: .tests/test-workflow/workflow/Snakefile
+        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
         show-disk-usage-on-error: true
 
