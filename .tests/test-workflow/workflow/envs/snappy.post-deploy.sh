@@ -6,7 +6,7 @@ conda activate "$CONDA_PREFIX"
 if [[ -z "${GITHUB_WORKSPACE}" ]]; then
   cd "${GITHUB_WORKSPACE}" || exit
 else
-  if [[ -d /github/workspace ]; then
+  if [[ -d /github/workspace ]]; then
     cd /github/workspace/ || exit
   else
     cd snappy-pipeline || exit
