@@ -664,7 +664,7 @@ class BaseStep:
         try:
             module = import_module(".model", package=self.__module__)
             model = getattr(module, model_name)
-            validate_config(self.config, model())
+            validate_config(self.config, model)
         except ModuleNotFoundError:
             # TODO: use logging
             # print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",

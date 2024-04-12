@@ -46,7 +46,7 @@ def minimal_config():
               path_index: /path/to/bwa_mem2/index.fasta
             mbcs:
               mapping_tool: bwa
-            bsqr:
+            bqsr:
               common_variants: /path/to/common/variants
             agent:
               prepare:

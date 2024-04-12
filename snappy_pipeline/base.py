@@ -72,11 +72,11 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
 
 def validate_config(
     config: dict[Any, Any],
-    model: pydantic.BaseModel,
+    model: type[pydantic.BaseModel],
     file=sys.stderr,
 ):
-    print(f"\nValidating config using {model.__class__.__name__}", file=file)
-    model.model_validate(config)
+    print(f"\nValidating config using {model.__name__}", file=file)
+    _ = model(**config)
 
 
 def print_config(config, file=sys.stderr):
