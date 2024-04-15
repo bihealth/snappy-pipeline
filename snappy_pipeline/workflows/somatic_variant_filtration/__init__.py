@@ -257,7 +257,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, is_unpack=True):
             yield (
                 "bam",
                 os.path.join(
@@ -507,11 +507,11 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
 
 
 def somatic_variant(path: str) -> str:
-    return "../somatic_variant_calling/" + path
+    return os.path.join(os.path.abspath("../somatic_variant_calling/"), path)
 
 
 def ngs_mapping(path: str) -> str:
-    return "../ngs_mapping/" + path
+    return os.path.join(os.path.abspath("../ngs_mapping"), path)
 
 
 class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
