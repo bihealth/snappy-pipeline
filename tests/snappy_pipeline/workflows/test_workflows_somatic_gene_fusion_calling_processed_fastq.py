@@ -375,7 +375,7 @@ def test_arriba_step_part_get_log_file(somatic_gene_fusion_calling_workflow):
 def test_arriba_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow):
     """Tests ArribaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "24:00:00", "memory": "65536M", "partition": "medium"}
+    expected_dict = {"threads": 8, "time": "24:00:00", "memory": "98304M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

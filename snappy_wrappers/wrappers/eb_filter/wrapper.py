@@ -6,7 +6,7 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-if snakemake.params["args"]["interval"]:
+if "args" in snakemake.params and snakemake.params["args"].get("interval", None):
     cmd_fetch = "tabix --print-header {} {}".format(
         snakemake.input.vcf, snakemake.params["args"]["interval"]
     )
@@ -24,7 +24,7 @@ elif "ebfilter" in config and "ebfilter_threshold" in config["ebfilter"]:
     threshold = config["ebfilter"].get("ebfilter_threshold", 0)
 else:
     try:
-        filter_nb = int(snakemake.params["args"]["filter_nb"]) - 1
+        filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
         threshold = config["filter_list"][filter_nb]["ebfilter"].get("ebfilter_threshold", 0)
     except:
         threshold = 0
@@ -37,7 +37,7 @@ elif "ebfilter" in config and "filter_name" in config["ebfilter"]:
     filter_name = config["ebfilter"].get("filter_name", "")
 else:
     try:
-        filter_name = "ebfilter_{}".format(int(snakemake.params["args"]["filter_nb"]))
+        filter_name = "ebfilter_{}".format(int(snakemake.wildcards["filter_nb"]))
     except:
         filter_name = "+"
 
@@ -55,15 +55,20 @@ trap "rm -rf $TMPDIR" EXIT
 export REF={snakemake.config[static_data_config][reference][path]}
 
 # Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
+if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        exec 2> >(tee -a "{snakemake.log.log}" >&2)
     else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
+        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+        echo "No tty, logging disabled" >"{snakemake.log.log}"
     fi
 fi
+
+conda list >{snakemake.log.conda_list}
+conda info >{snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
+md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
 
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
@@ -121,7 +126,11 @@ else
     mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
 fi
 
+bcftools index --force $TMPDIR/after_eb_filter.vcf.gz
+bcftools index --force $TMPDIR/not_for_eb_filter.vcf.gz
+
 bcftools concat \
+    --allow-overlaps \
     $TMPDIR/after_eb_filter.vcf.gz \
     $TMPDIR/not_for_eb_filter.vcf.gz \
 | bcftools sort --output {snakemake.output.vcf} --output-type z
@@ -132,5 +141,12 @@ pushd $(dirname {snakemake.output.vcf}) && \
     md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
     md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5 && \
     popd
+"""
+)
+
+# Compute MD5 sums of logs.
+shell(
+    r"""
+md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

@@ -83,9 +83,17 @@ step_config:
     path_somatic_variant: ../somatic_variant_filtration          # REQUIRED (before or after filtration)
     somatic_variant_calling_tool: "mutect2"                      # mutect/scalpel combo unsupported
     somatic_variant_annotation_tool: "vep"
-    filter_set: ""                                               # Will take variants before filtration step.dkfz_only.
-                                                                 # For filters, use dkfz_only, dkfz_and_ebfilter, dkfz_and_ebfilter_and_oxog, ...
-    exon_list: "genome_wide"                                     # Works together with filter set, see somatic_variant_filtration step
+    filter_set: ""                                               # Set it to an empty value when using annotated variants without filtration.
+                                                                 # When using filters, there are two possibilities:
+                                                                 # - the old implementation, using filter_sets.
+                                                                 #   In that case, choose one of the filters:
+                                                                 #   * no_filter
+                                                                 #   * dkfz_only
+                                                                 #   * dkfz_and_ebfilter
+                                                                 #   * dkfz_and_ebfilter_and_oxog (that should be reserved for datasets with oxo-G artifacts)
+                                                                 # - the new implementation, using filter_list.
+                                                                 #   In that case, the value must be "filter_list"
+    exon_list: "genome_wide"                                     # Works together with filter_set, ignored when "filter_list" is selected
     exclude_variant_with_flag: ""
     # Required for Copy Number Alterations
     path_copy_number: ""                                         # When missing, no CNV data uploaded to portal. Access WES & WGS steps
@@ -213,11 +221,14 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         super().__init__(parent)
         self.name_pattern = None
         if self.config["filter_set"]:
-            self.name_pattern = (
-                "{mapper}.{caller}.{annotator}."
-                "dkfz_bias_filter.eb_filter.{tumor_library}."
-                "{filter_set}.{exon_list}"
-            )
+            if self.config["filter_set"] == "filter_list":
+                self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
+            else:
+                self.name_pattern = (
+                    "{mapper}.{caller}.{annotator}."
+                    "dkfz_bias_filter.eb_filter.{tumor_library}."
+                    "{filter_set}.{exon_list}"
+                )
         else:
             self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
         # Build shortcut from cancer bio sample name to matched cancer sample
@@ -326,11 +337,14 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         if self.config["filter_set"]:
-            name_pattern = (
-                "{mapper}.{caller}.{annotator}."
-                "dkfz_bias_filter.eb_filter.{{library_name}}."
-                "{filter_set}.{exon_list}"
-            )
+            if self.config["filter_set"] == "filter_list":
+                name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{library_name}}"
+            else:
+                name_pattern = (
+                    "{mapper}.{caller}.{annotator}."
+                    "dkfz_bias_filter.eb_filter.{{library_name}}."
+                    "{filter_set}.{exon_list}"
+                )
         else:
             name_pattern = "{mapper}.{caller}.{annotator}.{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
@@ -779,8 +793,10 @@ class cbioportalExportWorkflow(BaseStep):
         if self.config["path_copy_number"]:
             if self.config["copy_number_tool"] in [
                 "cnvetti_on_target_postprocess",
-                "copywriter",
                 "cnvkit",
+                "copywriter",
+                "purecn",
+                "sequenza",
             ]:
                 self.register_sub_workflow(
                     "somatic_targeted_seq_cnv_calling",

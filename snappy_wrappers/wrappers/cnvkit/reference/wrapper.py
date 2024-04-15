@@ -63,8 +63,20 @@ else
         {snakemake.input.target} {snakemake.input.antitarget} 
 fi
 
+if [[ -n "{snakemake.input.logs}" ]]
+then
+    tar -zcvf {snakemake.output.log} {snakemake.input.logs}
+else
+    touch {snakemake.output.log}
+fi
+
 fn=$(basename "{snakemake.output.panel}")
 d=$(dirname "{snakemake.output.panel}")
+pushd $d
+md5sum $fn > $fn.md5
+popd
+fn=$(basename "{snakemake.output.log}")
+d=$(dirname "{snakemake.output.log}")
 pushd $d
 md5sum $fn > $fn.md5
 popd

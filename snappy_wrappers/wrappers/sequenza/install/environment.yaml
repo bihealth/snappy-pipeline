@@ -8,7 +8,7 @@ dependencies:
   # sequenza requirements (+copynumber)
   - r-pbapply
   - r-squash
-  - r-iotools
+  - r-iotools ==0.3-2    # See https://groups.google.com/g/sequenza-user-group/c/UA5bBNBeN18?pli=1
   - r-readr
   - r-seqminer
   - r-data.table

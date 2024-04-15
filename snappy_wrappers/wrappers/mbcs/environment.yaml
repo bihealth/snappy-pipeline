@@ -5,7 +5,7 @@ dependencies:
 - cffi
 - pandas
 - numpy
-- snakemake-minimal
+- snakemake-minimal ==7.32.4
 - openjdk =17
 - seqtk
 - samtools
@@ -13,3 +13,4 @@ dependencies:
 - gatk4
 - trimadap
 - samblaster
+
