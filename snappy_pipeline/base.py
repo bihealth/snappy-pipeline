@@ -7,6 +7,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
+from pathlib import Path
 
 import ruamel.yaml as ruamel_yaml
 
@@ -48,7 +49,7 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
     - paths containing included config files
     - config files included
     """
-    lookup_paths = lookup_paths or [os.getcwd()]
+    lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent / ".snappy_pipeline")]
     resolver = RefResolver(lookup_paths=lookup_paths, dict_class=dict_class)
     # Perform resolution
     resolved = resolver.resolve("file://" + config_path, dict_data)

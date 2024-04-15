@@ -32,12 +32,10 @@ from snakemake.io import touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    expand_ref,
     merge_dicts,
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
@@ -261,10 +259,9 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.sub_workflows:
-                return  # early exit
+            # if "ngs_mapping" not in self.parent.sub_workflows:
+            #     return  # early exit
             # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -281,7 +278,7 @@ class WritePedigreeStepPart(BaseStepPart):
                     path = tpl.format(
                         library_name=library_name, mapper=mapper, ext=".bam", **wildcards
                     )
-                    yield ngs_mapping(path)
+                    yield Path("../ngs_mapping") / path
 
         return get_input_files
 
@@ -671,8 +668,6 @@ class BaseStep:
             )
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
-        #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows = {}
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -786,38 +781,6 @@ class BaseStep:
             obj = klass(self, *args)
             obj.check_config()
             self.sub_steps[klass.name] = obj
-
-    def register_sub_workflow(self, step_name, workdir, sub_workflow_name=None):
-        """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
-
-        Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
-        value for it.
-        """
-        sub_workflow_name = sub_workflow_name or step_name
-        if sub_workflow_name in self.sub_workflows:
-            raise ValueError("Sub workflow {} already registered!".format(sub_workflow_name))
-        if os.path.isabs(workdir):
-            abs_workdir = workdir
-        else:
-            abs_workdir = os.path.realpath(os.path.join(os.getcwd(), workdir))
-
-        config_path = abs_workdir + "/" + "config.yaml"
-        config, *_ = expand_ref(config_path, self.w_config)
-
-        from pprint import pprint
-
-        pprint(config)
-        pprint(_)
-        print(snakefile_path(step_name))
-        print(abs_workdir)
-        self.workflow.module(
-            name=sub_workflow_name,
-            # workdir=abs_workdir,
-            prefix=step_name,
-            snakefile=snakefile_path(step_name),
-            config=config,
-        )
-        self.sub_workflows[sub_workflow_name] = self.workflow.modules[sub_workflow_name]
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards

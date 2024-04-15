@@ -126,14 +126,11 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_annotation import (
     ANNOTATION_TOOLS,
-    SomaticVariantAnnotationWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -509,6 +506,14 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         }
 
 
+def somatic_variant(path: str) -> str:
+    return "../somatic_variant_calling/" + path
+
+
+def ngs_mapping(path: str) -> str:
+    return "../ngs_mapping/" + path
+
+
 class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
     """Flag variants with the DKFZ bias filter"""
 
@@ -529,13 +534,13 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
             "{mapper}.{var_caller}.{annotator}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        somatic_variant = self.parent.sub_workflows["somatic_variant"]
+
         for key, ext in key_ext.items():
             yield key, somatic_variant(tpl + ext)
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
 
@@ -622,7 +627,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
@@ -707,7 +712,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         random.seed(self.config["eb_filter"]["shuffle_seed"])
         lib_count = self.config["eb_filter"]["panel_of_normals_size"]
         random.shuffle(libraries)
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
@@ -883,7 +888,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantAnnotationWorkflow, SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            (),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -901,15 +906,6 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_sub_workflow(
-            "somatic_variant_annotation"
-            if self.config["has_annotation"]
-            else "somatic_variant_calling",
-            self.config["path_somatic_variant"],
-            "somatic_variant",
-        )
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][

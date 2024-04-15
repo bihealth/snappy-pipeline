@@ -83,11 +83,10 @@ from snakemake.io import expand
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_JOINT,
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow,
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -147,6 +146,10 @@ step_config:
 """
 
 
+def variant_calling(path: str) -> str:
+    return "../somatic_variant_calling/" + path
+
+
 class AnnotateSomaticVcfStepPart(BaseStepPart):
     """Annotate VCF file from somatic calls
 
@@ -182,7 +185,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
+
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -345,15 +348,11 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            (),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
-        )
-        # Register sub workflows
-        self.register_sub_workflow(
-            "somatic_variant_calling", self.config["path_somatic_variant_calling"]
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
