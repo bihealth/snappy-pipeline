@@ -181,6 +181,10 @@ SOMATIC_VARIANT_CALLERS = SOMATIC_VARIANT_CALLERS_MATCHED | SOMATIC_VARIANT_CALL
 DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
 
 
+def ngs_mapping(path: str) -> str:
+    return os.path.join(os.path.abspath("../ngs_mapping"), path)
+
+
 class SomaticVariantCallingStepPart(BaseStepPart):
     """Base class for somatic variant calling step parts
 
@@ -214,9 +218,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             tumor_base_path = (
                 "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
-
-            def ngs_mapping(path: str) -> str:
-                return f"../ngs_mapping/{path}"
 
             input_files = {
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
@@ -409,9 +410,6 @@ class Mutect2StepPart(MutectBaseStepPart):
         :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
         """
 
-        def ngs_mapping(path: str) -> str:
-            return "../" + "ngs_mapping" + "/" + path
-
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         tumor_base_path = (
@@ -473,9 +471,6 @@ class Mutect2StepPart(MutectBaseStepPart):
         :return: Returns dictionary with input files for rule 'pileup_normal', BAM and BAI files.
         """
 
-        def ngs_mapping(path: str) -> str:
-            return f"../ngs_mapping/{path}"
-
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
@@ -492,9 +487,6 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'pileup_tumor', BAM and BAI files.
         """
-
-        def ngs_mapping(path: str) -> str:
-            return f"../ngs_mapping/{path}"
 
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
@@ -760,9 +752,6 @@ class JointCallingStepPart(BaseStepPart):
         def input_function(wildcards):
             """Helper wrapper function"""
             donor = self.donor_by_name[wildcards.donor_name]
-
-            def ngs_mapping(path: str) -> str:
-                return f"../ngs_mapping/{path}"
 
             # Return paths of NGS libraries.
             input_base_path = "output/{mapper}.{library.name}/out/{mapper}.{library.name}{ext}"

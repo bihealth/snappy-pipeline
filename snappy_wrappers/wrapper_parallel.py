@@ -285,18 +285,22 @@ def run_snakemake(
         )
 
         with SnakemakeApi() as api:
-            result = api.workflow(
-                snakefile=snakefile,
-                workdir=workdir,
-                resource_settings=ResourceSettings(
-                    cores=cores, nodes=num_jobs or config["num_jobs"]
-                ),
-                # TODO properly choose remaining *_settings, if needed
-                # config_settings=None,
-                # storage_settings=None,
-                # workflow_settings=None,
-                # deployment_settings=None,
-                # storage_provider_settings=None,
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    workdir=workdir,
+                    resource_settings=ResourceSettings(
+                        cores=cores, nodes=num_jobs or config["num_jobs"]
+                    ),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
             )
     else:
         print(
@@ -305,17 +309,21 @@ def run_snakemake(
             )
         )
         with SnakemakeApi() as api:
-            result = api.workflow(
-                snakefile=snakefile,
-                resource_settings=ResourceSettings(cores=config["num_jobs"]),
-                # TODO properly choose remaining *_settings, if needed
-                # config_settings=None,
-                # storage_settings=None,
-                # workflow_settings=None,
-                # deployment_settings=None,
-                # storage_provider_settings=None,
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    resource_settings=ResourceSettings(cores=config["num_jobs"]),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
             )
-    if not result:
+    if result is False:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
 
 
