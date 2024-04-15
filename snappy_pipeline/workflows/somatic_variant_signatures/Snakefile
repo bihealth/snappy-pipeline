@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_variant_signatures import SomaticVariantSignaturesWorkflow
+from snappy_pipeline.workflows.somatic_variant_signatures import (
+    SomaticVariantSignaturesWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 
@@ -20,7 +22,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticVariantSignaturesWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = SomaticVariantSignaturesWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 
