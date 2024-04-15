@@ -1,4 +1,7 @@
 line-length = 100
+exclude = [
+  "**/Snakefile",
+]
 
 [lint]
 select = ["E", "F", "I"] # "B": flake8-bugbear, "COM": trailing commas, "W": whitespace, "C"
@@ -13,5 +16,6 @@ exclude = [
   "splitMNPsAndComplex.py",
   "wrapper.py",
   "snappy_pipeline/__init__.py",
-  "versioneer.py"
+  "versioneer.py",
+  "**/Snakefile"
 ]
