@@ -8,6 +8,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snakemake.utils import min_version
+
 min_version("8.6")
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
@@ -17,30 +18,42 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 configfile: "config.yaml"
 
+
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticVariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = SomaticVariantCallingWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
+
 
 module ngs_mapping:
-    snakefile: "../ngs_mapping/Snakefile"
-    config: wf.w_config
-    prefix: "../ngs_mapping"
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        "../ngs_mapping"
+
 
 use rule * from ngs_mapping
 
+
 # Rules =======================================================================
+
 
 localrules:
     # Linking files from work/ to output/ should be done locally
     somatic_variant_calling_link_out_run,
 
+
 rule somatic_variant_calling_all:
     input:
         wf.get_result_files(),
     default_target: True
+
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
