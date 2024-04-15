@@ -28,7 +28,7 @@ done
 # Get contig name style
 # Note: the sample_index in '{snakemake.input.ploidy}' and '{snakemake.input.calls[0]}' are NOT guaranteed to be the same
 # -> Sample_0 should always exist and the contig names (which we care for) are the same
-tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | egrep "^chr[0-9XY]{1,2}\s[0-9]\s[0-9.]+" > /dev/null && true
+tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | egrep "^chr[0-9XY]{{1,2}}\s[0-9]\s[0-9.]+" > /dev/null && true
 exit_status=$?
 if [[ $exit_status == 0 ]]; then
     STYLE="chr"
