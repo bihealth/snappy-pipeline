@@ -56,7 +56,7 @@ def expand_ref(
     - paths containing included config files
     - config files included
     """
-    lookup_paths = lookup_paths or [os.getcwd()]
+    lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent / ".snappy_pipeline")]
     resolver = RefResolver(lookup_paths=lookup_paths, dict_class=dict_class)
     # Perform resolution
     resolved = resolver.resolve("file://" + config_path, dict_data)

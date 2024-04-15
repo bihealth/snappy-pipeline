@@ -82,11 +82,10 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_JOINT,
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow,
 )
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
@@ -104,6 +103,10 @@ ANNOTATION_TOOLS = ("jannovar", "vep")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
+
+
+def variant_calling(path: str) -> str:
+    return "../somatic_variant_calling/" + path
 
 
 class AnnotateSomaticVcfStepPart(BaseStepPart):
@@ -141,7 +144,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
+
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -296,6 +299,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
+            (),
             config_model_class=SomaticVariantAnnotationConfigModel,
             previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )

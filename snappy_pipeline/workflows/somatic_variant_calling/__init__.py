@@ -112,7 +112,6 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
 
@@ -210,12 +209,15 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             tumor_base_path = (
                 "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
+
+            def ngs_mapping(path: str) -> str:
+                return f"../ngs_mapping/{path}"
+
             input_files = {
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
@@ -406,10 +408,6 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
         """
-        # Get shorcut to Snakemake sub workflow
-        module_info = self.parent.sub_workflows["ngs_mapping"]
-        module_info.use_rules(rules="*")
-        _parent_path = self.parent.workflow.overwrite_workdir.parent
 
         def ngs_mapping(path: str) -> str:
             return "../" + "ngs_mapping" + "/" + path
@@ -474,8 +472,10 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'pileup_normal', BAM and BAI files.
         """
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+        def ngs_mapping(path: str) -> str:
+            return f"../ngs_mapping/{path}"
+
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
@@ -492,8 +492,10 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'pileup_tumor', BAM and BAI files.
         """
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+        def ngs_mapping(path: str) -> str:
+            return f"../ngs_mapping/{path}"
+
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
         )
@@ -758,8 +760,10 @@ class JointCallingStepPart(BaseStepPart):
         def input_function(wildcards):
             """Helper wrapper function"""
             donor = self.donor_by_name[wildcards.donor_name]
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+            def ngs_mapping(path: str) -> str:
+                return f"../ngs_mapping/{path}"
+
             # Return paths of NGS libraries.
             input_base_path = "output/{mapper}.{library.name}/out/{mapper}.{library.name}{ext}"
             result = {"bam": [], "bai": []}
@@ -982,6 +986,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
+            (),
             config_model_class=SomaticVariantCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
         )
@@ -1000,14 +1005,14 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
-
-        if "mutect2" in self.config.tools:
-            if self.config.mutect2.common_variants:
-                self.sub_steps["mutect2"].actions.extend(
-                    ["contamination", "pileup_normal", "pileup_tumor"]
-                )
+        # # Initialize sub-workflows
+        # self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        #
+        # if "mutect2" in self.config.tools:
+        #     if self.config.mutect2.common_variants:
+        #         self.sub_steps["mutect2"].actions.extend(
+        #             ["contamination", "pileup_normal", "pileup_tumor"]
+        #         )
 
     @listify
     def get_result_files(self):

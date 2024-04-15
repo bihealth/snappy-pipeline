@@ -39,7 +39,6 @@ from snappy_pipeline.base import (
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
@@ -280,10 +279,9 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.sub_workflows:
-                return  # early exit
+            # if "ngs_mapping" not in self.parent.sub_workflows:
+            #     return  # early exit
             # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -303,7 +301,7 @@ class WritePedigreeStepPart(BaseStepPart):
                         ext=".bam",
                         **wildcards,
                     )
-                    yield ngs_mapping(path)
+                    yield Path("../ngs_mapping") / path
 
         return get_input_files
 
