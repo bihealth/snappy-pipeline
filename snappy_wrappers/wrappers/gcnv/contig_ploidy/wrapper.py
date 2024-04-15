@@ -44,7 +44,7 @@ export OMP_NUM_THREADS={snakemake.threads}
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
 # Get contig name style
-egrep "^@SQ\s+SN:chr[0-9XY]{1,2}\s+" {snakemake.input.interval_list} > /dev/null && true
+egrep "^@SQ\s+SN:chr[0-9XY]{{1,2}}\s+" {snakemake.input.interval_list} > /dev/null && true
 exit_status=$?
 if [[ $exit_status == 0 ]]; then
     STYLE="chr"
