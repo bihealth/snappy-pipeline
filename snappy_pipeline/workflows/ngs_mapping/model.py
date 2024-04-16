@@ -1,11 +1,10 @@
-from typing import Any, Annotated
-
-import pydantic
-from pydantic import BaseModel, conint, validator, field_validator, ConfigDict
-from enum import Enum
 import re
+import typing
+from enum import Enum
+from typing import Annotated, Self
 
 from annotated_types import Predicate
+from pydantic import BaseModel, conint, ConfigDict, model_validator, model_serializer
 
 size_string_regexp = re.compile(r"[. 0-9]+([KMGTP])")
 SizeString = Annotated[str, Predicate(lambda s: size_string_regexp.match(s) is not None)]
@@ -57,7 +56,7 @@ class TargetCoverageReportEntry(BaseModel):
 
 
 class TargetCoverageReport(BaseModel):
-    path_target_interval_list_mapping: list[TargetCoverageReportEntry]
+    path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 
 class BamCollectDoc(BaseModel):
@@ -70,7 +69,7 @@ class NgsChewFingerprint(BaseModel):
 
 
 class Bwa(BaseModel):
-    path_index: str
+    path_index: str = None
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
@@ -93,18 +92,18 @@ class BwaMode(Enum):
 
 
 class BwaMem2(BaseModel):
-    path_index: str
+    path_index: str = None
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
 
     bwa_mode: BwaMode = BwaMode.AUTO
-    num_threads_align: int = 16
-    num_threads_trimming: int = 8
-    num_threads_bam_view: int = 4
-    num_threads_bam_sort: int = 4
-    memory_bam_sort: SizeString = "4G"
-    trim_adapters: bool = False
-    mask_duplicates: bool = True
-    split_as_secondary: bool = True
+    num_threads_align: int | None = 16
+    num_threads_trimming: int | None = 8
+    num_threads_bam_view: int | None = 4
+    num_threads_bam_sort: int | None = 4
+    memory_bam_sort: SizeString | None = "4G"
+    trim_adapters: bool | None = False
+    mask_duplicates: bool | None = True
+    split_as_secondary: bool | None = True
     """-M flag"""
 
     extra_flags: list[str] = []
@@ -116,7 +115,7 @@ class BarcodeTool(Enum):
 
 
 class Somatic(BaseModel):
-    mapping_tool: DnaMapper
+    mapping_tool: DnaMapper = None
     """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
 
     barcode_tool: BarcodeTool = BarcodeTool.AGENT
@@ -140,11 +139,11 @@ class AgentLibPrepType(Enum):
 
 
 class AgentPrepare(BaseModel):
-    path: str
-    lib_prep_type: AgentLibPrepType
+    path: str = None
+    lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
 
-    extra_args: list[str]
+    extra_args: list[str] = []
     """Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data"""
 
 
@@ -155,9 +154,9 @@ class AgentMarkDuplicatesConsensusMode(Enum):
 
 
 class AgentMarkDuplicates(BaseModel):
-    path: str
-    path_baits: str
-    consensus_mode: AgentMarkDuplicatesConsensusMode
+    path: str = None
+    path_baits: str = None
+    consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 
     input_filter_args: list[str] = []
@@ -235,50 +234,56 @@ class NgsMapping(BaseModel):
         extra="forbid",
     )
 
-    tools: Tools
+    tools: Tools = Tools()
     """Aligners to use for the different NGS library types"""
 
     path_link_in: str | None = None
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    target_coverage_report: TargetCoverageReport
+    target_coverage_report: TargetCoverageReport | None = TargetCoverageReport()
     """Thresholds for targeted sequencing coverage QC."""
 
-    bam_collect_doc: BamCollectDoc
+    bam_collect_doc: BamCollectDoc | None = BamCollectDoc()
     """Depth of coverage collection, mainly useful for genomes."""
 
-    ngs_chew_fingerprint: NgsChewFingerprint
+    ngs_chew_fingerprint: NgsChewFingerprint | None = NgsChewFingerprint()
     """Compute fingerprints with ngs-chew"""
 
-    bwa: Bwa
+    bwa: Bwa | None = Bwa()
     """Configuration for BWA"""
 
-    bwa_mem2: BwaMem2
+    bwa_mem2: BwaMem2 | None = BwaMem2()
     """Configuration for BWA-MEM2"""
 
-    somatic: Somatic
+    somatic: Somatic | None = Somatic()
     """
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
     """
 
-    bqsr: Bqsr
+    bqsr: Bqsr | None = None
 
-    agent: Agent
+    agent: Agent | None = None
 
-    star: Star
+    star: Star | None = None
     """Configuration for STAR"""
 
-    strandedness: Strandedness
+    strandedness: Strandedness | None = None
 
-    minimap2: Minimap2
+    minimap2: Minimap2 | None = None
 
-    # @field_validator('tools')
-    # @classmethod
-    # def ensure_the_tools(cls, v: Tools, values, **kwargs):
-    #     for attr in ("dna", "rna", "dna_long"):
-    #         tool_list = getattr(v, attr)
-    #         for tool in tool_list:
-    #             if tool not in values:
-    #                 raise ValueError(f"Tool {tool} not configured in {values}")
-    #     return v
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        for data_type in ("dna", "rna", "dna_long"):
+            tool_list = getattr(self.tools, data_type)
+            for tool in tool_list:
+                print(tool)
+                if tool not in (tool_config := getattr(self, tool)):
+                    raise ValueError(f"Tool {tool} not configured in {tool_config}")
+        return self
+
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler):
+        d = handler(self)
+        print(d)
+        return d

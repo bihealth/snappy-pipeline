@@ -432,7 +432,7 @@ class Bbduk(BaseModel):
     Number idhist bins.  Set to 'auto' to use read length.
     """
 
-    k: Annotated[int | None, Field(21, ge=0)]
+    k: Annotated[int | None, Field(21, ge=1)]
     """
     Kmer length used for finding contaminants.
     Contaminants shorter than k will not be found.

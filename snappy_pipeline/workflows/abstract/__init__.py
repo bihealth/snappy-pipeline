@@ -17,6 +17,7 @@ import tempfile
 import typing
 
 import attr
+import ruamel.yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -663,7 +664,43 @@ class BaseStep:
         model_name = self.name.title().replace("_", "")
         try:
             module = import_module(".model", package=self.__module__)
-            model = getattr(module, model_name)
+            model: typing.Type[pydantic.BaseModel] = getattr(module, model_name)
+            from pprint import pprint
+
+            def dump_commented_yaml(model: typing.Type[pydantic.BaseModel]) -> str:
+                import json
+                from ruamel.yaml import YAML
+                import typing_extensions
+
+                yaml = YAML()
+                yaml.indent(mapping=2, offset=2)
+                cfg = ruamel.yaml.CommentedMap(json.loads(model().model_dump_json()))
+
+                def annotate_model(model: typing.Type[pydantic.BaseModel], cfg, parent=None):
+                    for name, field in model.model_fields.items():
+                        print(name, "\t", field)
+                        key = name if parent is None else f"{parent}/{name}"
+                        if not type(None) in typing_extensions.get_args(field.annotation):
+                            cfg.yaml_add_eol_comment("REQUIRED", key)
+                        elif not field.is_required():
+                            cfg.yaml_add_eol_comment("OPTIONAL", key)
+                        if (submodel := field.default) is not None:
+                            if isinstance(submodel, typing.Sequence):
+                                for s in submodel:
+                                    if isinstance(s, pydantic.BaseModel):
+                                        print("annotating multiple", s)
+                                        annotate_model(s, cfg, parent=key)
+                            elif isinstance(submodel, pydantic.BaseModel):
+                                print("annotating submodel", type(submodel), submodel)
+                                annotate_model(submodel, cfg, parent=key)
+
+                annotate_model(model, cfg)
+
+                with StringIO() as out:
+                    yaml.dump(cfg, stream=out)
+                    return out.getvalue()
+
+            print(dump_commented_yaml(model))
             validate_config(self.config, model)
         except ModuleNotFoundError:
             # TODO: use logging
@@ -707,6 +744,7 @@ class BaseStep:
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
+
         # In the following, the "log" parameter to the handler functions is set to "_" as we
         # don't use them
         def on_start(_):
