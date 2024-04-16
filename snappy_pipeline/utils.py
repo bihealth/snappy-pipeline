@@ -3,10 +3,13 @@
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-import typing
+from typing import Any, Callable, Generator, Iterable, TypeVar
+
+F = TypeVar("F")
+T = TypeVar("T")
 
 
-def listify(gen):
+def listify(gen: Callable[..., Generator[T, None, None]]) -> Callable[..., list[T]]:
     """Decorator that converts a generator into a function which returns a list
 
     Use it in the case where a generator is easier to write but you want
@@ -19,7 +22,7 @@ def listify(gen):
                 yield i
     """
 
-    def patched(*args, **kwargs):
+    def patched(*args, **kwargs) -> list[T]:
         """Wrapper function"""
         return list(gen(*args, **kwargs))
 
@@ -39,20 +42,20 @@ def dictify[**P](gen) -> typing.Callable[P, dict]:
                 yield 'key{}'.format(i), i
     """
 
-    def patched(*args, **kwargs):
+    def patched(*args, **kwargs) -> dict[F, T]:
         """Wrapper function"""
         return dict(gen(*args, **kwargs))
 
     return patched
 
 
-def flatten(coll: typing.List[typing.Union[str, typing.List[str]]]) -> typing.List[str]:
+def flatten(coll: list[str | list[str] | Iterable[str]]) -> list[str]:
     """Flatten collection of strings or list of strings.
 
     Source: https://stackoverflow.com/a/17865033
     """
     for i in coll:
-        if isinstance(i, typing.Iterable) and not isinstance(i, str):
+        if isinstance(i, Iterable) and not isinstance(i, str):
             for subc in flatten(i):
                 yield subc
         else:
@@ -70,12 +73,12 @@ def try_or_none(func, exceptions):
         return None
 
 
-def is_none(value):
+def is_none(value: Any) -> bool:
     """Helper function returning whether ``value is None``"""
     return value is None
 
 
-def is_not_none(value):
+def is_not_none(value: Any) -> bool:
     """Helper function returning whether ``value is not None``"""
     return value is not None
 
@@ -88,7 +91,7 @@ class DictQuery(dict):
     - https://www.haykranen.nl/2016/02/13/handling-complex-nested-dicts-in-python/
     """
 
-    def get(self, path, default=None):
+    def get(self, path: str, default=None):
         keys = path.split("/")
         val = None
 
