@@ -1,7 +1,6 @@
 channels:
 - conda-forge
 - bioconda
-- r
 dependencies:
 - jannovar-cli ==0.33
 - htslib ==1.8

@@ -1,6 +1,5 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
 dependencies:
-- zlib
+  - zlib==1.3.1

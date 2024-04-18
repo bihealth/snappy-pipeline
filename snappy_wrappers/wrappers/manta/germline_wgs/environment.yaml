@@ -1,7 +1,6 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
 dependencies:
-- manta ==1.6.0
-- samtools ==1.9.0
+  - manta==1.6.0
+  - samtools==1.9

@@ -1,8 +1,7 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
 dependencies:
-- scalpel ==0.5.3
-- htslib >=1.3
-- bcftools >=1.3
+  - scalpel==0.5.3
+  - htslib==1.15.1
+  - bcftools==1.15.1
