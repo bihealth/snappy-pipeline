@@ -588,7 +588,7 @@ class Bbduk(BaseModel):
       w (sliding window).
     """
 
-    trimq: int | None = 25
+    trimq: float | None = 25
     """
     Regions with average quality BELOW this will be trimmed,
     if qtrim is set to something other than f.

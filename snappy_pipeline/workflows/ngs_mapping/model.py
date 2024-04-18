@@ -1,10 +1,40 @@
+import enum
 import re
 import typing
 from enum import Enum
 from typing import Annotated, Self
 
 from annotated_types import Predicate
-from pydantic import BaseModel, conint, ConfigDict, model_validator, model_serializer
+from pydantic import BaseModel, ConfigDict, model_validator, model_serializer, Field
+
+from ..abstract.models import placeholder_model_instance
+
+from pydantic import BaseModel
+from pydantic_core import PydanticUndefined
+
+
+class AutoSetDefaultModel(BaseModel):
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs):
+        super().__pydantic_init_subclass__(**kwargs)
+
+        for name, model_field in cls.model_fields.items():
+            if not model_field.alias and model_field.default is PydanticUndefined and model_field.default_factory is None:
+                # if isinstance(model_field.annotation, BaseModel) or issubclass(model_field.annotation, BaseModel):
+                #     print(name, model_field.annotation, type(model_field.annotation))
+                #     model_field.default_factory = lambda: placeholder_model_instance(model_field.annotation)
+                # else:
+                model_field.default_factory = model_field.annotation
+        cls.model_rebuild(force=True)
+
+
+class SnappyModel(AutoSetDefaultModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        use_attribute_docstrings=True,
+        use_enum_values=True,
+    )
+
 
 size_string_regexp = re.compile(r"[. 0-9]+([KMGTP])")
 SizeString = Annotated[str, Predicate(lambda s: size_string_regexp.match(s) is not None)]
@@ -23,18 +53,25 @@ class RnaMapper(Enum):
     STAR = "star"
 
 
-class Tools(BaseModel):
-    dna: list[DnaMapper] = []
-    """Required if DNA analysis; otherwise, leave empty. Example: 'bwa'."""
-
-    rna: list[RnaMapper] = []
-    """Required if RNA analysis; otherwise, leave empty. Example: 'star'."""
-
-    dna_long: list[LongDnaMapper] = []
-    """Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'."""
+def options(enum: Enum) -> list[typing.Any]:
+    return [e.value for e in enum]
 
 
-class TargetCoverageReportEntry(BaseModel):
+class Tools(SnappyModel):
+    dna: Annotated[list[DnaMapper], Field([], json_schema_extra=dict(options=options(DnaMapper)))]
+    """Required if DNA analysis; otherwise, leave empty."""
+
+    rna: Annotated[
+        list[RnaMapper], Field([], json_schema_extra=dict(options=options(RnaMapper)))]
+    """Required if RNA analysis; otherwise, leave empty."""
+
+    dna_long: Annotated[
+        list[LongDnaMapper], Field([], json_schema_extra=dict(
+            options=options(LongDnaMapper)))]
+    """Required if long-read mapper used; otherwise, leave empty."""
+
+
+class TargetCoverageReportEntry(SnappyModel):
     """
     Mapping from enrichment kit to target region BED file, for either computing per--target
     region coverage or selecting targeted exons.
@@ -47,38 +84,37 @@ class TargetCoverageReportEntry(BaseModel):
         path: "path/to/targets.bed"
     """
 
-    name: str
-    """'IDT_xGen_V1_0'"""
-    pattern: str
-    """'xGen Exome Research Panel V1\\.0*'"""
-    path: str
-    """'path/to/targets.bed'"""
+    name: Annotated[str, Field(examples=['IDT_xGen_V1_0'])]
+
+    pattern: Annotated[str, Field(examples=['xGen Exome Research Panel V1\\.0*'])]
+
+    path: Annotated[str, Field(examples=['path/to/targets.bed'])]
 
 
-class TargetCoverageReport(BaseModel):
+class TargetCoverageReport(SnappyModel):
     path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 
-class BamCollectDoc(BaseModel):
+class BamCollectDoc(SnappyModel):
     enabled: bool = False
-    window_length: conint(ge=0) = 1000
+    window_length: Annotated[int, Field(gt=0)] = 1000
 
 
-class NgsChewFingerprint(BaseModel):
+class NgsChewFingerprint(SnappyModel):
     enabled: bool = True
 
 
-class Bwa(BaseModel):
-    path_index: str = None
+class Bwa(SnappyModel):
+    path_index: str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
-    num_threads_align: int = 16
-    num_threads_trimming: int = 8
-    num_threads_bam_view: int = 4
-    num_threads_bam_sort: int = 4
-    memory_bam_sort: SizeString = "4G"
-    trim_adapters: bool = False
-    mask_duplicates: bool = True
-    split_as_secondary: bool = False
+    num_threads_align: int | None = 16
+    num_threads_trimming: int | None = 8
+    num_threads_bam_view: int | None = 4
+    num_threads_bam_sort: int | None = 4
+    memory_bam_sort: SizeString | None = "4G"
+    trim_adapters: bool | None = False
+    mask_duplicates: bool | None = True
+    split_as_secondary: bool | None = False
     """-M flag"""
 
     extra_flags: list[str] = []
@@ -91,7 +127,7 @@ class BwaMode(Enum):
     BWA_MEM = "bwa-mem"
 
 
-class BwaMem2(BaseModel):
+class BwaMem2(SnappyModel):
     path_index: str = None
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
 
@@ -114,18 +150,18 @@ class BarcodeTool(Enum):
     AGENT = "agent"
 
 
-class Somatic(BaseModel):
+class Somatic(SnappyModel):
     mapping_tool: DnaMapper = None
     """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
 
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
+    barcode_tool: BarcodeTool = None
     """Only agent currently implemented"""
 
     use_barcodes: bool = False
     recalibrate: bool = True
 
 
-class Bqsr(BaseModel):
+class Bqsr(SnappyModel):
     common_variants: str
     """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
 
@@ -138,7 +174,7 @@ class AgentLibPrepType(Enum):
     SURE_SELECT_QXT = "qxt"
 
 
-class AgentPrepare(BaseModel):
+class AgentPrepare(SnappyModel):
     path: str = None
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
@@ -153,7 +189,7 @@ class AgentMarkDuplicatesConsensusMode(Enum):
     DUPLEX = "DUPLEX"
 
 
-class AgentMarkDuplicates(BaseModel):
+class AgentMarkDuplicates(SnappyModel):
     path: str = None
     path_baits: str = None
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
@@ -168,42 +204,42 @@ class AgentMarkDuplicates(BaseModel):
     """Consider -d 1 (max nb barcode mismatch)"""
 
 
-class Agent(BaseModel):
+class Agent(SnappyModel):
     prepare: AgentPrepare
     mark_duplicates: AgentMarkDuplicates
 
 
-class Star(BaseModel):
+class Star(SnappyModel):
     path_index: str
     """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
-    num_threads_align: int = 16
-    num_threads_trimming: int = 8
-    num_threads_bam_view: int = 4
-    num_threads_bam_sort: int = 4
-    memory_bam_sort: SizeString = "4G"
-    genome_load: str = "NoSharedMemory"
-    raw_star_options: str = ""
-    align_intron_max: int = 1000000  # ENCODE option
-    align_intron_min: int = 20  # ENCODE option
-    align_mates_gap_max: int = 1000000  # ENCODE option
-    align_sjdb_overhang_min: int = 1  # ENCODE option
-    align_sj_overhang_min: int = 8  # ENCODE option
-    out_filter_mismatch_n_max: int = 999  # ENCODE option
-    out_filter_mismatch_n_over_l_max: float = 0.04  # ENCODE option
-    out_filter_multimap_n_max: int = 20  # ENCODE option
-    out_filter_type: str = "BySJout"  # ENCODE option
+    num_threads_align: int | None = 16
+    num_threads_trimming: int | None = 8
+    num_threads_bam_view: int | None = 4
+    num_threads_bam_sort: int | None = 4
+    memory_bam_sort: SizeString | None = "4G"
+    genome_load: str | None = "NoSharedMemory"
+    raw_star_options: str | None = ""
+    align_intron_max: int | None = 1000000  # ENCODE option
+    align_intron_min: int | None = 20  # ENCODE option
+    align_mates_gap_max: int | None = 1000000  # ENCODE option
+    align_sjdb_overhang_min: int | None = 1  # ENCODE option
+    align_sj_overhang_min: int | None = 8  # ENCODE option
+    out_filter_mismatch_n_max: int | None = 999  # ENCODE option
+    out_filter_mismatch_n_over_l_max: float | None = 0.04  # ENCODE option
+    out_filter_multimap_n_max: int | None = 20  # ENCODE option
+    out_filter_type: str | None = "BySJout"  # ENCODE option
     out_filter_intron_motifs: str | None = None
     """or for cufflinks: RemoveNoncanonical"""
 
     out_sam_strand_field: str | None = None
     """or for cufflinks: intronMotif"""
 
-    transcriptome: bool = False
+    transcriptome: bool | None = False
     """true to output transcript coordinate bam for RSEM"""
 
-    trim_adapters: bool = False
-    mask_duplicates: bool = False
-    include_unmapped: bool = True
+    trim_adapters: bool | None = False
+    mask_duplicates: bool | None = False
+    include_unmapped: bool | None = True
 
 
 class Strand(Enum):
@@ -214,7 +250,7 @@ class Strand(Enum):
     REVERSE = 2
 
 
-class Strandedness(BaseModel):
+class Strandedness(SnappyModel):
     path_exon_bed: str
     """Location of usually highly expressed genes. Known protein coding genes is a good choice"""
 
@@ -225,14 +261,13 @@ class Strandedness(BaseModel):
     """Minimum proportion of reads mapped to forward/reverse direction to call the protocol"""
 
 
-class Minimap2(BaseModel):
+class Minimap2(SnappyModel):
     mapping_threads: int = 16
 
 
-class NgsMapping(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
+class NgsMapping(SnappyModel):
+    required: str
+    """This is a required field"""
 
     tools: Tools = Tools()
     """Aligners to use for the different NGS library types"""
