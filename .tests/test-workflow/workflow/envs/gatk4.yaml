@@ -1,5 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - gatk4 ==4.5.0.0
