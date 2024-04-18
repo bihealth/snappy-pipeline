@@ -29,14 +29,23 @@ if [[ $sample_index == -1 ]]; then
     exit 1
 fi
 
+# Get contig name style; SAMPLE_0  is guaranteed to exist
+tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | grep "^chr[0-9XY]{1,2}\s[0-9]\s[0-9.]+$" > /dev/null && true
+exit_status=$?
+if [[ $exit_status == 0 ]]; then
+    STYLE="chr"
+else
+    STYLE=""
+fi
+
 gatk PostprocessGermlineCNVCalls \
     $(for x in {paths_calls}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
     $(for x in {paths_models}; do echo --model-shard-path $x; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --sample-index $sample_index \
     --autosomal-ref-copy-number 2 \
-    --allosomal-contig X \
-    --allosomal-contig Y \
+    --allosomal-contig ${{STYLE}}X \
+    --allosomal-contig ${{STYLE}}Y \
     --output-genotyped-intervals ${{itv_vcf%.gz}} \
     --output-genotyped-segments ${{seg_vcf%.gz}} \
     --output-denoised-copy-ratios {snakemake.output.ratio_tsv}
