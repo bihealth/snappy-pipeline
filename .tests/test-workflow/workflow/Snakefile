@@ -1,0 +1,36 @@
+from snakemake.utils import validate
+
+
+configfile: "config/config.yaml"
+
+
+validate(config, "schemas/config.schema.yaml")
+
+
+include: "rules/common.smk"
+include: "rules/reference.smk"
+include: "rules/stats.smk"
+include: "rules/cancer_wes.smk"
+
+
+rule all:
+    input:
+        expand(
+            "pipelines/snappy-cancer_wes/{step_name}/output/{mapper}.{caller}.{annotator}.filtered.{sample}/out/{mapper}.{caller}.{annotator}.filtered.{sample}.vcf.gz",
+            step_name=["somatic_variant_filtration"],
+            sample=["case001subregion-T1-DNA1-WES1"],
+            mapper=["bwa"],
+            caller=["mutect2"],
+            annotator=["vep"],
+        ),
+
+
+rule generate_snakemake_profile_config:
+    output:
+        config="profile/snakemake/config.yaml",
+    conda:
+        "envs/base.yaml"
+    log:
+        "logs/generate_snakemake_profile_config",
+    shell:
+        """echo "use-conda: true\nconda-frontend: mamba\ncores: all" > {output.config} 2> {log}"""
