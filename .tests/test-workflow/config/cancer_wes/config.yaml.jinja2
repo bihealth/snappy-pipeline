@@ -26,7 +26,7 @@ step_config:
     tools: [mutect2]
     mutect2:
       ngs_mapping: ../ngs_mapping
-      extra_arguments: [] # [ "--genotype-germline-sites true", "--genotype-pon-sites true" ]
+      extra_arguments: []
       window_length: 300000000
       keep_tmpdir: onerror
       job_mult_time: 5
@@ -41,14 +41,12 @@ step_config:
 
 
   somatic_variant_filtration:
-    path_somatic_variant: ../somatic_variant_annotation  #  instead of somatic_variant_calling
+    path_somatic_variant: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
     filter_list:
     - dkfz: {}
     - bcftools:
         exclude: FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025
-    - bcftools:
-        exclude: ((REF='C' & ALT='T') | (REF='G' & ALT='A')) & AD[1:1]/(AD[1:0]+AD[1:1])<0.025
 
 
 

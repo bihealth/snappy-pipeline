@@ -3,7 +3,7 @@ set -o pipefail
 conda init
 conda activate "$CONDA_PREFIX"
 
-if [[ -z "${GITHUB_WORKSPACE}" ]]; then
+if [[ -n "${GITHUB_WORKSPACE}" ]]; then
   cd "${GITHUB_WORKSPACE}" || exit
 else
   if [[ -d /github/workspace ]]; then

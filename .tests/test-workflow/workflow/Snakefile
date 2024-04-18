@@ -16,7 +16,7 @@ include: "rules/cancer_wes.smk"
 rule all:
     input:
         expand(
-            "pipelines/snappy-cancer_wes/{step_name}/output/{mapper}.{caller}.{annotator}.filtered.{sample}/out/{mapper}.{caller}.{annotator}.filtered.{sample}.vcf.tsv",
+            "pipelines/snappy-cancer_wes/{step_name}/output/{mapper}.{caller}.{annotator}.filtered.{sample}/out/{mapper}.{caller}.{annotator}.filtered.{sample}.vcf.gz",
             step_name=["somatic_variant_filtration"],
             sample=["case001subregion-T1-DNA1-WES1"],
             mapper=["bwa"],

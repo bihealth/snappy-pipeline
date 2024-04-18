@@ -72,17 +72,3 @@ rule cancer_wes_execute_pipeline:
             popd
         done
         """
-
-
-rule vembrane_table:
-    input:
-        vcf="{file}.vcf.gz",
-    output:
-        vcf="{file}.vcf.tsv",
-    params:
-        expression='CHROM, POS, ALT, REF, CSQ["IMPACT"], CSQ["SYMBOL"]',
-        extra="--annotation-key CSQ --header 'CHROM, POS, ALT, REF, IMPACT, SYMBOL'",
-    log:
-        "logs/vembrane/{file}.log",
-    wrapper:
-        "v3.7.0/bio/vembrane/table"

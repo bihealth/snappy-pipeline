@@ -71,17 +71,17 @@ rule contig_list:
         "bioawk -c fastx '{{print $name;}}' {input} > {output} 2> {log}"
 
 
-rule gatk_dict:
+rule samtools_dict:
     input:
         "{reference}.fa",
     output:
         "{reference}.dict",
     conda:
-        "../envs/gatk4.yaml"
+        "../envs/samtools.yaml"
     log:
-        "logs/{reference}.gatk_dict.log",
+        "logs/{reference}.samtools_dict.log",
     shell:
-        "gatk CreateSequenceDictionary -R {input} -O {output}"
+        "samtools dict {input} > {output} 2> {log}"
 
 
 rule bwa_index:
