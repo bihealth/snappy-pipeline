@@ -5,12 +5,15 @@ dependencies:
   - python==3.9.19
   - r-base==4.3.3
   - r-remotes==2.5.0
+  # scarHRD requirements (+sequenza)
   - r-data.table==1.15.2
+  # sequenza requirements (+copynumber)
   - r-pbapply==1.7_2
   - r-squash==1.0.9
-  - r-iotools==0.3_2
+  - r-iotools==0.3_2  # See https://groups.google.com/g/sequenza-user-group/c/UA5bBNBeN18?pli=1
   - r-readr==2.1.5
   - r-seqminer==9.4
+  # copynumber requirements
   - bioconductor-s4vectors==0.40.2
   - bioconductor-iranges==2.36.0
   - bioconductor-genomicranges==1.54.1
