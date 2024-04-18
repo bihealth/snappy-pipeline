@@ -1,10 +1,46 @@
 name: Tests
 
 on:
+  # always run tests when pushing to main
   push:
     branches: [ main ]
+
+  # only run tests on pull requests which actually modify files that affect the tests
   pull_request:
     branches_ignore: []
+    # for now, the tests defined in this file are only run when any of the following paths are modified:
+    paths:
+      # workflow definitions
+      - '.tests/**'
+
+      # github workflow configurations
+      - '.github/**'
+
+      # 'base' files of snappy-pipeline
+      - 'snappy_pipeline/*'
+      - 'snappy_pipeline/workflows/abstract/**'
+
+      # steps used in the test workflows
+      - 'snappy_pipeline/workflows/ngs_mapping/**'
+      - 'snappy_pipeline/workflows/somatic_variant_calling/**'
+      - 'snappy_pipeline/workflows/somatic_variant_annotation/**'
+      - 'snappy_pipeline/workflows/somatic_variant_filtration/**'
+
+      # 'base' files of snappy_wrappers
+      - 'snappy_wrappers/*'
+
+      # wrappers used in the test workflows
+      - 'snappy_wrappers/wrappers/alfred/**'
+      - 'snappy_wrappers/wrappers/bcftools/**'
+      - 'snappy_wrappers/wrappers/bwa/**'
+      - 'snappy_wrappers/wrappers/link_in_bam/**'
+      - 'snappy_wrappers/wrappers/mutect/**'
+      - 'snappy_wrappers/wrappers/mutect_par/**'
+      - 'snappy_wrappers/wrappers/mutect2/**'
+      - 'snappy_wrappers/wrappers/mutect2_par/**'
+      - 'snappy_wrappers/wrappers/ngs_chew/**'
+      - 'snappy_wrappers/wrappers/somatic_variant_filtration/**'
+      - 'snappy_wrappers/wrappers/vep/**'
 
 
 jobs:
