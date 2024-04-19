@@ -662,11 +662,10 @@ class BaseStep:
         #: This assumes the existence of a model.py in the module directory
         #: with the model class' name being the camelCased version of the workflow name
         model_name = self.name.title().replace("_", "")
-        print("FOO", model_name)
+        print(f"validating {model_name}")
         try:
             module = import_module(".model", package=self.__module__)
             model: typing.Type[pydantic.BaseModel] = getattr(module, model_name)
-            print("validating {model}")
             print(dump_commented_yaml(model))
             validate_config(self.config, model)
             exit(1)
