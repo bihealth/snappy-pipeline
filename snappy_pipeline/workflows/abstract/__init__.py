@@ -45,7 +45,7 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
-from .models import placeholder_model_instance, dump_commented_yaml
+from .models import _placeholder_model_instance, _dump_commented_yaml
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -121,6 +121,7 @@ class BaseStepPart:
         self.parent = parent
         self.config = parent.config
         self.w_config = parent.w_config
+        self.config_model = parent.config_model
 
     def _validate_action(self, action):
         """Validate provided action
@@ -662,13 +663,10 @@ class BaseStep:
         #: This assumes the existence of a model.py in the module directory
         #: with the model class' name being the camelCased version of the workflow name
         model_name = self.name.title().replace("_", "")
-        print(f"validating {model_name}")
         try:
             module = import_module(".model", package=self.__module__)
-            model: typing.Type[pydantic.BaseModel] = getattr(module, model_name)
-            print(dump_commented_yaml(model))
-            validate_config(self.config, model)
-            exit(1)
+            model: type[pydantic.BaseModel] = getattr(module, model_name)
+            self.config_model = validate_config(self.config, model)
         except ModuleNotFoundError:
             # TODO: use logging
             # print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",
@@ -684,7 +682,7 @@ class BaseStep:
         self.sub_steps = {}
         self.data_set_infos = list(self._load_data_set_infos())
         # Check configuration
-        self._check_config()
+        # self._check_config()
         #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
         #: Shortcut BioMed SampleSheet keyword arguments
@@ -755,9 +753,10 @@ class BaseStep:
 
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
-        self.check_config()
-        for step in self.sub_steps.values():
-            step.check_config()
+        # self.check_config()
+        # for step in self.sub_steps.values():
+        #     step.check_config()
+        pass
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
@@ -819,7 +818,7 @@ class BaseStep:
                 klass = pair_or_class
                 args = ()
             obj = klass(self, *args)
-            obj.check_config()
+            # obj.check_config()
             self.sub_steps[klass.name] = obj
 
     def register_sub_workflow(self, step_name, workdir, sub_workflow_name=None):

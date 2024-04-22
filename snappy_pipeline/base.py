@@ -74,9 +74,9 @@ def validate_config(
     config: dict[Any, Any],
     model: type[pydantic.BaseModel],
     file=sys.stderr,
-):
+) -> pydantic.BaseModel:
     print(f"\nValidating config using {model.__name__}", file=file)
-    _ = model(**config)
+    return model(**config)
 
 
 def print_config(config, file=sys.stderr):

@@ -1,35 +1,12 @@
-import re
-import typing
+import os
 from enum import Enum
+from pathlib import Path
 from typing import Annotated, Self
 
-from annotated_types import Predicate
-from pydantic import BaseModel
-from pydantic import ConfigDict, model_validator, model_serializer, Field
-from pydantic_core import PydanticUndefined
+from pydantic import model_validator, Field, FilePath, DirectoryPath, field_validator
+from pydantic.types import PathType
 
-
-class SnappyModel(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-        use_attribute_docstrings=True,
-        use_enum_values=True,
-    )
-
-
-def options(enum: Enum) -> list[typing.Any]:
-    return [(e.name, e.value) for e in enum]
-
-
-def EnumField(enum: typing.Type[Enum], default: typing.Any = PydanticUndefined, *args, **kwargs):
-    extra = kwargs.get("json_schema_extra", {})
-    extra.update(dict(options=options(enum)))
-    kwargs["json_schema_extra"] = extra
-    return Field(default, *args, **kwargs)
-
-
-size_string_regexp = re.compile(r"[. 0-9]+([KMGTP])")
-SizeString = Annotated[str, Predicate(lambda s: size_string_regexp.match(s) is not None)]
+from ..abstract.models import SnappyModel, EnumField, SizeString
 
 
 class DnaMapper(Enum):
@@ -49,12 +26,10 @@ class Tools(SnappyModel):
     dna: Annotated[list[DnaMapper], EnumField(DnaMapper, [])]
     """Required if DNA analysis; otherwise, leave empty."""
 
-    rna: Annotated[
-        list[RnaMapper], EnumField(RnaMapper, [])]
+    rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
     """Required if RNA analysis; otherwise, leave empty."""
 
-    dna_long: Annotated[
-        list[LongDnaMapper], EnumField(LongDnaMapper, [])]
+    dna_long: Annotated[list[LongDnaMapper], EnumField(LongDnaMapper, [])]
     """Required if long-read mapper used; otherwise, leave empty."""
 
 
@@ -71,11 +46,11 @@ class TargetCoverageReportEntry(SnappyModel):
         path: "path/to/targets.bed"
     """
 
-    name: Annotated[str, Field(examples=['IDT_xGen_V1_0'])]
+    name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
 
-    pattern: Annotated[str, Field(examples=['xGen Exome Research Panel V1\\.0*'])]
+    pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[str, Field(examples=['path/to/targets.bed'])]
+    path: Annotated[Path, PathType("file"), Field(examples=["path/to/targets.bed"])]
 
 
 class TargetCoverageReport(SnappyModel):
@@ -92,20 +67,30 @@ class NgsChewFingerprint(SnappyModel):
 
 
 class Bwa(SnappyModel):
-    path_index: str
+    path_index: FilePath | str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
-    num_threads_align: int | None = 16
-    num_threads_trimming: int | None = 8
-    num_threads_bam_view: int | None = 4
-    num_threads_bam_sort: int | None = 4
-    memory_bam_sort: SizeString | None = "4G"
-    trim_adapters: bool | None = False
-    mask_duplicates: bool | None = True
-    split_as_secondary: bool | None = False
+    num_threads_align: int = 16
+    num_threads_trimming: int = 8
+    num_threads_bam_view: int = 4
+    num_threads_bam_sort: int = 4
+    memory_bam_sort: SizeString = "4G"
+    trim_adapters: bool = False
+    mask_duplicates: bool = True
+    split_as_secondary: bool = False
     """-M flag"""
 
     extra_flags: list[str] = []
     """ [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode """
+
+    @field_validator("path_index")
+    def validate_bwa_path_index(cls, v):
+        extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
+        prefix, ext = os.path.splitext(v)
+        if ext:
+            assert ext in extensions, f"unknown extension '{v}'"
+        for extension in extensions:
+            assert os.path.exists(prefix + extension), f"{v} does not exist"
+        return prefix
 
 
 class BwaMode(Enum):
@@ -115,22 +100,32 @@ class BwaMode(Enum):
 
 
 class BwaMem2(SnappyModel):
-    path_index: str
+    path_index: FilePath | str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
 
     bwa_mode: BwaMode = BwaMode.AUTO
-    num_threads_align: int | None = 16
-    num_threads_trimming: int | None = 8
-    num_threads_bam_view: int | None = 4
-    num_threads_bam_sort: int | None = 4
-    memory_bam_sort: SizeString | None = "4G"
-    trim_adapters: bool | None = False
-    mask_duplicates: bool | None = True
-    split_as_secondary: bool | None = True
+    num_threads_align: int = 16
+    num_threads_trimming: int = 8
+    num_threads_bam_view: int = 4
+    num_threads_bam_sort: int = 4
+    memory_bam_sort: SizeString = "4G"
+    trim_adapters: bool = False
+    mask_duplicates: bool = True
+    split_as_secondary: bool = True
     """-M flag"""
 
     extra_flags: list[str] = []
     """[ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode"""
+
+    @field_validator("path_index")
+    def validate_bwa_mem2_path_index(cls, v):
+        extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
+        prefix, ext = os.path.splitext(v)
+        if ext:
+            assert ext in extensions, f"unknown extension '{v}'"
+        for extension in extensions:
+            assert os.path.exists(prefix + extension), f"{v} does not exist"
+        return prefix
 
 
 class BarcodeTool(Enum):
@@ -138,10 +133,10 @@ class BarcodeTool(Enum):
 
 
 class Somatic(SnappyModel):
-    mapping_tool: DnaMapper = None
+    mapping_tool: DnaMapper
     """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
 
-    barcode_tool: BarcodeTool = None
+    barcode_tool: BarcodeTool = BarcodeTool.AGENT
     """Only agent currently implemented"""
 
     use_barcodes: bool = False
@@ -162,7 +157,8 @@ class AgentLibPrepType(Enum):
 
 
 class AgentPrepare(SnappyModel):
-    path: str
+    path: FilePath
+
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
 
@@ -177,8 +173,8 @@ class AgentMarkDuplicatesConsensusMode(Enum):
 
 
 class AgentMarkDuplicates(SnappyModel):
-    path: str = None
-    path_baits: str = None
+    path: FilePath
+    path_baits: FilePath
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 
@@ -197,7 +193,7 @@ class Agent(SnappyModel):
 
 
 class Star(SnappyModel):
-    path_index: str
+    path_index: FilePath | str
     """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
     num_threads_align: int | None = 16
     num_threads_trimming: int | None = 8
@@ -238,7 +234,7 @@ class Strand(Enum):
 
 
 class Strandedness(SnappyModel):
-    path_exon_bed: str
+    path_exon_bed: FilePath
     """Location of usually highly expressed genes. Known protein coding genes is a good choice"""
 
     strand: Strand = Strand.UNKNOWN
@@ -256,53 +252,46 @@ class NgsMapping(SnappyModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
-    path_link_in: str | None
+    path_link_in: DirectoryPath | str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    target_coverage_report: TargetCoverageReport | None
+    target_coverage_report: TargetCoverageReport | None = None
     """Thresholds for targeted sequencing coverage QC."""
 
-    bam_collect_doc: BamCollectDoc | None
+    bam_collect_doc: BamCollectDoc | None = None
     """Depth of coverage collection, mainly useful for genomes."""
 
-    ngs_chew_fingerprint: NgsChewFingerprint | None
+    ngs_chew_fingerprint: NgsChewFingerprint | None = None
     """Compute fingerprints with ngs-chew"""
 
-    bwa: Bwa | None
+    bwa: Bwa | None = None
     """Configuration for BWA"""
 
-    bwa_mem2: BwaMem2 | None
+    bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
 
-    somatic: Somatic | None
+    somatic: Somatic | None = None
     """
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
     """
 
-    bqsr: Bqsr | None
+    bqsr: Bqsr | None = None
 
-    agent: Agent | None
+    agent: Agent | None = None
 
-    star: Star | None
+    star: Star | None = None
     """Configuration for STAR"""
 
-    strandedness: Strandedness | None
+    strandedness: Strandedness | None = None
 
-    minimap2: Minimap2 | None
+    minimap2: Minimap2 | None = None
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self: Self) -> Self:
         for data_type in ("dna", "rna", "dna_long"):
             tool_list = getattr(self.tools, data_type)
             for tool in tool_list:
-                print(tool)
-                if tool not in (tool_config := getattr(self, tool)):
-                    raise ValueError(f"Tool {tool} not configured in {tool_config}")
+                if not getattr(self, tool):
+                    raise ValueError(f"Tool {tool} not configured")
         return self
-
-    @model_serializer(mode="wrap")
-    def _serialize(self, handler):
-        d = handler(self)
-        print(d)
-        return d
