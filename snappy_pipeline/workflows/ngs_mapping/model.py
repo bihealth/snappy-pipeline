@@ -253,9 +253,6 @@ class Minimap2(SnappyModel):
 
 
 class NgsMapping(SnappyModel):
-    required: str
-    """This is a required field"""
-
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
