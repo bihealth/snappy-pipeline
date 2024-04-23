@@ -457,8 +457,13 @@ class ParallelBaseWrapper:
         self.snakemake = snakemake
         #: Base directory to wrappers
         self.wrapper_base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+        #: Path to the main pipeline step workflow directory
+        self.main_cwd = os.getcwd()
+
         # Kick-off initialization
         self._apply_realpath_to_output()
+        self._apply_realpath_to_input()
+
         # Setup logging (will run in wrapper and its own process)
         if hasattr(snakemake.log, "log"):
             log_filename = self.snakemake.log.log
@@ -471,8 +476,6 @@ class ParallelBaseWrapper:
             level=logging.INFO,
         )  # TODO: make configurable?
         self.logger = logging.getLogger(self._job_name_token())
-        #: Path to the main pipeline step workflow directory
-        self.main_cwd = os.getcwd()
 
     def _apply_realpath_to_output(self):
         """Update output and log file paths to be realpaths."""
@@ -486,6 +489,11 @@ class ParallelBaseWrapper:
         for key in self.realpath_log_keys or []:
             if hasattr(self.snakemake.log, key):
                 setattr(self.snakemake.log, key, os.path.realpath(getattr(self.snakemake.log, key)))
+
+    def _apply_realpath_to_input(self):
+        for name, f in self.snakemake.input.items():
+            path = os.path.realpath(os.path.join(self.main_cwd, f))
+            setattr(self.snakemake.input, name, path)
 
     def get_fai_path(self):
         """Return path to FAI file for reference to use.
