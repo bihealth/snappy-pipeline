@@ -617,12 +617,16 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             for ext in ("log", "conda_list.txt", "conda_info.txt")
         ]
         return {
-            "target": targets
-            if targets
-            else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards),
-            "antitarget": antitargets
-            if antitargets
-            else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards),
+            "target": (
+                targets
+                if targets
+                else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards)
+            ),
+            "antitarget": (
+                antitargets
+                if antitargets
+                else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards)
+            ),
             "logs": logs if targets or antitargets else [],
         }
 
