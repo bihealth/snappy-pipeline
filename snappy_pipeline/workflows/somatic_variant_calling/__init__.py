@@ -356,7 +356,7 @@ step_config:
 
 
 def ngs_mapping(path: str) -> str:
-    return os.path.join(os.path.abspath("../ngs_mapping"), path)
+    return os.path.join("../ngs_mapping", path)
 
 
 class SomaticVariantCallingStepPart(BaseStepPart):
