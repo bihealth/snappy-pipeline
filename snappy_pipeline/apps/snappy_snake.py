@@ -9,8 +9,8 @@ import argparse
 import datetime
 import logging
 import os
-import subprocess
 import sys
+from shutil import which
 
 import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main as snakemake_main
@@ -137,8 +137,7 @@ def setup_logging(args):
 
 
 def binary_available(name):
-    retcode = subprocess.call(["which", "mamba"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return retcode == 0
+    return which(name) is not None
 
 
 def run(wrapper_args):  # noqa: C901
