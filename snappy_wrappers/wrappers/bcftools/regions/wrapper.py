@@ -13,7 +13,16 @@ elif "bcftools" in config and "path_bed" in config["bcftools"]:
     bed = config["bcftools"].get("path_bed", "")
 elif "filter_nb" in snakemake.wildcards.keys():
     filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
-    bed = config["filter_list"][filter_nb]["regions"].get("path_bed", "")
+    keywords = config["filter_list"][filter_nb]["regions"].keys()
+    assert len(keywords) == 1
+    keyword = list(keywords)[0]
+    path = config["filter_list"][filter_nb]["regions"][keyword]
+    if keyword == "include":
+        bed = path
+    elif keyword == "exclude" or "path_bed":
+        bed = f"^{path}"
+    else:
+        bed = ""
 else:
     bed = ""
 assert bed, "No bed file defining the regions to be filtered"
