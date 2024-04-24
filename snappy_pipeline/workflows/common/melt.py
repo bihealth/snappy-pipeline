@@ -89,7 +89,7 @@ class MeltStepPart(
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
         yield "bai", ngs_mapping(f"output/{infix}/out/{infix}.bam.bai")

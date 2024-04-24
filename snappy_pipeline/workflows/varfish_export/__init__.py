@@ -215,7 +215,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_seqvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        variant_calling = self.parent.sub_workflows["variant_calling"]
+        variant_calling = self.parent.modules["variant_calling"]
 
         path = (
             "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
@@ -275,7 +275,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         if self.parent.config.path_sv_calling_targeted:
-            sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
+            sv_calling = self.parent.modules["sv_calling_targeted"]
             sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
                 sv_caller: getattr(
@@ -284,7 +284,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 for sv_caller in sv_callers
             }
         elif self.parent.config.path_sv_calling_wgs:
-            sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
+            sv_calling = self.parent.modules["sv_calling_wgs"]
             sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
                 sv_caller: getattr(
@@ -340,7 +340,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             )
         yield "vcf", vcfs
 
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         library_names = [
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
@@ -385,7 +385,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -480,12 +480,12 @@ class VarfishExportWorkflow(BaseStep):
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
 
         # Register sub workflows
-        self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
+        self.register_module("variant_calling", self.config.path_variant_calling)
         if self.config.path_sv_calling_targeted:
-            self.register_sub_workflow("sv_calling_targeted", self.config.path_sv_calling_targeted)
+            self.register_module("sv_calling_targeted", self.config.path_sv_calling_targeted)
         if self.config.path_sv_calling_wgs:
-            self.register_sub_workflow("sv_calling_wgs", self.config.path_sv_calling_wgs)
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+            self.register_module("sv_calling_wgs", self.config.path_sv_calling_wgs)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         step_config = self.w_config.step_config

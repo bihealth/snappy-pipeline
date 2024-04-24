@@ -148,7 +148,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflows
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = (
@@ -252,7 +252,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         """Return input files that "cnvetti coverage" needs"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         # Yield input BAM and BAI file
         bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
         for ext in (".bam", ".bam.bai"):
@@ -416,7 +416,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
         input_files = {
             "bam": ngs_mapping(base_path + ".bam"),
@@ -742,9 +742,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
-        self.register_sub_workflow(
-            "somatic_variant_calling", self.config.path_somatic_variant_calling
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("somatic_variant_calling", self.config.path_somatic_variant_calling
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:

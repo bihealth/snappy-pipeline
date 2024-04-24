@@ -210,7 +210,7 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
                     "work/write_pedigree.{index_library}/out/{index_library}.ped"
                 ).format(**wildcards),
             )
-            variant_annotation = self.parent.sub_workflows["variant_annotation"]
+            variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
                     "output/{mapper}.{caller}.jannovar_annotate_vcf.{index_library}/out/"
@@ -386,7 +386,7 @@ class VariantFiltrationWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("variant_annotation", self.config.path_variant_annotation)
+        self.register_module("variant_annotation", self.config.path_variant_annotation)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna

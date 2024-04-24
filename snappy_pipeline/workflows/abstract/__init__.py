@@ -669,6 +669,7 @@ class BaseStep:
         self.previous_steps = tuple(previous_steps or [])
         #: Snakefile "workflow" object
         self.workflow = workflow
+        self.modules = {}
         #: Setup logger for the step
         self.logger = logging.getLogger(self.name)
         #: Merge default configuration with true configuration
@@ -848,41 +849,35 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(
-        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
-    ):
-        """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
+    def register_module(self, step_name: str, prefix: os.PathLike, module_name: str | None = None):
+        """
+        Register workflow with given pipeline ``step_name``, using the given ``prefix``.
+        This requires importing the respective workflow in the Snakefile
+        (since the module API is not intended to be used programmatically).
+        For example:
 
-        Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
+        ```
+        module ngs_mapping:
+            snakefile:
+                "../ngs_mapping/Snakefile"
+            config:
+                wf.w_config
+            prefix:
+                wf.w_config["step_config"]["your_workflow"].get("path_ngs_mapping", "../ngs_mapping")
+
+
+        use rule * from ngs_mapping
+        ```
+
+        Optionally, the module name can be given separate from ``step_name`` (the default)
         value for it.
         """
-        sub_workflow_name = sub_workflow_name or step_name
-        if sub_workflow_name in self.sub_workflows:
-            raise ValueError("Sub workflow {} already registered!".format(sub_workflow_name))
-        if os.path.isabs(workdir):
-            abs_workdir = workdir
-        else:
-            abs_workdir = os.path.realpath(os.path.join(os.getcwd(), workdir))
+        module_name = module_name or step_name
+        if module_name in self.modules:
+            raise ValueError("Sub workflow {} already registered!".format(module_name))
+        self.modules[module_name] = lambda path: os.path.join(prefix, path)
 
-        config_path = abs_workdir + "/" + "config.yaml"
-        config, *_ = expand_ref(config_path, self.w_config)
-
-        from pprint import pprint
-
-        pprint(config)
-        pprint(_)
-        print(snakefile_path(step_name))
-        print(abs_workdir)
-        self.workflow.module(
-            name=sub_workflow_name,
-            # workdir=abs_workdir,
-            prefix=step_name,
-            snakefile=snakefile_path(step_name),
-            config=config,
-        )
-        self.sub_workflows[sub_workflow_name] = self.workflow.modules[sub_workflow_name]
-
-    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+    def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
 
         Delegates to the sub step object's get_args function

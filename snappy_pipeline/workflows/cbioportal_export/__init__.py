@@ -210,7 +210,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """Return input vcf for each output maf"""
         # Validate action
         self._validate_action(action)
-        somatic_variant = self.parent.sub_workflows["somatic_variant"]
+        somatic_variant = self.parent.modules["somatic_variant"]
         tpl = somatic_variant(
             os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
         )
@@ -742,16 +742,16 @@ class cbioportalExportWorkflow(BaseStep):
         # Initialize sub-workflows
         if self.config.path_somatic_variant:
             if self.config.filter_set:
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_variant_filtration",
                     self.config.path_somatic_variant,
-                    sub_workflow_name="somatic_variant",
+                    module_name="somatic_variant",
                 )
             else:
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_variant_annotation",
                     self.config.path_somatic_variant,
-                    sub_workflow_name="somatic_variant",
+                    module_name="somatic_variant",
                 )
         if self.config.path_copy_number:
             if self.config.copy_number_tool in [
@@ -761,22 +761,22 @@ class cbioportalExportWorkflow(BaseStep):
                 "purecn",
                 "sequenza",
             ]:
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_targeted_seq_cnv_calling",
-                    workdir=self.config.path_copy_number,
-                    sub_workflow_name="copy_number_step",
+                    prefix=self.config.path_copy_number,
+                    module_name="copy_number_step",
                 )
             else:
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_wgs_cnv_calling",
-                    workdir=self.config.path_copy_number,
-                    sub_workflow_name="copy_number_step",
+                    prefix=self.config.path_copy_number,
+                    module_name="copy_number_step",
                 )
         if self.config.path_ngs_mapping:
-            self.register_sub_workflow(
+            self.register_module(
                 "ngs_mapping",
-                workdir=self.config.path_ngs_mapping,
-                sub_workflow_name="ngs_mapping",
+                prefix=self.config.path_ngs_mapping,
+                module_name="ngs_mapping",
             )
 
     @listify

@@ -61,7 +61,7 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
         # Validate action
         self._validate_action(action)
 
-        gene_expression = self.parent.sub_workflows["gene_expression_quantification"]
+        gene_expression = self.parent.modules["gene_expression_quantification"]
 
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
@@ -175,7 +175,7 @@ class GeneExpressionReportWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         if self.config.path_gene_expression_quantification:
-            self.register_sub_workflow(
+            self.register_module(
                 "gene_expression_quantification", self.config.path_gene_expression_quantification
             )
 

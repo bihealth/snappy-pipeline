@@ -94,13 +94,13 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three time the
         # TODO: same value: 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         return ngs_mapping(
             "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)
         )
 
     def _get_path_vcf(self, wildcards, real_index):
-        prev_step = self.parent.sub_workflows[self.previous_step]
+        prev_step = self.parent.modules[self.previous_step]
         name_pattern = "{mapper}.{caller}{prev_token}.{real_index_library}"
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
@@ -204,11 +204,11 @@ class IgvSessionGenerationWorkflow(BaseStep):
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
             if prev_path := self.config.get(f"path_{prev}"):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, prev_path)
+                self.register_module(prev, prev_path)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
