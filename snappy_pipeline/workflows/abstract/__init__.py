@@ -638,6 +638,7 @@ class BaseStep:
         self.previous_steps = tuple(previous_steps or [])
         #: Snakefile "workflow" object
         self.workflow = workflow
+        self.modules = {}
         #: Merge default configuration with true configuration
         self.w_config = config
         self.w_config.update(self._update_config(config))
@@ -781,6 +782,34 @@ class BaseStep:
             obj = klass(self, *args)
             obj.check_config()
             self.sub_steps[klass.name] = obj
+
+    def register_module(self, step_name: str, prefix: os.PathLike, module_name: str | None = None):
+        """
+        Register workflow with given pipeline ``step_name``, using the given ``prefix``.
+        This requires importing the respective workflow in the Snakefile
+        (since the module API is not intended to be used programmatically).
+        For example:
+
+        ```
+        module ngs_mapping:
+            snakefile:
+                "../ngs_mapping/Snakefile"
+            config:
+                wf.w_config
+            prefix:
+                wf.w_config["step_config"]["your_workflow"].get("path_ngs_mapping", "../ngs_mapping")
+
+
+        use rule * from ngs_mapping
+        ```
+
+        Optionally, the module name can be given separate from ``step_name`` (the default)
+        value for it.
+        """
+        module_name = module_name or step_name
+        if module_name in self.modules:
+            raise ValueError("Sub workflow {} already registered!".format(module_name))
+        self.modules[module_name] = lambda path: os.path.join(prefix, path)
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards

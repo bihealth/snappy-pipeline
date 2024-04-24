@@ -355,10 +355,6 @@ step_config:
 """
 
 
-def ngs_mapping(path: str) -> str:
-    return os.path.join("../ngs_mapping", path)
-
-
 class SomaticVariantCallingStepPart(BaseStepPart):
     """Base class for somatic variant calling step parts
 
@@ -386,7 +382,9 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
+            # Get shortcut to Snakemake module for ngs_mapping
+            ngs_mapping = self.parent.modules["ngs_mapping"]
+
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = (
@@ -576,6 +574,8 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
         """
+        # Get shortcut to Snakemake module for ngs_mapping
+        ngs_mapping = self.parent.modules["ngs_mapping"]
 
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
@@ -625,6 +625,8 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'pileup_normal', BAM and BAI files.
         """
+        # Get shortcut to Snakemake module for ngs_mapping
+        ngs_mapping = self.parent.modules["ngs_mapping"]
 
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
@@ -642,6 +644,8 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         :return: Returns dictionary with input files for rule 'pileup_tumor', BAM and BAI files.
         """
+        # Get shortcut to Snakemake module for ngs_mapping
+        ngs_mapping = self.parent.modules["ngs_mapping"]
 
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
@@ -904,6 +908,9 @@ class JointCallingStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
+        # Get shortcut to Snakemake module for ngs_mapping
+        ngs_mapping = self.parent.modules["ngs_mapping"]
+
         def input_function(wildcards):
             """Helper wrapper function"""
             donor = self.donor_by_name[wildcards.donor_name]
@@ -1148,6 +1155,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
 
     @listify
     def get_result_files(self):

@@ -178,7 +178,7 @@ class PopDelStepPart(
     @dictify
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
@@ -307,7 +307,7 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
@@ -365,7 +365,7 @@ class SvCallingWgsWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
 
     @listify
     def all_donors(self, include_background=True):

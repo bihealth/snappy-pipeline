@@ -134,7 +134,7 @@ class SvCallingTargetedWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # Build dictionary with sample count per library kit
         _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
 

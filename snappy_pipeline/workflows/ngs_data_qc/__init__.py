@@ -193,7 +193,7 @@ class PicardStepPart(BaseStepPart):
         if "CollectHsMetrics" in self.config["picard"]["programs"]:
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
@@ -290,7 +290,7 @@ class NgsDataQcWorkflow(BaseStep):
             (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
         if "picard" in self.config["tools"]:
-            self.register_sub_workflow("ngs_mapping", self.config["picard"]["path_ngs_mapping"])
+            self.register_module("ngs_mapping", self.config["picard"]["path_ngs_mapping"])
 
     @listify
     def get_result_files(self):

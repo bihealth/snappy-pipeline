@@ -55,7 +55,7 @@ class Delly2StepPart(
 
     @dictify
     def _get_input_files_call(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         token = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{token}/out/{token}.bam")
 

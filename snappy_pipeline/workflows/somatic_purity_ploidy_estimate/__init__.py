@@ -93,7 +93,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the tumor."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             base_path = (
                 "output/{mapper}.{tumor_library_name}/out/{mapper}.{tumor_library_name}"
             ).format(**wildcards)
@@ -108,7 +108,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the normal."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             base_path = (
                 "output/{mapper}.{normal_library_name}/out/{mapper}.{normal_library_name}"
             ).format(**wildcards)
@@ -131,7 +131,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating CNV file from copywriter for tumor."""
 
         def func(wildcards):
-            wgs_cnv_calling = self.parent.sub_workflows["somatic_targeted_seq_cnv_calling"]
+            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             base_path = (
                 "work/{mapper}.copywriter.{tumor_library_name}/"
                 "out/{mapper}.copywriter.{tumor_library_name}"
@@ -145,7 +145,7 @@ class AscatStepPart(BaseStepPart):
 
         def func(wildcards):
             tumor_library = None
-            wgs_cnv_calling = self.parent.sub_workflows["somatic_targeted_seq_cnv_calling"]
+            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             # look up tumor to normal
             for k, v in self.tumor_ngs_library_to_sample_pair.items():
                 if v.normal_sample.dna_ngs_library.name == wildcards["normal_library_name"]:
@@ -322,11 +322,11 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # TODO: potential bug here as this step requires an entry that is not available
         #  in DEFAULT_CONFIG.
         if self.config["tool_cnv_calling"] == "copywriter":
-            self.register_sub_workflow(
+            self.register_module(
                 "somatic_targeted_seq_cnv_calling",
                 self.config["path_somatic_targeted_seq_cnv_calling"],
             )

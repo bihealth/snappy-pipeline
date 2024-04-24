@@ -310,7 +310,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     def get_input_files(self, action):
         self._validate_action(action)
-        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        self.ngs_mapping = self.parent.modules["ngs_mapping"]
         if action == "prepare":
             return {"container": "work/containers/out/purecn.simg"}
         if action == "coverage":
@@ -442,7 +442,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
         # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         return {"normal_bam": bam, "normal_bai": bam + ".bai"}
@@ -568,7 +568,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         """Helper wrapper function to estimate target average size in wgs mode"""
         if not self.is_wgs:
             return {}
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bams = [
             ngs_mapping(tpl.format(mapper=wildcards["mapper"], normal_library=x))
@@ -588,7 +588,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         return {
@@ -780,7 +780,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             (NgsMappingWorkflow,),
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

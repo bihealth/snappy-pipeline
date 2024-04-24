@@ -24,9 +24,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticVariantCallingWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticVariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
 module ngs_mapping:
@@ -35,7 +33,9 @@ module ngs_mapping:
     config:
         wf.w_config
     prefix:
-        "../ngs_mapping"
+        wf.w_config["step_config"]["somatic_variant_calling"].get(
+            "path_ngs_mapping", "../ngs_mapping"
+        )
 
 
 use rule * from ngs_mapping

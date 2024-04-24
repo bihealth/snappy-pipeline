@@ -108,7 +108,7 @@ class PeddyStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{index_ngs_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["variant_calling"]
+        variant_calling = self.parent.modules["variant_calling"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -182,7 +182,7 @@ class VariantCheckingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
         # Register sub workflows
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+        self.register_module("variant_calling", self.config["path_variant_calling"])
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"]

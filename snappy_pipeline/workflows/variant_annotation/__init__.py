@@ -118,7 +118,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         """Return path to pedigree input file"""
         self._validate_action(action)
         token = "{mapper}.{var_caller}.{library_name}"
-        variant_calling = self.parent.sub_workflows["variant_calling"]
+        variant_calling = self.parent.modules["variant_calling"]
         return {
             "vcf": variant_calling(f"output/{token}/out/{token}.vcf.gz"),
             "vcf_tbi": variant_calling(f"output/{token}/out/{token}.vcf.gz.tbi"),
@@ -196,10 +196,10 @@ class VariantAnnotationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
-        self.register_sub_workflow(
+        self.register_module(
             "ngs_mapping", self.w_config["step_config"]["variant_calling"]["path_ngs_mapping"]
         )
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+        self.register_module("variant_calling", self.config["path_variant_calling"])
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

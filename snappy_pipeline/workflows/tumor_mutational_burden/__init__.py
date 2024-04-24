@@ -84,7 +84,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         tpl = os.path.join("output", base_name, "out", base_name)
 
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_path = self.parent.sub_workflows["somatic_variant"]
+        variant_path = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_path(tpl + ext)
 
@@ -194,7 +194,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             sub_workflow = "somatic_variant_annotation"
         if config["is_filtered"]:
             sub_workflow = "somatic_variant_filtration"
-        self.register_sub_workflow(sub_workflow, config["path_somatic_variant"], "somatic_variant")
+        self.register_module(sub_workflow, config["path_somatic_variant"], "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not config["tools_ngs_mapping"]:
             config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
