@@ -449,9 +449,9 @@ def minimal_config_list():
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
             filter_list:
+            - dkfz: {}
             - bcftools:
                 include: "include_statment"
-            - dkfz:
             - ebfilter:
                 threshold: 2.3
             - regions:
@@ -518,9 +518,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
         "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
     }
-    actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
-        wildcards
-    )
+    actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
     assert actual == expected
 
 
@@ -542,28 +540,14 @@ def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_l
 
 def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow_list):
     """Tests ApplyFiltersStepPart.get_resource()"""
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "var_caller": "mutect2",
-            "annotator": "jannovar",
-            "tumor_library": "P001-T1-DNA1-WGS1",
-            "filter_nb": 3,
-        }
-    )
     # Define expected
     expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2048M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        if resource == "threads" or resource == "partition":
-            actual = somatic_variant_filtration_workflow_list.get_resource(
-                "one_regions", "run", resource
-            )
-        else:
-            actual = somatic_variant_filtration_workflow_list.get_resource(
-                "one_regions", "run", resource
-            )(wildcards)
+        actual = somatic_variant_filtration_workflow_list.get_resource(
+            "one_ebfilter", "run", resource
+        )
         assert actual == expected, msg_error
 
 
@@ -577,7 +561,7 @@ def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workfl
     expected = {
         "logs": [
             log_tpl.format(filt=filt, ext=ext, chksum=chksum)
-            for filt in ("bcftools_1", "dkfz_2", "ebfilter_3", "regions_4", "protected_5")
+            for filt in ("dkfz_1", "bcftools_2", "ebfilter_3", "regions_4", "protected_5")
             for ext in ("log", "conda_list.txt", "conda_info.txt")
             for chksum in ("", ".md5")
         ],

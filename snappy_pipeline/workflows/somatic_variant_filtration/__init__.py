@@ -114,7 +114,6 @@ Note that the parallelisation of ``ebfilter`` has been removed, even though this
 from collections import OrderedDict
 import os
 import random
-import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -226,8 +225,8 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.normal_sample.dna_ngs_library.name if pair else None
 
     def get_params(self, action):
         """Return arguments to pass down."""
@@ -254,32 +253,17 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    #: Default filtration resource usage (should be light)
+    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
+
     def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        """Return path to input or previous filter vcf file"""
         # Validate action
         self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
-            yield "bam", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                "{mapper}.{tumor_library}",
-                "out",
-                "{mapper}.{tumor_library}.bam",
-            )
-            normal_library = self.tumor_to_normal_library[wildcards["tumor_library"]]
-            yield "normal", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                f"{{mapper}}.{normal_library}",
-                "out",
-                f"{{mapper}}.{normal_library}.bam",
-            )
             filter_nb = int(wildcards["filter_nb"])
-            filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
-            if filter_name == "ebfilter":
-                yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
             if filter_nb > 1:
                 prev = list(self.config["filter_list"][filter_nb - 2].keys())[0]
                 n = filter_nb - 1
@@ -340,45 +324,64 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
             )
 
-    def get_resource_usage(self, action):
+
+class OneFilterWithBamStepPart(OneFilterStepPart):
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
         # Validate action
         self._validate_action(action)
 
-        def time_usage(wildcards):
-            filter_nb = int(wildcards["filter_nb"]) - 1
-            filter_name = list(self.config["filter_list"][filter_nb].keys())[0]
-            if filter_name == "dkfz":
-                return "12:00:00"
-            elif filter_name == "ebfilter":
-                return "24:00:00"
-            else:
-                return "02:00:00"
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
+            for k, v in parent(wildcards).items():
+                yield k, v
 
-        def memory_usage(wildcards):
-            filter_nb = int(wildcards["filter_nb"]) - 1
-            filter_name = list(self.config["filter_list"][filter_nb].keys())[0]
-            if filter_name == "dkfz":
-                return f"{3 * 1024}M"
-            elif filter_name == "ebfilter":
-                return f"{2 * 1024}M"
-            else:
-                return f"{8 * 1024}M"
+            yield "bam", os.path.join(
+                self.config["path_ngs_mapping"],
+                "output",
+                "{mapper}.{tumor_library}",
+                "out",
+                "{mapper}.{tumor_library}.bam",
+            )
+            normal_library = self.tumor_to_normal_library.get(wildcards["tumor_library"], None)
+            if normal_library:
+                yield "normal", os.path.join(
+                    self.config["path_ngs_mapping"],
+                    "output",
+                    f"{{mapper}}.{normal_library}",
+                    "out",
+                    f"{{mapper}}.{normal_library}.bam",
+                )
 
-        return ResourceUsage(
-            threads=1,
-            time=time_usage,
-            memory=memory_usage,
-        )
+        return input_function
 
 
-class OneFilterDkfzStepPart(OneFilterStepPart):
+class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     name = "one_dkfz"
     filter_name = "dkfz"
+    resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
 
 
-class OneFilterEbfilterStepPart(OneFilterStepPart):
+class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
     filter_name = "ebfilter"
+    resource_usage = {"run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M")}
+
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
+            for k, v in parent(wildcards).items():
+                yield k, v
+
+            yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+
+        return input_function
 
     @dictify
     def _get_output_files_write_panel(self):
@@ -982,20 +985,16 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Mutect.
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+            for bio_entity in sheet.sheet.bio_entities.values():
+                for bio_sample in bio_entity.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
