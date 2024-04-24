@@ -354,6 +354,8 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         self.register_sub_step_classes(
             (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
         )
+        # Register modules
+        self.register_module("somatic_variant_calling", self.config["path_somatic_variant_calling"])
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config["tools_ngs_mapping"]:
             self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][

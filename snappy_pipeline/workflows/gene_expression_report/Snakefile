@@ -22,6 +22,23 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = GeneExpressionReportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+# Modules =====================================================================
+
+if wf.config["path_gene_expression_quantification"]:
+
+    module gene_expression_quantification:
+        snakefile:
+            "../gene_expression_quantification/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get(
+                "path_gene_expression_quantification", "../gene_expression_quantification"
+            )
+
+    use rule * from gene_expression_quantification
+
+
 # Rules =======================================================================
 
 
@@ -30,9 +47,10 @@ localrules:
     gene_expression_report_link_out_run,
 
 
-rule all:
+rule gene_expression_report_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -20,6 +20,22 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = HelperBuildWgsGcnvModelWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -28,9 +44,10 @@ localrules:
     sv_calling_targeted_write_pedigree_run,
 
 
-rule all:
+rule build_gcnv_model_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 rule build_gcnv_model_write_pedigree_run:

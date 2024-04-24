@@ -40,7 +40,7 @@ module somatic_variant_calling:
     config:
         wf.w_config
     prefix:
-        "../somatic_variant_calling"
+        wf.config.get("path_somatic_variant", "../somatic_variant_calling")
 
 
 module somatic_variant_annotation:
@@ -49,7 +49,7 @@ module somatic_variant_annotation:
     config:
         wf.w_config
     prefix:
-        "../somatic_variant_annotation"
+        wf.config.get("path_somatic_variant", "../somatic_variant_annotation")
 
 
 use rule * from ngs_mapping

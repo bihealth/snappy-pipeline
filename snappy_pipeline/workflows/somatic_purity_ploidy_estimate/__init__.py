@@ -325,7 +325,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # TODO: potential bug here as this step requires an entry that is not available
         #  in DEFAULT_CONFIG.
-        if self.config["tool_cnv_calling"] == "copywriter":
+        if self.config.get("tool_cnv_calling", None) == "copywriter":
             self.register_module(
                 "somatic_targeted_seq_cnv_calling",
                 self.config["path_somatic_targeted_seq_cnv_calling"],

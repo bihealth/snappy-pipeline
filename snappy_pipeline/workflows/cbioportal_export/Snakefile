@@ -9,7 +9,6 @@ from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
 
 __author__ = "Clemens Messerschmidt"
 
-
 # Configuration ===============================================================
 
 
@@ -25,6 +24,60 @@ wf = cbioportalExportWorkflow(workflow, config, lookup_paths, config_paths, os.g
 
 exclude_flag = wf.w_config["step_config"]["cbioportal_export"]["exclude_variant_with_flag"]
 
+
+# Modules =====================================================================
+
+if wf.config["path_somatic_variant"]:
+    module_name = (
+        "somatic_variant_filtration" if wf.config["filter_set"] else "somatic_variant_annotation"
+    )
+
+    module somatic_variant:
+        snakefile:
+            f"../{module_name}/Snakefile"
+        config:
+            wf.config
+        prefix:
+            wf.config.get("path_somatic_variant", f"../{module_name}")
+
+    use rule * from somatic_variant
+
+
+if wf.config["path_copy_number"]:
+    module_name = "somatic_wgs_cnv_calling"
+    if wf.config["copy_number_tool"] in [
+        "cnvetti_on_target_postprocess",
+        "cnvkit",
+        "copywriter",
+        "purecn",
+        "sequenza",
+    ]:
+        module_name = "somatic_targeted_seq_cnv_calling"
+
+    module copy_number_step:
+        snakefile:
+            f"../{module_name}/Snakefile"
+        config:
+            wf.config
+        prefix:
+            wf.config.get("path_copy_number", f"../{module_name}")
+
+    use rule * from copy_number_step
+
+
+if wf.config["path_ngs_mapping"]:
+
+    module ngs_mapping:
+        snakefile:
+            "../ngs_mapping/Snakefile"
+        config:
+            wf.config
+        prefix:
+            wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+    use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -38,9 +91,10 @@ localrules:
     cbioportal_export_concatenate_maf,
 
 
-rule all:
+rule cbioportal_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # cbioportal study metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
