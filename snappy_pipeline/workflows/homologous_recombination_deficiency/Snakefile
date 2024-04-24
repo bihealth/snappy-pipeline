@@ -26,6 +26,24 @@ wf = HomologousRecombinationDeficiencyWorkflow(
     workflow, config, lookup_paths, config_paths, os.getcwd()
 )
 
+
+# Modules =====================================================================
+
+
+module somatic_targeted_seq_cnv_calling:
+    snakefile:
+        "../somatic_targeted_seq_cnv_calling/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get(
+            "path_somatic_targeted_seq_cnv_calling", "../somatic_targeted_seq_cnv_calling"
+        )
+
+
+use rule * from somatic_targeted_seq_cnv_calling
+
+
 # Rules =======================================================================
 
 
@@ -34,9 +52,10 @@ localrules:
     homologous_recombination_deficiency_link_out_run,
 
 
-rule all:
+rule homologous_recombination_deficiency_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

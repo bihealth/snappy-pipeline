@@ -27,15 +27,16 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
+# Modules =====================================================================
+
+
 module ngs_mapping:
     snakefile:
         "../ngs_mapping/Snakefile"
     config:
         wf.w_config
     prefix:
-        wf.w_config["step_config"]["somatic_variant_calling"].get(
-            "path_ngs_mapping", "../ngs_mapping"
-        )
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
 
 
 use rule * from ngs_mapping

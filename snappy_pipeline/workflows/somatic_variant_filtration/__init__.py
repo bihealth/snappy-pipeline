@@ -983,6 +983,18 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
+        # Register sub workflows
+        self.register_module(
+            (
+                "somatic_variant_annotation"
+                if self.config["has_annotation"]
+                else "somatic_variant_calling"
+            ),
+            self.config["path_somatic_variant"],
+            "somatic_variant",
+        )
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna

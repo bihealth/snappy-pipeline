@@ -24,6 +24,34 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = SomaticHlaLohCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
+module hla_typing:
+    snakefile:
+        "../hla_typing/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_hla_typing", "../hla_typing")
+
+
+use rule * from hla_typing
+
+
 # Rules =======================================================================
 
 
