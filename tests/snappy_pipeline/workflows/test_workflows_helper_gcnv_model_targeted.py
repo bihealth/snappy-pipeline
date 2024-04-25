@@ -424,7 +424,7 @@ def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
             "bwa.gcnv_contig_ploidy.Agilent_SureSelect_Human_All_Exon_V6/.done"
         ),
     }
-    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
+    with mock.patch("snakemake.checkpoints.Checkpoints") as patched_checkpoints:
         # Patch checkpoint
         patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
         # Get actual
