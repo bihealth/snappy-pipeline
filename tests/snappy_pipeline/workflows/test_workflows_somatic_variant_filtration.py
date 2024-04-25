@@ -521,6 +521,39 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
     assert actual == expected
 
+    # wildcards = Wildcards(
+    #     fromdict={
+    #         "mapper": "bwa",
+    #         "var_caller": "mutect2",
+    #         "annotator": "jannovar",
+    #         "tumor_library": "P003-T1-DNA1-WGS1",
+    #         "filter_nb": 1,
+    #     }
+    # )
+    # expected = {
+    #     "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
+    #     "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
+    # }
+    # actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
+    # assert actual == expected
+
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "var_caller": "mutect2",
+            "annotator": "jannovar",
+            "tumor_library": "P001-T1-DNA1-WGS1",
+            "filter_nb": 2,
+        }
+    )
+    expected = {
+        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_1.vcf.gz",
+    }
+    actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
+        wildcards
+    )
+    assert actual == expected
+
 
 def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
     """Tests ApplyFiltersStepPart.get_output_files()"""
