@@ -279,9 +279,10 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            # if "ngs_mapping" not in self.parent.sub_workflows:
-            #     return  # early exit
+            if "ngs_mapping" not in self.parent.modules:
+                return  # early exit
             # Get shortcut to NGS mapping sub workflow
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -301,7 +302,7 @@ class WritePedigreeStepPart(BaseStepPart):
                         ext=".bam",
                         **wildcards,
                     )
-                    yield Path("../ngs_mapping") / path
+                    yield ngs_mapping(path)
 
         return get_input_files
 
