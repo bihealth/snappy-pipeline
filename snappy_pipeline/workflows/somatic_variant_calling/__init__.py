@@ -101,6 +101,7 @@ Currently, no reports are generated.
 from collections import OrderedDict
 from itertools import chain
 import os
+import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -389,6 +390,11 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             tumor_base_path = (
                 "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
+            input_files = {
+                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            }
+
             normal_library = self.get_normal_lib_name(wildcards)
             if normal_library:
                 normal_base_path = (
@@ -396,17 +402,14 @@ class SomaticVariantCallingStepPart(BaseStepPart):
                         normal_library=normal_library, **wildcards
                     )
                 )
-                return {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                    "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                    "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-                }
-            else:
-                return {
-                    "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                    "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-                }
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
+
+            return input_files
 
         return input_function
 
@@ -586,6 +589,11 @@ class Mutect2StepPart(MutectBaseStepPart):
         tumor_base_path = (
             "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
         ).format(**wildcards)
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
+
         normal_library = self.get_normal_lib_name(wildcards)
         if normal_library:
             normal_base_path = (
@@ -593,17 +601,14 @@ class Mutect2StepPart(MutectBaseStepPart):
                     normal_library=normal_library, **wildcards
                 )
             )
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
-        else:
-            return {
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
+
+        return input_files
 
     def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
@@ -1219,6 +1224,9 @@ class SomaticVariantCallingWorkflow(BaseStep):
                     for test_sample in bio_sample.test_samples.values():
                         extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
                         if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
                             yield from expand(tpl, tumor_library=[ngs_library], **kwargs)

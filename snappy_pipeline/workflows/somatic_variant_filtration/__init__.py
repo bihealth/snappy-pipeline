@@ -114,6 +114,7 @@ Note that the parallelisation of ``ebfilter`` has been removed, even though this
 from collections import OrderedDict
 import os
 import random
+import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -334,8 +335,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
         @dictify
         def input_function(wildcards):
             parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
-            for k, v in parent(wildcards).items():
-                yield k, v
+            yield from parent(wildcards).items()
 
             yield "bam", os.path.join(
                 self.config["path_ngs_mapping"],
@@ -376,8 +376,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         @dictify
         def input_function(wildcards):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
-            for k, v in parent(wildcards).items():
-                yield k, v
+            yield from parent(wildcards).items()
 
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
@@ -841,7 +840,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
     sheet_shortcut_class = CancerCaseSheet
 
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=False)
     }
 
     @classmethod
@@ -992,6 +991,9 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                     for test_sample in bio_sample.test_samples.values():
                         extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
                         if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
                             yield from expand(tpl, tumor_library=[ngs_library], **kwargs)

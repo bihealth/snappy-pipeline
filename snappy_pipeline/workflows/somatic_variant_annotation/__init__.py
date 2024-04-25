@@ -75,6 +75,7 @@ Currently, no reports are generated.
 
 from collections import OrderedDict
 import os
+import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -432,6 +433,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
                     for test_sample in bio_sample.test_samples.values():
                         extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
                         if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
                             yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
