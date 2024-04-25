@@ -122,7 +122,7 @@ def tumor_mutational_burden_workflow(
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
+        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
         "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}"
     )
     expected = {
