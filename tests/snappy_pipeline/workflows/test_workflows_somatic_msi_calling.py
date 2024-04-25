@@ -34,7 +34,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
           somatic_msi_calling:
             tools: ["mantis_msi2"]
-            path_ngs_mapping: ../ngs_mapping  # REQUIRED
+            path_ngs_mapping: NGS_MAPPING  # REQUIRED
             loci_bed: /path/to/hg19/loci.bed  # REQUIRED
 
         data_sets:
@@ -65,7 +65,7 @@ def somatic_msi_calling_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SomaticMsiCallingWorkflow(
         dummy_workflow,

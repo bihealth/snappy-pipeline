@@ -36,6 +36,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
+            path_ngs_mapping: NGS_MAPPING
             tools:
               - bcftools_call
               - gatk3_hc
@@ -47,7 +48,9 @@ def minimal_config():
             tools: ['vep']
             vep: {}
           variant_phasing:
-            path_variant_annotation: ../variant_annotation
+            path_ngs_mapping: NGS_MAPPING
+            path_variant_calling: VARIANT_CALLING
+            path_variant_annotation: VARIANT_ANNOTATION
 
         data_sets:
           first_batch:

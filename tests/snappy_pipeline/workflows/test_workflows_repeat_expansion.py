@@ -33,6 +33,10 @@ def minimal_config():
             repeat_catalog: DUMMY
             repeat_annotation: DUMMY
 
+          repeat_expansion:
+            # Path to the ngs_mapping step
+            path_ngs_mapping: NGS_MAPPING
+
         data_sets:
           first_batch:
             file: sheet.tsv

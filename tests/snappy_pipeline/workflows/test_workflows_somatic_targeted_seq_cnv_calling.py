@@ -39,6 +39,8 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           somatic_targeted_seq_cnv_calling:
+            path_ngs_mapping: NGS_MAPPING
+            path_variant_calling: SOMATIC_VARIANT_CALLING
             tools:
             - cnvetti_on_target
             - cnvkit
@@ -50,6 +52,7 @@ def minimal_config():
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
             purecn:
+              path_somatic_variants: SOMATIC_VARIANT_CALLING
               path_container: /path/to/purecn/container
               path_intervals: /path/to/interval/list
               path_panel_of_normals: /path/to/purecn/pon

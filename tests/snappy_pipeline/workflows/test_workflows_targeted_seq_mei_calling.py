@@ -31,6 +31,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
 
           targeted_seq_mei_calling:
+            path_ngs_mapping: NGS_MAPPING
             scramble:
               blast_ref: /path/to/blast_ref.fa
 

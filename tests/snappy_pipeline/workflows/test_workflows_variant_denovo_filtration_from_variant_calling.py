@@ -40,7 +40,8 @@ def minimal_config():
             - gatk3_hc
             gatk3_hc: {}
           variant_denovo_filtration:
-            path_variant_calling: ../variant_calling
+            path_ngs_mapping: NGS_MAPPING
+            path_variant_calling: VARIANT_CALLING
 
         data_sets:
           first_batch:

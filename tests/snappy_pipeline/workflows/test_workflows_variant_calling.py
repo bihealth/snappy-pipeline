@@ -37,6 +37,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
+            path_ngs_mapping: NGS_MAPPING
             baf_file_generation:
               enabled: true
             jannovar_stats:

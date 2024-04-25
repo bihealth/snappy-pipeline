@@ -36,7 +36,7 @@ def minimal_config():
               - dkfz: {}
 
           somatic_variant_signatures:
-            path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            path_somatic_variant: SOMATIC_VARIANT_FILTRATION
             tools_somatic_variant_annotation: ['vep']
             tools_somatic_variant_calling: ['mutect']
             is_filtered: True
@@ -69,10 +69,7 @@ def somatic_variant_signatures_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantSignaturesWorkflow(
         dummy_workflow,

@@ -43,8 +43,8 @@ def minimal_config():
               path_panel_of_normals: DUMMY
 
           somatic_cnv_checking:
-            path_ngs_mapping: ../ngs_mapping
-            path_cnv_calling: ../somatic_targeted_seq_cnv_calling
+            path_ngs_mapping: NGS_MAPPING
+            path_cnv_calling: CNV_CALLING
             cnv_assay_type: WES
 
         data_sets:

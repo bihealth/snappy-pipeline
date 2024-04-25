@@ -38,6 +38,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           somatic_variant_calling:
+            path_ngs_mapping: NGS_MAPPING
             tools:
               - mutect
               - mutect2
