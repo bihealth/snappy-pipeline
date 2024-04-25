@@ -105,10 +105,6 @@ ANNOTATION_TOOLS = ("jannovar", "vep")
 DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
 
 
-def variant_calling(path: str) -> str:
-    return "../somatic_variant_calling/" + path
-
-
 class AnnotateSomaticVcfStepPart(BaseStepPart):
     """Annotate VCF file from somatic calls
 
@@ -144,9 +140,10 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             "{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
+        somatic_variant_calling = self.parent.modules["somatic_variant_calling"]
 
         for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+            yield key, somatic_variant_calling(tpl + ext)
 
     @dictify
     def get_output_files(self, action):

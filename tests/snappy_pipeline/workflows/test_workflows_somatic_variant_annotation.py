@@ -41,10 +41,9 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-            mutect: {}
-
+mutect: {}
           somatic_variant_annotation:
-            path_somatic_variant_calling: /path/to/somatic_variant_calling
+            path_somatic_variant_calling: SOMATIC_VARIANT_CALLING
             tools: ["jannovar", "vep"]
             jannovar:
               dbnsfp: {}
