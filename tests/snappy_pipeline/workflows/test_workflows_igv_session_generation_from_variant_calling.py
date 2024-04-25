@@ -39,8 +39,8 @@ def minimal_config():
             - gatk3_hc
 
           igv_session_generation:
-            path_ngs_mapping: ../ngs_mapping
-            path_variant_calling: ../variant_calling
+            path_ngs_mapping: NGS_MAPPING
+            path_variant_calling: VARIANT_CALLING
             tools_variant_calling: ['gatk3_hc']
 
         data_sets:

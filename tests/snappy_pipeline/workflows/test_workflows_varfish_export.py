@@ -42,6 +42,9 @@ def minimal_config():
             - gatk3_hc
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
+          varfish_export:
+            path_variant_calling: VAR_CALLING
+            path_ngs_mapping: NGS_MAPPING
 
         data_sets:
           first_batch:

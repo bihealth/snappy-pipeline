@@ -39,7 +39,7 @@ def minimal_config():
 
           panel_of_normals:
               tools: ['mutect2', 'cnvkit', 'access', 'purecn']
-              path_ngs_mapping: ../ngs_mapping
+              path_ngs_mapping: NGS_MAPPING
               mutect2:
                   germline_resource: /path/to/germline_resource.vcf
                   path_normals_list: ""

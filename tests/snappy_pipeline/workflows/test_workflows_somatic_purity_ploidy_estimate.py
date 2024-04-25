@@ -36,7 +36,8 @@ def minimal_config():
           somatic_purity_ploidy_estimate:
             tools: ['ascat']
             tool_cnv_calling: cnvetti
-            path_somatic_targeted_seq_cnv_calling: ../somatic_targeted_seq_cnv_calling
+            path_somatic_targeted_seq_cnv_calling: SOMATIC_CNV_CALLING
+            path_ngs_mapping: NGS_MAPPING
 
         data_sets:
           first_batch:

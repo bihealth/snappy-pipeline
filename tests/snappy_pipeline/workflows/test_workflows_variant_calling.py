@@ -43,6 +43,7 @@ def minimal_config():
                 path: "path/to/targets.bed"
 
           variant_calling:
+            path_ngs_mapping: NGS_MAPPING
             baf_file_generation:
               enabled: true
             tools:

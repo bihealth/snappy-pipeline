@@ -33,7 +33,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
           somatic_msi_calling:
             tools: ['mantis']
-            path_ngs_mapping: ../ngs_mapping  # REQUIRED
+            path_ngs_mapping: NGS_MAPPING  # REQUIRED
             loci_bed: /path/to/hg19/loci.bed  # REQUIRED
 
         data_sets:

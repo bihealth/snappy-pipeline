@@ -38,6 +38,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           panel_of_normals:
+              path_ngs_mapping: NGS_MAPPING
               tools: ['cnvkit']
               cnvkit:
                   path_excluded_regions: ""

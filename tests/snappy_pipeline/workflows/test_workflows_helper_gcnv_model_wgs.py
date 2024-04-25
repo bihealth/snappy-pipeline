@@ -51,7 +51,11 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           gcnv:
+            path_ngs_mapping: NGS_MAPPING
             path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
+
+          helper_gcnv_model_wgs:
+            path_ngs_mapping: NGS_MAPPING
 
         data_sets:
           first_batch:

@@ -31,7 +31,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
 
           somatic_variant_signatures:
-            path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            path_somatic_variant: SOMATIC_VARIANT_FILTRATION
             is_filtered: True
 
         data_sets:

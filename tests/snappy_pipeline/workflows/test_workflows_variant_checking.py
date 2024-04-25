@@ -38,7 +38,7 @@ def minimal_config():
           variant_checking:
             tools_ngs_mapping: ['bwa']  # optional, copied from ngs mapping config
             tools_variant_calling: ['gatk3_hc']  # optional, copied from variant calling config
-            path_variant_calling: ../variant_calling  # REQUIRED
+            path_variant_calling: VAR_CALLING
             tools: ['peddy']
 
         data_sets:

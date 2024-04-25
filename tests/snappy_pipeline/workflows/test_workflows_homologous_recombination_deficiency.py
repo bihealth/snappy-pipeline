@@ -36,7 +36,7 @@ def minimal_config():
             tools: ['sequenza']
           homologous_recombination_deficiency:
             tools: ['scarHRD']
-            path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
+            path_cnv_calling: SOMATIC_CNV_CALLING
 
         data_sets:
           first_batch:

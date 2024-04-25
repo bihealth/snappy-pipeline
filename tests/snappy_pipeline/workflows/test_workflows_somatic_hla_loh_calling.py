@@ -31,8 +31,8 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_hla_loh_calling:
-            path_ngs_mapping: ../ngs_mapping
-            path_hla_typing: ../hla_typing
+            path_ngs_mapping: NGS_MAPPING
+            path_hla_typing: HLA_TYPING
             path_somatic_purity_ploidy: ../somatic_purity_ploidy_estimate
 
         data_sets:

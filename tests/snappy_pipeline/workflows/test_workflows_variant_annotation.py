@@ -39,6 +39,7 @@ def minimal_config():
             - gatk3_hc
 
           variant_annotation:
+            path_variant_calling: VAR_CALLING
             vep:
               cache_dir: "/some/dir/"
 

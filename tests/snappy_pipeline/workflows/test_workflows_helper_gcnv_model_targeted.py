@@ -57,6 +57,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
           helper_gcnv_model_targeted:
+            path_ngs_mapping: NGS_MAPPING
             gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"

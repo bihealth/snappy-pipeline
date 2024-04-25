@@ -41,6 +41,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           sv_calling_wgs:
+            path_ngs_mapping: NGS_MAPPING
             variant_calling_tool: gatk3_ug
             tools:
               dna:

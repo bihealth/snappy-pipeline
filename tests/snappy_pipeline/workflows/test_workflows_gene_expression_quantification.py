@@ -34,6 +34,9 @@ def minimal_config():
             star:
               path_index: /path/to/star/index
 
+          gene_expression_quantification:
+            path_ngs_mapping: NGS_MAPPING  # REQUIRED
+
         data_sets:
           first_batch:
             file: sheet.tsv

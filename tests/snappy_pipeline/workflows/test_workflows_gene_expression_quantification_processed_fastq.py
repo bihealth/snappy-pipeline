@@ -30,6 +30,7 @@ def minimal_config():
         step_config:
           gene_expression_quantification:
             path_link_in: "/preprocess"
+            path_ngs_mapping: NGS_MAPPING
           ngs_mapping:
             tools:
               rna: ['star']

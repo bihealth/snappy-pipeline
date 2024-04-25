@@ -38,6 +38,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           sv_calling_targeted:
+            path_ngs_mapping: NGS_MAPPING
             tools:
               - delly2
               - manta

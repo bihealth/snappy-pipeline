@@ -41,7 +41,8 @@ def minimal_config():
             tools:
             - gatk3_hc
           variant_denovo_filtration:
-            path_variant_annotation: ../variant_annotation
+            path_ngs_mapping: NGS_MAPPING
+            path_variant_annotation: VARIANT_ANNOTATION
 
         data_sets:
           first_batch:

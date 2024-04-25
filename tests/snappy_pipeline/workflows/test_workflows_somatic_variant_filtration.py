@@ -33,8 +33,11 @@ def minimal_config():
 
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
+            path_ngs_mapping: NGS_MAPPING
             tools_somatic_variant_calling: ['mutect2']
+            path_somatic_variant_calling: SOMATIC_VARIANT_CALLING
             tools_somatic_variant_annotation: ['jannovar']
+            path_somatic_variant: SOMATIC_VARIANT_ANNOTATION
 
         data_sets:
           first_batch:
@@ -443,8 +446,10 @@ def minimal_config_list():
 
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
+            path_ngs_mapping: NGS_MAPPING
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
+            path_somatic_variant: SOMATIC_VARIANT_ANNOTATION
             filter_list:
             - bcftools:
                 include: "include_statment"
@@ -508,9 +513,9 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         }
     )
     expected = {
-        "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
-        "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
-        "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
+        "vcf": "SOMATIC_VARIANT_ANNOTATION/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
+        "bam": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
+        "normal": "NGS_MAPPING/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
         wildcards
