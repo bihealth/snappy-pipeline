@@ -74,11 +74,7 @@ def cbioportal_export_workflow(
     """Return cbioportalExportWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "/SOM_VAR_FILTRATION/" + x,
-        "copy_number_step": lambda x: "/COPY_NUMBER/" + x,
-    }
+
     # Construct the workflow object
     return cbioportalExportWorkflow(
         dummy_workflow,

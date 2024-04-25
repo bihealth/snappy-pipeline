@@ -43,8 +43,9 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-        
+
           somatic_variant_annotation:
+            path_somatic_variant_calling: SOMATIC_VARIANT_CALLING
             tools: ["jannovar", "vep"]
             jannovar:
               path_jannovar_ser: /path/to/jannover.ser
@@ -77,12 +78,7 @@ def somatic_variant_annotation_workflow(
     """Return SomaticVariantAnnotationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
         dummy_workflow,
