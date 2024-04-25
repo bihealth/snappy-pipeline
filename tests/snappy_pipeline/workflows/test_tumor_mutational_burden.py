@@ -95,12 +95,7 @@ def tumor_mutational_burden_workflow(
     """Return TumorMutationalBurdenCalculationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
-    }
+
     # Construct the workflow object
     return TumorMutationalBurdenCalculationWorkflow(
         dummy_workflow,
@@ -117,7 +112,7 @@ def tumor_mutational_burden_workflow(
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
+        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
         "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}"
     )
     expected = {
