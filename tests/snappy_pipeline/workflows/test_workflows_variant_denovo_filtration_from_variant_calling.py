@@ -78,12 +78,7 @@ def variant_de_novo_filtration_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.variant_denovo_filtration", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return VariantDeNovoFiltrationWorkflow(
         dummy_workflow,

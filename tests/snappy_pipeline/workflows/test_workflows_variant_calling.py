@@ -82,9 +82,7 @@ def variant_calling_workflow(
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_calling", germline_sheet_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return VariantCallingWorkflow(
         dummy_workflow,
@@ -665,9 +663,6 @@ def test_variant_calling_custom_pedigree_field(
     patch_module_fs(
         "snappy_pipeline.workflows.variant_calling", germline_trio_plus_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
 
     # Construct the workflow object - should work, standard pedigree join
     vcw = VariantCallingWorkflow(

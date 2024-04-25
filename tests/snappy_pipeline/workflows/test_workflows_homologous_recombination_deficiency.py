@@ -64,7 +64,7 @@ def homologous_recombination_deficiency_workflow(
     """Return HomologousRecombinationDeficiencyWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {"cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x}
+
     # Construct the workflow object
     return HomologousRecombinationDeficiencyWorkflow(
         dummy_workflow,

@@ -83,7 +83,7 @@ def somatic_gene_fusion_calling_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.somatic_gene_fusion_calling", aligner_indices_fake_fs, mocker
     )
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SomaticGeneFusionCallingWorkflow(
         dummy_workflow,

@@ -61,10 +61,7 @@ def somatic_hla_loh_calling_workflow(
     """Return SomaticHlaLohCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "hla_typing": lambda x: "HLA_TYPING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticHlaLohCallingWorkflow(
         dummy_workflow,

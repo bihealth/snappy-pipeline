@@ -120,9 +120,7 @@ def sv_calling_targeted_workflow(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -149,9 +147,7 @@ def sv_calling_targeted_workflow_large_cohort(
     """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -176,9 +172,7 @@ def sv_calling_targeted_workflow_large_cohort_background(
     large trio cohort as background."""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -217,9 +211,6 @@ def test_validate_request(
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
 
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Empty precomputed models, should fail
     with pytest.raises(InvalidConfiguration):
         SvCallingTargetedWorkflow(

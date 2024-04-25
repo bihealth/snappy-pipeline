@@ -62,10 +62,7 @@ def somatic_variant_filtration_workflow(
     """Return SomaticVariantFiltrationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,
@@ -485,10 +482,7 @@ def somatic_variant_filtration_workflow_list(
     """Return SomaticVariantFiltrationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,

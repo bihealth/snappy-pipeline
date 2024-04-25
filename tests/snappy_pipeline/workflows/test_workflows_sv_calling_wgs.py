@@ -94,9 +94,7 @@ def sv_calling_wgs_workflow(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingWgsWorkflow(
         dummy_workflow,

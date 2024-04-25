@@ -84,12 +84,7 @@ def variant_filtration_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_annotation": lambda x: "VAR_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return VariantFiltrationWorkflow(
         dummy_workflow,
