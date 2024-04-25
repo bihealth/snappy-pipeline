@@ -523,14 +523,6 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         }
 
 
-def somatic_variant(path: str) -> str:
-    return os.path.join(os.path.abspath("../somatic_variant_calling/"), path)
-
-
-def ngs_mapping(path: str) -> str:
-    return os.path.join(os.path.abspath("../ngs_mapping"), path)
-
-
 class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
     """Flag variants with the DKFZ bias filter"""
 
@@ -554,12 +546,14 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
 
+        somatic_variant = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, somatic_variant(tpl + ext)
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
 
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
 
@@ -667,6 +661,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         tpl = r"output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
 
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
@@ -772,6 +767,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         random.shuffle(libraries)
 
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
