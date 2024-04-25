@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools mpileup
+"""Wrapper for running bcftools filter over regions defined by a bed file
 """
 
 from snakemake.shell import shell
@@ -18,9 +18,9 @@ elif "filter_nb" in snakemake.wildcards.keys():
     keyword = list(keywords)[0]
     path = config["filter_list"][filter_nb]["regions"][keyword]
     if keyword == "include":
-        bed = path
-    elif keyword == "exclude" or "path_bed":
         bed = f"^{path}"
+    elif keyword == "exclude" or "path_bed":
+        bed = path
     else:
         bed = ""
 else:
@@ -32,7 +32,7 @@ if "filter_name" in config:
 elif "bcftools" in config and "filter_name" in config["bcftools"]:
     filter_name = config["bcftools"].get("filter_name", "")
 elif "filter_nb" in snakemake.wildcards.keys():
-    filter_name = "bcftools_{}".format(int(snakemake.wildcards["filter_nb"]))
+    filter_name = "regions_{}".format(int(snakemake.wildcards["filter_nb"]))
 else:
     filter_name = "+"
 
@@ -52,7 +52,7 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 bcftools filter --soft-filter {filter_name} --mode + \
-    --mask-file "^{bed}" \
+    --mask-file "{bed}" \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}
 tabix {snakemake.output.vcf}
