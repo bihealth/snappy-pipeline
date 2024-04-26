@@ -141,8 +141,6 @@ rule somatic_variant_calling_mutect2_split:
             )
         ),
     params:
-        window_length=wf.config.get("window_length", 300000000),
-        window_padding=0,
         ignore_chroms=wf.w_config.get("ignore_chroms", wf.config.get("ignore_chroms", [])),
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
     log:
@@ -156,7 +154,9 @@ rule somatic_variant_calling_mutect2_process:
         unpack(wf.get_input_files("mutect2", "run")),
         region="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/in/{scatteritem}.txt",
     output:
-        raw=temp("work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz"),
+        raw=temp(
+            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz"
+        ),
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
         memory=wf.get_resource("mutect2", "run", "memory"),
