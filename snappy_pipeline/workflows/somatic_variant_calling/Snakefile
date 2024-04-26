@@ -2,14 +2,11 @@
 """CUBI Pipeline somatic_variant_calling step Snakefile"""
 
 import os
-from bisect import bisect
-from itertools import accumulate
 
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
-from snappy_wrappers.tools.genome_windows import matches_any
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -134,50 +131,14 @@ scattergather:
     mutect2=8,
 
 
-def split_regions(
-    contig_lengths: dict[str, int], n_chunks: int, offset: int = 1
-) -> list[list[[str, int, int]]]:
-    """Splits a given collection of contigs based on their length into `n_chunks` equal sized chunks"""
-    contigs, lengths = zip(*contig_lengths.items())
-    cumulative_lengths = list(accumulate(lengths, initial=0))
-    chunk_size = cumulative_lengths[-1] // n_chunks
-
-    all_entries = []
-    cumulative_start = cumulative_end = 0
-    for _ in range(n_chunks):
-        entries = []
-        idx = bisect(cumulative_lengths, cumulative_start) - 1
-        accumulated_length = 0
-        while accumulated_length < chunk_size and idx < len(contigs):
-            contig = contigs[idx]
-            available_length = cumulative_lengths[idx + 1] - cumulative_end
-            remaining = chunk_size - accumulated_length
-            cumulative_end = cumulative_start + min(available_length, remaining)
-
-            start = cumulative_start - cumulative_lengths[idx]
-            end = cumulative_end - cumulative_lengths[idx]
-            entries.append([contig, start + offset, end + offset])
-
-            diff = cumulative_end - cumulative_start
-            accumulated_length += diff
-            cumulative_start += diff
-            idx = bisect(cumulative_lengths, cumulative_start) - 1
-
-        assert sum(map(lambda x: x[2] - x[1], entries)) == chunk_size
-
-        all_entries.append(entries)
-
-    # make sure the last entry has any bases lost due to rounding
-    all_entries[-1][-1][2] = lengths[-1]
-    return all_entries
-
-
 rule somatic_variant_calling_mutect2_split:
     input:
         unpack(wf.get_input_files("mutect", "run")),
     output:
-        regions=scatter.mutect2(
-            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/in/{scatteritem}.txt"
+        regions=temp(
+            scatter.mutect2(
+                "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/in/{scatteritem}.txt"
+            )
         ),
     params:
         window_length=wf.config.get("window_length", 300000000),
@@ -186,25 +147,8 @@ rule somatic_variant_calling_mutect2_split:
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
     log:
         log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/in/split.log",
-    run:
-        with open(log.log, "wt") as l:
-            print("foo", file=l)
-        import csv
-
-        with open(params.fai, "rt") as fai:
-            csv_reader = csv.reader(fai, delimiter="\t")
-            lengths = {
-                contig: int(length)
-                for contig, length, *_ in csv_reader
-                if not matches_any(contig, params.ignore_chroms)
-            }
-        regions = split_regions(lengths, len(output.regions))
-        print(regions)
-        for region, path in zip(regions, output.regions):
-            with open(path, "wt") as f:
-                for chrom, start, end in region:
-                    print(f"{chrom}:{start}-{end}", file=f)
-
+    script:
+        "scripts/split_region.py"
 
 
 rule somatic_variant_calling_mutect2_process:
@@ -212,7 +156,7 @@ rule somatic_variant_calling_mutect2_process:
         unpack(wf.get_input_files("mutect2", "run")),
         region="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/in/{scatteritem}.txt",
     output:
-        raw="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz",
+        raw=temp("work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz"),
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
         memory=wf.get_resource("mutect2", "run", "memory"),
