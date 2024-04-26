@@ -157,6 +157,12 @@ rule somatic_variant_calling_mutect2_process:
         raw=temp(
             "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz"
         ),
+        stats=temp(
+            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.stats"
+        ),
+        f1r2=temp(
+            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.f1r2_tar.tar.gz"
+        ),
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
         memory=wf.get_resource("mutect2", "run", "memory"),
@@ -186,14 +192,21 @@ rule somatic_variant_calling_mutect2_gather:
         raw=gather.mutect2(
             "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.vcf.gz"
         ),
+        stats=gather.mutect2(
+            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.vcf.stats"
+        ),
+        f1r2=gather.mutect2(
+            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.f1r2_tar.tar.gz"
+        ),
     output:
-        raw="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}.raw.vcf.gz",
+        **wf.get_output_files("mutect2", "run"),
     conda:
-        "envs/bcftools.yaml"
+        "envs/mutect2_gather.yaml"
     log:
         log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/gather.raw.vcf.gz.log",
     shell:
         """
+        # Concatenate raw calls vcfs & index result ----------------------
         bcftools concat \
             --allow-overlaps \
             -d none \
@@ -201,6 +214,31 @@ rule somatic_variant_calling_mutect2_gather:
             -O z \
             {input.raw}
         tabix -f {output.raw}
+
+        # Concatenate stats with GATK tool -------------------------------
+        stats=$(echo "{input.stats}" | sed -e "s/ / -stats /g")
+        gatk MergeMutectStats -stats $stats -O {output.stats}
+
+        # Contatenate orientation tar files ------------------------------
+        tmpdir=$(mktemp -d)
+        for tar_file in {input.f1r2}
+        do
+            abs_path=$(realpath $tar_file)
+            pushd $tmpdir
+            tar -zxvf $abs_path
+            popd
+        done
+        tar -zcvf {output.f1r2} -C $tmpdir .
+        rm -rf $tmpdir
+
+        # Compute md5 sums -----------------------------------------------
+        pushd $(dirname {output.raw})
+        for f in *; do
+            if [[ -f "$f" ]] && [[ $f != *.md5 ]]; then
+                md5sum $f > $f.md5;
+            fi;
+        done
+        popd
         """
 
 
