@@ -1,33 +1,32 @@
 -r base.txt
 
 # Wonderful py.test library, style checker etc.
-pytest
+pytest >=8.1
 coverage>=7.4.4
-pytest-cov
-pytest-mock
-pytest-subprocess
+pytest-cov >=5
+pytest-mock >=3.14
+pytest-subprocess >=1.5
 
 # Fake file system for testing
-pyfakefs
+pyfakefs >=5.4
 
 # "Black" code formatter and checker.
 black
 # "snakefmt" code formatter and checker.
-snakefmt
+snakefmt >=0.10
 # isort code formatter - import order
 isort
 flake8
 flake8-import-order
 pytest-flake8
-ruff
 
 # ruff linter + formatter
-ruff >=0.3.4
+ruff >=0.4.1
 
 # coveralls.io tooling
-coveralls
+coveralls >=1.8
 
 # Sphinx
-sphinx
-sphinx_rtd_theme
-sphinx-mdinclude
+sphinx >= 7
+sphinx_rtd_theme >=2
+sphinx-mdinclude >=0.5

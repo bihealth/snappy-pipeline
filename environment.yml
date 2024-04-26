@@ -46,10 +46,10 @@ dependencies:
   - pytest-cov =5.0
   - coverage =7.4
   - pytest-mock =3.14
-  - pytest-subprocess = 1.5
+  - pytest-subprocess =1.5
   - pyfakefs =5.4
   - snakefmt =0.10
-  - ruff =0.3
+  - ruff =0.4
   - coveralls =1.8
 
   # Dependencies for documentation
@@ -64,6 +64,6 @@ dependencies:
     # from source, though.
     # - biomedsheets >=0.11.7
     # … which is what we do here:
-    - git+https://github.com/bihealth/biomedsheets.git@a355c396b6e6b2f52f96f73d58cd26c3f1f5e18c
+    - git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8
     - pysam >=0.22
     - vcfpy >=0.13.8

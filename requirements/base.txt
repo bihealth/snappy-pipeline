@@ -20,10 +20,10 @@ snakemake>=8.10.6
 #PyYAML>=6.0
 
 # Required for plotting
-matplotlib>=2.1.2
+matplotlib>=3.8
 
 # Library for working with VCF files.
-vcfpy >=0.13.2
+vcfpy >=0.13.8
 # Support for vcfpy
 pysam >=0.19.1
 pytabix >=0.1
@@ -32,7 +32,7 @@ pytabix >=0.1
 jinja2 >=3.1.2
 
 # Parsing of ISA-tab.
-altamisa >=0.2.6
+altamisa >=0.2.9
 
 # REST API client for VarFish Server
-varfish-cli >=0.2.0
+varfish-cli >=0.6.3
