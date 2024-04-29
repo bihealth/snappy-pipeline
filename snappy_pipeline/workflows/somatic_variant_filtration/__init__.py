@@ -502,11 +502,13 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return path to jannovar-annotated vcf input file"""
         # Validate action
         self._validate_action(action)
+
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+
         # VCF file and index
-        tpl = (
-            "output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
-            "{mapper}.{var_caller}.{annotator}.{tumor_library}"
-        )
+        tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         somatic_variant = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
@@ -523,10 +525,16 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
+
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+
         prefix = (
-            r"work/{mapper}.{var_caller}.{annotator}."
-            r"dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
-            r"{annotator}.dkfz_bias_filter.{tumor_library}"
+            rf"work/{name_pattern}."
+            r"dkfz_bias_filter.{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}."
+            r"dkfz_bias_filter.{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
@@ -588,11 +596,15 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
         # VCF file and index
         tpl = (
-            "work/{mapper}.{var_caller}.{annotator}."
-            "dkfz_bias_filter.{tumor_library}/out/{mapper}.{var_caller}."
-            "{annotator}.dkfz_bias_filter."
+            f"work/{name_pattern}."
+            "dkfz_bias_filter.{tumor_library}/"
+            f"out/{name_pattern}."
+            "dkfz_bias_filter."
             "{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -619,10 +631,14 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_output_files_run(self):
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+        # VCF file and index
         prefix = (
-            r"work/{mapper}.{var_caller}.{annotator}."
-            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/out/"
-            r"{mapper}.{var_caller}.{annotator}."
+            rf"work/{name_pattern}."
+            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}."
             r"dkfz_bias_filter.eb_filter.{tumor_library}"
         )
         key_ext = {
