@@ -87,7 +87,7 @@ if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
     filter=$(echo "$filter" | sed -e "s/^ || //")
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
-    if [[ {has_annotation} == "True" ]]; then
+    if [[ '{has_annotation}' == "True" ]]; then
         filter="$filter || $ann ~ \"stream_gene_variant\""
     else
         filter="$filter"
