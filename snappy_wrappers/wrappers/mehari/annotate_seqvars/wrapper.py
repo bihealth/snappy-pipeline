@@ -65,14 +65,20 @@ if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed
         -R {export_config[path_exon_bed]} \
         {snakemake.input.vcf} \
     | bcftools sort -T $TMPDIR \
-    | bcftools norm -d all \
+    | bcftools annotate -x INFO/AS_UNIQ_ALT_READ_COUNT \
+    | bcftools norm -d all -m- \
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
 else
     set -e
-    ln -sr {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
-    ln -sr {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
+    bcftools annotate \
+        -x INFO/AS_UNIQ_ALT_READ_COUNT \
+        {snakemake.input.vcf} \
+    | bcftools norm -m- \
+    | bgzip -c \
+    > $TMPDIR/tmp.vcf.gz
+    tabix -f $TMPDIR/tmp.vcf.gz
 fi
 
 # Perform Mehari sequence variant annotation.
