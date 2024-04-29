@@ -15,6 +15,7 @@ else:
 
 step = snakemake.config["pipeline_step"]["name"]
 config = snakemake.config["step_config"][step]
+has_annotation = str(config.get("has_annotation", False))
 
 if "ebfilter_threshold" in config:
     threshold = config.get("ebfilter_threshold", 0)
@@ -86,7 +87,11 @@ if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
     filter=$(echo "$filter" | sed -e "s/^ || //")
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
-    filter="$filter || $ann ~ \"stream_gene_variant\""
+    if [[ {has_annotation} == "True" ]]; then
+        filter="$filter || $ann ~ \"stream_gene_variant\""
+    else
+        filter="$filter"
+    fi
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \
