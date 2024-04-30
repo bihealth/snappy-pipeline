@@ -136,8 +136,9 @@ The following adpter trimming tools are currently available
 
 """
 
-from collections import OrderedDict
 import os
+import re
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -634,6 +635,16 @@ class AdapterTrimmingWorkflow(BaseStep):
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
+
+    def wildcard_constraints(self) -> dict[str, str]:
+        ngs_library_names = [
+            ngs_library for sheet in self.shortcut_sheets for ngs_library in sheet.all_ngs_libraries
+        ]
+        trimmers = self.config.get("tools", ["bbduk", "fastp"])
+        return {
+            "trimmer": r"|".join(map(re.escape, trimmers)),
+            "ngs_library_name": r"|".join(map(re.escape, ngs_library_names)),
+        }
 
     @classmethod
     def default_config_yaml(cls):

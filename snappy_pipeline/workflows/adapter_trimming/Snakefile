@@ -22,6 +22,11 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = AdapterTrimmingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+wildcard_constraints:
+    **wf.wildcard_constraints(),
+
+
 # Rules =======================================================================
 
 

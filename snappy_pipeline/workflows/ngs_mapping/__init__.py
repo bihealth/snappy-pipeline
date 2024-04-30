@@ -1683,6 +1683,16 @@ class NgsMappingWorkflow(BaseStep):
                 "mapper defined in tool list."
             )
 
+    def wildcard_constraints(self) -> dict[str, str]:
+        library_names = list(self.ngs_library_to_extra_infos.keys())
+        mappers = set(self.config["tools"].get("dna", [])) | set(
+            self.config["tools"].get("rna", [])
+        )
+        return {
+            "mapper": r"|".join(map(re.escape, mappers)),
+            "library_name": r"|".join(map(re.escape, library_names)),
+        }
+
     @staticmethod
     def extraction_type_check(sample_sheet):
         """Retrieve extraction type from biomedsheet.

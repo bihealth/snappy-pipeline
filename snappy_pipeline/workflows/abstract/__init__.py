@@ -804,6 +804,21 @@ class BaseStep:
         )
         self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
+    # noinspection PyMethodMayBeStatic
+    def wildcard_constraints(self) -> dict[str, str]:
+        """
+        Returns a dict of wildcard-name: constraint strings for this workflow
+
+        Example:
+            ```
+            wildcard_constraints = {
+                "mapper": "bwa|bwa-mem2|star|minimap2",
+                "library_name": "|".join(get_library_names())
+            }
+            ```
+        """
+        return {}
+
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
 
