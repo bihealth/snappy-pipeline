@@ -667,11 +667,11 @@ def test_gcnv_get_params_ploidy_model(sv_calling_targeted_workflow):
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config
-    expected = {"model": "/path/to/ploidy-model"}
+    expected = {"model": "/path/to/ploidy-model", "par_intervals": ""}
     actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
     assert actual == expected
     # Test large cohort - model not defined in config
-    expected = {"model": "__no_ploidy_model_for_library_in_config__"}
+    expected = {"model": "__no_ploidy_model_for_library_in_config__", "par_intervals": ""}
     actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
     assert actual == expected
 

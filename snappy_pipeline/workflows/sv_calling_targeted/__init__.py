@@ -103,6 +103,22 @@ class GcnvTargetedStepPart(RunGcnvStepPart):
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit = self.parent.ngs_library_to_kit
 
+    def get_params(self, action: str):
+        param_fn = super().get_params(action)
+
+        def _get_params(*args, **kwargs):
+            params = param_fn(*args, **kwargs)
+            if action == "contig_ploidy":
+                par_intervals = (
+                    self.config.get("helper_gcnv_model_targeted", {})
+                    .get("gcnv", {})
+                    .get("path_par_intervals", "")
+                )
+                params.update({"par_intervals": par_intervals})
+            return params
+
+        return _get_params
+
 
 class SvCallingTargetedWorkflow(BaseStep):
     """Perform germline targeted sequencing CNV calling"""
