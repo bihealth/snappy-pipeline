@@ -585,8 +585,13 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return path to jannovar-annotated vcf input file"""
         # Validate action
         self._validate_action(action)
+
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+
         # VCF file and index
-        tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern)
+        tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         somatic_variant = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
@@ -603,15 +608,16 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
+
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter"
-        prefix = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}",
-            "out",
-            name_pattern + ".{tumor_library}",
+
+        prefix = (
+            rf"work/{name_pattern}."
+            r"dkfz_bias_filter.{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}."
+            r"dkfz_bias_filter.{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
@@ -721,12 +727,12 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.eb_filter"
+        # VCF file and index
         prefix = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}",
-            "out",
-            name_pattern + ".{tumor_library}",
+            rf"work/{name_pattern}."
+            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}."
+            r"dkfz_bias_filter.eb_filter.{tumor_library}",
         )
         key_ext = {
             "vcf": ".vcf.gz",
