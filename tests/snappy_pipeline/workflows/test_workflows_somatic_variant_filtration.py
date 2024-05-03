@@ -99,9 +99,9 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
 def test_dkfz_bias_filter_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
-        "{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.{annotator}."
-        "dkfz_bias_filter.{tumor_library}"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
+        r"{tumor_library,[^\.]+}/out/{mapper}.{var_caller}.{annotator}."
+        r"dkfz_bias_filter.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_output_files("dkfz_bias_filter", "run")
@@ -111,8 +111,8 @@ def test_dkfz_bias_filter_step_part_get_output_files(somatic_variant_filtration_
 def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_log_file()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}/"
-        "log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library,[^\.]+}/"
+        r"log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_log_file("dkfz_bias_filter", "run")
@@ -183,9 +183,9 @@ def test_eb_filter_step_part_get_input_files_write_panel(somatic_variant_filtrat
 def test_eb_filter_step_part_get_output_files_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_output_files_run()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
-        "eb_filter.{tumor_library,[^\\.]+}/out/{mapper}.{var_caller}.{annotator}."
-        "dkfz_bias_filter.eb_filter.{tumor_library}"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
+        r"eb_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}.{annotator}."
+        r"dkfz_bias_filter.eb_filter.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_output_files("eb_filter", "run")
@@ -203,19 +203,19 @@ def test_eb_filter_step_part_get_output_files_write_panel(somatic_variant_filtra
     assert actual == expected
 
 
-def test_eb_eb_filter_step_part_get_log_file_run(somatic_variant_filtration_workflow):
+def test_eb_filter_step_part_get_log_file_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_log_file_run()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
-        "{tumor_library}/log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
-        "eb_filter.{tumor_library}"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        r"{tumor_library,[^\.]+}/log/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
+        r"eb_filter.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_log_file("eb_filter", "run")
     assert actual == expected
 
 
-def test_eb_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration_workflow):
+def test_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart._get_log_file_write_panel()"""
     expected = {}
     actual = somatic_variant_filtration_workflow.get_log_file("eb_filter", "write_panel")
@@ -257,10 +257,9 @@ def test_apply_filters_step_part_get_input_files(somatic_variant_filtration_work
 def test_apply_filters_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
-        "{tumor_library}.{filter_set}.genome_wide/out/{mapper}.{var_caller}."
-        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
-        "genome_wide"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        r"{tumor_library,[^\.]+}.{filter_set,[^\.]+}/out/{mapper}.{var_caller}."
+        r"{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_output_files("apply_filters", "run")
@@ -270,10 +269,9 @@ def test_apply_filters_step_part_get_output_files(somatic_variant_filtration_wor
 def test_apply_filters_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
-        "{tumor_library}.{filter_set}.genome_wide/log/{mapper}.{var_caller}."
-        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
-        "genome_wide.log"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        r"{tumor_library,[^\.]+}.{filter_set,[^\.]+}/log/{mapper}.{var_caller}."
+        r"{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.log"
     )
     actual = somatic_variant_filtration_workflow.get_log_file("apply_filters", "run")
     assert actual == expected
@@ -282,7 +280,7 @@ def test_apply_filters_step_part_get_log_file(somatic_variant_filtration_workflo
 def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests ApplyFiltersStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -293,38 +291,37 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 # Tests for FilterToExonsStepPart ------------------------------------------------------------------
 
 
-# def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
-#     """Tests FilterToExonsStepPart.get_input_files()"""
-#     # TODO: fix use of `tumor_library` in get_input_files()
-#     wildcards = Wildcards(
-#         fromdict={
-#             "mapper": "bwa",
-#             "var_caller": "mutect2",
-#             "filter_set": "custom_exon_list",  # totally made up, not sure it should look like
-#             "tumor_library": "P001-T1-DNA1-WGS1",
-#         }
-#     )
-#     base_out = (
-#         "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
-#         "{tumor_library}/out/{mapper}.{var_caller}.{annotator}."
-#         "dkfz_bias_filter.eb_filter.{tumor_library}"
-#     )
-#     expected = {
-#         "vcf": base_out + ".vcf.gz",
-#         "vcf_tbi": base_out + ".vcf.gz.tbi",
-#     }
-#     # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
-#     _ = expected
-#     assert True
+def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
+    """Tests FilterToExonsStepPart.get_input_files()"""
+    # TODO: fix use of `tumor_library` in get_input_files()
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "var_caller": "mutect2",
+            "filter_set": "custom_exon_list",  # totally made up, not sure it should look like
+            "tumor_library": "P001-T1-DNA1-WGS1",
+        }
+    )
+    base_out = (
+        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        "{tumor_library}/out/{mapper}.{var_caller}.{annotator}."
+        "dkfz_bias_filter.eb_filter.{tumor_library}"
+    )
+    expected = {
+        "vcf": base_out + ".vcf.gz",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
+    }
+    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
+    _ = expected
+    assert True
 
 
 def test_filter_to_exons_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
-        "{tumor_library}.{filter_set}.{exon_list}/out/{mapper}.{var_caller}."
-        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
-        "{exon_list}"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        r"{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}/out/{mapper}.{var_caller}."
+        r"{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_output_files("filter_to_exons", "run")
@@ -334,10 +331,9 @@ def test_filter_to_exons_step_part_get_output_files(somatic_variant_filtration_w
 def test_filter_to_exons_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter."
-        "eb_filter.{tumor_library}.{filter_set}.{exon_list}/log/{mapper}.{var_caller}."
-        "{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}."
-        "{exon_list}.log"
+        r"work/{mapper}.{var_caller}.{annotator}.dkfz_bias_filter.eb_filter."
+        r"{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}/log/{mapper}.{var_caller}."
+        r"{annotator}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}.log"
     )
     actual = somatic_variant_filtration_workflow.get_log_file("filter_to_exons", "run")
     assert actual == expected
@@ -346,7 +342,7 @@ def test_filter_to_exons_step_part_get_log_file(somatic_variant_filtration_workf
 def test_filter_to_exons_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7680M", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "8192M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -407,8 +403,8 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
     expected += [
         tpl.format(mapper=mapper, filter=filter_, i=i, t=t, ext=ext, chksum=chksum)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("log", "conda_list.txt", "conda_info.txt")
-        for chksum in ("", ".md5")
+        for ext in ("log",)
+        for chksum in ("",)
         for mapper in ("bwa",)
         for filter_ in (
             "dkfz_and_ebfilter.genome_wide",
@@ -448,14 +444,15 @@ def minimal_config_list():
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
+            filtration_schema: list
             filter_list:
             - dkfz: {}
-            - bcftools:
-                include: "include_statment"
             - ebfilter:
                 threshold: 2.3
+            - bcftools:
+                include: "include_statment"
             - regions:
-                path_bed: /path/to/regions.bed
+                exclude: /path/to/regions.bed
             - protected:
                 path_bed: /path/to/protected.bed
 
@@ -473,6 +470,7 @@ def minimal_config_list():
 
 
 @pytest.fixture
+# @pytest.mark.filterwarnings("ignore:.*Could not find .*")
 def somatic_variant_filtration_workflow_list(
     dummy_workflow,
     minimal_config_list,
@@ -503,7 +501,7 @@ def somatic_variant_filtration_workflow_list(
 
 
 def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_input_files()"""
+    """Tests OneFilterStepPart.get_input_files()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -521,33 +519,17 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
     assert actual == expected
 
-    # wildcards = Wildcards(
-    #     fromdict={
-    #         "mapper": "bwa",
-    #         "var_caller": "mutect2",
-    #         "annotator": "jannovar",
-    #         "tumor_library": "P003-T1-DNA1-WGS1",
-    #         "filter_nb": 1,
-    #     }
-    # )
-    # expected = {
-    #     "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
-    #     "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
-    # }
-    # actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
-    # assert actual == expected
-
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
             "annotator": "jannovar",
             "tumor_library": "P001-T1-DNA1-WGS1",
-            "filter_nb": 2,
+            "filter_nb": 3,
         }
     )
     expected = {
-        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_1.vcf.gz",
+        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.ebfilter_2.vcf.gz",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
         wildcards
@@ -556,7 +538,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
 
 
 def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_output_files()"""
+    """Tests OneFilterStepPart.get_output_files()"""
     base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_{filter_nb}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow_list.get_output_files("one_dkfz", "run")
@@ -564,15 +546,43 @@ def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workfl
 
 
 def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_log_file()"""
+    """Tests OneFilterStepPart.get_log_file()"""
     base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/log/{mapper}.{var_caller}.{annotator}.{tumor_library}.ebfilter_{filter_nb}"
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow_list.get_log_file("one_ebfilter", "run")
     assert actual == expected
 
 
+def test_one_filter_step_part_get_params(somatic_variant_filtration_workflow_list):
+    """Tests OneFilterStepPart.get_params()"""
+    wildcards = Wildcards(fromdict={"filter_nb": 1})
+    expected = {"filter_name": "dkfz_1"}
+    actual = somatic_variant_filtration_workflow_list.get_params("one_dkfz", "run")(wildcards)
+    assert actual == expected
+
+    wildcards = Wildcards(fromdict={"filter_nb": 2})
+    expected = {"filter_name": "ebfilter_2", "threshold": 2.3}
+    actual = somatic_variant_filtration_workflow_list.get_params("one_ebfilter", "run")(wildcards)
+    assert actual == expected
+
+    wildcards = Wildcards(fromdict={"filter_nb": 3})
+    expected = {"filter_name": "bcftools_3", "include": "include_statment"}
+    actual = somatic_variant_filtration_workflow_list.get_params("one_bcftools", "run")(wildcards)
+    assert actual == expected
+
+    wildcards = Wildcards(fromdict={"filter_nb": 4})
+    expected = {"filter_name": "regions_4", "exclude": "/path/to/regions.bed"}
+    actual = somatic_variant_filtration_workflow_list.get_params("one_regions", "run")(wildcards)
+    assert actual == expected
+
+    wildcards = Wildcards(fromdict={"filter_nb": 5})
+    expected = {"filter_name": "protected_5", "path_bed": "/path/to/protected.bed"}
+    actual = somatic_variant_filtration_workflow_list.get_params("one_protected", "run")(wildcards)
+    assert actual == expected
+
+
 def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_resource()"""
+    """Tests OneFilterStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2048M", "partition": "medium"}
     # Evaluate
@@ -588,13 +598,13 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
 
 
 def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_input_files()"""
+    """Tests LastFilterStepPart.get_input_files()"""
     base_tpl = "{{mapper}}.{{var_caller}}.{{annotator}}.{{tumor_library}}"
     log_tpl = "work/" + base_tpl + "/log/" + base_tpl + ".{filt}.{ext}{chksum}"
     expected = {
         "logs": [
             log_tpl.format(filt=filt, ext=ext, chksum=chksum)
-            for filt in ("dkfz_1", "bcftools_2", "ebfilter_3", "regions_4", "protected_5")
+            for filt in ("dkfz_1", "ebfilter_2", "bcftools_3", "regions_4", "protected_5")
             for ext in ("log", "conda_list.txt", "conda_info.txt")
             for chksum in ("", ".md5")
         ],
@@ -605,7 +615,7 @@ def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workfl
 
 
 def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
-    """Tests ApplyFiltersStepPart.get_output_files()"""
+    """Tests LastFilterStepPart.get_output_files()"""
     base_name = "{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}"
     base_out = "work/" + base_name + "/out/" + base_name
     expected = get_expected_output_vcf_files_dict(base_out=base_out)

@@ -4,37 +4,9 @@
 
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
-if "path_bed" in config:
-    bed = config.get("path_bed", "")
-elif "bcftools" in config and "path_bed" in config["bcftools"]:
-    bed = config["bcftools"].get("path_bed", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
-    keywords = config["filter_list"][filter_nb]["regions"].keys()
-    assert len(keywords) == 1
-    keyword = list(keywords)[0]
-    path = config["filter_list"][filter_nb]["regions"][keyword]
-    if keyword == "include":
-        bed = f"^{path}"
-    elif keyword == "exclude" or "path_bed":
-        bed = path
-    else:
-        bed = ""
-else:
-    bed = ""
-assert bed, "No bed file defining the regions to be filtered"
-
-if "filter_name" in config:
-    filter_name = config.get("filter_name", "")
-elif "bcftools" in config and "filter_name" in config["bcftools"]:
-    filter_name = config["bcftools"].get("filter_name", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_name = "regions_{}".format(int(snakemake.wildcards["filter_nb"]))
-else:
-    filter_name = "+"
+params = dict(snakemake.params)["args"]
+filter_name = params["filter_name"]
+bed = f'^{params["include"]}' if "include" in params else params["exclude"]
 
 # Actually run the script.
 shell(

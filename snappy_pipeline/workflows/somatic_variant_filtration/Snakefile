@@ -76,7 +76,7 @@ rule somatic_variant_filtration_eb_filter_write_panel:
 
 # Run DKFZ Bias Filter --------------------------------------------------------
 
-if len(config["step_config"]["somatic_variant_filtration"]["filter_sets"]) > 0:
+if config["step_config"]["somatic_variant_filtration"]["filtration_schema"] == "sets":
 
     rule somatic_variant_filtration_dkfz_bias_filter_run:
         input:
@@ -118,7 +118,7 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_sets"]) > 0:
 
     # Apply Filters ---------------------------------------------------------------
 
-    rule variant_filtration_apply_filters_run:
+    rule somatic_variant_filtration_apply_filters_run:
         input:
             **(wf.get_input_files("apply_filters", "run")),
         output:
@@ -138,7 +138,7 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_sets"]) > 0:
 
     # Filter to Exons--------------------------------------------------------------
 
-    rule variant_filtration_filter_to_exons_run:
+    rule somatic_variant_filtration_filter_to_exons_run:
         input:
             unpack(wf.get_input_files("filter_to_exons", "run")),
         output:
@@ -158,13 +158,15 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_sets"]) > 0:
 # Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-if len(config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
+if config["step_config"]["somatic_variant_filtration"]["filtration_schema"] == "list":
 
     checkpoint one_dkfz:
         input:
             unpack(wf.get_input_files("one_dkfz", "run")),
         output:
             **wf.get_output_files("one_dkfz", "run"),
+        params:
+            **{"args": wf.get_params("one_dkfz", "run")},
         threads: wf.get_resource("one_dkfz", "run", "threads")
         resources:
             time=wf.get_resource("one_dkfz", "run", "time"),
@@ -182,7 +184,7 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
         output:
             **wf.get_output_files("one_ebfilter", "run"),
         params:
-            wf.get_params("one_ebfilter", "run"),
+            **{"args": wf.get_params("one_ebfilter", "run")},
         threads: wf.get_resource("one_ebfilter", "run", "threads")
         resources:
             time=wf.get_resource("one_ebfilter", "run", "time"),
@@ -199,6 +201,8 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
             unpack(wf.get_input_files("one_bcftools", "run")),
         output:
             **wf.get_output_files("one_bcftools", "run"),
+        params:
+            **{"args": wf.get_params("one_bcftools", "run")},
         threads: wf.get_resource("one_bcftools", "run", "threads")
         resources:
             time=wf.get_resource("one_bcftools", "run", "time"),
@@ -215,6 +219,8 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
             unpack(wf.get_input_files("one_regions", "run")),
         output:
             **wf.get_output_files("one_regions", "run"),
+        params:
+            **{"args": wf.get_params("one_regions", "run")},
         threads: wf.get_resource("one_regions", "run", "threads")
         resources:
             time=wf.get_resource("one_regions", "run", "time"),
@@ -231,6 +237,8 @@ if len(config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
             unpack(wf.get_input_files("one_protected", "run")),
         output:
             **wf.get_output_files("one_protected", "run"),
+        params:
+            **{"args": wf.get_params("one_protected", "run")},
         threads: wf.get_resource("one_protected", "run", "threads")
         resources:
             time=wf.get_resource("one_protected", "run", "time"),

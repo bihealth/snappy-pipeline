@@ -4,28 +4,9 @@
 
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
-if "path_bed" in config:
-    bed = config.get("path_bed", "")
-elif "bcftools" in config and "path_bed" in config["bcftools"]:
-    bed = config["bcftools"].get("path_bed", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
-    bed = config["filter_list"][filter_nb]["protected"].get("path_bed", "")
-else:
-    bed = ""
-assert bed, "No bed file defining the protected regions"
-
-if "filter_name" in config:
-    filter_name = config.get("filter_name", "")
-elif "bcftools" in config and "filter_name" in config["bcftools"]:
-    filter_name = config["bcftools"].get("filter_name", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_name = "protected_{}".format(int(snakemake.wildcards["filter_nb"]))
-else:
-    filter_name = "+"
+params = dict(snakemake.params)["args"]
+filter_name = params["filter_name"]
+bed = params["path_bed"]
 
 # Actually run the script.
 shell(
