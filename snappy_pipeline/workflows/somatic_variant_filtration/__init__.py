@@ -690,8 +690,13 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.{tumor_library}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern)
+        tpl = (
+            f"work/{name_pattern}."
+            "dkfz_bias_filter.{tumor_library}/"
+            f"out/{name_pattern}."
+            "dkfz_bias_filter."
+            "{tumor_library}"
+        )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, tpl.format(**wildcards) + ext
@@ -728,11 +733,11 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
         # VCF file and index
-        prefix = os.path.join(
+        prefix = (
             rf"work/{name_pattern}."
             r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/"
             rf"out/{name_pattern}."
-            r"dkfz_bias_filter.eb_filter.{tumor_library}",
+            r"dkfz_bias_filter.eb_filter.{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
