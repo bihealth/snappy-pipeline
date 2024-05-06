@@ -9,7 +9,7 @@ except ImportError:
 
 from pydantic import DirectoryPath, Field, FilePath, field_validator, model_validator
 
-from ..abstract.models import EnumField, SizeString, SnappyModel
+from ..abstract.models import EnumField, SizeString, SnappyModel, SnappyStepModel
 
 
 class DnaMapper(Enum):
@@ -53,7 +53,7 @@ class TargetCoverageReportEntry(SnappyModel):
 
     pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[Path, PathType("file"), Field(examples=["path/to/targets.bed"])]
+    path: Annotated[os.PathLike, Field(examples=["path/to/targets.bed"])]
 
 
 class TargetCoverageReport(SnappyModel):
@@ -251,7 +251,7 @@ class Minimap2(SnappyModel):
     mapping_threads: int = 16
 
 
-class NgsMapping(SnappyModel):
+class NgsMapping(SnappyStepModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
@@ -261,10 +261,10 @@ class NgsMapping(SnappyModel):
     target_coverage_report: TargetCoverageReport | None = None
     """Thresholds for targeted sequencing coverage QC."""
 
-    bam_collect_doc: BamCollectDoc | None = None
+    bam_collect_doc: BamCollectDoc = BamCollectDoc()
     """Depth of coverage collection, mainly useful for genomes."""
 
-    ngs_chew_fingerprint: NgsChewFingerprint | None = None
+    ngs_chew_fingerprint: NgsChewFingerprint = NgsChewFingerprint()
     """Compute fingerprints with ngs-chew"""
 
     bwa: Bwa | None = None
