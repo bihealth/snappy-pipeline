@@ -1,13 +1,15 @@
 import enum
+from os import PathLike
 from typing import Annotated
 
 from pydantic import AfterValidator, DirectoryPath, Field, FilePath
 
-from ..abstract.models import EnumField, SnappyModel
+from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.Enum):
     MUTECT = "mutect"
+    MUTECT2 = "mutect2"
     SCALPEL = "scalpel"
 
 
@@ -76,20 +78,29 @@ class Mutect(Parallel):
     pass
 
 
-def argument(arg: str) -> str:
-    if not arg.startswith("--"):
-        raise ValueError(f"Invalid argument: {arg}")
-    return arg
+def argument(args: list[str]) -> list[str]:
+    def _is_valid_argument(arg: str) -> bool:
+        return arg.startswith("--")
+
+    if any(_is_valid_argument(arg) for arg in args):
+        raise ValueError(
+            f"invalid arguments: {list(filter(lambda x: not _is_valid_argument(x), args))}"
+        )
+    return args
 
 
 class Mutect2(Parallel):
-    panel_of_normals: FilePath | None = None
+
+    # Sadly a type of
+    # `FilePath | None = None`
+    # still applies `FilePath` validation on `None`, which errors
+    panel_of_normals: PathLike | None = None
     """Set path to panel of normals vcf if required"""
 
-    germline_resource: FilePath | None = None
+    germline_resource: PathLike | None = None
     """Germline variants resource (same as panel of normals)"""
 
-    common_variants: FilePath | None = None
+    common_variants: PathLike | None = None
     """Common germline variants for contamination estimation"""
 
     extra_arguments: Annotated[
@@ -115,11 +126,11 @@ class Mutect2(Parallel):
 
 
 class Scalpel(SnappyModel):
-    path_target_regions: FilePath
+    path_target_regions: PathLike
 
 
 class Strelka2(SnappyModel):
-    path_target_regions: FilePath | None = None
+    path_target_regions: PathLike | None = None
     """For exomes: include a bgzipped bed file with tabix index. That also triggers the --exome flag"""
 
 
@@ -196,7 +207,7 @@ class VarscanJoint(Parallel, SamtoolsMpileup):
     window_length: int = 5000000
 
 
-class SomaticVariantCalling(SnappyModel):
+class SomaticVariantCalling(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [])]
     """List of tools"""
 
@@ -209,29 +220,29 @@ class SomaticVariantCalling(SnappyModel):
     ] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"]
     """Patterns of contig names to ignore"""
 
-    bcftools_joint: BcfToolsJoint
+    bcftools_joint: BcfToolsJoint | None = None
     """Configuration for joint calling with samtools+bcftools."""
 
-    platypus_joint: PlatypusJoint
+    platypus_joint: PlatypusJoint | None = None
     """Configuration for joint calling with Platypus."""
 
-    mutect: Mutect
+    mutect: Mutect | None = None
     """Configuration for MuTect"""
 
-    mutect2: Mutect2
+    mutect2: Mutect2 | None = None
     """Configuration for MuTect 2"""
 
-    scalpel: Scalpel
+    scalpel: Scalpel | None = None
     """Configuration for Scalpel"""
 
-    strelka2: Strelka2
+    strelka2: Strelka2 | None = None
     """Configuration for Strelka2"""
 
-    gatk_hc_joint: GatkHcJoint
+    gatk_hc_joint: GatkHcJoint | None = None
     """Configuration for GatkHcJoint"""
 
-    gatk_ug_joint: GatkUgJoint
+    gatk_ug_joint: GatkUgJoint | None = None
     """Configuration for GatkUgJoint"""
 
-    varscan_joint: VarscanJoint
+    varscan_joint: VarscanJoint | None = None
     """Configuration for VarscanJoint"""
