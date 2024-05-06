@@ -604,6 +604,7 @@ def cancer_sheet_tsv():
         P002\tT1\tY\tWGS\tP002_T1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
         P002\tT2\tY\tWGS\tP002_T2_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
         P002\tT2\tY\tmRNA_seq\tP002_T2-RNA1_mRNA_seq1\tNone\tRNA
+        # P003\tT1\tY\tWGS\tP003_T1_DNA1_WGS1\tNone\tDNA
         """
     ).lstrip()
 
