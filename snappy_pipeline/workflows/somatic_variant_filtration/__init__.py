@@ -410,6 +410,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
             filter_nb = int(wildcards["filter_nb"])
             ebfilter_config = self.config["filter_list"][filter_nb - 1][self.filter_name]
             parameters.update(ebfilter_config)
+            parameters["has_annotation"] = self.config.get("has_annotation", False)
             return parameters
 
         return input_function
@@ -731,6 +732,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         parameters = self.config["eb_filter"]
         parameters.update(self.config["filter_sets"]["dkfz_and_ebfilter"])
+        parameters["has_annotation"] = self.config.get("has_annotation", False)
         return parameters
 
     @dictify

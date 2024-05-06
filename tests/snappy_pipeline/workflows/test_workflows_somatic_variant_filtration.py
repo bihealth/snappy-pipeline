@@ -562,7 +562,7 @@ def test_one_filter_step_part_get_params(somatic_variant_filtration_workflow_lis
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 2})
-    expected = {"filter_name": "ebfilter_2", "threshold": 2.3}
+    expected = {"filter_name": "ebfilter_2", "threshold": 2.3, "has_annotation": True}
     actual = somatic_variant_filtration_workflow_list.get_params("one_ebfilter", "run")(wildcards)
     assert actual == expected
 

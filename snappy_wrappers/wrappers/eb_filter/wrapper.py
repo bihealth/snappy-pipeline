@@ -8,6 +8,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 params = dict(snakemake.params)["args"]
 filter_name = params["filter_name"] if "filter_name" in params else ""
+has_annotation = str(params["has_annotation"] if "has_annotation" in params else False)
 
 if "interval" in params:
     cmd_fetch = "tabix --print-header {} {}".format(
@@ -61,7 +62,11 @@ if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
     filter=$(echo "$filter" | sed -e "s/^ || //")
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
-    filter="$filter || $ann ~ \"stream_gene_variant\""
+    if [[ '{has_annotation}' == "True" ]]; then
+        filter="$filter || $ann ~ \"stream_gene_variant\""
+    else
+        filter="$filter"
+    fi
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \
