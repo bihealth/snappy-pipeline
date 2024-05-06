@@ -28,13 +28,13 @@ class SnappyModel(BaseModel):
     )
 
 
-def options(enum: Enum) -> list[typing.Any]:
+def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
     return [(e.name, e.value) for e in enum]
 
 
 def EnumField(enum: type[Enum], default: typing.Any = PydanticUndefined, *args, **kwargs):
     extra = kwargs.get("json_schema_extra", {})
-    extra.update(dict(options=options(enum)))
+    extra.update(dict(options=enum_options(enum)))
     kwargs["json_schema_extra"] = extra
     return Field(default, *args, **kwargs)
 
@@ -90,20 +90,18 @@ def annotate_model(
         if field.examples:
             comment.append(f"Examples: {', '.join(map(str, field.examples))}")
 
-        options = []
-        if field.json_schema_extra and "options" in field.json_schema_extra:
-            options = field.json_schema_extra["options"]
+        options = (getattr(field, "json_schema_extra") or {}).get("options", [])
         if check_model_class(annotation, enum.Enum):
-            options = [(e.name, e.value) for e in annotation]
+            options = enum_options(annotation)
 
         if options:
 
-            def option_str(option: tuple[typing.Any, typing.Any]) -> str:
+            def option_str(option: tuple[str, typing.Any]) -> str:
                 name, value = option
-                if name != value:
-                    return f"{value} ({name})"
+                if name.upper() != str(value).upper().replace("-", "_"):
+                    return f"{repr(value)} ({name})"
                 else:
-                    return f"{value}"
+                    return f"{repr(value)}"
 
             comment.append(f"Options: " f"{', '.join(map(option_str, options))}")
 
