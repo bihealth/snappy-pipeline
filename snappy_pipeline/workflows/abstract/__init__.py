@@ -45,7 +45,7 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
-from .models import _placeholder_model_instance, _dump_commented_yaml
+from .models import _placeholder_model_instance, _dump_commented_yaml, SnappyModel
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""

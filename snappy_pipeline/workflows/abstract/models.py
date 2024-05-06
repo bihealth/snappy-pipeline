@@ -10,7 +10,6 @@ from typing import Annotated
 
 import ruamel
 import typing_extensions
-import yaml
 from annotated_types import Predicate
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_core import PydanticUndefined

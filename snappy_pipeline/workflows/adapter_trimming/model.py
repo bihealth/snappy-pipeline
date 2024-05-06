@@ -6,8 +6,10 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, conlist
+from pydantic import ConfigDict, Field
 from typing_extensions import Annotated
+
+from ..abstract.models import EnumField, SnappyModel
 
 
 class Tool(Enum):
@@ -91,7 +93,7 @@ class UmiLoc(Enum):
     FIELD_ = ""
 
 
-class Fastp(BaseModel):
+class Fastp(SnappyModel):
     num_threads: int = 0
     trim_front1: int = 0
     """
@@ -354,11 +356,25 @@ class Tfbool(Enum):
     F = "f"
 
 
-class Bbduk(BaseModel):
+class Bbduk(SnappyModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    adapter_sequences: list[str]
+    adapter_sequences: Annotated[
+        list[str],
+        Field(
+            examples=[
+                [
+                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "bbtools/39.01/resources/adapters.fa",
+                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "bbtools/39.01/resources/phix174_ill.ref.fa.gz",
+                ]
+            ]
+        ),
+    ]
+    """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
+
     num_threads: int = 8
     interleaved: Tfbool | Interleaved = "auto"
     """
@@ -861,11 +877,10 @@ class Bbduk(BaseModel):
     """
 
 
-class AdapterTrimming(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
+class AdapterTrimming(SnappyModel):
     path_link_in: str | None = None
-    tools: conlist(Tool, min_length=1) = None
-    bbduk: Bbduk | None = None
-    fastp: Fastp | None = None
+    """Override data set configuration search paths for FASTQ files"""
+
+    tools: Annotated[list[Tool], EnumField(Tool, min_length=1, default=["bbduk", "fastp"])]
+    bbduk: Bbduk
+    fastp: Fastp
