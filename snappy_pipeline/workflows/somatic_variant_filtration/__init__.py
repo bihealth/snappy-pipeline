@@ -689,6 +689,9 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
         # VCF file and index
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
