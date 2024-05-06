@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
 import contextlib
 import datetime
-from fnmatch import fnmatch
-from functools import lru_cache
-from importlib import import_module
-from io import StringIO
 import itertools
+import logging
 import os
 import os.path
 import sys
 import tempfile
 import typing
+from collections import OrderedDict
+from collections.abc import MutableMapping
+from fnmatch import fnmatch
+from functools import lru_cache
+from importlib import import_module
+from io import StringIO
 
 import attr
+import pydantic
+import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -27,8 +30,6 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import pydantic
-import ruamel.yaml as ruamel_yaml
 from snakemake.io import touch
 
 from snappy_pipeline.base import (
@@ -45,7 +46,8 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
-from .models import _placeholder_model_instance, _dump_commented_yaml, SnappyModel
+
+from .models import ConfigModel, SnappyModel, _dump_commented_yaml, _placeholder_model_instance
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""

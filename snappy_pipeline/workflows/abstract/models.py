@@ -6,6 +6,7 @@ import typing
 from enum import Enum
 from inspect import isclass
 from io import StringIO
+from os import PathLike
 from typing import Annotated
 
 import ruamel
@@ -26,6 +27,11 @@ class SnappyModel(BaseModel):
         use_attribute_docstrings=True,
         use_enum_values=True,
     )
+
+
+# This only exists to distinguish workflow step_config models from other snappy specific models
+class SnappyStepModel(SnappyModel, object):
+    pass
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
@@ -297,3 +303,45 @@ def _optional_key_paths(
             optional_keys.extend(_optional_key_paths(annotation, comment_map[key], path_))
 
     return optional_keys
+
+
+class Reference(SnappyModel):
+    path: PathLike = ""
+
+
+class StaticDataConfig(SnappyModel):
+    reference: Reference
+
+
+class SearchPattern(SnappyModel):
+    left: str = "*.R1.fastq.gz"
+    right: str | None = "*.R2.fastq.gz"
+
+
+class DataSetType(enum.Enum):
+    MATCHED_CANCER = "matched_cancer"
+    GERMLINE_VARIANTS = "germline_variants"
+
+
+class NamingScheme(enum.Enum):
+    ONLY_SECONDARY_ID = "only_secondary_id"
+
+
+class DataSet(SnappyModel):
+    file: PathLike = ""
+    search_patterns: list[SearchPattern] = [SearchPattern()]
+    search_paths: list[PathLike] = ["../raw"]
+    type: DataSetType = DataSetType.MATCHED_CANCER
+    naming_scheme: NamingScheme = NamingScheme.ONLY_SECONDARY_ID
+
+
+class ConfigModel(SnappyModel):
+    model_config = ConfigDict(
+        extra="allow",
+        use_attribute_docstrings=True,
+        use_enum_values=True,
+    )
+
+    static_data_config: StaticDataConfig
+    step_config: dict[str, typing.Type[SnappyStepModel]]
+    data_sets: dict[str, DataSet]
