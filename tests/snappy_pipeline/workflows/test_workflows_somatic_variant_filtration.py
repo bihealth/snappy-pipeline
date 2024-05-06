@@ -35,6 +35,7 @@ def minimal_config():
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
+            filtration_schema: sets
 
         data_sets:
           first_batch:

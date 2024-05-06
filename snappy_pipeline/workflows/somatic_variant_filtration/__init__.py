@@ -155,7 +155,7 @@ step_config:
     tools_somatic_variant_calling: null                 # Default: use those defined in somatic_variant_calling step
     tools_somatic_variant_annotation: null              # Default: use those defined in somatic_variant_annotation step
     has_annotation: True
-    filtration_schema: "sets"                           # Either "sets" (old scheme- filter_sets) or "list" (new scheme- filter_list)
+    filtration_schema: "list"                           # Either "sets" (old scheme- filter_sets) or "list" (new scheme- filter_list)
     filter_sets:                                        # Deprecated filtration method, use filter_list
     # no_filter: no_filters                             # implicit, always defined
       dkfz_only: ''  # empty
@@ -354,8 +354,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
                 "out",
                 "{mapper}.{tumor_library}.bam",
             )
-            normal_library = self.tumor_to_normal_library.get(wildcards["tumor_library"], None)
-            if normal_library:
+            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
                 yield "normal", os.path.join(
                     self.config["path_ngs_mapping"],
                     "output",
@@ -432,7 +431,7 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
             msg = "Only one include or exclude expression is allowed in {} filter {} (configuration: {})"
             assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
             keyword = list(keywords.keys())[0]
-            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, configuration: {})'
+            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude. Configuration: {})'
             assert keyword in ("include", "exclude"), msg.format(
                 keyword, self.filter_name, filter_nb, keywords
             )
@@ -460,7 +459,7 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
             )
             assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
             keyword = list(keywords.keys())[0]
-            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, configuration: {})'
+            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, path_bed (deprecated). Configuration: {})'
             assert keyword in ("include", "exclude", "path_bed"), msg.format(
                 keyword, self.filter_name, filter_nb, keywords
             )
@@ -485,10 +484,14 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
             keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
-            msg = "Only one protected region is allowed in {} filter {} (configuration: {})"
+            msg = (
+                "Only one protected region bed file is allowed in {} filter {} (configuration: {})"
+            )
             assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
             keyword = list(keywords.keys())[0]
-            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, configuration: {})'
+            msg = (
+                'Unknown keyword "{}" in {} filter {} (allowed value: path_bed. Configuration: {})'
+            )
             assert keyword in ("path_bed",), msg.format(
                 keyword, self.filter_name, filter_nb, keywords
             )
@@ -614,10 +617,10 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
             name_pattern += ".{annotator}"
 
         prefix = (
-            rf"work/{name_pattern}."
-            r"dkfz_bias_filter.{tumor_library,[^\.]+}/"
-            rf"out/{name_pattern}."
-            r"dkfz_bias_filter.{tumor_library}"
+            rf"work/{name_pattern}.{self.name}."
+            r"{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}.{self.name}."
+            r"{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
@@ -637,7 +640,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter"
+        name_pattern += f".{self.name}"
         prefix = os.path.join(
             "work",
             name_pattern + r".{tumor_library,[^\.]+}",
@@ -1086,15 +1089,10 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             name_pattern = "{mapper}.{caller}"
             if self.config["has_annotation"]:
                 name_pattern += ".{annotator}"
-            name_pattern_1 = name_pattern + (
-                r".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
-            )
-            name_pattern_2 = name_pattern + (
-                r".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
-            )
+            name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
 
             yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern_1, "out", name_pattern_2 + "{ext}"),
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=mappers,
                 caller=callers,
                 annotator=annotators,
@@ -1103,7 +1101,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 ext=EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern_1, "log", name_pattern_2 + ".{ext}"),
+                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
                 mapper=mappers,
                 caller=callers,
                 annotator=annotators,

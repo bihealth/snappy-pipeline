@@ -671,7 +671,8 @@ class BaseStep:
         #: Functions from sub workflows, can be used to generate output paths into these workflows
         self.sub_workflows = {}
 
-        self._write_step_config()
+        if workflow.verbose:
+            self._write_step_config()
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
