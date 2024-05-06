@@ -47,7 +47,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
 
-from .models import ConfigModel, SnappyModel, _dump_commented_yaml, _placeholder_model_instance
+from .models import ConfigModel, SnappyStepModel, _dump_commented_yaml, _placeholder_model_instance
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -667,16 +667,21 @@ class BaseStep:
         model_name = self.name.title().replace("_", "")
         try:
             module = import_module(".model", package=self.__module__)
-            model: type[pydantic.BaseModel] = getattr(module, model_name)
+            model: type[SnappyStepModel] = getattr(module, model_name)
+            if workflow.verbose:
+                logging.info(
+                    f"default config yaml for {model_name}\n"
+                    + models.default_config_yaml_string(model, comment_optional=True)
+                )
             self.config_model = validate_config(self.config, model)
         except ModuleNotFoundError:
-            # TODO: use logging
-            # print(f"No pydantic model found for {self.name} ({model_name}), skipping validation",
-            #       file=sys.stderr)
-            pass
+            model_path = f"{self.__module__}.model"
+            logging.warning(
+                f"No pydantic model named {model_name} found in {model_path} (for step {self.name}), "
+                f"skipping validation",
+            )
         except pydantic.ValidationError as ve:
-            # TODO: use logging
-            # print(f"{self.name} failed validation", file=sys.stderr)
+            logging.error(f"{self.name} failed validation")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
