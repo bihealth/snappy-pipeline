@@ -92,258 +92,258 @@ class UmiLoc(Enum):
 
 
 class Fastp(BaseModel):
-    num_threads: int | None = 0
-    trim_front1: int | None = 0
+    num_threads: int = 0
+    trim_front1: int = 0
     """
     trimming how many bases in front for read1, default is 0 (int [=0])
     """
 
-    trim_tail1: int | None = 0
+    trim_tail1: int = 0
     """
     trimming how many bases in tail for read1, default is 0 (int [=0])
     """
 
-    max_len1: int | None = 0
+    max_len1: int = 0
     """
     if read1 is longer than max_len1, then trim read1 at its tail to make it as long as max_len1.
     Default 0 means no limitation (int [=0])
     """
 
-    trim_front2: int | None = 0
+    trim_front2: int = 0
     """
     trimming how many bases in front for read2.
     If it's not specified, it will follow read1's settings (int [=0])
     """
 
-    trim_tail2: int | None = 0
+    trim_tail2: int = 0
     """
     trimming how many bases in tail for read2.
     If it's not specified, it will follow read1's settings (int [=0])
     """
 
-    max_len2: int | None = 0
+    max_len2: int = 0
     """
     if read2 is longer than max_len2, then trim read2 at its tail to make it as long as max_len2.
     Default 0 means no limitation. If it's not specified, it will follow read1's settings (int [=0])
     """
 
-    dedup: bool | None = False
+    dedup: bool = False
     """
     enable deduplication to drop the duplicated reads/pairs
     """
 
-    dup_calc_accuracy: Annotated[int | None, Field(0, ge=0, le=6)]
+    dup_calc_accuracy: Annotated[int, Field(0, ge=0, le=6)]
     """
     accuracy level to calculate duplication (1~6),
     higher level uses more memory (1G, 2G, 4G, 8G, 16G, 24G).
     Default 1 for no-dedup mode, and 3 for dedup mode. (int [=0])
     """
 
-    dont_eval_duplication: bool | None = True
+    dont_eval_duplication: bool = True
     """
     don't evaluate duplication rate to save time and use less memory.
     """
 
-    trim_poly_g: bool | None = True
+    trim_poly_g: bool = True
     """
     force polyG tail trimming,
     by default trimming is automatically enabled for Illumina NextSeq/NovaSeq data
     """
 
-    poly_g_min_len: int | None = 8
+    poly_g_min_len: int = 8
     """
     the minimum length to detect polyG in the read tail. 10 by default. (int [=10])
     """
 
-    trim_poly_x: bool | None = False
+    trim_poly_x: bool = False
     """
     enable polyX trimming in 3' ends.
     """
 
-    poly_x_min_len: int | None = 10
+    poly_x_min_len: int = 10
     """
     the minimum length to detect polyX in the read tail. 10 by default. (int [=10])
     """
 
-    cut_front: bool | None = False
+    cut_front: bool = False
     """
     move a sliding window from front (5') to tail, drop the bases in the window if its mean quality < threshold, stop otherwise.
     """
 
-    cut_tail: bool | None = False
+    cut_tail: bool = False
     """
     move a sliding window from tail (3') to front, drop the bases in the window if its mean quality < threshold, stop otherwise.
     """
 
-    cut_right: bool | None = False
+    cut_right: bool = False
     """
     move a sliding window from front to tail, if meet one window with mean quality < threshold, drop the bases in the window and the right part, and then stop.
     """
 
-    cut_front_window_size: int | None = 4
+    cut_front_window_size: int = 4
     """
     the window size option of cut_front, default to cut_window_size if not specified (int [=4])
     """
 
-    cut_front_mean_quality: int | None = 20
+    cut_front_mean_quality: int = 20
     """
     the mean quality requirement option for cut_front, default to cut_mean_quality if not specified (int [=20])
     """
 
-    cut_tail_window_size: int | None = 4
+    cut_tail_window_size: int = 4
     """
     the window size option of cut_tail, default to cut_window_size if not specified (int [=4])
     """
 
-    cut_tail_mean_quality: int | None = 20
+    cut_tail_mean_quality: int = 20
     """
     the mean quality requirement option for cut_tail, default to cut_mean_quality if not specified (int [=20])
     """
 
-    cut_right_window_size: int | None = 4
+    cut_right_window_size: int = 4
     """
     the window size option of cut_right, default to cut_window_size if not specified (int [=4])
     """
 
-    cut_right_mean_quality: int | None = 20
+    cut_right_mean_quality: int = 20
     """
     the mean quality requirement option for cut_right,
     default to cut_mean_quality if not specified (int [=20])
     """
 
-    disable_quality_filtering: bool | None = False
+    disable_quality_filtering: bool = False
     """
     quality filtering is enabled by default.
     If this option is specified, quality filtering is disabled
     """
 
-    qualified_quality_phred: int | None = 15
+    qualified_quality_phred: int = 15
     """
     the quality value that a base is qualified.
     Default 15 means phred quality >=Q15 is qualified. (int [=15])
     """
 
-    unqualified_percent_limit: int | None = 40
+    unqualified_percent_limit: int = 40
     """
     how many percents of bases are allowed to be unqualified (0~100).
     Default 40 means 40% (int [=40])
     """
 
-    n_base_limit: int | None = 5
+    n_base_limit: int = 5
     """
     if one read's number of N base is >n_base_limit, then this read/pair is discarded.
     Default is 5 (int [=5])
     """
 
-    average_qual: int | None = 0
+    average_qual: int = 0
     """
     if one read's average quality score <avg_qual, then this read/pair is discarded.
     Default 0 means no requirement (int [=0])
     """
 
-    disable_length_filtering: bool | None = False
+    disable_length_filtering: bool = False
     """
     length filtering is enabled by default.
     If this option is specified, length filtering is disabled
     """
 
-    length_required: int | None = 15
+    length_required: int = 15
     """
     reads shorter than length_required will be discarded, default is 15. (int [=15])
     """
 
-    length_limit: int | None = 0
+    length_limit: int = 0
     """
     reads longer than length_limit will be discarded, default 0 means no limitation. (int [=0])
     """
 
-    low_complexity_filter: bool | None = False
+    low_complexity_filter: bool = False
     """
     enable low complexity filter.
     The complexity is defined as the percentage of base that is different from its next base
     (base[i] != base[i+1]).
     """
 
-    complexity_threshold: int | None = 30
+    complexity_threshold: int = 30
     """
     the threshold for low complexity filter (0~100).
     Default is 30, which means 30% complexity is required. (int [=30])
     """
 
-    filter_by_index1: str | None = ""
+    filter_by_index1: str = ""
     """
     specify a file contains a list of barcodes of index1 to be filtered out, one barcode per line
     (string [=])
     """
 
-    filter_by_index2: str | None = ""
+    filter_by_index2: str = ""
     """
     specify a file contains a list of barcodes of index2 to be filtered out, one barcode per line
     (string [=])
     """
 
-    filter_by_index_threshold: int | None = 0
+    filter_by_index_threshold: int = 0
     """
     the allowed difference of index barcode for index filtering,
     default 0 means completely identical. (int [=0])
     """
 
-    correction: bool | None = False
+    correction: bool = False
     """
     enable base correction in overlapped regions (only for PE data), default is disabled
     """
 
-    overlap_len_require: int | None = 30
+    overlap_len_require: int = 30
     """
     the minimum length to detect overlapped region of PE reads.
     This will affect overlap analysis based PE merge, adapter trimming and correction.
     30 by default. (int [=30])
     """
 
-    overlap_diff_limit: int | None = 5
+    overlap_diff_limit: int = 5
     """
     the maximum number of mismatched bases to detect overlapped region of PE reads.
     This will affect overlap analysis based PE merge, adapter trimming and correction. 5 by default.
     (int [=5])
     """
 
-    overlap_diff_percent_limit: int | None = 20
+    overlap_diff_percent_limit: int = 20
     """
     the maximum percentage of mismatched bases to detect overlapped region of PE reads.
     This will affect overlap analysis based PE merge, adapter trimming and correction.
     Default 20 means 20%. (int [=20])
     """
 
-    umi: bool | None = False
+    umi: bool = False
     """
     enable unique molecular identifier (UMI) preprocessing
     """
 
-    umi_loc: UmiLoc | None = ""
+    umi_loc: UmiLoc = ""
     """
     specify the location of UMI, can be (index1/index2/read1/read2/per_index/per_read,
     default is none (string [=])
     """
 
-    umi_len: int | None = 0
+    umi_len: int = 0
     """
     if the UMI is in read1/read2, its length should be provided (int [=0])
     """
 
-    umi_prefix: Annotated[str | None, Field("", examples=["UMI"])]
+    umi_prefix: Annotated[str, Field("", examples=["UMI"])]
     """
     if specified, an underline will be used to connect prefix and UMI
     (i.e. prefix=UMI, UMI=AATTCG, final=UMI_AATTCG).
     No prefix by default (string [=])
     """
 
-    umi_skip: int | None = 0
+    umi_skip: int = 0
     """
     if the UMI is in read1/read2, fastp can skip several bases following UMI,
     default is 0 (int [=0])
     """
 
-    overrepresentation_analysis: bool | None = False
+    overrepresentation_analysis: bool = False
     """
     enable overrepresented sequence analysis.
     """
@@ -359,189 +359,189 @@ class Bbduk(BaseModel):
         extra="forbid",
     )
     adapter_sequences: list[str]
-    num_threads: int | None = 8
-    interleaved: Tfbool | Interleaved | None = "auto"
+    num_threads: int = 8
+    interleaved: Tfbool | Interleaved = "auto"
     """
     (int) t/f overrides interleaved autodetection.
     """
 
-    qin: Qin | None = "auto"
+    qin: Qin = "auto"
     """
     Input quality offset: 33 (Sanger), 64, or auto.
     """
 
-    copyundefined: Tfbool | None = "f"
+    copyundefined: Tfbool = "f"
     """
     (cu) Process non-AGCT IUPAC reference bases by making all possible unambiguous copies.
     Intended for short motifs or adapter barcodes, as time/memory use is exponential.
     """
 
-    nzo: Tfbool | None = "t"
+    nzo: Tfbool = "t"
     """
     Only write statistics about ref sequences with nonzero hits.
     """
 
-    qout: Qout | None = "auto"
+    qout: Qout = "auto"
     """
     Output quality offset: 33 (Sanger), 64, or auto.
     """
 
-    statscolumns: Statscolumns | None = 3
+    statscolumns: Statscolumns = 3
     """
     (cols) Number of columns for stats output, 3 or 5. 5 includes base counts.
     """
 
-    rename: Tfbool | None = "f"
+    rename: Tfbool = "f"
     """
     Rename reads to indicate which sequences they matched.
     """
 
-    refnames: Tfbool | None = "f"
+    refnames: Tfbool = "f"
     """
     Use names of reference files rather than scaffold IDs.
     """
 
-    trd: Tfbool | None = "f"
+    trd: Tfbool = "f"
     """
     Truncate read and ref names at the first whitespace.
     """
 
-    ordered: Tfbool | None = "f"
+    ordered: Tfbool = "f"
     """
     Set to true to output reads in same order as input.
     """
 
-    gcbins: int | Gcbins | None = "auto"
+    gcbins: int | Gcbins = "auto"
     """
     Number gchist bins.  Set to 'auto' to use read length.
     """
 
-    maxhistlen: int | Maxhistlen | None = 6000
+    maxhistlen: int | Maxhistlen = 6000
     """
     Set an upper bound for histogram lengths; higher uses more memory.
     The default is 6000 for some histograms and 80000 for others.
     """
 
-    histbefore: Tfbool | None = "t"
+    histbefore: Tfbool = "t"
     """
     Calculate histograms from reads before processing.
     """
 
-    idbins: int | Idbins | None = 100
+    idbins: int | Idbins = 100
     """
     Number idhist bins.  Set to 'auto' to use read length.
     """
 
-    k: Annotated[int | None, Field(21, ge=1)]
+    k: Annotated[int, Field(21, ge=1)]
     """
     Kmer length used for finding contaminants.
     Contaminants shorter than k will not be found.
     k must be at least 1. bbduk default: 27
     """
 
-    rcomp: Tfbool | None = "t"
+    rcomp: Tfbool = "t"
     """
     Look for reverse-complements of kmers in addition to forward kmers.
     """
 
-    maskmiddle: Tfbool | None = "t"
+    maskmiddle: Tfbool = "t"
     """
     (mm) Treat the middle base of a kmer as a wildcard,
     to increase sensitivity in the presence of errors.
     """
 
-    minkmerhits: int | None = 1
+    minkmerhits: int = 1
     """
     (mkh) Reads need at least this many matching kmers to be considered as matching the reference.
     """
 
-    minkmerfraction: float | None = 0
+    minkmerfraction: float = 0
     """
     (mkf) A reads needs at least this fraction of its total kmers to hit a ref,
     in order to be considered a match.
     If this and minkmerhits are set, the greater is used.
     """
 
-    mincovfraction: float | None = 0
+    mincovfraction: float = 0
     """
     (mcf) A reads needs at least this fraction of its total bases to be covered by ref kmers
     to be considered a match.
     If specified, mcf overrides mkh and mkf.
     """
 
-    hammingdistance: int | None = 1
+    hammingdistance: int = 1
     """
     (hdist) Maximum Hamming distance for ref kmers (subs only).
     Memory use is proportional to (3*K)^hdist. bbduk default: 0
     """
 
-    qhdist: int | None = 0
+    qhdist: int = 0
     """
     Hamming distance for query kmers; impacts speed, not memory.
     """
 
-    editdistance: int | None = 0
+    editdistance: int = 0
     """
     (edist) Maximum edit distance from ref kmers (subs and indels).
     Memory use is proportional to (8*K)^edist.
     """
 
-    hammingdistance2: int | None = 0
+    hammingdistance2: int = 0
     """
     (hdist2) Sets hdist for short kmers, when using mink.
     """
 
-    qhdist2: int | None = 0
+    qhdist2: int = 0
     """
     Sets qhdist for short kmers, when using mink.
     """
 
-    editdistance2: int | None = 0
+    editdistance2: int = 0
     """
     (edist2) Sets edist for short kmers, when using mink.
     """
 
-    forbidn: Tfbool | None = "f"
+    forbidn: Tfbool = "f"
     """
     (fn) Forbids matching of read kmers containing N.
     By default, these will match a reference 'A' if hdist>0 or edist>0, to increase sensitivity.
     """
 
-    removeifeitherbad: Tfbool | None = "t"
+    removeifeitherbad: Tfbool = "t"
     """
     (rieb) Paired reads get sent to 'outmatch' if either is match
     (or either is trimmed shorter than minlen).
     Set to false to require both.
     """
 
-    trimfailures: Tfbool | None = "f"
+    trimfailures: Tfbool = "f"
     """
     Instead of discarding failed reads, trim them to 1bp.
     This makes the statistics a bit odd.
     """
 
-    findbestmatch: Tfbool | None = "f"
+    findbestmatch: Tfbool = "f"
     """
     (fbm) If multiple matches, associate read with sequence sharing most kmers. Reduces speed.
     """
 
-    skipr1: Tfbool | None = "f"
+    skipr1: Tfbool = "f"
     """
     Don't do kmer-based operations on read 1.
     """
 
-    skipr2: Tfbool | None = "f"
+    skipr2: Tfbool = "f"
     """
     Don't do kmer-based operations on read 2.
     """
 
-    ecco: Tfbool | None = "f"
+    ecco: Tfbool = "f"
     """
     For overlapping paired reads only.
     Performs error- correction with BBMerge prior to kmer operations.
     """
 
-    ktrim: Ktrim | None = "r"
+    ktrim: Ktrim = "r"
     """
     Trim reads to remove bases matching reference kmers. Values:
       f (don't trim), [bbduk default]
@@ -549,19 +549,19 @@ class Bbduk(BaseModel):
       l (trim to the left)
     """
 
-    kmask: str | None = ""
+    kmask: str = ""
     """
     Replace bases matching ref kmers with another symbol.
     Allows any non-whitespace character, and processes short kmers on both ends if mink is set.
     'kmask: lc' will convert masked bases to lowercase.
     """
 
-    maskfullycovered: Tfbool | None = "f"
+    maskfullycovered: Tfbool = "f"
     """
     (mfc) Only mask bases that are fully covered by kmers.
     """
 
-    ksplit: Tfbool | None = "f"
+    ksplit: Tfbool = "f"
     """
     For single-ended reads only.
     Reads will be split into pairs around the kmer.
@@ -570,14 +570,14 @@ class Bbduk(BaseModel):
     Do not use ksplit with other operations such as quality-trimming or filtering.
     """
 
-    mink: int | None = 11
+    mink: int = 11
     """
     Look for shorter kmers at read tips down to this length, when k-trimming or masking.
     0 means disabled.
     Enabling this will disable maskmiddle. bbduk default: 0 (disabled)
     """
 
-    qtrim: Qtrim | None = "rl"
+    qtrim: Qtrim = "rl"
     """
     Trim read ends to remove bases with quality below trimq.
     Performed AFTER looking for kmers.  Values:
@@ -588,7 +588,7 @@ class Bbduk(BaseModel):
       w (sliding window).
     """
 
-    trimq: float | None = 25
+    trimq: float = 25
     """
     Regions with average quality BELOW this will be trimmed,
     if qtrim is set to something other than f.
@@ -596,141 +596,141 @@ class Bbduk(BaseModel):
     Very strict quality threshold, bbduk default: 6
     """
 
-    minlength: int | None = 35
+    minlength: int = 35
     """
     (ml) Reads shorter than this after trimming will be discarded.
     Pairs will be discarded if both are shorter.
     bbduk default: 10
     """
 
-    mlf: int | None = 0
+    mlf: int = 0
     """
     (minlengthfraction) Reads shorter than this fraction of original length after trimming
     will be discarded.
     """
 
-    minavgquality: int | None = 0
+    minavgquality: int = 0
     """
     (maq) Reads with average quality (after trimming) below this will be discarded.
     """
 
-    maqb: int | None = 0
+    maqb: int = 0
     """
     If positive, calculate maq from this many initial bases.
     """
 
-    minbasequality: int | None = 0
+    minbasequality: int = 0
     """
     (mbq) Reads with any base below this quality (after trimming) will be discarded.
     """
 
-    maxns: int | None = -1
+    maxns: int = -1
     """
     If non-negative, reads with more Ns than this (after trimming) will be discarded.
     """
 
-    mcb: int | None = 0
+    mcb: int = 0
     """
     (minconsecutivebases) Discard reads without at least this many consecutive called bases.
     """
 
-    ottm: Tfbool | None = "f"
+    ottm: Tfbool = "f"
     """
     (outputtrimmedtomatch) Output reads trimmed to shorter than minlength to outm rather than discarding.
     """
 
-    tp: int | None = 0
+    tp: int = 0
     """
     (trimpad) Trim this much extra around matching kmers.
     """
 
-    tbo: Tfbool | None = "f"
+    tbo: Tfbool = "f"
     """
     (trimbyoverlap) Trim adapters based on where paired reads overlap.
     """
 
-    strictoverlap: Tfbool | None = "t"
+    strictoverlap: Tfbool = "t"
     """
     Adjust sensitivity for trimbyoverlap mode.
     """
 
-    minoverlap: int | None = 14
+    minoverlap: int = 14
     """
     Require this many bases of overlap for detection.
     """
 
-    mininsert: int | None = 40
+    mininsert: int = 40
     """
     Require insert size of at least this for overlap.
     Should be reduced to 16 for small RNA sequencing.
     """
 
-    tpe: Tfbool | None = "f"
+    tpe: Tfbool = "f"
     """
     (trimpairsevenly) When kmer right-trimming, trim both reads to the minimum length of either.
     """
 
-    forcetrimleft: int | None = 0
+    forcetrimleft: int = 0
     """
     (ftl) If positive, trim bases to the left of this position (exclusive, 0-based).
     """
 
-    forcetrimright: int | None = 0
+    forcetrimright: int = 0
     """
     (ftr) If positive, trim bases to the right of this position (exclusive, 0-based).
 
     """
-    forcetrimright2: int | None = 0
+    forcetrimright2: int = 0
     """
     (ftr2) If positive, trim this many bases on the right end.
     """
 
-    forcetrimmod: int | None = 5
+    forcetrimmod: int = 5
     """
     (ftm) If positive, right-trim length to be equal to zero, modulo this number. bbduk default: 0
     """
 
-    restrictleft: int | None = 0
+    restrictleft: int = 0
     """
     If positive, only look for kmer matches in the leftmost X bases.
     """
 
-    restrictright: int | None = 0
+    restrictright: int = 0
     """
     If positive, only look for kmer matches in the rightmost X bases.
     """
 
-    mingc: float | None = 0
+    mingc: float = 0
     """
     Discard reads with GC content below this.
     """
 
-    maxgc: float | None = 1
+    maxgc: float = 1
     """
     Discard reads with GC content above this.
     """
 
-    gcpairs: Tfbool | None = "t"
+    gcpairs: Tfbool = "t"
     """
     Use average GC of paired reads.    Deprecated option? Also affects gchist.
     """
 
-    tossjunk: Tfbool | None = "f"
+    tossjunk: Tfbool = "f"
     """
     Discard reads with invalid characters as bases.
     """
 
-    swift: Tfbool | None = "f"
+    swift: Tfbool = "f"
     """
     Trim Swift sequences: Trailing C/T/N R1, leading G/A/N R2.
     """
 
-    chastityfilter: Tfbool | None = "f"
+    chastityfilter: Tfbool = "f"
     """
     (cf) Discard reads with id containing ' 1:Y:' or ' 2:Y:'.
     """
 
-    barcodefilter: Barcodefilter | None = "f"
+    barcodefilter: Barcodefilter = "f"
     """
     Remove reads with unexpected barcodes if barcodes is set,
     or barcodes containing 'N' otherwise.
@@ -741,81 +741,81 @@ class Bbduk(BaseModel):
       crash: Crash upon encountering bad barcodes.
     """
 
-    barcodes: str | None = ""
+    barcodes: str = ""
     """
     File of barcodes.
     """
 
-    xmin: int | None = -1
+    xmin: int = -1
     """
     If positive, discard reads with a lesser X coordinate.
     """
 
-    ymin: int | None = -1
+    ymin: int = -1
     """
     If positive, discard reads with a lesser Y coordinate.
     """
 
-    xmax: int | None = -1
+    xmax: int = -1
     """
     If positive, discard reads with a greater X coordinate.
     """
 
-    ymax: int | None = -1
+    ymax: int = -1
     """
     If positive, discard reads with a greater Y coordinate.
     """
 
-    trimpolya: int | None = 0
+    trimpolya: int = 0
     """
     If greater than 0, trim poly-A or poly-T tails of at least this length on either end of reads.
     """
 
-    trimpolygleft: int | None = 0
+    trimpolygleft: int = 0
     """
     If greater than 0, trim poly-G prefixes of at least this length on the left end of reads.
     Does not trim poly-C.
     """
 
-    trimpolygright: int | None = 8
+    trimpolygright: int = 8
     """
     If greater than 0, trim poly-G tails of at least this length on the right end of reads.
     Does not trim poly-C. bbduk default: don't trim polyG (trimpolyg=0)
     """
 
-    trimpolyg: int | None = 0
+    trimpolyg: int = 0
     """
     This sets both left and right at once.
     """
 
-    filterpolyg: int | None = 8
+    filterpolyg: int = 8
     """
     If greater than 0, remove reads with a poly-G prefix of at least this length (on the left).
     Note: there are also equivalent poly-C flags.
     """
 
-    entropy: float | None = -1
+    entropy: float = -1
     """
     Set between 0 and 1 to filter reads with entropy below that value.
     Higher is more stringent.
     """
 
-    entropywindow: int | None = 50
+    entropywindow: int = 50
     """
     Calculate entropy using a sliding window of this length.
     """
 
-    entropyk: int | None = 5
+    entropyk: int = 5
     """
     Calculate entropy using kmers of this length.
     """
 
-    minbasefrequency: float | None = 0
+    minbasefrequency: float = 0
     """
     Discard reads with a minimum base frequency below this.
     """
 
-    entropytrim: Entropytrim | None = "f"
+    entropytrim: Entropytrim = "f"
     """
     Values:
       f:  (false) Do not entropy-trim.
@@ -825,7 +825,7 @@ class Bbduk(BaseModel):
     NOTE: If set, entropytrim overrides entropymask.
     """
 
-    entropymask: Entropymask | None = "f"
+    entropymask: Entropymask = "f"
     """
     Values:
       f:  (filter) Discard low-entropy sequences.
@@ -833,29 +833,29 @@ class Bbduk(BaseModel):
       lc: Change low-entropy parts of sequences to lowercase.
     """
 
-    entropymark: Tfbool | None = "f"
+    entropymark: Tfbool = "f"
     """
     Mark each base with its entropy value.
     This is on a scale of 0-41 and is reported as quality scores,
     so the output should be fastq or fasta+qual. NOTE: If set, entropytrim overrides entropymask.
     """
 
-    cardinality: Tfbool | None = "f"
+    cardinality: Tfbool = "f"
     """
     (loglog) Count unique kmers using the LogLog algorithm.
     """
 
-    cardinalityout: Tfbool | None = "f"
+    cardinalityout: Tfbool = "f"
     """
     (loglogout) Count unique kmers in output reads.
     """
 
-    loglogk: Annotated[int | None, Field(31, ge=0)]
+    loglogk: Annotated[int, Field(31, gt=0)]
     """
     Use this kmer length for counting.
     """
 
-    loglogbuckets: Annotated[int | None, Field(2048, ge=0)]
+    loglogbuckets: Annotated[int, Field(2048, gt=0)]
     """
     Use this many buckets for counting.
     """

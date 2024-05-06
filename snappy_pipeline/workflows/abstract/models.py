@@ -53,6 +53,16 @@ def default_config_yaml_string(model: type[BaseModel], comment_optional: bool = 
     return _dump_commented_yaml(model, comment_optional)
 
 
+def check_model_class(annotation, clazz: type = BaseModel) -> bool:
+    """Checks whether the given annotation is a class and is a subclass of `clazz`"""
+    try:
+        is_model_class = isclass(annotation) and issubclass(annotation, clazz)
+    except TypeError:
+        # for some reason, types.GenericAlias doesn't count as a class?
+        is_model_class = hasattr(annotation, "model_fields")
+    return is_model_class
+
+
 def annotate_model(
     config_model: type[BaseModel],
     comment_map: ruamel.yaml.CommentedMap,
@@ -84,7 +94,7 @@ def annotate_model(
         options = []
         if field.json_schema_extra and "options" in field.json_schema_extra:
             options = field.json_schema_extra["options"]
-        if isclass(annotation) and issubclass(annotation, enum.Enum):
+        if check_model_class(annotation, enum.Enum):
             options = [(e.name, e.value) for e in annotation]
 
         if options:
@@ -114,7 +124,7 @@ def annotate_model(
                     )
                 )
 
-        if isclass(annotation) and issubclass(annotation, BaseModel):
+        if check_model_class(annotation):
             annotate_model(
                 annotation,
                 comment_map[key],
@@ -125,13 +135,14 @@ def annotate_model(
         elif is_union_type(annotation):
             if len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
                 sub_model = next(filter(lambda s: s is not types.NoneType, args))
-                if isclass(sub_model) and issubclass(sub_model, BaseModel):
+                if check_model_class(sub_model):
                     # when the default is set to None but the annotation inherits from basemodel,
                     # make sure to generate those entries as well
                     if not comment_map[key]:
-                        sub_model_yaml, _ = _model_to_commented_yaml(
+                        sub_model_yaml, m = _model_to_commented_yaml(
                             _placeholder_model_instance(sub_model)
                         )
+                        max_column = max(m + 2, max_column)
                         comment_map[key] = sub_model_yaml
                     annotate_model(
                         sub_model,
@@ -140,7 +151,7 @@ def annotate_model(
                         max_column=max_column,
                         path=path + [key],
                     )
-        elif isclass(annotation) and issubclass(annotation, typing.Collection):
+        elif check_model_class(annotation, typing.Collection):
             for s in filter(lambda c: issubclass(c, BaseModel), typing.get_args(annotation)):
                 annotate_model(
                     s, comment_map[key], level=level + 1, max_column=max_column, path=path + [key]
@@ -153,7 +164,7 @@ def is_union_type(typ_) -> bool:
 
 def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
     """
-    Constructs a model instance where the value of required fields are replaced by a placeholder
+    Constructs a model instance where the values of required fields are replaced by a placeholder
     """
     placeholders = {}
     # recurse into (optional) fields which are themselves pydantic models
@@ -169,7 +180,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
                         placeholders[name] = _placeholder_model_instance(sub_model, placeholder)
 
         # required fields, i.e. `Model`
-        if isclass(annotation) and issubclass(annotation, BaseModel):
+        if check_model_class(annotation):
             placeholders[name] = _placeholder_model_instance(annotation)
 
     # replace values of undefined required fields with `placeholder`
@@ -189,6 +200,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
 def _yaml_instance():
     yaml = YAML(typ="rt")
     yaml.indent(mapping=INDENTATION, offset=INDENTATION)
+    yaml.sequence_indent = INDENTATION
     yaml.block_seq_indent = INDENTATION
     return yaml
 
@@ -197,7 +209,7 @@ def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) 
     invalid_model_instance = _placeholder_model_instance(model)
 
     cfg, max_column = _model_to_commented_yaml(invalid_model_instance)
-
+    max_column = max(50, max_column)
     annotate_model(model, cfg, max_column=max_column)
     key_paths = _optional_key_paths(model, cfg)
     if comment_optional:
@@ -284,7 +296,7 @@ def _optional_key_paths(
         if is_optional:
             optional_keys.append(path_)
 
-        if isclass(annotation) and issubclass(annotation, BaseModel):
+        if check_model_class(annotation):
             optional_keys.extend(_optional_key_paths(annotation, comment_map[key], path_))
 
     return optional_keys

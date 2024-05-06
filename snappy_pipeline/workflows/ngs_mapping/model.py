@@ -1,12 +1,15 @@
 import os
 from enum import Enum
-from pathlib import Path
-from typing import Annotated, Self
+from typing import Annotated
 
-from pydantic import model_validator, Field, FilePath, DirectoryPath, field_validator
-from pydantic.types import PathType
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
-from ..abstract.models import SnappyModel, EnumField, SizeString
+from pydantic import DirectoryPath, Field, FilePath, field_validator, model_validator
+
+from ..abstract.models import EnumField, SizeString, SnappyModel
 
 
 class DnaMapper(Enum):
@@ -195,34 +198,34 @@ class Agent(SnappyModel):
 class Star(SnappyModel):
     path_index: FilePath | str
     """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
-    num_threads_align: int | None = 16
-    num_threads_trimming: int | None = 8
-    num_threads_bam_view: int | None = 4
-    num_threads_bam_sort: int | None = 4
-    memory_bam_sort: SizeString | None = "4G"
-    genome_load: str | None = "NoSharedMemory"
-    raw_star_options: str | None = ""
-    align_intron_max: int | None = 1000000  # ENCODE option
-    align_intron_min: int | None = 20  # ENCODE option
-    align_mates_gap_max: int | None = 1000000  # ENCODE option
-    align_sjdb_overhang_min: int | None = 1  # ENCODE option
-    align_sj_overhang_min: int | None = 8  # ENCODE option
-    out_filter_mismatch_n_max: int | None = 999  # ENCODE option
-    out_filter_mismatch_n_over_l_max: float | None = 0.04  # ENCODE option
-    out_filter_multimap_n_max: int | None = 20  # ENCODE option
-    out_filter_type: str | None = "BySJout"  # ENCODE option
-    out_filter_intron_motifs: str | None = None
+    num_threads_align: int = 16
+    num_threads_trimming: int = 8
+    num_threads_bam_view: int = 4
+    num_threads_bam_sort: int = 4
+    memory_bam_sort: SizeString = "4G"
+    genome_load: str = "NoSharedMemory"
+    raw_star_options: str = ""
+    align_intron_max: int = 1000000  # ENCODE option
+    align_intron_min: int = 20  # ENCODE option
+    align_mates_gap_max: int = 1000000  # ENCODE option
+    align_sjdb_overhang_min: int = 1  # ENCODE option
+    align_sj_overhang_min: int = 8  # ENCODE option
+    out_filter_mismatch_n_max: int = 999  # ENCODE option
+    out_filter_mismatch_n_over_l_max: float = 0.04  # ENCODE option
+    out_filter_multimap_n_max: int = 20  # ENCODE option
+    out_filter_type: str = "BySJout"  # ENCODE option
+    out_filter_intron_motifs: str = None
     """or for cufflinks: RemoveNoncanonical"""
 
-    out_sam_strand_field: str | None = None
+    out_sam_strand_field: str = None
     """or for cufflinks: intronMotif"""
 
-    transcriptome: bool | None = False
+    transcriptome: bool = False
     """true to output transcript coordinate bam for RSEM"""
 
-    trim_adapters: bool | None = False
-    mask_duplicates: bool | None = False
-    include_unmapped: bool | None = True
+    trim_adapters: bool = False
+    mask_duplicates: bool = False
+    include_unmapped: bool = True
 
 
 class Strand(Enum):
