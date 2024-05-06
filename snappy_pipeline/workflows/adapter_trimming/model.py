@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 from typing_extensions import Annotated
 
-from ..abstract.models import EnumField, SnappyModel
+from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(Enum):
@@ -72,9 +72,16 @@ class Barcodefilter(Enum):
 
 class Entropytrim(Enum):
     F = "f"
+    """Do not entropy-trim"""
+
     R = "r"
+    """Trim low entropy on the right end only."""
+
     L = "l"
+    """Trim low entropy on the left end only."""
+
     RL = "rl"
+    """Trim low entropy on both ends."""
 
 
 class Entropymask(Enum):
@@ -90,7 +97,7 @@ class UmiLoc(Enum):
     READ2 = "read2"
     PER_INDEX = "per_index"
     PER_READ = "per_read"
-    FIELD_ = ""
+    NONE = ""
 
 
 class Fastp(SnappyModel):
@@ -321,10 +328,10 @@ class Fastp(SnappyModel):
     enable unique molecular identifier (UMI) preprocessing
     """
 
-    umi_loc: UmiLoc = ""
+    umi_loc: UmiLoc = UmiLoc.NONE
     """
-    specify the location of UMI, can be (index1/index2/read1/read2/per_index/per_read,
-    default is none (string [=])
+    specify the location of UMI, can be (index1/index2/read1/read2/per_index/per_read/""),
+    default is "" (none).
     """
 
     umi_len: int = 0
@@ -357,9 +364,8 @@ class Tfbool(Enum):
 
 
 class Bbduk(SnappyModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
+    """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
+
     adapter_sequences: Annotated[
         list[str],
         Field(
@@ -373,7 +379,6 @@ class Bbduk(SnappyModel):
             ]
         ),
     ]
-    """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
 
     num_threads: int = 8
     interleaved: Tfbool | Interleaved = "auto"
@@ -663,6 +668,7 @@ class Bbduk(SnappyModel):
     tbo: Tfbool = "f"
     """
     (trimbyoverlap) Trim adapters based on where paired reads overlap.
+    Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads.
     """
 
     strictoverlap: Tfbool = "t"
@@ -684,6 +690,7 @@ class Bbduk(SnappyModel):
     tpe: Tfbool = "f"
     """
     (trimpairsevenly) When kmer right-trimming, trim both reads to the minimum length of either.
+    Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads.
     """
 
     forcetrimleft: int = 0
@@ -877,7 +884,7 @@ class Bbduk(SnappyModel):
     """
 
 
-class AdapterTrimming(SnappyModel):
+class AdapterTrimming(SnappyStepModel):
     path_link_in: str | None = None
     """Override data set configuration search paths for FASTQ files"""
 
