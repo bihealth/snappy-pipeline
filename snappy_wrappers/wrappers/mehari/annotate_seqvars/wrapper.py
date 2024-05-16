@@ -58,21 +58,31 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-# Extract around BED file, if given.
+# Extract around BED file, if given.  Otherwise, "just" normalize.
 if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
     set -e
     bcftools view \
         -R {export_config[path_exon_bed]} \
         {snakemake.input.vcf} \
+    | bcftools norm \
+        -m -any \
+        --force \
+        --fasta-ref {snakemake.config[static_data_config][reference][path]} \
     | bcftools sort -T $TMPDIR \
-    | bcftools norm -d all \
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
 else
     set -e
-    ln -sr {snakemake.input.vcf} $TMPDIR/tmp.vcf.gz
-    ln -sr {snakemake.input.vcf}.tbi $TMPDIR/tmp.vcf.gz.tbi
+    bcftools norm \
+        -m -any \
+        --force \
+        --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+        {snakemake.input.vcf} \
+    | bcftools sort -T $TMPDIR \
+    | bgzip -c \
+    > $TMPDIR/tmp.vcf.gz
+    tabix -f $TMPDIR/tmp.vcf.gz
 fi
 
 # Perform Mehari sequence variant annotation.
