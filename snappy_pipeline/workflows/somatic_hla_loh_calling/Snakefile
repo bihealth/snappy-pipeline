@@ -60,9 +60,10 @@ localrules:
     somatic_hla_loh_calling_link_out_run,
 
 
-rule all:
+rule somatic_hla_loh_calling_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

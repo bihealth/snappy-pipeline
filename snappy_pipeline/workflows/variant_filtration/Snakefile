@@ -47,9 +47,10 @@ localrules:
     variant_filtration_link_out_run,
 
 
-rule all:
+rule variant_filtration_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
