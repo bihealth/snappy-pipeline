@@ -277,7 +277,7 @@ class BbdukStepPart(AdapterTrimmingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["bbduk"]["num_threads"],
+            threads=self.config_model.bbduk.num_threads,
             time="12:00:00",  # 40 hours
             memory="24000M",
         )
@@ -300,7 +300,7 @@ class FastpStepPart(AdapterTrimmingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["fastp"]["num_threads"],
+            threads=self.config_model.fastp.num_threads,
             time="12:00:00",  # 60 hours
             memory="24000M",
         )
