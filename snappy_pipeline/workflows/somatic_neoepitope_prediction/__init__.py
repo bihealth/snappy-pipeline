@@ -204,80 +204,6 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             memory=f"{mem_mb}M",
         )
 
-    @listify
-    def get_result_files(self):
-        callers = set(
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_calling"
-            ]
-        )
-        anno_callers = set(
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_annotation"
-            ]
-        )
-        if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "gene"
-        ):
-            name_pattern = "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library.name}"
-        elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "transcript"
-        ):
-            name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
-
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_ngs_mapping"
-            ],
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
-            anno_caller=anno_callers,
-            ext=EXT_VALUES,
-        )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_ngs_mapping"
-            ],
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
-            anno_caller=anno_callers,
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-            ),
-        )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                    or not sample_pair.tumor_sample.rna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl,
-                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
-                )
-
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
     """Perform neoepitope prediction workflow"""
@@ -346,10 +272,79 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 "path_features"
             ] = self.w_config["static_data_config"]["features"]["path"]
 
+    @listify
     def get_result_files(self):
-        for sub_step in self.sub_steps.values():
-            if sub_step.name not in (LinkOutStepPart.name,):
-                yield from sub_step.get_result_files()
+        callers = set(
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_somatic_variant_calling"
+            ]
+        )
+        anno_callers = set(
+            self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_somatic_variant_annotation"
+            ]
+        )
+        if (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
+            == "gene"
+        ):
+            name_pattern = "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library.name}"
+        elif (
+            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
+            == "transcript"
+        ):
+            name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
+
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_ngs_mapping"
+            ],
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            anno_caller=anno_callers,
+            ext=EXT_VALUES,
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
+                "tools_ngs_mapping"
+            ],
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            anno_caller=anno_callers,
+            ext=(
+                ".log",
+                ".log.md5",
+                ".conda_info.txt",
+                ".conda_info.txt.md5",
+                ".conda_list.txt",
+                ".conda_list.txt.md5",
+            ),
+        )
+
+    def _yield_result_files_matched(self, tpl, **kwargs):
+        """Build output paths from path template and extension list.
+
+        This function returns the results from the matched somatic variant callers such as
+        Mutect.
+        """
+        for sheet in filter(is_not_background, self.shortcut_sheets):
+            for sample_pair in sheet.all_sample_pairs:
+                if (
+                    not sample_pair.tumor_sample.dna_ngs_library
+                    or not sample_pair.normal_sample.dna_ngs_library
+                    or not sample_pair.tumor_sample.rna_ngs_library
+                ):
+                    msg = (
+                        "INFO: sample pair for cancer bio sample {} has is missing primary"
+                        "normal or primary cancer NGS library"
+                    )
+                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
+                    continue
+                yield from expand(
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
+                )
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""

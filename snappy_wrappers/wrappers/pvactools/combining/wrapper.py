@@ -21,6 +21,9 @@ preparation_vcf = os.path.join(
 ensemble_id = (
     "--ignore-ensembl-id-version" if config["preparation"]["ignore-ensembl-id-version"] else ""
 )
+id_column = (
+    "--id-column " + str(config["preparation"]["id-column"]) if  config["preparation"]["format"] == "custom" else ""
+)
 
 shell(
     r"""
@@ -73,6 +76,7 @@ python3 -W ignore {preparation_vcf} \
     -e {config[preparation][expression-column]} \
     -s {snakemake.wildcards.tumor_library} \
     -o /dev/stdout \
+    "{id_column}" \
     "{ensemble_id}" \
 | bgzip -c > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
