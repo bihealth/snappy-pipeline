@@ -10,10 +10,9 @@ import sys
 from typing import Any, TypeVar
 import warnings
 
-import pydantic
 import ruamel.yaml as ruamel_yaml
 
-from workflows.abstract import SnappyStepModel
+from .workflows.abstract import SnappyStepModel
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -73,6 +72,8 @@ def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict
 
 
 C = TypeVar("C", bound=SnappyStepModel)
+
+
 def validate_config(
     config: dict[Any, Any],
     model: type[C],
