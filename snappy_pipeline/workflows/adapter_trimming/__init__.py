@@ -180,7 +180,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config_model.path_link_in,
         )
 
     @dictify
@@ -227,7 +227,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
 
         def args_function(wildcards):
             folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-            if self.config["path_link_in"]:
+            if self.config_model.path_link_in:
                 folder_name = wildcards.library_name
             reads_left = self._collect_reads(wildcards, folder_name, "")
             reads_right = self._collect_reads(wildcards, folder_name, "right-")
@@ -391,6 +391,6 @@ class AdapterTrimmingWorkflow(BaseStep):
         )
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config["tools"]:
+                for tool in self.config_model.tools:
                     for tpl in tpls:
                         yield tpl.format(trimmer=tool, ngs_library_name=ngs_library.name)
