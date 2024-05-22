@@ -680,6 +680,7 @@ class BaseStep:
                 f"No pydantic model named {model_name} found in {model_path} (for step {self.name}), "
                 f"skipping validation",
             )
+            self.config_model = None
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
             raise ve
