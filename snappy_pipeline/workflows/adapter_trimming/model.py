@@ -6,10 +6,15 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, PlainSerializer
 from typing_extensions import Annotated
 
 from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
+
+# A bool type that serializes to "t" when True and "f" when False
+# (which are the values bbduk expects)
+TfBool = Annotated[
+    bool, PlainSerializer(lambda v: "t" if v else "f", return_type="str", when_used="json")]
 
 
 class Tool(Enum):
@@ -358,11 +363,6 @@ class Fastp(SnappyModel):
     """
 
 
-class Tfbool(Enum):
-    T = "t"
-    F = "f"
-
-
 class Bbduk(SnappyModel):
     """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
 
@@ -381,7 +381,7 @@ class Bbduk(SnappyModel):
     ]
 
     num_threads: int = 8
-    interleaved: Tfbool | Interleaved = "auto"
+    interleaved: TfBool | Interleaved = "auto"
     """
     (int) t/f overrides interleaved autodetection.
     """
@@ -391,13 +391,13 @@ class Bbduk(SnappyModel):
     Input quality offset: 33 (Sanger), 64, or auto.
     """
 
-    copyundefined: Tfbool = "f"
+    copyundefined: TfBool = False
     """
     (cu) Process non-AGCT IUPAC reference bases by making all possible unambiguous copies.
     Intended for short motifs or adapter barcodes, as time/memory use is exponential.
     """
 
-    nzo: Tfbool = "t"
+    nzo: TfBool = True
     """
     Only write statistics about ref sequences with nonzero hits.
     """
@@ -412,22 +412,22 @@ class Bbduk(SnappyModel):
     (cols) Number of columns for stats output, 3 or 5. 5 includes base counts.
     """
 
-    rename: Tfbool = "f"
+    rename: TfBool = False
     """
     Rename reads to indicate which sequences they matched.
     """
 
-    refnames: Tfbool = "f"
+    refnames: TfBool = False
     """
     Use names of reference files rather than scaffold IDs.
     """
 
-    trd: Tfbool = "f"
+    trd: TfBool = False
     """
     Truncate read and ref names at the first whitespace.
     """
 
-    ordered: Tfbool = "f"
+    ordered: TfBool = False
     """
     Set to true to output reads in same order as input.
     """
@@ -443,7 +443,7 @@ class Bbduk(SnappyModel):
     The default is 6000 for some histograms and 80000 for others.
     """
 
-    histbefore: Tfbool = "t"
+    histbefore: TfBool = True
     """
     Calculate histograms from reads before processing.
     """
@@ -460,12 +460,12 @@ class Bbduk(SnappyModel):
     k must be at least 1. bbduk default: 27
     """
 
-    rcomp: Tfbool = "t"
+    rcomp: TfBool = True
     """
     Look for reverse-complements of kmers in addition to forward kmers.
     """
 
-    maskmiddle: Tfbool = "t"
+    maskmiddle: TfBool = True
     """
     (mm) Treat the middle base of a kmer as a wildcard,
     to increase sensitivity in the presence of errors.
@@ -522,41 +522,41 @@ class Bbduk(SnappyModel):
     (edist2) Sets edist for short kmers, when using mink.
     """
 
-    forbidn: Tfbool = "f"
+    forbidn: TfBool = False
     """
     (fn) Forbids matching of read kmers containing N.
     By default, these will match a reference 'A' if hdist>0 or edist>0, to increase sensitivity.
     """
 
-    removeifeitherbad: Tfbool = "t"
+    removeifeitherbad: TfBool = True
     """
     (rieb) Paired reads get sent to 'outmatch' if either is match
     (or either is trimmed shorter than minlen).
     Set to false to require both.
     """
 
-    trimfailures: Tfbool = "f"
+    trimfailures: TfBool = False
     """
     Instead of discarding failed reads, trim them to 1bp.
     This makes the statistics a bit odd.
     """
 
-    findbestmatch: Tfbool = "f"
+    findbestmatch: TfBool = False
     """
     (fbm) If multiple matches, associate read with sequence sharing most kmers. Reduces speed.
     """
 
-    skipr1: Tfbool = "f"
+    skipr1: TfBool = False
     """
     Don't do kmer-based operations on read 1.
     """
 
-    skipr2: Tfbool = "f"
+    skipr2: TfBool = False
     """
     Don't do kmer-based operations on read 2.
     """
 
-    ecco: Tfbool = "f"
+    ecco: TfBool = False
     """
     For overlapping paired reads only.
     Performs error- correction with BBMerge prior to kmer operations.
@@ -577,12 +577,12 @@ class Bbduk(SnappyModel):
     'kmask: lc' will convert masked bases to lowercase.
     """
 
-    maskfullycovered: Tfbool = "f"
+    maskfullycovered: TfBool = False
     """
     (mfc) Only mask bases that are fully covered by kmers.
     """
 
-    ksplit: Tfbool = "f"
+    ksplit: TfBool = False
     """
     For single-ended reads only.
     Reads will be split into pairs around the kmer.
@@ -655,7 +655,7 @@ class Bbduk(SnappyModel):
     (minconsecutivebases) Discard reads without at least this many consecutive called bases.
     """
 
-    ottm: Tfbool = "f"
+    ottm: TfBool = False
     """
     (outputtrimmedtomatch) Output reads trimmed to shorter than minlength to outm rather than discarding.
     """
@@ -665,13 +665,13 @@ class Bbduk(SnappyModel):
     (trimpad) Trim this much extra around matching kmers.
     """
 
-    tbo: Tfbool = "f"
+    tbo: TfBool = False
     """
     (trimbyoverlap) Trim adapters based on where paired reads overlap.
     Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads.
     """
 
-    strictoverlap: Tfbool = "t"
+    strictoverlap: TfBool = True
     """
     Adjust sensitivity for trimbyoverlap mode.
     """
@@ -687,7 +687,7 @@ class Bbduk(SnappyModel):
     Should be reduced to 16 for small RNA sequencing.
     """
 
-    tpe: Tfbool = "f"
+    tpe: TfBool = False
     """
     (trimpairsevenly) When kmer right-trimming, trim both reads to the minimum length of either.
     Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads.
@@ -733,22 +733,22 @@ class Bbduk(SnappyModel):
     Discard reads with GC content above this.
     """
 
-    gcpairs: Tfbool = "t"
+    gcpairs: TfBool = True
     """
     Use average GC of paired reads.    Deprecated option? Also affects gchist.
     """
 
-    tossjunk: Tfbool = "f"
+    tossjunk: TfBool = False
     """
     Discard reads with invalid characters as bases.
     """
 
-    swift: Tfbool = "f"
+    swift: TfBool = False
     """
     Trim Swift sequences: Trailing C/T/N R1, leading G/A/N R2.
     """
 
-    chastityfilter: Tfbool = "f"
+    chastityfilter: TfBool = False
     """
     (cf) Discard reads with id containing ' 1:Y:' or ' 2:Y:'.
     """
@@ -856,19 +856,19 @@ class Bbduk(SnappyModel):
       lc: Change low-entropy parts of sequences to lowercase.
     """
 
-    entropymark: Tfbool = "f"
+    entropymark: TfBool = False
     """
     Mark each base with its entropy value.
     This is on a scale of 0-41 and is reported as quality scores,
     so the output should be fastq or fasta+qual. NOTE: If set, entropytrim overrides entropymask.
     """
 
-    cardinality: Tfbool = "f"
+    cardinality: TfBool = False
     """
     (loglog) Count unique kmers using the LogLog algorithm.
     """
 
-    cardinalityout: Tfbool = "f"
+    cardinalityout: TfBool = False
     """
     (loglogout) Count unique kmers in output reads.
     """
