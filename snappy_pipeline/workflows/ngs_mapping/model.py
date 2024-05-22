@@ -9,7 +9,7 @@ except ImportError:
 
 from pydantic import DirectoryPath, Field, FilePath, field_validator, model_validator
 
-from ..abstract.models import EnumField, SizeString, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
 
 
 class DnaMapper(Enum):

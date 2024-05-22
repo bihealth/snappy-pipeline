@@ -12,7 +12,7 @@ import warnings
 
 import ruamel.yaml as ruamel_yaml
 
-from .workflows.abstract import SnappyStepModel
+from .models import SnappyStepModel
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:

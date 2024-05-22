@@ -47,7 +47,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
 
-from .models import ConfigModel, SnappyStepModel, _dump_commented_yaml, _placeholder_model_instance
+from snappy_pipeline.models import SnappyStepModel, default_config_yaml_string
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -671,7 +671,7 @@ class BaseStep:
             if workflow.verbose:
                 logging.info(
                     f"default config yaml for {model_name}\n"
-                    + models.default_config_yaml_string(model, comment_optional=True)
+                    + default_config_yaml_string(model, comment_optional=True)
                 )
             self.config_model = validate_config(self.config, model)
         except ModuleNotFoundError:

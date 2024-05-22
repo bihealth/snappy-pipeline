@@ -2,9 +2,9 @@ import enum
 from os import PathLike
 from typing import Annotated
 
-from pydantic import AfterValidator, DirectoryPath, Field, FilePath
+from pydantic import AfterValidator, DirectoryPath, Field
 
-from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.Enum):

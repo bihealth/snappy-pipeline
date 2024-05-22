@@ -9,7 +9,7 @@ from enum import Enum
 from pydantic import Field, PlainSerializer
 from typing_extensions import Annotated
 
-from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 # A bool type that serializes to "t" when True and "f" when False
 # (which are the values bbduk expects)
