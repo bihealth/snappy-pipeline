@@ -291,10 +291,8 @@ def parse_expression_file(args, vcf_reader, vcf_writer):
                 id_column, args.expression_file
             )
         )
-    if (args.ignore_ensembl_id_version):
-        df[id_column] = df[id_column].apply(
-            lambda x: re.sub(r"\.[0-9]+$", "", x)
-        )
+    if args.ignore_ensembl_id_version:
+        df[id_column] = df[id_column].apply(lambda x: re.sub(r"\.[0-9]+$", "", x))
     exp_df = df[[id_column, expression_column]]
     exp_dict = exp_df.set_index(id_column)[expression_column].to_dict()
     return exp_dict

@@ -22,7 +22,9 @@ ensemble_id = (
     "--ignore-ensembl-id-version" if config["preparation"]["ignore-ensembl-id-version"] else ""
 )
 id_column = (
-    "--id-column " + str(config["preparation"]["id-column"]) if  config["preparation"]["format"] == "custom" else ""
+    "--id-column " + str(config["preparation"]["id-column"])
+    if config["preparation"]["format"] == "custom"
+    else ""
 )
 
 shell(
