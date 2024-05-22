@@ -14,7 +14,8 @@ from ..abstract.models import EnumField, SnappyModel, SnappyStepModel
 # A bool type that serializes to "t" when True and "f" when False
 # (which are the values bbduk expects)
 TfBool = Annotated[
-    bool, PlainSerializer(lambda v: "t" if v else "f", return_type="str", when_used="json")]
+    bool, PlainSerializer(lambda v: "t" if v else "f", return_type="str", when_used="json")
+]
 
 
 class Tool(Enum):
