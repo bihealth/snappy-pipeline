@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models import SnappyStepModel, EnumField, SnappyModel
 
