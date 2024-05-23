@@ -1,7 +1,7 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models import SnappyStepModel, SnappyModel, EnumField
 from models.gcnv import PrecomputedModelEntry
@@ -135,3 +135,12 @@ class SvCallingWgs(SnappyStepModel):
     sniffles2: Sniffles2 | None = None
 
     ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "chrUn_*"]
+
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        for data_type in ("dna", "dna_long"):
+            tool_list = getattr(self.tools, data_type)
+            for tool in tool_list:
+                if not getattr(self, tool):
+                    raise ValueError(f"Tool {tool} not configured")
+        return self

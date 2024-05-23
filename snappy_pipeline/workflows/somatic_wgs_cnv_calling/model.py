@@ -1,7 +1,7 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models import SnappyStepModel, EnumField, SnappyModel
 from models.cnvkit import Cnvkit
@@ -85,3 +85,10 @@ class SomaticWgsCnvCalling(SnappyStepModel):
     control_freec: ControlFreec | None = None
 
     cnvkit: CnvkitWgs | None = None
+
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        for tool in self.tools:
+            if not getattr(self, str(tool)):
+                raise ValueError(f"Tool {tool} not configured")
+        return self

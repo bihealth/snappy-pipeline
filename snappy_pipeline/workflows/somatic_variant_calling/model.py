@@ -1,8 +1,8 @@
 import enum
 from os import PathLike
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import AfterValidator, DirectoryPath, Field
+from pydantic import AfterValidator, DirectoryPath, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
@@ -246,3 +246,10 @@ class SomaticVariantCalling(SnappyStepModel):
 
     varscan_joint: VarscanJoint | None = None
     """Configuration for VarscanJoint"""
+
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        for tool in self.tools:
+            if not getattr(self, str(tool)):
+                raise ValueError(f"Tool {tool} not configured")
+        return self
