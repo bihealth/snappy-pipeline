@@ -106,6 +106,23 @@ class SomaticVariantFiltration(SnappyStepModel):
     eb_filter: Annotated[EbfilterSet | None, Field(deprecated="use filter_list instead")] = None
 
     filter_list: list[Filter] = []
+    """
+    Available filters
+    dkfz: {}                                         # Not parametrisable
+    ebfilter:
+      ebfilter_threshold: 2.4
+      shuffle_seed: 1
+      panel_of_normals_size: 25
+      min_mapq: 20
+      min_baseq: 15
+    bcftools:
+      include: ""                                   # Expression to be used in bcftools view --include
+      exclude: ""                                   # Expression to be used in bcftools view --exclude
+    regions:
+      path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    protected:
+      path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
+    """
 
     @model_validator(mode="after")
     def ensure_filter_list_is_configured_correctly(self: Self) -> Self:
