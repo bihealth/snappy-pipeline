@@ -139,3 +139,9 @@ class SomaticVariantFiltration(SnappyStepModel):
             if num_dkfz > 1:
                 raise ValueError("Only one dkfz is allowed")
         return self
+
+    @model_validator(mode="after")
+    def ensure_either_filter_sets_or_filter_list_is_configured(self: Self) -> Self:
+        if self.filter_sets and self.filter_list:
+            raise ValueError("Either filter_sets or filter_list must be set")
+        return self
