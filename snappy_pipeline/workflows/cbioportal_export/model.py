@@ -3,7 +3,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
+
+from models import SnappyStepModel, SnappyModel
 
 
 class MappingTool(Enum):
@@ -29,7 +31,7 @@ class FilterSet(Enum):
     DKFZ_AND_EBFILTER_AND_OXOG = "dkfz_and_ebfilter_and_oxog"
 
 
-class Filter(BaseModel):
+class Filter(SnappyModel):
     pass
 
 
@@ -73,12 +75,12 @@ class NcbiBuild(Enum):
     GRCh38 = "GRCh38"
 
 
-class Vcf2Maf(BaseModel):
+class Vcf2Maf(SnappyModel):
     Center: str
     ncbi_build: NcbiBuild
 
 
-class Study(BaseModel):
+class Study(SnappyModel):
     type_of_cancer: str
     """
     see http://oncotree.mskcc.org/#/home
@@ -91,7 +93,7 @@ class Study(BaseModel):
     study_name_short: str
 
 
-class CbioportalExport(BaseModel):
+class CbioportalExport(SnappyStepModel):
     model_config = ConfigDict(
         extra="forbid",
     )
