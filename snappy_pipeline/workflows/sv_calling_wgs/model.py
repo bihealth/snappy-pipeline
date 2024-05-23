@@ -3,15 +3,25 @@ from typing import Annotated
 
 from pydantic import Field
 
-from models import SnappyStepModel, EnumField, SnappyModel
-from models.gcnv import TargetIntervalEntry, PrecomputedModelEntry
+from models import SnappyStepModel, SnappyModel, EnumField
+from models.gcnv import PrecomputedModelEntry
 
 
-class Tool(enum.Enum):
-    gcnv = "gcnv"
+class DnaTool(enum.Enum):
     delly2 = "delly2"
     manta = "manta"
+    popdel = "popdel"
+    gcnv = "gcnv"
     melt = "melt"
+
+
+class DnaLongTool(enum.Enum):
+    sniffles2 = "sniffles2"
+
+
+class Tools(SnappyModel):
+    dna: Annotated[list[DnaTool], EnumField(DnaTool, [DnaTool.delly2])]
+    dna_long: Annotated[list[DnaLongTool], EnumField(DnaLongTool, [])]
 
 
 class Gcnv(SnappyModel):
@@ -26,6 +36,9 @@ class Gcnv(SnappyModel):
         contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
         model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
     """
+
+    path_uniquely_mapable_bed: str  # "mapable" is a typo in the original code
+    """Path to BED file with uniquely mappable regions."""
 
     skip_libraries: list[str] = []
     """
@@ -76,24 +89,49 @@ class Melt(SnappyModel):
     """
 
 
-class SvCallingTargeted(SnappyStepModel):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+class Popdel(SnappyModel):
+    window_size: int = 10000000
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta])]
+    max_sv_size: int = 20000
+    """== padding"""
 
-    path_target_interval_list_mapping: list[TargetIntervalEntry]
+    skip_libraries: list[str] = []
     """
-    The following allows to define one or more set of target intervals.  This is only used by gcnv.
-    Example:
-     - name: "Agilent SureSelect Human All Exon V6"
-       pattern: "Agilent SureSelect Human All Exon V6.*"
-       path: "path/to/targets.bed"
+    Skip processing of the following libraries.
+    If the library is in family/pedigree then all of the family/pedigree will be skipped.
     """
 
-    gcnv: Gcnv | None = None
 
-    dell2: Delly2 | None = None
+class Sniffles2(SnappyModel):
+    tandem_repeats: Annotated[
+        str,
+        Field(
+            examples=[
+                "/fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed"
+            ]
+        ),
+    ]
+
+    skip_libraries: list[str] = []
+    """
+    Skip processing of the following libraries.
+    If the library is in family/pedigree then all of the family/pedigree will be skipped.
+    """
+
+
+class SvCallingWgs(SnappyStepModel):
+    tools: Tools
+
+    delly2: Delly2 | None = None
 
     manta: Manta | None = None
 
+    popdel: Popdel | None = None
+
+    gcnv: Gcnv | None = None
+
     melt: Melt | None = None
+
+    sniffles2: Sniffles2 | None = None
+
+    ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "chrUn_*"]
