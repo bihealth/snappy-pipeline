@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from models import SnappyStepModel, EnumField, SnappyModel
+from models.annotation import Vep
 
 
 class Tool(enum.Enum):
@@ -51,41 +52,6 @@ class Jannovar(SnappyModel):
 
     ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "GL*", "*_decoy", "HLA-*"]
     """patterns of chromosome names to ignore"""
-
-
-class VepTxFlag(enum.Enum):
-    gencode_basic = "gencode_basic"
-    refseq = "refseq"
-    merged = "merged"
-
-
-class Vep(SnappyModel):
-    cache_dir: str = ""
-    """Defaults to $HOME/.vep Not a good idea on the cluster"""
-
-    species: str = "homo_sapiens"
-
-    assembly: str = "GRCh38"
-
-    cache_version: int = 102
-    """WARNING- this must match the wrapper's vep version!"""
-
-    tx_flag: VepTxFlag = VepTxFlag.gencode_basic
-    """The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged"."""
-
-    pick_order: list[str] = [
-        "biotype",
-        "mane",
-        "appris",
-        "tsl",
-        "ccds",
-        "canonical",
-        "rank",
-        "length",
-    ]
-    num_threads: int = 8
-    buffer_size: int = 1000
-    output_options: list[str] = ["everything"]
 
 
 class SomaticVariantAnnotation(SnappyStepModel):
