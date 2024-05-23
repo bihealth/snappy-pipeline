@@ -121,7 +121,7 @@ class CbioportalExport(BaseModel):
         str | None,
         Field(
             "genome_wide",
-            deprecated="Works together with filter_set, " "ignored when `filter_list` is selected",
+            deprecated="Works together with filter_set, ignored when `filter_list` is selected",
         ),
     ]
     """
