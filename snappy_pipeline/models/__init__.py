@@ -38,9 +38,15 @@ class SnappyStepModel(SnappyModel, object):
         config_str = default_config_yaml_string(cls, comment_optional)
         if with_step_config:
             config_str = (
-                (" " * INDENTATION + line) for line in config_str.splitlines(keepends=True)
+                (" " * INDENTATION * 2 + line) for line in config_str.splitlines(keepends=True)
             )
-            config_str = f"step_config:\n{''.join(config_str)}"
+
+            def camel_to_snake(name: str) -> str:
+                name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+                return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+            name = camel_to_snake(cls.__name__)
+            config_str = "step_config:\n" f"{' ' * INDENTATION}{name}:\n" f"{''.join(config_str)}"
 
         return config_str
 
