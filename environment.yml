@@ -8,9 +8,12 @@ name: snappy_env
 dependencies:
 
   # Fundamentals
-  - python =3.11
+  - python =3.12
   - pip
   - git-lfs
+
+  # pydantic is used to validate configuration files
+  - pydantic
 
   # Snakemake is used for providing the actual wrapper calling functionality
   - snakemake =7
