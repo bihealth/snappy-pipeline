@@ -345,3 +345,9 @@ class ConfigModel(SnappyModel):
     static_data_config: StaticDataConfig
     step_config: dict[str, typing.Type[SnappyStepModel]]
     data_sets: dict[str, DataSet]
+
+
+class KeepTmpdir(enum.Enum):
+    always = "always"
+    never = "never"
+    onerror = "onerror"

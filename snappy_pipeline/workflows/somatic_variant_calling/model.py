@@ -61,16 +61,16 @@ class Parallel(SnappyModel):
     keep_tmpdir: Keep = Keep.NEVER
     """keep temporary directory, {always, never, onerror}"""
 
-    job_mult_memory: int = 1
+    job_mult_memory: float = 1
     """memory multiplier"""
 
-    job_mult_time: int = 1
+    job_mult_time: float = 1
     """running time multiplier"""
 
-    merge_mult_memory: int = 1
+    merge_mult_memory: float = 1
     """memory multiplier for merging"""
 
-    merge_mult_time: int = 1
+    merge_mult_time: float = 1
     """running time multiplier for merging"""
 
 

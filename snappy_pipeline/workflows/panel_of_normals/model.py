@@ -3,17 +3,11 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from models import SnappyStepModel, EnumField, SnappyModel
+from models import SnappyStepModel, EnumField, SnappyModel, KeepTmpdir
 
 
 class Tool(enum.Enum):
     mutect2 = "mutect2"
-
-
-class KeepTmpdir(enum.Enum):
-    always = "always"
-    never = "never"
-    onerror = "onerror"
 
 
 class Mutect2(SnappyModel):
@@ -50,16 +44,16 @@ class Mutect2(SnappyModel):
     keep_tmpdir: KeepTmpdir = KeepTmpdir.never
     """keep temporary directory, {always, never, onerror}"""
 
-    job_mult_memory: int = 1
+    job_mult_memory: float = 1
     """memory multiplier"""
 
-    job_mult_time: int = 1
+    job_mult_time: float = 1
     """running time multiplier"""
 
-    merge_mult_memory: int = 1
+    merge_mult_memory: float = 1
     """memory multiplier for merging"""
 
-    merge_mult_time: int = 1
+    merge_mult_time: float = 1
     """running time multiplier for merging"""
 
 
