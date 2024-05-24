@@ -385,23 +385,6 @@ class SvCallingWgsWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "sv_calling_wgs", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for variant calling",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna"])
-        invalid = selected - set(DNA_WGS_SV_CALLERS)
-        if invalid:
-            raise Exception(
-                "Invalid short-read WGS SV caller selected: {}".format(list(sorted(invalid)))
-            )
-        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna_long"])
-        invalid = selected - set(LONG_DNA_WGS_SV_CALLERS)
-        if invalid:
-            raise Exception(
-                "Invalid long-read WGS SV caller selected: {}".format(list(sorted(invalid)))
-            )

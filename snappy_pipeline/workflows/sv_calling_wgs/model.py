@@ -17,6 +17,9 @@ class DnaTool(enum.Enum):
 
 class DnaLongTool(enum.Enum):
     sniffles2 = "sniffles2"
+    # These seem to be unused:
+    # sniffles = "sniffles"
+    # pb_honey_spots = "pb_honey_spots"
 
 
 class Tools(SnappyModel):
@@ -120,6 +123,8 @@ class Sniffles2(SnappyModel):
 
 
 class SvCallingWgs(SnappyStepModel):
+    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+
     tools: Tools
 
     delly2: Delly2 | None = None
