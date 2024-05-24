@@ -464,10 +464,3 @@ class VariantPhasingWorkflow(BaseStep):
                         and donor.mother.dna_ngs_library
                     ):  # only phase if both parents present
                         yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the variant annotation step is present"""
-        self.ensure_w_config(
-            ("step_config", "variant_phasing", "path_variant_annotation"),
-            "Path to variant calling not configured but required for somatic variant annotation",
-        )
