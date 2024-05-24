@@ -40,7 +40,7 @@ class SnappyStepModel(SnappyModel, object):
             config_str = (
                 (" " * INDENTATION + line) for line in config_str.splitlines(keepends=True)
             )
-            config_str = f"step_config:\n{config_str}"
+            config_str = f"step_config:\n{''.join(config_str)}"
 
         return config_str
 
