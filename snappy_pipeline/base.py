@@ -77,9 +77,7 @@ C = TypeVar("C", bound=SnappyStepModel)
 def validate_config(
     config: dict[Any, Any],
     model: type[C],
-    file=sys.stderr,
 ) -> C:
-    print(f"\nValidating config using {model.__name__}", file=file)
     return model(**config)
 
 
