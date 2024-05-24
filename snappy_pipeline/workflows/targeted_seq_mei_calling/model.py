@@ -6,7 +6,7 @@ from pydantic import Field, model_validator
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     scramble = "scramble"
 
 

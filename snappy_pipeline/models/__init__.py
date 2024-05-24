@@ -26,6 +26,7 @@ class SnappyModel(BaseModel):
         extra="forbid",
         use_attribute_docstrings=True,
         use_enum_values=True,
+        validate_default=True,
     )
 
 
@@ -335,12 +336,12 @@ class SearchPattern(SnappyModel):
     right: str | None = "*.R2.fastq.gz"
 
 
-class DataSetType(enum.Enum):
+class DataSetType(enum.StrEnum):
     MATCHED_CANCER = "matched_cancer"
     GERMLINE_VARIANTS = "germline_variants"
 
 
-class NamingScheme(enum.Enum):
+class NamingScheme(enum.StrEnum):
     ONLY_SECONDARY_ID = "only_secondary_id"
 
 
@@ -364,7 +365,7 @@ class ConfigModel(SnappyModel):
     data_sets: dict[str, DataSet]
 
 
-class KeepTmpdir(enum.Enum):
+class KeepTmpdir(enum.StrEnum):
     always = "always"
     never = "never"
     onerror = "onerror"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 from enum import Enum
 from typing import Any, Annotated, Self
 
@@ -80,6 +81,13 @@ class Vcf2Maf(SnappyModel):
     ncbi_build: NcbiBuild
 
 
+class GenomeName(enum.StrEnum):
+    grch37 = "grch37"
+    grch38 = "grch38"
+    hg19 = "hg19"
+    mouse = "mouse"
+
+
 class Study(SnappyModel):
     type_of_cancer: str
     """
@@ -91,6 +99,7 @@ class Study(SnappyModel):
     study_description: str
     study_name: str
     study_name_short: str
+    reference_genome: GenomeName
 
 
 class CbioportalExport(SnappyStepModel):

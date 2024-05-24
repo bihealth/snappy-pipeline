@@ -6,7 +6,7 @@ from pydantic import Field
 from snappy_pipeline.models import SnappyModel
 
 
-class SegmentationMethod(enum.Enum):
+class SegmentationMethod(enum.StrEnum):
     cbs = "cbs"
     flasso = "flasso"
     haar = "haar"
@@ -16,27 +16,27 @@ class SegmentationMethod(enum.Enum):
     none = "none"
 
 
-class CenterMode(enum.Enum):
+class CenterMode(enum.StrEnum):
     mean = "mean"
     median = "median"
     mode = "mode"
     biweight = "biweight"
 
 
-class FilterMode(enum.Enum):
+class FilterMode(enum.StrEnum):
     ampdel = "ampdel"
     cn = "cn"
     ci = "ci"
     sem = "sem"
 
 
-class CallingMethod(enum.Enum):
+class CallingMethod(enum.StrEnum):
     threshold = "threshold"
     clonal = "clonal"
     none = ""
 
 
-class Gender(enum.Enum):
+class Gender(enum.StrEnum):
     male = "male"
     female = "female"
     guess = ""

@@ -3,7 +3,7 @@ import enum
 from snappy_pipeline.models import SnappyModel
 
 
-class VepTxFlag(enum.Enum):
+class VepTxFlag(enum.StrEnum):
     gencode_basic = "gencode_basic"
     refseq = "refseq"
     merged = "merged"

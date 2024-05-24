@@ -7,7 +7,7 @@ from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 from snappy_pipeline.models.annotation import Vep
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     jannovar = "jannovar"
     vep = "vep"
 

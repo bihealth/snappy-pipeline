@@ -7,7 +7,7 @@ from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     cnvkit = "cnvkit"
     sequenza = "sequenza"
     copywriter = "copywriter"
@@ -140,7 +140,7 @@ class CopyWriter(SnappyModel):
     nThread: int = 8
 
 
-class GenomeName(enum.Enum):
+class GenomeName(enum.StrEnum):
     hg18 = "hg18"
     hg19 = "hg19"
     hg38 = "hg38"

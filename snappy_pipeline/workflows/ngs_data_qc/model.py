@@ -6,12 +6,12 @@ from pydantic import model_validator, Field
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     fastqc = "fastqc"
     picard = "picard"
 
 
-class PicardProgram(enum.Enum):
+class PicardProgram(enum.StrEnum):
     # Generic metrics
     CollectAlignmentSummaryMetrics = "CollectAlignmentSummaryMetrics"
     CollectBaseDistributionByCycle = "CollectBaseDistributionByCycle"

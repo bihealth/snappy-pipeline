@@ -6,7 +6,7 @@ from pydantic import Field, model_validator
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel, KeepTmpdir
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     mutect2 = "mutect2"
 
 
@@ -123,7 +123,7 @@ class Access(SnappyModel):
     """[access] Minimum gap size between accessible sequence regions (0: use default value)"""
 
 
-class GenomeName(enum.Enum):
+class GenomeName(enum.StrEnum):
     hg18 = "hg18"
     hg19 = "hg19"
     hg38 = "hg38"

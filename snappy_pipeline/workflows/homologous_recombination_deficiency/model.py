@@ -6,11 +6,11 @@ from pydantic import model_validator
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     scarHRD = "scarHRD"
 
 
-class GenomeName(enum.Enum):
+class GenomeName(enum.StrEnum):
     grch37 = "grch37"
     grch38 = "grch38"
     mouse = "mouse"

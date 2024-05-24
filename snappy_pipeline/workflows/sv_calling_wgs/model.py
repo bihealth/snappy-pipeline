@@ -7,7 +7,7 @@ from snappy_pipeline.models import SnappyStepModel, SnappyModel, EnumField
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry
 
 
-class DnaTool(enum.Enum):
+class DnaTool(enum.StrEnum):
     delly2 = "delly2"
     manta = "manta"
     popdel = "popdel"
@@ -15,7 +15,7 @@ class DnaTool(enum.Enum):
     melt = "melt"
 
 
-class DnaLongTool(enum.Enum):
+class DnaLongTool(enum.StrEnum):
     sniffles2 = "sniffles2"
     # These seem to be unused:
     # sniffles = "sniffles"

@@ -6,7 +6,7 @@ from pydantic import Field
 from snappy_pipeline.models import SnappyStepModel, EnumField
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     mantis = "mantis"
 
 

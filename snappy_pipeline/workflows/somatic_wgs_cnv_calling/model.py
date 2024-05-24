@@ -7,7 +7,7 @@ from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     cnvetti = "cnvetti"
     control_freec = "control_freec"
 

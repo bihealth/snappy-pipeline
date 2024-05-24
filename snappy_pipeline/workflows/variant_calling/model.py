@@ -37,7 +37,7 @@ class BcftoolsRoh(SnappyModel):
     rec_rate: float = 1e-8
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     bcftools_call = "bcftools_call"
     gatk3_hc = "gatk3_hc"
     gatk3_ug = "gatk3_ug"

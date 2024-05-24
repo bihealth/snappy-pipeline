@@ -6,7 +6,7 @@ from pydantic import model_validator
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     optitype = "optitype"
     arcashla = "arcashla"
 

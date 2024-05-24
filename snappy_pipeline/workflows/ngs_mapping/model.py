@@ -1,3 +1,4 @@
+import enum
 import os
 from enum import Enum
 from typing import Annotated
@@ -238,7 +239,7 @@ class Star(SnappyModel):
         return self
 
 
-class Strand(Enum):
+class Strand(enum.IntEnum):
     UNKNOWN = -1
     INFER = 0
     UNSTRANDED = 0

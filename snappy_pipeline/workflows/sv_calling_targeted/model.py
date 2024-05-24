@@ -7,7 +7,7 @@ from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 from snappy_pipeline.models.gcnv import TargetIntervalEntry, PrecomputedModelEntry
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     gcnv = "gcnv"
     delly2 = "delly2"
     manta = "manta"

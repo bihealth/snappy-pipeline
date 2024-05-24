@@ -675,6 +675,7 @@ class BaseStep:
             )
         try:
             self.config_model = validate_config(self.config, self.config_model_class)
+            self.config = self.config_model.model_dump(by_alias=True)
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
             raise ve

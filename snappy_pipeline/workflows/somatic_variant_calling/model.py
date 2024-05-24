@@ -7,7 +7,7 @@ from pydantic import AfterValidator, DirectoryPath, Field, model_validator
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     MUTECT = "mutect"
     MUTECT2 = "mutect2"
     SCALPEL = "scalpel"
@@ -27,7 +27,7 @@ class PlatypusJoint(SnappyModel):
     num_threads: int = 16
 
 
-class Keep(enum.Enum):
+class Keep(enum.StrEnum):
     ALWAYS = "always"
     NEVER = "never"
     ONERROR = "onerror"

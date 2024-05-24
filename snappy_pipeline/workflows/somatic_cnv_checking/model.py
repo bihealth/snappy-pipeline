@@ -6,7 +6,7 @@ from pydantic import Field, model_validator
 from snappy_pipeline.models import SnappyStepModel
 
 
-class CnvAssayType(enum.Enum):
+class CnvAssayType(enum.StrEnum):
     WES = "WES"
     WGS = "WGS"
 

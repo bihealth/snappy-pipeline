@@ -3,7 +3,7 @@ import enum
 from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
-class Strand(enum.Enum):
+class Strand(enum.IntEnum):
     unstranded = 0
     forward = 1
     reverse = 2
