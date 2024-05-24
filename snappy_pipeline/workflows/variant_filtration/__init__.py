@@ -513,10 +513,3 @@ class VariantFiltrationWorkflow(BaseStep):
                     filters=self.config["filter_combinations"],
                     **kwargs,
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "variant_filtration", "path_variant_annotation"),
-            "Path to variant_annotation not configured but required for variant_filtration",
-        )
