@@ -18,10 +18,12 @@ class WgsCnvExportExternal(SnappyStepModel):
     merge_option: str = "id"
     """How to merge VCF, used in `bcftools --merge` call."""
 
-    search_paths: list[str]
+    search_paths: Annotated[list[str], Field(min_length=1)]
     """path to all VCF files."""
 
-    search_patterns: Annotated[list[dict[str, str]], Field(examples=[{"vcf": "*/*.vcf.gz"}])]
+    search_patterns: Annotated[
+        list[dict[str, str]], Field(examples=[{"vcf": "*/*.vcf.gz"}], min_length=1)
+    ]
     """list of search pattern"""
 
     release: str = "GRCh37"
