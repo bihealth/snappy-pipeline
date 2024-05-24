@@ -235,6 +235,7 @@ class Star(SnappyModel):
             expected_path = os.path.join(full_path, indfile)
             if not os.path.exists(expected_path):  # pragma: no cover
                 raise ValueError(f"Expected STAR index file {expected_path} does not exist!")
+        return self
 
 
 class Strand(Enum):
