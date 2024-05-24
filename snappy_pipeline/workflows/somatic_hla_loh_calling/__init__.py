@@ -209,10 +209,3 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
                 yield from expand(
                     tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_hla_loh_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required.",
-        )
