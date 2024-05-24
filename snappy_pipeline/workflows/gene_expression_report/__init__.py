@@ -201,7 +201,3 @@ class GeneExpressionReportWorkflow(BaseStep):
                             tool="featurecounts",
                             ext=exts,
                         )
-
-    def check_config(self):
-        """Check config attributes for presence"""
-        # TODO: verify that `path_gene_expression_quantification` is defined in configuration.
