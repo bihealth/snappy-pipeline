@@ -32,8 +32,17 @@ class SnappyModel(BaseModel):
 # This only exists to distinguish workflow step_config models from other snappy specific models
 class SnappyStepModel(SnappyModel, object):
     @classmethod
-    def default_config_yaml_string(cls, comment_optional: bool = True):
-        return default_config_yaml_string(cls, comment_optional)
+    def default_config_yaml_string(
+        cls, comment_optional: bool = True, with_step_config: bool = True
+    ):
+        config_str = default_config_yaml_string(cls, comment_optional)
+        if with_step_config:
+            config_str = (
+                (" " * INDENTATION + line) for line in config_str.splitlines(keepends=True)
+            )
+            config_str = f"step_config:\n{config_str}"
+
+        return config_str
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
