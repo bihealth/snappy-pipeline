@@ -8,12 +8,12 @@ name: snappy_env
 dependencies:
 
   # Fundamentals
-  - python
+  - python =3.11
   - pip
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=7.0.2
+  - snakemake =7
 
   # Additional libraries used by snappy
   - ruamel.yaml             # Nice, round-trip enabled YAML parsing
@@ -26,8 +26,8 @@ dependencies:
   - htslib >=1.15
   - bcftools >=1.15
   - samtools >=1.15
-  - vcfpy                   # Library for working with VCF files
-  - pysam                   # Support for vcfpy
+#  - vcfpy                   # Library for working with VCF files
+#  - pysam                   # Support for vcfpy
 
   # Parsing of ISA-tab
   - altamisa
@@ -36,3 +36,5 @@ dependencies:
   - pip:
     - varfish-cli
     - biomedsheets >=0.11.7
+    - pysam
+    - vcfpy
