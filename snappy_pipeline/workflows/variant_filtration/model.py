@@ -36,11 +36,65 @@ def check_combination(s: str) -> str:
     The actual validation is done in the model validator, because the sets of valid pattern strings
     can only be known at that point.
     """
-    assert s.count(".") == 5
+    if s.count(".") != 5:
+        raise ValueError(
+            f"Invalid combination: {s}, has to have 6 parts separated by dots"
+            "({thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp})"
+        )
     return s
 
 
 FilterCombination = Annotated[str, AfterValidator(check_combination)]
+
+FILTER_COMBINATION_EXAMPLES = [
+    "conservative.de_novo.dominant_freq.lifted_enhancers.all_scores.passthrough",
+    "conservative.de_novo.dominant_freq.lifted_enhancers.conserved.passthrough",
+    "conservative.de_novo.dominant_freq.limb_tads.all_scores.passthrough",
+    "conservative.de_novo.dominant_freq.limb_tads.coding.passthrough",
+    "conservative.de_novo.dominant_freq.limb_tads.conserved.passthrough",
+    "conservative.de_novo.dominant_freq.vista_enhancers.all_scores.passthrough",
+    "conservative.de_novo.dominant_freq.vista_enhancers.conserved.passthrough",
+    "conservative.de_novo.dominant_freq.whole_genome.all_scores.passthrough",
+    "conservative.de_novo.dominant_freq.whole_genome.coding.passthrough",
+    "conservative.de_novo.dominant_freq.whole_genome.conserved.passthrough",
+    "conservative.dominant.dominant_freq.lifted_enhancers.all_scores.passthrough",
+    "conservative.dominant.dominant_freq.lifted_enhancers.conserved.passthrough",
+    "conservative.dominant.dominant_freq.limb_tads.all_scores.passthrough",
+    "conservative.dominant.dominant_freq.limb_tads.coding.passthrough",
+    "conservative.dominant.dominant_freq.limb_tads.conserved.passthrough",
+    "conservative.dominant.dominant_freq.vista_enhancers.all_scores.passthrough",
+    "conservative.dominant.dominant_freq.vista_enhancers.conserved.passthrough",
+    "conservative.dominant.dominant_freq.whole_genome.all_scores.passthrough",
+    "conservative.dominant.dominant_freq.whole_genome.coding.passthrough",
+    "conservative.dominant.dominant_freq.whole_genome.conserved.passthrough",
+    "conservative.dominant.recessive_freq.lifted_enhancers.all_scores.intervals500",
+    "conservative.dominant.recessive_freq.lifted_enhancers.conserved.intervals500",
+    "conservative.dominant.recessive_freq.lifted_enhancers.conserved.tads",
+    "conservative.dominant.recessive_freq.limb_tads.all_scores.intervals500",
+    "conservative.dominant.recessive_freq.limb_tads.coding.gene",
+    "conservative.dominant.recessive_freq.limb_tads.conserved.intervals500",
+    "conservative.dominant.recessive_freq.limb_tads.conserved.tads",
+    "conservative.dominant.recessive_freq.vista_enhancers.all_scores.intervals500",
+    "conservative.dominant.recessive_freq.vista_enhancers.conserved.intervals500",
+    "conservative.dominant.recessive_freq.vista_enhancers.conserved.tads",
+    "conservative.dominant.recessive_freq.whole_genome.all_scores.intervals500",
+    "conservative.dominant.recessive_freq.whole_genome.coding.gene",
+    "conservative.dominant.recessive_freq.whole_genome.conserved.intervals500",
+    "conservative.dominant.recessive_freq.whole_genome.conserved.tads",
+    "conservative.recessive_hom.recessive_freq.lifted_enhancers.all_scores.passthrough",
+    "conservative.recessive_hom.recessive_freq.lifted_enhancers.conserved.passthrough",
+    "conservative.recessive_hom.recessive_freq.limb_tads.all_scores.passthrough",
+    "conservative.recessive_hom.recessive_freq.limb_tads.coding.passthrough",
+    "conservative.recessive_hom.recessive_freq.limb_tads.conserved.passthrough",
+    "conservative.recessive_hom.recessive_freq.vista_enhancers.all_scores.passthrough",
+    "conservative.recessive_hom.recessive_freq.vista_enhancers.conserved.passthrough",
+    "conservative.recessive_hom.recessive_freq.whole_genome.all_scores.passthrough",
+    "conservative.recessive_hom.recessive_freq.whole_genome.coding.passthrough",
+    "conservative.recessive_hom.recessive_freq.whole_genome.conserved.passthrough",
+    # The following are for input to variant_combination.
+    "conservative.dominant.recessive_freq.whole_genome.coding.passthrough",
+    "conservative.dominant.recessive_freq.whole_genome.conserved.passthrough",
+]
 
 
 class VariantFiltration(SnappyStepModel):
@@ -102,55 +156,9 @@ class VariantFiltration(SnappyStepModel):
         ),
     }
 
-    filter_combinations: list[FilterCombination] = [
-        "conservative.de_novo.dominant_freq.lifted_enhancers.all_scores.passthrough",
-        "conservative.de_novo.dominant_freq.lifted_enhancers.conserved.passthrough",
-        "conservative.de_novo.dominant_freq.limb_tads.all_scores.passthrough",
-        "conservative.de_novo.dominant_freq.limb_tads.coding.passthrough",
-        "conservative.de_novo.dominant_freq.limb_tads.conserved.passthrough",
-        "conservative.de_novo.dominant_freq.vista_enhancers.all_scores.passthrough",
-        "conservative.de_novo.dominant_freq.vista_enhancers.conserved.passthrough",
-        "conservative.de_novo.dominant_freq.whole_genome.all_scores.passthrough",
-        "conservative.de_novo.dominant_freq.whole_genome.coding.passthrough",
-        "conservative.de_novo.dominant_freq.whole_genome.conserved.passthrough",
-        "conservative.dominant.dominant_freq.lifted_enhancers.all_scores.passthrough",
-        "conservative.dominant.dominant_freq.lifted_enhancers.conserved.passthrough",
-        "conservative.dominant.dominant_freq.limb_tads.all_scores.passthrough",
-        "conservative.dominant.dominant_freq.limb_tads.coding.passthrough",
-        "conservative.dominant.dominant_freq.limb_tads.conserved.passthrough",
-        "conservative.dominant.dominant_freq.vista_enhancers.all_scores.passthrough",
-        "conservative.dominant.dominant_freq.vista_enhancers.conserved.passthrough",
-        "conservative.dominant.dominant_freq.whole_genome.all_scores.passthrough",
-        "conservative.dominant.dominant_freq.whole_genome.coding.passthrough",
-        "conservative.dominant.dominant_freq.whole_genome.conserved.passthrough",
-        "conservative.dominant.recessive_freq.lifted_enhancers.all_scores.intervals500",
-        "conservative.dominant.recessive_freq.lifted_enhancers.conserved.intervals500",
-        "conservative.dominant.recessive_freq.lifted_enhancers.conserved.tads",
-        "conservative.dominant.recessive_freq.limb_tads.all_scores.intervals500",
-        "conservative.dominant.recessive_freq.limb_tads.coding.gene",
-        "conservative.dominant.recessive_freq.limb_tads.conserved.intervals500",
-        "conservative.dominant.recessive_freq.limb_tads.conserved.tads",
-        "conservative.dominant.recessive_freq.vista_enhancers.all_scores.intervals500",
-        "conservative.dominant.recessive_freq.vista_enhancers.conserved.intervals500",
-        "conservative.dominant.recessive_freq.vista_enhancers.conserved.tads",
-        "conservative.dominant.recessive_freq.whole_genome.all_scores.intervals500",
-        "conservative.dominant.recessive_freq.whole_genome.coding.gene",
-        "conservative.dominant.recessive_freq.whole_genome.conserved.intervals500",
-        "conservative.dominant.recessive_freq.whole_genome.conserved.tads",
-        "conservative.recessive_hom.recessive_freq.lifted_enhancers.all_scores.passthrough",
-        "conservative.recessive_hom.recessive_freq.lifted_enhancers.conserved.passthrough",
-        "conservative.recessive_hom.recessive_freq.limb_tads.all_scores.passthrough",
-        "conservative.recessive_hom.recessive_freq.limb_tads.coding.passthrough",
-        "conservative.recessive_hom.recessive_freq.limb_tads.conserved.passthrough",
-        "conservative.recessive_hom.recessive_freq.vista_enhancers.all_scores.passthrough",
-        "conservative.recessive_hom.recessive_freq.vista_enhancers.conserved.passthrough",
-        "conservative.recessive_hom.recessive_freq.whole_genome.all_scores.passthrough",
-        "conservative.recessive_hom.recessive_freq.whole_genome.coding.passthrough",
-        "conservative.recessive_hom.recessive_freq.whole_genome.conserved.passthrough",
-        # The following are for input to variant_combination.
-        "conservative.dominant.recessive_freq.whole_genome.coding.passthrough",
-        "conservative.dominant.recessive_freq.whole_genome.conserved.passthrough",
-    ]
+    filter_combinations: Annotated[
+        list[FilterCombination], Field(examples=FILTER_COMBINATION_EXAMPLES)
+    ] = []
     """dot-separated {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}"""
 
     @model_validator(mode="after")
@@ -166,6 +174,9 @@ class VariantFiltration(SnappyStepModel):
         )
         pattern: re.Pattern[str] = re.compile(pattern)
         for combination in self.filter_combinations:
-            assert pattern.fullmatch(combination) is not None
+            if pattern.fullmatch(combination) is None:
+                raise ValueError(
+                    f"Invalid combination: {combination}, " f"must match pattern {pattern.pattern}"
+                )
 
         return self
