@@ -96,7 +96,7 @@ class Cnvkit(SnappyModel):
     drop_low_coverage: bool = False
     """[segment, call, genemetrics] Drop very low coverage bins"""
 
-    drop_outliers: 10
+    drop_outliers: int = 10
     """[segment] Drop outlier bins (0 for no outlier filtering)"""
 
     smooth_cbs: bool = True

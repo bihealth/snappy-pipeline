@@ -85,7 +85,7 @@ class Melt(SnappyModel):
     genes_file: str = "add_bed_files/1KGP_Hg19 / hg19.genes.bed"
     """adjust, e.g., Hg38/Hg38.genes.bed"""
 
-    skip_libraries: []
+    skip_libraries: list[str] = []
     """
     Skip processing of the following libraries.
     If the library is in family/pedigree then all of the family/pedigree will be skipped.

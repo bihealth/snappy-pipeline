@@ -12,13 +12,13 @@ class Tool(enum.Enum):
 
 
 class VepCustom(Vep):
-    buffer_size = 100000
-    num_threads = 16
+    buffer_size: int = 100000
+    num_threads: int = 16
 
-    cache_version = "85"
+    cache_version: str = "85"
     """The cache version to use.  gnomAD v2 used 85, gnomAD v3.1 uses 101."""
 
-    assembly = "GRCh37"
+    assembly: str = "GRCh37"
     """The assembly to use.  gnomAD v2 used "GRCh37", gnomAD v3.1 uses "GRCh38"."""
 
     more_flags: str = "--af_gnomade --af_gnomadg"

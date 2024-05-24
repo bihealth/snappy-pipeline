@@ -15,7 +15,7 @@ class GatkReadBackedPhasing(SnappyModel):
     num_jobs: int = 1000
     """number of windows to process in parallel"""
 
-    use_profile: True
+    use_profile: bool = True
     """use Snakemake profile for parallel processing"""
 
     restart_times: int = 0
@@ -30,7 +30,7 @@ class GatkReadBackedPhasing(SnappyModel):
     debug_trunc_tokens: int = 0
     """truncation to first N tokens (0 for none)"""
 
-    keep_tmpdir: KeepTmpdir
+    keep_tmpdir: KeepTmpdir = KeepTmpdir.never
     """keep temporary directory, {always, never, onerror}"""
 
     job_mult_memory: float = 1
