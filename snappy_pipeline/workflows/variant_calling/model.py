@@ -82,11 +82,11 @@ class VariantCalling(SnappyStepModel):
 
     baf_file_generation: BafFileGeneration = BafFileGeneration()
 
-    bcftools_stats: BcftoolsStats = BcftoolsStats()
+    bcftools_stats: BcftoolsStats | None = None
 
-    jannovar_stats: JannovarStats = JannovarStats()
+    jannovar_stats: JannovarStats | None = None
 
-    bcftools_roh: BcftoolsRoh = BcftoolsRoh()
+    bcftools_roh: BcftoolsRoh | None = None
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf])]
 
