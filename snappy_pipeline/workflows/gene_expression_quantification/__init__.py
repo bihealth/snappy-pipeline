@@ -364,7 +364,6 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "duplication"
 
@@ -389,7 +388,6 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "dupradar"
 
@@ -414,7 +412,6 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "rnaseqc"
 
@@ -439,7 +436,6 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
-
     #: Step name
     name = "stats"
 
@@ -558,45 +554,3 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             all_fns.extend(fns)
 
         return all_fns
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gene expression quantification",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "featurecounts",
-                "path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for featurecounts",
-        )
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "strandedness", "path_exon_bed"),
-            "Path to bed file with exon regions required for RSeQC",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "rnaseqc",
-                "rnaseqc_path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for RNA-SeQC",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "dupradar",
-                "dupradar_path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for dupradar",
-        )
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "salmon", "path_index"),
-            "Path to directory containing salmon index files",
-        )
