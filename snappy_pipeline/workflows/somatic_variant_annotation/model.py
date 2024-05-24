@@ -20,6 +20,7 @@ class Dbnsfp(SnappyModel):
 
 class Jannovar(SnappyModel):
     path_jannovar_ser: str
+    """Path to serialized Jannovar database"""
 
     flag_off_target: bool
 

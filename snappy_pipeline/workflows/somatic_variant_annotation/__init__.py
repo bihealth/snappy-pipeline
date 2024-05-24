@@ -270,14 +270,6 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
             memory=f"{8 * 1024 * 2}M",
         )
 
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "jannovar", "path_jannovar_ser"),
-            "Path to serialized Jannovar database",
-        )
-
 
 class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     """Annotate VCF file from somatic calling using ENSEMBL's VEP"""
@@ -312,16 +304,6 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
             time="24:00:00",  # 24 hours
             memory=f"{16 * 1024 * 1}M",
         )
-
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return
-        if not self.config["vep"]["tx_flag"] in ("merged", "refseq", "gencode_basic"):
-            raise InvalidConfiguration("tx_flag must be 'gencode_basic', or 'merged' or 'refseq'")
-        if not all([x in self.PICK_ORDER for x in self.config["vep"]["pick_order"]]):
-            raise InvalidConfiguration(
-                "pick order keywords must be in {}".format(", ".join(self.PICK_ORDER))
-            )
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
@@ -450,10 +432,3 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "path_somatic_variant_calling"),
-            "Path to variant calling not configured but required for somatic variant annotation",
-        )
