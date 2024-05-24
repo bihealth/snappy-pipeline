@@ -14,8 +14,13 @@ class Tool(enum.Enum):
 
 class Canvas(SnappyModel):
     path_reference: str
+    """Path to Canvas reference file"""
+
     path_filter_bed: str
+    """Path to Canvas filter BED file"""
+
     path_genome_folder: str
+    """Path to Canvas genome folder"""
 
 
 class CnvettiPreset(SnappyModel):
@@ -32,7 +37,7 @@ class Cnvetti(SnappyModel):
     normalization: str | None = None
     presets: dict[str, CnvettiPreset] = {
         "deep_wgs": CnvettiPreset(
-            {
+            **{
                 "window_length": 200,
                 "count_kind": "Coverage",
                 "segmentation": "HaarSeg",
@@ -53,8 +58,10 @@ class ControlFreecConvert(SnappyModel):
 
 class ControlFreec(SnappyModel):
     path_chrlenfile: str
+    """Path to ControlFreec ChrLenFile"""
 
     path_mappability: str
+    """Path to ControlFreec mappability file"""
 
     path_mappability_enabled: bool = False
 

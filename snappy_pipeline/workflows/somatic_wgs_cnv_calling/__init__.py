@@ -281,23 +281,6 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def check_config(self):
-        """Check configuration for Canvas Somatic WGS CNV calling"""
-        if "canvas" not in (self.config["tools"] or []):  # pylint: disable=C0325
-            return  # Canvas not enabled, skip  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "canvas", "path_reference"),
-            "Path to Canvas reference file not configured",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "canvas", "path_filter_bed"),
-            "Path to Canvas filter BED file not configured",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "canvas", "path_genome_folder"),
-            "Path to Canvas genome folder not configured",
-        )
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -415,11 +398,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def check_config(self):
-        """Check configuration for CNVetti WGS CNV calling"""
-        if "cnvetti" not in (self.config["tools"] or []):  # pylint: disable=C0325
-            return  # CNVetti not enabled, skip
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -476,23 +454,6 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-
-    def check_config(self):
-        """Check configuration for cnvkit"""
-        if "cnvkit" not in self.config["tools"]:
-            return  # cnvkit not enabled, skip
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_target"),
-            "Path to target regions is missing for cnvkit",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_antitarget"),
-            "Path to antitarget regions is missing for cnvkit",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "cnvkit", "path_panel_of_normals"),
-            "Path to panel of normals (reference) is missing for cnvkit",
-        )
 
     def get_input_files(self, action):
         """Return input paths input function, dependent on rule"""
@@ -786,19 +747,6 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
-    def check_config(self):
-        """Check configuration for ControlFreec Somatic WGS CNV calling"""
-        if "control_freec" not in (self.config["tools"] or []):  # pylint: disable=C0325
-            return  # ControlFreec not enabled, skip  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "control_freec", "path_chrlenfile"),
-            "Path to ControlFreec ChrLenFile not configured",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "control_freec", "path_mappability"),
-            "Path to ControlFreec mappability file not configured",
-        )
-
     def get_resource_usage(self, action):
         """Get Resource Usage
 
@@ -1032,17 +980,3 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                                 ext=plot + ".chr" + c + "." + ext + ".md5",
                                 **kwargs,
                             )
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )
-        self.ensure_w_config(
-            ("step_config", "somatic_wgs_cnv_calling", "path_somatic_variant_calling"),
-            (
-                "Path to somatic (small) variant calling not configured but required for somatic "
-                "WGS CNV calling"
-            ),
-        )
