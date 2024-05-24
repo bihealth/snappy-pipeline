@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Annotated
+from typing import Any, Annotated, Self
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from models import SnappyStepModel, SnappyModel
 
@@ -153,3 +153,15 @@ class CbioportalExport(SnappyStepModel):
 
     sample_info: Any
     """Each additional sample column must have a name and a (possibly empty) config attached."""
+
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        if self.path_somatic_variant and not self.mapping_tool:
+            raise ValueError("Mapping tool must be set when path_somatic_variant is set")
+        if not self.somatic_variant_calling_tool or not self.somatic_variant_annotation_tool:
+            raise ValueError("Somatic variant calling or annotation tools must be set")
+        if self.path_copy_number and not self.copy_number_tool:
+            raise ValueError("Copy number tool must be set when path_copy_number is set")
+        if self.path_ngs_mapping and not self.expression_tool:
+            raise ValueError("Expression tool must be set when path_ngs_mapping is set")
+        return self
