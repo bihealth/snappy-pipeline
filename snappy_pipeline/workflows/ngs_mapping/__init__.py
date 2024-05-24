@@ -1347,7 +1347,14 @@ class NgsMappingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=NgsMappingConfigModel,
+        )
         self.register_sub_step_classes(
             (
                 BwaStepPart,
