@@ -806,26 +806,11 @@ class StarStepPart(ReadMappingStepPart):
         if self.__class__.name not in self.config["tools"]["rna"]:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "star", "path_index"),
-            msg="Path to STAR index is required",
-        )
+        # Check required global configuration settings present
         self.parent.ensure_w_config(
             config_keys=("static_data_config", "reference"),
             msg="No reference genome FASTA file given",
         )
-
-        # Check validity of the STAR index
-        full_path = self.config["star"]["path_index"]
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(full_path, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR index file {expected_path} does not exist!".format(
-                    expected_path=expected_path
-                )
-                raise InvalidConfiguration(tpl)
 
     @dictify
     def _get_output_files_run_work(self):

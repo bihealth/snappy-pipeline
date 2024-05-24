@@ -227,6 +227,15 @@ class Star(SnappyModel):
     mask_duplicates: bool = False
     include_unmapped: bool = True
 
+    @model_validator(mode="after")
+    def ensure_star_index_files_exist(self):
+        full_path = self.path_index
+        # a lot of files should be in this dir, justtest these
+        for indfile in ("Genome", "SA", "SAindex"):
+            expected_path = os.path.join(full_path, indfile)
+            if not os.path.exists(expected_path):  # pragma: no cover
+                raise ValueError(f"Expected STAR index file {expected_path} does not exist!")
+
 
 class Strand(Enum):
     UNKNOWN = -1
