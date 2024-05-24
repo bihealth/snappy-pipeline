@@ -32,6 +32,7 @@ def minimal_config():
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
             path_ngs_mapping: /NGS_MAPPING
+            path_gene_id_mappings: DUMMY
             expression_tool: star
             path_somatic_variant: /SOM_VAR_FILTRATION
             somatic_variant_calling_tool: mutect2
@@ -40,6 +41,9 @@ def minimal_config():
             path_copy_number: /COPY_NUMBER
             copy_number_tool: cnvkit
             exclude_variant_with_flag: LowFisherScore
+            vcf2maf:
+              ncbi_build: GRCh37
+              Center: DUMMY
             # Description of dataset in cBioPortal
             study:
               type_of_cancer: mixed
@@ -47,6 +51,7 @@ def minimal_config():
               study_description: "PeDiOn project A02P"
               study_name: PeDiOn_A02P
               study_name_short: A02P
+              reference_genome: grch37
 
         data_sets:
           first_batch:
