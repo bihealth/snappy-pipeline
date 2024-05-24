@@ -30,7 +30,7 @@ class VariantExportExternal(SnappyStepModel):
     gvcf_option: bool = True
     """Flag to indicate if inputs are genomic VCFs."""
 
-    search_paths: list[str]
+    search_paths: Annotated[list[str], Field(min_length=1)]
     """list of paths to VCF files."""
 
     search_patterns: Annotated[
