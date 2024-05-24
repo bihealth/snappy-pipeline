@@ -263,11 +263,3 @@ class IgvSessionGenerationWorkflow(BaseStep):
                         continue
                     else:
                         yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the variant annotation step is present."""
-        # TODO: Check that at least one path was provided in user provided config.
-        self.ensure_w_config(
-            ("step_config", "igv_session_generation", "path_ngs_mapping"),
-            "Path to ngs_mapping not configured but required for igv_session_generation",
-        )
