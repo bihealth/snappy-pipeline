@@ -560,12 +560,3 @@ class VarfishExportWorkflow(BaseStep):
         for action in self.sub_steps["mehari"].actions:
             yield from self.sub_steps["mehari"].get_result_files(action)
 
-    def check_config(self):
-        self.ensure_w_config(
-            ("step_config", "varfish_export", "path_ngs_mapping"),
-            "Path to ngs_mapping not configured but required for variant annotation",
-        )
-        self.ensure_w_config(
-            ("step_config", "varfish_export", "path_variant_calling"),
-            "Path to variant_calling not configured but required for variant annotation",
-        )
