@@ -221,7 +221,3 @@ class SomaticMsiCallingWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        self.ensure_w_config(
-            ("step_config", "somatic_msi_calling", "loci_bed"),
-            "Path to bed file with microsatellite loci needed",
-        )
