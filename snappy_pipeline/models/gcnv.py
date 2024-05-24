@@ -1,7 +1,7 @@
 import os
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, ConfigDict
 
 from snappy_pipeline.models import SnappyModel
 
@@ -24,6 +24,8 @@ class TargetIntervalEntry(SnappyModel):
 
 
 class PrecomputedModelEntry(SnappyModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     library: Annotated[str, Field(examples=["Agilent SureSelect Human All Exon V6"])]
     """Kit name, match in path_target_interval_list_mapping"""
 
