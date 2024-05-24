@@ -332,10 +332,3 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                 yield from expand(
                     tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_signatures", "path_somatic_variant"),
-            "Path to variant calling not configured but required for somatic variant signatures",
-        )
