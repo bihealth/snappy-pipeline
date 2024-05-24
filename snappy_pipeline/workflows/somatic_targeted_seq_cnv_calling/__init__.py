@@ -364,15 +364,6 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
                     "work", name_pattern, "out", name_pattern + "_" + infix + ext
                 )
 
-    def check_config(self):
-        """Check configuration"""
-        if self.name not in self.config["tools"]:
-            return  # skip check
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", self.name, "path_target_regions"),
-            "Path to target regions is missing for {}".format(self.name),
-        )
-
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
         # Validate action
@@ -652,18 +643,6 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
         return self._get_log_file_from_prefix(prefix)
 
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return  # skip check
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", self.name, "path_panel_of_normals"),
-            "Path to the PureCN panel of normal is missing",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", self.name, "path_mapping_bias"),
-            "Path to the PureCN mapping bias file is missing (created in the panel_of_normals step)",
-        )
-
 
 class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using cnvkit"""
@@ -702,23 +681,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-
-    def check_config(self):
-        """Check configuration for cnvkit"""
-        if "cnvkit" not in self.config["tools"]:
-            return  # cnvkit not enabled, skip
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_target"),
-            "Path to target regions is missing for cnvkit",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_antitarget"),
-            "Path to antitarget regions is missing for cnvkit",
-        )
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", "cnvkit", "path_panel_of_normals"),
-            "Path to panel of normals (reference) is missing for cnvkit",
-        )
 
     def get_input_files(self, action):
         """Return input paths input function, dependent on rule"""
@@ -1051,20 +1013,6 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             output_files[k + "_md5"] = tpl + v + ".md5"
         return output_files
 
-    def check_config(self):
-        """Check configuration"""
-        if "copywriter" not in self.config["tools"]:
-            return  # skip
-        self.parent.ensure_w_config(
-            (
-                "step_config",
-                "somatic_targeted_seq_cnv_calling",
-                "copywriter",
-                "path_target_regions",
-            ),
-            "Path to target regions is missing",
-        )
-
     def get_log_file(self, action):
         """Return path to log file for the given action"""
         # Validate action
@@ -1174,13 +1122,6 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the necessary global configuration is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_targeted_seq_cnv_calling", "path_ngs_mapping"),
-            (
-                "Path to somatic variant calling not configured but required for "
-                "targeted sequencing CNV calling"
-            ),
-        )
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             (

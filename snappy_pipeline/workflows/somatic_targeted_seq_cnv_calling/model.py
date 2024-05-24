@@ -123,6 +123,7 @@ class Sequenza(SnappyModel):
 
 class CopyWriter(SnappyModel):
     path_target_regions: str
+    """Path to target regions"""
 
     bin_size: int = 20000  # TODO: make actually configurable
 
@@ -201,10 +202,13 @@ class PureCn(SnappyModel):
             examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.panel_of_normals.rds"]
         ),
     ]
+    """Path to the PureCN panel of normal"""
+
     path_mapping_bias: Annotated[
         str,
         Field(examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.mapping_bias.rds"]),
     ]
+    """Path to the PureCN mapping bias file"""
 
     somatic_variant_caller: str = "mutect2"
     """
