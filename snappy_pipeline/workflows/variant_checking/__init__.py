@@ -212,10 +212,3 @@ class VariantCheckingWorkflow(BaseStep):
                         var_caller=self.config["tools_variant_calling"],
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "variant_checking", "path_variant_calling"),
-            "Path to variant calling not configured but required for variant checking",
-        )
