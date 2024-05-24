@@ -955,15 +955,6 @@ class VariantCallingWorkflow(BaseStep):
     def check_config(self):
         # Checks for static data
         self.ensure_w_config(
-            ("step_config", "variant_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for variant calling",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["variant_calling"]["tools"])
-        invalid = list(sorted(selected - set(VARIANT_CALLERS)))
-        if invalid:
-            raise InvalidConfigurationException(f"Invalid variant callers selected: {invalid}")
