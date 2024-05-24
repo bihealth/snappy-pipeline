@@ -7,12 +7,14 @@ from models import SnappyStepModel
 
 class TumorMutationalBurden(SnappyStepModel):
     has_annotation: bool
+    """TMB needs to know whether the vcf is annotated or not"""
 
     is_filtered: bool
 
     path_somatic_variant: Annotated[
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
     ]
+    """Path to variant (directory of vcf files)"""
 
     tools_ngs_mapping: list[str] = []
     """default to those configured for ngs_mapping"""
@@ -33,6 +35,7 @@ class TumorMutationalBurden(SnappyStepModel):
     """When using variants after the somatic_variant_filtration step, use "genome_wide" or "" """
 
     target_regions: str
+    """Path to target_regions file (bed format)"""
 
     missense_regex: str = r".*[\|&]missense_variant[\|&].*"
     """change if the annotation tool doesn't use 'missense_variant' to indicate missense variant"""

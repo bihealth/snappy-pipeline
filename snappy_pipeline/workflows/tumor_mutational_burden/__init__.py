@@ -323,21 +323,3 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
                     tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
                     **kwargs,
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "path_somatic_variant"),
-            "Path to variant (directory of vcf files) not configured but required for tmb calculation",
-        )
-
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "target_regions"),
-            "Path to target_regions file (bed format)"
-            "not configured but required for tmb calculation",
-        )
-
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "has_annotation"),
-            "TMB needs to know whether the vcf is annotated or not",
-        )
