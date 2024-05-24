@@ -382,14 +382,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         assert action in self.actions
         return self._get_log_file(tpls[action])
 
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return  # PureCN not enabled, skip
-        self.parent.ensure_w_config(
-            ("step_config", "panel_of_normals", self.name, "path_bait_regions"),
-            "Path to exome panel bait regions not defined for tool {}".format(self.name),
-        )
-
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
@@ -871,10 +863,3 @@ class PanelOfNormalsWorkflow(BaseStep):
         for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
             for ext in ext_list:
                 yield tpl.format(mapper=mapper, ext=ext)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "panel_of_normals", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )
