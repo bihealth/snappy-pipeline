@@ -559,4 +559,3 @@ class VarfishExportWorkflow(BaseStep):
         """
         for action in self.sub_steps["mehari"].actions:
             yield from self.sub_steps["mehari"].get_result_files(action)
-

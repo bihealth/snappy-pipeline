@@ -35,7 +35,7 @@ class VariantExportExternal(SnappyStepModel):
 
     search_patterns: Annotated[
         list[dict[str, str]],
-        Field(examples=[{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}]),
+        Field(examples=[{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}], min_length=1),
     ]
     """list of search patterns"""
 
