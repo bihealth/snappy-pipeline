@@ -475,10 +475,6 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
         self.ensure_w_config(
-            ("step_config", "somatic_wgs_sv_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic WGS SV calling",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file required by not available",
         )
