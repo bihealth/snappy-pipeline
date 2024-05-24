@@ -3,8 +3,8 @@ from typing import Annotated, Any, Self
 
 from pydantic import Field, model_validator
 
-from models import SnappyStepModel, EnumField, SnappyModel
-from models.cnvkit import Cnvkit
+from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
+from snappy_pipeline.models.cnvkit import Cnvkit
 
 
 class Tool(enum.Enum):

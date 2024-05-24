@@ -1,4 +1,4 @@
-from models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
 class Gcnv(SnappyModel):

@@ -5,7 +5,7 @@ from typing import Any, Annotated, Self
 
 from pydantic import ConfigDict, Field, model_validator
 
-from models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
 class MappingTool(Enum):

@@ -3,8 +3,8 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from models import SnappyStepModel, SnappyModel, EnumField
-from models.gcnv import PrecomputedModelEntry
+from snappy_pipeline.models import SnappyStepModel, SnappyModel, EnumField
+from snappy_pipeline.models.gcnv import PrecomputedModelEntry
 
 
 class DnaTool(enum.Enum):

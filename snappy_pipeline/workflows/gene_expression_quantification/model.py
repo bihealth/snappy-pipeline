@@ -1,6 +1,6 @@
 import enum
 
-from models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
 class Strand(enum.Enum):

@@ -2,7 +2,7 @@ from typing import Self
 
 from pydantic import model_validator
 
-from models import SnappyStepModel
+from snappy_pipeline.models import SnappyStepModel
 
 
 class IgvSessionGeneration(SnappyStepModel):

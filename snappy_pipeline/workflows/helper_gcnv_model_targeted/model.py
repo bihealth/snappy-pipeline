@@ -1,5 +1,5 @@
-from models import SnappyStepModel, SnappyModel
-from models.gcnv import TargetIntervalEntry
+from snappy_pipeline.models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models.gcnv import TargetIntervalEntry
 
 
 class Gcnv(SnappyModel):

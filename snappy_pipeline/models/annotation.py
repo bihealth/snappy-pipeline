@@ -1,6 +1,6 @@
 import enum
 
-from models import SnappyModel
+from snappy_pipeline.models import SnappyModel
 
 
 class VepTxFlag(enum.Enum):

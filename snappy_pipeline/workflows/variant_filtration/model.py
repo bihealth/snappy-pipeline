@@ -3,7 +3,7 @@ from typing import Annotated, Self
 
 from pydantic import Field, AfterValidator, model_validator
 
-from models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
 class Threshold(SnappyModel):

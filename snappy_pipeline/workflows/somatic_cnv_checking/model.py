@@ -3,7 +3,7 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from models import SnappyStepModel
+from snappy_pipeline.models import SnappyStepModel
 
 
 class CnvAssayType(enum.Enum):

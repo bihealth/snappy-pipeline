@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from models import SnappyModel
+from snappy_pipeline.models import SnappyModel
 
 
 class TargetIntervalEntry(SnappyModel):

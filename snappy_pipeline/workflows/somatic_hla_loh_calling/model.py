@@ -1,4 +1,4 @@
-from models import SnappyStepModel
+from snappy_pipeline.models import SnappyStepModel
 
 
 class SomaticHlaLohCalling(SnappyStepModel):
