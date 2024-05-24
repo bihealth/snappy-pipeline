@@ -396,12 +396,3 @@ class SomaticCnvCheckingWorkflow(BaseStep):
                 ext=exts,
                 chksum=chksum,
             )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_cnv_checking", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )
-        if self.config["path_cnv_calling"]:
-            assert self.config["cnv_assay_type"] in ("WES", "WGS")

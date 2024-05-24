@@ -1,7 +1,7 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models import SnappyStepModel
 
@@ -34,3 +34,9 @@ class SomaticCnvChecking(SnappyStepModel):
 
     min_baf: Annotated[float, Field(0.4, ge=0, le=0.5)]
     """Maximum BAF to consider variant as heterozygous (between 0 & 1/2)"""
+
+    @model_validator(mode="after")
+    def ensure_cnv_assay_type_is_specified(self: Self) -> Self:
+        if self.path_cnv_calling and not self.cnv_assay_type:
+            raise ValueError("CNV assay type must be specified")
+        return self
