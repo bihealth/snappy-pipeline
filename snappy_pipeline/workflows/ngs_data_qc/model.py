@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
+from pydantic import model_validator, Field
 
 from models import SnappyStepModel, EnumField, SnappyModel
 
@@ -61,7 +61,15 @@ class Picard(SnappyModel):
     bait_name: str = ""
     """Exon enrichment kit name (optional)"""
 
-    programs: list[PicardProgram] = []
+    programs: Annotated[list[PicardProgram], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def ensure_baits_when_required(self):
+        if PicardProgram.CollectHsMetrics in self.programs and not self.path_to_baits:
+            raise ValueError(
+                "Path to baits is required when CollectHsMetrics is among the programs"
+            )
+        return self
 
 
 class Fastqc(SnappyModel):

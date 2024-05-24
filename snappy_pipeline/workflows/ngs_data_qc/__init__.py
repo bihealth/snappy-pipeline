@@ -334,23 +334,3 @@ class NgsDataQcWorkflow(BaseStep):
                 extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
                 if extraction_type in allowed_extraction_types:
                     yield from expand(tpl, ngs_library=[ngs_library], **kwargs)
-
-    def check_config(self):
-        if "picard" in self.config["tools"]:
-            self.ensure_w_config(
-                ("step_config", "ngs_data_qc", "picard", "path_ngs_mapping"),
-                "Path to ngs_mapping not configured but required for picard",
-            )
-            programs = self.config["picard"]["programs"]
-            assert len(programs) > 0, "No selected programs for collecting metrics"
-            assert all(
-                pgm in MULTIPLE_METRICS.keys()
-                or pgm in ADDITIONAL_METRICS
-                or pgm in WES_METRICS
-                or pgm in WGS_METRICS
-                for pgm in programs
-            ), "Some requested metrics programs are not implemented"
-            if "CollectHsMetrics" in programs:
-                assert self.config["picard"][
-                    "path_to_baits"
-                ], "Path to baits must be specified when using CollectHsMetrics"
