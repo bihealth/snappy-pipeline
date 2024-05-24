@@ -206,15 +206,6 @@ class VariantAnnotationWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "variant_annotation", "path_variant_calling"),
-            "Path to variant calling not configured but required for variant annotation",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["variant_annotation"]["tools"])
-        invalid = list(sorted(selected - set(VARIANT_ANNOTATORS)))
-        if invalid:
-            raise InvalidConfigurationException(f"Invalid variant callers selected: {invalid}")
