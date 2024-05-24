@@ -569,10 +569,3 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                             continue
                         else:
                             yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the variant annotation step is present."""
-        self.ensure_w_config(
-            ("step_config", "variant_denovo_filtration", "path_ngs_mapping"),
-            "Path to ngs_mapping not configured but required for variant_denovo_filtration",
-        )
