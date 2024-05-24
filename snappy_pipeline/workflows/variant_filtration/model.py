@@ -24,37 +24,6 @@ class Frequencies(SnappyModel):
     """AC (allele count in gnomAD) values"""
 
 
-class RegionBeds(SnappyModel):
-    all_tads: Annotated[
-        str,
-        Field(examples=["/fast/projects/medgen_genomes/static_data/GRCh37/hESC_hg19_allTads.bed"]),
-    ]
-
-    all_genes: Annotated[
-        str,
-        Field(
-            examples=[
-                "/fast/projects/medgen_genomes/static_data/GRCh37/gene_bed/ENSEMBL_v75.bed.gz"
-            ]
-        ),
-    ]
-
-    limb_tads: Annotated[
-        str, Field(examples=["/fast/projects/medgen_genomes/static_data/GRCh37/newlimb_tads.bed"])
-    ]
-
-    lifted_enhancers: Annotated[
-        str, Field(examples=["/fast/projects/medgen_genomes/static_data/GRCh37/all_but_onlyMB.bed"])
-    ]
-
-    vista_enhancers: Annotated[
-        str,
-        Field(
-            examples=["/fast/projects/medgen_genomes/static_data/GRCh37/vista_limb_enhancers.bed"]
-        ),
-    ]
-
-
 class ScoreThreshold(SnappyModel):
     require_coding: bool
     require_gerpp_gt2: bool
@@ -105,7 +74,20 @@ class VariantFiltration(SnappyStepModel):
 
     frequencies: Frequencies = Frequencies()
 
-    region_beds: dict[str, str] = RegionBeds()
+    region_beds: Annotated[
+        dict[str, str],
+        Field(
+            examples=[
+                {
+                    "all_tads": "/fast/projects/medgen_genomes/static_data/GRCh37/hESC_hg19_allTads.bed",
+                    "all_genes": "/fast/projects/medgen_genomes/static_data/GRCh37/gene_bed/ENSEMBL_v75.bed.gz",
+                    "limb_tads": "/fast/projects/medgen_genomes/static_data/GRCh37/newlimb_tads.bed",
+                    "lifted_enhancers": "/fast/projects/medgen_genomes/static_data/GRCh37/all_but_onlyMB.bed",
+                    "vista_enhancers": "/fast/projects/medgen_genomes/static_data/GRCh37/vista_limb_enhancers.bed",
+                }
+            ]
+        ),
+    ] = {}
     """regions to filter to, "whole_genome" implicitly defined"""
 
     score_thresholds: dict[str, ScoreThreshold] = {
