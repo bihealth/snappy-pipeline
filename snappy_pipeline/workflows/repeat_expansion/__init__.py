@@ -370,11 +370,6 @@ class RepeatExpansionWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
-        # Requires path to ngs_mapping output, i.e., the BAM files
-        self.ensure_w_config(
-            config_keys=("step_config", "repeat_expansion", "path_ngs_mapping"),
-            msg="Path to NGS mapping not configured but required for repeat expansion analysis.",
-        )
         # Requires path to reference genome FASTA
         self.ensure_w_config(
             config_keys=("static_data_config", "reference", "path"),
