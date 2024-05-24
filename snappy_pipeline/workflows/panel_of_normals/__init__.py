@@ -165,67 +165,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 TOOLS = ("mutect2", "cnvkit", "access", "purecn")
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_variant_calling
-step_config:
-  panel_of_normals:
-    tools: ['mutect2']  # REQUIRED - available: 'mutect2'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    ignore_chroms: []   # patterns of chromosome names to ignore
-                        # hs37d5: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']
-                        # GRCh38.d1.vd1: [chrEBV, 'HPV*', CMV, HBV, 'HCV-*', 'HIV-*', KSHV, 'HTLV-1', MCV, '*_decoy', 'chrUn_GL00220*', SV40]
-    # Configuration for mutect2
-    mutect2:
-      path_normals_list: null    # Optional file listing libraries to include in panel
-      germline_resource: REQUIRED
-      # Java options
-      java_options: ' -Xmx16g '
-      # Parallelization configuration
-      num_cores: 2               # number of cores to use locally
-      window_length: 100000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500              # number of windows to process in parallel
-      use_profile: true          # use Snakemake profile for parallel processing
-      restart_times: 5           # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2     # throttling of job creation
-      max_status_checks_per_second: 10 # throttling of status checks
-      debug_trunc_tokens: 0      # truncation to first N tokens (0 for none)
-      keep_tmpdir: never         # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1         # memory multiplier
-      job_mult_time: 1           # running time multiplier
-      merge_mult_memory: 1       # memory multiplier for merging
-      merge_mult_time: 1         # running time multiplier for merging
-    cnvkit:
-      path_normals_list: ""       # Optional file listing libraries to include in panel
-      path_target_regions: ""     # Bed files of targetted regions (Missing when creating a panel of normals for WGS data)
-      access: ""                  # Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)
-      annotate: ""                # [target] Optional targets annotations
-      target_avg_size: 0          # [target] Average size of split target bins (0: use default value)
-      bp_per_bin: 50000           # [autobin] Expected base per bin
-      split: True                 # [target] Split large intervals into smaller ones
-      antitarget_avg_size: 0      # [antitarget] Average size of antitarget bins (0: use default value)
-      min_size: 0                 # [antitarget] Min size of antitarget bins (0: use default value)
-      min_mapq: 0                 # [coverage] Mininum mapping quality score to count a read for coverage depth
-      count: False                # [coverage] Alternative couting algorithm
-      min_cluster_size: 0         # [reference] Minimum cluster size to keep in reference profiles. 0 for no clustering
-      gender: ""                  # [reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing
-      male_reference: False       # [reference & sex] Create male reference
-      gc_correction: True         # [reference] Use GC correction
-      edge_correction: True       # [reference] Use edge correction
-      rmask_correction: True      # [reference] Use rmask correction
-      drop_low_coverage: False    # [metrics] Drop very-low-coverage bins before calculations
-    access:                       # Creates access file for cnvkit, based on genomic sequence & excluded regions (optionally)
-      exclude: []                 # [access] Bed file of regions to exclude (mappability, blacklisted, ...)
-      min_gap_size: 0             # [access] Minimum gap size between accessible sequence regions (0: use default value)
-    purecn:
-      path_normals_list: ""       # Optional file listing libraries to include in panel
-      path_bait_regions: REQUIRED # Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect), recommended by PureCN author
-      path_genomicsDB: REQUIRED   # Mutect2 genomicsDB created during panel_of_normals
-      genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
-      enrichment_kit_name: "unknown" # For filename only...
-      mappability: "" # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
-      reptiming: ""   # Nothing for GRCh38
-      seed: 1234567
-"""
+DEFAULT_CONFIG = PanelOfNormalsConfigModel.default_config_yaml_string()
 
 
 class PanelOfNormalsStepPart(BaseStepPart):
