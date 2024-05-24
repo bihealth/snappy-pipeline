@@ -31,18 +31,12 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_hla_loh_calling
-step_config:
-  somatic_hla_loh_calling:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    path_hla_typing: ../hla_typing  # REQUIRED
-    path_somatic_purity_ploidy: ../somatic_purity_ploidy_estimate  # REQUIRED
-"""
+DEFAULT_CONFIG = SomaticHlaLohCallingConfigModel.default_config_yaml_string()
 
 
 class LohhlaStepPart(BaseStepPart):
@@ -155,7 +149,8 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticHlaLohCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))

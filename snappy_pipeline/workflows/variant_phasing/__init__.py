@@ -76,6 +76,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+from .model import VariantPhasing as VariantPhasingConfigModel
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -91,39 +92,7 @@ CONFIG_TO_TOKEN = {
 }
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = r"""
-# Default configuration wgs_sv_filtration
-step_config:
-  variant_phasing:
-    path_ngs_mapping: ../ngs_mapping
-    path_variant_annotation: ../variant_annotation
-    tools_ngs_mapping: []       # expected tools for ngs mapping
-    tools_variant_calling: []   # expected tools for variant calling
-    phasings:
-    - gatk_phasing_both
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605               # herpes virus
-    - hs37d5                  # GRCh37 decoy
-    - chrEBV                  # Eppstein-Barr Virus
-    - '*_decoy'               # decoy contig
-    - 'HLA-*'                 # HLA genes
-    gatk_read_backed_phasing:
-      phase_quality_threshold: 20.0  # quality threshold for phasing
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 1000            # number of windows to process in parallel
-      use_profil: true          # use Snakemake profile for parallel processing
-      restart_times: 0          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-    gatk_phase_by_transmission:
-      de_novo_prior: 1e-8       # default, use 1e-6 when interested in phasing de novos
-"""
+DEFAULT_CONFIG = VariantPhasingConfigModel.default_config_yaml_string()
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
@@ -406,7 +375,8 @@ class VariantPhasingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantPhasingConfigModel,
+            previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

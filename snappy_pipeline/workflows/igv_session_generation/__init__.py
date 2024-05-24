@@ -57,6 +57,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutSt
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
+from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
@@ -65,18 +66,7 @@ EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
 EXT_NAMES = ("xml", "xml_md5")
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = r"""
-# Default configuration igv_session_generation
-step_config:
-  igv_session_generation:
-    path_ngs_mapping: ../ngs_mapping
-    # One of the following must be given!
-    path_variant_phasing: ''
-    path_variant_annotation: ''
-    path_variant_calling: ''
-    tools_ngs_mapping: [] # defaults to ngs_mapping tool
-    tools_variant_calling: [] # defaults to variant_annotation tool
-"""
+DEFAULT_CONFIG = IgvSessionGenerationConfigModel.default_config_yaml_string()
 
 
 class WriteIgvSessionFileStepPart(BaseStepPart):
@@ -208,7 +198,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=IgvSessionGenerationConfigModel,
+            previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):

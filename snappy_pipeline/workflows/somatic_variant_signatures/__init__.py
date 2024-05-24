@@ -28,21 +28,12 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
 __author__ = "Clemens Messerschmidt"
 
 # Default configuration variant_signatures
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_variant_signatures:
-    is_filtered: false         # REQUIRED
-    path_somatic_variant: ../somatic_variant_calling   # REQUIRED
-    tools_ngs_mapping: []      # default to those configured for ngs_mapping
-    tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-    tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
-    filters: []                # When using variants after the somatic_variant_filtration step, use "no_filter", "dkfz_only", "dkfz_and_ebfilter" or "dkfz_and_ebfilter_and_oxog"
-    filtered_regions: []       # When using variants after the somatic_variant_filtration step, use "genome_wide" or ""
-"""
+DEFAULT_CONFIG = SomaticVariantSignaturesConfigModel.default_config_yaml_string()
 
 
 class SignaturesStepPart(BaseStepPart):
@@ -211,7 +202,8 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=SomaticVariantSignaturesConfigModel,
+            previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,

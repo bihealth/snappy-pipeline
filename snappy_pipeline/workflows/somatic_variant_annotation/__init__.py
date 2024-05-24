@@ -89,6 +89,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
+from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -102,49 +103,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 ANNOTATION_TOOLS = ("jannovar", "vep")
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_annotation
-step_config:
-  somatic_variant_annotation:
-    tools: ["jannovar", "vep"]
-    path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
-    tools_ngs_mapping: []      # default to those configured for ngs_mapping
-    tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-    jannovar:
-      path_jannovar_ser: REQUIRED                # REQUIRED
-      flag_off_target: False  # REQUIRED
-      dbnsfp:  # configuration for default genome release, needs change if differing
-        col_contig: 1
-        col_pos: 2
-        columns: []
-      annotation_tracks_bed: []
-      annotation_tracks_tsv: []
-      annotation_tracks_vcf: []
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 100             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - 'GL*'      # problematic unplaced loci
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
-    vep:
-      cache_dir: ""             # Defaults to $HOME/.vep Not a good idea on the cluster
-      species: homo_sapiens
-      assembly: GRCh38
-      cache_version: 102        # WARNING- this must match the wrapper's vep version!
-      tx_flag: "gencode_basic"  # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
-      pick_order: ["biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length"]
-      num_threads: 8
-      buffer_size: 1000
-      output_options:
-      - everything
-"""
+DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
 
 
 class AnnotateSomaticVcfStepPart(BaseStepPart):
@@ -327,7 +286,8 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=SomaticVariantAnnotationConfigModel,
+            previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

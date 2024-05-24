@@ -454,7 +454,7 @@ from snappy_pipeline.workflows.abstract import (
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from snappy_pipeline.models import default_config_yaml_string
-from .model import NgsMapping as ConfigModel
+from .model import NgsMapping as NgsMappingConfigModel
 
 # TODO: Need something smarter still for @RG
 
@@ -474,7 +474,7 @@ READ_MAPPERS_RNA = ("star",)
 READ_MAPPERS_DNA_LONG = ("minimap2",)
 
 #: Default configuration
-DEFAULT_CONFIG = default_config_yaml_string(ConfigModel, True)
+DEFAULT_CONFIG = NgsMappingConfigModel.default_config_yaml_string()
 
 
 class MappingGetResultFilesMixin:

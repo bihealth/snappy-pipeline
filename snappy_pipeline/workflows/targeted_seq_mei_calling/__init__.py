@@ -92,29 +92,14 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 
 #: Extensions of files to create as main payload.
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 
 #: Default configuration for the targeted_seq_mei_calling step.
-DEFAULT_CONFIG = r"""
-# Default configuration
-step_config:
-  targeted_seq_mei_calling:
-    # Path to the ngs_mapping step
-    path_ngs_mapping: ../ngs_mapping
-
-    tools: [scramble]  # REQUIRED - available: 'scramble'
-
-    scramble:
-      blast_ref: null  # REQUIRED: path to FASTA reference with BLAST DB (`makeblastdb`)
-      mei_refs: null  # OPTIONAL: MEI reference file (FASTA), if none provided will use default.
-      n_cluster: 5  # OPTIONAL: minimum cluster size, depth of soft-clipped reads.
-      mei_score: 50  # OPTIONAL: minimum MEI alignment score.
-      indel_score: 80  # OPTIONAL: minimum INDEL alignment score.
-      mei_polya_frac: 0.75  # OPTIONAL: minimum fraction of clipped length for calling polyA tail.
-"""
+DEFAULT_CONFIG = TargetedSeqMeiCallingConfigModel.default_config_yaml_string()
 
 
 class ScrambleStepPart(BaseStepPart):
@@ -308,7 +293,8 @@ class MeiWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=TargetedSeqMeiCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))

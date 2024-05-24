@@ -44,15 +44,24 @@ class Gender(enum.Enum):
 
 class Cnvkit(SnappyModel):
     path_target: Annotated[
-        str, Field(examples=["../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed"])]
+        str, Field(examples=["../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed"])
+    ]
     """Path to target regions"""
 
-    path_antitarget: Annotated[str, Field(
-        examples=["../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed"])]
+    path_antitarget: Annotated[
+        str,
+        Field(examples=["../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed"]),
+    ]
     """Path to antitarget regions"""
 
-    path_panel_of_normals: Annotated[str, Field(examples=[
-        "../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn"])]
+    path_panel_of_normals: Annotated[
+        str,
+        Field(
+            examples=[
+                "../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn"
+            ]
+        ),
+    ]
     """Path to panel of normals (reference)"""
 
     plot: bool = True

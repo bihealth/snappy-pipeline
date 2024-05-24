@@ -12,12 +12,9 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import GeneExpressionReport as GeneExpressionReportConfigModel
 
-DEFAULT_CONFIG = r"""
-step_config:
-  gene_expression_report:
-    path_gene_expression_quantification: ''  # REQUIRED
-"""
+DEFAULT_CONFIG = GeneExpressionReportConfigModel.default_config_yaml_string()
 
 #: Names of the files to create for the extension (snakemake output)
 EXT_NAMES = ("tsv",)
@@ -164,7 +161,8 @@ class GeneExpressionReportWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=GeneExpressionReportConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

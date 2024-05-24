@@ -644,11 +644,15 @@ class BaseStep:
         config_lookup_paths,
         config_paths,
         work_dir,
-        previous_steps=None,
+        *,
+        config_model_class: type[SnappyStepModel],
+        previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.name = self.__class__.name
         #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
+        #: Pydantic model class for configuration validation
+        self.config_model_class = config_model_class
         #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
         #: Classes of previously executed steps, used for merging their default configuration as
@@ -664,26 +668,13 @@ class BaseStep:
         #: Validate workflow configuration using its accompanying pydantic model
         #: This assumes the existence of a model.py in the module directory
         #: with the model class' name being the camelCased version of the workflow name
-        model_name = self.name.title().replace("_", "")
+        if workflow.verbose:
+            logging.info(
+                f"default config yaml for {self.name}\n"
+                + default_config_yaml_string(self.config_model_class, comment_optional=True)
+            )
         try:
-            module = import_module(".model", package=self.__module__)
-            model: type[SnappyStepModel] = getattr(module, model_name)
-            if workflow.verbose:
-                logging.info(
-                    f"default config yaml for {model_name}\n"
-                    + default_config_yaml_string(model, comment_optional=True)
-                )
-            self.config_model = validate_config(self.config, model)
-        except ModuleNotFoundError:
-            model_path = f"{self.__module__}.model"
-            logging.warning(
-                f"No pydantic model named {model_name} found in {model_path} (for step {self.name}), "
-                f"abort",
-            )
-            self.config_model = None
-            raise MissingConfiguration(
-                f"No pydantic model named {model_name} found in {model_path} (for step {self.name})"
-            )
+            self.config_model = validate_config(self.config, self.config_model_class)
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
             raise ve

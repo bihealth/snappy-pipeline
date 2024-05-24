@@ -83,6 +83,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from .model import WgsSvExportExternal as WgsSvExportExternalConfigModel
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
@@ -99,22 +100,7 @@ KEY_EXT = {
 }
 
 #: Default configuration for the wgs_sv_export_external step
-DEFAULT_CONFIG = r"""
-# Default configuration wgs_sv_export_external.
-step_config:
-  wgs_sv_export_external:
-    tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
-    tool_sv_calling_wgs: null    # OPTIONAL: used to create output file prefix.
-    merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
-    merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
-    search_paths: []             # REQUIRED: path to all VCF files.
-    search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]
-    release: GRCh37              # REQUIRED: default 'GRCh37'
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
-    path_db: REQUIRED            # REQUIRED: path to annotator DB file to use
-    varfish_server_compatibility: false # OPTIONAL: build output compatible with varfish-server v1.2 (Anthenea) and early versions of the v2 (Bollonaster).
-"""
+DEFAULT_CONFIG = WgsSvExportExternalConfigModel.default_config_yaml_string()
 
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
@@ -341,7 +327,8 @@ class WgsSvExportExternalWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
+            config_model_class=WgsSvExportExternalConfigModel,
+            previous_steps=(),
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())

@@ -93,18 +93,10 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import HelperGcnvModelWgs as HelperGcnvModelWgsConfigModel
 
 #: Default configuration for the helper_gcnv_model_wgs schema
-DEFAULT_CONFIG = r"""
-# Default configuration helper_gcnv_model_wgs
-step_config:
-  helper_gcnv_model_wgs:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
-    gcnv:
-      # Path to BED file with uniquely mappable regions.
-      path_uniquely_mapable_bed: null  # REQUIRED
-"""
+DEFAULT_CONFIG = HelperGcnvModelWgsConfigModel.default_config_yaml_string()
 
 
 class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
@@ -228,7 +220,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=HelperGcnvModelWgsConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

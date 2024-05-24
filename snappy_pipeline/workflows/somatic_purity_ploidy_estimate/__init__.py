@@ -20,6 +20,7 @@ from snakemake.io import touch
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -27,21 +28,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 PURITY_PLOIDY_TOOLS = "ascat"
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_purity_ploidy_estimate:
-    tools: ['ascat']  # REQUIRED - available: 'ascat'
-    tool_cnv_calling: cnvetti
-    # Configuration with read mapper and path to mapping output. Will use this
-    # for generating a pileup using samtools for obtaining the b allele
-    # fraction and computing coverage.
-    tool_ngs_mapping: bwa
-    path_ngs_mapping: ../ngs_mapping
-    # Configuration of ASCAT method.
-    ascat:
-      # BED file with loci for B allele frequency.
-      b_af_loci: REQUIRED  # REQUIRED
-""".lstrip()
+DEFAULT_CONFIG = SomaticPurityPloidyEstimateConfigModel.default_config_yaml_string()
 
 
 class AscatStepPart(BaseStepPart):
@@ -318,7 +305,8 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticPurityPloidyEstimateConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows

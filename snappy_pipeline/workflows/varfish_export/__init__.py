@@ -81,6 +81,7 @@ from snappy_pipeline.workflows.variant_calling import (
     VariantCallingGetLogFileMixin,
     VariantCallingWorkflow,
 )
+from .model import VarfishExport as VarfishExportConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -90,37 +91,7 @@ EXTS = (".tsv.gz", ".tsv.gz.md5")
 # TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration varfish_export.
-step_config:
-  varfish_export:
-    # Configuration of the input path enables export from the corresponding pipeline step.
-    #
-    # Used output of ngs_mapping is alignment quality control data
-    path_ngs_mapping: ../ngs_mapping
-    # Used output of variant_calling is variant calls
-    path_variant_calling: ../variant_calling
-    # Used output of targeted SV calling is variant calls
-    path_sv_calling_targeted: null  # REQUIRED; optional
-    # Used output of WGS SV calling is variant calls
-    path_sv_calling_wgs: null       # REQUIRED; optional
-
-    # Optionally, you can override the exported mappers and variant callers by setting
-    # the following variables.
-    tools_ngs_mapping: null
-    tools_variant_calling: null
-    tools_sv_calling_targeted: null
-    tools_sv_calling_wgs: null
-
-    # The following configuration is used for parameterizing the output itself.
-    #
-    # The release of the genome reference that data has been aligned to.
-    release: GRCh37              # REQUIRED: default 'GRCh37'
-    # Path to BED file with exons; used for reducing data to near-exon small variants.
-    path_exon_bed: null          # REQUIRED: exon BED file to use
-    # Path to mehari database.
-    path_mehari_db: REQUIRED     # REQUIRED: path to mehari database
-"""
+DEFAULT_CONFIG = VarfishExportConfigModel.default_config_yaml_string()
 
 
 class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
@@ -493,7 +464,8 @@ class VarfishExportWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantCallingWorkflow, SvCallingTargetedWorkflow, NgsMappingWorkflow),
+            config_model_class=VarfishExportConfigModel,
+            previous_steps=(VariantCallingWorkflow, SvCallingTargetedWorkflow, NgsMappingWorkflow),
         )
 
         # Register sub step classes so the sub steps are available

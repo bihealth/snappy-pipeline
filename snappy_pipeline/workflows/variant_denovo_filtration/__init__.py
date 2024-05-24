@@ -106,6 +106,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
+from .model import VariantDenovoFiltration as VariantDenovoFiltrationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -116,31 +117,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the variant_denovo_filtration step
-DEFAULT_CONFIG = r"""
-step_config:
-  variant_denovo_filtration:
-    # One of the following must be given!
-    path_variant_phasing: ''
-    path_variant_annotation: ''
-    path_variant_calling: ''
-    path_ngs_mapping: ../ngs_mapping
-    tools_ngs_mapping: null          # defaults to ngs_mapping tool
-    tools_variant_calling: null      # defaults to variant_annotation tool
-    info_key_reliable_regions: []    # optional INFO keys with reliable regions
-    info_key_unreliable_regions: []  # optional INFO keys with unreliable regions
-    params_besenbacher:              # parameters for Besenbacher quality filter
-      min_gq: 50
-      min_dp: 10
-      max_dp: 120
-      min_ab: 0.20
-      max_ab: 0.9
-      max_ad2: 1
-    bad_region_expressions: []
-    # e.g.,
-    # - 'UCSC_CRG_MAPABILITY36 == 1'
-    # - 'UCSC_SIMPLE_REPEAT == 1'
-    collect_msdn: True               # whether or not to collect MSDN (requires GATK HC+UG)
-"""
+DEFAULT_CONFIG = VariantDenovoFiltrationConfigModel.default_config_yaml_string()
 
 
 class FilterDeNovosBaseStepPart(BaseStepPart):
@@ -479,7 +456,8 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantDenovoFiltrationConfigModel,
+            previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):

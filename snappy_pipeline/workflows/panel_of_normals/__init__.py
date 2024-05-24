@@ -157,6 +157,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import PanelOfNormals as PanelOfNormalsConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -758,7 +759,8 @@ class PanelOfNormalsWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=PanelOfNormalsConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])

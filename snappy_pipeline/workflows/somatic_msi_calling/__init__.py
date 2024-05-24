@@ -57,18 +57,12 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_msi_calling
-step_config:
-  somatic_msi_calling:
-    tools: ['mantis']  # REQUIRED - available: 'mantis'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    loci_bed: /fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed  # REQUIRED
-"""
+DEFAULT_CONFIG = SomaticMsiCallingConfigModel.default_config_yaml_string()
 
 
 class MantisStepPart(BaseStepPart):
@@ -176,7 +170,8 @@ class SomaticMsiCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticMsiCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((MantisStepPart, LinkOutStepPart))

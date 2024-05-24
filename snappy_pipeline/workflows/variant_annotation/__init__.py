@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerato
 from snappy_pipeline.workflows.abstract.exceptions import InvalidConfigurationException
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
+from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -79,30 +80,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 # TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_annotation
-step_config:
-  variant_annotation:
-    path_variant_calling: ../variant_calling
-    tools:
-      - vep
-    vep:
-      # We will always run VEP in cache mode.  You have to provide the directory to the
-      # cache to use (VEP would be ``~/.vep``).
-      cache_dir: null # OPTIONAL
-      # The cache version to use.  gnomAD v2 used 85, gnomAD v3.1 uses 101.
-      cache_version: "85"
-      # The assembly to use.  gnomAD v2 used "GRCh37", gnomAD v3.1 uses "GRCh38".
-      assembly: "GRCh37"
-      # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
-      tx_flag: "gencode_basic"
-      # Number of threads to use with forking, set to 0 to disable forking.
-      num_threads: 16
-      # Additional flags.
-      more_flags: "--af_gnomade --af_gnomadg"
-      # The --buffer_size parameter
-      buffer_size: 100000
-"""
+DEFAULT_CONFIG = VariantAnnotationConfigModel.default_config_yaml_string()
 
 
 class VepStepPart(GetResultFilesMixin, BaseStepPart):
@@ -188,7 +166,8 @@ class VariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantAnnotationConfigModel,
+            previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))

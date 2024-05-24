@@ -10,7 +10,7 @@ files.
 from collections import OrderedDict
 import os
 import sys
-
+from .model import CbioportalExport as CbioportalExportConfigModel
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 
 from snappy_pipeline.base import MissingConfiguration
@@ -72,49 +72,7 @@ CASE_LIST_FILES = {
 }
 
 
-DEFAULT_CONFIG = r"""
-step_config:
-  cbioportal_export:
-    # Required for RNA expression
-    path_ngs_mapping: ""                                         # When missing, no expression data is uploaded to cBioPortal
-    mapping_tool: "bwa"
-    expression_tool: "star"
-    # Required for somatic variants
-    path_somatic_variant: ../somatic_variant_filtration          # REQUIRED (before or after filtration)
-    somatic_variant_calling_tool: "mutect2"                      # mutect/scalpel combo unsupported
-    somatic_variant_annotation_tool: "vep"
-    filter_set: ""                                               # Set it to an empty value when using annotated variants without filtration.
-                                                                 # When using filters, there are two possibilities:
-                                                                 # - the old implementation, using filter_sets.
-                                                                 #   In that case, choose one of the filters:
-                                                                 #   * no_filter
-                                                                 #   * dkfz_only
-                                                                 #   * dkfz_and_ebfilter
-                                                                 #   * dkfz_and_ebfilter_and_oxog (that should be reserved for datasets with oxo-G artifacts)
-                                                                 # - the new implementation, using filter_list.
-                                                                 #   In that case, the value must be "filter_list"
-    exon_list: "genome_wide"                                     # Works together with filter_set, ignored when "filter_list" is selected
-    exclude_variant_with_flag: ""
-    # Required for Copy Number Alterations
-    path_copy_number: ""                                         # When missing, no CNV data uploaded to portal. Access WES & WGS steps
-    copy_number_tool: cnvkit                                     # Control_FREEC is currently unsupported, CopywriteR is not maintained
-    # Required for MAF &/or cBioPortal
-    path_gene_id_mappings: REQUIRED             # Mapping from pipeline gene ids to cBioPortal ids (HGNC symbols from GeneNexus)
-    vcf2maf:
-      Center: BIH
-      ncbi_build: GRCh37
-    # Description of dataset in cBioPortal
-    study:
-      type_of_cancer: REQUIRED                  # see http://oncotree.mskcc.org/#/home
-      cancer_study_id: REQUIRED                 # Usually: <type of cancer id>_<pi>_<year>
-      study_description: REQUIRED               # REQUIRED
-      study_name: REQUIRED                      # REQUIRED
-      study_name_short: REQUIRED                # REQUIRED
-    patient_info: {}              # Unimplemented
-    sample_info: {}               # Each additional sample column must have a name and a (possibly empty) config attached.
-    # tumor_mutational_burden:
-    #   path: ../tumor_mutational_burden
-"""
+DEFAULT_CONFIG = CbioportalExportConfigModel.default_config_yaml_string()
 
 
 # ================================================================================================
@@ -746,6 +704,7 @@ class cbioportalExportWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
+            config_model_class=CbioportalExportConfigModel,
         )
 
         # cBioPortal requires the genome release as GRC[hm]3[78] in the MAF file

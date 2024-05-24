@@ -138,6 +138,7 @@ The following adpter trimming tools are currently available
 
 import os
 from collections import OrderedDict
+from .model import AdapterTrimming as AdapterTrimmingConfigModel
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -159,7 +160,7 @@ from .model import AdapterTrimming as ConfigModel
 TRIMMERS = ("bbduk", "fastp")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = default_config_yaml_string(ConfigModel, True)
+DEFAULT_CONFIG = ConfigModel.default_config_yaml_string()
 
 
 class AdapterTrimmingStepPart(BaseStepPart):
@@ -365,7 +366,7 @@ class AdapterTrimmingWorkflow(BaseStep):
     sheet_shortcut_class = GenericSampleSheet
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, config_model_class=AdapterTrimmingConfigModel)
         self.register_sub_step_classes(
             (BbdukStepPart, FastpStepPart, LinkInStep, LinkOutFastqStepPart)
         )

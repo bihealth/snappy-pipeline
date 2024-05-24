@@ -17,6 +17,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".json", ".json.md5")
@@ -25,20 +26,7 @@ EXT_VALUES = (".json", ".json.md5")
 EXT_NAMES = ("json", "json_md5")
 
 #: Default configuration for the tmb calculation step
-DEFAULT_CONFIG = r"""
-step_config:
-    tumor_mutational_burden:
-        has_annotation: true       # REQUIRED
-        is_filtered: false         # REQUIRED
-        path_somatic_variant: ../somatic_variant_annotation   # REQUIRED
-        tools_ngs_mapping: []      # default to those configured for ngs_mapping
-        tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-        tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
-        filters: []                # When using variants after the somatic_variant_filtration step, use "no_filter", "dkfz_only", "dkfz_and_ebfilter" or "dkfz_and_ebfilter_and_oxog"
-        filtered_regions: []       # When using variants after the somatic_variant_filtration step, use "genome_wide" or ""
-        target_regions:            # REQUIRED
-        missense_regex: '.*[\|&]missense_variant[\|&].*' #change if the annotation tool doesn't use 'missense_variant' to indicate missense variant
-"""
+DEFAULT_CONFIG = TumorMutationalBurdenConfigModel.default_config_yaml_string()
 
 
 class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
@@ -180,7 +168,8 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=TumorMutationalBurdenConfigModel,
+            previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,

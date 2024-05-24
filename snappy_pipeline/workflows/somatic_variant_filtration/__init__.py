@@ -135,6 +135,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
+from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -145,52 +146,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_annotation
-step_config:
-  somatic_variant_filtration:
-    path_somatic_variant: ../somatic_variant_annotation # When annotations are present, otherwise ../somatic_variant_calling
-    path_ngs_mapping: ../ngs_mapping                    # Needed for dkfz & ebfilter
-    tools_ngs_mapping: null                             # Default: use those defined in ngs_mapping step
-    tools_somatic_variant_calling: null                 # Default: use those defined in somatic_variant_calling step
-    tools_somatic_variant_annotation: null              # Default: use those defined in somatic_variant_annotation step
-    has_annotation: True
-    filter_sets:                                        # Deprecated filtration method, use filter_list
-    # no_filter: no_filters                             # implicit, always defined
-      dkfz_only: ''  # empty
-      dkfz_and_ebfilter:
-        ebfilter_threshold: 2.4
-      dkfz_and_ebfilter_and_oxog:
-        vaf_threshold: 0.08
-        coverage_threshold: 5
-      dkfz_and_oxog:
-        vaf_threshold: 0.08
-        coverage_threshold: 5
-    exon_lists: {}                                     # Deprecated filtration method, use filter_list
-    # genome_wide: null                                # implicit, always defined
-    # ensembl74: path/to/ensembl47.bed
-    eb_filter:                                         # Deprecated filter, use in filter_list
-      shuffle_seed: 1
-      panel_of_normals_size: 25
-      min_mapq: 20
-      min_baseq: 15
-    filter_list: []
-    # Available filters
-    # dkfz: {}                                         # Not parametrisable
-    # ebfilter:
-    #   ebfilter_threshold: 2.4
-    #   shuffle_seed: 1
-    #   panel_of_normals_size: 25
-    #   min_mapq: 20
-    #   min_baseq: 15
-    # bcftools:
-    #   include: ""                                   # Expression to be used in bcftools view --include
-    #   exclude: ""                                   # Expression to be used in bcftools view --exclude
-    # regions:
-    #   path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
-    # protected:
-    #   path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
-"""
+DEFAULT_CONFIG = SomaticVariantFiltrationConfigModel.default_config_yaml_string()
 
 
 class SomaticVariantFiltrationStepPart(BaseStepPart):
@@ -853,7 +809,12 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantAnnotationWorkflow, SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=SomaticVariantFiltrationConfigModel,
+            previous_steps=(
+                SomaticVariantAnnotationWorkflow,
+                SomaticVariantCallingWorkflow,
+                NgsMappingWorkflow,
+            ),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

@@ -76,6 +76,7 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
+from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -86,18 +87,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_cnv_checking schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_cnv_checking
-step_config:
-  somatic_cnv_checking:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    path_cnv_calling: ""              # Can use for instance ../somatic_targeted_seq_cnv_calling
-    cnv_assay_type: ""                # Empty: no CNV, WES for somatic_targeted_seq_snv_calling step, WGS for somatic_wgs_cnv_calling step
-    excluded_regions: ""              # Bed file of regions to be excluded
-    max_depth: 10000                  # Max depth for pileups
-    min_depth: 20                     # Minimum depth for reference and alternative alleles to consider variant
-    min_baf: 0.4                      # Maximum BAF to consider variant as heterozygous (between 0 & 1/2)
-"""
+DEFAULT_CONFIG = SomaticCnvCheckingConfigModel.default_config_yaml_string()
 
 
 class SomaticCnvCheckingStepPart(BaseStepPart):
@@ -301,7 +291,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=SomaticCnvCheckingConfigModel,
+            previous_steps=(
                 SomaticTargetedSeqCnvCallingWorkflow,
                 SomaticWgsCnvCallingWorkflow,
                 NgsMappingWorkflow,

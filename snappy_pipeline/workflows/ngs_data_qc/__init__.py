@@ -28,42 +28,10 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from .model import NgsDataQc as NgsDataQcConfigModel
 
 #: Default configuration for the ngs_mapping schema
-DEFAULT_CONFIG = r"""
-# Default configuration ngs_mapping
-step_config:
-  ngs_data_qc:
-    path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [fastqc, picard]  # REQUIRED - available: 'fastqc' & 'picard' (for QC on bam files)
-    picard:
-      path_ngs_mapping: ../ngs_mapping  # REQUIRED
-      path_to_baits: ""                 # Required when CollectHsMetrics is among the programs
-      path_to_targets: ""               # When missing, same as baits
-      bait_name: ""                     # Exon enrichment kit name (optional)
-      programs: []  # Available metrics:
-                    # * Generic metrics [* grouped into CollectMultipleMetrics]
-      #                 - CollectAlignmentSummaryMetrics      *
-      #                 - CollectBaseDistributionByCycle      *
-      #                 - CollectGcBiasMetrics                *
-      #                 - CollectInsertSizeMetrics            *
-      #                 - CollectJumpingLibraryMetrics
-      #                 - CollectOxoGMetrics
-      #                 - CollectQualityYieldMetrics          *
-      #                 - CollectSequencingArtifactMetrics    *
-      #                 - EstimateLibraryComplexity
-      #                 - MeanQualityByCycle                  *
-      #                 - QualityScoreDistribution            *
-                    # * WGS-specific metrics
-      #                 - CollectRawWgsMetrics
-      #                 - CollectWgsMetrics
-      #                 - CollectWgsMetricsWithNonZeroCoverage
-                    # * Other assay-specific metrics
-      #                 - CollectHsMetrics                    Whole Exome Sequencing
-      #                 - CollectTargetedPcrMetrics           Panel sequencing
-      #                 - CollectRnaSeqMetrics                mRNA sequencing, not implemented yet
-      #                 - CollectRbsMetrics                   bi-sulfite sequencing, not implemented yet
-"""
+DEFAULT_CONFIG = NgsDataQcConfigModel.default_config_yaml_string()
 
 MULTIPLE_METRICS = {
     "CollectAlignmentSummaryMetrics": ["alignment_summary_metrics"],
@@ -285,7 +253,14 @@ class NgsDataQcWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=NgsDataQcConfigModel,
+        )
         self.register_sub_step_classes(
             (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )

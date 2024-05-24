@@ -88,6 +88,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -101,16 +102,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 SOMATIC_VARIANT_CALLERS = ("manta", "delly2")
 
 #: Default configuration for the somatic_wgs_sv_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_wgs_sv_calling
-step_config:
-  somatic_wgs_sv_calling:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    tools: [manta]  # REQUIRED - available: 'delly2' and 'manta'
-    delly2:
-      path_exclude_tsv: null  # optional
-      max_threads: 16
-"""
+DEFAULT_CONFIG = SomaticWgsSvCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticWgsSvCallingStepPart(BaseStepPart):
@@ -431,7 +423,8 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticWgsSvCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))

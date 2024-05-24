@@ -95,31 +95,10 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeSampleNameStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
+from .model import VariantExportExternal as VariantExportExternalConfigModel
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_export_external.
-step_config:
-  variant_export_external:
-    external_tool: dragen        # OPTIONAL: external tool name.
-    bam_available_flag: false    # REQUIRED: BAM QC only possible if BAM files are present.
-    merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
-    merge_option: null           # OPTIONAL: How to merge VCF, used in `bcftools --merge` argument.
-    gvcf_option: true            # OPTIONAL: Flag to indicate if inputs are genomic VCFs.
-    search_paths: []             # REQUIRED: list of paths to VCF files.
-    search_patterns: []          # REQUIRED: list of search patterns, ex.: [{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}]
-    release: GRCh37              # OPTIONAL: genome release; default 'GRCh37'.
-    # Path to BED file with exons; used for reducing data to near-exon small variants.
-    path_exon_bed: null          # REQUIRED: exon BED file to use
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file.
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file.
-    path_db: REQUIRED            # REQUIRED: path to annotator DB file to use.
-    target_coverage_report:
-      # Mapping from enrichment kit to target region BED file, for either computing per target
-      # region coverage or selecting targeted exons. Only used if 'bam_available_flag' is True.
-      # It will not generated detailed reporting.
-      path_targets_bed: OPTIONAL # OPTIONAL
-"""
+DEFAULT_CONFIG = VariantExportExternalConfigModel.default_config_yaml_string()
 
 
 class BamReportsExternalStepPart(TargetCovReportStepPart):
@@ -567,7 +546,8 @@ class VariantExportExternalWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
+            config_model_class=VariantExportExternalConfigModel,
+            previous_steps=(),
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())

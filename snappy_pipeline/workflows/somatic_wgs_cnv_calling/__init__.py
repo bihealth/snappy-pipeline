@@ -89,6 +89,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -103,80 +104,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 SOMATIC_WGS_CNV_CALLERS = ("canvas", "cnvetti", "control_freec")
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_wgs_cnv_calling
-step_config:
-  somatic_wgs_cnv_calling:
-    path_ngs_mapping: ../ngs_mapping                          # REQUIRED
-    path_somatic_variant_calling: ../somatic_variant_calling  # REQUIRED
-    somatic_variant_calling_tool: null                        # REQUIRED
-    tools: [cnvetti]  # REQUIRED, examples: 'cnvetti' and 'control_freec'.
-    canvas:
-      path_reference: REQUIRED       # REQUIRED
-      path_filter_bed: REQUIRED      # REQUIRED
-      path_genome_folder: REQUIRED   # REQUIRED
-    cnvetti:
-      window_length: null
-      count_kind: null
-      segmentation: null
-      normalization: null
-      preset: deep_wgs  # REQUIRED
-      presets:
-        deep_wgs:
-          window_length: 200
-          count_kind: Coverage
-          segmentation: HaarSeg
-          normalization: MedianGcBinned
-    control_freec:
-      path_chrlenfile: REQUIRED  #REQUIRED
-      path_mappability: REQUIRED  #REQUIRED
-      path_mappability_enabled: False
-      window_size: -1 #set to a value >=0 you want a specific fixed window size
-      convert:
-        org_obj: org.Hs.eg.db::org.Hs.eg.db
-        tx_obj: TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
-        bs_obj: BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5
-    cnvkit:
-      path_target: REQUIRED             # Usually ../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
-      path_antitarget: REQUIRED         # Usually ../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
-      path_panel_of_normals: REQUIRED   # Usually ../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn
-      plot: True                        # Output plots (very slow)
-      min_mapq: 0                       # [coverage] Mininum mapping quality score to count a read for coverage depth
-      count: False                      # [coverage] Alternative couting algorithm
-      gc_correction: True               # [fix] Use GC correction
-      edge_correction: True             # [fix] Use edge correction
-      rmask_correction: True            # [fix] Use rmask correction
-      # BCBIO uses
-      # seg_method: haar
-      # seg_threshold: 0.0001
-      # -- OR
-      # seg_method: cbs
-      # seg_threshold: 0.000001
-      segmentation_method: cbs          # [segment] One of cbs, flasso, haar, hmm, hmm-tumor, hmm-germline, none
-      segmentation_threshold: 0.000001  # [segment] Significance threshold (hmm methods: smoothing window size)
-      drop_low_coverage: False          # [segment, call, genemetrics] Drop very low coverage bins
-      drop_outliers: 10                 # [segment] Drop outlier bins (0 for no outlier filtering)
-      smooth_cbs: True                  # [segment] Additional smoothing of CBS segmentation (WARNING- not the default value)
-      center: ""                        # [call] Either one of mean, median, mode, biweight, or a constant log2 ratio value.
-      filter: ampdel                    # [call] One of ampdel, cn, ci, sem (merging segments flagged with the specified filter), "" for no filtering
-      calling_method: threshold         # [call] One of threshold, clonal, none
-      call_thresholds: "-1.1,-0.25,0.2,0.7" # [call] Thresholds for calling integer copy number
-      ploidy: 2                         # [call] Ploidy of sample cells
-      purity: 0                         # [call] Estimated tumor cell fraction (0 for discarding tumor cell purity)
-      gender: ""                        # [call, diagram] Specify the chromosomal sex of all given samples as male or female. Guess when missing
-      male_reference: False             # [call, diagram] Create male reference
-      diagram_threshold: 0.5            # [diagram] Copy number change threshold to label genes
-      diagram_min_probes: 3             # [diagram] Min number of covered probes to label genes
-      shift_xy: True                    # [diagram] Shift X & Y chromosomes according to sample sex
-      breaks_min_probes: 1              # [breaks] Min number of covered probes for a break inside the gene
-      genemetrics_min_probes: 3         # [genemetrics] Min number of covered probes to consider a gene
-      genemetrics_threshold: 0.2        # [genemetrics] Min abs log2 change to consider a gene
-      genemetrics_alpha: 0.05           # [genemetrics] Significance cutoff
-      genemetrics_bootstrap: 100        # [genemetrics] Number of bootstraps
-      segmetrics_alpha: 0.05            # [segmetrics] Significance cutoff
-      segmetrics_bootstrap: 100         # [segmetrics] Number of bootstraps
-      smooth_bootstrap: False           # [segmetrics] Smooth bootstrap results
-"""
+DEFAULT_CONFIG = SomaticWgsCnvCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticWgsCnvCallingStepPart(BaseStepPart):
@@ -785,7 +713,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticWgsCnvCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

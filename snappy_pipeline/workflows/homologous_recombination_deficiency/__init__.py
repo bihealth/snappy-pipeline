@@ -73,21 +73,12 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
+from .model import HomologousRecombinationDeficiency as HomologousRecombinationDeficiencyConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Default configuration for the homologous recombination deficiency step
-DEFAULT_CONFIG = r"""
-# Default configuration homologous_recombination_deficiency
-step_config:
-  homologous_recombination_deficiency:
-    tools: ['scarHRD']  # REQUIRED - available: 'scarHRD'
-    path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
-    scarHRD:
-      genome_name: "grch37"  # Must be either "grch37", "grch38" or "mouse"
-      chr_prefix: False
-      length: 50             # Wiggle track for GC reference file
-"""
+DEFAULT_CONFIG = HomologousRecombinationDeficiencyConfigModel.default_config_yaml_string()
 
 
 class ScarHRDStepPart(BaseStepPart):
@@ -187,7 +178,8 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticTargetedSeqCnvCallingWorkflow,),
+            config_model_class=HomologousRecombinationDeficiencyConfigModel,
+            previous_steps=(SomaticTargetedSeqCnvCallingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))

@@ -271,6 +271,7 @@ from snappy_pipeline.workflows.abstract.common import (
 from snappy_pipeline.workflows.abstract.exceptions import InvalidConfigurationException
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import VariantCalling as VariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -290,65 +291,7 @@ VARIANT_CALLERS = (
 )
 
 #: Default configuration for the variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_calling
-step_config:
-  variant_calling:
-    # Common configuration
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
-    # Report generation
-    baf_file_generation:
-      enabled: true
-      min_dp: 10  # minimal DP of variant, must be >=1
-    bcftools_stats:
-      enabled: true
-    jannovar_stats:
-      enabled: true
-      path_ser: REQUIRED  # REQUIRED
-    bcftools_roh:
-      enabled: true
-      path_targets: null  # REQUIRED; optional
-      path_af_file: null  # REQUIRED
-      ignore_homref: false
-      skip_indels: false
-      rec_rate: 1e-8
-
-    # Variant calling tools and their configuration
-    #
-    # Common configuration
-    tools: ['gatk4_hc_gvcf']  # REQUIRED
-    ignore_chroms:
-    - '^NC_007605$' # herpes virus
-    - '^hs37d5$'    # GRCh37 decoy
-    - '^chrEBV$'    # Eppstein-Barr Virus
-    - '_decoy$'     # decoy contig
-    - '^HLA-'       # HLA genes
-
-    # Variant caller specific configuration
-    bcftools_call:
-      max_depth: 250
-      max_indel_depth: 250
-      window_length: 10000000
-      num_threads: 16
-    gatk3_hc:
-      num_threads: 16
-      window_length: 10000000
-      allow_seq_dict_incompatibility: false
-    gatk3_ug:
-      num_threads: 16
-      window_length: 10000000
-      allow_seq_dict_incompatibility: false
-      downsample_to_coverage: 250
-    gatk4_hc_joint:
-      window_length: 10000000
-      num_threads: 16
-      allow_seq_dict_incompatibility: false
-    gatk4_hc_gvcf:
-      window_length: 10000000
-      num_threads: 16
-      allow_seq_dict_incompatibility: false
-"""
+DEFAULT_CONFIG = VariantCallingConfigModel.default_config_yaml_string()
 
 
 class GetResultFilesMixin:
@@ -924,7 +867,8 @@ class VariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=VariantCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

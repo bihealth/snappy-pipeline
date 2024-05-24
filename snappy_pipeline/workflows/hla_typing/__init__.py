@@ -71,6 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from .model import HlaTyping as HlaTypingConfigModel
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".txt", ".txt.md5")
@@ -82,19 +83,7 @@ EXT_NAMES = ("txt", "txt_md5")
 HLA_TYPERS = ("optitype", "arcashla")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = r"""
-# Default configuration ngs_mapping
-step_config:
-  hla_typing:
-    path_ngs_mapping: ../ngs_mapping
-    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [optitype]  # REQUIRED - available: 'optitype' and 'arcashla'
-    optitype:
-      max_reads: 5000  # suggestion by OptiType author
-      num_mapping_threads: 4
-    arcashla:
-      mapper: star
-""".lstrip()
+DEFAULT_CONFIG = HlaTypingConfigModel.default_config_yaml_string()
 
 
 class OptiTypeStepPart(BaseStepPart):
@@ -306,7 +295,7 @@ class HlaTypingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
         self.register_sub_step_classes(
             (OptiTypeStepPart, ArcasHlaStepPart, LinkInStep, LinkOutStepPart)
         )

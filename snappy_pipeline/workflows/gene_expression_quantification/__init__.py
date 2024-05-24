@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 
 # Extensions
 EXTENSIONS = {
@@ -112,30 +113,7 @@ EXTENSIONS = {
     "salmon": {"transcript_sf": ".transcript.sf", "transcript_sf_md5": ".transcript.sf.md5"},
 }
 
-DEFAULT_CONFIG = r"""
-step_config:
-  gene_expression_quantification:
-    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [strandedness, featurecounts, duplication, dupradar, rnaseqc, stats, salmon]  # REQUIRED
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    strand: -1 # Use 0, 1 or 2 to force unstranded, forward or reverse strand
-    featurecounts:
-      path_annotation_gtf: REQUIRED  # REQUIRED
-    strandedness:
-      # needs column 6 with strand info, e.g. CCDS/15/GRCh37/CCDS.bed
-      path_exon_bed: REQUIRED  # REQUIRED
-      threshold: 0.85
-    rnaseqc:
-      rnaseqc_path_annotation_gtf: REQUIRED # REQUIRED
-    dupradar:
-      dupradar_path_annotation_gtf: REQUIRED  # REQUIRED
-      num_threads: 8
-    salmon:
-      path_transcript_to_gene: REQUIRED  # REQUIRED
-      path_index: REQUIRED # REQUIRED
-      salmon_params: " --gcBias --validateMappings"
-      num_threads: 16
-""".lstrip()
+DEFAULT_CONFIG = GeneExpressionQuantificationConfigModel.default_config_yaml_string()
 
 
 class SalmonStepPart(BaseStepPart):
@@ -480,7 +458,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=GeneExpressionQuantificationConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

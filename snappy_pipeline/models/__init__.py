@@ -31,7 +31,9 @@ class SnappyModel(BaseModel):
 
 # This only exists to distinguish workflow step_config models from other snappy specific models
 class SnappyStepModel(SnappyModel, object):
-    pass
+    @classmethod
+    def default_config_yaml_string(cls, comment_optional: bool = True):
+        return default_config_yaml_string(cls, comment_optional)
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
@@ -54,7 +56,7 @@ SizeString = Annotated[str, Predicate(lambda s: size_string_regexp.match(s) is n
 # list all optional fields commented out, list enum options, mark required fields, show descriptions
 
 
-def default_config_yaml_string(model: type[BaseModel], comment_optional: bool = False) -> str:
+def default_config_yaml_string(model: type[SnappyStepModel], comment_optional: bool = False) -> str:
     return _dump_commented_yaml(model, comment_optional)
 
 

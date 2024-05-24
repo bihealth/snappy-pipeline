@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -79,51 +80,7 @@ GENE_FUSION_CALLERS = (
 )
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_gene_fusion_calling:
-    path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: ['fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion']  # REQUIRED, available: 'fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion'.
-    fusioncatcher:
-      data_dir: REQUIRED   # REQUIRED
-      configuration: null  # optional
-      num_threads: 16
-    pizzly:
-      kallisto_index: REQUIRED    # REQUIRED
-      transcripts_fasta: REQUIRED # REQUIRED
-      annotations_gtf: REQUIRED       # REQUIRED
-      kmer_size: 31
-    hera:
-      path_index: REQUIRED   # REQUIRED
-      path_genome: REQUIRED  # REQUIRED
-    star_fusion:
-      path_ctat_resource_lib: REQUIRED
-    defuse:
-      path_dataset_directory: REQUIRED
-    arriba:
-      path_index: REQUIRED       # REQUIRED  STAR path index (preferably 2.7.10 or later)
-      blacklist: ""              # optional (provided in the arriba distribution, see /fast/work/groups/cubi/projects/biotools/static_data/app_support/arriba/v2.3.0)
-      known_fusions: ""          # optional
-      tags: ""                   # optional (can be set to the same path as known_fusions)
-      structural_variants: ""    # optional
-      protein_domains: ""        # optional
-      num_threads: 8
-      trim_adapters: false
-      num_threads_trimming: 2
-      star_parameters:
-      - " --outFilterMultimapNmax 50"
-      - " --peOverlapNbasesMin 10"
-      - " --alignSplicedMateMapLminOverLmate 0.5"
-      - " --alignSJstitchMismatchNmax 5 -1 5 5"
-      - " --chimSegmentMin 10"
-      - " --chimOutType WithinBAM HardClip"
-      - " --chimJunctionOverhangMin 10"
-      - " --chimScoreDropMax 30"
-      - " --chimScoreJunctionNonGTAG 0"
-      - " --chimScoreSeparation 1"
-      - " --chimSegmentReadGapMax 3"
-      - " --chimMultimapNmax 50"
-""".lstrip()
+DEFAULT_CONFIG = SomaticGeneFusionCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
@@ -506,7 +463,14 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=SomaticGeneFusionCallingConfigModel,
+        )
         self.register_sub_step_classes(
             (
                 FusioncatcherStepPart,

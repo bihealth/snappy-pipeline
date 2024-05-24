@@ -90,23 +90,14 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
     AnnotateExpansionHunter,
 )
+from .model import RepeatExpansion as RepeatExpansionConfigModel
 
 #: Extensions of files to create as main payload - JSON.
 EXT_JSON = (".json", ".json.md5")
 #: Extensions of files to create as main payload - VCF.
 EXT_VCF = (".vcf", ".vcf.md5")
 #: Default configuration for the repeat_expansion step.
-DEFAULT_CONFIG = r"""
-# Default configuration repeat_expansion
-step_config:
-  repeat_expansion:
-    # Repeat expansions definitions - used in ExpansionHunter call
-    repeat_catalog: REQUIRED
-    # Repeat expansions annotations, e.g., normality range - custom file
-    repeat_annotation: REQUIRED
-    # Path to the ngs_mapping step
-    path_ngs_mapping: ../ngs_mapping
-"""
+DEFAULT_CONFIG = RepeatExpansionConfigModel.default_config_yaml_string()
 
 
 class ExpansionHunterStepPart(BaseStepPart):
@@ -318,7 +309,8 @@ class RepeatExpansionWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=RepeatExpansionConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))

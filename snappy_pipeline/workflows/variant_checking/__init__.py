@@ -63,6 +63,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+from .model import VariantChecking as VariantCheckingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -70,14 +71,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 VARIANT_CHECKERS = "peddy"
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  variant_checking:
-    tools_ngs_mapping: []  # optional, copied from ngs mapping config
-    tools_variant_calling: []  # optional, copied from variant calling config
-    path_variant_calling: ../variant_calling  # REQUIRED
-    tools: ['peddy']  # REQUIRED - available: 'peddy'
-"""
+DEFAULT_CONFIG = VariantCheckingConfigModel.default_config_yaml_string()
 
 
 class PeddyStepPart(BaseStepPart):
@@ -177,7 +171,8 @@ class VariantCheckingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantCheckingConfigModel,
+            previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))

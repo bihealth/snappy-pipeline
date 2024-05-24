@@ -114,6 +114,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -192,168 +193,7 @@ SOMATIC_VARIANT_CALLERS_JOINT = (
 )
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_variant_calling
-step_config:
-  somatic_variant_calling:
-    tools: ['mutect', 'scalpel']  # REQUIRED, examples: 'mutect' and 'scalpel'.
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605    # herpes virus
-    - hs37d5       # GRCh37 decoy
-    - chrEBV       # Eppstein-Barr Virus
-    - '*_decoy'    # decoy contig
-    - 'HLA-*'      # HLA genes
-    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
-    # Configuration for joint calling with samtools+bcftools.
-    bcftools_joint:
-      max_depth: 4000
-      max_indel_depth: 4000
-      window_length: 10000000
-      num_threads: 16
-    # Configuration for joint calling with Platypus.
-    platypus_joint:
-      split_complex_mnvs: true  # whether or not to split complex and MNV variants
-      num_threads: 16
-    # VCF annotation databases are given as mapping from name to
-    #   {'file': '/path.vcf.gz',
-    #    'info_tag': 'VCF_TAG',
-    #    'description': 'VCF header description'}
-    # Configuration for MuTect
-    mutect:
-      # Parallelization configuration
-      num_cores: 2               # number of cores to use locally
-      window_length: 3500000     # split input into windows of this size, each triggers a job
-      num_jobs: 500              # number of windows to process in parallel
-      use_profile: true          # use Snakemake profile for parallel processing
-      restart_times: 5           # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2     # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0      # truncation to first N tokens (0 for none)
-      keep_tmpdir: never         # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1         # memory multiplier
-      job_mult_time: 1           # running time multiplier
-      merge_mult_memory: 1       # memory multiplier for merging
-      merge_mult_time: 1         # running time multiplier for merging
-    # Configuration for MuTect 2
-    mutect2:
-      panel_of_normals: ''      # Set path to panel of normals vcf if required
-      germline_resource: ''     # Germline variants resource (same as panel of normals)
-      common_variants: ''       # Common germline variants for contamination estimation
-      extra_arguments: []       # List additional Mutect2 arguments
-                                # Each additional argument xust be in the form:
-                                # "--<argument name> <argument value>"
-                                # For example, to filter reads prior to calling & to
-                                # add annotations to the output vcf:
-                                # - "--read-filter CigarContainsNoNOperator"
-                                # - "--annotation AssemblyComplexity BaseQuality"
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-    # Configuration for Scalpel
-    scalpel:
-      path_target_regions: REQUIRED  # REQUIRED
-    # Configuration for strelka2
-    strelka2:
-      path_target_regions: ""   # For exomes: include a bgzipped bed file with tabix index. That also triggers the --exome flag
-    gatk_hc_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK HC--specific configuration
-      allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    gatk_ug_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK UG--specific configuration
-      downsample_to_coverage: 250
-      allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    varscan_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      # Configuration for samtools mpileup
-      max_depth: 4000
-      max_indel_depth: 4000
-      min_bq: 13
-      no_baq: True
-      # Configuration for Varscan
-      min_coverage: 8
-      min_reads2: 2
-      min_avg_qual: 15
-      min_var_freq: 0.01
-      min_freq_for_hom: 0.75
-      p_value: 99e-02
-"""
+DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticVariantCallingStepPart(BaseStepPart):
@@ -1133,7 +973,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticVariantCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
