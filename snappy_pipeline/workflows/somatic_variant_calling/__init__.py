@@ -546,6 +546,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
+        # FIXME not sure this should be done here in `check_config`
         if self.config[self.name]["common_variants"]:
             self.actions.extend(["contamination", "pileup_normal", "pileup_tumor"])
 
@@ -1220,10 +1221,3 @@ class SomaticVariantCallingWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )
