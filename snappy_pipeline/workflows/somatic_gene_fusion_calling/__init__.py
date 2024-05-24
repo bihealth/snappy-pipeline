@@ -418,32 +418,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "arriba"
 
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute STAR & arriba are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]:
-            return  # arriba not run, don't check configuration  # pragma: no cover
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "somatic_gene_fusion_calling", "arriba", "path_index"),
-            msg="Path to STAR indices is required",
-        )
-
-        # Check that the path to the STAR index is valid.
-        for fn in ("Genome", "SA", "SAindex"):
-            expected_path = self.config["arriba"]["path_index"] + "/" + fn
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR indices input path {expected_path} does not exist!".format(
-                    expected_path=expected_path
-                )
-                raise InvalidConfiguration(tpl)
-
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
 
@@ -596,7 +570,3 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
             yield tpl.format(library_name=ngs_library, ext=ext)
             yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-
-    def check_config(self):
-        """Check that the required configurations are present."""
-        # TODO: implement check for REQUIRED configurations.
