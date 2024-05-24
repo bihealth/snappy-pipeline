@@ -260,10 +260,3 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         for sheet in sheets:
             for pedigree in sheet.cohort.pedigrees:
                 yield from pedigree.donors
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "helper_gcnv_model_wgs", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gCNV model building.",
-        )
