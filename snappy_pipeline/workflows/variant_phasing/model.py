@@ -46,7 +46,7 @@ class GatkReadBackedPhasing(SnappyModel):
     """running time multiplier for merging"""
 
 
-class GatkPhaseByTransmission:
+class GatkPhaseByTransmission(SnappyModel):
     de_novo_prior: float = 1e-8
     """use 1e-6 when interested in phasing de novos"""
 

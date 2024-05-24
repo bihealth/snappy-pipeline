@@ -150,7 +150,7 @@ class PureCn(SnappyModel):
 
     genome_name: Annotated[GenomeName, EnumField(GenomeName)]
 
-    enrichment_kit_name: "unknown"
+    enrichment_kit_name: str = "unknown"
     """For filename only..."""
 
     mappability: str = ""
