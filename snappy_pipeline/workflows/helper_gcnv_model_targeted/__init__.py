@@ -240,10 +240,3 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
         ]
         return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "helper_gcnv_model_targeted", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gCNV model building.",
-        )
