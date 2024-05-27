@@ -197,7 +197,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
             if len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
                 if field.default in (PydanticUndefined, None):
                     sub_model = next(filter(lambda s: s is not types.NoneType, args))
-                    if isclass(sub_model) and issubclass(sub_model, BaseModel):
+                    if check_model_class(sub_model):
                         placeholders[name] = _placeholder_model_instance(sub_model, placeholder)
 
         # required fields, i.e. `Model`
