@@ -27,10 +27,12 @@ def minimal_config():
 
         step_config:
            adapter_trimming:
-             tools: ["bbduk"]
+             tools: ["bbduk", "fastp"]
              bbduk:
                adapter_sequences:
                  - /path/to/adapter_sequences.fa
+             fastp:
+               num_threads: 4
         data_sets:
           first_batch:
             file: sheet.tsv
