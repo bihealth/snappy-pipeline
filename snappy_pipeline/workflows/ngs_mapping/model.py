@@ -87,6 +87,7 @@ class Bwa(SnappyModel):
     """ [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode """
 
     @field_validator("path_index")
+    @classmethod
     def validate_bwa_path_index(cls, v):
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
