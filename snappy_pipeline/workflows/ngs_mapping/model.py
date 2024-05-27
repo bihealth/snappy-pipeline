@@ -90,7 +90,7 @@ class Bwa(SnappyModel):
     def validate_bwa_path_index(cls, v):
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
-        if ext:
+        if ext and ext not in {".fa", ".fasta"}:
             assert ext in extensions, f"unknown extension '{v}'"
         for extension in extensions:
             assert os.path.exists(prefix + extension), f"{v} does not exist"
