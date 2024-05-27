@@ -61,7 +61,6 @@ from biomedsheets.shortcuts import GermlineCaseSheet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
-from snappy_pipeline.workflows.abstract.exceptions import InvalidConfigurationException
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
 from .model import VariantAnnotation as VariantAnnotationConfigModel

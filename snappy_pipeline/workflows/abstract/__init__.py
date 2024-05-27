@@ -14,7 +14,6 @@ from collections import OrderedDict
 from collections.abc import MutableMapping
 from fnmatch import fnmatch
 from functools import lru_cache
-from importlib import import_module
 from io import StringIO
 
 import attr

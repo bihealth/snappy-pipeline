@@ -237,7 +237,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         return ResourceUsage(
             threads=1,
             time="1-00:00:00",  # 1 day
-            memory=f"{ 14 * 1024}M",
+            memory=f"{14 * 1024}M",
         )
 
 

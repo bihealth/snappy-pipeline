@@ -26,5 +26,5 @@ class IgvSessionGeneration(SnappyStepModel):
             getattr(self, path)
             for path in ("path_variant_phasing", "path_variant_annotation", "path_variant_calling")
         ):
-            raise ValueError(f"No path specified for variant phasing, annotation or calling")
+            raise ValueError("No path specified for variant phasing, annotation or calling")
         return self

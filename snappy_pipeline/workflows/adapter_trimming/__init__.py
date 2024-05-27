@@ -153,7 +153,6 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 
-from snappy_pipeline.models import default_config_yaml_string
 from .model import AdapterTrimming as ConfigModel
 
 #: Adatper trimming tools

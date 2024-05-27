@@ -453,7 +453,6 @@ from snappy_pipeline.workflows.abstract import (
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-from snappy_pipeline.models import default_config_yaml_string
 from .model import NgsMapping as NgsMappingConfigModel
 
 # TODO: Need something smarter still for @RG
