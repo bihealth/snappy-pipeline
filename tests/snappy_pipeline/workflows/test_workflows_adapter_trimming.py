@@ -27,7 +27,7 @@ def minimal_config():
 
         step_config:
            adapter_trimming:
-             tools: ["bbduk", "fastp"]
+             tools: ["bbduk"]
              bbduk:
                adapter_sequences:
                  - /path/to/adapter_sequences.fa
