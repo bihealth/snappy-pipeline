@@ -83,7 +83,7 @@ class SomaticWgsCnvCalling(SnappyStepModel):
 
     somatic_variant_calling_tool: str
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvetti])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvetti], min_length=1)]
 
     canvas: Canvas | None = None
 

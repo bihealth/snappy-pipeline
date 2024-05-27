@@ -28,7 +28,7 @@ class HlaTyping(SnappyStepModel):
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.optitype])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.optitype], min_length=1)]
 
     optitype: Optitype | None = None
 

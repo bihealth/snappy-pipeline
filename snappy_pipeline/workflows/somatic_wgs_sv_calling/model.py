@@ -22,7 +22,7 @@ class Delly2(SnappyModel):
 
 class SomaticWgsSvCalling(SnappyStepModel):
     path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta], min_length=1)]
 
     manta: Manta | None = None
 

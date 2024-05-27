@@ -166,7 +166,7 @@ class PureCn(SnappyModel):
 
 
 class PanelOfNormals(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
 
     path_ngs_mapping: str
 

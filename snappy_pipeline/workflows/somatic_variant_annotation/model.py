@@ -56,7 +56,7 @@ class Jannovar(SnappyModel):
 
 
 class SomaticVariantAnnotation(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.jannovar, Tool.vep])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.jannovar, Tool.vep], min_length=1)]
 
     path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
 

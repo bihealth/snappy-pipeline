@@ -79,7 +79,9 @@ class Melt(SnappyModel):
 class SvCallingTargeted(SnappyStepModel):
     path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta])]
+    tools: Annotated[
+        list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta], min_length=1)
+    ]
 
     path_target_interval_list_mapping: list[TargetIntervalEntry]
     """

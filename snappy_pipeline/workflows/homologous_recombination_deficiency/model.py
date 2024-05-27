@@ -26,7 +26,7 @@ class ScarHRD(SnappyModel):
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
 
     path_cnv_calling: str
 

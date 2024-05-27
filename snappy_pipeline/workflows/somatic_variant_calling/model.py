@@ -208,7 +208,7 @@ class VarscanJoint(Parallel, SamtoolsMpileup):
 
 
 class SomaticVariantCalling(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [])]
+    tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
     """List of tools"""
 
     path_ngs_mapping: DirectoryPath

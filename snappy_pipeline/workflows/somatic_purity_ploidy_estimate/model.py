@@ -16,7 +16,7 @@ class Ascat(SnappyModel):
 
 
 class SomaticPurityPloidyEstimate(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.ascat])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.ascat], min_length=1)]
 
     tool_cnv_calling: str = "cnvetti"
     """When set to 'copywriter', will trigger 'somatic_targeted_seq_cnv_calling'"""

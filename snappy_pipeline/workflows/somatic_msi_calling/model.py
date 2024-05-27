@@ -13,7 +13,7 @@ class Tool(enum.StrEnum):
 class SomaticMsiCalling(SnappyStepModel):
     path_ngs_mapping: str
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis], min_length=1)]
 
     loci_bed: Annotated[
         str, Field(examples=["/fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed"])

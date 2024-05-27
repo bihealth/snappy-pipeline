@@ -232,7 +232,7 @@ class CnvettiOffTarget(SnappyModel):
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
     path_ngs_mapping: str
 
     cnvkit: Cnvkit | None = None

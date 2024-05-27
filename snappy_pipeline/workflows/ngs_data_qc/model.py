@@ -80,7 +80,7 @@ class NgsDataQc(SnappyStepModel):
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.fastqc, Tool.picard])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.fastqc, Tool.picard], min_length=1)]
 
     picard: Picard | None = None
 

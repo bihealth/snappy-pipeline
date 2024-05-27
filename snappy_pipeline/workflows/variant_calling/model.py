@@ -88,7 +88,7 @@ class VariantCalling(SnappyStepModel):
 
     bcftools_roh: BcftoolsRoh | None = None
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf])]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf], min_length=1)]
 
     ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
 
