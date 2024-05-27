@@ -11,7 +11,7 @@ pytest-subprocess
 pyfakefs
 
 # "Black" code formatter and checker.
-black ==22.8.0
+black ~=24.4
 # "snakefmt" code formatter and checker.
 snakefmt >=0.8.0,<0.9.0
 # isort code formatter - import order

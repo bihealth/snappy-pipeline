@@ -753,11 +753,11 @@ class BaseStep:
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
 
-    def _update_default_config(self, config: dict):
+    def _update_default_config[D](self, config: dict, dict_class: D = OrderedDict) -> D:
         """Update configuration config with the configuration returned by subclass'
         ``default_config_yaml()`` and return
         """
-        result = OrderedDict()
+        result = dict_class()
         for cls in itertools.chain([self.__class__], self.previous_steps):
             result = merge_dicts(
                 result, _cached_yaml_round_trip_load_str(cls.default_config_yaml())
