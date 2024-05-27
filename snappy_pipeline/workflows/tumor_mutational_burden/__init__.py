@@ -150,7 +150,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     """Perform TMB calculation"""
 
-    name = "tumormutation"
+    name = "tumor_mutational_burden"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
