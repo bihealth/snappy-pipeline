@@ -36,3 +36,6 @@ altamisa >=0.2.6
 
 # REST API client for VarFish Server
 varfish-cli >=0.2.0
+
+# Validation for models, mainly used for configuration validation
+pydantic =2.7
