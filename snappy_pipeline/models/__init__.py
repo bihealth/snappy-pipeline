@@ -195,7 +195,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
         # optional fields, i.e. `Union[Model, None]` or `Model | None`
         if is_union_type(annotation):
             if len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
-                if field.default is PydanticUndefined:
+                if field.default in (PydanticUndefined, None):
                     sub_model = next(filter(lambda s: s is not types.NoneType, args))
                     if issubclass(sub_model, BaseModel):
                         placeholders[name] = _placeholder_model_instance(sub_model, placeholder)
@@ -233,13 +233,11 @@ def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) 
     max_column = max(50, max_column)
     annotate_model(model, cfg, max_column=max_column)
     key_paths = _optional_key_paths(model, cfg)
+    cfg_yaml = _dump_yaml(cfg)
     if comment_optional:
-        commented_yaml = _comment_key_paths_naive(_dump_yaml(cfg), key_paths)
-        yaml = _yaml_instance()
-        cfg = yaml.load(commented_yaml)
-        return _dump_yaml(cfg)
+        return _comment_key_paths_naive(cfg_yaml, key_paths)
     else:
-        return _dump_yaml(cfg)
+        return cfg_yaml
 
 
 def _model_to_commented_yaml(model_instance: BaseModel):
