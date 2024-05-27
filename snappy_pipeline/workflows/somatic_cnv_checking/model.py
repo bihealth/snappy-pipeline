@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, DirectoryPath
 
 from snappy_pipeline.models import SnappyStepModel
 
@@ -12,7 +12,7 @@ class CnvAssayType(enum.StrEnum):
 
 
 class SomaticCnvChecking(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: DirectoryPath | str
 
     path_cnv_calling: Annotated[str, Field(examples=["../somatic_targeted_seq_cnv_calling"])] = ""
 

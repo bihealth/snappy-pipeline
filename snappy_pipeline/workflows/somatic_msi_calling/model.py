@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, DirectoryPath
 
 from snappy_pipeline.models import SnappyStepModel, EnumField
 
@@ -11,7 +11,7 @@ class Tool(enum.StrEnum):
 
 
 class SomaticMsiCalling(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: DirectoryPath | str
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis], min_length=1)]
 

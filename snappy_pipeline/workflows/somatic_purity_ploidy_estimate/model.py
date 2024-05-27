@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Self
 
-from pydantic import model_validator
+from pydantic import model_validator, DirectoryPath
 
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
@@ -28,7 +28,7 @@ class SomaticPurityPloidyEstimate(SnappyStepModel):
         for obtaining the b allele fraction and computing coverage.
     """
 
-    path_ngs_mapping: str
+    path_ngs_mapping: DirectoryPath | str
 
     ascat: Ascat | None = None
 

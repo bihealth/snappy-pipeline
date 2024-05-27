@@ -1,3 +1,5 @@
+from pydantic import DirectoryPath
+
 from snappy_pipeline.models import SnappyStepModel, SnappyModel
 from snappy_pipeline.models.gcnv import TargetIntervalEntry
 
@@ -10,6 +12,6 @@ class Gcnv(SnappyModel):
 
 
 class HelperGcnvModelTargeted(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: DirectoryPath | str
 
     gcnv: Gcnv

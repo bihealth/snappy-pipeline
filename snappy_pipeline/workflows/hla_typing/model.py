@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Self
 
-from pydantic import model_validator
+from pydantic import model_validator, DirectoryPath
 
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
@@ -23,7 +23,7 @@ class ArcasHla(SnappyModel):
 
 
 class HlaTyping(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: DirectoryPath | str
 
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
