@@ -130,10 +130,10 @@ def merge_kwargs(first_kwargs, second_kwargs):
         return None
 
 
-def merge_dicts(dict1, dict2, dict_class=OrderedDict):
+def merge_dicts[D](dict1: dict, dict2: dict, dict_class: D = OrderedDict) -> D:
     """Merge dictionary ``dict2`` into ``dict1``"""
 
-    def _merge_inner(dict1, dict2):
+    def _merge_inner(dict1: dict, dict2: dict) -> D:
         for k in set(dict1.keys()).union(dict2.keys()):
             if k in dict1 and k in dict2:
                 if isinstance(dict1[k], (dict, MutableMapping)) and isinstance(

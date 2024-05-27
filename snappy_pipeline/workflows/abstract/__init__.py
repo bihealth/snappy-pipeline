@@ -666,7 +666,7 @@ class BaseStep:
         self.workflow = workflow
         #: Merge default configuration with true configuration
         self.w_config = config
-        self.w_config.update(self._update_config(config))
+        self.w_config.update(self._update_default_config(config))
         self.config = self.w_config["step_config"].get(self.name, OrderedDict())
 
         if workflow.verbose:
@@ -753,7 +753,7 @@ class BaseStep:
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
 
-    def _update_config(self, config):
+    def _update_default_config(self, config: dict):
         """Update configuration config with the configuration returned by subclass'
         ``default_config_yaml()`` and return
         """
