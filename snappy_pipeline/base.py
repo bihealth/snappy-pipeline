@@ -43,7 +43,12 @@ class UnknownFiltrationSourceException(Exception):
     """Raised when user try to request an unknown filtration source."""
 
 
-def expand_ref(config_path, dict_data, lookup_paths=None, dict_class=OrderedDict):
+def expand_ref(
+    config_path: str,
+    dict_data: dict | list,
+    lookup_paths: list[str] = None,
+    dict_class=OrderedDict,
+) -> tuple[Any, tuple[str, ...], tuple[str, ...]]:
     """Expand "$ref" in JSON-like data ``dict_data``
 
     Returns triple:
