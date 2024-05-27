@@ -15,7 +15,7 @@ biomedsheets >=0.11.7
 termcolor==1.1.0
 
 # Snakemake is used for providing the actual wrapper calling functionality
-snakemake==7.26.0
+snakemake~=7.32.0
 # Snakemake needs manual install of PyYAML to make YAML configuration loading work
 PyYAML>=6.0
 
@@ -38,4 +38,4 @@ altamisa >=0.2.6
 varfish-cli >=0.2.0
 
 # Validation for models, mainly used for configuration validation
-pydantic =2.7
+pydantic~=2.7.0
