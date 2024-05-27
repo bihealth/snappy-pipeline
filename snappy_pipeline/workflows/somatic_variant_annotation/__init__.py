@@ -197,8 +197,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.normal_sample.dna_ngs_library.name if pair else None
 
 
 class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
@@ -368,20 +368,19 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         Mutect.
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+            for bio_entity in sheet.sheet.bio_entities.values():
+                for bio_sample in bio_entity.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
 
     def _yield_result_files_joint(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

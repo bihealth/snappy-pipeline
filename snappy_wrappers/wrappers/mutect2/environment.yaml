@@ -1,16 +1,18 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 
 dependencies:
-- python =3.9
-- gatk4 =4.3
-- htslib >=1.9
-- bcftools >=1.9
-- datrie
-# snakemake needed by the parallel wrapper
-- snakemake-minimal =7
-# needed by snakemake
-- cffi
-- numpy
-- pandas
+  - python==3.9.19
+  - gatk4==4.3.0.0
+  - htslib==1.19.1
+  - bcftools==1.19
+  - datrie==0.8.2
+  - gawk==5.1.0
+  # snakemake needed by the parallel wrapper
+  - snakemake-minimal==7.32.4
+  # needed by snakemake
+  - cffi==1.16.0
+  - numpy==1.26.4
+  - pandas==2.2.1
+

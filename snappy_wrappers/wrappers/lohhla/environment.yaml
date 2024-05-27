@@ -1,7 +1,6 @@
 channels:
-- conda-forge
-- anaconda
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- lohhla
-- jellyfish ==2.2.6
+  - lohhla==20171108
+  - kmer-jellyfish==2.3.1

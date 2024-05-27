@@ -1,3 +1,4 @@
+import enum
 from typing import Annotated, Any, Self, TypedDict, NamedTuple
 
 from pydantic import Field, model_validator, Discriminator
@@ -80,6 +81,11 @@ class Filter(TypedDict, total=False):
     protected: Protected
 
 
+class FiltrationSchema(enum.StrEnum):
+    list = "list"
+    sets = "sets"
+
+
 class SomaticVariantFiltration(SnappyStepModel):
     path_somatic_variant: Annotated[
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
@@ -98,6 +104,8 @@ class SomaticVariantFiltration(SnappyStepModel):
     """Default: use those defined in somatic_variant_annotation step"""
 
     has_annotation: bool = True
+
+    filtration_schema: FiltrationSchema = FiltrationSchema.list
 
     filter_sets: Annotated[FilterSets | None, Field(deprecated="use filter_list instead")] = None
 

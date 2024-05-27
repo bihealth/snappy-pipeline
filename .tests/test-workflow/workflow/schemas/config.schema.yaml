@@ -1,0 +1,55 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+
+description: configuration file for snappy-end-to-end workflow
+
+type: object
+
+definitions:
+  pipeline-entry:
+    type: object
+    properties:
+      workdir:
+        type: string
+      config:
+        type: string
+      samplesheet:
+        type: string
+    required:
+      - workdir
+      - config
+      - samplesheet
+
+properties:
+  reference:
+    type: object
+    properties:
+      species:
+        type: string
+        description: reference species, e.g. "homo_sapiens"
+      datatype:
+        type: string
+        enum: ["dna", "rna"]
+      build:
+        type: string
+      release:
+        type: integer
+        minimum: 0
+      chromosome:
+        type: string
+      region:
+        type: string
+    required:
+      - species
+      - datatype
+      - build
+      - release
+
+  pipeline-configuration:
+    type: object
+    additionalProperties:
+      $ref: "#/definitions/pipeline-entry"
+
+
+required:
+  - reference
+  - pipeline-configuration

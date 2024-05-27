@@ -1,12 +1,11 @@
 channels:
-- conda-forge
-- bioconda
-- r
-- http://conda.cubi.bihealth.org/cubiconda
+  - conda-forge
+  - bioconda
+  - http://conda.cubi.bihealth.org/cubiconda
 dependencies:
-- gatk_nonfree ==3.7
-- bcftools ==1.12
-- samtools ==1.12
-- htslib ==1.12
-- coincbc
-- snakemake-minimal
+  - gatk_nonfree==3.7
+  - bcftools==1.12
+  - samtools==1.12
+  - htslib==1.12
+  - coincbc==2.10.10
+  - snakemake-minimal==7.32.4

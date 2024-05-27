@@ -1,6 +1,6 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- bcftools ==1.15
-- htslib ==1.15
+  - bcftools==1.15
+  - htslib==1.15

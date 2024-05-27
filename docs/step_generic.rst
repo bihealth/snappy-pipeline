@@ -79,3 +79,11 @@ The versioning allows the pipeline step to check whether there are incompatibili
 
     The execution of ``cubi-snake`` in a directory will not automatically generate these files.
     Rather, they are only generated when used in a pipeline step such as ``somatic_targeted_cnv_calling``.
+
+.. note:: **Debugging configuration errors**
+
+    The configuration for a complete pipeline can be long, and copy/paste errors can creep in.
+    When facing errors in configuration, it is advisable to 
+
+    - Use absolute paths for files not part of the workflow (panel of normal files are **NOT** part the of workflow), and
+    - Use the ``snappy-snake --verbose``, which prints the step configuration (and all the dependend workflows) as ``snappy`` has understood it.

@@ -1,7 +1,6 @@
 channels:
-- r
+- conda-forge
 - bioconda
 - https://conda.anaconda.org/dranew
-- conda-forge
 dependencies:
 - defuse ==0.8.1

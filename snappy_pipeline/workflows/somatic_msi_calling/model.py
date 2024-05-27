@@ -7,14 +7,20 @@ from snappy_pipeline.models import SnappyStepModel, EnumField
 
 
 class Tool(enum.StrEnum):
-    mantis = "mantis"
+    mantis2_msi = "mantis2_msi"
 
 
 class SomaticMsiCalling(SnappyStepModel):
     path_ngs_mapping: DirectoryPath | str
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis], min_length=1)]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis2_msi], min_length=1)]
 
     loci_bed: Annotated[
-        str, Field(examples=["/fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed"])
+        str,
+        Field(
+            examples=[
+                "/fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed",
+                "/fast/work/groups/cubi/projects/biotools/Mantis/appData/hg38/GRCh38.d1.vd1.all_loci.bed",
+            ]
+        ),
     ]

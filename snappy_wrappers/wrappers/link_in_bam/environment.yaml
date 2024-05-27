@@ -1,8 +1,7 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
-  - samtools =1.5
-  - gnuplot ==5.0.5
-  - libpng ==1.6.28
+  - samtools ==1.19.2
+  - gnuplot ==5.4.8
+  - libpng ==1.6.43
