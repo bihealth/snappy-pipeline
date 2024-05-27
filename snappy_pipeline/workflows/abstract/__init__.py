@@ -675,7 +675,7 @@ class BaseStep:
                 + default_config_yaml_string(self.config_model_class, comment_optional=True)
             )
 
-        #: Validate workflow configuration using its accompanying pydantic model
+        #: Validate workflow step configuration using its accompanying pydantic model
         #: available through self.config_model_class (mandatory keyword arg for BaseStep)
         try:
             self.config_model: C = validate_config(self.config, self.config_model_class)
@@ -685,6 +685,17 @@ class BaseStep:
             self.w_config["step_config"][self.name] = self.config
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
+            raise ve
+
+        #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
+        #: This includes static_data_config, step_config and data_sets
+        try:
+            # local import of ConfigModel to avoid circular import
+            from snappy_pipeline.workflow_model import ConfigModel
+
+            self.w_config_model: ConfigModel = ConfigModel(**self.w_config)
+        except pydantic.ValidationError as ve:
+            logging.error(f"Workflow configuration failed validation")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
