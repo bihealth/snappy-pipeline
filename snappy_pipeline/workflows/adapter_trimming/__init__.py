@@ -153,13 +153,11 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 
-from .model import AdapterTrimming as ConfigModel
-
 #: Adatper trimming tools
 TRIMMERS = ("bbduk", "fastp")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = ConfigModel.default_config_yaml_string()
+DEFAULT_CONFIG = AdapterTrimmingConfigModel.default_config_yaml_string()
 
 
 class AdapterTrimmingStepPart(BaseStepPart):
