@@ -51,7 +51,7 @@ def minimal_config():
             jannovar:
               path_jannovar_ser: /path/to/jannover.ser
             vep:
-              path_dir_cache: /path/to/dir/cache
+              cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
             filters:
