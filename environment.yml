@@ -13,7 +13,7 @@ dependencies:
   - git-lfs
 
   # pydantic is used to validate configuration files
-  - pydantic
+  - pydantic =2.7
 
   # Snakemake is used for providing the actual wrapper calling functionality
   - snakemake =7
