@@ -19,6 +19,7 @@ from io import StringIO
 import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
+import snakemake
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -642,7 +643,7 @@ class BaseStep:
 
     def __init__(
         self,
-        workflow,
+        workflow: snakemake.Workflow,
         config,
         config_lookup_paths,
         config_paths,
