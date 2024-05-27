@@ -440,9 +440,9 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                library_name_to_file_identifier[
+                library_name_to_file_identifier[donor.dna_ngs_library.name] = (
                     donor.dna_ngs_library.name
-                ] = donor.dna_ngs_library.name
+                )
         return library_name_to_file_identifier
 
 

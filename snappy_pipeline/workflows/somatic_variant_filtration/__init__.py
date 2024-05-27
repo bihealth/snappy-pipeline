@@ -975,9 +975,11 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         )
         # Register sub workflows
         self.register_sub_workflow(
-            "somatic_variant_annotation"
-            if self.config["has_annotation"]
-            else "somatic_variant_calling",
+            (
+                "somatic_variant_annotation"
+                if self.config["has_annotation"]
+                else "somatic_variant_calling"
+            ),
             self.config["path_somatic_variant"],
             "somatic_variant",
         )
