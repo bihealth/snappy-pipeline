@@ -668,17 +668,20 @@ class BaseStep:
         self.w_config.update(self._update_config(config))
         self.config = self.w_config["step_config"].get(self.name, OrderedDict())
 
-        #: Validate workflow configuration using its accompanying pydantic model
-        #: This assumes the existence of a model.py in the module directory
-        #: with the model class' name being the camelCased version of the workflow name
         if workflow.verbose:
             logging.info(
                 f"default config yaml for {self.name}\n"
                 + default_config_yaml_string(self.config_model_class, comment_optional=True)
             )
+
+        #: Validate workflow configuration using its accompanying pydantic model
+        #: available through self.config_model_class (mandatory keyword arg for BaseStep)
         try:
             self.config_model: C = validate_config(self.config, self.config_model_class)
+            # Get the config dict from the config model to fill in defaults etc.
             self.config = self.config_model.model_dump(by_alias=True)
+            # Also update the workflow config, just in case
+            self.w_config["step_config"][self.name] = self.config
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
             raise ve

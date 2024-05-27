@@ -177,7 +177,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             ),
         )
         # Register sub workflows
-        config = self.w_config["step_config"]["tumor_mutational_burden"]
+        config = self.config
         sub_workflow = "somatic_variant_calling"
         if config["has_annotation"]:
             sub_workflow = "somatic_variant_annotation"
