@@ -591,6 +591,10 @@ class DataSearchInfo:
     mixed_se_pe: bool
 
 
+# A type variable for the SnappyStepModel class
+C = typing.TypeVar("C", bound=SnappyStepModel)
+
+
 class BaseStep:
     """Base class for the pipeline steps
 
@@ -644,7 +648,7 @@ class BaseStep:
         config_paths,
         work_dir,
         *,
-        config_model_class: type[SnappyStepModel],
+        config_model_class: type[C],
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.name = self.__class__.name
@@ -673,7 +677,7 @@ class BaseStep:
                 + default_config_yaml_string(self.config_model_class, comment_optional=True)
             )
         try:
-            self.config_model = validate_config(self.config, self.config_model_class)
+            self.config_model: C = validate_config(self.config, self.config_model_class)
             self.config = self.config_model.model_dump(by_alias=True)
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
