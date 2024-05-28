@@ -383,14 +383,8 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
             parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
-            msg = "Only one include or exclude expression is allowed in {} filter {} (configuration: {})"
-            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
-            keyword = list(keywords.keys())[0]
-            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude. Configuration: {})'
-            assert keyword in ("include", "exclude"), msg.format(
-                keyword, self.filter_name, filter_nb, keywords
-            )
+            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
+            keywords = filter.keywords()
             parameters.update(keywords)
             return parameters
 
@@ -409,18 +403,8 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
             parent = super(OneFilterRegionsStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
-            msg = (
-                "Only one include or exclude region is allowed in {} filter {} (configuration: {})"
-            )
-            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
-            keyword = list(keywords.keys())[0]
-            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, path_bed (deprecated). Configuration: {})'
-            assert keyword in ("include", "exclude", "path_bed"), msg.format(
-                keyword, self.filter_name, filter_nb, keywords
-            )
-            if keyword == "path_bed":
-                keywords = {"exclude": keywords["path_bed"]}
+            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
+            keywords = filter.keywords()
             parameters.update(keywords)
             return parameters
 
@@ -439,18 +423,8 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
             parent = super(OneFilterProtectedStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
-            msg = (
-                "Only one protected region bed file is allowed in {} filter {} (configuration: {})"
-            )
-            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
-            keyword = list(keywords.keys())[0]
-            msg = (
-                'Unknown keyword "{}" in {} filter {} (allowed value: path_bed. Configuration: {})'
-            )
-            assert keyword in ("path_bed",), msg.format(
-                keyword, self.filter_name, filter_nb, keywords
-            )
+            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
+            keywords = filter.keywords()
             parameters.update(keywords)
             return parameters
 

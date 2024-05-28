@@ -62,15 +62,50 @@ class Bcftools(SnappyModel):
             raise ValueError("Only one of include or exclude may be set")
         return self
 
+    def keywords(self) -> dict[str, str]:
+        if self.include:
+            return {"include": self.include}
+        elif self.exclude:
+            return {"exclude": self.exclude}
+        return {}
+
 
 class Regions(SnappyModel):
-    path_bed: str
+    include: str = ""
+    """Expression to be used in bcftools view --include"""
+
+    exclude: str = ""
+    """Expression to be used in bcftools view --exclude"""
+
+    path_bed: Annotated[str, Field(deprecated="Use `exclude` instead")]
     """Bed file of regions to be considered (variants outside are filtered out)"""
+
+    @model_validator(mode="after")
+    def ensure_include_or_exclude(self) -> Self:
+        if not any((self.include, self.exclude, self.path_bed)):
+            raise ValueError("Either include, exclude or path_bed must be set")
+        if sum((bool(self.include), bool(self.exclude), bool(self.path_bed))) > 1:
+            raise ValueError("Only one of include, exclude or path_bed may be set")
+        return self
+
+    def keywords(self) -> dict[str, str]:
+        if self.include:
+            return {"include": self.include}
+        elif self.exclude:
+            return {"exclude": self.exclude}
+        elif self.path_bed:
+            return {"exclude": self.path_bed}  # path_bed is deprecated and replaced by exclude
+        return {}
 
 
 class Protected(SnappyModel):
     path_bed: str
     """Bed file of regions that should not be filtered out at all."""
+
+    def keywords(self) -> dict[str, str]:
+        if self.path_bed:
+            return {"path_bed": self.include}
+        return {}
 
 
 class Filter(TypedDict, total=False):
