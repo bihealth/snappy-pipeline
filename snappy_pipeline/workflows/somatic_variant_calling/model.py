@@ -1,5 +1,4 @@
 import enum
-from os import PathLike
 from typing import Annotated, Self
 
 from pydantic import AfterValidator, DirectoryPath, Field, model_validator
@@ -94,13 +93,13 @@ class Mutect2(Parallel):
     # Sadly a type of
     # `FilePath | None = None`
     # still applies `FilePath` validation on `None`, which errors
-    panel_of_normals: PathLike | None = None
+    panel_of_normals: str | None = ""
     """Set path to panel of normals vcf if required"""
 
-    germline_resource: PathLike | None = None
+    germline_resource: str | None = ""
     """Germline variants resource (same as panel of normals)"""
 
-    common_variants: PathLike | None = None
+    common_variants: str | None = ""
     """Common germline variants for contamination estimation"""
 
     extra_arguments: Annotated[
@@ -126,11 +125,11 @@ class Mutect2(Parallel):
 
 
 class Scalpel(SnappyModel):
-    path_target_regions: PathLike
+    path_target_regions: str
 
 
 class Strelka2(SnappyModel):
-    path_target_regions: PathLike | None = None
+    path_target_regions: str | None = None
     """For exomes: include a bgzipped bed file with tabix index. That also triggers the --exome flag"""
 
 

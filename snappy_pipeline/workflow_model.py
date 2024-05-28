@@ -55,7 +55,7 @@ from snappy_pipeline.workflows.wgs_sv_export_external.model import WgsSvExportEx
 
 
 class PathModel(SnappyModel):
-    path: PathLike = ""
+    path: str = ""
 
 
 class StaticDataConfig(SnappyModel):

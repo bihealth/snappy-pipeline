@@ -54,7 +54,7 @@ class TargetCoverageReportEntry(SnappyModel):
 
     pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[os.PathLike, Field(examples=["path/to/targets.bed"])]
+    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
 
 
 class TargetCoverageReport(SnappyModel):
