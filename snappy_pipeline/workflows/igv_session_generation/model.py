@@ -1,12 +1,12 @@
 from typing import Self
 
-from pydantic import model_validator, DirectoryPath
+from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyStepModel
 
 
 class IgvSessionGeneration(SnappyStepModel):
-    path_ngs_mapping: DirectoryPath | str
+    path_ngs_mapping: str
 
     path_variant_phasing: str = ""
 

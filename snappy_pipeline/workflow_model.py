@@ -1,5 +1,4 @@
 import enum
-from os import PathLike
 from typing import TypedDict
 
 from pydantic import ConfigDict

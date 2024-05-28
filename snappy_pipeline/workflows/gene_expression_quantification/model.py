@@ -1,7 +1,5 @@
 import enum
 
-from pydantic import DirectoryPath
-
 from snappy_pipeline.models import SnappyStepModel, SnappyModel
 
 
@@ -52,7 +50,7 @@ class GeneExpressionQuantification(SnappyStepModel):
         "salmon",
     ]
 
-    path_ngs_mapping: DirectoryPath | str
+    path_ngs_mapping: str
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?
     """Use 0, 1 or 2 to force unstranded, forward or reverse strand"""

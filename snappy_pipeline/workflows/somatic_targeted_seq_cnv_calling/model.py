@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Any, Self
 
-from pydantic import Field, model_validator, DirectoryPath
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 from snappy_pipeline.models.cnvkit import Cnvkit
@@ -233,7 +233,7 @@ class CnvettiOffTarget(SnappyModel):
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
-    path_ngs_mapping: DirectoryPath | str
+    path_ngs_mapping: str
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None

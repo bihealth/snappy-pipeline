@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Self
 
-from pydantic import Field, model_validator, DirectoryPath
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel, KeepTmpdir
 
@@ -168,7 +168,7 @@ class PureCn(SnappyModel):
 class PanelOfNormals(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
 
-    path_ngs_mapping: DirectoryPath | str
+    path_ngs_mapping: str
 
     ignore_chroms: Annotated[
         list[str],

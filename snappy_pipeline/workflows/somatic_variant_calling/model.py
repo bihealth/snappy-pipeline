@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Self
 
-from pydantic import AfterValidator, DirectoryPath, Field, model_validator
+from pydantic import AfterValidator, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
@@ -210,7 +210,7 @@ class SomaticVariantCalling(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
     """List of tools"""
 
-    path_ngs_mapping: DirectoryPath
+    path_ngs_mapping: str
     """Path to ngs_mapping"""
 
     ignore_chroms: Annotated[

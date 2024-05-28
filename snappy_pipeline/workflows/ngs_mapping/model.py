@@ -8,7 +8,7 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-from pydantic import DirectoryPath, Field, FilePath, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
 
@@ -71,7 +71,7 @@ class NgsChewFingerprint(SnappyModel):
 
 
 class Bwa(SnappyModel):
-    path_index: FilePath | str
+    path_index: str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
@@ -105,7 +105,7 @@ class BwaMode(Enum):
 
 
 class BwaMem2(SnappyModel):
-    path_index: FilePath | str
+    path_index: str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
 
     bwa_mode: BwaMode = BwaMode.AUTO
@@ -162,7 +162,7 @@ class AgentLibPrepType(Enum):
 
 
 class AgentPrepare(SnappyModel):
-    path: FilePath
+    path: str
 
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
@@ -178,8 +178,8 @@ class AgentMarkDuplicatesConsensusMode(Enum):
 
 
 class AgentMarkDuplicates(SnappyModel):
-    path: FilePath
-    path_baits: FilePath
+    path: str
+    path_baits: str
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 
@@ -198,7 +198,7 @@ class Agent(SnappyModel):
 
 
 class Star(SnappyModel):
-    path_index: FilePath | str
+    path_index: str
     """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
@@ -249,7 +249,7 @@ class Strand(enum.IntEnum):
 
 
 class Strandedness(SnappyModel):
-    path_exon_bed: FilePath
+    path_exon_bed: str
     """Location of usually highly expressed genes. Known protein coding genes is a good choice"""
 
     strand: Strand = Strand.UNKNOWN
@@ -267,7 +267,7 @@ class NgsMapping(SnappyStepModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
-    path_link_in: DirectoryPath | str = ""
+    path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
     target_coverage_report: TargetCoverageReport | None = None

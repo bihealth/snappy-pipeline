@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator, Field, DirectoryPath
+from pydantic import model_validator, Field
 
 from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
 
@@ -50,7 +50,7 @@ class PicardProgram(enum.StrEnum):
 
 
 class Picard(SnappyModel):
-    path_ngs_mapping: DirectoryPath | str
+    path_ngs_mapping: str
 
     path_to_baits: str = ""
     """Required when CollectHsMetrics is among the programs"""
