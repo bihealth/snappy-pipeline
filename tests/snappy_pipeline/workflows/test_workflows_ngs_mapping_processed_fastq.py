@@ -40,11 +40,13 @@ def minimal_config():
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
             bwa:
-              path_index: /path/to/bwa/index.fasta
+              path_index: /path/to/bwa/index.fasta.amb
             star:
-              path_index: /path/to/star/index
+              path_index: /path/to/star/index/SA
               path_features: /path/to/features.gtf
               transcriptome: true
+              out_filter_intron_motifs: ""
+              out_sam_strand_field: ""
             bam_collect_doc:
               enabled: true
 

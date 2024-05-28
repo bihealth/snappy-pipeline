@@ -41,9 +41,9 @@ def minimal_config():
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
             compute_coverage_bed: true
             bwa:
-              path_index: /path/to/bwa/index.fasta
+              path_index: /path/to/bwa/index.fasta.amb
             bwa_mem2:
-              path_index: /path/to/bwa_mem2/index.fasta
+              path_index: /path/to/bwa_mem2/index.fasta.amb
             mbcs:
               mapping_tool: bwa
             bqsr:
@@ -208,6 +208,7 @@ def test_project_validation_germline(
     minimal_config_dict = deepcopy(minimal_config)
     minimal_config_dict = dict(minimal_config_dict)
     minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+    config = ngs_mapping_workflow.config_model_class(**minimal_config_dict)
 
     # Create germline sample sheet
     germline_sheet_io = io.StringIO(germline_sheet_tsv)
@@ -219,14 +220,14 @@ def test_project_validation_germline(
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
     out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
+        config=config, sample_sheets_list=[germline_sheet]
     )
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
     # Exception raised cause no RNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[rna_sheet]
+            config=config, sample_sheets_list=[rna_sheet]
         )
     error_msg = "RNA sample provided, but config only contains DNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
@@ -234,15 +235,15 @@ def test_project_validation_germline(
     # Exception raised cause only DNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+            config=config, sample_sheets_list=[germline_sheet, rna_sheet]
         )
     error_msg = "DNA and RNA sample provided, but config only contains DNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
     # Update config and remove RNA exception
-    minimal_config_dict["tools"]["rna"] = ["rna_mapper"]
+    config.tools.rna = ["rna_mapper"]
     out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+        config=config, sample_sheets_list=[germline_sheet, rna_sheet]
     )
     error_msg = (
         "No exception expected: DNA, RNA sample sheet and respective tools defined in config."
@@ -250,10 +251,10 @@ def test_project_validation_germline(
     assert out is None, error_msg
 
     # Update config and introduce DNA exception
-    minimal_config_dict["tools"]["dna"] = []
+    config.tools.dna = []
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+            config=config, sample_sheets_list=[germline_sheet, rna_sheet]
         )
     error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
@@ -261,7 +262,7 @@ def test_project_validation_germline(
     # Exception raised cause no DNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
+            config=config, sample_sheets_list=[germline_sheet]
         )
     error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
