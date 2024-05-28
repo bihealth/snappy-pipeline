@@ -815,7 +815,7 @@ class StarStepPart(ReadMappingStepPart):
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run_work()
-        if cfg := getattr(self.config, self.name) is None:
+        if (cfg := getattr(self.config, self.name)) is None:
             return output_files
 
         output_files["gene_counts"] = self.base_path_out.format(
