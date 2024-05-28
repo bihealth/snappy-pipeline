@@ -909,15 +909,26 @@ def aligner_indices_fake_fs(fake_fs):
     return fake_fs
 
 
-def patch_module_fs(module_name, fake_fs, mocker):
+def patch_module_fs(module_name: str, fake_fs, mocker):
     """Helper function to mock out the file-system related things in the module with the given
     name using the given fake_fs and pytest-mock mocker
     """
-    mocker.patch(f"{module_name}.open", fake_fs.open, create=True)
-    try:
-        mocker.patch(f"{module_name}.os", fake_fs.os)
-    except AttributeError:
-        pass  # swallo, "os" not imported
+
+    # Because workflows have a .model module which potentially uses filesystem operations for
+    # validation, make sure to patch both the main module and the model module
+    modules = [module_name]
+    if module_name.startswith("snappy_pipeline.workflows.") and not module_name.endswith(".model"):
+        if not module_name.endswith("abstract"):
+            modules.append(module_name + ".model")
+
+    for module_name in modules:
+        mocker.patch(f"{module_name}.open", fake_fs.open, create=True)
+        try:
+            mocker.patch(f"{module_name}.os", fake_fs.os)
+        except AttributeError:
+            print("Skipping", module_name)
+            pass  # swallo, "os" not imported
+
     mocker.patch("snappy_pipeline.find_file.InterProcessLock", fake_fs.inter_process_lock)
     mocker.patch("snappy_pipeline.find_file.open", fake_fs.open, create=True)
     mocker.patch("snappy_pipeline.find_file.os", fake_fs.os)
