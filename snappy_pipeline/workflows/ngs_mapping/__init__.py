@@ -1131,7 +1131,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
         for item in self.config.target_coverage_report.path_target_interval_list_mapping:
             if item.name == kit_name:
-                path_targets_bed = item["path"]
+                path_targets_bed = item.path
                 break
 
         return {
