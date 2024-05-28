@@ -395,7 +395,7 @@ class VariantPhasingWorkflow(BaseStep):
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config.variant_calling.tools
+            self.config.tools_variant_calling = self.w_config.step_config.variant_calling["tools"]
 
     @listify
     def get_result_files(self):
