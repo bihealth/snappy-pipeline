@@ -248,9 +248,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
 
 def _yaml_instance():
     yaml = YAML(typ="rt")
-    yaml.indent(mapping=INDENTATION, offset=INDENTATION)
-    yaml.sequence_indent = INDENTATION
-    yaml.block_seq_indent = INDENTATION
+    yaml.indent(mapping=INDENTATION, sequence=INDENTATION * 2, offset=INDENTATION)
     return yaml
 
 
