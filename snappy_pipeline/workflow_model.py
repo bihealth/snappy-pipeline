@@ -80,9 +80,9 @@ class NamingScheme(enum.StrEnum):
 
 
 class DataSet(SnappyModel):
-    file: PathLike = ""
+    file: str = ""
     search_patterns: list[SearchPattern] = [SearchPattern()]
-    search_paths: list[PathLike] = ["../raw"]
+    search_paths: list[str] = ["../raw"]
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
     is_background: bool = False
