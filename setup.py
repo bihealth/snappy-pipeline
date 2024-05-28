@@ -29,8 +29,8 @@ def parse_requirements(path):
     return requirements
 
 
-# Enforce python version >=3.7
-if sys.version_info < (3, 7):
+# Enforce python version >=3.12
+if sys.version_info < (3, 12):
     print("At least Python 3.7 is required.\n", file=sys.stderr)
     sys.exit(1)
 
