@@ -95,7 +95,7 @@ jobs:
       - name: Prepare environment.yml file
         run: >
           cp environment.yml /tmp/environment.yml && sed -i -e
-          's/- python/- python=${{ matrix.python-version }}/'
+          's/- python=.*/- python=${{ matrix.python-version }}/'
           /tmp/environment.yml
       - name: Update environment using mamba
         run: mamba env update --name root --file /tmp/environment.yml
