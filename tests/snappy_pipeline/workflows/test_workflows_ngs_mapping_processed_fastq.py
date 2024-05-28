@@ -43,7 +43,6 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta.amb
             star:
               path_index: /path/to/star/index/SA
-              path_features: /path/to/features.gtf
               transcriptome: true
               out_filter_intron_motifs: ""
               out_sam_strand_field: ""
