@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.wgs_cnv_export_external import WgsCnvExportExternalWorkflow
+from snappy_pipeline.workflows.wgs_cnv_export_external import (
+    WgsCnvExportExternalWorkflow,
+)
 
 
 # Configuration ===============================================================
@@ -18,7 +20,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = WgsCnvExportExternalWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = WgsCnvExportExternalWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 
@@ -82,7 +86,9 @@ rule wgs_cnv_export_external_varfish_annotator_external_merge_vcf:
     resources:
         time=wf.get_resource("varfish_annotator_external", "merge_vcf", "time"),
         memory=wf.get_resource("varfish_annotator_external", "merge_vcf", "memory"),
-        partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
+        partition=wf.get_resource(
+            "varfish_annotator_external", "merge_vcf", "partition"
+        ),
         tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
     log:
         **wf.get_log_file("varfish_annotator_external", "merge_vcf"),

@@ -62,7 +62,6 @@ class LohhlaStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
-
         # Validate action
         self._validate_action(action)
 

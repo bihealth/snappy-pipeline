@@ -89,7 +89,6 @@ def argument(args: list[str]) -> list[str]:
 
 
 class Mutect2(Parallel):
-
     # Sadly a type of
     # `FilePath | None = None`
     # still applies `FilePath` validation on `None`, which errors

@@ -444,7 +444,6 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
 
 class cbioportalSegmentStepPart(cbioportalExportStepPart):
-
     #: Step name
     name = "cbioportal_segment"
 

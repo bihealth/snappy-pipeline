@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.helper_gcnv_model_wgs import HelperBuildWgsGcnvModelWorkflow
+from snappy_pipeline.workflows.helper_gcnv_model_wgs import (
+    HelperBuildWgsGcnvModelWorkflow,
+)
 
 
 # Configuration ===============================================================
@@ -18,7 +20,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = HelperBuildWgsGcnvModelWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = HelperBuildWgsGcnvModelWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 

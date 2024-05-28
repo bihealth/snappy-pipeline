@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.gene_expression_report import GeneExpressionReportWorkflow
+from snappy_pipeline.workflows.gene_expression_report import (
+    GeneExpressionReportWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 
@@ -20,7 +22,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = GeneExpressionReportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = GeneExpressionReportWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 

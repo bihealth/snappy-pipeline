@@ -1131,7 +1131,6 @@ class LinkInPathGenerator:
         out_list = []
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
-
             # Search paths - expects a list already
             out_list.extend(getattr(info, "search_paths"))
 

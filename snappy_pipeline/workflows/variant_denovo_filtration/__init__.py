@@ -121,7 +121,6 @@ DEFAULT_CONFIG = VariantDenovoFiltrationConfigModel.default_config_yaml_string()
 
 
 class FilterDeNovosBaseStepPart(BaseStepPart):
-
     #: Class available actions
     actions = ("run",)
 

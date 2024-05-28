@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
+    SomaticWgsCnvCallingWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,7 +22,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticWgsCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = SomaticWgsCnvCallingWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 

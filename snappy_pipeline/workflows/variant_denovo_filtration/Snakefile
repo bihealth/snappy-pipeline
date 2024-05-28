@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
+from snappy_pipeline.workflows.variant_denovo_filtration import (
+    VariantDeNovoFiltrationWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,7 +22,9 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantDeNovoFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = VariantDeNovoFiltrationWorkflow(
+    workflow, config, lookup_paths, config_paths, os.getcwd()
+)
 
 # Rules =======================================================================
 

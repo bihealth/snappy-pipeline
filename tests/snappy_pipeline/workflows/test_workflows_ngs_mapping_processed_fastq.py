@@ -296,17 +296,17 @@ def test_star_step_part_get_output_files(ngs_mapping_workflow):
     log_base_out = "work/star.{library_name}/log/star.{library_name}"
     expected = get_expected_output_files_dict(bam_base_out, report_base_out, log_base_out)
     expected["gene_counts"] = "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab"
-    expected["gene_counts_md5"] = (
-        "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab.md5"
-    )
+    expected[
+        "gene_counts_md5"
+    ] = "work/star.{library_name}/out/star.{library_name}.GeneCounts.tab.md5"
     expected["junctions"] = "work/star.{library_name}/out/star.{library_name}.Junctions.tab"
     expected["junctions_md5"] = "work/star.{library_name}/out/star.{library_name}.Junctions.tab.md5"
-    expected["transcriptome"] = (
-        "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam"
-    )
-    expected["transcriptome_md5"] = (
-        "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam.md5"
-    )
+    expected[
+        "transcriptome"
+    ] = "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam"
+    expected[
+        "transcriptome_md5"
+    ] = "work/star.{library_name}/out/star.{library_name}.toTranscriptome.bam.md5"
     expected["output_links"].extend(
         [
             "output/star.{library_name}/out/star.{library_name}.Junctions.tab",

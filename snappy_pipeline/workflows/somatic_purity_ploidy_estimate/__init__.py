@@ -314,7 +314,6 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         # TODO: potential bug here as this step requires an entry that is not available
         #  in DEFAULT_CONFIG.
         if self.config.tool_cnv_calling == "copywriter":
-
             self.register_sub_workflow(
                 "somatic_targeted_seq_cnv_calling",
                 self.config.path_somatic_targeted_seq_cnv_calling,
