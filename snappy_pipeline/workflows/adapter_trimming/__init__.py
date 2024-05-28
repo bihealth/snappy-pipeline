@@ -178,7 +178,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config_model.path_link_in,
+            preprocessed_path=self.config.path_link_in,
         )
 
     @dictify
@@ -225,7 +225,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
 
         def args_function(wildcards):
             folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-            if self.config_model.path_link_in:
+            if self.config.path_link_in:
                 folder_name = wildcards.library_name
             reads_left = self._collect_reads(wildcards, folder_name, "")
             reads_right = self._collect_reads(wildcards, folder_name, "right-")
@@ -275,7 +275,7 @@ class BbdukStepPart(AdapterTrimmingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config_model.bbduk.num_threads,
+            threads=self.config.bbduk.num_threads,
             time="12:00:00",  # 40 hours
             memory="24000M",
         )
@@ -298,7 +298,7 @@ class FastpStepPart(AdapterTrimmingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config_model.fastp.num_threads,
+            threads=self.config.fastp.num_threads,
             time="12:00:00",  # 60 hours
             memory="24000M",
         )

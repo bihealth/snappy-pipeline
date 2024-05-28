@@ -916,7 +916,7 @@ class StrandednessStepPart(BaseStepPart):
             yield key + "_md5", "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5"
 
     def get_result_files(self):
-        for mapper in self.config_model.tools.rna:
+        for mapper in self.config.tools.rna:
             tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
             tpl_strandedness = (
                 "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
@@ -1166,9 +1166,8 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     actions = ("run",)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return (
-            not self.config_model.bam_collect_doc.enabled
-            or super().skip_result_files_for_library(library_name)
+        return not self.config.bam_collect_doc.enabled or super().skip_result_files_for_library(
+            library_name
         )
 
     def __init__(self, parent):
