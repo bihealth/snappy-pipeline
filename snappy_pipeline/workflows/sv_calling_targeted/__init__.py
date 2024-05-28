@@ -88,7 +88,7 @@ class SvCallingTargetedWorkflow(BaseStep):
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
         # Build mapping
-        regexes = {item.pattern: name for item in config.path_target_interval_list_mapping}
+        regexes = {item.pattern: item.name for item in config.path_target_interval_list_mapping}
         result = {}
         for donor in self.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
