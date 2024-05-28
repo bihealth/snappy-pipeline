@@ -81,6 +81,7 @@ from snappy_pipeline.workflows.variant_calling import (
     VariantCallingGetLogFileMixin,
     VariantCallingWorkflow,
 )
+
 from .model import VarfishExport as VarfishExportConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

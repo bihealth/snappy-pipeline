@@ -71,6 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+
 from .model import HlaTyping as HlaTypingConfigModel
 
 #: Extensions of files to create as main payload

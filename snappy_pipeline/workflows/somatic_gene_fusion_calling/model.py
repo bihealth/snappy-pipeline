@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.StrEnum):

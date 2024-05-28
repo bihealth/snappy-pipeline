@@ -92,6 +92,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 
 #: Extensions of files to create as main payload.

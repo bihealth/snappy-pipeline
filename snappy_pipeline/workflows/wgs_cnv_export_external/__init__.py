@@ -82,6 +82,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+
 from .model import WgsCnvExportExternal as WgsCnvExportExternalConfigModel
 
 #: Extension of files

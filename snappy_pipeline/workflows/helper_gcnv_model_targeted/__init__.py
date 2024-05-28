@@ -92,6 +92,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
 
 #: Default configuration for the helper_gcnv_model_targeted schema

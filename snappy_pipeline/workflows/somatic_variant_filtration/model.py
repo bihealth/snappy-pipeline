@@ -3,7 +3,7 @@ from typing import Annotated, Any, Self, TypedDict
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class DkfzAndEbfilter(SnappyModel):

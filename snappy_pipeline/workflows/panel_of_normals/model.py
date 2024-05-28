@@ -3,7 +3,7 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, EnumField, SnappyModel, KeepTmpdir
+from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.StrEnum):

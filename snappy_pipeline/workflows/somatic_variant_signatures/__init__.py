@@ -28,6 +28,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
 __author__ = "Clemens Messerschmidt"

@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 
 # Extensions

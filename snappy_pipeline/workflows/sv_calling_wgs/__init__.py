@@ -27,6 +27,7 @@ from snappy_pipeline.workflows.common.sv_calling import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
+
 from .model import SvCallingWgs as SvCallingWgsConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

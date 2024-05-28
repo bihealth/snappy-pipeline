@@ -57,6 +57,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutSt
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
+
 from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
 
 #: Extensions of files to create as main payload

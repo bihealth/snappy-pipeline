@@ -12,6 +12,7 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
 
 DEFAULT_CONFIG = GeneExpressionReportConfigModel.default_config_yaml_string()

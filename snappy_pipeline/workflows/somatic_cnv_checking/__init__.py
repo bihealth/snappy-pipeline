@@ -76,6 +76,7 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
+
 from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"

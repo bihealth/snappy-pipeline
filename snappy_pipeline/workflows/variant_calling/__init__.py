@@ -270,6 +270,7 @@ from snappy_pipeline.workflows.abstract.common import (
 )
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import VariantCalling as VariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

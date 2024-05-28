@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class TargetCoverageReport(SnappyModel):

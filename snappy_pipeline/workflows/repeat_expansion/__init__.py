@@ -90,6 +90,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
     AnnotateExpansionHunter,
 )
+
 from .model import RepeatExpansion as RepeatExpansionConfigModel
 
 #: Extensions of files to create as main payload - JSON.

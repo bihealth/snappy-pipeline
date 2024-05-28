@@ -15,6 +15,7 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
 from .model import SvCallingTargeted as SvCallingTargetedConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

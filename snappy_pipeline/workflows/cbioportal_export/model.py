@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import enum
 from enum import Enum
-from typing import Any, Annotated, Self
+from typing import Annotated, Any, Self
 
 from pydantic import ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class MappingTool(Enum):

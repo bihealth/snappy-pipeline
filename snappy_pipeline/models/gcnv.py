@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field, ConfigDict
+from pydantic import ConfigDict, Field
 
 from snappy_pipeline.models import SnappyModel
 

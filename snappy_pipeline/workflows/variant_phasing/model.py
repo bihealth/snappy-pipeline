@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel, KeepTmpdir
+from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
 
 
 class GatkReadBackedPhasing(SnappyModel):

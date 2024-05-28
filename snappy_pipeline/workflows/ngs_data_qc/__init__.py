@@ -28,6 +28,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+
 from .model import NgsDataQc as NgsDataQcConfigModel
 
 #: Default configuration for the ngs_mapping schema

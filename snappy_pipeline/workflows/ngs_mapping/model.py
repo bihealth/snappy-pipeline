@@ -1,6 +1,6 @@
 import enum
-import os
 from enum import Enum
+import os
 from typing import Annotated
 
 try:

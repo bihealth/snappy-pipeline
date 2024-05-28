@@ -63,6 +63,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceU
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
+
 from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

@@ -73,6 +73,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
+
 from .model import HomologousRecombinationDeficiency as HomologousRecombinationDeficiencyConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"

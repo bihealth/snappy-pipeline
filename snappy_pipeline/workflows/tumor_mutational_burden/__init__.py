@@ -17,6 +17,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 
 #: Extensions of files to create as main payload

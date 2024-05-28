@@ -1,9 +1,9 @@
 import re
 from typing import Annotated, Self
 
-from pydantic import Field, AfterValidator, model_validator
+from pydantic import AfterValidator, Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class Threshold(SnappyModel):

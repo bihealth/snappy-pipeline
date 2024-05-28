@@ -76,6 +76,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+
 from .model import VariantPhasing as VariantPhasingConfigModel
 
 #: Extensions of files to create as main payload

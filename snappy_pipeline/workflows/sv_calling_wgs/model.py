@@ -3,7 +3,7 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel, SnappyModel, EnumField
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry
 
 

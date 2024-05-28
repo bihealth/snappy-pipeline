@@ -136,9 +136,8 @@ The following adpter trimming tools are currently available
 
 """
 
-import os
 from collections import OrderedDict
-from .model import AdapterTrimming as AdapterTrimmingConfigModel
+import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -152,6 +151,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+
+from .model import AdapterTrimming as AdapterTrimmingConfigModel
 
 #: Adatper trimming tools
 TRIMMERS = ("bbduk", "fastp")
