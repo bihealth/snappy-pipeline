@@ -26,7 +26,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -58,7 +58,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -75,7 +75,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.10"
+          - "3.12"
           # - "3.11"  # no compatible pysam yet
           # - "3.12"  # no compatible pysam yet
     needs: linting

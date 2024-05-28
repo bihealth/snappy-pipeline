@@ -124,11 +124,12 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.12",
         # We are missing bioconda pysam packages for 3.11 and 3.12, cf.
         # https://github.com/bioconda/bioconda-recipes/issues/37805
         # "Programming Language :: Python :: 3.11",
         # "Programming Language :: Python :: 3.12",
+        # … but we can build pysam from pip instead
     ],
     test_suite="tests",
     tests_require=test_requirements,
