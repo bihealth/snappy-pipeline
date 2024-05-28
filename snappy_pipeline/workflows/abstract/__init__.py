@@ -158,13 +158,18 @@ class BaseStepPart:
         """
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
-        resource_usage = self.get_resource_usage(action)
-        if resource_name == "tmpdir" and not resource_usage.tmpdir:
-            return self.parent.get_tmpdir()
-        if resource_name == "partition" and not resource_usage.partition:
-            return self.get_default_partition()
-        else:
-            return getattr(resource_usage, resource_name)
+
+        def _get_resource(wildcards, input):
+            logging.info(f"_get_resource fn, {wildcards}, {input}")
+            resource_usage = self.get_resource_usage(action)
+            if resource_name == "tmpdir" and not resource_usage.tmpdir:
+                return self.parent.get_tmpdir()
+            if resource_name == "partition" and not resource_usage.partition:
+                return self.get_default_partition()
+            else:
+                return getattr(resource_usage, resource_name)
+
+        return _get_resource
 
     def get_args(self, action):
         """Return args for the given action of the sub step"""
