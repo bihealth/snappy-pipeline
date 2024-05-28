@@ -239,7 +239,7 @@ class ScrambleStepPart(BaseStepPart):
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
-        blast_ref_path = self.config["scramble"]["blast_ref"]
+        blast_ref_path = self.config.scramble.blast_ref
         try:
             if not os.path.isfile(blast_ref_path):
                 raise InvalidConfiguration(
@@ -250,11 +250,11 @@ class ScrambleStepPart(BaseStepPart):
             raise TypeError("Path to reference genome ('blast_ref') cannot be empty.") from e
         params = {
             "reference_genome": blast_ref_path,
-            "mei_refs": self.config["scramble"]["mei_refs"],
-            "n_cluster": self.config["scramble"]["n_cluster"],
-            "mei_score": self.config["scramble"]["mei_score"],
-            "indel_score": self.config["scramble"]["indel_score"],
-            "mei_polya_frac": self.config["scramble"]["mei_polya_frac"],
+            "mei_refs": self.config.scramble.mei_refs,
+            "n_cluster": self.config.scramble.n_cluster,
+            "mei_score": self.config.scramble.mei_score,
+            "indel_score": self.config.scramble.indel_score,
+            "mei_polya_frac": self.config.scramble.mei_polya_frac,
         }
         return params
 
@@ -299,7 +299,7 @@ class MeiWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):
@@ -328,7 +328,7 @@ class MeiWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             tool=tools,
             ext=EXT_VALUES,
         )

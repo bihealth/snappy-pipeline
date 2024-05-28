@@ -94,11 +94,11 @@ class ValidationMixin:
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
-        if "gcnv" not in self.config["tools"]:
+        if "gcnv" not in self.config.tools:
             return
 
         # Get precomputed models from configurations
-        path_to_models = self.config["gcnv"]["precomputed_model_paths"]
+        path_to_models = self.config.gcnv.precomputed_model_paths
 
         # No model provided
         if not path_to_models:
@@ -284,7 +284,7 @@ class ContigPloidyMixin:
         with `DetermineGermlineContigPloidy`.
         """
         path = "__no_ploidy_model_for_library_in_config__"
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == wildcards.library_kit:
@@ -340,7 +340,7 @@ class CallCnvsMixin:
         `GermlineCNVCaller`.
         """
         path = "__no_model_for_library_in_config__"
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == wildcards.library_kit:
@@ -377,7 +377,7 @@ class PostGermlineCallsMixin:
 
         # Get shards - based on scattered step
         model_dir_dict = None
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library name to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == library_kit:
@@ -415,7 +415,7 @@ class PostGermlineCallsMixin:
         `PostprocessGermlineCNVCalls `.
         """
         paths = ["__no_model_available_for_library__"]
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             # Get library kit associated with library name
@@ -600,6 +600,6 @@ class RunGcnvStepPart(
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,
-                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                    mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                     library_name=[index_library_name],
                 )

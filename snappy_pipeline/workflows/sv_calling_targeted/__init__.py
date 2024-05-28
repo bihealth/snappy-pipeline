@@ -8,7 +8,7 @@ import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
@@ -75,21 +75,21 @@ class SvCallingTargetedWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Build dictionary with sample count per library kit
         _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
-        if not config["path_target_interval_list_mapping"]:
+        config = self.w_config.step_config.sv_calling_targeted.gcnv
+        if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
         # Build mapping
         regexes = {
-            item["pattern"]: item["name"] for item in config["path_target_interval_list_mapping"]
+            item["pattern"]: item["name"] for item in config.path_target_interval_list_mapping
         }
         result = {}
         for donor in self.all_donors():

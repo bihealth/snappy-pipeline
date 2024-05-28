@@ -156,7 +156,7 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         super().__init__(parent)
         self.config = parent.config
         self.name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             self.name_pattern += ".{annotator}"
         self.name_pattern += ".{tumor_library}"
         # Build shortcut from cancer bio sample name to matched cancer sample
@@ -222,14 +222,14 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         def input_function(wildcards):
             filter_nb = int(wildcards["filter_nb"])
             if filter_nb > 1:
-                prev = list(self.config["filter_list"][filter_nb - 2].keys())[0]
+                prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
                 n = filter_nb - 1
                 yield "vcf", os.path.join(
                     "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
                 )
             else:
                 yield "vcf", os.path.join(
-                    self.config["path_somatic_variant"],
+                    self.config.path_somatic_variant,
                     "output",
                     self.name_pattern,
                     "out",
@@ -303,7 +303,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
             yield from parent(wildcards).items()
 
             yield "bam", os.path.join(
-                self.config["path_ngs_mapping"],
+                self.config.path_ngs_mapping,
                 "output",
                 "{mapper}.{tumor_library}",
                 "out",
@@ -311,7 +311,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
             )
             if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
                 yield "normal", os.path.join(
-                    self.config["path_ngs_mapping"],
+                    self.config.path_ngs_mapping,
                     "output",
                     f"{{mapper}}.{normal_library}",
                     "out",
@@ -363,7 +363,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
             parent = super(OneFilterEbfilterStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            ebfilter_config = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            ebfilter_config = self.config.filter_list[filter_nb - 1][self.filter_name]
             parameters.update(ebfilter_config)
             return parameters
 
@@ -382,7 +382,7 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
             parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
             msg = "Only one include or exclude expression is allowed in {} filter {} (configuration: {})"
             assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
             keyword = list(keywords.keys())[0]
@@ -408,7 +408,7 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
             parent = super(OneFilterRegionsStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
             msg = (
                 "Only one include or exclude region is allowed in {} filter {} (configuration: {})"
             )
@@ -438,7 +438,7 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
             parent = super(OneFilterProtectedStepPart, self).get_params(action)
             parameters = parent(wildcards)
             filter_nb = int(wildcards["filter_nb"])
-            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            keywords = self.config.filter_list[filter_nb - 1][self.filter_name]
             msg = (
                 "Only one protected region bed file is allowed in {} filter {} (configuration: {})"
             )
@@ -469,8 +469,8 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
 
-        filter_names = [list(filter_name.keys())[0] for filter_name in self.config["filter_list"]]
-        filter_nb = len(self.config["filter_list"])
+        filter_names = [list(filter_name.keys())[0] for filter_name in self.config.filter_list]
+        filter_nb = len(self.config.filter_list)
         filter_name = filter_names[filter_nb - 1]
         vcf = os.path.join(
             "work",
@@ -492,7 +492,7 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += ".filtered.{tumor_library}"
         vcf = os.path.join("work", name_pattern, "out", name_pattern)
@@ -515,7 +515,7 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += ".filtered.{tumor_library}"
         tpl = os.path.join("work", name_pattern, "log", name_pattern)
@@ -545,7 +545,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
 
         # VCF file and index
@@ -568,7 +568,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
 
         prefix = (
@@ -593,7 +593,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += f".{self.name}"
         prefix = os.path.join(
@@ -645,11 +645,11 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         # VCF file and index
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         tpl = (
             f"work/{name_pattern}."
@@ -684,14 +684,14 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return EBFilter parameters from the config"""
         # Validate action
         self._validate_action(action)
-        parameters = self.config["eb_filter"]
-        parameters.update(self.config["filter_sets"]["dkfz_and_ebfilter"])
+        parameters = self.config.eb_filter
+        parameters.update(self.config.filter_sets.dkfz_and_ebfilter)
         return parameters
 
     @dictify
     def _get_output_files_run(self):
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         # VCF file and index
         prefix = (
@@ -727,7 +727,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             return {}
         else:
             name_pattern = "{mapper}.{var_caller}"
-            if self.config["has_annotation"]:
+            if self.config.has_annotation:
                 name_pattern += ".{annotator}"
             name_pattern += ".dkfz_bias_filter.eb_filter"
             prefix = os.path.join(
@@ -761,8 +761,8 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
                     if not bio_sample.extra_infos["isTumor"]:
                         libraries.append(bio_sample.dna_ngs_library.name)
         libraries.sort()
-        random.seed(self.config["eb_filter"]["shuffle_seed"])
-        lib_count = self.config["eb_filter"]["panel_of_normals_size"]
+        random.seed(self.config.eb_filter.shuffle_seed)
+        lib_count = self.config.eb_filter.panel_of_normals_size
         random.shuffle(libraries)
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
@@ -801,7 +801,7 @@ class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += ".dkfz_bias_filter.eb_filter"
         self.base_path_out = os.path.join(
@@ -835,7 +835,7 @@ class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern)
@@ -871,7 +871,7 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = "{mapper}.{var_caller}"
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             name_pattern += ".{annotator}"
         name_pattern += ".dkfz_bias_filter.eb_filter"
         self.base_path_out = os.path.join(
@@ -977,24 +977,22 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         self.register_sub_workflow(
             (
                 "somatic_variant_annotation"
-                if self.config["has_annotation"]
+                if self.config.has_annotation
                 else "somatic_variant_calling"
             ),
-            self.config["path_somatic_variant"],
+            self.config.path_somatic_variant,
             "somatic_variant",
         )
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_somatic_variant_calling"]:
-            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools["dna"]
+        if not self.config.tools_somatic_variant_calling:
+            self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
             ]["tools"]
-        if not self.config["tools_somatic_variant_annotation"]:
-            self.config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
+        if not self.config.tools_somatic_variant_annotation:
+            self.config.tools_somatic_variant_annotation = self.w_config.step_config[
                 "somatic_variant_annotation"
             ]["tools"]
 
@@ -1003,24 +1001,22 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         """Return list of result files
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
-        mappers = set(self.config["tools_ngs_mapping"]) & set(
-            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+        mappers = set(self.config.tools_ngs_mapping) & set(
+            self.w_config.step_config.ngs_mapping.tools.dna
         )
-        callers = set(self.config["tools_somatic_variant_calling"]) & set(
+        callers = set(self.config.tools_somatic_variant_calling) & set(
             SOMATIC_VARIANT_CALLERS_MATCHED
         )
-        if self.config["has_annotation"]:
-            annotators = set(self.config["tools_somatic_variant_annotation"]) & set(
-                ANNOTATION_TOOLS
-            )
+        if self.config.has_annotation:
+            annotators = set(self.config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
         else:
             annotators = []
 
         log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
 
-        if self.config["filtration_schema"] == "list":
+        if self.config.filtration_schema == "list":
             name_pattern = "{mapper}.{caller}"
-            if self.config["has_annotation"]:
+            if self.config.has_annotation:
                 name_pattern += ".{annotator}"
             name_pattern += ".filtered.{tumor_library}"
 
@@ -1047,12 +1043,12 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             )
         else:
             filter_sets = ["no_filter"]
-            filter_sets += self.config["filter_sets"].keys()
+            filter_sets += self.config.filter_sets.keys()
             exon_lists = ["genome_wide"]
-            exon_lists += list(self.config["exon_lists"].keys())
+            exon_lists += list(self.config.exon_lists.keys())
 
             name_pattern = "{mapper}.{caller}"
-            if self.config["has_annotation"]:
+            if self.config.has_annotation:
                 name_pattern += ".{annotator}"
             name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
 

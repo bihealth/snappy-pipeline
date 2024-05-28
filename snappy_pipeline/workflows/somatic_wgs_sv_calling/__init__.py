@@ -429,7 +429,7 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -440,8 +440,8 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=self.config["tools"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            caller=self.config.tools,
             ext=EXT_VALUES,
         )
 

@@ -175,9 +175,9 @@ class GeneExpressionReportWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        if self.config["path_gene_expression_quantification"]:
+        if self.config.path_gene_expression_quantification:
             self.register_sub_workflow(
-                "gene_expression_quantification", self.config["path_gene_expression_quantification"]
+                "gene_expression_quantification", self.config.path_gene_expression_quantification
             )
 
     @listify
@@ -195,7 +195,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
+                            mapper=self.w_config.step_config.ngs_mapping.tools.rna,
                             tool="featurecounts",
                             ext=exts,
                         )

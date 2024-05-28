@@ -288,7 +288,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         # Annotate
         AnnotateExpansionHunter(
             eh_json=input_path,
-            annotation_json=self.config["repeat_annotation"],
+            annotation_json=self.config.repeat_annotation,
             output_path=output_path,
         ).run()
 
@@ -315,7 +315,7 @@ class RepeatExpansionWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):
@@ -341,7 +341,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             tool=tools,
             ext=EXT_JSON,
         )
@@ -349,7 +349,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             tool=tools,
             ext=EXT_VCF,
         )

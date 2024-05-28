@@ -382,16 +382,12 @@ class VariantFiltrationWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("variant_annotation", self.config["path_variant_annotation"])
+        self.register_sub_workflow("variant_annotation", self.config.path_variant_annotation)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools["dna"]
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config.variant_calling["tools"]
 
     @listify
     def get_result_files(self):
@@ -402,8 +398,8 @@ class VariantFiltrationWorkflow(BaseStep):
         )
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 
@@ -422,6 +418,6 @@ class VariantFiltrationWorkflow(BaseStep):
                 yield from expand(
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
-                    filters=self.config["filter_combinations"],
+                    filters=self.config.filter_combinations,
                     **kwargs,
                 )

@@ -178,8 +178,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.name_pattern = None
-        if self.config["filter_set"]:
-            if self.config["filter_set"] == "filter_list":
+        if self.config.filter_set:
+            if self.config.filter_set == "filter_list":
                 self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
             else:
                 self.name_pattern = (
@@ -294,8 +294,8 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.config["filter_set"]:
-            if self.config["filter_set"] == "filter_list":
+        if self.config.filter_set:
+            if self.config.filter_set == "filter_list":
                 name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{library_name}}"
             else:
                 name_pattern = (
@@ -307,11 +307,11 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
             name_pattern = "{mapper}.{caller}.{annotator}.{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
         self.input_tpl = tpl.format(
-            mapper=self.config["mapping_tool"],
-            caller=self.config["somatic_variant_calling_tool"],
-            annotator=self.config["somatic_variant_annotation_tool"],
-            filter_set=self.config["filter_set"],
-            exon_list=self.config["exon_list"],
+            mapper=self.config.mapping_tool,
+            caller=self.config.somatic_variant_calling_tool,
+            annotator=self.config.somatic_variant_annotation_tool,
+            filter_set=self.config.filter_set,
+            exon_list=self.config.exon_list,
             ext=".maf",
         )
 
@@ -332,7 +332,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
         yield "DNAcopy", os.path.join(
-            self.config["path_copy_number"],
+            self.config.path_copy_number,
             "output",
             name_pattern,
             "out",
@@ -368,7 +368,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         return {
             "pipeline_id": "ENSEMBL",
-            "features": self.parent.w_config["static_data_config"]["features"]["path"],
+            "features": self.parent.w_config.static_data_config.features.path,
         }
 
     def get_resource_usage(self, action):
@@ -403,7 +403,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = (
-            self.config["mapping_tool"] + "." + self.config["copy_number_tool"] + ".{library_name}"
+            self.config.mapping_tool + "." + self.config.copy_number_tool + ".{library_name}"
         )
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
@@ -460,10 +460,10 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = (
-            self.config["mapping_tool"] + "." + self.config["copy_number_tool"] + ".{library_name}"
+            self.config.mapping_tool + "." + self.config.copy_number_tool + ".{library_name}"
         )
         self.input_tpl = os.path.join(
-            self.config["path_copy_number"],
+            self.config.path_copy_number,
             "output",
             name_pattern,
             "out",
@@ -504,9 +504,9 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = self.config["expression_tool"] + ".{library_name}"
+        name_pattern = self.config.expression_tool + ".{library_name}"
         self.input_tpl = os.path.join(
-            self.config["path_ngs_mapping"],
+            self.config.path_ngs_mapping,
             "output",
             name_pattern,
             "out",
@@ -520,7 +520,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             "action_type": "expression",
             "extra_args": {
                 "pipeline_id": "ENSEMBL",
-                "tx_obj": self.parent.w_config["static_data_config"]["features"]["path"],
+                "tx_obj": self.parent.w_config.static_data_config.features.path,
             },
         }
 
@@ -554,13 +554,13 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         yield from [os.path.join("work/upload", f) for f in META_FILES["always_present"]]
-        if self.config["path_somatic_variant"]:
+        if self.config.path_somatic_variant:
             yield from [os.path.join("work/upload", f) for f in META_FILES["sequenced"]]
-        if self.config["path_copy_number"]:
+        if self.config.path_copy_number:
             yield from [os.path.join("work/upload", f) for f in META_FILES["cna"]]
-            if self.config["study"]["reference_genome"] == "hg19":
+            if self.config.study.reference_genome == "hg19":
                 yield from [os.path.join("work/upload", f) for f in META_FILES["segment"]]
-        if self.config["path_ngs_mapping"]:
+        if self.config.path_ngs_mapping:
             yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
 
 
@@ -580,11 +580,11 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
         for extraction_type in ("DNA", "RNA"):
             if (
                 extraction_type == "DNA"
-                and self.config["path_somatic_variant"] == ""
-                and self.config["path_copy_number"] == ""
+                and self.config.path_somatic_variant == ""
+                and self.config.path_copy_number == ""
             ):
                 continue
-            if extraction_type == "RNA" and self.config["path_ngs_mapping"] == "":
+            if extraction_type == "RNA" and self.config.path_ngs_mapping == "":
                 continue
             self.extraction_type = extraction_type
             for lib in self._yield_libraries():
@@ -624,13 +624,13 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         self.extraction_type = "DNA"
         for lib in self._yield_libraries():
             sample_name = lib.test_sample.bio_sample.name
-            if self.config["path_somatic_variant"]:
+            if self.config.path_somatic_variant:
                 samples["sequenced"] += [sample_name]
-            if self.config["path_copy_number"]:
+            if self.config.path_copy_number:
                 samples["cna"] += [sample_name]
-            if self.config["path_somatic_variant"] and self.config["path_copy_number"]:
+            if self.config.path_somatic_variant and self.config.path_copy_number:
                 samples["cnaseq"] += [sample_name]
-        if self.config["path_ngs_mapping"]:
+        if self.config.path_ngs_mapping:
             self.extraction_type = "RNA"
             for lib in self._yield_libraries():
                 sample_name = lib.test_sample.bio_sample.name
@@ -641,9 +641,9 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
                 args[k] = CASE_LIST_FILES[k]
                 args[k]["samples"] = v
         if (
-            self.config["path_somatic_variant"]
-            and self.config["path_copy_number"]
-            and self.config["path_ngs_mapping"]
+            self.config.path_somatic_variant
+            and self.config.path_copy_number
+            and self.config.path_ngs_mapping
         ):
             args["3way_complete"] = CASE_LIST_FILES["3way_complete"]
             args["3way_complete"]["samples"] = []
@@ -657,16 +657,16 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         # Validate action
         self._validate_action(action)
         case_lists = {}
-        if self.config["path_somatic_variant"]:
+        if self.config.path_somatic_variant:
             case_lists["sequenced"] = CASE_LIST_FILES["sequenced"]["filename"]
-        if self.config["path_copy_number"]:
+        if self.config.path_copy_number:
             case_lists["cna"] = CASE_LIST_FILES["cna"]["filename"]
-        if self.config["path_ngs_mapping"]:
+        if self.config.path_ngs_mapping:
             case_lists["rna_seq_mrna"] = CASE_LIST_FILES["rna_seq_mrna"]["filename"]
-        if self.config["path_somatic_variant"]:
-            if self.config["path_copy_number"]:
+        if self.config.path_somatic_variant:
+            if self.config.path_copy_number:
                 case_lists["cnaseq"] = CASE_LIST_FILES["cnaseq"]["filename"]
-                if self.config["path_ngs_mapping"]:
+                if self.config.path_ngs_mapping:
                     case_lists["3way_complete"] = CASE_LIST_FILES["3way_complete"]["filename"]
         for case, filename in case_lists.items():
             yield case, os.path.join("work/upload/case_lists", filename)
@@ -713,13 +713,13 @@ class cbioportalExportWorkflow(BaseStep):
         # For the user's convenience, the configuration is augmented automatically,
         # before the sub steps are registered, so they all have the updated config.
         translated = "unknown"
-        if self.config["vcf2maf"]["ncbi_build"] == "GRCh37":
+        if self.config.vcf2maf.ncbi_build == "GRCh37":
             translated = "hg19"
-        if self.config["vcf2maf"]["ncbi_build"] == "GRCh38":
+        if self.config.vcf2maf.ncbi_build == "GRCh38":
             translated = "hg38"
-        if self.config["vcf2maf"]["ncbi_build"] in ("mm9", "mm10", "GRCm37", "GRCm38", "GRCm39"):
+        if self.config.vcf2maf.ncbi_build in ("mm9", "mm10", "GRCm37", "GRCm38", "GRCm39"):
             translated = "mouse"
-        self.config["study"]["reference_genome"] = translated
+        self.config.study.reference_genome = translated
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -736,21 +736,21 @@ class cbioportalExportWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        if self.config["path_somatic_variant"]:
-            if self.config["filter_set"]:
+        if self.config.path_somatic_variant:
+            if self.config.filter_set:
                 self.register_sub_workflow(
                     "somatic_variant_filtration",
-                    self.config["path_somatic_variant"],
+                    self.config.path_somatic_variant,
                     sub_workflow_name="somatic_variant",
                 )
             else:
                 self.register_sub_workflow(
                     "somatic_variant_annotation",
-                    self.config["path_somatic_variant"],
+                    self.config.path_somatic_variant,
                     sub_workflow_name="somatic_variant",
                 )
-        if self.config["path_copy_number"]:
-            if self.config["copy_number_tool"] in [
+        if self.config.path_copy_number:
+            if self.config.copy_number_tool in [
                 "cnvetti_on_target_postprocess",
                 "cnvkit",
                 "copywriter",
@@ -759,19 +759,19 @@ class cbioportalExportWorkflow(BaseStep):
             ]:
                 self.register_sub_workflow(
                     "somatic_targeted_seq_cnv_calling",
-                    workdir=self.config["path_copy_number"],
+                    workdir=self.config.path_copy_number,
                     sub_workflow_name="copy_number_step",
                 )
             else:
                 self.register_sub_workflow(
                     "somatic_wgs_cnv_calling",
-                    workdir=self.config["path_copy_number"],
+                    workdir=self.config.path_copy_number,
                     sub_workflow_name="copy_number_step",
                 )
-        if self.config["path_ngs_mapping"]:
+        if self.config.path_ngs_mapping:
             self.register_sub_workflow(
                 "ngs_mapping",
-                workdir=self.config["path_ngs_mapping"],
+                workdir=self.config.path_ngs_mapping,
                 sub_workflow_name="ngs_mapping",
             )
 
@@ -782,14 +782,14 @@ class cbioportalExportWorkflow(BaseStep):
         yield from self.sub_steps["cbioportal_case_lists"].get_output_files("run").values()
 
         result_files = []
-        if self.config["path_somatic_variant"]:
+        if self.config.path_somatic_variant:
             result_files += [self.sub_steps["cbioportal_mutations"].get_output_files("run")]
-        if self.config["path_copy_number"]:
+        if self.config.path_copy_number:
             result_files += [self.sub_steps["cbioportal_cna"].get_output_files("log2")]
             result_files += [self.sub_steps["cbioportal_cna"].get_output_files("gistic")]
-            if self.config["study"]["reference_genome"] == "hg19":
+            if self.config.study.reference_genome == "hg19":
                 result_files += [self.sub_steps["cbioportal_segment"].get_output_files("run")]
-        if self.config["path_ngs_mapping"]:
+        if self.config.path_ngs_mapping:
             result_files += [self.sub_steps["cbioportal_expression"].get_output_files("run")]
 
         yield from result_files
@@ -797,21 +797,21 @@ class cbioportalExportWorkflow(BaseStep):
     def check_config(self):
         """Check config attributes for presence"""
         msg = []
-        if self.config["path_somatic_variant"]:
-            if not self.config["mapping_tool"]:
+        if self.config.path_somatic_variant:
+            if not self.config.mapping_tool:
                 msg += ["DNA mapping tool must be defined"]
             if (
-                not self.config["somatic_variant_calling_tool"]
-                or not self.config["somatic_variant_annotation_tool"]
+                not self.config.somatic_variant_calling_tool
+                or not self.config.somatic_variant_annotation_tool
             ):
                 msg += [
                     "Somatic variant calling tool and somatic variant annotation tool must be defined"
                 ]
-        if self.config["path_copy_number"] and not self.config["copy_number_tool"]:
+        if self.config.path_copy_number and not self.config.copy_number_tool:
             msg += [
                 "Somatic copy number calling tool must be defined when CNV results are available"
             ]
-        if self.config["path_ngs_mapping"] and not self.config["expression_tool"]:
+        if self.config.path_ngs_mapping and not self.config.expression_tool:
             msg += ["Gene count tools must be defined when RNA expression is available"]
         if len(msg) > 0:
             raise MissingConfiguration()  # (msg="Please select a supported tool for the CNV calls")

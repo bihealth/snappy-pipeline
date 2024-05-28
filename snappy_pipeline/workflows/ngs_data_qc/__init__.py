@@ -83,7 +83,7 @@ class FastQcReportStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     def get_args(self, action):
@@ -131,7 +131,7 @@ class FastQcReportStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -158,7 +158,7 @@ class PicardStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
-        if "CollectHsMetrics" in self.config["picard"]["programs"]:
+        if "CollectHsMetrics" in self.config.picard.programs:
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
@@ -172,7 +172,7 @@ class PicardStepPart(BaseStepPart):
             yield "targets", "work/static_data/picard/out/targets.interval_list"
         elif action == "metrics":
             base_out = "work/{mapper}.{library_name}/report/picard/{mapper}.{library_name}."
-            for pgm in self.config["picard"]["programs"]:
+            for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():
                     first = MULTIPLE_METRICS[pgm][0]
                     yield pgm, base_out + f"CollectMultipleMetrics.{first}.txt"
@@ -264,8 +264,8 @@ class NgsDataQcWorkflow(BaseStep):
         self.register_sub_step_classes(
             (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
-        if "picard" in self.config["tools"]:
-            self.register_sub_workflow("ngs_mapping", self.config["picard"]["path_ngs_mapping"])
+        if "picard" in self.config.tools:
+            self.register_sub_workflow("ngs_mapping", self.config.picard.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -274,7 +274,7 @@ class NgsDataQcWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        if "fastqc" in self.config["tools"]:
+        if "fastqc" in self.config.tools:
             yield from self._yield_result_files(
                 tpl="output/{ngs_library.name}/report/fastqc/.done",
                 allowed_extraction_types=(
@@ -282,12 +282,12 @@ class NgsDataQcWorkflow(BaseStep):
                     "RNA",
                 ),
             )
-        if "picard" in self.config["tools"]:
+        if "picard" in self.config.tools:
             tpl = (
                 "output/{mapper}.{ngs_library.name}/report/picard/{mapper}.{ngs_library.name}.{ext}"
             )
             exts = []
-            for pgm in self.config["picard"]["programs"]:
+            for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():
                     first = MULTIPLE_METRICS[pgm][0]
                     exts.append(f"CollectMultipleMetrics.{first}.txt")
@@ -298,7 +298,7 @@ class NgsDataQcWorkflow(BaseStep):
             yield from self._yield_result_files(
                 tpl=tpl,
                 allowed_extraction_types=("DNA",),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                 ext=exts,
             )
 

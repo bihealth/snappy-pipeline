@@ -177,14 +177,12 @@ class VariantCheckingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
         # Register sub workflows
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+        self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config.variant_calling["tools"]
 
     @listify
     def get_result_files(self):
@@ -203,7 +201,7 @@ class VariantCheckingWorkflow(BaseStep):
                 for path in self.sub_steps["peddy"].get_output_files("run").values():
                     yield from expand(
                         path,
-                        mapper=self.config["tools_ngs_mapping"],
-                        var_caller=self.config["tools_variant_calling"],
+                        mapper=self.config.tools_ngs_mapping,
+                        var_caller=self.config.tools_variant_calling,
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )

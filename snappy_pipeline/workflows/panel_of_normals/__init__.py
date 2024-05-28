@@ -182,9 +182,9 @@ class PanelOfNormalsStepPart(BaseStepPart):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.normal_libraries = list(self._get_normal_libraries())
-        if self.name and self.config[self.name].get("path_normals_list"):
+        if self.name and getattr(self.config, self.name).path_normals_list:
             self.normal_libraries = []
-            with open(self.config[self.name]["path_normals_list"], "rt") as f:
+            with open(getattr(self.config, self.name).path_normals_list, "rt") as f:
                 for line in f:
                     self.normal_libraries.append(line.strip())
 
@@ -263,8 +263,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_coverage(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         yield "intervals", "work/purecn/out/{}_{}.list".format(
-            self.config["purecn"]["enrichment_kit_name"],
-            self.config["purecn"]["genome_name"],
+            self.config.purecn.enrichment_kit_name,
+            self.config.purecn.genome_name,
         )
         tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bam", self.ngs_mapping(tpl.format(**wildcards))
@@ -284,8 +284,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             return {"container": "work/containers/out/purecn.simg"}
         if action == "prepare":
             base_out = "{}_{}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             return {
                 "intervals": "work/purecn/out/" + base_out + ".list",
@@ -314,8 +314,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         tpls = {
             "install": "work/containers/log/purecn",
             "prepare": "work/purecn/log/{}_{}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             ),
             "coverage": "work/{mapper}.purecn/log/{mapper}.purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}",
             "create_panel": "work/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals",
@@ -348,7 +348,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     }
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -458,10 +458,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.is_wgs = self.config["cnvkit"]["path_target_regions"] == ""
+        self.is_wgs = self.config.cnvkit.path_target_regions == ""
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # cnvkit not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -707,7 +707,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             previous_steps=(NgsMappingWorkflow,),
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -736,7 +736,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             "conda_info.txt.md5",
         ]
 
-        if "mutect2" in set(self.config["tools"]) & set(TOOLS):
+        if "mutect2" in set(self.config.tools) & set(TOOLS):
             tpl = "output/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals.{ext}"
             ext_list = ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -746,7 +746,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "cnvkit" in set(self.config["tools"]) & set(TOOLS):
+        if "cnvkit" in set(self.config.tools) & set(TOOLS):
             tpls = [
                 ("output/{mapper}.cnvkit/out/{mapper}.cnvkit.target.{ext}", ("bed", "bed.md5")),
                 ("output/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.{ext}", ("bed", "bed.md5")),
@@ -776,13 +776,13 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz{ext}"
             result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
-        if "access" in set(self.config["tools"]) & set(TOOLS):
+        if "access" in set(self.config.tools) & set(TOOLS):
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"
             result_files.extend([tpl + md5 for md5 in ("", ".md5")])
             tpl = "output/cnvkit.access/log/cnvkit.access.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "purecn" in set(self.config["tools"]) & set(TOOLS):
+        if "purecn" in set(self.config.tools) & set(TOOLS):
             tpl = "output/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.{ext}"
             ext_list = ("rds", "rds.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -792,20 +792,20 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
             tpl = "output/purecn/out/{}_{}.{{ext}}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             ext_list = ("list", "list.md5", "bed.gz", "bed.gz.md5", "bed.gz.tbi", "bed.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
             tpl = "output/purecn/log/{}_{}.{{ext}}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         return result_files
 
     def _expand_result_files(self, tpl, ext_list):
-        for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
+        for mapper in self.w_config.step_config.ngs_mapping.tools.dna:
             for ext in ext_list:
                 yield tpl.format(mapper=mapper, ext=ext)

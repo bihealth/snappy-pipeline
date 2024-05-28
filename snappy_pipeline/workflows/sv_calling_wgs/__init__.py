@@ -146,8 +146,8 @@ class PopDelStepPart(
 
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
-        window_size = self.config["popdel"]["window_size"]
-        padding = self.config["popdel"]["max_sv_size"]
+        window_size = self.config.popdel.window_size
+        padding = self.config.popdel.max_sv_size
         vcfs = []
         with open(self._get_fai_path(), "rt") as fai_file:
             for r in yield_regions(
@@ -164,10 +164,10 @@ class PopDelStepPart(
         yield "vcf", vcfs
 
     def _get_fai_path(self):
-        return self.w_config["static_data_config"]["reference"]["path"] + ".fai"
+        return self.w_config.static_data_config.reference.path + ".fai"
 
     def _get_ignore_chroms(self):
-        return self.config["ignore_chroms"]
+        return self.config.ignore_chroms
 
     @dictify
     def _get_output_files_concat_calls(self):
@@ -291,7 +291,7 @@ class SvCallingWgsWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def all_donors(self, include_background=True):

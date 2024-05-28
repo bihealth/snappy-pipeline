@@ -131,8 +131,8 @@ class SalmonStepPart(BaseStepPart):
         self.base_path_out = "work/salmon.{{library_name}}/out/salmon.{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
         if (
-            self.config["salmon"]["path_transcript_to_gene"] is not None
-            and self.config["salmon"]["path_transcript_to_gene"] != ""
+            self.config.salmon.path_transcript_to_gene is not None
+            and self.config.salmon.path_transcript_to_gene != ""
         ):
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
@@ -140,7 +140,7 @@ class SalmonStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @classmethod
@@ -198,7 +198,7 @@ class SalmonStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -476,7 +476,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     def get_strandedness_file(self, action):
         _ = action
@@ -493,7 +493,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config["step_config"]["gene_expression_quantification"]["salmon"][
+        if self.w_config.step_config.gene_expression_quantification.salmon[
             "path_transcript_to_gene"
         ]:
             salmon_exts["gene_sf"] = ".gene.sf"
@@ -502,7 +502,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling
         all_fns = []
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for ngs_library in sheet.all_ngs_libraries:
                     extraction_type = ngs_library.test_sample.extra_infos.get(
@@ -525,7 +525,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             fns = expand(
                                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
+                                mapper=self.w_config.step_config.ngs_mapping.tools.rna,
                                 # tool=set(self.config['tools']),
                                 tool=tool,
                                 ext=EXTENSIONS[tool].values(),

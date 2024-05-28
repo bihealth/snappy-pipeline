@@ -155,8 +155,8 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        self.register_sub_workflow("hla_typing", self.config["path_hla_typing"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_sub_workflow("hla_typing", self.config.path_hla_typing)
 
     @listify
     def get_result_files(self):
@@ -167,12 +167,12 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.optitype.lohhla.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             ext=".done",
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             ext=(
                 ".log",
                 ".log.md5",

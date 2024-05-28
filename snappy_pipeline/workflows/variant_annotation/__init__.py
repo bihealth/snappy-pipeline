@@ -119,7 +119,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         ]
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.w_config["step_config"]["variant_calling"]["tools"]}
+        return {"var_caller": self.parent.w_config.step_config.variant_calling.tools}
 
     @dictify
     def _get_log_file(self, action):
@@ -139,7 +139,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_resource_usage(self, action) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name]["num_threads"]
+        num_threads = getattr(self.config, self.name).num_threads
         return ResourceUsage(
             threads=num_threads,
             time="1-00",
@@ -172,13 +172,13 @@ class VariantAnnotationWorkflow(BaseStep):
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
         self.register_sub_workflow(
-            "ngs_mapping", self.w_config["step_config"]["variant_calling"]["path_ngs_mapping"]
+            "ngs_mapping", self.w_config.step_config.variant_calling.path_ngs_mapping
         )
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+        self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
 
     def check_config(self):

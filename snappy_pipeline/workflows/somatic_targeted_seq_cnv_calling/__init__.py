@@ -385,7 +385,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 **wildcards
             )
             yield "gc", "work/static_data/out/sequenza.{length}.wig.gz".format(
-                length=self.config["sequenza"]["length"],
+                length=self.config.sequenza.length,
             )
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
@@ -409,7 +409,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         elif action == "gcreference":
             return {
                 "gc": "work/static_data/out/sequenza.{length}.wig.gz".format(
-                    length=self.config["sequenza"]["length"],
+                    length=self.config.sequenza.length,
                 )
             }
         elif action == "coverage":
@@ -447,7 +447,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             prefix = "work/R_packages/log/sequenza"
         elif action == "gcreference":
             prefix = "work/static_data/log/sequenza.{length}".format(
-                length=self.config["sequenza"]["length"],
+                length=self.config.sequenza.length,
             )
         else:
             name_pattern = "{mapper}.sequenza.{library_name}"
@@ -497,7 +497,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             name_pattern + "_coverage_loess.txt.gz",
         ).format(**wildcards)
         name_pattern = "{mapper}.{caller}.{library_name}".format(
-            caller=self.config["purecn"]["somatic_variant_caller"],
+            caller=self.config.purecn.somatic_variant_caller,
             **wildcards,
         )
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
@@ -971,11 +971,11 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        if "purecn" in self.config["tools"]:
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        if "purecn" in self.config.tools:
             self.register_sub_workflow(
                 "somatic_variant_calling",
-                self.config["purecn"]["path_somatic_variants"],
+                self.config.purecn.path_somatic_variants,
                 "somatic_variants",
             )
 
@@ -990,7 +990,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
         }
-        if "cnvkit" in self.config["tools"] and self.config["cnvkit"]["plot"]:
+        if "cnvkit" in self.config.tools and self.config.cnvkit.plot:
             tool_actions["cnvkit"] += ["plot"]
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
@@ -1004,7 +1004,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config["tools"]:
+                for tool in self.config.tools:
                     for action in tool_actions[tool]:
                         try:
                             tpls = list(self.sub_steps[tool].get_output_files(action).values())
@@ -1017,7 +1017,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:

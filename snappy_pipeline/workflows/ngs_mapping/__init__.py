@@ -441,7 +441,7 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
+from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -493,7 +493,7 @@ class MappingGetResultFilesMixin:
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
-            return self.name not in self.config["tools"][library_tool_category]
+            return self.name not in self.config.tools[library_tool_category]
 
     @listify
     def get_result_files(self):
@@ -506,7 +506,7 @@ class MappingGetResultFilesMixin:
         a library.
         """
         # Skip if step part has a tool category and it is not enabled
-        if self.tool_category != "__any__" and self.name not in self.config["tools"].get(
+        if self.tool_category != "__any__" and self.name not in self.config.tools.get(
             self.tool_category, []
         ):
             return
@@ -691,7 +691,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         seen = []
@@ -727,9 +727,9 @@ class BwaStepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_mb = int(4.5 * 1024 * self.config["bwa"]["num_threads_align"])
+        mem_mb = int(4.5 * 1024 * self.config.bwa.num_threads_align)
         return ResourceUsage(
-            threads=self.config["bwa"]["num_threads_align"],
+            threads=self.config.bwa.num_threads_align,
             time="3-00:00:00",  # 3 days
             memory=f"{mem_mb}M",
         )
@@ -752,9 +752,9 @@ class BwaMem2StepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_mb = int(4.5 * 1024 * self.config["bwa_mem2"]["num_threads_align"])
+        mem_mb = int(4.5 * 1024 * self.config.bwa_mem2.num_threads_align)
         return ResourceUsage(
-            threads=self.config["bwa_mem2"]["num_threads_align"],
+            threads=self.config.bwa_mem2.num_threads_align,
             time="3-00:00:00",  # 3 days
             memory=f"{mem_mb}M",
         )
@@ -802,7 +802,7 @@ class StarStepPart(ReadMappingStepPart):
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]["rna"]:
+        if self.__class__.name not in self.config.tools.rna:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
         # Check required global configuration settings present
@@ -823,7 +823,7 @@ class StarStepPart(ReadMappingStepPart):
             mapper=self.name, ext=".Junctions.tab"
         )
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
-        if self.config[self.name]["transcriptome"]:
+        if getattr(self.config, self.name).transcriptome:
             output_files["transcriptome"] = self.base_path_out.format(
                 mapper=self.name, ext=".toTranscriptome.bam"
             )
@@ -861,9 +861,9 @@ class StarStepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_gb = int(3.5 * self.config["star"]["num_threads_align"])
+        mem_gb = int(3.5 * self.config.star.num_threads_align)
         return ResourceUsage(
-            threads=self.config["star"]["num_threads_align"],
+            threads=self.config.star.num_threads_align,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
@@ -974,9 +974,9 @@ class Minimap2StepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_gb = int(3.5 * self.config["minimap2"]["mapping_threads"])
+        mem_gb = int(3.5 * self.config.minimap2.mapping_threads)
         return ResourceUsage(
-            threads=self.config["minimap2"]["mapping_threads"],
+            threads=self.config.minimap2.mapping_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
@@ -1005,7 +1005,7 @@ class ExternalStepPart(ReadMappingStepPart):
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if "external" not in self.config["tools"]["dna"]:
+        if "external" not in self.config.tools.dna:
             return  # External not run, don't check configuration  # pragma: no cover
 
     def get_args(self, action):
@@ -1126,7 +1126,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         library_name = wildcards.library_name
         path_targets_bed = ""
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config["target_coverage_report"]["path_target_interval_list_mapping"]:
+        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
             if item["name"] == kit_name:
                 path_targets_bed = item["path"]
                 break
@@ -1260,7 +1260,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         super().__init__(parent)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config["ngs_chew_fingerprint"]["enabled"]
+        return not self.config.ngs_chew_fingerprint.enabled
 
     def get_input_files(self, action):
         """Return required input files"""
@@ -1387,11 +1387,11 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = DictQuery(self.w_config).get("step_config/ngs_mapping/target_coverage_report")
+        cov_config = self.w_config.step_config.ngs_mapping.target_coverage_report
         # Build mapping.
         default_kit_configured = False
         regexes = {}
-        for item in cov_config["path_target_interval_list_mapping"]:
+        for item in cov_config.path_target_interval_list_mapping:
             if item["name"] == "__default__":
                 default_kit_configured = True
             else:

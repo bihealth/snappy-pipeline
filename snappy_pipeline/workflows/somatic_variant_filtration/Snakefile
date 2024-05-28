@@ -76,7 +76,7 @@ rule somatic_variant_filtration_eb_filter_write_panel:
 
 # Run DKFZ Bias Filter --------------------------------------------------------
 
-if config["step_config"]["somatic_variant_filtration"]["filtration_schema"] == "sets":
+if config.step_config.somatic_variant_filtration.filtration_schema == "sets":
 
     rule somatic_variant_filtration_dkfz_bias_filter_run:
         input:
@@ -158,7 +158,7 @@ if config["step_config"]["somatic_variant_filtration"]["filtration_schema"] == "
 # Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-if config["step_config"]["somatic_variant_filtration"]["filtration_schema"] == "list":
+if config.step_config.somatic_variant_filtration.filtration_schema == "list":
 
     checkpoint one_dkfz:
         input:

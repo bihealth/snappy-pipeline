@@ -231,7 +231,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):

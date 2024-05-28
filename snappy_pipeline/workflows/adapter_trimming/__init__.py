@@ -389,6 +389,6 @@ class AdapterTrimmingWorkflow(BaseStep):
         )
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config_model.tools:
+                for tool in self.config.tools:
                     for tpl in tpls:
                         yield tpl.format(trimmer=tool, ngs_library_name=ngs_library.name)

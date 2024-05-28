@@ -187,7 +187,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         return {
             "bam": sorted(list(self._collect_bam_files(wildcards))),
             "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
-            "path_targets_bed": self.config["target_coverage_report"]["path_targets_bed"],
+            "path_targets_bed": self.config.target_coverage_report.path_targets_bed,
         }
 
     def _get_params_bam_qc(self, wildcards):
@@ -253,8 +253,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         :return: Returns external tool prefix if any provided, example: "dragen.". Otherwise,
         returns empty string.
         """
-        if self.config["external_tool"]:
-            return self.config["external_tool"].lower() + "."
+        if self.config.external_tool:
+            return self.config.external_tool.lower() + "."
         return ""
 
     def get_input_files(self, action):
@@ -268,7 +268,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
-        if self.config["merge_vcf_flag"]:
+        if self.config.merge_vcf_flag:
             pedigree = self.index_ngs_library_to_pedigree.get(wildcards.index_ngs_library)
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 for bio_sample in donor.bio_samples.values():
@@ -439,7 +439,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
-            "merge_option": self.config["merge_option"],
+            "merge_option": self.config.merge_option,
         }
         return result
 
@@ -586,7 +586,7 @@ class VariantExportExternalWorkflow(BaseStep):
         # Define infixes and actions - check if BAM QC is possible
         infixes = ("gts", "db-infos")
         performed_actions = ("annotate",)
-        if self.config["bam_available_flag"]:
+        if self.config.bam_available_flag:
             infixes += ("bam-qc",)
             performed_actions += ("bam_qc",)
 

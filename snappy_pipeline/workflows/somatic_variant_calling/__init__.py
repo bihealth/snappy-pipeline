@@ -297,7 +297,7 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
     """Base class for Mutect 1 and 2 step parts"""
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "cosmic", "path"),
@@ -389,14 +389,14 @@ class Mutect2StepPart(MutectBaseStepPart):
         super().__init__(parent)
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
         # FIXME not sure this should be done here in `check_config`
-        if self.config[self.name]["common_variants"]:
+        if getattr(self.config, self.name).common_variants:
             self.actions.extend(["contamination", "pileup_normal", "pileup_tumor"])
 
     def get_input_files(self, action):
@@ -644,7 +644,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
     actions = ("run",)
 
     def check_config(self):
-        if "scalpel" not in self.config["tools"]:
+        if "scalpel" not in self.config.tools:
             return  # scalpel not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -826,7 +826,7 @@ class JointCallingStepPart(BaseStepPart):
                 ]
             }
             if "ignore_chroms" in self.parent.config:
-                ignore_chroms = self.parent.config["ignore_chroms"]
+                ignore_chroms = self.parent.config.ignore_chroms
                 result["ignore_chroms"] = ignore_chroms
             return result
 
@@ -853,9 +853,9 @@ class BcftoolsJointStepPart(JointCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        mem_mb = 1024 * self.parent.config["bcftools_joint"]["num_threads"]
+        mem_mb = 1024 * self.parent.config.bcftools_joint.num_threads
         return ResourceUsage(
-            threads=self.parent.config["bcftools_joint"]["num_threads"],
+            threads=self.parent.config.bcftools_joint.num_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
@@ -907,9 +907,9 @@ class PlatypusJointStepPart(JointCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        mem_mb = int(3.75 * 1024 * self.parent.config["platypus_joint"]["num_threads"])
+        mem_mb = int(3.75 * 1024 * self.parent.config.platypus_joint.num_threads)
         return ResourceUsage(
-            threads=self.parent.config["platypus_joint"]["num_threads"],
+            threads=self.parent.config.platypus_joint.num_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
@@ -1013,7 +1013,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -1022,16 +1022,16 @@ class SomaticVariantCallingWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         name_pattern = "{mapper}.{caller}.{tumor_library.name}"
-        for caller in set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
+        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                 caller=caller,
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                 caller=caller,
                 ext=(
                     ".log",
@@ -1047,8 +1047,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_JOINT),
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            caller=set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_JOINT),
             ext=EXT_VALUES,
         )
 

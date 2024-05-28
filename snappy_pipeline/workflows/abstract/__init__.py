@@ -280,7 +280,7 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mappers = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+            mappers = self.w_config.step_config.ngs_mapping.tools.dna
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name
@@ -965,7 +965,7 @@ class BaseStep:
 
     def _load_data_set_infos(self):
         """Load BioMed Sample Sheets as given by configuration and yield them"""
-        for name, data_set in self.w_config["data_sets"].items():
+        for name, data_set in self.w_config.data_sets.items():
             yield DataSetInfo(
                 name,
                 data_set["file"],
@@ -983,12 +983,12 @@ class BaseStep:
 
     def _load_data_search_infos(self):
         """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
-        for _, data_set in self.w_config["data_sets"].items():
+        for _, data_set in self.w_config.data_sets.items():
             yield DataSearchInfo(
                 sheet_path=data_set["file"],
                 base_paths=self.config_lookup_paths,
-                search_paths=self.config["search_paths"],
-                search_patterns=self.config["search_patterns"],
+                search_paths=self.config.search_paths,
+                search_patterns=self.config.search_patterns,
                 mixed_se_pe=False,
             )
 
@@ -1217,7 +1217,7 @@ class LinkInStep(BaseStepPart):
         # FASTQ files. That doesn't make sense for pipelines that are using externally generated
         # data already.
         try:
-            preprocessed_path = self.config["path_link_in"]
+            preprocessed_path = self.config.path_link_in
         except KeyError:
             preprocessed_path = ""
 
@@ -1249,7 +1249,7 @@ class LinkInStep(BaseStepPart):
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = wildcards.library_name
         # Perform the command generation
         lines = []

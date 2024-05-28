@@ -64,7 +64,7 @@ from matplotlib.cbook import flatten
 from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.base import SkipLibraryWarning
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -153,8 +153,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         elif action == "annotate_strucvars":
             # Only annotate_seqvars SVs if path to step for calling them is configured.
             if (
-                not self.parent.config["path_sv_calling_targeted"]
-                and not self.parent.config["path_sv_calling_wgs"]
+                not self.parent.config.path_sv_calling_targeted
+                and not self.parent.config.path_sv_calling_wgs
             ):
                 return
             raw_path_tpls = self._get_output_files_annotate_strucvars().values()
@@ -166,13 +166,13 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.config["path_sv_calling_targeted"])
+                bool(self.parent.config.path_sv_calling_targeted)
                 and (action == "annotate_strucvars")
             )
         )
         kwargs = {
             "index_ngs_library": list(index_ngs_libraries.keys()),
-            "mapper": [self.parent.config["tools_ngs_mapping"][0]],
+            "mapper": [self.parent.config.tools_ngs_mapping[0]],
         }
         for path_tpl in path_tpls:
             yield from expand(path_tpl, **kwargs)
@@ -222,7 +222,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
         vcfs = []
-        for var_caller in self.parent.config["tools_variant_calling"]:
+        for var_caller in self.parent.config.tools_variant_calling:
             vcfs.append(
                 variant_calling(path).format(
                     mapper=wildcards.mapper,
@@ -270,22 +270,22 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        if self.parent.config["path_sv_calling_targeted"]:
+        if self.parent.config.path_sv_calling_targeted:
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
-            sv_callers = self.parent.config["tools_sv_calling_targeted"]
+            sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
-                sv_caller: self.parent.w_config["step_config"]["sv_calling_targeted"]
-                .get(sv_caller, {})
-                .get("skip_libraries", [])
+                sv_caller: self.parent.w_config.step_config.sv_calling_targeted.get(
+                    sv_caller, {}
+                ).get("skip_libraries", [])
                 for sv_caller in sv_callers
             }
-        elif self.parent.config["path_sv_calling_wgs"]:
+        elif self.parent.config.path_sv_calling_wgs:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
-            sv_callers = self.parent.config["tools_sv_calling_wgs"]["dna"]
+            sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
-                sv_caller: self.parent.w_config["step_config"]["sv_calling_wgs"]
-                .get(sv_caller, {})
-                .get("skip_libraries", [])
+                sv_caller: self.parent.w_config.step_config.sv_calling_wgs.get(sv_caller, {}).get(
+                    "skip_libraries", []
+                )
                 for sv_caller in sv_callers
             }
         else:
@@ -472,31 +472,26 @@ class VarfishExportWorkflow(BaseStep):
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
 
         # Register sub workflows
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
-        if self.config["path_sv_calling_targeted"]:
-            self.register_sub_workflow(
-                "sv_calling_targeted", self.config["path_sv_calling_targeted"]
-            )
-        if self.config["path_sv_calling_wgs"]:
-            self.register_sub_workflow("sv_calling_wgs", self.config["path_sv_calling_wgs"])
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
+        if self.config.path_sv_calling_targeted:
+            self.register_sub_workflow("sv_calling_targeted", self.config.path_sv_calling_targeted)
+        if self.config.path_sv_calling_wgs:
+            self.register_sub_workflow("sv_calling_wgs", self.config.path_sv_calling_wgs)
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        step_config = self.w_config["step_config"]
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = step_config["ngs_mapping"]["tools"]["dna"]
-        if not self.config["tools_variant_calling"] and "variant_calling" in step_config:
-            self.config["tools_variant_calling"] = step_config["variant_calling"]["tools"]
+        step_config = self.w_config.step_config
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = step_config.ngs_mapping.tools.dna
+        if not self.config.tools_variant_calling and "variant_calling" in step_config:
+            self.config.tools_variant_calling = step_config.variant_calling.tools
         if (
-            not self.config["tools_sv_calling_targeted"]
-            and "sv_calling_targeted" in self.w_config["step_config"]
+            not self.config.tools_sv_calling_targeted
+            and "sv_calling_targeted" in self.w_config.step_config
         ):
-            self.config["tools_sv_calling_targeted"] = step_config["sv_calling_targeted"]["tools"]
-        if (
-            not self.config["tools_sv_calling_wgs"]
-            and "sv_calling_wgs" in self.w_config["step_config"]
-        ):
-            self.config["tools_sv_calling_wgs"] = step_config["sv_calling_wgs"]["tools"]
+            self.config.tools_sv_calling_targeted = step_config.sv_calling_targeted.tools
+        if not self.config.tools_sv_calling_wgs and "sv_calling_wgs" in self.w_config.step_config:
+            self.config.tools_sv_calling_wgs = step_config.sv_calling_wgs.tools
 
         # Build additional information
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
@@ -504,10 +499,10 @@ class VarfishExportWorkflow(BaseStep):
     @dictify
     def _build_ngs_library_to_kit(self):
         """Build mapping of NGS library to kit based on the ``ngs_mapping`` configuration"""
-        cov_config = DictQuery(self.w_config).get("step_config/ngs_mapping/target_coverage_report")
+        cov_config = self.w_config.step_config.ngs_mapping.target_coverage_report
         regexes = {
             item["pattern"]: item["name"]
-            for item in cov_config["path_target_interval_list_mapping"]
+            for item in cov_config.path_target_interval_list_mapping
             if item["name"] != "__default__"
         }
         result = {}

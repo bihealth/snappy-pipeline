@@ -317,7 +317,7 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        "mapper": self.w_config.step_config.ngs_mapping.tools.dna,
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
@@ -333,7 +333,7 @@ class GetResultFilesMixin:
                     )
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.config["tools"]}
+        return {"var_caller": self.parent.config.tools}
 
     @dictify
     def _get_index_dna_ngs_libraries(
@@ -478,7 +478,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
 
     def check_config(self):
-        if self.__class__.name not in self.config["tools"]:
+        if self.__class__.name not in self.config.tools:
             return  # caller not enabled, skip  # pragma: no cover
         self.parent.ensure_w_config(
             ("static_data_config", "dbsnp", "path"),
@@ -487,7 +487,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
 
     def get_resource_usage(self, action) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name]["num_threads"]
+        num_threads = getattr(self.config, self.name).num_threads
         mem_per_thread = 5.5
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
@@ -885,14 +885,14 @@ class VariantCallingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
-            if self.w_config["step_config"]["variant_calling"][name]["enabled"]:
+            if self.w_config.step_config.variant_calling[name]["enabled"]:
                 yield from self.sub_steps[name].get_result_files()
 
     def check_config(self):

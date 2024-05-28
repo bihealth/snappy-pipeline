@@ -108,7 +108,7 @@ class OptiTypeStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @staticmethod
@@ -175,7 +175,7 @@ class OptiTypeStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -221,7 +221,7 @@ class ArcasHlaStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.mapper = self.config["arcashla"]["mapper"]
+        self.mapper = self.config.arcashla.mapper
         self.base_path_out = (
             "work/{mapper}.arcashla.{{library_name}}/out/{mapper}.arcashla.{{library_name}}{ext}"
         )
@@ -246,10 +246,10 @@ class ArcasHlaStepPart(BaseStepPart):
         """Return output files"""
         assert action == "run"
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, self.base_path_out.format(ext=ext, mapper=self.config["arcashla"]["mapper"])
+            yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
 
     def get_output_prefix(self):
-        return "%s." % self.config["arcashla"]["mapper"]
+        return "%s." % self.config.arcashla.mapper
 
     @staticmethod
     def get_log_file(action):
@@ -305,7 +305,7 @@ class HlaTypingWorkflow(BaseStep):
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -329,7 +329,7 @@ class HlaTypingWorkflow(BaseStep):
         """Build output paths from path template and extension list"""
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config["tools"]:
+                for tool in self.config.tools:
                     supported = self.sub_steps[tool].supported_extraction_types
                     extraction_type = ngs_library.test_sample.extra_infos.get(
                         "extractionType", "DNA"

@@ -88,7 +88,7 @@ import re
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -108,8 +108,8 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = DictQuery(self.w_config).get("step_config/helper_gcnv_model_targeted/gcnv")
-        if not gcnv_config["path_target_interval_list_mapping"]:
+        gcnv_config = self.w_config.step_config.helper_gcnv_model_targeted.gcnv
+        if not gcnv_config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
@@ -117,8 +117,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
         # Build mapping
         regexes = {
-            item["pattern"]: item["name"]
-            for item in gcnv_config["path_target_interval_list_mapping"]
+            item["pattern"]: item["name"] for item in gcnv_config.path_target_interval_list_mapping
         }
         result = {}
         for donor in self.parent.all_donors():
@@ -188,7 +187,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Build mapping from NGS DNA library to library kit
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
 

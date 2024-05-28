@@ -413,7 +413,7 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
                     elif not donor.mother or not donor.mother.dna_ngs_library:
                         continue
                     else:
-                        for caller in self.config["tools_variant_calling"]:
+                        for caller in self.config.tools_variant_calling:
                             yield tpl.format(
                                 mapper="{mapper}",
                                 caller=caller,
@@ -467,7 +467,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
@@ -486,14 +486,10 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             )
         )
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools["dna"]
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config.variant_calling["tools"]
 
     @listify
     def get_result_files(self):
@@ -503,22 +499,22 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         ext_values = list(itertools.chain(EXT_VALUES, (".summary.txt", ".summary.txt.md5")))
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=ext_values,
         )
         # Summarise counts
         yield from expand(
             "output/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary{ext}",
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=(".txt", ".txt.md5"),
         )
         # Collect MSDN statistics
-        if self.w_config["step_config"]["variant_denovo_filtration"]["collect_msdn"]:
+        if self.w_config.step_config.variant_denovo_filtration.collect_msdn:
             yield from expand(
                 "output/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo{ext}",
-                mapper=self.config["tools_ngs_mapping"],
+                mapper=self.config.tools_ngs_mapping,
                 ext=(".txt", ".txt.md5"),
             )
 

@@ -4,7 +4,7 @@ import typing
 
 from snakemake.io import expand
 
-from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
+from snappy_pipeline.utils import dictify, flatten, listify
 
 
 class SvCallingGetResultFilesMixin:
@@ -17,14 +17,13 @@ class SvCallingGetResultFilesMixin:
         The implementation will return a list of all paths with prefix ``output/` that are
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
-        if self.name not in self.config["tools"] and not (
-            hasattr(self.config["tools"], "get")
-            and self.name in self.config["tools"].get("dna", {})
+        if self.name not in self.config.tools and not (
+            hasattr(self.config.tools, "dna") and self.name not in self.config.tools.dna
         ):
             return  # tool not enabled, no result files
 
-        ngs_mapping_config = DictQuery(self.w_config).get("step_config/ngs_mapping")
-        for mapper in ngs_mapping_config["tools"]["dna"]:
+        ngs_mapping_config = self.w_config.step_config.ngs_mapping
+        for mapper in ngs_mapping_config.tools.dna:
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])
             if isinstance(output_files_tmp, dict):
@@ -40,7 +39,7 @@ class SvCallingGetResultFilesMixin:
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
-                    if library_name not in self.config[self.name].get("skip_libraries", []):
+                    if library_name not in getattr(self.config, self.name).skip_libraries:
                         yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
 
 

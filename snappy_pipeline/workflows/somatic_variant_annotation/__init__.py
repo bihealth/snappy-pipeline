@@ -258,7 +258,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["vep"]["num_threads"],
+            threads=self.config.vep.num_threads,
             time="24:00:00",  # 24 hours
             memory=f"{16 * 1024 * 1}M",
         )
@@ -294,15 +294,13 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         )
         # Register sub workflows
         self.register_sub_workflow(
-            "somatic_variant_calling", self.config["path_somatic_variant_calling"]
+            "somatic_variant_calling", self.config.path_somatic_variant_calling
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_somatic_variant_calling"]:
-            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools["dna"]
+        if not self.config.tools_somatic_variant_calling:
+            self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
             ]["tools"]
 
@@ -312,19 +310,19 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        annotators = set(self.config["tools"]) & set(ANNOTATION_TOOLS)
-        callers = set(self.config["tools_somatic_variant_calling"])
+        annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
+        callers = set(self.config.tools_somatic_variant_calling)
         name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=(
@@ -340,12 +338,12 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         full = list(
             filter(
                 lambda x: self.sub_steps[x].has_full,
-                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
+                set(self.config.tools) & set(ANNOTATION_TOOLS),
             ),
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=full,
             ext=EXT_VALUES,
@@ -354,7 +352,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
             annotator=annotators,
             ext=EXT_VALUES,

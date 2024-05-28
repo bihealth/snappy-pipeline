@@ -216,22 +216,22 @@ class SomaticMsiCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
         name_pattern = "{mapper}.{msi_caller}.{tumor_library.name}"
-        for msi_caller in set(self.config["tools"]) & set(MSI_CALLERS_MATCHED):
+        for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                 msi_caller=msi_caller,
                 ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                 msi_caller=msi_caller,
                 ext=(
                     ".log",

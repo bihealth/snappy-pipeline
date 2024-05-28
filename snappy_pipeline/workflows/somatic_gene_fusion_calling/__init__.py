@@ -97,7 +97,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @dictify
@@ -128,7 +128,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -437,7 +437,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["arriba"]["num_threads"], time="24:00:00", memory=f"{96 * 1024}M"
+            threads=self.config.arriba.num_threads, time="24:00:00", memory=f"{96 * 1024}M"
         )  # 1 day
 
 
@@ -495,7 +495,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
         name_pattern = "{fusion_caller}.{ngs_library}"
-        for fusion_caller in self.config["tools"]:
+        for fusion_caller in self.config.tools:
             for ngs_library in library_names_list:
                 # Constant to all callers
                 name_pattern_value = name_pattern.format(

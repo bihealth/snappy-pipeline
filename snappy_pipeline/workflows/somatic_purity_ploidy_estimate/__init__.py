@@ -310,14 +310,14 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # TODO: potential bug here as this step requires an entry that is not available
         #  in DEFAULT_CONFIG.
-        if self.config["tool_cnv_calling"] == "copywriter":
+        if self.config.tool_cnv_calling == "copywriter":
 
             self.register_sub_workflow(
                 "somatic_targeted_seq_cnv_calling",
-                self.config["path_somatic_targeted_seq_cnv_calling"],
+                self.config.path_somatic_targeted_seq_cnv_calling,
             )
 
     @listify
@@ -328,7 +328,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         sheets.
         """
         name_pattern = "{mapper}.{tool}.{ngs_library.name}"
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
                     # Skip all donors that do not have a non-tumor bio sample, estimation only
@@ -342,7 +342,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                         for _test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.dna_ngs_library
                             name_pattern_value = name_pattern.format(
-                                mapper=self.config["tool_ngs_mapping"],
+                                mapper=self.config.tool_ngs_mapping,
                                 tool=tool,
                                 ngs_library=ngs_library,
                             )

@@ -185,7 +185,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
         # Initialize sub-workflows
         self.register_sub_workflow(
-            "somatic_targeted_seq_cnv_calling", self.config["path_cnv_calling"], "cnv_calling"
+            "somatic_targeted_seq_cnv_calling", self.config.path_cnv_calling, "cnv_calling"
         )
 
     @listify
@@ -204,7 +204,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config["tools"]:
+                for tool in self.config.tools:
                     for action in tool_actions[tool]:
                         try:
                             tpls = self.sub_steps[tool].get_output_files(action).values()
@@ -215,7 +215,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
                                 caller=["sequenza"],
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
@@ -229,6 +229,4 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        assert (
-            "sequenza" in self.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
-        )
+        assert "sequenza" in self.w_config.step_config.somatic_targeted_seq_cnv_calling.tools

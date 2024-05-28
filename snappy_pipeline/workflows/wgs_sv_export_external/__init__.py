@@ -132,7 +132,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
         """"""
-        if self.config["merge_vcf_flag"]:
+        if self.config.merge_vcf_flag:
             pedigree = self.index_ngs_library_to_pedigree.get(wildcards.index_ngs_library)
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 for bio_sample in donor.bio_samples.values():
@@ -250,7 +250,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
-            "merge_option": self.config["merge_option"],
+            "merge_option": self.config.merge_option,
             "gvcf_option": False,
         }
         return result
@@ -258,7 +258,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     def _get_params_annotate(self, wildcards):
         return {
             "step_name": "wgs_sv_export_external",
-            "varfish_server_compatibility": self.config["varfish_server_compatibility"],
+            "varfish_server_compatibility": self.config.varfish_server_compatibility,
         }
 
     def _collect_vcfs(self, wildcards):
@@ -293,8 +293,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         :return: Returns tag to be used to name intermediate and final files. Tag based on
         information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
         """
-        mapper = self.config["tool_ngs_mapping"]
-        caller = self.config["tool_sv_calling_wgs"]
+        mapper = self.config.tool_ngs_mapping
+        caller = self.config.tool_sv_calling_wgs
         if mapper and caller:
             return f"{mapper}.{caller}."
         elif mapper or caller:
