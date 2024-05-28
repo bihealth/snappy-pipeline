@@ -986,13 +986,9 @@ class BaseStep:
                 mixed_se_pe=False,
             )
 
-    def _write_step_config(self, f=sys.stdout):
-        print(f"\n\n----- Configuration for step {self.name}:\n", file=f)
-        yaml = ruamel_yaml.YAML()
-        yaml.preserve_quotes = True
-        yaml.indent(sequence=4, mapping=4, offset=4)
-        yaml.dump(self.config, f)
-        print(f"\n------ Configuration for {self.name} ends here\n", file=f)
+    def _write_step_config(self):
+        config_string = self.config.model_dump_yaml(by_alias=True)
+        logging.info(f"Configuration for step {self.name}\n{config_string}")
 
     @classmethod
     def wrapper_path(cls, path):
