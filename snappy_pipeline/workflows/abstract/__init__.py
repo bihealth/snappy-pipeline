@@ -23,7 +23,7 @@ import snakemake
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
-from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
+from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
     donor_has_dna_ngs_library,
@@ -968,17 +968,17 @@ class BaseStep:
         for name, data_set in self.w_config.data_sets.items():
             yield DataSetInfo(
                 name,
-                data_set["file"],
+                data_set.file,
                 self.config_lookup_paths,
-                data_set["search_paths"],
-                data_set["search_patterns"],
-                data_set["type"],
-                data_set.get("is_background", False),
-                data_set.get("naming_scheme", NAMING_SECONDARY_ID_PK),
-                data_set.get("mixed_se_pe", False),
-                data_set.get("sodar_uuid", None),
-                data_set.get("sodar_title", None),
-                data_set.get("pedigree_field", None),
+                data_set.search_paths,
+                data_set.search_patterns,
+                data_set.type,
+                data_set.is_background,
+                data_set.naming_scheme,
+                data_set.mixed_se_pe,
+                data_set.sodar_uuid,
+                data_set.sodar_title,
+                data_set.pedigree_field,
             )
 
     def _load_data_search_infos(self):

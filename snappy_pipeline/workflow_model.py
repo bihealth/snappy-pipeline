@@ -76,6 +76,7 @@ class DataSetType(enum.StrEnum):
 
 class NamingScheme(enum.StrEnum):
     ONLY_SECONDARY_ID = "only_secondary_id"
+    SECONDARY_ID_PK = "secondary_id_pk"
 
 
 class DataSet(SnappyModel):
@@ -83,7 +84,12 @@ class DataSet(SnappyModel):
     search_patterns: list[SearchPattern] = [SearchPattern()]
     search_paths: list[PathLike] = ["../raw"]
     type: DataSetType = DataSetType.MATCHED_CANCER
-    naming_scheme: NamingScheme = NamingScheme.ONLY_SECONDARY_ID
+    naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
+    is_background: bool = False
+    mixed_se_pe: bool = False
+    sodar_uuid: str | None = None
+    sodar_title: str | None = None
+    pedigree_field: str | None = None
 
 
 class StepConfig(TypedDict, total=False):
