@@ -900,7 +900,9 @@ def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {
         "bwa": [".fasta" + ext for ext in (".amb", ".ann", ".bwt", ".pac", ".sa", "")],
-        "bwa_mem2": [".fasta" + ext for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac", "")],
+        "bwa_mem2": [
+            ".fasta" + ext for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac", "")
+        ],
         "star": ("/Genome", "/SA", "/SAindex"),
     }
     for aligner, suffixes in d.items():

@@ -219,16 +219,12 @@ def test_project_validation_germline(
     rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
-    out = ngs_mapping_workflow.validate_project(
-        config=config, sample_sheets_list=[germline_sheet]
-    )
+    out = ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[germline_sheet])
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
     # Exception raised cause no RNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config=config, sample_sheets_list=[rna_sheet]
-        )
+        ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[rna_sheet])
     error_msg = "RNA sample provided, but config only contains DNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
@@ -261,9 +257,7 @@ def test_project_validation_germline(
 
     # Exception raised cause no DNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config=config, sample_sheets_list=[germline_sheet]
-        )
+        ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[germline_sheet])
     error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
