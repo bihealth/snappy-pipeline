@@ -904,7 +904,7 @@ class BaseStep:
         2. If this fails, try to use environment variable TMPDIR.
         3. If this fails, use tempfile.gettempdir(), same as Snakemake default.
         """
-        tmpdir = self.w_config.get("global_config", {}).get("tmpdir", None)
+        tmpdir = getattr(self.w_config, "global_config", {}).get("tmpdir", None)
         if tmpdir:
             with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
                 tmpdir = os.path.expandvars(tmpdir)
