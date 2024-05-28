@@ -22,9 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticPurityPloidyEstimateWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticPurityPloidyEstimateWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -57,10 +55,7 @@ rule somatic_purity_ploidy_estimate_link_out_run:
 
 # Decide if WGS or WES rules should be used:
 
-if (
-    wf.w_config.step_config["somatic_purity_ploidy_estimate"].tool_cnv_calling
-    == "cnvetti"
-):
+if wf.w_config.step_config["somatic_purity_ploidy_estimate"].tool_cnv_calling == "cnvetti":
 
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor > somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal > somatic_purity_ploidy_estimate_ascat_cnv_normal_wes

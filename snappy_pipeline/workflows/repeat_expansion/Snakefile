@@ -78,6 +78,4 @@ rule repeat_expansion_annotate_expansionhunter:
         partition=wf.get_resource("expansionhunter", "run", "partition"),
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     run:
-        wf.substep_getattr("expansionhunter", "annotate_results")(
-            wildcards, input, output
-        )
+        wf.substep_getattr("expansionhunter", "annotate_results")(wildcards, input, output)

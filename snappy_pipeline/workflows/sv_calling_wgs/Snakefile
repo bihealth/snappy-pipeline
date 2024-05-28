@@ -536,9 +536,7 @@ rule sv_calling_wgs_gcnv_joint_germline_cnv_segmentation:
     resources:
         time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
         memory=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "memory"),
-        partition=wf.get_resource(
-            "gcnv", "joint_germline_cnv_segmentation", "partition"
-        ),
+        partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
         tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),

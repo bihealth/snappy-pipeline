@@ -20,9 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantExportExternalWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = VariantExportExternalWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
@@ -111,15 +109,9 @@ if wf.w_config.step_config["variant_export_external"].gvcf_option:
         threads: wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "threads")
         resources:
             time=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "time"),
-            memory=wf.get_resource(
-                "varfish_annotator_external", "gvcf_to_vcf", "memory"
-            ),
-            partition=wf.get_resource(
-                "varfish_annotator_external", "gvcf_to_vcf", "partition"
-            ),
-            tmpdir=wf.get_resource(
-                "varfish_annotator_external", "gvcf_to_vcf", "tmpdir"
-            ),
+            memory=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "memory"),
+            partition=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "partition"),
+            tmpdir=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "tmpdir"),
         log:
             **wf.get_log_file("varfish_annotator_external", "gvcf_to_vcf"),
         params:
@@ -138,9 +130,7 @@ else:
         resources:
             time=wf.get_resource("varfish_annotator_external", "merge_vcf", "time"),
             memory=wf.get_resource("varfish_annotator_external", "merge_vcf", "memory"),
-            partition=wf.get_resource(
-                "varfish_annotator_external", "merge_vcf", "partition"
-            ),
+            partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
             tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
         log:
             **wf.get_log_file("varfish_annotator_external", "merge_vcf"),

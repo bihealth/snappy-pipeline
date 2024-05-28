@@ -22,9 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticVariantFiltrationWorkflow(
-    workflow, config, lookup_paths, config_paths, os.getcwd()
-)
+wf = SomaticVariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 # Rules =======================================================================
 
