@@ -666,12 +666,6 @@ class BaseStep:
         workflow_config.update(self._update_default_config(config))
         local_config = workflow_config["step_config"].get(self.name, OrderedDict())
 
-        if workflow.verbose:
-            logging.info(
-                f"default config yaml for {self.name}\n"
-                + default_config_yaml_string(self.config_model_class, comment_optional=True)
-            )
-
         #: Validate workflow step configuration using its accompanying pydantic model
         #: available through self.config_model_class (mandatory keyword arg for BaseStep)
         try:

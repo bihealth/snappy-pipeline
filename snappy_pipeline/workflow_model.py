@@ -64,9 +64,9 @@ class StaticDataConfig(SnappyModel):
     dbsnp: PathModel | None = None
 
 
-class SearchPattern(SnappyModel):
-    left: str = "*.R1.fastq.gz"
-    right: str | None = "*.R2.fastq.gz"
+class SearchPattern(TypedDict):
+    left: str
+    right: str | None
 
 
 class DataSetType(enum.StrEnum):
@@ -81,7 +81,9 @@ class NamingScheme(enum.StrEnum):
 
 class DataSet(SnappyModel):
     file: str = ""
-    search_patterns: list[SearchPattern] = [SearchPattern()]
+    search_patterns: list[SearchPattern] = [
+        SearchPattern(left="*.R1.fastq.gz", right="*.R2.fastq.gz")
+    ]
     search_paths: list[str] = ["../raw"]
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
