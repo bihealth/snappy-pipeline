@@ -317,7 +317,7 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.w_config.step_config.ngs_mapping.tools.dna,
+                        "mapper": self.w_config.step_config["ngs_mapping"].tools.dna,
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
@@ -892,7 +892,7 @@ class VariantCallingWorkflow(BaseStep):
         for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
-            if getattr(self.w_config.step_config.variant_calling, name).enabled:
+            if getattr(self.w_config.step_config["variant_calling"], name).enabled:
                 yield from self.sub_steps[name].get_result_files()
 
     def check_config(self):

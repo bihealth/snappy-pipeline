@@ -119,7 +119,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         ]
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.w_config.step_config.variant_calling.tools}
+        return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}
 
     @dictify
     def _get_log_file(self, action):
@@ -172,7 +172,7 @@ class VariantAnnotationWorkflow(BaseStep):
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
         self.register_sub_workflow(
-            "ngs_mapping", self.w_config.step_config.variant_calling.path_ngs_mapping
+            "ngs_mapping", self.w_config.step_config["variant_calling"].path_ngs_mapping
         )
         self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
 

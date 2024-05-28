@@ -298,11 +298,11 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools.dna
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
         if not self.config.tools_somatic_variant_calling:
-            self.config.tools_somatic_variant_calling = (
-                self.w_config.step_config.somatic_variant_calling.tools
-            )
+            self.config.tools_somatic_variant_calling = self.w_config.step_config[
+                "somatic_variant_calling"
+            ].tools
 
     @listify
     def get_result_files(self):
@@ -352,7 +352,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
             annotator=annotators,
             ext=EXT_VALUES,

@@ -108,7 +108,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = self.w_config.step_config.helper_gcnv_model_targeted.gcnv
+        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
         if not gcnv_config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():

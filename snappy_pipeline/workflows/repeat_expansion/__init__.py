@@ -341,7 +341,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             tool=tools,
             ext=EXT_JSON,
         )
@@ -349,7 +349,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             tool=tools,
             ext=EXT_VCF,
         )

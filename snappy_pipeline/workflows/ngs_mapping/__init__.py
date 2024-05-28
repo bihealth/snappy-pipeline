@@ -493,7 +493,7 @@ class MappingGetResultFilesMixin:
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
-            return self.name not in self.config.tools[library_tool_category]
+            return self.name not in getattr(self.config.tools, library_tool_category)
 
     @listify
     def get_result_files(self):
@@ -506,8 +506,8 @@ class MappingGetResultFilesMixin:
         a library.
         """
         # Skip if step part has a tool category and it is not enabled
-        if self.tool_category != "__any__" and self.name not in self.config.tools.get(
-            self.tool_category, []
+        if self.tool_category != "__any__" and self.name not in getattr(
+            self.config.tools, self.tool_category, []
         ):
             return
 
@@ -601,7 +601,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.get("path_link_in", ""),
+            preprocessed_path=self.config.path_link_in,
         )
 
     def get_args(self, action):
@@ -1127,7 +1127,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         path_targets_bed = ""
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
         for item in self.config.target_coverage_report.path_target_interval_list_mapping:
-            if item["name"] == kit_name:
+            if item.name == kit_name:
                 path_targets_bed = item["path"]
                 break
 
@@ -1373,7 +1373,7 @@ class NgsMappingWorkflow(BaseStep):
         # Create shortcut from library to all extra infos.
         self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
         # Validate project
-        self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
+        self.validate_project(config=self.config, sample_sheets_list=self.shortcut_sheets)
 
     def _build_ngs_library_to_extra_infos(self):
         result = {}
@@ -1386,15 +1386,15 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = self.w_config.step_config.ngs_mapping.target_coverage_report
+        cov_config = self.w_config.step_config["ngs_mapping"].target_coverage_report
         # Build mapping.
         default_kit_configured = False
         regexes = {}
         for item in cov_config.path_target_interval_list_mapping:
-            if item["name"] == "__default__":
+            if item.name == "__default__":
                 default_kit_configured = True
             else:
-                regexes[item["pattern"]] = item["name"]
+                regexes[item.pattern] = item.name
         result = {}
         for donor in self._all_donors():
             for bio_sample in donor.bio_samples.values():

@@ -806,6 +806,6 @@ class PanelOfNormalsWorkflow(BaseStep):
         return result_files
 
     def _expand_result_files(self, tpl, ext_list):
-        for mapper in self.w_config.step_config.ngs_mapping.tools.dna:
+        for mapper in self.w_config.step_config["ngs_mapping"].tools.dna:
             for ext in ext_list:
                 yield tpl.format(mapper=mapper, ext=ext)

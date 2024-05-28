@@ -22,7 +22,7 @@ class SvCallingGetResultFilesMixin:
         ):
             return  # tool not enabled, no result files
 
-        ngs_mapping_config = self.w_config.step_config.ngs_mapping
+        ngs_mapping_config = self.w_config.step_config["ngs_mapping"]
         for mapper in ngs_mapping_config.tools.dna:
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])

@@ -493,7 +493,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config.step_config.gene_expression_quantification.salmon[
+        if self.w_config.step_config["gene_expression_quantification"].salmon[
             "path_transcript_to_gene"
         ]:
             salmon_exts["gene_sf"] = ".gene.sf"
@@ -525,7 +525,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             fns = expand(
                                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
-                                mapper=self.w_config.step_config.ngs_mapping.tools.rna,
+                                mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
                                 # tool=set(self.config['tools']),
                                 tool=tool,
                                 ext=EXTENSIONS[tool].values(),

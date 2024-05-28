@@ -44,7 +44,7 @@ class SignaturesStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.config = parent.w_config.step_config.somatic_variant_signatures
+        self.config = parent.w_config.step_config["somatic_variant_signatures"]
         self.name_pattern = "{mapper}.{var_caller}"
         if self.config.is_filtered:
             if len(self.config.filters) == 0:
@@ -211,38 +211,38 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             ),
         )
         # Register sub workflows
-        config = self.w_config.step_config.somatic_variant_signatures
+        config = self.w_config.step_config["somatic_variant_signatures"]
         sub_workflow = "somatic_variant_calling"
         if config.is_filtered:
             sub_workflow = "somatic_variant_filtration"
         self.register_sub_workflow(sub_workflow, config.path_somatic_variant, "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not config.tools_ngs_mapping:
-            config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools.dna
+            config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
         if not config.tools_somatic_variant_calling:
-            config.tools_somatic_variant_calling = (
-                self.w_config.step_config.somatic_variant_calling.tools
-            )
+            config.tools_somatic_variant_calling = self.w_config.step_config[
+                "somatic_variant_calling"
+            ].tools
         if not config.tools_somatic_variant_annotation:
-            config.tools_somatic_variant_annotation = (
-                self.w_config.step_config.somatic_variant_annotation.tools
-            )
+            config.tools_somatic_variant_annotation = self.w_config.step_config[
+                "somatic_variant_annotation"
+            ].tools
         if config.is_filtered:
-            if len(self.w_config.step_config.somatic_variant_filtration.filter_list) > 0:
+            if len(self.w_config.step_config["somatic_variant_filtration"].filter_list) > 0:
                 config.filters = []
                 config.filtered_regions = []
             else:
                 if not config.filters:
                     config.filters = list(
-                        self.w_config.step_config.somatic_variant_filtration.filter_sets.keys()
+                        self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
                     )
                     config.filters.append("no_filter")
                 if not config.filtered_regions:
                     config.filtered_regions = list(
-                        self.w_config.step_config.somatic_variant_filtration.exon_lists.keys()
+                        self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
                     )
                     config.filtered_regions.append("genome_wide")
-        self.w_config.step_config.somatic_variant_signatures = config
+        self.w_config.step_config["somatic_variant_signatures"] = config
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (TabulateVariantsStepPart, DeconstructSigsStepPart, LinkOutStepPart)
@@ -251,7 +251,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for workflow"""
-        config = self.w_config.step_config.somatic_variant_signatures
+        config = self.w_config.step_config["somatic_variant_signatures"]
         name_pattern = "{mapper}.{caller}"
         if config.is_filtered:
             if len(config.filters) > 0:
@@ -263,7 +263,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             name_pattern += ".{filter}.{region}"
 
         mappers = set(config.tools_ngs_mapping) & set(
-            self.w_config.step_config.ngs_mapping.tools.dna
+            self.w_config.step_config["ngs_mapping"].tools.dna
         )
         assert len(mappers) > 0, "No valid mapper"
         callers = set(config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS_MATCHED)
@@ -271,10 +271,14 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         if config.is_filtered:
             anno_callers = set(config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
             assert len(anno_callers) > 0, "No valid somatic variant annotation tool"
-            filters = list(self.w_config.step_config.somatic_variant_filtration.filter_sets.keys())
+            filters = list(
+                self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
+            )
             filters.append("no_filter")
             filters = set(filters) & set(config.filters)
-            regions = list(self.w_config.step_config.somatic_variant_filtration.exon_lists.keys())
+            regions = list(
+                self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
+            )
             regions.append("genome_wide")
             regions = set(regions) & set(config.filtered_regions)
         else:

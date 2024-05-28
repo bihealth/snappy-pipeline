@@ -275,7 +275,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
                 sv_caller: getattr(
-                    self.parent.w_config.step_config.sv_calling_targeted, sv_caller
+                    self.parent.w_config.step_config["sv_calling_targeted"], sv_caller
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
@@ -284,7 +284,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
                 sv_caller: getattr(
-                    self.parent.w_config.step_config.sv_calling_wgs, sv_caller
+                    self.parent.w_config.step_config["sv_calling_wgs"], sv_caller
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
@@ -499,11 +499,11 @@ class VarfishExportWorkflow(BaseStep):
     @dictify
     def _build_ngs_library_to_kit(self):
         """Build mapping of NGS library to kit based on the ``ngs_mapping`` configuration"""
-        cov_config = self.w_config.step_config.ngs_mapping.target_coverage_report
+        cov_config = self.w_config.step_config["ngs_mapping"].target_coverage_report
         regexes = {
-            item["pattern"]: item["name"]
+            item.pattern: item.name
             for item in cov_config.path_target_interval_list_mapping
-            if item["name"] != "__default__"
+            if item.name != "__default__"
         }
         result = {}
         for sheet in self.shortcut_sheets:

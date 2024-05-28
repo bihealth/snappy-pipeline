@@ -81,16 +81,14 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = self.w_config.step_config.sv_calling_targeted.gcnv
+        config = self.w_config.step_config["sv_calling_targeted"].gcnv
         if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
         # Build mapping
-        regexes = {
-            item["pattern"]: item["name"] for item in config.path_target_interval_list_mapping
-        }
+        regexes = {item.pattern: name for item in config.path_target_interval_list_mapping}
         result = {}
         for donor in self.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):

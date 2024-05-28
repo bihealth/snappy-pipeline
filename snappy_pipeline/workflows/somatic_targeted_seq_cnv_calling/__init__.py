@@ -1017,7 +1017,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+                                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:

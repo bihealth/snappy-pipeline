@@ -350,14 +350,14 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         ext = ("log", "conda_info.txt", "conda_list.txt")
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
-            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             library_name=set(self.tumor_to_normal.values()),
             ext=ext,
             chksum=chksum,
         )
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
-            mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             library_name=self.tumor_to_normal.keys(),
             ext=ext,
             chksum=chksum,
@@ -367,7 +367,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         if self.config.path_cnv_calling:
             # CNV avaliable
             name_pattern = "{mapper}.{caller}.{library_name}"
-            callers = self.w_config.step_config.somatic_targeted_seq_cnv_calling.tools
+            callers = self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools
             ext["out"] += [".tsv"]
             ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
             ext["log"] = [
@@ -381,7 +381,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         for subdir, exts in ext.items():
             yield from expand(
                 os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
-                mapper=self.w_config.step_config.ngs_mapping.tools.dna,
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller=callers,
                 library_name=self.tumor_to_normal.keys(),
                 ext=exts,
