@@ -892,7 +892,7 @@ class VariantCallingWorkflow(BaseStep):
         for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
-            if self.w_config.step_config.variant_calling[name]["enabled"]:
+            if getattr(self.w_config.step_config.variant_calling, name).enabled:
                 yield from self.sub_steps[name].get_result_files()
 
     def check_config(self):

@@ -218,15 +218,15 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         self.register_sub_workflow(sub_workflow, config.path_somatic_variant, "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not config.tools_ngs_mapping:
-            config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools["dna"]
+            config.tools_ngs_mapping = self.w_config.step_config.ngs_mapping.tools.dna
         if not config.tools_somatic_variant_calling:
-            config.tools_somatic_variant_calling = self.w_config.step_config[
-                "somatic_variant_calling"
-            ]["tools"]
+            config.tools_somatic_variant_calling = (
+                self.w_config.step_config.somatic_variant_calling.tools
+            )
         if not config.tools_somatic_variant_annotation:
-            config.tools_somatic_variant_annotation = self.w_config.step_config[
-                "somatic_variant_annotation"
-            ]["tools"]
+            config.tools_somatic_variant_annotation = (
+                self.w_config.step_config.somatic_variant_annotation.tools
+            )
         if config.is_filtered:
             if len(self.w_config.step_config.somatic_variant_filtration.filter_list) > 0:
                 config.filters = []
@@ -234,12 +234,12 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             else:
                 if not config.filters:
                     config.filters = list(
-                        self.w_config.step_config.somatic_variant_filtration["filter_sets"].keys()
+                        self.w_config.step_config.somatic_variant_filtration.filter_sets.keys()
                     )
                     config.filters.append("no_filter")
                 if not config.filtered_regions:
                     config.filtered_regions = list(
-                        self.w_config.step_config.somatic_variant_filtration["exon_lists"].keys()
+                        self.w_config.step_config.somatic_variant_filtration.exon_lists.keys()
                     )
                     config.filtered_regions.append("genome_wide")
         self.w_config.step_config.somatic_variant_signatures = config

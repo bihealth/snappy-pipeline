@@ -117,7 +117,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
         # Build mapping
         regexes = {
-            item["pattern"]: item["name"] for item in gcnv_config.path_target_interval_list_mapping
+            item.pattern: item.name for item in gcnv_config.path_target_interval_list_mapping
         }
         result = {}
         for donor in self.parent.all_donors():

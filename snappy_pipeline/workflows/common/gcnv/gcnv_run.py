@@ -568,8 +568,8 @@ class RunGcnvStepPart(
 
         The function will skip pedigrees where samples have inconsistent library kits and print a warning.
         """
-        if "gcnv" not in self.config["tools"] and not (
-            hasattr(self.config["tools"], "get") and "gcnv" in self.config["tools"].get("dna", {})
+        if "gcnv" not in self.config.tools and not (
+            hasattr(self.config.tools, "dna") and "gcnv" in self.config.tools.dna
         ):
             return
 

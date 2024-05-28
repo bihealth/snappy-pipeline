@@ -1428,15 +1428,15 @@ class NgsMappingWorkflow(BaseStep):
             if sub_step.name not in (LinkInStep.name,):
                 yield from sub_step.get_result_files()
 
-    def validate_project(self, config_dict, sample_sheets_list):
+    def validate_project(self, config, sample_sheets_list):
         """Validates project.
 
         Method compares sample information included in the sample sheet and the configuration. If
         sheet contains 'DNA' samples, a DNA mapper should be defined. Similarly, if it contains
         'RNA', a RNA mapper should be defined.
 
-        :param config_dict: Dictionary with configurations as found in the project's yaml file.
-        :type config_dict: dict
+        :param config: SnappyStepModel with configurations as found in the project's yaml file.
+        :type config: SnappyStepModel
 
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
@@ -1446,7 +1446,7 @@ class NgsMappingWorkflow(BaseStep):
         rna_bool_list = []
 
         # Get tools dictionary
-        tools_dict = config_dict["tools"]
+        tools = config.tools
 
         # Iterate over sheets
         for sheet in sample_sheets_list:
@@ -1460,14 +1460,14 @@ class NgsMappingWorkflow(BaseStep):
         rna_analysis = any(rna_bool_list)
 
         # Validate DNA project
-        dna_tool_list = tools_dict.get("dna", [])
+        dna_tool_list = tools.dna
         if dna_analysis and not dna_tool_list:
             raise InvalidConfiguration(
                 "Sample sheet contains DNA but configuration has no DNA "
                 "mapper defined in tool list."
             )
         # Validate RNA project
-        rna_tool_list = tools_dict.get("rna", [])
+        rna_tool_list = tools.rna
         if rna_analysis and not rna_tool_list:
             raise InvalidConfiguration(
                 "Sample sheet contains RNA but configuration has no RNA "

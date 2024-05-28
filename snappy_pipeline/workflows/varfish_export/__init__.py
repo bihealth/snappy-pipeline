@@ -274,18 +274,18 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
             sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
-                sv_caller: self.parent.w_config.step_config.sv_calling_targeted.get(
-                    sv_caller, {}
-                ).get("skip_libraries", [])
+                sv_caller: getattr(
+                    self.parent.w_config.step_config.sv_calling_targeted, sv_caller
+                ).skip_libraries
                 for sv_caller in sv_callers
             }
         elif self.parent.config.path_sv_calling_wgs:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
             sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
-                sv_caller: self.parent.w_config.step_config.sv_calling_wgs.get(sv_caller, {}).get(
-                    "skip_libraries", []
-                )
+                sv_caller: getattr(
+                    self.parent.w_config.step_config.sv_calling_wgs, sv_caller
+                ).skip_libraries
                 for sv_caller in sv_callers
             }
         else:
