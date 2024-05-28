@@ -72,7 +72,7 @@ rule somatic_variant_calling_mutect_run:
 
 # Run MuTect 2 ----------------------------------------------------------------
 
-if config.step_config["somatic_variant_calling"].mutect2.common_variants:
+if wf.config.step_config["somatic_variant_calling"].mutect2.common_variants:
 
     rule somatic_variant_calling_mutect2_pileup_normal:
         input:

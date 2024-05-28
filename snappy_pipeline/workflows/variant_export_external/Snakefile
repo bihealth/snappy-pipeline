@@ -97,7 +97,7 @@ rule variant_export_external_write_pedigree_run:
 
 # Convert gVCF to VCF | Merge VCFs  ------------------------------------------------
 
-if config.step_config["variant_export_external"].gvcf_option:
+if wf.config.step_config["variant_export_external"].gvcf_option:
 
     rule variant_export_external_gvcf_to_vcf:
         input:
