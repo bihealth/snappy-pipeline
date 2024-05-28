@@ -107,7 +107,7 @@ class BaseStepPart:
     name = "<base step>"
 
     #: The actions available in the class.
-    actions: typing.Tuple[str] = None
+    actions: tuple[str] = None
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
@@ -116,14 +116,13 @@ class BaseStepPart:
 
     #: Configure resource usage here that should not use the default resource usage from
     #: ``default_resource_usage``.
-    resource_usage: typing.Dict[str, ResourceUsage] = {}
+    resource_usage: dict[str, ResourceUsage] = {}
 
-    def __init__(self, parent):
+    def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
-        self.parent = parent
+        self.parent: P = parent
         self.config = parent.config
         self.w_config = parent.w_config
-        self.config_model = parent.config_model
 
     def _validate_action(self, action):
         """Validate provided action
@@ -592,10 +591,6 @@ class DataSearchInfo:
     mixed_se_pe: bool
 
 
-# A type variable for the SnappyStepModel class
-C = typing.TypeVar("C", bound=SnappyStepModel)
-
-
 class BaseStep:
     """Base class for the pipeline steps
 
@@ -641,7 +636,9 @@ class BaseStep:
         """
         return ""  # pragma: no cover
 
-    def __init__(
+    def __init__[
+        C: SnappyStepModel
+    ](
         self,
         workflow: snakemake.Workflow,
         config: dict[str, typing.Any],
@@ -665,9 +662,9 @@ class BaseStep:
         #: Snakefile "workflow" object
         self.workflow = workflow
         #: Merge default configuration with true configuration
-        self.w_config = config
-        self.w_config.update(self._update_default_config(config))
-        self.config = self.w_config["step_config"].get(self.name, OrderedDict())
+        workflow_config = config
+        workflow_config.update(self._update_default_config(config))
+        local_config = workflow_config["step_config"].get(self.name, OrderedDict())
 
         if workflow.verbose:
             logging.info(
@@ -678,11 +675,9 @@ class BaseStep:
         #: Validate workflow step configuration using its accompanying pydantic model
         #: available through self.config_model_class (mandatory keyword arg for BaseStep)
         try:
-            self.config_model: C = validate_config(self.config, self.config_model_class)
-            # Get the config dict from the config model to fill in defaults etc.
-            self.config = self.config_model.model_dump(by_alias=True)
+            self.config: C = validate_config(local_config, self.config_model_class)
             # Also update the workflow config, just in case
-            self.w_config["step_config"][self.name] = self.config
+            workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
         except pydantic.ValidationError as ve:
             logging.error(f"{self.name} failed validation")
             raise ve
@@ -693,7 +688,7 @@ class BaseStep:
             # local import of ConfigModel to avoid circular import
             from snappy_pipeline.workflow_model import ConfigModel
 
-            self.w_config_model: ConfigModel = ConfigModel(**self.w_config)
+            self.w_config: ConfigModel = ConfigModel(**workflow_config)
         except pydantic.ValidationError as ve:
             logging.error(f"Workflow configuration failed validation")
             raise ve
@@ -702,8 +697,7 @@ class BaseStep:
         self.config_lookup_paths = config_lookup_paths
         self.sub_steps = {}
         self.data_set_infos = list(self._load_data_set_infos())
-        # Check configuration
-        # self._check_config()
+
         #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
         #: Shortcut BioMed SampleSheet keyword arguments
@@ -727,6 +721,11 @@ class BaseStep:
         self._setup_hooks()
         #: Functions from sub workflows, can be used to generate output paths into these workflows
         self.sub_workflows = {}
+
+        # Even though we already validated via pydantic, we still call check_config here, as
+        # some of the checks done in substep check_config are not covered by the pydantic models yet
+        # and some of the checks actually influence program logic/flow
+        self._check_config()
 
         if workflow.verbose:
             self._write_step_config()
@@ -822,7 +821,7 @@ class BaseStep:
         for entry in config_keys:
             # Check if keys are present in config dictionary
             if entry in handle:
-                handle = handle[entry]
+                handle = getattr(handle, entry)
                 so_far.append(entry)
             else:
                 tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(

@@ -60,8 +60,8 @@ class PathModel(SnappyModel):
 
 class StaticDataConfig(SnappyModel):
     reference: PathModel
-    cosmic: PathModel | None
-    dbsnp: PathModel | None
+    cosmic: PathModel | None = None
+    dbsnp: PathModel | None = None
 
 
 class SearchPattern(SnappyModel):
