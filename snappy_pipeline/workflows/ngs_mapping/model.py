@@ -91,8 +91,11 @@ class Bwa(SnappyModel):
     def validate_bwa_path_index(cls, v):
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
-        if ext and ext not in {".fa", ".fasta"}:
-            assert ext in extensions, f"unknown extension '{v}'"
+        if ext:
+            if ext in {".fa", ".fasta"}:
+                prefix += ext
+            else:
+                assert ext in extensions, f"unknown extension '{v}'"
         for extension in extensions:
             assert os.path.exists(prefix + extension), f"{v} does not exist"
         return prefix
@@ -126,8 +129,11 @@ class BwaMem2(SnappyModel):
     def validate_bwa_mem2_path_index(cls, v):
         extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
         prefix, ext = os.path.splitext(v)
-        if ext and ext not in {".fa", ".fasta"}:
-            assert ext in extensions, f"unknown extension '{v}'"
+        if ext:
+            if ext in {".fa", ".fasta"}:
+                prefix += ext
+            else:
+                assert ext in extensions, f"unknown extension '{v}'"
         for extension in extensions:
             assert os.path.exists(prefix + extension), f"{v} does not exist"
         return prefix
