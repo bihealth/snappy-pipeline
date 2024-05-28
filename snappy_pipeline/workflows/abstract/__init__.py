@@ -47,7 +47,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
 
-from snappy_pipeline.models import SnappyStepModel, default_config_yaml_string
+from snappy_pipeline.models import SnappyStepModel
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -684,7 +684,7 @@ class BaseStep:
 
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
         except pydantic.ValidationError as ve:
-            logging.error(f"Workflow configuration failed validation")
+            logging.error("Workflow configuration failed validation")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
