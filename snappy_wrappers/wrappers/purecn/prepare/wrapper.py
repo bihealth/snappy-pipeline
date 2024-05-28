@@ -17,12 +17,16 @@ genome = snakemake.config["static_data_config"]["reference"]["path"]
 bound_files = {
     "genome": os.path.normpath(genome),
     "path_bait_regions": os.path.normpath(config["path_bait_regions"]),
-    "mappability": os.path.normpath(config["mappability"])
-    if "mappability" in config and config["mappability"]
-    else "",
-    "reptiming": os.path.normpath(config["reptiming"])
-    if "reptiming" in config and config["reptiming"]
-    else "",
+    "mappability": (
+        os.path.normpath(config["mappability"])
+        if "mappability" in config and config["mappability"]
+        else ""
+    ),
+    "reptiming": (
+        os.path.normpath(config["reptiming"])
+        if "reptiming" in config and config["reptiming"]
+        else ""
+    ),
 }
 
 keys = list(bound_files.keys())
