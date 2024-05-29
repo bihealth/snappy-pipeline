@@ -54,6 +54,7 @@ def minimal_config():
                 lib_prep_type: v2
               mark_duplicates:
                 path: /path/to/creak
+                path_baits: /path/to/baits
                 consensus_mode: HYBRID
             bam_collect_doc:
               enabled: true
