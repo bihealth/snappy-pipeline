@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -20,17 +20,10 @@ class Delly2(SnappyModel):
     max_threads: int = 16
 
 
-class SomaticWgsSvCalling(SnappyStepModel):
+class SomaticWgsSvCalling(SnappyStepModel, validators.ToolsMixin):
     path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta], min_length=1)]
 
     manta: Manta | None = None
 
     delly2: Delly2 | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

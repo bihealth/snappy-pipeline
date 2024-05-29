@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
 
 
@@ -76,7 +76,7 @@ class CnvkitWgs(Cnvkit):
     pass
 
 
-class SomaticWgsCnvCalling(SnappyStepModel):
+class SomaticWgsCnvCalling(SnappyStepModel, validators.ToolsMixin):
     path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
 
     path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
@@ -92,10 +92,3 @@ class SomaticWgsCnvCalling(SnappyStepModel):
     control_freec: ControlFreec | None = None
 
     cnvkit: CnvkitWgs | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

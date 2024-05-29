@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyStepModel, validators
 from snappy_pipeline.models.annotation import Vep
 
 
@@ -24,17 +24,10 @@ class VepCustom(Vep):
     more_flags: str = "--af_gnomade --af_gnomadg"
 
 
-class VariantAnnotation(SnappyStepModel):
+class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
     path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])]
     """Path to variant calling"""
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
 
     vep: VepCustom | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

@@ -1,9 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
-
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -15,7 +13,7 @@ class Ascat(SnappyModel):
     """BED file with loci for B allele frequency."""
 
 
-class SomaticPurityPloidyEstimate(SnappyStepModel):
+class SomaticPurityPloidyEstimate(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.ascat], min_length=1)]
 
     tool_cnv_calling: str = "cnvetti"
@@ -31,10 +29,3 @@ class SomaticPurityPloidyEstimate(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"
 
     ascat: Ascat | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

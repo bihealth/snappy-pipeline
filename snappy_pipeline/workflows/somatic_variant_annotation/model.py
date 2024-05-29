@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.annotation import Vep
 
 
@@ -55,7 +55,7 @@ class Jannovar(SnappyModel):
     """patterns of chromosome names to ignore"""
 
 
-class SomaticVariantAnnotation(SnappyStepModel):
+class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.jannovar, Tool.vep], min_length=1)]
 
     path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
@@ -69,10 +69,3 @@ class SomaticVariantAnnotation(SnappyStepModel):
     jannovar: Jannovar | None = None
 
     vep: Vep | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

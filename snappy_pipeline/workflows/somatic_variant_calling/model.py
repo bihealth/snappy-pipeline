@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import AfterValidator, Field, model_validator
+from pydantic import AfterValidator, Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -205,7 +205,7 @@ class VarscanJoint(Parallel, SamtoolsMpileup):
     window_length: int = 5000000
 
 
-class SomaticVariantCalling(SnappyStepModel):
+class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
     """List of tools"""
 
@@ -244,10 +244,3 @@ class SomaticVariantCalling(SnappyStepModel):
 
     varscan_joint: VarscanJoint | None = None
     """Configuration for VarscanJoint"""
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

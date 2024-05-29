@@ -1,9 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
-
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -25,16 +23,9 @@ class ScarHRD(SnappyModel):
     """Wiggle track for GC reference file"""
 
 
-class HomologousRecombinationDeficiency(SnappyStepModel):
+class HomologousRecombinationDeficiency(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
 
     path_cnv_calling: str
 
     scarHRD: ScarHRD | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

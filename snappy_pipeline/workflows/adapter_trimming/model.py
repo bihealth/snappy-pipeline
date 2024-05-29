@@ -1,10 +1,10 @@
 from enum import Enum
 
-from snappy_pipeline.models.validators import ToolsMixin
 from pydantic import Field
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models.validators import ToolsMixin
 
 
 class Tool(Enum):

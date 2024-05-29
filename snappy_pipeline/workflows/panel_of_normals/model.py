@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -165,7 +165,7 @@ class PureCn(SnappyModel):
     seed: int = 1234567
 
 
-class PanelOfNormals(SnappyStepModel):
+class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
 
     path_ngs_mapping: str = "../ngs_mapping"
@@ -204,10 +204,3 @@ class PanelOfNormals(SnappyStepModel):
     access: Access = Access()
 
     purecn: PureCn | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

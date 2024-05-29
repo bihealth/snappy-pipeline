@@ -1,9 +1,7 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models.validators import NgsMappingMixin, ToolsMixin
-
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -22,7 +20,7 @@ class ArcasHla(SnappyModel):
     mapper: str = "star"
 
 
-class HlaTyping(SnappyStepModel, ToolsMixin, NgsMappingMixin):
+class HlaTyping(SnappyStepModel, validators.ToolsMixin, validators.NgsMappingMixin):
     path_ngs_mapping: str = "../ngs_mapping"
 
     path_link_in: str = ""
