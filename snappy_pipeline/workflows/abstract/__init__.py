@@ -677,7 +677,7 @@ class BaseStep:
             # Also update the workflow config, just in case
             workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
         except pydantic.ValidationError as ve:
-            logging.error(f"{self.name} failed validation")
+            logging.error(f"{self.name} failed validation:\n{local_config}")
             raise ve
 
         #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
@@ -688,7 +688,7 @@ class BaseStep:
 
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
         except pydantic.ValidationError as ve:
-            logging.error("Workflow configuration failed validation")
+            logging.error(f"Workflow configuration failed validation:\n{workflow_config}")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
