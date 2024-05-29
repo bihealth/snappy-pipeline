@@ -33,6 +33,19 @@ def minimal_config():
               rna: ['star']
             star:
               path_index: /path/to/star/index
+          gene_expression_quantification:
+            path_ngs_mapping: ../ngs_mapping
+            featurecounts:
+              path_annotation_gtf: /path/to/annotation.gtf
+            strandedness:
+              path_exon_bed: /path/to/exon.bed
+            rnaseqc:
+              rnaseqc_path_annotation_gtf: /path/to/rnaseqc.gtf
+            dupradar:
+              dupradar_path_annotation_gtf: /path/to/dupradar.gtf
+            salmon:
+              path_transcript_to_gene: /path/to/salmon/transcript_to_gene
+              path_index: /path/to/salmon/index
 
         data_sets:
           first_batch:
@@ -55,11 +68,13 @@ def gene_expression_quantification_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return GeneExpressionQuantificationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping.model", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return GeneExpressionQuantificationWorkflow(
