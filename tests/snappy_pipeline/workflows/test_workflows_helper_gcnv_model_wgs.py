@@ -45,11 +45,11 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-                        path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           gcnv:
+            path_ngs_mapping: ../ngs_mapping
             path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
 
         data_sets:

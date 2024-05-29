@@ -31,7 +31,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
           somatic_variant_calling:

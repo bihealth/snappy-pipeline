@@ -52,10 +52,10 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-                        path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
           helper_gcnv_model_targeted:
+            path_ngs_mapping: ../ngs_mapping
             gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
