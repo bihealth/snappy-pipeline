@@ -43,6 +43,13 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta.amb
             bwa_mem2:
               path_index: /path/to/bwa_mem2/index.fasta.amb
+            minimap2:
+              mapping_threads: 16
+            star:
+              path_index: /path/to/star/index
+              transcriptome: true
+              out_filter_intron_motifs: ""
+              out_sam_strand_field: ""
             mbcs:
               mapping_tool: bwa
               use_barcodes: True
