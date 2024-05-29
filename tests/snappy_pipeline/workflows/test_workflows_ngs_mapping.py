@@ -47,7 +47,7 @@ def minimal_config():
               mapping_threads: 16
             star:
               path_index: /path/to/star/index
-              transcriptome: true
+              transcriptome: false
               out_filter_intron_motifs: ""
               out_sam_strand_field: ""
             mbcs:
