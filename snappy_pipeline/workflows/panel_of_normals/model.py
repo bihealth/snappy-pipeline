@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import Field, model_validator
 
@@ -168,7 +168,7 @@ class PureCn(SnappyModel):
 class PanelOfNormals(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
 
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     ignore_chroms: Annotated[
         list[str],
@@ -206,7 +206,7 @@ class PanelOfNormals(SnappyStepModel):
     purecn: PureCn | None = None
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         for tool in self.tools:
             if not getattr(self, str(tool)):
                 raise ValueError(f"Tool {tool} not configured")

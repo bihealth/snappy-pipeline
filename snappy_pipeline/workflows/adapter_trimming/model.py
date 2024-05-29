@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Self
 
-from pydantic import Field, model_validator
+from models.validators import ToolsMixin
+from pydantic import Field
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
@@ -874,17 +874,10 @@ class Bbduk(SnappyModel):
     """
 
 
-class AdapterTrimming(SnappyStepModel):
+class AdapterTrimming(SnappyStepModel, ToolsMixin):
     path_link_in: str | None = None
     """Override data set configuration search paths for FASTQ files"""
 
     tools: Annotated[list[Tool], EnumField(Tool, min_length=1, default=["bbduk", "fastp"])]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

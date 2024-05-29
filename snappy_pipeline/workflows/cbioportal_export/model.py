@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from enum import Enum
-from typing import Annotated, Any, Self
+from typing import Annotated, Any
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -164,7 +164,7 @@ class CbioportalExport(SnappyStepModel):
     """Each additional sample column must have a name and a (possibly empty) config attached."""
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         if self.path_somatic_variant and not self.mapping_tool:
             raise ValueError("Mapping tool must be set when path_somatic_variant is set")
         if not self.somatic_variant_calling_tool or not self.somatic_variant_annotation_tool:

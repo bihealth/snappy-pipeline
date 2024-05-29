@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import AfterValidator, Field, model_validator
 
@@ -162,7 +162,7 @@ class VariantFiltration(SnappyStepModel):
     """dot-separated {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}"""
 
     @model_validator(mode="after")
-    def ensure_filter_combinations_are_valid(self: Self) -> Self:
+    def ensure_filter_combinations_are_valid(self):
         thresholds: set[str] = set(self.thresholds.keys())
         inherit: set[str] = {"de_novo", "dominant", "recessive_hom"}
         freq: set[str] = {"dominant_freq", "recessive_freq"}

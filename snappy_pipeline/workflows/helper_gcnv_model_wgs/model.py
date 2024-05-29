@@ -7,6 +7,6 @@ class Gcnv(SnappyModel):
 
 
 class HelperGcnvModelWgs(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     gcnv: Gcnv

@@ -11,7 +11,7 @@ class Tool(enum.StrEnum):
 
 
 class SomaticMsiCalling(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis2_msi], min_length=1)]
 

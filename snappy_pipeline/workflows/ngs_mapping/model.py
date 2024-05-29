@@ -3,14 +3,9 @@ from enum import Enum
 import os
 from typing import Annotated
 
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
-
 from pydantic import Field, field_validator, model_validator
 
-from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel, validators
 
 
 class DnaMapper(Enum):
@@ -262,7 +257,7 @@ class Mbcs(SnappyModel):
     recalibrate: bool
 
 
-class NgsMapping(SnappyStepModel):
+class NgsMapping(SnappyStepModel, validators.NgsMappingMixin):
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
@@ -304,7 +299,7 @@ class NgsMapping(SnappyStepModel):
     mbcs: Mbcs | None = None
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         for data_type in ("dna", "rna", "dna_long"):
             tool_list = getattr(self.tools, data_type)
             for tool in tool_list:
@@ -313,7 +308,7 @@ class NgsMapping(SnappyStepModel):
         return self
 
     @model_validator(mode="after")
-    def check_mbcs_prerequisites(self: Self) -> Self:
+    def check_mbcs_prerequisites(self):
         if self.mbcs:
             tool = self.mbcs.mapping_tool
             if not getattr(self, str(tool)):

@@ -1,7 +1,7 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
-from pydantic import model_validator
+from models.validators import NgsMappingMixin, ToolsMixin
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
@@ -22,8 +22,8 @@ class ArcasHla(SnappyModel):
     mapper: str = "star"
 
 
-class HlaTyping(SnappyStepModel):
-    path_ngs_mapping: str
+class HlaTyping(SnappyStepModel, ToolsMixin, NgsMappingMixin):
+    path_ngs_mapping: str = "../ngs_mapping"
 
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
@@ -33,10 +33,3 @@ class HlaTyping(SnappyStepModel):
     optitype: Optitype | None = None
 
     arcashla: ArcasHla | None = None
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

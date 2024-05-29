@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import Field, model_validator
 
@@ -142,7 +142,7 @@ class SvCallingWgs(SnappyStepModel):
     ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "chrUn_*"]
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         for data_type in ("dna", "dna_long"):
             tool_list = getattr(self.tools, data_type)
             for tool in tool_list:

@@ -168,7 +168,7 @@ class SomaticVariantFiltration(SnappyStepModel):
     """
 
     @model_validator(mode="after")
-    def ensure_filter_list_is_configured_correctly(self: Self) -> Self:
+    def ensure_filter_list_is_configured_correctly(self):
         if self.filter_list:
             # check ebfilter and dkfz are only used at most once
             num_ebfilter = num_dkfz = 0
@@ -184,7 +184,7 @@ class SomaticVariantFiltration(SnappyStepModel):
         return self
 
     @model_validator(mode="after")
-    def ensure_either_filter_sets_or_filter_list_is_configured(self: Self) -> Self:
+    def ensure_either_filter_sets_or_filter_list_is_configured(self):
         if self.filter_sets and self.filter_list:
             raise ValueError("Either filter_sets or filter_list must be set")
         return self

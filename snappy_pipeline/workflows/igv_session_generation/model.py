@@ -1,12 +1,10 @@
-from typing import Self
-
 from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyStepModel
 
 
 class IgvSessionGeneration(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     path_variant_phasing: str = ""
 
@@ -21,7 +19,7 @@ class IgvSessionGeneration(SnappyStepModel):
     """defaults to variant_annotation tool"""
 
     @model_validator(mode="after")
-    def ensure_at_least_one_path_is_specified(self: Self) -> Self:
+    def ensure_at_least_one_path_is_specified(self):
         if not any(
             getattr(self, path)
             for path in ("path_variant_phasing", "path_variant_annotation", "path_variant_calling")

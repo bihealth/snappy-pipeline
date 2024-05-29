@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
 class Tool(enum.StrEnum):
@@ -50,7 +50,7 @@ class PicardProgram(enum.StrEnum):
 
 
 class Picard(SnappyModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     path_to_baits: str = ""
     """Required when CollectHsMetrics is among the programs"""
@@ -76,7 +76,7 @@ class Fastqc(SnappyModel):
     pass
 
 
-class NgsDataQc(SnappyStepModel):
+class NgsDataQc(SnappyStepModel, validators.ToolsMixin):
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 
@@ -85,10 +85,3 @@ class NgsDataQc(SnappyStepModel):
     picard: Picard | None = None
 
     fastqc: Fastqc | None = None  # TODO fastqc has no configuration options in the DEFAULT_CONFIG?
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for tool in self.tools:
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-        return self

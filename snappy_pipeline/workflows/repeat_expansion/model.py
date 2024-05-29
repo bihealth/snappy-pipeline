@@ -8,5 +8,5 @@ class RepeatExpansion(SnappyStepModel):
     repeat_annotation: str
     """Repeat expansions annotations, e.g., normality range - custom file"""
 
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
     """Path to the ngs_mapping step"""

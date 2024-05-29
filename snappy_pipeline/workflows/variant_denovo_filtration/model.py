@@ -1,4 +1,4 @@
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import Field, model_validator
 
@@ -47,7 +47,7 @@ class VariantDenovoFiltration(SnappyStepModel):
     """whether or not to collect MSDN (requires GATK HC+UG)"""
 
     @model_validator(mode="after")
-    def ensure_variant_paths_are_configured(self: Self) -> Self:
+    def ensure_variant_paths_are_configured(self):
         assert (
             self.path_variant_phasing or self.path_variant_annotation or self.path_variant_calling
         )

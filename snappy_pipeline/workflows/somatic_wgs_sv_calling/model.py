@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import Field, model_validator
 
@@ -29,7 +29,7 @@ class SomaticWgsSvCalling(SnappyStepModel):
     delly2: Delly2 | None = None
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         for tool in self.tools:
             if not getattr(self, str(tool)):
                 raise ValueError(f"Tool {tool} not configured")

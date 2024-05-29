@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import AfterValidator, Field, model_validator
 
@@ -209,7 +209,7 @@ class SomaticVariantCalling(SnappyStepModel):
     tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
     """List of tools"""
 
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
     """Path to ngs_mapping"""
 
     ignore_chroms: Annotated[
@@ -246,7 +246,7 @@ class SomaticVariantCalling(SnappyStepModel):
     """Configuration for VarscanJoint"""
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self: Self) -> Self:
+    def ensure_tools_are_configured(self):
         for tool in self.tools:
             if not getattr(self, str(tool)):
                 raise ValueError(f"Tool {tool} not configured")

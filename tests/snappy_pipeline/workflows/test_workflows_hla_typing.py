@@ -25,6 +25,13 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
+        step_config:
+          hla_typing:
+            path_ngs_mapping: ../ngs_mapping
+            tools: [optitype]
+          optitype:
+            max_reads: 5000
+
         data_sets:
           first_batch:
             file: sheet.tsv

@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import Field, model_validator
 
@@ -12,7 +12,7 @@ class CnvAssayType(enum.StrEnum):
 
 
 class SomaticCnvChecking(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
 
     path_cnv_calling: Annotated[str, Field(examples=["../somatic_targeted_seq_cnv_calling"])] = ""
 
@@ -36,7 +36,7 @@ class SomaticCnvChecking(SnappyStepModel):
     """Maximum BAF to consider variant as heterozygous (between 0 & 1/2)"""
 
     @model_validator(mode="after")
-    def ensure_cnv_assay_type_is_specified(self: Self) -> Self:
+    def ensure_cnv_assay_type_is_specified(self):
         if self.path_cnv_calling and not self.cnv_assay_type:
             raise ValueError("CNV assay type must be specified")
         return self
