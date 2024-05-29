@@ -256,6 +256,12 @@ class Minimap2(SnappyModel):
     mapping_threads: int = 16
 
 
+class Mbcs(SnappyModel):
+    mapping_tool: DnaMapper
+    use_barcodes: bool
+    recalibrate: bool
+
+
 class NgsMapping(SnappyStepModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""
@@ -295,6 +301,8 @@ class NgsMapping(SnappyStepModel):
 
     minimap2: Minimap2 | None = None
 
+    mbcs: Mbcs | None = None
+
     @model_validator(mode="after")
     def ensure_tools_are_configured(self: Self) -> Self:
         for data_type in ("dna", "rna", "dna_long"):
@@ -302,4 +310,20 @@ class NgsMapping(SnappyStepModel):
             for tool in tool_list:
                 if not getattr(self, tool):
                     raise ValueError(f"Tool {tool} not configured")
+        return self
+
+    @model_validator(mode="after")
+    def check_mbcs_prerequisites(self: Self) -> Self:
+        if self.mbcs:
+            tool = self.mbcs.mapping_tool
+            if not getattr(self, str(tool)):
+                raise ValueError(f"Tool {tool} not configured")
+
+            if self.mbcs.use_barcodes:
+                if not self.agent:
+                    raise ValueError("Agent configuration required for MBCS")
+
+            if self.mbcs.recalibrate:
+                if not self.bqsr:
+                    raise ValueError("BQSR configuration required for MBCS")
         return self

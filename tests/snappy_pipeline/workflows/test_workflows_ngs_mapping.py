@@ -46,6 +46,8 @@ def minimal_config():
               path_index: /path/to/bwa_mem2/index.fasta.amb
             mbcs:
               mapping_tool: bwa
+              use_barcodes: True
+              recalibrate: True
             bqsr:
               common_variants: /path/to/common/variants
             agent:
