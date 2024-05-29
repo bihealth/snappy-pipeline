@@ -31,7 +31,6 @@ def minimal_config():
           gene_expression_quantification:
             tools: [strandedness, featurecounts, dupradar, rnaseqc, salmon]
             path_link_in: "/preprocess"
-            path_ngs_mapping: ../ngs_mapping
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
             strandedness:
