@@ -899,9 +899,15 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {
-        "bwa": [".fasta" + ext for ext in (".amb", ".ann", ".bwt", ".pac", ".sa", "")],
+        "bwa": [
+            pre + ext
+            for ext in (".amb", ".ann", ".bwt", ".pac", ".sa", "")
+            for pre in (".fasta", ".fa")
+        ],
         "bwa_mem2": [
-            ".fasta" + ext for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac", "")
+            pre + ext
+            for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac", "")
+            for pre in (".fasta", ".fa")
         ],
         "star": ("/Genome", "/SA", "/SAindex"),
     }
