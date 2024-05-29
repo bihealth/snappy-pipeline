@@ -46,6 +46,8 @@ def minimal_config():
               transcriptome: true
               out_filter_intron_motifs: ""
               out_sam_strand_field: ""
+            minimap2:
+              mapping_threads: 16
             bam_collect_doc:
               enabled: true
 
