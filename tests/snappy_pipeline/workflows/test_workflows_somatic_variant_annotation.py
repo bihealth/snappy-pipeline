@@ -43,7 +43,7 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-        
+
           somatic_variant_annotation:
             tools: ["jannovar", "vep"]
             jannovar:
