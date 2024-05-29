@@ -35,6 +35,7 @@ def minimal_config():
               path_index: /path/to/star/index
           gene_expression_quantification:
             path_ngs_mapping: ../ngs_mapping
+            tools: [strandedness, featurecounts, dupradar, rnaseqc, salmon]
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
             strandedness:

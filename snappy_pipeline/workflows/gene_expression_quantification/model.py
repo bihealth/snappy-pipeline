@@ -42,10 +42,8 @@ class Salmon(SnappyModel):
 class Tool(enum.Enum):
     strandedness = "strandedness"
     featurecounts = "featurecounts"
-    duplication = "duplication"
     dupradar = "dupradar"
     rnaseqc = "rnaseqc"
-    stats = "stats"
     salmon = "salmon"
 
 
