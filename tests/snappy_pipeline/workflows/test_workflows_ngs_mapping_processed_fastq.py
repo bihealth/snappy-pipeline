@@ -176,6 +176,7 @@ def test_project_validation_cancer(ngs_mapping_workflow, cancer_sheet_tsv, minim
     minimal_config_dict = deepcopy(minimal_config)
     minimal_config_dict = dict(minimal_config_dict)
     minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+    config = ngs_mapping_workflow.config_model_class(**minimal_config_dict)
 
     # Create germline sample sheet
     cancer_sheet_io = io.StringIO(cancer_sheet_tsv)
@@ -183,7 +184,7 @@ def test_project_validation_cancer(ngs_mapping_workflow, cancer_sheet_tsv, minim
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
     out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[cancer_sheet]
+        config=config, sample_sheets_list=[cancer_sheet]
     )
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
