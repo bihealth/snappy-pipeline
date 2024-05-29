@@ -204,9 +204,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if self.config["path_%s" % prev]:
+            if prev_path := getattr(self.config, f"path_{prev}"):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, self.config["path_%s" % prev])
+                self.register_sub_workflow(prev, prev_path)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
