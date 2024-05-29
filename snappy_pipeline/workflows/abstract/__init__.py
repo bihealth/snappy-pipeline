@@ -138,7 +138,12 @@ class BaseStepPart:
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(
+        self,
+        action: str,
+        wildcards: snakemake.io.Wildcards = None,
+        input: snakemake.io.InputFiles = None,
+    ) -> ResourceUsage:
         """Return the resource usage for the given action."""
         if action not in self.actions:
             raise ValueError(f"Invalid {action} not in {self.actions}")
@@ -158,9 +163,11 @@ class BaseStepPart:
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
-        def _get_resource(wildcards, input):
+        def _get_resource(
+            wildcards: snakemake.io.Wildcards = None, input: snakemake.io.InputFiles = None
+        ):
             logging.info(f"_get_resource fn, {wildcards}, {input}")
-            resource_usage = self.get_resource_usage(action)
+            resource_usage = self.get_resource_usage(action, wildcards, input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
