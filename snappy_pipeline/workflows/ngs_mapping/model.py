@@ -70,7 +70,13 @@ class NgsChewFingerprint(SnappyModel):
     enabled: bool = True
 
 
-class Bwa(SnappyModel):
+class BwaMode(Enum):
+    AUTO = "auto"
+    BWA_ALN = "bwa-aln"
+    BWA_MEM = "bwa-mem"
+
+
+class BwaMapper(SnappyModel):
     path_index: str
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
     num_threads_align: int = 16
@@ -80,12 +86,15 @@ class Bwa(SnappyModel):
     memory_bam_sort: SizeString = "4G"
     trim_adapters: bool = False
     mask_duplicates: bool = True
+
     split_as_secondary: bool = False
     """-M flag"""
 
-    extra_flags: list[str] = []
-    """ [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode """
+    extra_args: list[str] = []
+    """[ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode"""
 
+
+class Bwa(BwaMapper):
     @field_validator("path_index")
     @classmethod
     def validate_bwa_path_index(cls, v):
@@ -101,31 +110,9 @@ class Bwa(SnappyModel):
         return prefix
 
 
-class BwaMode(Enum):
-    AUTO = "auto"
-    BWA_ALN = "bwa-aln"
-    BWA_MEM = "bwa-mem"
-
-
-class BwaMem2(SnappyModel):
-    path_index: str
-    """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
-
-    bwa_mode: BwaMode = BwaMode.AUTO
-    num_threads_align: int = 16
-    num_threads_trimming: int = 8
-    num_threads_bam_view: int = 4
-    num_threads_bam_sort: int = 4
-    memory_bam_sort: SizeString = "4G"
-    trim_adapters: bool = False
-    mask_duplicates: bool = True
-    split_as_secondary: bool = True
-    """-M flag"""
-
-    extra_flags: list[str] = []
-    """[ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode"""
-
+class BwaMem2(BwaMapper):
     @field_validator("path_index")
+    @classmethod
     def validate_bwa_mem2_path_index(cls, v):
         extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
         prefix, ext = os.path.splitext(v)
