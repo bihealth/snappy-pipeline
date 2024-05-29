@@ -39,7 +39,6 @@ def minimal_config():
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
-            compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fasta.amb
             bwa_mem2:

@@ -383,11 +383,6 @@ Target Coverage Report (.alfred.json.gz)
     [...]
 
 
-Genome-wide Coverage Count (.bed.gz)
-  If ``ngs_mapping/compute_coverage_bed`` to be set to ``true`` a report is generated
-  that gives the depth at each base of the genome. (note: currently this report only appears
-  in ``work/`` and is not yet linked out into the ``output/`` directory).
-
   (TODO: add file name rules and example)
 
 ::

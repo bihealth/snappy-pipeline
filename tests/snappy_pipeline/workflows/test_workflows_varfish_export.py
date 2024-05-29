@@ -28,7 +28,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fa
             target_coverage_report:
