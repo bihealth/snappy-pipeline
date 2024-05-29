@@ -28,7 +28,11 @@ def minimal_config():
         step_config:
           hla_typing:
             path_link_in: /preprocess
-            tools: [optitype]
+            tools: [optitype, arcashla]
+            optitype:
+              max_reads: 5000
+            arcashla:
+              mapper: star
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -187,31 +191,41 @@ def test_hla_typing_workflow(hla_typing_workflow):
     assert actual == expected
 
     # Check result file construction
-    samples = (
+    dna_samples = {
         "P001-N1-DNA1-WGS1",
         "P001-T1-DNA1-WGS1",
-        "P001-T1-RNA1-mRNA_seq1",
         "P002-N1-DNA1-WGS1",
         "P002-T1-DNA1-WGS1",
         "P002-T2-DNA1-WGS1",
+    }
+
+    rna_samples = {
+        "P001-T1-RNA1-mRNA_seq1",
         "P002-T2-RNA1-mRNA_seq1",
-    )
+    }
+
     expected = []
+    tools = [("star.arcashla", rna_samples), ("optitype", dna_samples | rna_samples)]
     expected += [
-        "output/optitype.{sample}/out/optitype.{sample}.{ext}{chksum}".format(
-            sample=sample, ext=ext, chksum=chksum
+        "output/{tool}.{sample}/out/{tool}.{sample}.{ext}{chksum}".format(
+            tool=tool, sample=sample, ext=ext, chksum=chksum
         )
+        for tool, samples in tools
         for sample in samples
         for ext in ("txt",)
         for chksum in ("", ".md5")
     ]
     expected += [
-        "output/optitype.{sample}/log/optitype.{sample}.{ext}{chksum}".format(
-            sample=sample, ext=ext, chksum=chksum
+        "output/{tool}.{sample}/log/{tool}.{sample}.{ext}{chksum}".format(
+            tool=tool, sample=sample, ext=ext, chksum=chksum
         )
+        for tool, samples in tools
         for sample in samples
         for ext in ("log", "conda_list.txt", "conda_info.txt")
         for chksum in ("", ".md5")
     ]
+    expected.sort()
     actual = hla_typing_workflow.get_result_files()
+    actual.sort()
+
     assert actual == expected
