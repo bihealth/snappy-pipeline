@@ -157,7 +157,7 @@ def test_tumor_mutational_step_part_get_resource_usage(tumor_mutational_burden_w
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = tumor_mutational_burden_workflow.get_resource("tmb_gathering", "run", resource)
+        actual = tumor_mutational_burden_workflow.get_resource("tmb_gathering", "run", resource)()
         assert actual == expected, msg_error
 
 

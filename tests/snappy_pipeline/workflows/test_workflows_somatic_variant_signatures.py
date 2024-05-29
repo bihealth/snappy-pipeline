@@ -125,7 +125,7 @@ def test_tabulate_vcf_step_part_get_resource_usage(somatic_variant_signatures_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_signatures_workflow.get_resource("tabulate_vcf", "run", resource)
+        actual = somatic_variant_signatures_workflow.get_resource("tabulate_vcf", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -177,7 +177,7 @@ def test_deconstruct_sigs_step_part_get_resource_usage(somatic_variant_signature
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_signatures_workflow.get_resource(
             "deconstruct_sigs", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

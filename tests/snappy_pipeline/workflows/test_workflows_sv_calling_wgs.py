@@ -287,14 +287,14 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     for action in high_resource_actions:
 #         for resource, expected in high_res_expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)()
 #             assert actual == expected, msg_error
 
 #     # Evaluate - all other actions
 #     for action in default_actions:
 #         for resource, expected in default_expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)()
 #             assert actual == expected, msg_error
 
 
@@ -794,7 +794,7 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     for action in all_actions:
 #         for resource, expected in expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' for action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("melt", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("melt", action, resource)()
 #             assert actual == expected, msg_error
 
 

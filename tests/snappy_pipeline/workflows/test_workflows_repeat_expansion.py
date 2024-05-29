@@ -168,7 +168,7 @@ def test_expansionhunter_step_part_get_resource_usage(repeat_expansion_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = repeat_expansion_workflow.get_resource("expansionhunter", "run", resource)
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -210,5 +210,5 @@ def test_expansionhunter_annotate_step_part_get_resource_usage(repeat_expansion_
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = repeat_expansion_workflow.get_resource("expansionhunter", "annotate", resource)
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "annotate", resource)()
         assert actual == expected, msg_error

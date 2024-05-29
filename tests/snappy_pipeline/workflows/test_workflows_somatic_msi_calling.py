@@ -122,7 +122,7 @@ def test_mantis_msi2_step_part_get_resource_usage(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_msi_calling_workflow.get_resource("mantis_msi2", "run", resource)
+        actual = somatic_msi_calling_workflow.get_resource("mantis_msi2", "run", resource)()
         assert actual == expected, msg_error
 
 

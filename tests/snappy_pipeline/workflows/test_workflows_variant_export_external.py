@@ -343,7 +343,7 @@ def test_varfish_annotator_step_part_get_resource_usage_gvcf_to_vcf(
         msg_error = f"Assertion error for resource '{resource}' for action 'gvcf_to_vcf'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "gvcf_to_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -408,7 +408,7 @@ def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(variant_export
         msg_error = f"Assertion error for resource '{resource}' for action 'merge_vcf'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "merge_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -507,7 +507,7 @@ def test_varfish_annotator_step_part_get_resource_usage_annotate(variant_export_
         msg_error = f"Assertion error for resource '{resource}' for action 'annotate'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "annotate", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -603,7 +603,7 @@ def test_varfish_annotator_step_part_get_resource_usage_bam_qc(variant_export_ex
         msg_error = f"Assertion error for resource '{resource}' for action 'bam_qc'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "bam_qc", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

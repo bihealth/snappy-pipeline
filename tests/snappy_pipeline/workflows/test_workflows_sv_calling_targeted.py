@@ -387,14 +387,14 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
     for action in high_resource_actions:
         for resource, expected in high_res_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)()
             assert actual == expected, msg_error
 
     # Evaluate - all other actions
     for action in default_actions:
         for resource, expected in default_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)()
             assert actual == expected, msg_error
 
 

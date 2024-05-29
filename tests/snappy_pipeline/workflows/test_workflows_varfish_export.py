@@ -284,7 +284,7 @@ def test_mehari_step_part_get_resource_usage(varfish_export_workflow):
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = varfish_export_workflow.get_resource("mehari", action, resource)
+            actual = varfish_export_workflow.get_resource("mehari", action, resource)()
             assert actual == expected, msg_error
 
 

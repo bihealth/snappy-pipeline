@@ -170,7 +170,7 @@ def test_scramble_analysis_step_part_get_resource_usage(mei_workflow):
             msg_error = (
                 f"Assertion error for resource '{resource}' associated with action '{action}'."
             )
-            actual = mei_workflow.get_resource("scramble", action, resource)
+            actual = mei_workflow.get_resource("scramble", action, resource)()
             assert actual == expected, msg_error
 
 

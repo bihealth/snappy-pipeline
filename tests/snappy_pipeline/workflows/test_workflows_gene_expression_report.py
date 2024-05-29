@@ -93,7 +93,7 @@ def test_all_steps_get_resource_usage(gene_expression_report_workflow):
     for step in steps:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in step '{step}'."
-            actual = gene_expression_report_workflow.get_resource(step, "run", resource)
+            actual = gene_expression_report_workflow.get_resource(step, "run", resource)()
             assert actual == expected, msg_error
 
 

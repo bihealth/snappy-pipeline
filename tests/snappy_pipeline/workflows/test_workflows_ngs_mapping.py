@@ -334,7 +334,7 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     for tool, v in expected_dict.items():
         for resource, expected in v.items():
             msg_error = f"Assertion error for tool '{tool}' & resource '{resource}'."
-            actual = ngs_mapping_workflow.get_resource(tool, "run", resource)
+            actual = ngs_mapping_workflow.get_resource(tool, "run", resource)()
             assert actual == expected, msg_error
 
 
@@ -419,7 +419,7 @@ def test_star_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("star", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("star", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -485,7 +485,7 @@ def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -532,7 +532,7 @@ def test_external_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("external", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("external", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -673,7 +673,7 @@ def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
     expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2G", "partition": "medium"}
     for resource, expected in expected_dict.items():
-        actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)()
         assert actual == expected
 
 

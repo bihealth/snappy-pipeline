@@ -319,31 +319,31 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     # Evaluate action `target`
     for resource, expected in target_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'target'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `antitarget`
     for resource, expected in antitarget_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'antitarget'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `coverage`
     for resource, expected in coverage_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'coverage'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `create_panel`
     for resource, expected in reference_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'create_panel'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `report`
     for resource, expected in report_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'report'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)()
         assert actual == expected, msg_error
 
 

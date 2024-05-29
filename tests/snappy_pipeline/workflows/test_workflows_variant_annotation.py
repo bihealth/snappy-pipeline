@@ -148,7 +148,7 @@ def test_vep_run_step_part_get_resource_usage(variant_annotation_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_annotation_workflow.get_resource("vep", "run", resource)
+        actual = variant_annotation_workflow.get_resource("vep", "run", resource)()
         assert actual == expected, msg_error
 
 

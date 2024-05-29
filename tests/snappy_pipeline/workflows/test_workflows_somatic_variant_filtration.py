@@ -129,7 +129,7 @@ def test_dkfz_bias_filter_step_part_get_resource_usage(somatic_variant_filtratio
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow.get_resource(
             "dkfz_bias_filter", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -233,7 +233,7 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_variant_filtration_workflow.get_resource("eb_filter", action, resource)
+            actual = somatic_variant_filtration_workflow.get_resource("eb_filter", action, resource)()
             assert actual == expected, msg_error
 
 
@@ -285,7 +285,7 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_filtration_workflow.get_resource("apply_filters", "run", resource)
+        actual = somatic_variant_filtration_workflow.get_resource("apply_filters", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -349,7 +349,7 @@ def test_filter_to_exons_step_part_get_resource_usage(somatic_variant_filtration
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow.get_resource(
             "filter_to_exons", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -591,7 +591,7 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow_list.get_resource(
             "one_ebfilter", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

@@ -117,7 +117,7 @@ def test_manta_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_sv_calling_workflow.get_resource("manta", "run", resource)
+        actual = somatic_wgs_sv_calling_workflow.get_resource("manta", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -134,7 +134,7 @@ def test_delly2_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_wgs_sv_calling_workflow.get_resource("delly2", action, resource)
+            actual = somatic_wgs_sv_calling_workflow.get_resource("delly2", action, resource)()
             assert actual == expected, msg_error
 
 

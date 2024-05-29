@@ -140,7 +140,7 @@ def test_peddy_step_part_get_resource_usage(variant_checking_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_checking_workflow.get_resource("peddy", "run", resource)
+        actual = variant_checking_workflow.get_resource("peddy", "run", resource)()
         assert actual == expected, msg_error
 
 

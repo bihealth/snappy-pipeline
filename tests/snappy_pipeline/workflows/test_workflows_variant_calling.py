@@ -144,7 +144,7 @@ def test_bcftools_call_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("bcftools_call", "run", resource)
+        actual = variant_calling_workflow.get_resource("bcftools_call", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -208,7 +208,7 @@ def test_gatk3_hc_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk3_hc", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_hc", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -272,7 +272,7 @@ def test_gatk3_ug_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk3_ug", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_ug", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -338,7 +338,7 @@ def test_bcftools_stats_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("bcftools_stats", "run", resource)
+        actual = variant_calling_workflow.get_resource("bcftools_stats", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -402,7 +402,7 @@ def test_jannovar_stats_stats_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("jannovar_stats", "run", resource)
+        actual = variant_calling_workflow.get_resource("jannovar_stats", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -473,7 +473,7 @@ def test_baf_file_generation_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("baf_file_generation", "run", resource)
+        actual = variant_calling_workflow.get_resource("baf_file_generation", "run", resource)()
         assert actual == expected, msg_error
 
 

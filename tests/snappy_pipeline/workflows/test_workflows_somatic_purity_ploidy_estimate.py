@@ -288,7 +288,7 @@ def test_ascat_step_part_get_resource_usage(somatic_purity_ploidy_estimate_workf
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' for action '{action}'."
-            actual = somatic_purity_ploidy_estimate_workflow.get_resource("ascat", action, resource)
+            actual = somatic_purity_ploidy_estimate_workflow.get_resource("ascat", action, resource)()
             assert actual == expected, msg_error
 
 

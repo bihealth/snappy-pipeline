@@ -158,7 +158,7 @@ def test_filter_quality_step_part_get_resource_usage(variant_filtration_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_quality", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_quality", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -218,7 +218,7 @@ def test_filter_inheritance_step_part_get_resource_usage(variant_filtration_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_inheritance", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_inheritance", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -280,7 +280,7 @@ def test_filter_frequency_step_part_get_resource_usage(variant_filtration_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_frequency", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_frequency", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -345,7 +345,7 @@ def test_filter_regions_step_part_get_resource_usage(variant_filtration_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_regions", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_regions", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -411,7 +411,7 @@ def test_filter_scores_step_part_get_resource_usage(variant_filtration_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_scores", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_scores", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -480,7 +480,7 @@ def test_filter_het_comp_step_part_get_resource_usage(variant_filtration_workflo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_het_comp", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_het_comp", "run", resource)()
         assert actual == expected, msg_error
 
 

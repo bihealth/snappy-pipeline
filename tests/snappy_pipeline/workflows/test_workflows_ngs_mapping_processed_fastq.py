@@ -251,7 +251,7 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -343,7 +343,7 @@ def test_star_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("star", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("star", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -432,7 +432,7 @@ def test_strandedness_step_part_infer_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("strandedness", "infer", resource)
+        actual = ngs_mapping_workflow.get_resource("strandedness", "infer", resource)()
         assert actual == expected, msg_error
 
 
@@ -500,7 +500,7 @@ def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -547,7 +547,7 @@ def test_external_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("external", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("external", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -617,7 +617,7 @@ def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = ngs_mapping_workflow.get_resource("target_coverage_report", action, resource)
+            actual = ngs_mapping_workflow.get_resource("target_coverage_report", action, resource)()
             assert actual == expected, msg_error
 
 

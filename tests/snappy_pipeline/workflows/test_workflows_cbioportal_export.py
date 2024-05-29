@@ -138,7 +138,7 @@ def test_cbioportal_meta_files_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_meta_files", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_meta_files", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -183,7 +183,7 @@ def test_cbioportal_clinical_data_step_part_get_resource_usage(cbioportal_export
         msg_error = f"Assertion error for resource '{resource}'."
         actual = cbioportal_export_workflow.get_resource(
             "cbioportal_clinical_data", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -243,7 +243,7 @@ def test_cbioportal_case_lists_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_case_lists", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_case_lists", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -364,7 +364,7 @@ def test_cbioportal_vcf2maf_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_vcf2maf", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_vcf2maf", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -413,7 +413,7 @@ def test_cbioportal_mutations_step_part_get_resource_usage(cbioportal_export_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_mutations", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_mutations", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -469,7 +469,7 @@ def test_cbioportal_cns2cna_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_cns2cna", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_cns2cna", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -562,7 +562,7 @@ def test_cbioportal_cna_step_part_get_resource_usage(cbioportal_export_workflow)
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = cbioportal_export_workflow.get_resource("cbioportal_cna", action, resource)
+            actual = cbioportal_export_workflow.get_resource("cbioportal_cna", action, resource)()
             assert actual == expected, msg_error
 
 
@@ -608,7 +608,7 @@ def test_cbioportal_segment_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_segment", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_segment", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -665,7 +665,7 @@ def test_cbioportal_expression_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_expression", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_expression", "run", resource)()
         assert actual == expected, msg_error
 
 

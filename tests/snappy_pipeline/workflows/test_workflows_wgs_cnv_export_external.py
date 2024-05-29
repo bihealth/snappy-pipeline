@@ -256,7 +256,7 @@ def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(wgs_cnv_export
         msg_error = f"Assertion error for resource '{resource}' for action 'merge_vcf'."
         actual = wgs_cnv_export_external_workflow.get_resource(
             "varfish_annotator_external", "merge_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -332,7 +332,7 @@ def test_varfish_annotator_step_part_get_resource_usage_annotate(wgs_cnv_export_
         msg_error = f"Assertion error for resource '{resource}' for action 'annotate'."
         actual = wgs_cnv_export_external_workflow.get_resource(
             "varfish_annotator_external", "annotate", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

@@ -124,7 +124,7 @@ def test_fastqc_step_part_get_resource_usage(ngs_data_qc):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_data_qc.get_resource("fastqc", "run", resource)
+        actual = ngs_data_qc.get_resource("fastqc", "run", resource)()
         assert actual == expected, msg_error
 
 

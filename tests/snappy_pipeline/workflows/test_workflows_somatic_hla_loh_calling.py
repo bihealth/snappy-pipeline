@@ -123,7 +123,7 @@ def test_lohhla_step_part_get_resource_usage(somatic_hla_loh_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_hla_loh_calling_workflow.get_resource("lohhla", "run", resource)
+        actual = somatic_hla_loh_calling_workflow.get_resource("lohhla", "run", resource)()
         assert actual == expected, msg_error
 
 

@@ -280,7 +280,7 @@ def test_cnvetti_on_target_step_part_get_resource_usage(somatic_targeted_seq_cnv
             msg_error = f"Assertion error for resource '{resource}' in action {action}."
             actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
                 "cnvetti_on_target", action, resource
-            )
+            )()
             assert actual == expected, msg_error
 
 
@@ -334,7 +334,7 @@ def test_cnvkit_coverage_step_part_get_resource(somatic_targeted_seq_cnv_calling
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "cnvkit", "coverage", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -376,7 +376,7 @@ def test_cnvkit_fix_step_part_get_resource(somatic_targeted_seq_cnv_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "fix", resource)
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "fix", resource)()
         assert actual == expected, msg_error
 
 
@@ -419,7 +419,7 @@ def test_cnvkit_segment_step_part_get_resource(somatic_targeted_seq_cnv_calling_
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "cnvkit", "segment", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -461,7 +461,7 @@ def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "call", resource)
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "call", resource)()
         assert actual == expected, msg_error
 
 
@@ -511,7 +511,7 @@ def test_cnvkit_postprocess_step_part_get_resource(somatic_targeted_seq_cnv_call
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "cnvkit", "postprocess", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -573,7 +573,7 @@ def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "plot", resource)
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "plot", resource)()
         assert actual == expected, msg_error
 
 
@@ -627,7 +627,7 @@ def test_cnvkit_export_step_part_get_resource(somatic_targeted_seq_cnv_calling_w
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "cnvkit", "export", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -688,7 +688,7 @@ def test_cnvkit_report_step_part_get_resource(somatic_targeted_seq_cnv_calling_w
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "cnvkit", "report", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -795,7 +795,7 @@ def test_copywriter_step_part_get_resource_usage_prepare(somatic_targeted_seq_cn
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "copywriter", "prepare", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -808,7 +808,7 @@ def test_copywriter_step_part_get_resource_usage_run(somatic_targeted_seq_cnv_ca
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "copywriter", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -821,7 +821,7 @@ def test_copywriter_step_part_get_resource_usage_call(somatic_targeted_seq_cnv_c
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
             "copywriter", "call", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -939,7 +939,7 @@ def test_sequenza_step_part_get_resource_usage_call(somatic_targeted_seq_cnv_cal
             msg_error = f"Assertion error for resource '{resource}' in '{action}'."
             actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
                 "sequenza", action, resource
-            )
+            )()
             assert actual == expected, msg_error
 
 
@@ -1023,7 +1023,7 @@ def test_purecn_step_part_get_resource_usage(somatic_targeted_seq_cnv_calling_wo
             msg_error = f"Assertion error for resource '{resource}' in '{action}'."
             actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
                 "purecn", action, resource
-            )
+            )()
             assert actual == expected, msg_error
 
 

@@ -127,7 +127,7 @@ def test_scarHRD_step_part_get_resource_usage_run(homologous_recombination_defic
         msg_error = f"Assertion error for resource '{resource}'."
         actual = homologous_recombination_deficiency_workflow.get_resource(
             "scarHRD", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -157,7 +157,7 @@ def test_scarHRD_step_part_get_resource_usage_install(homologous_recombination_d
         msg_error = f"Assertion error for resource '{resource}'."
         actual = homologous_recombination_deficiency_workflow.get_resource(
             "scarHRD", "install", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

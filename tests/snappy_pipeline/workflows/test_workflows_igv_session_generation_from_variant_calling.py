@@ -140,7 +140,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_resource_usag
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = igv_session_generation.get_resource("write_igv_session_file", "run", resource)
+        actual = igv_session_generation.get_resource("write_igv_session_file", "run", resource)()
         assert actual == expected, msg_error
 
 

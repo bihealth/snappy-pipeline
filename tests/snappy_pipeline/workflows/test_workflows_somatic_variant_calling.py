@@ -168,7 +168,7 @@ def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -430,7 +430,7 @@ def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -441,7 +441,7 @@ def test_mutect2_step_part_get_resource_usage_filter(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "filter", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "filter", resource)()
         assert actual == expected, msg_error
 
 
@@ -452,7 +452,7 @@ def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "contamination", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "contamination", resource)()
         assert actual == expected, msg_error
 
 
@@ -463,7 +463,7 @@ def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_normal", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_normal", resource)()
         assert actual == expected, msg_error
 
 
@@ -474,7 +474,7 @@ def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calli
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_tumor", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_tumor", resource)()
         assert actual == expected, msg_error
 
 
@@ -533,7 +533,7 @@ def test_scalpel_step_part_get_resource_usage(somatic_variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -598,7 +598,7 @@ def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -662,7 +662,7 @@ def test_bcftools_joint_step_part_get_resource_usage(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -726,7 +726,7 @@ def test_varscan_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -790,7 +790,7 @@ def test_platypus_joint_step_part_get_resource_usage(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -854,7 +854,7 @@ def test_gatk_hc_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -918,7 +918,7 @@ def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)()
         assert actual == expected, msg_error
 
 

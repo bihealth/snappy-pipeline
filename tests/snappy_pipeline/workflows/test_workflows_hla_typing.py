@@ -127,7 +127,7 @@ def test_optitype_step_part_get_resource_usage(hla_typing_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = hla_typing_workflow.get_resource("optitype", "run", resource)
+        actual = hla_typing_workflow.get_resource("optitype", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -168,7 +168,7 @@ def test_arcashla_step_part_get_resource_usage(hla_typing_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = hla_typing_workflow.get_resource("arcashla", "run", resource)
+        actual = hla_typing_workflow.get_resource("arcashla", "run", resource)()
         assert actual == expected, msg_error
 
 

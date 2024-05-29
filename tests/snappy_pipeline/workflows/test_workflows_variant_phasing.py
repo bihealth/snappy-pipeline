@@ -161,7 +161,7 @@ def test_write_trio_pedigree_step_part_get_resource_usage(variant_phasing_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_phasing_workflow.get_resource("write_trio_pedigree", "run", resource)
+        actual = variant_phasing_workflow.get_resource("write_trio_pedigree", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -223,7 +223,7 @@ def test_gatk_phase_by_transmission_step_part_get_resource_usage(variant_phasing
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_phase_by_transmission", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -285,7 +285,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_resource_usage(variant_phas
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_read_backed_phasing_only", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -347,7 +347,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_resource_usage(variant_phas
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_read_backed_phasing_also", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

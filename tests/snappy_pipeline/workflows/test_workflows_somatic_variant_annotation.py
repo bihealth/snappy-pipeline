@@ -153,7 +153,7 @@ def test_jannovar_step_part_get_resource_usage(somatic_variant_annotation_workfl
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_annotation_workflow.get_resource(
             "jannovar", "annotate_somatic_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -213,7 +213,7 @@ def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_annotation_workflow.get_resource("vep", "run", resource)
+        actual = somatic_variant_annotation_workflow.get_resource("vep", "run", resource)()
         assert actual == expected, msg_error
 
 
