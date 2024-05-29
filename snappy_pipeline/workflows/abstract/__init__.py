@@ -160,7 +160,7 @@ class BaseStepPart:
 
         def _get_resource(wildcards: Wildcards = None, input: InputFiles = None):
             logging.info(f"_get_resource fn, {wildcards}, {input}")
-            resource_usage = self.get_resource_usage(action, wildcards, input)
+            resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
