@@ -233,7 +233,9 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_variant_filtration_workflow.get_resource("eb_filter", action, resource)()
+            actual = somatic_variant_filtration_workflow.get_resource(
+                "eb_filter", action, resource
+            )()
             assert actual == expected, msg_error
 
 
@@ -285,7 +287,9 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_filtration_workflow.get_resource("apply_filters", "run", resource)()
+        actual = somatic_variant_filtration_workflow.get_resource(
+            "apply_filters", "run", resource
+        )()
         assert actual == expected, msg_error
 
 

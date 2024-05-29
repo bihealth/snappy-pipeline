@@ -125,7 +125,9 @@ def test_fusioncatcher_step_part_get_resource_usage(somatic_gene_fusion_calling_
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("fusioncatcher", "run", resource)()
+        actual = somatic_gene_fusion_calling_workflow.get_resource(
+            "fusioncatcher", "run", resource
+        )()
         assert actual == expected, msg_error
 
 

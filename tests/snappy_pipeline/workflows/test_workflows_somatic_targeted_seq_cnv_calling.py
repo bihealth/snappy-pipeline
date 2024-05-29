@@ -461,7 +461,9 @@ def test_cnvkit_call_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "call", resource)()
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
+            "cnvkit", "call", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -573,7 +575,9 @@ def test_cnvkit_plot_step_part_get_resource(somatic_targeted_seq_cnv_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource("cnvkit", "plot", resource)()
+        actual = somatic_targeted_seq_cnv_calling_workflow.get_resource(
+            "cnvkit", "plot", resource
+        )()
         assert actual == expected, msg_error
 
 

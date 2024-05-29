@@ -183,9 +183,7 @@ def test_project_validation_cancer(ngs_mapping_workflow, cancer_sheet_tsv, minim
     cancer_sheet = read_cancer_tsv_sheet(cancer_sheet_io)
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
-    out = ngs_mapping_workflow.validate_project(
-        config=config, sample_sheets_list=[cancer_sheet]
-    )
+    out = ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[cancer_sheet])
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
 

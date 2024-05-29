@@ -452,7 +452,9 @@ def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "contamination", resource)()
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "contamination", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -463,7 +465,9 @@ def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_normal", resource)()
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "pileup_normal", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -474,7 +478,9 @@ def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calli
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_tumor", resource)()
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "pileup_tumor", resource
+        )()
         assert actual == expected, msg_error
 
 

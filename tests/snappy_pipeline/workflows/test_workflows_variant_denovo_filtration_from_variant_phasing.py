@@ -166,7 +166,9 @@ def test_filter_de_novo_from_variant_phasing_step_part_get_resource(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)()
+        actual = variant_de_novo_filtration_workflow.get_resource(
+            "filter_denovo", "run", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -237,7 +239,9 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_resource(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)()
+        actual = variant_de_novo_filtration_workflow.get_resource(
+            "filter_denovo", "run", resource
+        )()
         assert actual == expected, msg_error
 
 
