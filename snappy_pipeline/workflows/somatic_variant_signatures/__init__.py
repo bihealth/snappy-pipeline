@@ -72,7 +72,7 @@ class SignaturesStepPart(BaseStepPart):
         self._validate_action(action)
         return os.path.join("work", self.name_pattern, "log", "snakemake." + self.name + ".log")
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

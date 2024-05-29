@@ -219,7 +219,7 @@ class PicardStepPart(BaseStepPart):
     def _get_params(self, wildcards):
         return {"prefix": f"{wildcards.mapper}.{wildcards.library_name}"}
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -230,7 +230,7 @@ class PicardStepPart(BaseStepPart):
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         if action == "prepare":
-            return super().get_resource_usage(action)
+            return super().get_resource_usage(action, **kwargs)
         elif action == "metrics":
             return ResourceUsage(threads=1, time="24:00:00", memory="24G")
         else:

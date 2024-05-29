@@ -146,7 +146,7 @@ class ScarHRDStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         self._validate_action(action)
         if action == "run":
             return ResourceUsage(
@@ -155,7 +155,7 @@ class ScarHRDStepPart(BaseStepPart):
                 time="24:00:00",
             )
         else:
-            return super().get_resource_usage(action)
+            return super().get_resource_usage(action, **kwargs)
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):

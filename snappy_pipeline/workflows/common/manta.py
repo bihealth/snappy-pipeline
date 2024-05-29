@@ -30,7 +30,7 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

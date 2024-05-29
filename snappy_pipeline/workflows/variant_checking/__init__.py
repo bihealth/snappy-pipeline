@@ -132,7 +132,7 @@ class PeddyStepPart(BaseStepPart):
         self._validate_action(action)
         return self.log_path
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

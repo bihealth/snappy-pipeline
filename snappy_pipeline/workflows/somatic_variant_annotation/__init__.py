@@ -213,7 +213,7 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     #: Class available actions
     actions = ("annotate_somatic_vcf",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -248,7 +248,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     #: Allowed keywords for pick order
     PICK_ORDER = ("biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length")
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

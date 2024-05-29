@@ -162,7 +162,7 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -200,7 +200,7 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -238,7 +238,7 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -276,7 +276,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -314,7 +314,7 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -352,7 +352,7 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -427,7 +427,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

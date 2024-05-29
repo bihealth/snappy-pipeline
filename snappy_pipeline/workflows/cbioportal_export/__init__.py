@@ -262,7 +262,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
         return pair.normal_sample.dna_ngs_library.test_sample.bio_sample.name
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -373,7 +373,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
             "features": self.parent.w_config.static_data_config.features.path,
         }
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -428,7 +428,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return "work/upload/data_cna_{action}.txt".format(action=action)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -471,7 +471,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
             name_pattern + "_dnacopy.seg",
         )
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -525,7 +525,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             },
         }
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

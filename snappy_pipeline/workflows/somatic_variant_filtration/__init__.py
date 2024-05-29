@@ -587,7 +587,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -746,7 +746,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action, **kwargs):
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
