@@ -1,6 +1,6 @@
 from enum import Enum
 
-from models.validators import ToolsMixin
+from snappy_pipeline.models.validators import ToolsMixin
 from pydantic import Field
 from typing_extensions import Annotated
 

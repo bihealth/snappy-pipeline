@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from models.validators import NgsMappingMixin, ToolsMixin
+from snappy_pipeline.models.validators import NgsMappingMixin, ToolsMixin
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
