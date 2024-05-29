@@ -736,7 +736,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
     name = "bwa_mem2"
     tool_category = "dna"
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
