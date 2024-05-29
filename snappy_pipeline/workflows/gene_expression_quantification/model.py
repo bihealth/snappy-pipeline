@@ -1,6 +1,9 @@
 import enum
+from typing import Annotated, Self
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from pydantic import model_validator
+
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, EnumField
 
 
 class Strand(enum.IntEnum):
@@ -36,31 +39,40 @@ class Salmon(SnappyModel):
     num_threads: int = 16
 
 
+class Tool(enum.Enum):
+    strandedness = "strandedness"
+    featurecounts = "featurecounts"
+    duplication = "duplication"
+    dupradar = "dupradar"
+    rnaseqc = "rnaseqc"
+    stats = "stats"
+    salmon = "salmon"
+
+
 class GeneExpressionQuantification(SnappyStepModel):
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    tools: list[str] = [
-        "strandedness",
-        "featurecounts",
-        "duplication",
-        "dupradar",
-        "rnaseqc",
-        "stats",
-        "salmon",
-    ]
+    tools: Annotated[list[Tool], EnumField(Tool)] = [Tool.salmon]
 
     path_ngs_mapping: str
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?
-    """Use 0, 1 or 2 to force unstranded, forward or reverse strand"""
+    """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""
 
-    featurecounts: Featurecounts
+    featurecounts: Featurecounts | None = None
 
-    strandedness: Strandedness
+    strandedness: Strandedness | None = None
 
-    rnaseqc: RnaSeqC
+    rnaseqc: RnaSeqC | None = None
 
-    dupradar: DupRadar
+    dupradar: DupRadar | None = None
 
-    salmon: Salmon
+    salmon: Salmon | None = None
+
+    @model_validator(mode="after")
+    def ensure_tools_are_configured(self: Self) -> Self:
+        for tool in self.tools:
+            if not getattr(self, str(tool)):
+                raise ValueError(f"Tool {tool} not configured")
+        return self

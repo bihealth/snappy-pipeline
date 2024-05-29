@@ -494,9 +494,9 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config.step_config["gene_expression_quantification"].salmon[
-            "path_transcript_to_gene"
-        ]:
+        if self.w_config.step_config[
+            "gene_expression_quantification"
+        ].salmon.path_transcript_to_gene:
             salmon_exts["gene_sf"] = ".gene.sf"
             salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 
