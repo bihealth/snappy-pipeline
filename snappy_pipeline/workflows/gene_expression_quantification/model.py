@@ -53,7 +53,7 @@ class GeneExpressionQuantification(
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool)] = [Tool.salmon]
+    tools: Annotated[list[Tool], EnumField(Tool, min_length=1)] = [Tool.salmon]
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?
     """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""
