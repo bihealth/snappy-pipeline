@@ -5,7 +5,7 @@ from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
 
-from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
 
 
 class DnaMapper(Enum):
@@ -257,7 +257,7 @@ class Mbcs(SnappyModel):
     recalibrate: bool
 
 
-class NgsMapping(SnappyStepModel, validators.NgsMappingMixin):
+class NgsMapping(SnappyStepModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""
 
