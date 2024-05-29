@@ -28,7 +28,10 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              rna: [star]
             star:
+              path_index: /path/to/star/index
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
             path_ngs_mapping: /NGS_MAPPING
@@ -74,11 +77,13 @@ def cbioportal_export_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return cbioportalExportWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
         "somatic_variant": lambda x: "/SOM_VAR_FILTRATION/" + x,

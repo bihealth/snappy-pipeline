@@ -61,6 +61,7 @@ class StaticDataConfig(SnappyModel):
     reference: PathModel
     cosmic: PathModel | None = None
     dbsnp: PathModel | None = None
+    features: PathModel | None = None
 
 
 class SearchPattern(TypedDict):

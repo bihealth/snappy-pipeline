@@ -209,10 +209,10 @@ class Star(SnappyModel):
     out_filter_mismatch_n_over_l_max: float = 0.04  # ENCODE option
     out_filter_multimap_n_max: int = 20  # ENCODE option
     out_filter_type: str = "BySJout"  # ENCODE option
-    out_filter_intron_motifs: str = None
+    out_filter_intron_motifs: str = ""
     """or for cufflinks: RemoveNoncanonical"""
 
-    out_sam_strand_field: str = None
+    out_sam_strand_field: str = ""
     """or for cufflinks: intronMotif"""
 
     transcriptome: bool = False
