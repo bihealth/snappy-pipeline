@@ -105,9 +105,6 @@ class ValidationMixin:
             msg_tpl = "Precomputed model paths must be configured (key: 'precomputed_model_paths')."
             raise InvalidConfiguration(msg_tpl)
         else:
-            # Validate configuration - check if only expected keys are present
-            self.validate_precomputed_model_paths_config(config=path_to_models)
-
             # Check model directories content
             for model in path_to_models:
                 # Validate ploidy-model
@@ -132,46 +129,6 @@ class ValidationMixin:
                             "does not contain all required call model files: {0}"
                         )
                         raise InvalidConfiguration(msg_tpl.format(str(model)))
-
-    def validate_precomputed_model_paths_config(self, config):
-        """Validate precomputed model config.
-
-        Evaluates if provided configuration has the following format:
-
-        precomputed_model_paths:
-          - library: "Agilent SureSelect Human All Exon V6"
-            contig_ploidy": /path/to/ploidy-model
-            model_pattern: /path/to/model_*
-
-        :param config: List of precomputed model configuration dictionary.
-        :type config: list
-
-        :raises InvalidConfiguration: if configuration not as expected for
-        ``precomputed_model_paths`` list.
-        """
-        # Initialise variables
-        expected_keys = ("library", "model_pattern", "contig_ploidy")
-        expected_format = (
-            '{\n    "library": "Agilent SureSelect Human All Exon V6"\n'
-            '    "contig_ploidy": /path/to/ploidy-model\n'
-            '    "model_pattern": "/path/to/model_*"\n}'
-        )
-        # Test
-        for model in config:
-            # Test keys
-            n_keys_pass = len(model) == 3
-            keys_pass = all(key in expected_keys for key in model)
-            # Test values
-            values_pass = all(isinstance(value, str) for value in model.values())
-            # Validate
-            if not (n_keys_pass and keys_pass and values_pass):
-                pretty_model = self._pretty_print_config(config=model)
-                msg = (
-                    "Provided configuration not as expected...\n"
-                    f"\nn_keys_pass={n_keys_pass}, keys_pass={keys_pass}, values_pass={values_pass}\n"
-                    f"Expected:\n{expected_format}\nObserved:\n{pretty_model}\n"
-                )
-                raise InvalidConfiguration(msg)
 
     def _pretty_print_config(self, config):
         """Pretty format configuration.

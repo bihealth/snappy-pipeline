@@ -25,6 +25,8 @@ class Gcnv(SnappyModel):
        path: "path/to/targets.bed"
     """
 
+    path_uniquely_mapable_bed: str
+
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
     Path to gCNV model - will execute analysis in CASE MODE.
@@ -92,7 +94,7 @@ class SvCallingTargeted(SnappyStepModel, validators.ToolsMixin):
 
     gcnv: Gcnv | None = None
 
-    dell2: Delly2 | None = None
+    delly2: Delly2 | None = None
 
     manta: Manta | None = None
 
