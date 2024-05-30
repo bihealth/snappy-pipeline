@@ -27,6 +27,7 @@ def minimal_config():
           ngs_data_qc:
             path_link_in: "/preprocess"
             tools: ['fastqc']
+            fastqc: {}
 
         data_sets:
           first_batch:

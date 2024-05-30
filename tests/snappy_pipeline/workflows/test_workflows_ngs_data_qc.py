@@ -28,6 +28,8 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: [bwa]
+            bwa:
+              path_index: /path/to/bwa/index.fasta.amb
           ngs_data_qc:
             tools: ['picard']
             picard:
@@ -71,6 +73,7 @@ def ngs_data_qc(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_data_qc", aligner_indices_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Construct the workflow object
     return NgsDataQcWorkflow(
         dummy_workflow,
