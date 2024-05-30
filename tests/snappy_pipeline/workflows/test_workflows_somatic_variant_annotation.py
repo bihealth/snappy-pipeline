@@ -41,13 +41,17 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
+            mutect: {}
 
           somatic_variant_annotation:
+            path_somatic_variant_calling: /path/to/somatic_variant_calling
             tools: ["jannovar", "vep"]
             jannovar:
+              dbnsfp: {}
+              flag_off_target: true
               path_jannovar_ser: /path/to/jannover.ser
             vep:
-              path_dir_cache: /path/to/dir/cache
+              cache_dir: /path/to/dir/cache
 
         data_sets:
           first_batch:
