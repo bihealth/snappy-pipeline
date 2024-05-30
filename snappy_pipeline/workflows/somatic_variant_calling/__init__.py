@@ -396,9 +396,6 @@ class Mutect2StepPart(MutectBaseStepPart):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
-        # FIXME not sure this should be done here in `check_config`
-        if getattr(self.config, self.name).common_variants:
-            self.actions.extend(["contamination", "pileup_normal", "pileup_tumor"])
 
     def get_input_files(self, action):
         """Return input function for Mutect2 rules.
@@ -1015,6 +1012,12 @@ class SomaticVariantCallingWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+
+        if "mutect2" in self.config.tools:
+            if self.config.mutect2.common_variants:
+                self.sub_steps["mutect2"].actions.extend(
+                    ["contamination", "pileup_normal", "pileup_tumor"]
+                )
 
     @listify
     def get_result_files(self):

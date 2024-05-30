@@ -42,6 +42,7 @@ def minimal_config():
             - mutect
             - scalpel
             - mutect2
+            mutect: {}
             scalpel:
               path_target_regions: /path/to/target/regions.bed
             mutect2:
