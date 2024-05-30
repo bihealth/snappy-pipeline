@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
@@ -152,15 +152,11 @@ class GenomeName(enum.StrEnum):
     canFam3 = "canFam3"
 
 
-class PureCnExtraCommands(SnappyModel):
-    model: str = "betabin"
-    fun_segmentation: str = Field("PSCBS", alias="fun-segmentation")
-    post_optimize: str = ""
-    """post-optimize is a flag"""
-
-
 class PureCn(SnappyModel):
-    genome_name: Annotated[GenomeName, EnumField(GenomeName)]
+    genome_name: Annotated[
+        GenomeName | Literal["unknown"],
+        EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
+    ] = "unknown"
     """Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3"""
 
     enrichment_kit_name: str = "unknown"
@@ -176,8 +172,12 @@ class PureCn(SnappyModel):
     """Nothing for GRCh38"""
 
     seed: int = 1234567
-    extra_commands: PureCnExtraCommands
-    """Recommended extra arguments for PureCN, extra_arguments: [] to clear them all"""
+    extra_commands: dict[str, Any] = {
+        "model": "betabin",
+        "fun-segmentation": "PSCBS",
+        "post-optimize": "",
+    }
+    """Recommended extra arguments for PureCN, extra_commands: {} to clear them all"""
 
     path_container: Annotated[
         str, Field(examples=["../panel_of_normals/work/containers/out/purecn.simg"])

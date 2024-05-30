@@ -55,6 +55,13 @@ def minimal_config():
               path_intervals: /path/to/interval/list
               path_panel_of_normals: /path/to/purecn/pon
               path_mapping_bias: /path/to/mapping/bias
+              path_somatic_variants: /path/to/somatic/variants
+            cnvetti_on_target:
+              path_target_regions: /path/to/target/regions
+            copywriter:
+              path_target_regions: /path/to/target/regions
+              plot_genes: "/path/to/civic/annotation??"
+            sequenza: {}  # use defaults, no required fields.
 
         data_sets:
           first_batch:
