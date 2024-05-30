@@ -317,3 +317,11 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                 yield from expand(
                     tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
+
+    def check_config(self):
+        if self.config.is_filtered:
+            self.ensure_w_config(
+                ("step_config", "somatic_variant_filtration"),
+                "When is_filtered is set to True, "
+                "the somatic_variant_filtration step must be configured",
+            )

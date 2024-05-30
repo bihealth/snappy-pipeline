@@ -124,7 +124,7 @@ class FiltrationSchema(enum.StrEnum):
 class SomaticVariantFiltration(SnappyStepModel):
     path_somatic_variant: Annotated[
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
-    ]
+    ] = "../somatic_variant"
 
     path_ngs_mapping: str = "../ngs_mapping"
     """Needed for dkfz & ebfilter"""
@@ -187,6 +187,12 @@ class SomaticVariantFiltration(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_either_filter_sets_or_filter_list_is_configured(self):
+        if self.filtration_schema == FiltrationSchema.sets:
+            if not self.filter_sets:
+                raise ValueError("filter_sets must be set")
+        if self.filtration_schema == FiltrationSchema.list:
+            if not self.filter_list:
+                raise ValueError("filter_list must be set")
         if self.filter_sets and self.filter_list:
             raise ValueError("Either filter_sets or filter_list must be set")
         return self

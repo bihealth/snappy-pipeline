@@ -808,7 +808,7 @@ class BaseStep:
         # Iterate over required configuration keys
         for entry in config_keys:
             # Check if keys are present in config dictionary
-            if (handle := getattr(handle, entry)) is not None:
+            if (handle := (getattr(handle, entry, None) or handle.get(entry, None))) is not None:
                 so_far.append(entry)
             else:
                 tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(

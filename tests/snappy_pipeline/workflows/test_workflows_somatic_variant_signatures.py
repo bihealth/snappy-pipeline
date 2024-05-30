@@ -30,8 +30,15 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_filtration:
+            tools_somatic_variant_calling: ['mutect']
+            filter_list:
+              - dkfz: {}
+
           somatic_variant_signatures:
             path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            tools_somatic_variant_annotation: ['vep']
+            tools_somatic_variant_calling: ['mutect']
             is_filtered: True
 
         data_sets:
