@@ -37,6 +37,7 @@ def minimal_config():
           somatic_wgs_sv_calling:
               path_ngs_mapping: ../ngs_mapping
               tools: ['manta']
+              manta: {}
 
         data_sets:
           first_batch:
