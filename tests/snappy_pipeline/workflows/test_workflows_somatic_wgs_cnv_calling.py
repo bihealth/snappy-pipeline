@@ -42,6 +42,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           somatic_wgs_cnv_calling:
+            path_somatic_variant_calling: ../somatic_variant_calling
             somatic_variant_calling_tool: mutect
             tools:
             - canvas
@@ -51,13 +52,18 @@ def minimal_config():
             tools_ngs_mapping:
                 - bwa
             canvas:
-              reference: /path/to/reference.fasta
-              filter_bed: /path/to/filter.bed
-              genome_folder: /path/to/genome/folder
+              path_reference: /path/to/reference.fasta
+              path_filter_bed: /path/to/filter.bed
+              path_genome_folder: /path/to/genome/folder
             cnvkit:
               path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+            cnvetti: {}
+            control_freec:
+              path_chrlenfile: /path/to/chrlenfile
+              path_mappability: /path/to/mappability
+              convert: {}
 
 
         data_sets:

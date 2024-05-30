@@ -10,6 +10,8 @@ from snappy_pipeline.models.cnvkit import Cnvkit
 class Tool(enum.StrEnum):
     cnvetti = "cnvetti"
     control_freec = "control_freec"
+    canvas = "canvas"
+    cnvkit = "cnvkit"
 
 
 class Canvas(SnappyModel):
@@ -78,6 +80,8 @@ class CnvkitWgs(Cnvkit):
 
 class SomaticWgsCnvCalling(SnappyStepModel, validators.ToolsMixin):
     path_ngs_mapping: str = "../ngs_mapping"
+
+    tools_ngs_mapping: list[str] = []
 
     path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
 
