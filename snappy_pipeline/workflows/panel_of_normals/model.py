@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field
 
@@ -8,6 +8,9 @@ from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappySte
 
 class Tool(enum.StrEnum):
     mutect2 = "mutect2"
+    cnvkit = "cnvkit"
+    purecn = "purecn"
+    access = "access"
 
 
 class Mutect2(SnappyModel):
@@ -148,7 +151,10 @@ class PureCn(SnappyModel):
     path_genomicsDB: str
     """Mutect2 genomicsDB created during panel_of_normals"""
 
-    genome_name: Annotated[GenomeName, EnumField(GenomeName)]
+    genome_name: Annotated[
+        GenomeName | Literal["unknown"],
+        EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
+    ] = "unknown"
 
     enrichment_kit_name: str = "unknown"
     """For filename only..."""

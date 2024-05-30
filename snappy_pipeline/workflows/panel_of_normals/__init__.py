@@ -183,11 +183,12 @@ class PanelOfNormalsStepPart(BaseStepPart):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.normal_libraries = list(self._get_normal_libraries())
-        if self.name and getattr(self.config, self.name).path_normals_list:
-            self.normal_libraries = []
-            with open(getattr(self.config, self.name).path_normals_list, "rt") as f:
-                for line in f:
-                    self.normal_libraries.append(line.strip())
+        if self.name and (cfg := getattr(self.config, self.name)):
+            if path := getattr(cfg, "path_normals_list", None):
+                self.normal_libraries = []
+                with open(path, "rt") as f:
+                    for line in f:
+                        self.normal_libraries.append(line.strip())
 
     def _get_normal_libraries(self):
         for sheet in self.parent.shortcut_sheets:
