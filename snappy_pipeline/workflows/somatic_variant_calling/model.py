@@ -7,9 +7,15 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, vali
 
 
 class Tool(enum.StrEnum):
-    MUTECT = "mutect"
-    MUTECT2 = "mutect2"
-    SCALPEL = "scalpel"
+    mutect = "mutect"
+    mutect2 = "mutect2"
+    scalpel = "scalpel"
+    strelka2 = "strelka2"
+    gatk_hc_joint = "gatk_hc_joint"
+    gatk_ug_joint = "gatk_ug_joint"
+    bcftools_joint = "bcftools_joint"
+    platypus_joint = "platypus_joint"
+    varscan_joint = "varscan_joint"
 
 
 class BcfToolsJoint(SnappyModel):
