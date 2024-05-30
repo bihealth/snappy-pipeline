@@ -10,7 +10,7 @@ from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappySte
 
 class DnaMapper(Enum):
     BWA = "bwa"
-    BWA2 = "bwa_mem2"
+    BWA_MEM2 = "bwa_mem2"
 
 
 class LongDnaMapper(Enum):
