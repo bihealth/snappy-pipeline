@@ -35,8 +35,7 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
-            gatk3_hc:
-              num_threads: 16
+            gatk3_hc: {}
 
           igv_session_generation:
             path_ngs_mapping: ../ngs_mapping
