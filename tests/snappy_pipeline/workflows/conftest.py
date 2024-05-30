@@ -926,7 +926,8 @@ def patch_module_fs(module_name: str, fake_fs, mocker):
     # validation, make sure to patch both the main module and the model module
     modules = [module_name]
     if module_name.startswith("snappy_pipeline.workflows.") and not module_name.endswith(".model"):
-        if not module_name.endswith("abstract"):
+        # TODO replace with more robust solution
+        if not module_name.endswith("abstract") and not ".common." in module_name:
             modules.append(module_name + ".model")
 
     for module_name in modules:
