@@ -13,8 +13,17 @@ class Tool(enum.StrEnum):
 
 
 class Gcnv(SnappyModel):
-    path_par_intervals: str
+    path_par_intervals: str = ""
     """Path to interval block list with PAR region for contig calling."""
+
+    path_target_interval_list_mapping: list[TargetIntervalEntry]
+    """
+    The following allows to define one or more set of target intervals.  This is only used by gcnv.
+    Example:
+     - name: "Agilent SureSelect Human All Exon V6"
+       pattern: "Agilent SureSelect Human All Exon V6.*"
+       path: "path/to/targets.bed"
+    """
 
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
@@ -80,15 +89,6 @@ class SvCallingTargeted(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[
         list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta], min_length=1)
     ]
-
-    path_target_interval_list_mapping: list[TargetIntervalEntry]
-    """
-    The following allows to define one or more set of target intervals.  This is only used by gcnv.
-    Example:
-     - name: "Agilent SureSelect Human All Exon V6"
-       pattern: "Agilent SureSelect Human All Exon V6.*"
-       path: "path/to/targets.bed"
-    """
 
     gcnv: Gcnv | None = None
 
