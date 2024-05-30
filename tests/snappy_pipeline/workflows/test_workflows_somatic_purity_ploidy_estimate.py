@@ -36,6 +36,8 @@ def minimal_config():
             tools: ['ascat']
             tool_cnv_calling: cnvetti
             path_somatic_targeted_seq_cnv_calling: ../somatic_targeted_seq_cnv_calling
+            ascat:
+              b_af_loci: DUMMY
 
         data_sets:
           first_batch:
@@ -87,18 +89,20 @@ def somatic_purity_ploidy_estimate_workflow(
 
 
 @pytest.fixture
-def somatic_purity_ploidy_estimate_workflow_w_copywritter(
+def somatic_purity_ploidy_estimate_workflow_w_copywriter(
     dummy_workflow,
     minimal_config_copywritter,
     config_lookup_paths,
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticPurityPloidyEstimateWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "somatic_targeted_seq_cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x,
@@ -169,7 +173,7 @@ def test_ascat_step_part_get_input_files_cnv_normal(somatic_purity_ploidy_estima
 
 
 def test_ascat_step_part_get_input_files_cnv_tumor_wes(
-    somatic_purity_ploidy_estimate_workflow_w_copywritter,
+    somatic_purity_ploidy_estimate_workflow_w_copywriter,
 ):
     """Tests AscatStepPart._get_input_files_cnv_tumor_wes()"""
     wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
@@ -179,14 +183,14 @@ def test_ascat_step_part_get_input_files_cnv_tumor_wes(
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }
-    actual = somatic_purity_ploidy_estimate_workflow_w_copywritter.get_input_files(
+    actual = somatic_purity_ploidy_estimate_workflow_w_copywriter.get_input_files(
         "ascat", "cnv_tumor_wes"
     )(wildcards)
     assert actual == expected
 
 
 def test_ascat_step_part_get_input_files_cnv_normal_wes(
-    somatic_purity_ploidy_estimate_workflow_w_copywritter,
+    somatic_purity_ploidy_estimate_workflow_w_copywriter,
 ):
     """Tests AscatStepPart._get_input_files_cnv_normal_wes()"""
     wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
@@ -196,7 +200,7 @@ def test_ascat_step_part_get_input_files_cnv_normal_wes(
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }
-    actual = somatic_purity_ploidy_estimate_workflow_w_copywritter.get_input_files(
+    actual = somatic_purity_ploidy_estimate_workflow_w_copywriter.get_input_files(
         "ascat", "cnv_normal_wes"
     )(wildcards)
     assert actual == expected

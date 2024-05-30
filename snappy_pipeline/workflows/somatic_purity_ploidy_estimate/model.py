@@ -1,6 +1,8 @@
 import enum
 from typing import Annotated
 
+from pydantic import model_validator
+
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
@@ -28,4 +30,15 @@ class SomaticPurityPloidyEstimate(SnappyStepModel, validators.ToolsMixin):
 
     path_ngs_mapping: str = "../ngs_mapping"
 
+    path_somatic_targeted_seq_cnv_calling: str = ""
+
     ascat: Ascat | None = None
+
+    @model_validator(mode="after")
+    def check_tool_cnv_calling(self):
+        if self.tool_cnv_calling == "copywriter" and not self.path_somatic_targeted_seq_cnv_calling:
+            raise ValueError(
+                "When using 'copywriter' as tool_cnv_calling, "
+                "path_somatic_targeted_seq_cnv_calling must be set"
+            )
+        return self
