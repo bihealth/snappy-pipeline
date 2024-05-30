@@ -99,6 +99,7 @@ def sv_calling_targeted_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """
@@ -108,6 +109,7 @@ def sv_calling_targeted_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run",
         germline_sheet_fake_fs2_gcnv_model,

@@ -55,6 +55,7 @@ def mei_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return MeiWorkflow object pre-configured with germline sheet"""
@@ -66,6 +67,7 @@ def mei_workflow(
     )
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.targeted_seq_mei_calling", germline_sheet_fake_fs, mocker
     )

@@ -79,10 +79,12 @@ def sv_calling_wgs_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SvCallingWgsWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
