@@ -765,10 +765,9 @@ class BaseStep:
 
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
-        # self.check_config()
-        # for step in self.sub_steps.values():
-        #     step.check_config()
-        pass
+        self.check_config()
+        for step in self.sub_steps.values():
+            step.check_config()
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
@@ -809,8 +808,7 @@ class BaseStep:
         # Iterate over required configuration keys
         for entry in config_keys:
             # Check if keys are present in config dictionary
-            if entry in handle:
-                handle = getattr(handle, entry)
+            if (handle := getattr(handle, entry)) is not None:
                 so_far.append(entry)
             else:
                 tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
