@@ -60,6 +60,13 @@ class SnappyModel(BaseModel):
         validate_default=True,
     )
 
+    def get(self, key: str, default: typing.Any = None) -> typing.Any:
+        """
+        Return the value of the field with the given key, or the default value if it doesn't exist.
+        Simply delegates to getattr.
+        """
+        return getattr(self, key, default)
+
 
 # This exists to distinguish workflow step_config models from other snappy specific models
 # It also provides a default_config_yaml_string method that includes the step_config section
