@@ -7,13 +7,13 @@ from snappy_pipeline.models import EnumField, SnappyStepModel
 
 
 class Tool(enum.StrEnum):
-    mantis2_msi = "mantis2_msi"
+    mantis_msi2 = "mantis_msi2"
 
 
 class SomaticMsiCalling(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis2_msi], min_length=1)]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis_msi2], min_length=1)]
 
     loci_bed: Annotated[
         str,
