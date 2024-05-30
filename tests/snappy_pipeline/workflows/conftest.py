@@ -934,7 +934,6 @@ def patch_module_fs(module_name: str, fake_fs, mocker):
         try:
             mocker.patch(f"{module_name}.os", fake_fs.os)
         except AttributeError:
-            print("Skipping", module_name)
             pass  # swallo, "os" not imported
 
     mocker.patch("snappy_pipeline.find_file.InterProcessLock", fake_fs.inter_process_lock)

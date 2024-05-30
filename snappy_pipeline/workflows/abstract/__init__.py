@@ -8,7 +8,6 @@ import datetime
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
-import itertools
 import logging
 import os
 import os.path
@@ -35,12 +34,10 @@ from snakemake.io import InputFiles, Wildcards, touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    merge_dicts,
     merge_kwargs,
     print_config,
     print_sample_sheets,
     snakefile_path,
-    validate_config,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
@@ -159,7 +156,6 @@ class BaseStepPart:
             raise ValueError(f"Invalid resource name: {resource_name}")
 
         def _get_resource(wildcards: Wildcards = None, input: InputFiles = None):
-            logging.info(f"_get_resource fn, {wildcards}, {input}")
             resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
@@ -665,20 +661,22 @@ class BaseStep:
         self.previous_steps = tuple(previous_steps or [])
         #: Snakefile "workflow" object
         self.workflow = workflow
+        #: Setup logger for the step
+        self.logger = logging.getLogger(self.name)
         #: Merge default configuration with true configuration
         workflow_config = config
-        workflow_config.update(self._update_default_config(config))
         local_config = workflow_config["step_config"].get(self.name, OrderedDict())
+        self.logger.info(local_config)
 
-        #: Validate workflow step configuration using its accompanying pydantic model
-        #: available through self.config_model_class (mandatory keyword arg for BaseStep)
-        try:
-            self.config: C = validate_config(local_config, self.config_model_class)
-            # Also update the workflow config, just in case
-            workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
-        except pydantic.ValidationError as ve:
-            logging.error(f"{self.name} failed validation:\n{local_config}")
-            raise ve
+        # #: Validate workflow step configuration using its accompanying pydantic model
+        # #: available through self.config_model_class (mandatory keyword arg for BaseStep)
+        # try:
+        #     self.config: C = validate_config(local_config, self.config_model_class)
+        #     # Also update the workflow config, just in case
+        #     workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
+        # except pydantic.ValidationError as ve:
+        #     self.logger.error(f"{self.name} failed validation:\n{local_config}")
+        #     raise ve
 
         #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
         #: This includes static_data_config, step_config and data_sets
@@ -687,8 +685,9 @@ class BaseStep:
             from snappy_pipeline.workflow_model import ConfigModel
 
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
+            self.config = self.w_config.step_config[self.name]
         except pydantic.ValidationError as ve:
-            logging.error(f"Workflow configuration failed validation:\n{workflow_config}")
+            self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
@@ -725,8 +724,11 @@ class BaseStep:
         # and some of the checks actually influence program logic/flow
         self._check_config()
 
-        if workflow.verbose:
-            self._write_step_config()
+        config_string = self.config.model_dump_yaml(by_alias=True)
+        self.logger.info(f"Configuration for step {self.name}\n{config_string}")
+
+        config_string = self.w_config.model_dump_yaml(by_alias=True)
+        self.logger.info(f"Configuration for workflow\n{config_string}")
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -760,17 +762,6 @@ class BaseStep:
         self.workflow.onstart(on_start)
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
-
-    def _update_default_config[D](self, config: dict, dict_class: D = OrderedDict) -> D:
-        """Update configuration config with the configuration returned by subclass'
-        ``default_config_yaml()`` and return
-        """
-        result = dict_class()
-        for cls in itertools.chain([self.__class__], self.previous_steps):
-            result = merge_dicts(
-                result, _cached_yaml_round_trip_load_str(cls.default_config_yaml())
-            )
-        return merge_dicts(result, config)
 
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
@@ -989,10 +980,6 @@ class BaseStep:
                 search_patterns=self.config.search_patterns,
                 mixed_se_pe=False,
             )
-
-    def _write_step_config(self):
-        config_string = self.config.model_dump_yaml(by_alias=True)
-        logging.info(f"Configuration for step {self.name}\n{config_string}")
 
     @classmethod
     def wrapper_path(cls, path):
