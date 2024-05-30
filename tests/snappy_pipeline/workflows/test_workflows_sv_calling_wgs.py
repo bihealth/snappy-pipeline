@@ -37,20 +37,21 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           sv_calling_wgs:
-            variant_calling_tool: gatk3_ug
             tools:
               dna:
               - delly2
               - gcnv
               - melt
+            delly2: {}
             gcnv:
+              path_par_intervals: /path/to/par.intervals
+              path_uniquely_mapable_bed: /path/to/uniquely_mapable.bed
               precomputed_model_paths:
                 - library: "default"
                   contig_ploidy: /path/to/ploidy-model
                   model_pattern: "/data/model_*"
             melt:
-              path_genes_bed: /path/to/genes.bed
-              path_me_refs: /path/to/me/refs
+              jar_file: /path/to/melt.jar
 
         data_sets:
           first_batch:
