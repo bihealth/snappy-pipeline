@@ -21,7 +21,7 @@ class DkfzAndOxog(SnappyModel):
 
 
 class FilterSets(SnappyModel):
-    no_filters: str | None = None
+    no_filter: str | None = None
     dkfz_only: str | None = None
     dkfz_and_ebfilter: DkfzAndEbfilter | None = None
     dkfz_and_ebfilter_and_oxog: DkfzAndEbfilterAndOxog | None = None
@@ -77,7 +77,7 @@ class Regions(SnappyModel):
     exclude: str = ""
     """Expression to be used in bcftools view --exclude"""
 
-    path_bed: Annotated[str, Field(deprecated="Use `exclude` instead")]
+    path_bed: Annotated[str, Field(deprecated="Use `exclude` instead")] = ""
     """Bed file of regions to be considered (variants outside are filtered out)"""
 
     @model_validator(mode="after")
@@ -104,7 +104,7 @@ class Protected(SnappyModel):
 
     def keywords(self) -> dict[str, str]:
         if self.path_bed:
-            return {"path_bed": self.include}
+            return {"path_bed": self.path_bed}
         return {}
 
 
@@ -146,7 +146,9 @@ class SomaticVariantFiltration(SnappyStepModel):
 
     exon_lists: Annotated[dict[str, Any], Field(deprecated="use filter_list instead")] = {}
 
-    eb_filter: Annotated[EbfilterSet | None, Field(deprecated="use filter_list instead")] = None
+    eb_filter: Annotated[
+        EbfilterSet | None, Field(deprecated="use filter_list instead")
+    ] = EbfilterSet()
 
     filter_list: list[Filter] = []
     """

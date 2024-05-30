@@ -1019,10 +1019,12 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 ext=("", ".md5"),
             )
         else:
-            filter_sets = ["no_filter"]
-            filter_sets += self.config.filter_sets.keys()
-            exon_lists = ["genome_wide"]
-            exon_lists += list(self.config.exon_lists.keys())
+            filter_sets = {"no_filter"}
+            if self.config.filter_sets:
+                filter_sets |= dict(self.config.filter_sets).keys()
+            exon_lists = {"genome_wide"}
+            if self.config.exon_lists:
+                exon_lists |= dict(self.config.exon_lists).keys()
 
             name_pattern = "{mapper}.{caller}"
             if self.config.has_annotation:
