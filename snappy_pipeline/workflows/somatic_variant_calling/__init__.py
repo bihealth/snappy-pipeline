@@ -165,21 +165,19 @@ EXT_MATCHED = {
 }
 
 #: Available somatic variant callers assuming matched samples.
-SOMATIC_VARIANT_CALLERS_MATCHED = ("mutect", "mutect2", "scalpel", "strelka2")
+SOMATIC_VARIANT_CALLERS_MATCHED = {"mutect", "mutect2", "scalpel", "strelka2"}
 
 #: Available somatic variant callers that just call all samples from one donor together.
-SOMATIC_VARIANT_CALLERS_JOINT = (
+SOMATIC_VARIANT_CALLERS_JOINT = {
     "bcftools_joint",
     "platypus_joint",
     "gatk_hc_joint",
     "gatk_ug_joint",
     "varscan_joint",
-)
+}
 
 #: Available somatic variant callers
-SOMATIC_VARIANT_CALLERS = tuple(
-    chain(SOMATIC_VARIANT_CALLERS_MATCHED, SOMATIC_VARIANT_CALLERS_JOINT)
-)
+SOMATIC_VARIANT_CALLERS = SOMATIC_VARIANT_CALLERS_MATCHED | SOMATIC_VARIANT_CALLERS_JOINT
 
 #: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
