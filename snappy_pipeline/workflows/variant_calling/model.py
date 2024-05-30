@@ -80,6 +80,10 @@ class Gatk4HcGvcf(SnappyModel):
 class VariantCalling(SnappyStepModel, validators.ToolsMixin):
     path_ngs_mapping: str = "../ngs_mapping"
 
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf], min_length=1)]
+
+    ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
+
     baf_file_generation: BafFileGeneration = BafFileGeneration()
 
     bcftools_stats: BcftoolsStats | None = None
@@ -87,10 +91,6 @@ class VariantCalling(SnappyStepModel, validators.ToolsMixin):
     jannovar_stats: JannovarStats | None = None
 
     bcftools_roh: BcftoolsRoh | None = None
-
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf], min_length=1)]
-
-    ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
 
     bcftools_call: BcftoolsCall | None = None
 

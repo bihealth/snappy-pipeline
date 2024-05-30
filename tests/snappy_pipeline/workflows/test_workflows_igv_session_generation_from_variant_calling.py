@@ -35,6 +35,8 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc:
+              num_threads: 16
 
           igv_session_generation:
             path_ngs_mapping: ../ngs_mapping
@@ -62,11 +64,13 @@ def igv_session_generation(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return VariantCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_calling", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.igv_session_generation", germline_sheet_fake_fs, mocker

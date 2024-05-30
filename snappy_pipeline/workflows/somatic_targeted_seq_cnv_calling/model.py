@@ -216,9 +216,7 @@ class PureCn(SnappyModel):
     Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true
     """
 
-    path_somatic_variants: Annotated[
-        str, Field(examples=["../ somatic_variant_calling_for_purecn"])
-    ]
+    path_somatic_variants: Annotated[str, Field(examples=["../somatic_variant_calling_for_purecn"])]
 
 
 class CnvettiOnTarget(SnappyModel):

@@ -25,7 +25,9 @@ class VepCustom(Vep):
 
 
 class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])]
+    path_variant_calling: Annotated[
+        str, Field(examples=["../variant_calling"])
+    ] = "../variant_calling"
     """Path to variant calling"""
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
