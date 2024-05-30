@@ -51,6 +51,7 @@ def minimal_config():
                 path_dataset_directory: REQUIRED
               arriba:
                 path_index: /path/to/star/index
+              jaffa: {}
 
         data_sets:
           first_batch:
@@ -79,6 +80,7 @@ def somatic_gene_fusion_calling_workflow(
     """Return SomaticGeneFusionCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs_path_link_in, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs(
         "snappy_pipeline.workflows.somatic_gene_fusion_calling", aligner_indices_fake_fs, mocker
