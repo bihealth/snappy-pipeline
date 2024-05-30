@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 
 from pyfakefs import fake_filesystem
 import pytest
-import yaml
 
 FORCE_RUN = os.environ.get("FORCE_RUN", "false") == "true"
 DIFF_MASTER = os.environ.get("DIFF_MASTER", "false") == "true"

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the panel_of_normals workflow module code"""
 
-from collections import OrderedDict
 import textwrap
 
 import pytest

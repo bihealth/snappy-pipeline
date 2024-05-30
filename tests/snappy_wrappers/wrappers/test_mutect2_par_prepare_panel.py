@@ -17,7 +17,7 @@ from snappy_wrappers.wrappers.mutect2_par.prepare_panel.parallel_prepare_panel i
     ParallelMutect2Wrapper,
 )
 
-from .conftest import mock_settings_env_vars, patch_module_fs
+from .conftest import patch_module_fs
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
