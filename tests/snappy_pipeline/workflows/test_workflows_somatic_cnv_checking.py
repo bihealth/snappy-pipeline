@@ -33,9 +33,15 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
+            bwa:
+              path_index: /path/to/bwa/index.fa
 
           somatic_targeted_seq_cnv_calling:
             tools: ["cnvkit"]
+            cnvkit:
+              path_target: DUMMY
+              path_antitarget: DUMMY
+              path_panel_of_normals: DUMMY
 
           somatic_cnv_checking:
             path_ngs_mapping: ../ngs_mapping
@@ -63,11 +69,13 @@ def somatic_cnv_checking_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticTargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {
