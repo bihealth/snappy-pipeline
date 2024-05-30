@@ -126,7 +126,7 @@ class SomaticVariantFiltration(SnappyStepModel):
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
     ]
 
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
     """Needed for dkfz & ebfilter"""
 
     tools_ngs_mapping: list[str] | None = None

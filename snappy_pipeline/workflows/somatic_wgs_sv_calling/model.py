@@ -21,7 +21,7 @@ class Delly2(SnappyModel):
 
 
 class SomaticWgsSvCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta], min_length=1)]
 
     manta: Manta | None = None

@@ -77,7 +77,7 @@ class CnvkitWgs(Cnvkit):
 
 
 class SomaticWgsCnvCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
     path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
 

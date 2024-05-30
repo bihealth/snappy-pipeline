@@ -78,7 +78,7 @@ class Gatk4HcGvcf(SnappyModel):
 
 
 class VariantCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
     baf_file_generation: BafFileGeneration = BafFileGeneration()
 

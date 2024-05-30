@@ -52,9 +52,9 @@ class GatkPhaseByTransmission(SnappyModel):
 
 
 class VariantPhasing(SnappyStepModel):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
-    path_variant_annotation: Annotated[str, Field(examples=["../variant_annotation"])]
+    path_variant_annotation: str = "../variant_annotation"
 
     tools_ngs_mapping: list[str] = []
     """expected tools for ngs mapping"""

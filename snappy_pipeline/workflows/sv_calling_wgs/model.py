@@ -123,7 +123,7 @@ class Sniffles2(SnappyModel):
 
 
 class SvCallingWgs(SnappyStepModel):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
     tools: Tools
 

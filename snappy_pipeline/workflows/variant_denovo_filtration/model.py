@@ -23,7 +23,7 @@ class VariantDenovoFiltration(SnappyStepModel):
 
     path_variant_calling: str = ""
 
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
     tools_ngs_mapping: list[str] = []
     """defaults to ngs_mapping tool"""

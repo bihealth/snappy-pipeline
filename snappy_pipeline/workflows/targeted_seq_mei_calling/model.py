@@ -31,7 +31,7 @@ class Scramble(SnappyModel):
 
 
 class TargetedSeqMeiCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
+    path_ngs_mapping: str = "../ngs_mapping"
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.scramble], min_length=1)]
 

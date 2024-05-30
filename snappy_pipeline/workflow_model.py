@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from pydantic import ConfigDict
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.adapter_trimming.model import AdapterTrimming
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
@@ -113,7 +113,7 @@ class StepConfig(TypedDict, total=False):
     somatic_hla_loh_calling: SomaticHlaLohCalling
     somatic_msi_calling: SomaticMsiCalling
     somatic_purity_ploidy_estimate: SomaticPurityPloidyEstimate
-    somatic_targeted_seq_cnv: SomaticTargetedSeqCnvCalling
+    somatic_targeted_seq_cnv_calling: SomaticTargetedSeqCnvCalling
     somatic_variant_annotation: SomaticVariantAnnotation
     somatic_variant_calling: SomaticVariantCalling
     somatic_variant_filtration: SomaticVariantFiltration
@@ -132,11 +132,11 @@ class StepConfig(TypedDict, total=False):
     variant_export_external: VariantExportExternal
     variant_filtration: VariantFiltration
     variant_phasing: VariantPhasing
-    wgs_cnv_export: WgsCnvExportExternal
-    wgs_sv_export: WgsSvExportExternal
+    wgs_cnv_export_external: WgsCnvExportExternal
+    wgs_sv_export_external: WgsSvExportExternal
 
 
-class ConfigModel(SnappyModel):
+class ConfigModel(SnappyStepModel):
     model_config = ConfigDict(
         extra="allow",
         use_attribute_docstrings=True,
