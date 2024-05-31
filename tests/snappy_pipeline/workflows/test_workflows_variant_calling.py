@@ -35,11 +35,6 @@ def minimal_config():
               dna: ['bwa']
             bwa:
               path_index: /path/to/bwa/index.fa
-            target_cov_report:
-              path_target_interval_list_mapping:
-              - name: "Agilent SureSelect Human All Exon V6"
-                pattern: "Agilent SureSelect Human All Exon V6*"
-                path: "path/to/targets.bed"
 
           variant_calling:
             baf_file_generation:
@@ -48,6 +43,9 @@ def minimal_config():
             - bcftools_call
             - gatk3_hc
             - gatk3_ug
+            bcftools_call: {}
+            gatk3_hc: {}
+            gatk3_ug: {}
 
         data_sets:
           first_batch:
