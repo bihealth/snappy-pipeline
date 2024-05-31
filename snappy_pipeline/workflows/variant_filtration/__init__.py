@@ -148,7 +148,7 @@ class FiltersVariantsStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

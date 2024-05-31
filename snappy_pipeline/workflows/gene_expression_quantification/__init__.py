@@ -205,7 +205,7 @@ class SalmonStepPart(BaseStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -287,7 +287,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -317,7 +317,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -349,7 +349,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -373,7 +373,7 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -397,7 +397,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -421,7 +421,7 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

@@ -209,7 +209,7 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -326,7 +326,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -590,7 +590,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -675,7 +675,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

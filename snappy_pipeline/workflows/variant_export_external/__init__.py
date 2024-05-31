@@ -403,7 +403,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

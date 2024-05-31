@@ -129,7 +129,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, tpl + ext
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(

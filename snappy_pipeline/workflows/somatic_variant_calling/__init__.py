@@ -305,7 +305,7 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -603,7 +603,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -651,7 +651,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         )
         return result
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -705,7 +705,7 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -826,7 +826,7 @@ class BcftoolsJointStepPart(JointCallingStepPart):
     #: Step name
     name = "bcftools_joint"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -853,7 +853,7 @@ class VarscanJointStepPart(JointCallingStepPart):
     #: Class available actions
     actions = ("run", "call_pedigree")
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -880,7 +880,7 @@ class PlatypusJointStepPart(JointCallingStepPart):
     #: Step name
     name = "platypus_joint"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -908,7 +908,7 @@ class GatkHcJointStepPart(JointCallingStepPart):
     #: Step name
     name = "gatk_hc_joint"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -935,7 +935,7 @@ class GatkUgJointStepPart(JointCallingStepPart):
     #: Step name
     name = "gatk_ug_joint"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

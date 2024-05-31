@@ -141,7 +141,7 @@ class FilterDeNovosBaseStepPart(BaseStepPart):
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
                         self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -222,7 +222,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
         return self.path_log
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

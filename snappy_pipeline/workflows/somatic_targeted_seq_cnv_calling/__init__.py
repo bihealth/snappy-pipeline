@@ -276,7 +276,7 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         prefix = os.path.join("work", name_pattern, "log", name_pattern)
         return self._get_log_file_from_prefix(prefix)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

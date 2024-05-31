@@ -181,7 +181,7 @@ class GcnvCommonStepPart(
         self._validate_action(action)
         return getattr(self, f"_get_log_file_{action}")()
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

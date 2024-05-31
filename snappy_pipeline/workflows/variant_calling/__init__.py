@@ -466,7 +466,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
     #: Step name
     name = "bcftools_call"
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
@@ -486,7 +486,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
             "dbSNP not configured but required for {}".format(self.__class__.name),
         )
 
-    def get_resource_usage(self, action) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         num_threads = getattr(self.config, self.name).num_threads
         mem_per_thread = 5.5
@@ -673,7 +673,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
             for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -727,7 +727,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
             for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -784,7 +784,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
             for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -840,7 +840,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             for work_path in chain(work_files.values(), self.get_log_file("run").values())
         ]
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=1,

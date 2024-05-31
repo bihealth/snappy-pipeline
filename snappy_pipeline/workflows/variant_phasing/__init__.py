@@ -225,7 +225,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -275,7 +275,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
                 ]
                 yield key, list(map(ngs_mapping, files))
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

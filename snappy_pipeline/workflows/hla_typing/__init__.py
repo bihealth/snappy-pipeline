@@ -187,7 +187,7 @@ class OptiTypeStepPart(BaseStepPart):
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
         return library.test_sample.extra_infos.get("extractionType", "DNA").lower()
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -258,7 +258,7 @@ class ArcasHlaStepPart(BaseStepPart):
         _ = action
         return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

@@ -708,7 +708,7 @@ class BwaStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -761,7 +761,7 @@ class MBCsStepPart(ReadMappingStepPart):
     name = "mbcs"
     tool_category = "dna"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -845,7 +845,7 @@ class StarStepPart(ReadMappingStepPart):
                 )
             )
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -958,7 +958,7 @@ class Minimap2StepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna_long"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1027,7 +1027,7 @@ class ExternalStepPart(ReadMappingStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1133,7 +1133,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
             "path_targets_bed": path_targets_bed,
         }
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1226,7 +1226,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1310,7 +1310,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

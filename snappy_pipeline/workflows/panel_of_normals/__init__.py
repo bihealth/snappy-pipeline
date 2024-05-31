@@ -653,7 +653,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
     name = "access"
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action
         self._validate_action(action)
         return ResourceUsage(

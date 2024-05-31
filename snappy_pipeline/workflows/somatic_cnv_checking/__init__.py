@@ -168,7 +168,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             "work/{mapper}.{library_name}/log/{mapper}.{library_name}." + action
         )
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action
         self._validate_action(action)
         return ResourceUsage(

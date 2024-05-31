@@ -138,7 +138,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
             yield key, f"{prefix}{ext}"
             yield f"{key}_md5", f"{prefix}{ext}.md5"
 
-    def get_resource_usage(self, action) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         num_threads = getattr(self.config, self.name).num_threads
         return ResourceUsage(

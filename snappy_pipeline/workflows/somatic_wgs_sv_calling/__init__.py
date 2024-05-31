@@ -189,7 +189,7 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -382,7 +382,7 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

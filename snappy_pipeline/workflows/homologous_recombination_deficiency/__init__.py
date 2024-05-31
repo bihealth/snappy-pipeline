@@ -146,7 +146,7 @@ class ScarHRDStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         if action == "run":
             return ResourceUsage(

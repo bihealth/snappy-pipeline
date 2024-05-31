@@ -93,6 +93,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_wrappers.resource_usage import ResourceUsage
 
 from .model import HelperGcnvModelWgs as HelperGcnvModelWgsConfigModel
 
@@ -177,7 +178,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

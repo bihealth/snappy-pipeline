@@ -259,7 +259,7 @@ class ScrambleStepPart(BaseStepPart):
         }
         return params
 
-    def get_resource_usage(self, action, **kwargs):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.

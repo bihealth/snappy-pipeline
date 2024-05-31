@@ -138,7 +138,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_params_{action}")
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
