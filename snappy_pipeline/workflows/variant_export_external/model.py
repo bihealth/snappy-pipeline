@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, FilePath, DirectoryPath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
@@ -30,7 +30,7 @@ class VariantExportExternal(SnappyStepModel):
     gvcf_option: bool = True
     """Flag to indicate if inputs are genomic VCFs."""
 
-    search_paths: Annotated[list[str], Field(min_length=1)]
+    search_paths: Annotated[list[DirectoryPath], Field(min_length=1)]
     """list of paths to VCF files."""
 
     search_patterns: Annotated[
@@ -42,16 +42,16 @@ class VariantExportExternal(SnappyStepModel):
     release: str = "GRCh37"
     """genome release; default 'GRCh37'."""
 
-    path_exon_bed: str  # FIXME old code: "path_exon_bed: null # REQUIRED: exon BED file to use"
+    path_exon_bed: str = ""
     """Path to BED file with exons; used for reducing data to near-exon small variants."""
 
-    path_refseq_ser: str
+    path_refseq_ser: FilePath
     """path to RefSeq .ser file."""
 
-    path_ensembl_ser: str
+    path_ensembl_ser: FilePath
     """path to ENSEMBL .ser file."""
 
-    path_db: str
+    path_db: FilePath
     """path to annotator DB file to use."""
 
     target_coverage_report: TargetCoverageReport = TargetCoverageReport()
