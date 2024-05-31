@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, FilePath, DirectoryPath
 
 from snappy_pipeline.models import SnappyStepModel
 
@@ -18,7 +18,7 @@ class WgsCnvExportExternal(SnappyStepModel):
     merge_option: str = "id"
     """How to merge VCF, used in `bcftools --merge` call."""
 
-    search_paths: Annotated[list[str], Field(min_length=1)]
+    search_paths: Annotated[list[DirectoryPath], Field(min_length=1)]
     """path to all VCF files."""
 
     search_patterns: Annotated[
@@ -28,13 +28,13 @@ class WgsCnvExportExternal(SnappyStepModel):
 
     release: str = "GRCh37"
 
-    path_refseq_ser: str
+    path_refseq_ser: FilePath
     """path to RefSeq .ser file"""
 
-    path_ensembl_ser: str
+    path_ensembl_ser: FilePath
     """path to ENSEMBL .ser file"""
 
-    path_db: str
+    path_db: FilePath
     """path to annotator DB file to use"""
 
     varfish_server_compatibility: bool = False
