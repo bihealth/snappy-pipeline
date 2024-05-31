@@ -352,3 +352,7 @@ def _optional_key_paths(
             optional_keys.extend(_optional_key_paths(annotation, comment_map[key], path_))
 
     return optional_keys
+
+
+class ToggleModel(SnappyModel):
+    enabled: bool = False

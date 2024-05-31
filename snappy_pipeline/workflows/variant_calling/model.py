@@ -3,29 +3,23 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
 
 
-class BafFileGeneration(SnappyModel):
-    enabled: bool = True
-
+class BafFileGeneration(ToggleModel):
     min_dp: Annotated[int, Field(ge=1)] = 10
     """minimal DP of variant, must be >=1"""
 
 
-class BcftoolsStats(SnappyModel):
-    enabled: bool = True
+class BcftoolsStats(ToggleModel):
+    pass
 
 
-class JannovarStats(SnappyModel):
-    enabled: bool = True
-
+class JannovarStats(ToggleModel):
     path_ser: str
 
 
-class BcftoolsRoh(SnappyModel):
-    enabled: bool = True
-
+class BcftoolsRoh(ToggleModel):
     path_targets: str | None = None  # FIXME this says "REQUIRED; optional" in the original code
 
     path_af_file: str
