@@ -7,12 +7,12 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 import os
 import sys
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Dict
 import warnings
 
 import ruamel.yaml as ruamel_yaml
 
-from .models import SnappyStepModel
+from .models import SnappyStepModel, SnappyModel
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -130,25 +130,27 @@ def merge_kwargs(first_kwargs, second_kwargs):
         return None
 
 
-def merge_dicts[D](dict1: dict, dict2: dict, dict_class: D = OrderedDict) -> D:
-    """Merge dictionary ``dict2`` into ``dict1``"""
+type DictLike = Dict | MutableMapping | SnappyModel
 
-    def _merge_inner(dict1: dict, dict2: dict) -> D:
-        for k in set(dict1.keys()).union(dict2.keys()):
-            if k in dict1 and k in dict2:
-                if isinstance(dict1[k], (dict, MutableMapping)) and isinstance(
-                    dict2[k], (dict, MutableMapping)
-                ):
-                    yield k, dict_class(_merge_inner(dict1[k], dict2[k]))
+
+def merge_dictlikes[D](dict1: DictLike, dict2: DictLike, dict_class: D = OrderedDict) -> D:
+    """Merge dictionary/model ``dict2`` into ``dict1``"""
+
+    def _merge_inner(d1: DictLike, d2: DictLike) -> D:
+        DICT_LIKE = DictLike.__value__
+        for k in dict(d1).keys() | dict(d2).keys():
+            if k in d1 and k in d2:
+                if isinstance(d1[k], DICT_LIKE) and isinstance(d2[k], DICT_LIKE):
+                    yield k, dict_class(_merge_inner(d1[k], d2[k]))
                 else:
                     # If one of the values is not a dict, you can't continue
                     # merging it.  Value from second dict overrides one in
                     # first and we move on.
-                    yield k, dict2[k]
-            elif k in dict1:
-                yield k, dict1[k]
+                    yield k, d2[k]
+            elif k in d1:
+                yield k, d1[k]
             else:
-                yield k, dict2[k]
+                yield k, d2[k]
 
     return dict_class(_merge_inner(dict1, dict2))
 

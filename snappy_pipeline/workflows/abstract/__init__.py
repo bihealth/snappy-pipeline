@@ -15,6 +15,8 @@ import sys
 import tempfile
 import typing
 
+from typing import Any, Callable
+
 import attr
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
@@ -29,12 +31,12 @@ from biomedsheets.shortcuts import (
 import pydantic
 import ruamel.yaml as ruamel_yaml
 import snakemake
-from snakemake.io import InputFiles, Wildcards, touch
+from snakemake.io import InputFiles, Wildcards, touch, OutputFiles
 
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    merge_dicts,
+    merge_dictlikes,
     merge_kwargs,
     print_config,
     print_sample_sheets,
@@ -98,13 +100,17 @@ class ImplementationUnavailableError(NotImplementedError):
     """
 
 
+type Inputs = InputFiles | dict[str, Any]
+type Outputs = OutputFiles | dict[str, Any]
+
+
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
-    name = "<base step>"
+    name: str = "<base step>"
 
     #: The actions available in the class.
-    actions: tuple[str] = None
+    actions: set[str] = None
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
@@ -121,7 +127,7 @@ class BaseStepPart:
         self.config = parent.config
         self.w_config = parent.w_config
 
-    def _validate_action(self, action):
+    def _validate_action(self, action: str):
         """Validate provided action
 
         Checks that the provided ``action`` is listed in the valid class actions list.
@@ -147,7 +153,9 @@ class BaseStepPart:
         """Helper that returns the default partition."""
         return os.getenv("SNAPPY_PIPELINE_PARTITION")
 
-    def get_resource(self, action: str, resource_name: str):
+    def get_resource(
+        self, action: str, resource_name: str
+    ) -> Callable[[Wildcards, InputFiles], Any]:
         """Return the amount of resources to be allocated for the given action.
 
         :param action: The action to return the resource requirement for.
@@ -156,7 +164,7 @@ class BaseStepPart:
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
-        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None):
+        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None) -> Any:
             resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
@@ -167,19 +175,19 @@ class BaseStepPart:
 
         return _get_resource
 
-    def get_args(self, action):
+    def get_args(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return args for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_input_files(self, action):
+    def get_input_files(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_output_files(self, action):
+    def get_output_files(self, action: str) -> Outputs:
         """Return output files for the given action of the sub step and"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_log_file(self, action):
+    def get_log_file(self, action: str) -> Outputs:
         """Return path to log file
 
         The default implementation tries to call ``self._get_log_files()`` and in the case of
@@ -201,13 +209,13 @@ class BaseStepPart:
                 "Log file name generation not implemented!"
             )  # pragma: no cover
 
-    def get_shell_cmd(self, action, wildcards):  # NOSONAR
+    def get_shell_cmd(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
         """Return shell command for the given action of the sub step and the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
 
-    def run(self, action, wildcards):  # NOSONAR
+    def run(self, action: str, wildcards: Wildcards):  # NOSONAR
         """Run the sub steps action action's code with the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
@@ -231,7 +239,9 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent, require_dna_ngs_library=False, only_trios=False):
+    def __init__[
+        P: BaseStep
+    ](self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
@@ -642,7 +652,7 @@ class BaseStep:
     ](
         self,
         workflow: snakemake.Workflow,
-        config: dict[str, typing.Any],
+        config: dict[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
         work_dir: str,
@@ -727,7 +737,7 @@ class BaseStep:
 
         # Update snakemake.config (which `config` is a reference to)
         # with the validated configuration
-        config.update(merge_dicts(config, dict(self.w_config)))
+        config.update(merge_dictlikes(config, dict(self.w_config)))
 
         config_string = self.config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for step {self.name}\n{config_string}")
