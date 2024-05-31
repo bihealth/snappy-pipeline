@@ -140,7 +140,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = getattr(self.config, self.name).num_threads
+        num_threads = self.config[self.name].num_threads
         return ResourceUsage(
             threads=num_threads,
             time="1-00",
