@@ -99,7 +99,6 @@ Currently, no reports are generated.
 """
 
 from collections import OrderedDict
-from itertools import chain
 import os
 import sys
 
