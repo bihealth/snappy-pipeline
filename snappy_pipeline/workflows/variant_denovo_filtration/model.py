@@ -41,7 +41,7 @@ class VariantDenovoFiltration(SnappyStepModel):
 
     bad_region_expressions: Annotated[
         list[str], Field(examples=[["'UCSC_CRG_MAPABILITY36 == 1'", "'UCSC_SIMPLE_REPEAT == 1'"]])
-    ]
+    ] = []
 
     collect_msdn: bool = True
     """whether or not to collect MSDN (requires GATK HC+UG)"""
