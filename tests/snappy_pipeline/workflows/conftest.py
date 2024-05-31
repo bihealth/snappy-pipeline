@@ -62,6 +62,10 @@ def config_paths():
     return []
 
 
+class DummyModel(SnappyStepModel):
+    key: str
+
+
 @pytest.fixture
 def dummy_generic_step(
     dummy_workflow, dummy_config, dummy_cluster_config, work_dir, config_lookup_paths
@@ -85,7 +89,7 @@ def dummy_generic_step(
         dummy_cluster_config,
         config_lookup_paths,
         work_dir,
-        config_model_class=SnappyStepModel,
+        config_model_class=DummyModel,
     )
 
 

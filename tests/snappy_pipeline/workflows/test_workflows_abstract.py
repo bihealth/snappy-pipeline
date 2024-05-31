@@ -24,7 +24,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 
-from .conftest import patch_module_fs
+from .conftest import patch_module_fs, DummyModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -224,7 +224,9 @@ def dummy_config():
         textwrap.dedent(
             r"""
         step_config: {}
-        static_data_config: {}
+        static_data_config:
+          reference:
+            path: /path/to/reference.fasta
         data_sets:
           first_batch:  # example for a matched cancer data set
             file: sheet.tsv
@@ -282,6 +284,7 @@ def dummy_generic_step(
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -330,6 +333,7 @@ def dummy_generic_step_path_link_in(
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -422,7 +426,9 @@ def vcf_dummy_config():
         textwrap.dedent(
             r"""
         step_config: {}
-        static_data_config: {}
+        static_data_config:
+          reference:
+            path: /path/to/reference.fasta
         data_sets:
           first_batch:  # example for a matched cancer data set
             file: sheet.tsv
@@ -484,6 +490,7 @@ def vcf_dummy_generic_step(
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -599,6 +606,7 @@ def dummy_generic_step_w_write_pedigree(
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
