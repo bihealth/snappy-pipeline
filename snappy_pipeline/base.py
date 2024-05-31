@@ -7,12 +7,12 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 import os
 import sys
-from typing import Any, TypeVar, Dict
+from typing import TYPE_CHECKING, Any, AnyStr, Dict
 import warnings
 
 import ruamel.yaml as ruamel_yaml
 
-from .models import SnappyStepModel, SnappyModel
+from .models import SnappyModel, SnappyStepModel
 
 # TODO: This has to go away once biomedsheets is a proper, halfway-stable module
 try:
@@ -48,7 +48,7 @@ def expand_ref(
     dict_data: dict | list,
     lookup_paths: list[str] = None,
     dict_class=OrderedDict,
-) -> tuple[Any, tuple[str, ...], tuple[str, ...]]:
+) -> tuple[Any, tuple[AnyStr, ...], tuple[AnyStr, ...]]:
     """Expand "$ref" in JSON-like data ``dict_data``
 
     Returns triple:
@@ -76,17 +76,13 @@ def expand_ref(
     return resolved, tuple(lookup_paths), tuple(config_files)
 
 
-C = TypeVar("C", bound=SnappyStepModel)
-
-
-def validate_config(
-    config: dict[Any, Any],
-    model: type[C],
-) -> C:
+def validate_config[
+    C: SnappyStepModel
+](config: dict[Any, Any], model: type[C],) -> C:
     return model(**config)
 
 
-def print_config(config, file=sys.stderr):
+def print_config(config: dict[str, Any], file=sys.stderr):
     """Print human-readable version of configuration to ``file``"""
     print("\nConfiguration", file=file)
     print("-------------\n", file=file)
@@ -94,7 +90,11 @@ def print_config(config, file=sys.stderr):
     return yaml.dump(config, stream=file)
 
 
-def print_sample_sheets(step, file=sys.stderr):
+if TYPE_CHECKING:
+    from snappy_pipeline.workflows.abstract import BaseStep
+
+
+def print_sample_sheets(step: "BaseStep", file=sys.stderr):
     """Print loaded sample sheets from ``BaseStep`` in human-readable format"""
     for info in step.data_set_infos:
         print("\nSample Sheet {}".format(info.sheet_path), file=file)
@@ -103,7 +103,9 @@ def print_sample_sheets(step, file=sys.stderr):
         return yaml.dump(info.sheet.json_data, stream=file)
 
 
-def merge_kwargs(first_kwargs, second_kwargs):
+def merge_kwargs(
+    first_kwargs: dict[str, Any] | None, second_kwargs: dict[str, Any] | None
+) -> dict[str, Any] | None:
     """Merge two keyword arguments.
 
     :param first_kwargs: First keyword arguments dictionary.
@@ -155,7 +157,7 @@ def merge_dictlikes[D](dict1: DictLike, dict2: DictLike, dict_class: D = Ordered
     return dict_class(_merge_inner(dict1, dict2))
 
 
-def snakefile_path(step_name):
+def snakefile_path(step_name: str) -> AnyStr:
     """Return absolute path to Snakefile for the given step name"""
     return os.path.abspath(
         os.path.join(os.path.dirname(__file__), "workflows", step_name, "Snakefile")

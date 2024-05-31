@@ -14,7 +14,6 @@ import os.path
 import sys
 import tempfile
 import typing
-
 from typing import Any, Callable
 
 import attr
@@ -31,7 +30,7 @@ from biomedsheets.shortcuts import (
 import pydantic
 import ruamel.yaml as ruamel_yaml
 import snakemake
-from snakemake.io import InputFiles, Wildcards, touch, OutputFiles
+from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
 
 from snappy_pipeline.base import (
     MissingConfiguration,
