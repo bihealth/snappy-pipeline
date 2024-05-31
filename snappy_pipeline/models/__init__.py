@@ -67,6 +67,12 @@ class SnappyModel(BaseModel):
         """
         return getattr(self, key, default)
 
+    def __getitem__(self, item: str) -> typing.Any:
+        """
+        Return the value of the field with the given key.
+        Raise an AttributeError if the field doesn't exist.
+        """
+        return getattr(self, item)
 
 # This exists to distinguish workflow step_config models from other snappy specific models
 # It also provides a default_config_yaml_string method that includes the step_config section
