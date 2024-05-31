@@ -29,7 +29,7 @@ def minimal_config():
 
         step_config:
           gene_expression_quantification:
-            tools: [strandedness, featurecounts, dupradar, rnaseqc, salmon]
+            tools: [strandedness, featurecounts, dupradar, duplication, rnaseqc, salmon, stats]
             path_link_in: "/preprocess"
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
@@ -39,6 +39,8 @@ def minimal_config():
               rnaseqc_path_annotation_gtf: /path/to/rnaseqc.gtf
             dupradar:
               dupradar_path_annotation_gtf: /path/to/dupradar.gtf
+            duplication: {}
+            stats: {}
             salmon:
               path_transcript_to_gene: /path/to/salmon/transcript_to_gene
               path_index: /path/to/salmon/index

@@ -35,7 +35,7 @@ def minimal_config():
               path_index: /path/to/star/index
           gene_expression_quantification:
             path_ngs_mapping: ../ngs_mapping
-            tools: [strandedness, featurecounts, dupradar, rnaseqc, salmon]
+            tools: [strandedness, featurecounts, dupradar, duplication, rnaseqc, salmon, stats]
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
             strandedness:
@@ -44,6 +44,8 @@ def minimal_config():
               rnaseqc_path_annotation_gtf: /path/to/rnaseqc.gtf
             dupradar:
               dupradar_path_annotation_gtf: /path/to/dupradar.gtf
+            duplication: {}
+            stats: {}
             salmon:
               path_transcript_to_gene: /path/to/salmon/transcript_to_gene
               path_index: /path/to/salmon/index
@@ -342,4 +344,6 @@ def test_gene_expression_quantification_workflow_files(gene_expression_quantific
     # Get actual
     actual = set(gene_expression_quantification_workflow.get_result_files())
 
-    assert actual == expected
+    assert (
+        actual == expected
+    ), f"Missing from actual {expected - actual}\nMissing from expected {actual - expected}"

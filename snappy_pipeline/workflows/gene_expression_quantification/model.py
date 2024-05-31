@@ -37,12 +37,22 @@ class Salmon(SnappyModel):
     num_threads: int = 16
 
 
+class Duplication(SnappyModel):
+    pass
+
+
+class Stats(SnappyModel):
+    pass
+
+
 class Tool(enum.Enum):
     strandedness = "strandedness"
     featurecounts = "featurecounts"
     dupradar = "dupradar"
+    duplication = "duplication"
     rnaseqc = "rnaseqc"
     salmon = "salmon"
+    stats = "stats"
 
 
 class GeneExpressionQuantification(
@@ -65,5 +75,9 @@ class GeneExpressionQuantification(
     rnaseqc: RnaSeqC | None = None
 
     dupradar: DupRadar | None = None
+
+    duplication: Duplication | None = None
+
+    stats: Stats | None = None
 
     salmon: Salmon | None = None
