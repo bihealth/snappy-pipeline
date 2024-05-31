@@ -38,11 +38,15 @@ def minimal_config():
 
           variant_calling:
             tools:
-            - bcftools_call
-            - gatk3_hc
-            - gatk3_ug
+              - bcftools_call
+              - gatk3_hc
+              - gatk3_ug
+            bcftools_call: {}
+            gatk3_hc: {}
+            gatk3_ug: {}
           variant_annotation:
-            path_jannovar_ser: /path/to/jannovar.ser
+            tools: ['vep']
+            vep: {}
           variant_phasing:
             path_variant_annotation: ../variant_annotation
 
