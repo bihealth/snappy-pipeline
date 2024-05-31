@@ -36,6 +36,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta.amb
           somatic_targeted_seq_cnv_calling:
             tools: ['sequenza']
+            sequenza: {}
           homologous_recombination_deficiency:
             tools: ['scarHRD']
             path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
