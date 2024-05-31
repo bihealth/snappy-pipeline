@@ -461,9 +461,9 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if self.config["path_%s" % prev]:
+            if cfg := self.config.get(f"path_{prev}"):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, self.config["path_%s" % prev])
+                self.register_sub_workflow(prev, cfg)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
@@ -543,3 +543,15 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                             continue
                         else:
                             yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+
+    def check_config(self):
+        if not self.config.tools_ngs_mapping:
+            self.ensure_w_config(
+                ("step_config", "ngs_mapping", "tools", "dna"),
+                "Either define tools_ngs_mapping or provide a configuration for ngs_mapping",
+            )
+        if not self.config.tools_variant_calling:
+            self.ensure_w_config(
+                ("step_config", "variant_calling", "tools"),
+                "Either define tools_variant_calling or provide a configuration for variant_calling",
+            )
