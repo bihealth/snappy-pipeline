@@ -39,6 +39,7 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
           variant_annotation:
             path_jannovar_ser: /path/to/jannovar.ser
 
