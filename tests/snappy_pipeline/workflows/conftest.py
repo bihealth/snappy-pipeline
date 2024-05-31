@@ -14,6 +14,7 @@ from pyfakefs import fake_filesystem
 import pytest
 from ruamel.yaml.comments import CommentedMap
 
+from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.abstract import BaseStep
 
 
@@ -79,7 +80,12 @@ def dummy_generic_step(
             return "step_config:\n  dummy:\n    key: value"
 
     return DummyBaseStep(
-        dummy_workflow, dummy_config, dummy_cluster_config, config_lookup_paths, work_dir
+        dummy_workflow,
+        dummy_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        work_dir,
+        config_model_class=SnappyStepModel,
     )
 
 
