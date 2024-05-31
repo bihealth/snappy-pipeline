@@ -43,6 +43,7 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
 
           variant_filtration:
             path_variant_annotation: ../variant_annotation
@@ -51,7 +52,7 @@ def minimal_config():
             # Testing 1 out 40+ possible combinations:
             # {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}
             filter_combinations:
-              - conservative.dominant.dominant_freq.all_genes.coding.passthrough
+              - conservative.dominant.dominant_freq.whole_genome.coding.passthrough
 
         data_sets:
           first_batch:
@@ -360,14 +361,14 @@ def test_filter_scores_step_part_get_input_files(variant_filtration_workflow):
             "thresholds": "conservative",
             "inheritance": "dominant",
             "frequency": "af_dominant",
-            "regions": "all_genes",
+            "regions": "whole_genome",
         }
     )
     # Define expected
     base_name = (
         "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered."
-        "P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes"
+        "dominant.af_dominant.whole_genome/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered."
+        "P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.whole_genome"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -426,15 +427,15 @@ def test_filter_het_comp_step_part_get_input_files(variant_filtration_workflow):
             "thresholds": "conservative",
             "inheritance": "dominant",
             "frequency": "af_dominant",
-            "regions": "all_genes",
+            "regions": "whole_genome",
             "scores": "coding",
         }
     )
     # Define expected
     base_name = (
         "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes.coding/out/bwa.gatk3_hc.jannovar_annotate_vcf."
-        "filtered.P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes.coding"
+        "dominant.af_dominant.whole_genome.coding/out/bwa.gatk3_hc.jannovar_annotate_vcf."
+        "filtered.P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.whole_genome.coding"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -504,9 +505,9 @@ def test_variant_filtration_workflow(variant_filtration_workflow):
     # Check result file construction
     tpl = (
         "output/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
-        "dominant.dominant_freq.all_genes.coding.passthrough/out/"
+        "dominant.dominant_freq.whole_genome.coding.passthrough/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
-        "dominant.dominant_freq.all_genes.coding.passthrough.{ext}"
+        "dominant.dominant_freq.whole_genome.coding.passthrough.{ext}"
     )
     expected = [
         tpl.format(i=i, ext=ext)
