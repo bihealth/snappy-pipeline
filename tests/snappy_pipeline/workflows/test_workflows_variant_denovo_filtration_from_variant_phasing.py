@@ -39,6 +39,7 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
           variant_denovo_filtration:
             path_variant_phasing: ../variant_phasing
 
