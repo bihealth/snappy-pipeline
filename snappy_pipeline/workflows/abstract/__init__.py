@@ -23,10 +23,10 @@ from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
+    ShortcutSampleSheet,
     donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
-    ShortcutSampleSheet,
 )
 import pydantic
 import ruamel.yaml as ruamel_yaml
