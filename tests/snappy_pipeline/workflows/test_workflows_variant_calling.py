@@ -39,6 +39,11 @@ def minimal_config():
           variant_calling:
             baf_file_generation:
               enabled: true
+            jannovar_stats:
+              enabled: true
+              path_ser: /path/to/jannovar.ser
+            bcftools_stats:
+              enabled: true
             tools:
             - bcftools_call
             - gatk3_hc
@@ -485,12 +490,9 @@ def test_variant_calling_workflow(variant_calling_workflow):
     expected = [
         "baf_file_generation",
         "bcftools_call",
-        "bcftools_roh",
         "bcftools_stats",
         "gatk3_hc",
         "gatk3_ug",
-        "gatk4_hc_gvcf",
-        "gatk4_hc_joint",
         "jannovar_stats",
         "write_pedigree",
     ]
@@ -642,6 +644,7 @@ def test_variant_calling_custom_pedigree_field(
     work_dir,
     config_paths,
     germline_trio_plus_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Tests VariantCallingWorkflow object pre-configured with germline trio plus sheet
@@ -661,6 +664,7 @@ def test_variant_calling_custom_pedigree_field(
         create_missing_dirs=True,
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_trio_plus_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_calling", germline_trio_plus_sheet_fake_fs, mocker
     )

@@ -685,7 +685,7 @@ class BaseStep:
             from snappy_pipeline.workflow_model import ConfigModel
 
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
-            self.config = self.w_config.step_config[self.name]
+            self.config: C = self.w_config.step_config[self.name]
         except pydantic.ValidationError as ve:
             self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
             raise ve
