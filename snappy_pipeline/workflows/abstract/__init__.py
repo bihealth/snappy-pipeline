@@ -34,6 +34,7 @@ from snakemake.io import InputFiles, Wildcards, touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
+    merge_dicts,
     merge_kwargs,
     print_config,
     print_sample_sheets,
@@ -723,6 +724,10 @@ class BaseStep:
         # some of the checks done in substep check_config are not covered by the pydantic models yet
         # and some of the checks actually influence program logic/flow
         self._check_config()
+
+        # Update snakemake.config (which `config` is a reference to)
+        # with the validated configuration
+        config.update(merge_dicts(config, dict(self.w_config)))
 
         config_string = self.config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for step {self.name}\n{config_string}")

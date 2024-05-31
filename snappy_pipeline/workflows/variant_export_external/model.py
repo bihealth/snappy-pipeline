@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field, FilePath, DirectoryPath
+from pydantic import DirectoryPath, Field, FilePath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
