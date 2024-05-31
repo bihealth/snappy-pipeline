@@ -702,7 +702,7 @@ class BaseStep:
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = list(config_lookup_paths)
-        self.sub_steps = {}
+        self.sub_steps: dict[str, type[BaseStepPart]] = {}
         self.data_set_infos = list(self._load_data_set_infos())
 
         #: Shortcut to the BioMed SampleSheet objects
@@ -830,7 +830,9 @@ class BaseStep:
                 )
                 raise e_class(tpl)
 
-    def register_sub_step_classes(self, classes):
+    def register_sub_step_classes(
+        self, classes: tuple[type[typing.Self] | tuple[type[typing.Self], Any], ...]
+    ):
         """Register an iterable of sub step classes
 
         Initializes objects in ``self.sub_steps`` dict
@@ -845,7 +847,7 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(self, step_name, workdir, sub_workflow_name=None):
+    def register_sub_workflow(self, step_name: str, workdir: str, sub_workflow_name: str = None):
         """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
 
         Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
@@ -866,42 +868,42 @@ class BaseStep:
         )
         self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
-    def get_args(self, sub_step, action):
+    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return arguments for action of substep with given wildcards
 
-        Delegates to the sub step object's get_input_files function
+        Delegates to the sub step object's get_args function
         """
         return self._get_sub_step(sub_step).get_args(action)
 
-    def get_input_files(self, sub_step, action):
+    def get_input_files(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for action of substep with given wildcards
 
         Delegates to the sub step object's get_input_files function
         """
         return self._get_sub_step(sub_step).get_input_files(action)
 
-    def get_output_files(self, sub_step, action):
+    def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
 
         Delegates to the sub step object's get_output_files function
         """
         return self._get_sub_step(sub_step).get_output_files(action)
 
-    def get_params(self, sub_step, action):
+    def get_params(self, sub_step: str, action: str) -> Any:
         """Return parameters
 
         Delegates to the sub step object's get_params function
         """
         return self.substep_dispatch(sub_step, "get_params", action)
 
-    def get_resource(self, sub_step, action, resource_name):
+    def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
         """Get resource
 
         Delegates to the sub step object's get_resource function
         """
         return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
 
-    def get_tmpdir(self):
+    def get_tmpdir(self) -> str:
         """Return temporary directory.
 
         To be used directly or via get_resource("step", "action", "tmpdir")
@@ -923,40 +925,40 @@ class BaseStep:
         os.makedirs(tmpdir, exist_ok=True)
         return tmpdir
 
-    def get_log_file(self, sub_step, action):
+    def get_log_file(self, sub_step: str, action: str) -> Outputs:
         """Return path to the log file
 
         Delegates to the sub step object's get_log_file function
         """
         return self.substep_dispatch(sub_step, "get_log_file", action)
 
-    def get_shell_cmd(self, sub_step, action, wildcards):
+    def get_shell_cmd(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Return shell command for the pipeline sub step
 
         Delegates to the sub step object's get_shell_cmd function
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
 
-    def run(self, sub_step, action, wildcards):
+    def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
 
         Delegates to the sub step object's run function
         """
-        return self._get_sub_step(sub_step).get_shell_cmd(action, wildcards)
+        return self._get_sub_step(sub_step).run(action, wildcards)
 
-    def get_result_files(self):
+    def get_result_files(self) -> OutputFiles:
         """Return actual list of file names to build"""
         raise NotImplementedError("Implement me!")  # pragma: no cover
 
-    def substep_getattr(self, step, name):
+    def substep_getattr(self, step: str, name: str) -> Any:
         """Return attribute from substep"""
         return getattr(self._get_sub_step(step), name)
 
-    def substep_dispatch(self, step, function, *args, **kwargs):
+    def substep_dispatch(self, step: str, function: str, *args, **kwargs):
         """Dispatch call to function of sub step implementation"""
         return self.substep_getattr(step, function)(*args, **kwargs)
 
-    def _get_sub_step(self, sub_step):
+    def _get_sub_step(self, sub_step: str) -> type[BaseStepPart]:
         if sub_step in self.sub_steps:
             return self.sub_steps[sub_step]
         else:
@@ -964,7 +966,7 @@ class BaseStep:
                 'Could not find sub step "{}" in workflow step "{}"'.format(sub_step, self.name)
             )  # pragma: no cover
 
-    def _load_data_set_infos(self):
+    def _load_data_set_infos(self) -> typing.Generator[DataSetInfo, None, None]:
         """Load BioMed Sample Sheets as given by configuration and yield them"""
         for name, data_set in self.w_config.data_sets.items():
             yield DataSetInfo(
@@ -982,7 +984,7 @@ class BaseStep:
                 data_set.pedigree_field,
             )
 
-    def _load_data_search_infos(self):
+    def _load_data_search_infos(self) -> typing.Generator[DataSearchInfo, None, None]:
         """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
         for _, data_set in self.w_config.data_sets.items():
             yield DataSearchInfo(
@@ -994,7 +996,7 @@ class BaseStep:
             )
 
     @classmethod
-    def wrapper_path(cls, path):
+    def wrapper_path(cls, path: typing.AnyStr) -> typing.AnyStr:
         """Generate path to wrapper"""
         return "file://" + os.path.abspath(
             os.path.join(
