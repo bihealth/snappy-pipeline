@@ -140,7 +140,7 @@ def merge_dictlikes[D](dict1: DictLike, dict2: DictLike, dict_class: D = Ordered
 
     def _merge_inner(d1: DictLike, d2: DictLike) -> D:
         DICT_LIKE = DictLike.__value__
-        for k in dict(d1).keys() | dict(d2).keys():
+        for k in d1.keys() | d2.keys():
             if k in d1 and k in d2:
                 if isinstance(d1[k], DICT_LIKE) and isinstance(d2[k], DICT_LIKE):
                     yield k, dict_class(_merge_inner(d1[k], d2[k]))

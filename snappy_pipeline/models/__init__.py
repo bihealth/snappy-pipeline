@@ -74,6 +74,10 @@ class SnappyModel(BaseModel):
         """
         return getattr(self, item)
 
+    def keys(self):
+        """Return a list of field names."""
+        return self.model_fields.keys()
+
 
 # This exists to distinguish workflow step_config models from other snappy specific models
 # It also provides a default_config_yaml_string method that includes the step_config section
