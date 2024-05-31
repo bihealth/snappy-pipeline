@@ -612,7 +612,7 @@ class BaseStep:
     name: str
 
     #: Override with the sheet shortcut class to use
-    sheet_shortcut_class: ShortcutSampleSheet
+    sheet_shortcut_class: type[ShortcutSampleSheet]
 
     #: Override with arguments to pass into sheet shortcut class constructor
     sheet_shortcut_args = None
