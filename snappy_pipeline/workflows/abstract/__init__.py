@@ -26,6 +26,7 @@ from biomedsheets.shortcuts import (
     donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
+    ShortcutSampleSheet,
 )
 import pydantic
 import ruamel.yaml as ruamel_yaml
@@ -99,17 +100,17 @@ class ImplementationUnavailableError(NotImplementedError):
     """
 
 
-type Inputs = InputFiles | dict[str, Any]
-type Outputs = OutputFiles | dict[str, Any]
+Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
+Outputs: typing.TypeAlias = OutputFiles | dict[str, Any]
 
 
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
-    name: str = "<base step>"
+    name: str
 
     #: The actions available in the class.
-    actions: set[str] = None
+    actions: tuple[str, ...]
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
@@ -148,7 +149,7 @@ class BaseStepPart:
         return self.resource_usage.get(action, self.default_resource_usage)
 
     @staticmethod
-    def get_default_partition() -> str:
+    def get_default_partition() -> str | None:
         """Helper that returns the default partition."""
         return os.getenv("SNAPPY_PIPELINE_PARTITION")
 
@@ -608,10 +609,10 @@ class BaseStep:
     """
 
     #: Override with step name
-    name = None
+    name: str
 
     #: Override with the sheet shortcut class to use
-    sheet_shortcut_class = None
+    sheet_shortcut_class: ShortcutSampleSheet
 
     #: Override with arguments to pass into sheet shortcut class constructor
     sheet_shortcut_args = None
@@ -702,7 +703,7 @@ class BaseStep:
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = list(config_lookup_paths)
-        self.sub_steps: dict[str, type[BaseStepPart]] = {}
+        self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
 
         #: Shortcut to the BioMed SampleSheet objects
@@ -727,7 +728,7 @@ class BaseStep:
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
         #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows = {}
+        self.sub_workflows: dict[str, snakemake.Workflow] = {}
 
         # Even though we already validated via pydantic, we still call check_config here, as
         # some of the checks done in substep check_config are not covered by the pydantic models yet
@@ -831,7 +832,7 @@ class BaseStep:
                 raise e_class(tpl)
 
     def register_sub_step_classes(
-        self, classes: tuple[type[typing.Self] | tuple[type[typing.Self], Any], ...]
+        self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
     ):
         """Register an iterable of sub step classes
 
@@ -847,7 +848,9 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(self, step_name: str, workdir: str, sub_workflow_name: str = None):
+    def register_sub_workflow(
+        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
+    ):
         """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
 
         Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
@@ -958,7 +961,7 @@ class BaseStep:
         """Dispatch call to function of sub step implementation"""
         return self.substep_getattr(step, function)(*args, **kwargs)
 
-    def _get_sub_step(self, sub_step: str) -> type[BaseStepPart]:
+    def _get_sub_step(self, sub_step: str) -> BaseStepPart:
         if sub_step in self.sub_steps:
             return self.sub_steps[sub_step]
         else:
@@ -996,7 +999,7 @@ class BaseStep:
             )
 
     @classmethod
-    def wrapper_path(cls, path: typing.AnyStr) -> typing.AnyStr:
+    def wrapper_path(cls, path: str) -> str:
         """Generate path to wrapper"""
         return "file://" + os.path.abspath(
             os.path.join(
