@@ -691,7 +691,7 @@ class BaseStep:
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
-        self.config_lookup_paths = config_lookup_paths
+        self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps = {}
         self.data_set_infos = list(self._load_data_set_infos())
 
@@ -972,7 +972,7 @@ class BaseStep:
         """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
         for _, data_set in self.w_config.data_sets.items():
             yield DataSearchInfo(
-                sheet_path=data_set["file"],
+                sheet_path=data_set.file,
                 base_paths=self.config_lookup_paths,
                 search_paths=self.config.search_paths,
                 search_patterns=self.config.search_patterns,
@@ -1196,7 +1196,7 @@ class LinkInStep(BaseStepPart):
         # data already.
         try:
             preprocessed_path = self.config.path_link_in
-        except KeyError:
+        except AttributeError:
             preprocessed_path = ""
 
         # Path generator.

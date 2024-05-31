@@ -1,5 +1,5 @@
 import enum
-from typing import TypedDict
+from typing import TypedDict, Any
 
 from pydantic import ConfigDict
 
