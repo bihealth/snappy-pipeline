@@ -41,22 +41,27 @@ def minimal_config():
             tools:
             - mutect2
             - scalpel
+            mutect2: {}
             scalpel:
               path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_annotation:
+            path_somatic_variant_calling: ../somatic_variant_calling
             tools: ["vep", "jannovar"]
             jannovar:
               path_jannovar_ser: /path/to/jannover.ser
+              flag_off_target: False
+              dbnsfp: {}
             vep:
               cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
-            filters:
+            filtration_schema: sets
+            filter_sets:
               dkfz_only: ~
-              dkfz_and_ebfilter: ~
-              dkfz_and_oxog: ~
-              dkfz_and_ebfilter_and_oxog: ~
+              dkfz_and_ebfilter: {}
+              dkfz_and_oxog: {}
+              dkfz_and_ebfilter_and_oxog: {}
             exon_lists: {}
 
           tumor_mutational_burden:
@@ -88,11 +93,13 @@ def tumor_mutational_burden_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return TumorMutationalBurdenCalculationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
