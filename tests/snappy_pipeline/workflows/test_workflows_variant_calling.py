@@ -44,6 +44,9 @@ def minimal_config():
               path_ser: /path/to/jannovar.ser
             bcftools_stats:
               enabled: true
+            bcftools_roh:
+              enabled: true
+              path_af_file: /path/to/af_file.txt
             tools:
             - bcftools_call
             - gatk3_hc
@@ -491,8 +494,11 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "baf_file_generation",
         "bcftools_call",
         "bcftools_stats",
+        "bcftools_roh",
         "gatk3_hc",
         "gatk3_ug",
+        "gatk4_hc_joint",
+        "gatk4_hc_gvcf",
         "jannovar_stats",
         "write_pedigree",
     ]
@@ -517,6 +523,15 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
         "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{step}.{ext}"
     )
+
+    stats_steps = {"jannovar_stats", "bcftools_roh"} - {"bcftools_stats"}  # causes weird behaviour
+    stats_steps = {
+        step
+        for step in stats_steps
+        if ((s := variant_calling_workflow.config.get(step)) and s.enabled)
+    }
+    stats_steps_run = {f"{step}_run" for step in stats_steps}
+
     expected += [
         base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller, step=step)
         for i in (1, 4)  # only for indices
@@ -538,11 +553,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "gatk3_hc",
             "gatk3_ug",
         )
-        for step in (
-            f"{var_caller}_run",
-            "jannovar_stats_run",
-            "bcftools_roh_run",
-        )
+        for step in ({f"{var_caller}_run"} | stats_steps_run)
     ]
     base_out = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
@@ -617,24 +628,28 @@ def test_variant_calling_workflow(variant_calling_workflow):
         )
         for ext in ("bw", "bw.md5")
     ]
-    tpl = (
-        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
-        "roh/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
-    expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
-        for i in (1, 4)
-        for mapper in ("bwa",)
-        for var_caller in (
-            "bcftools_call",
-            "gatk3_hc",
-            "gatk3_ug",
+
+    if "bcftools_roh" in stats_steps:
+        tpl = (
+            "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
+            "roh/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
         )
-        for ext in ("txt", "txt.md5")
-    ]
-    expected = list(sorted(expected))
-    actual = list(sorted(variant_calling_workflow.get_result_files()))
-    assert actual == expected
+        expected += [
+            tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
+            for i in (1, 4)
+            for mapper in ("bwa",)
+            for var_caller in (
+                "bcftools_call",
+                "gatk3_hc",
+                "gatk3_ug",
+            )
+            for ext in ("txt", "txt.md5")
+        ]
+    expected = set(sorted(expected))
+    actual = set(sorted(variant_calling_workflow.get_result_files()))
+    assert (
+        actual == expected
+    ), f"Missing from actual: {expected - actual}\nMissing from expected: {actual - expected}"
 
 
 def test_variant_calling_custom_pedigree_field(
@@ -655,7 +670,7 @@ def test_variant_calling_custom_pedigree_field(
 
     # Create alternative configuration file
     local_minimal_config = deepcopy(minimal_config)
-    local_minimal_config["data_sets"]["first_batch"]["file"] = "sheet_trio_plus.tsv"
+    local_minimal_config["data_sets"]["first_batch"].file = "sheet_trio_plus.tsv"
 
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     germline_trio_plus_sheet_fake_fs.fs.create_file(
@@ -695,7 +710,7 @@ def test_variant_calling_custom_pedigree_field(
     )
 
     # Construct the workflow object - should work, custom pedigree join
-    local_minimal_config["data_sets"]["first_batch"]["pedigree_field"] = "familyId"
+    local_minimal_config["data_sets"]["first_batch"].pedigree_field = "familyId"
     vcw = VariantCallingWorkflow(
         dummy_workflow,
         local_minimal_config,
