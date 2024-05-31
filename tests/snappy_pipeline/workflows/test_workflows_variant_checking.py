@@ -32,6 +32,7 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
 
           variant_checking:
             tools_ngs_mapping: ['bwa']  # optional, copied from ngs mapping config
