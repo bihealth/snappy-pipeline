@@ -318,7 +318,7 @@ class WritePedigreeStepPart(BaseStepPart):
         #         yield tpl.format(index_ngs_library=index_ngs_library)
         return []
 
-    def run(self, wildcards, output):
+    def run(self, wildcards: Wildcards, output: OutputFiles):
         """Write out the pedigree information
 
         :param wildcards: Snakemake wildcards associated with rule (unused).
