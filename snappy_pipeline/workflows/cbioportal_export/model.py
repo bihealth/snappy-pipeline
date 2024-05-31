@@ -1,31 +1,30 @@
 from __future__ import annotations
 
 import enum
-from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated, TypedDict
 
 from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
-class MappingTool(Enum):
+class MappingTool(enum.StrEnum):
     BWA = "bwa"
 
 
-class ExpressionTool(Enum):
+class ExpressionTool(enum.StrEnum):
     STAR = "star"
 
 
-class SomaticVariantCallingTool(Enum):
+class SomaticVariantCallingTool(enum.StrEnum):
     MUTECT2 = "mutect2"
 
 
-class SomaticVariantAnnotationTool(Enum):
+class SomaticVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
 
 
-class FilterSet(Enum):
+class FilterSet(enum.StrEnum):
     NO_FILTER = "no_filter"
     DKFZ_ONLY = "dkfz_only"
     DKFZ_AND_EBFILTER = "dkfz_and_ebfilter"
@@ -61,7 +60,7 @@ class Protected(Filter):
     path_bed: str = ""
 
 
-class CopyNumberTool(Enum):
+class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
 
     CONTROL_FREEC = "Control_FREEC"
@@ -71,7 +70,7 @@ class CopyNumberTool(Enum):
     """unmaintained"""
 
 
-class NcbiBuild(Enum):
+class NcbiBuild(enum.StrEnum):
     GRCh37 = "GRCh37"
     GRCh38 = "GRCh38"
 
@@ -100,6 +99,14 @@ class Study(SnappyModel):
     study_name: str
     study_name_short: str
     reference_genome: GenomeName
+
+
+class ExtraInfos(TypedDict):
+    name: str
+    description: str
+    datatype: str
+    priority: str
+    column: str
 
 
 class CbioportalExport(SnappyStepModel):
@@ -157,10 +164,23 @@ class CbioportalExport(SnappyStepModel):
 
     study: Study
 
-    patient_info: None
+    patient_info: None = None
     """unimplemented"""
 
-    sample_info: Any
+    sample_info: dict[str, ExtraInfos] = Field(
+        {},
+        examples=[
+            {
+                "tumor_mutational_burden": dict(
+                    name="TMB",
+                    description="Tumor mutational burden computed on CDS regions",
+                    datatype="NUMBER",
+                    priority="2",
+                    column="TMB",
+                )
+            }
+        ],
+    )
     """Each additional sample column must have a name and a (possibly empty) config attached."""
 
     @model_validator(mode="after")
