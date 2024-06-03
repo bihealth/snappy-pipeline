@@ -36,7 +36,6 @@ from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    merge_dictlikes,
     merge_kwargs,
     print_config,
     print_sample_sheets,
@@ -744,7 +743,7 @@ class BaseStep:
         # Update snakemake.config (which `config` is a reference to)
         # with the validated configuration.
         # All fields with default values are explicitly defined.
-        _config = _cached_yaml_round_trip_load_str(self.w_config.model_dump_yaml(by_alias=True))
+        _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
         self.logger.info(f"Snakemake config\n{config}")
 
