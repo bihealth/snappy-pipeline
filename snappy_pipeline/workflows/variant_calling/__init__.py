@@ -488,7 +488,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = getattr(self.config, self.name).num_threads
+        num_threads = self.config[self.name].num_threads
         mem_per_thread = 5.5
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(

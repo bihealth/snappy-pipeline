@@ -670,7 +670,7 @@ def test_variant_calling_custom_pedigree_field(
 
     # Create alternative configuration file
     local_minimal_config = deepcopy(minimal_config)
-    local_minimal_config["data_sets"]["first_batch"].file = "sheet_trio_plus.tsv"
+    local_minimal_config["data_sets"]["first_batch"]["file"] = "sheet_trio_plus.tsv"
 
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     germline_trio_plus_sheet_fake_fs.fs.create_file(
@@ -710,7 +710,7 @@ def test_variant_calling_custom_pedigree_field(
     )
 
     # Construct the workflow object - should work, custom pedigree join
-    local_minimal_config["data_sets"]["first_batch"].pedigree_field = "familyId"
+    local_minimal_config["data_sets"]["first_batch"]["pedigree_field"] = "familyId"
     vcw = VariantCallingWorkflow(
         dummy_workflow,
         local_minimal_config,

@@ -488,7 +488,7 @@ class MappingGetResultFilesMixin:
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
-            return self.name not in getattr(self.config.tools, library_tool_category)
+            return self.name not in self.config.tools.get(library_tool_category)
 
     @listify
     def get_result_files(self):
@@ -810,7 +810,7 @@ class StarStepPart(ReadMappingStepPart):
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run_work()
-        if (cfg := getattr(self.config, self.name)) is None:
+        if (cfg := self.config.get(self.name)) is None:
             return output_files
 
         output_files["gene_counts"] = self.base_path_out.format(

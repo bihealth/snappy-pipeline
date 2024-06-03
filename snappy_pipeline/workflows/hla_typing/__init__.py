@@ -299,7 +299,7 @@ class HlaTypingWorkflow(BaseStep):
         super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
         sub_steps = [LinkInStep, LinkOutStepPart]
         for tool in self.config.tools:
-            if getattr(self.config, str(tool)):
+            if self.config.get(str(tool)):
                 match tool:
                     case "optitype":
                         sub_steps.append(OptiTypeStepPart)

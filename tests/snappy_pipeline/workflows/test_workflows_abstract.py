@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
 """Code for testing the code in the "abstract" workflow
 """
+from copy import deepcopy
 import filecmp
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 import textwrap
+from typing import TypedDict
+from unittest.mock import MagicMock
 
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 import pytest
+import ruamel.yaml
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import OutputFiles, Wildcards
+import yaml
 
-from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.base import MissingConfiguration, merge_dictlikes
+import snappy_pipeline.workflow_model
+from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     DataSearchInfo,
@@ -24,9 +31,10 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 
-from .conftest import patch_module_fs
+from .conftest import DummyModel, patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
 
 # Tests for DataSetInfo ---------------------------------------------------------------------------
 
@@ -224,7 +232,9 @@ def dummy_config():
         textwrap.dedent(
             r"""
         step_config: {}
-        static_data_config: {}
+        static_data_config:
+          reference:
+            path: /path/to/reference.fasta
         data_sets:
           first_batch:  # example for a matched cancer data set
             file: sheet.tsv
@@ -276,12 +286,25 @@ def dummy_generic_step(
             ).lstrip()
 
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+
+    class DummyStepConfig(TypedDict, total=False):
+        dummy: DummyModel
+
+    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
+
+    config = deepcopy(dummy_config)
+    yaml = ruamel_yaml.YAML()
+    local_config = yaml.load(DummyBaseStep.default_config_yaml())
+    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
+    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -324,12 +347,25 @@ def dummy_generic_step_path_link_in(
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
     )
+
+    class DummyStepConfig(TypedDict, total=False):
+        dummy: DummyModel
+
+    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
+
+    config = deepcopy(dummy_config)
+    yaml = ruamel_yaml.YAML()
+    local_config = yaml.load(DummyBaseStep.default_config_yaml())
+    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
+    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -422,7 +458,9 @@ def vcf_dummy_config():
         textwrap.dedent(
             r"""
         step_config: {}
-        static_data_config: {}
+        static_data_config:
+          reference:
+            path: /path/to/reference.fasta
         data_sets:
           first_batch:  # example for a matched cancer data set
             file: sheet.tsv
@@ -478,12 +516,25 @@ def vcf_dummy_generic_step(
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_with_ext_vcf_fake_fs, mocker
     )
+
+    class DummyStepConfig(TypedDict, total=False):
+        dummy: DummyModel
+
+    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
+
+    config = deepcopy(vcf_dummy_config)
+    yaml = ruamel_yaml.YAML()
+    local_config = yaml.load(DummyBaseStep.default_config_yaml())
+    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
+    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+
     return DummyBaseStep(
         dummy_workflow,
-        vcf_dummy_config,
+        dummy_config,
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -593,12 +644,25 @@ def dummy_generic_step_w_write_pedigree(
             ).lstrip()
 
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+
+    class DummyStepConfig(TypedDict, total=False):
+        dummy: DummyModel
+
+    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
+
+    config = deepcopy(dummy_config)
+    yaml = ruamel_yaml.YAML()
+    local_config = yaml.load(DummyBaseStep.default_config_yaml())
+    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
+    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+
     return DummyBaseStep(
         dummy_workflow,
         dummy_config,
         config_lookup_paths,
         config_paths,
         work_dir,
+        config_model_class=DummyModel,
     )
 
 

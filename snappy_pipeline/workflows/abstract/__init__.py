@@ -14,6 +14,7 @@ import os.path
 import sys
 import tempfile
 import typing
+from typing import Any, Callable
 
 import attr
 from biomedsheets import io_tsv
@@ -22,6 +23,7 @@ from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
+    ShortcutSampleSheet,
     donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
@@ -29,12 +31,12 @@ from biomedsheets.shortcuts import (
 import pydantic
 import ruamel.yaml as ruamel_yaml
 import snakemake
-from snakemake.io import InputFiles, Wildcards, touch
+from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
 
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    merge_dicts,
+    merge_dictlikes,
     merge_kwargs,
     print_config,
     print_sample_sheets,
@@ -98,13 +100,17 @@ class ImplementationUnavailableError(NotImplementedError):
     """
 
 
+Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
+Outputs: typing.TypeAlias = OutputFiles | dict[str, Any]
+
+
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
-    name = "<base step>"
+    name: str
 
     #: The actions available in the class.
-    actions: tuple[str] = None
+    actions: tuple[str, ...]
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
@@ -121,7 +127,7 @@ class BaseStepPart:
         self.config = parent.config
         self.w_config = parent.w_config
 
-    def _validate_action(self, action):
+    def _validate_action(self, action: str):
         """Validate provided action
 
         Checks that the provided ``action`` is listed in the valid class actions list.
@@ -143,11 +149,13 @@ class BaseStepPart:
         return self.resource_usage.get(action, self.default_resource_usage)
 
     @staticmethod
-    def get_default_partition() -> str:
+    def get_default_partition() -> str | None:
         """Helper that returns the default partition."""
         return os.getenv("SNAPPY_PIPELINE_PARTITION")
 
-    def get_resource(self, action: str, resource_name: str):
+    def get_resource(
+        self, action: str, resource_name: str
+    ) -> Callable[[Wildcards, InputFiles], Any]:
         """Return the amount of resources to be allocated for the given action.
 
         :param action: The action to return the resource requirement for.
@@ -156,7 +164,7 @@ class BaseStepPart:
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
-        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None):
+        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None) -> Any:
             resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
@@ -167,19 +175,19 @@ class BaseStepPart:
 
         return _get_resource
 
-    def get_args(self, action):
+    def get_args(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return args for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_input_files(self, action):
+    def get_input_files(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_output_files(self, action):
+    def get_output_files(self, action: str) -> Outputs:
         """Return output files for the given action of the sub step and"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_log_file(self, action):
+    def get_log_file(self, action: str) -> Outputs:
         """Return path to log file
 
         The default implementation tries to call ``self._get_log_files()`` and in the case of
@@ -201,13 +209,13 @@ class BaseStepPart:
                 "Log file name generation not implemented!"
             )  # pragma: no cover
 
-    def get_shell_cmd(self, action, wildcards):  # NOSONAR
+    def get_shell_cmd(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
         """Return shell command for the given action of the sub step and the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
 
-    def run(self, action, wildcards):  # NOSONAR
+    def run(self, action: str, wildcards: Wildcards):  # NOSONAR
         """Run the sub steps action action's code with the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
@@ -231,7 +239,9 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent, require_dna_ngs_library=False, only_trios=False):
+    def __init__[
+        P: BaseStep
+    ](self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
@@ -308,7 +318,7 @@ class WritePedigreeStepPart(BaseStepPart):
         #         yield tpl.format(index_ngs_library=index_ngs_library)
         return []
 
-    def run(self, wildcards, output):
+    def run(self, wildcards: Wildcards, output: OutputFiles):
         """Write out the pedigree information
 
         :param wildcards: Snakemake wildcards associated with rule (unused).
@@ -599,10 +609,10 @@ class BaseStep:
     """
 
     #: Override with step name
-    name = None
+    name: str
 
     #: Override with the sheet shortcut class to use
-    sheet_shortcut_class = None
+    sheet_shortcut_class: type[ShortcutSampleSheet]
 
     #: Override with arguments to pass into sheet shortcut class constructor
     sheet_shortcut_args = None
@@ -642,7 +652,7 @@ class BaseStep:
     ](
         self,
         workflow: snakemake.Workflow,
-        config: dict[str, typing.Any],
+        config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
         work_dir: str,
@@ -693,7 +703,7 @@ class BaseStep:
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
         self.config_lookup_paths = list(config_lookup_paths)
-        self.sub_steps = {}
+        self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
 
         #: Shortcut to the BioMed SampleSheet objects
@@ -718,22 +728,25 @@ class BaseStep:
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
         #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows = {}
+        self.sub_workflows: dict[str, snakemake.Workflow] = {}
 
         # Even though we already validated via pydantic, we still call check_config here, as
         # some of the checks done in substep check_config are not covered by the pydantic models yet
         # and some of the checks actually influence program logic/flow
         self._check_config()
 
-        # Update snakemake.config (which `config` is a reference to)
-        # with the validated configuration
-        config.update(merge_dicts(config, dict(self.w_config)))
-
         config_string = self.config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for step {self.name}\n{config_string}")
 
         config_string = self.w_config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for workflow\n{config_string}")
+
+        # Update snakemake.config (which `config` is a reference to)
+        # with the validated configuration.
+        # All fields with default values are explicitly defined.
+        _config = _cached_yaml_round_trip_load_str(self.w_config.model_dump_yaml(by_alias=True))
+        config.update(_config)
+        self.logger.info(f"Snakemake config\n{config}")
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -821,7 +834,9 @@ class BaseStep:
                 )
                 raise e_class(tpl)
 
-    def register_sub_step_classes(self, classes):
+    def register_sub_step_classes(
+        self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
+    ):
         """Register an iterable of sub step classes
 
         Initializes objects in ``self.sub_steps`` dict
@@ -836,7 +851,9 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(self, step_name, workdir, sub_workflow_name=None):
+    def register_sub_workflow(
+        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
+    ):
         """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
 
         Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
@@ -857,42 +874,42 @@ class BaseStep:
         )
         self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
-    def get_args(self, sub_step, action):
+    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return arguments for action of substep with given wildcards
 
-        Delegates to the sub step object's get_input_files function
+        Delegates to the sub step object's get_args function
         """
         return self._get_sub_step(sub_step).get_args(action)
 
-    def get_input_files(self, sub_step, action):
+    def get_input_files(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for action of substep with given wildcards
 
         Delegates to the sub step object's get_input_files function
         """
         return self._get_sub_step(sub_step).get_input_files(action)
 
-    def get_output_files(self, sub_step, action):
+    def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
 
         Delegates to the sub step object's get_output_files function
         """
         return self._get_sub_step(sub_step).get_output_files(action)
 
-    def get_params(self, sub_step, action):
+    def get_params(self, sub_step: str, action: str) -> Any:
         """Return parameters
 
         Delegates to the sub step object's get_params function
         """
         return self.substep_dispatch(sub_step, "get_params", action)
 
-    def get_resource(self, sub_step, action, resource_name):
+    def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
         """Get resource
 
         Delegates to the sub step object's get_resource function
         """
         return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
 
-    def get_tmpdir(self):
+    def get_tmpdir(self) -> str:
         """Return temporary directory.
 
         To be used directly or via get_resource("step", "action", "tmpdir")
@@ -914,40 +931,40 @@ class BaseStep:
         os.makedirs(tmpdir, exist_ok=True)
         return tmpdir
 
-    def get_log_file(self, sub_step, action):
+    def get_log_file(self, sub_step: str, action: str) -> Outputs:
         """Return path to the log file
 
         Delegates to the sub step object's get_log_file function
         """
         return self.substep_dispatch(sub_step, "get_log_file", action)
 
-    def get_shell_cmd(self, sub_step, action, wildcards):
+    def get_shell_cmd(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Return shell command for the pipeline sub step
 
         Delegates to the sub step object's get_shell_cmd function
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
 
-    def run(self, sub_step, action, wildcards):
+    def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
 
         Delegates to the sub step object's run function
         """
-        return self._get_sub_step(sub_step).get_shell_cmd(action, wildcards)
+        return self._get_sub_step(sub_step).run(action, wildcards)
 
-    def get_result_files(self):
+    def get_result_files(self) -> OutputFiles:
         """Return actual list of file names to build"""
         raise NotImplementedError("Implement me!")  # pragma: no cover
 
-    def substep_getattr(self, step, name):
+    def substep_getattr(self, step: str, name: str) -> Any:
         """Return attribute from substep"""
         return getattr(self._get_sub_step(step), name)
 
-    def substep_dispatch(self, step, function, *args, **kwargs):
+    def substep_dispatch(self, step: str, function: str, *args, **kwargs):
         """Dispatch call to function of sub step implementation"""
         return self.substep_getattr(step, function)(*args, **kwargs)
 
-    def _get_sub_step(self, sub_step):
+    def _get_sub_step(self, sub_step: str) -> BaseStepPart:
         if sub_step in self.sub_steps:
             return self.sub_steps[sub_step]
         else:
@@ -955,7 +972,7 @@ class BaseStep:
                 'Could not find sub step "{}" in workflow step "{}"'.format(sub_step, self.name)
             )  # pragma: no cover
 
-    def _load_data_set_infos(self):
+    def _load_data_set_infos(self) -> typing.Generator[DataSetInfo, None, None]:
         """Load BioMed Sample Sheets as given by configuration and yield them"""
         for name, data_set in self.w_config.data_sets.items():
             yield DataSetInfo(
@@ -973,7 +990,7 @@ class BaseStep:
                 data_set.pedigree_field,
             )
 
-    def _load_data_search_infos(self):
+    def _load_data_search_infos(self) -> typing.Generator[DataSearchInfo, None, None]:
         """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
         for _, data_set in self.w_config.data_sets.items():
             yield DataSearchInfo(
@@ -985,7 +1002,7 @@ class BaseStep:
             )
 
     @classmethod
-    def wrapper_path(cls, path):
+    def wrapper_path(cls, path: str) -> str:
         """Generate path to wrapper"""
         return "file://" + os.path.abspath(
             os.path.join(

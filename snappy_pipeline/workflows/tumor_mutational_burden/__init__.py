@@ -201,9 +201,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             else:
                 if not config.filters:
                     config.filters = list(
-                        dict(
-                            self.w_config.step_config["somatic_variant_filtration"].filter_sets
-                        ).keys()
+                        self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
                     )
                     config.filters.append("no_filter")
                 if not config.filtered_regions:

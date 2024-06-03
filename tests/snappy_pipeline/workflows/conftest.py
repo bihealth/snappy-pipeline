@@ -10,10 +10,11 @@ from unittest.mock import MagicMock, patch
 
 from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
+from pydantic import ConfigDict
 from pyfakefs import fake_filesystem
 import pytest
-from ruamel.yaml.comments import CommentedMap
 
+from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.abstract import BaseStep
 
 
@@ -27,7 +28,7 @@ def mock_settings_env_vars():
 @pytest.fixture
 def dummy_config():
     """Return dummy configuration OrderedDicts"""
-    return CommentedMap([("data_sets", CommentedMap())])
+    return {"data_sets": {}, "step_config": {"dummy": {"key": "value"}}}
 
 
 @pytest.fixture
@@ -61,6 +62,11 @@ def config_paths():
     return []
 
 
+class DummyModel(SnappyStepModel):
+    model_config = ConfigDict(extra="allow")
+    key: str = "value"
+
+
 @pytest.fixture
 def dummy_generic_step(
     dummy_workflow, dummy_config, dummy_cluster_config, work_dir, config_lookup_paths
@@ -79,7 +85,12 @@ def dummy_generic_step(
             return "step_config:\n  dummy:\n    key: value"
 
     return DummyBaseStep(
-        dummy_workflow, dummy_config, dummy_cluster_config, config_lookup_paths, work_dir
+        dummy_workflow,
+        dummy_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        work_dir,
+        config_model_class=DummyModel,
     )
 
 
