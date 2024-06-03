@@ -8,7 +8,7 @@ import vcfpy
 
 
 class VcfParser:
-    pattern = re.compile("^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")  # noqa: W605
+    pattern = re.compile(r"^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")
 
     def __init__(
         self,
