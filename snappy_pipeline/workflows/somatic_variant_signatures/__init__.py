@@ -268,23 +268,24 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         assert len(mappers) > 0, "No valid mapper"
         callers = set(config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS_MATCHED)
         assert len(callers) > 0, "No valid somatic variant caller"
+
+        anno_callers = []
+        filters = []
+        regions = []
         if config.is_filtered:
             anno_callers = set(config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
             assert len(anno_callers) > 0, "No valid somatic variant annotation tool"
-            filters = list(
-                self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
-            )
-            filters.append("no_filter")
-            filters = set(filters) & set(config.filters)
-            regions = list(
-                self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
-            )
-            regions.append("genome_wide")
-            regions = set(regions) & set(config.filtered_regions)
-        else:
-            anno_callers = []
-            filters = []
-            regions = []
+            if len(config.filters) > 0:
+                filters = list(
+                    self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
+                )
+                filters.append("no_filter")
+                filters = set(filters) & set(config.filters)
+                regions = list(
+                    self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
+                )
+                regions.append("genome_wide")
+                regions = set(regions) & set(config.filtered_regions)
 
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
