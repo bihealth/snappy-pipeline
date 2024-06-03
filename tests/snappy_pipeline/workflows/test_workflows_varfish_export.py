@@ -41,7 +41,14 @@ def minimal_config():
             - gatk3_hc
             gatk3_hc: {}
           variant_annotation:
-            path_jannovar_ser: /path/to/jannovar.ser
+            tools:
+              - vep
+            vep: {}
+          varfish_export:
+            path_ngs_mapping: ../ngs_mapping
+            path_variant_calling: ../variant_calling
+            path_exon_bed: /path/to/exons.bed
+            path_mehari_db: /path/to/mehari.db
 
         data_sets:
           first_batch:

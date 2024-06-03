@@ -483,16 +483,16 @@ class VarfishExportWorkflow(BaseStep):
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         step_config = self.w_config.step_config
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = step_config.ngs_mapping.tools.dna
+            self.config.tools_ngs_mapping = step_config["ngs_mapping"].tools.dna
         if not self.config.tools_variant_calling and "variant_calling" in step_config:
-            self.config.tools_variant_calling = step_config.variant_calling.tools
+            self.config.tools_variant_calling = step_config["variant_calling"].tools
         if (
             not self.config.tools_sv_calling_targeted
             and "sv_calling_targeted" in self.w_config.step_config
         ):
-            self.config.tools_sv_calling_targeted = step_config.sv_calling_targeted.tools
+            self.config.tools_sv_calling_targeted = step_config["sv_calling_targeted"].tools
         if not self.config.tools_sv_calling_wgs and "sv_calling_wgs" in self.w_config.step_config:
-            self.config.tools_sv_calling_wgs = step_config.sv_calling_wgs.tools
+            self.config.tools_sv_calling_wgs = step_config["sv_calling_wgs"].tools
 
         # Build additional information
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
