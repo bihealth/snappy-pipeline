@@ -652,7 +652,7 @@ class BaseStep:
     ](
         self,
         workflow: snakemake.Workflow,
-        config: dict[str, Any],
+        config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
         work_dir: str,
@@ -735,15 +735,18 @@ class BaseStep:
         # and some of the checks actually influence program logic/flow
         self._check_config()
 
-        # Update snakemake.config (which `config` is a reference to)
-        # with the validated configuration
-        config.update(merge_dictlikes(config, dict(self.w_config)))
-
         config_string = self.config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for step {self.name}\n{config_string}")
 
         config_string = self.w_config.model_dump_yaml(by_alias=True)
         self.logger.info(f"Configuration for workflow\n{config_string}")
+
+        # Update snakemake.config (which `config` is a reference to)
+        # with the validated configuration.
+        # All fields with default values are explicitly defined.
+        _config = _cached_yaml_round_trip_load_str(self.w_config.model_dump_yaml(by_alias=True))
+        config.update(_config)
+        self.logger.info(f"Snakemake config\n{config}")
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
