@@ -6,6 +6,8 @@ class Gcnv(SnappyModel):
     path_uniquely_mapable_bed: str
     """path to BED file with uniquely mappable regions."""
 
+    path_par_intervals: str = ""
+
     path_target_interval_list_mapping: list[TargetIntervalEntry] = []
 
 
