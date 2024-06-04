@@ -347,7 +347,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 )
 
     def check_config(self):
-        """Check that the path to the NGS mapping is present"""
+        """Check that path_somatic_variant_annotation, preparation/mode and preparation/format are present in the configuration"""
         self.ensure_w_config(
             (
                 "step_config",
