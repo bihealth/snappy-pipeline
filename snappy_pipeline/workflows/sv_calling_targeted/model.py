@@ -1,6 +1,8 @@
 import enum
 from typing import Annotated
 
+from pydantic import Field
+
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry, TargetIntervalEntry
 
@@ -72,11 +74,16 @@ class Manta(SnappyModel):
 
 
 class Melt(SnappyModel):
-    me_refs_infix: str = "1KGP_Hg19"
+    me_refs_infix: str = Field(examples=["1KGP_Hg19"])
+
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
-    jar_file: str
-    genes_file: str = "add_bed_files/1KGP_Hg19 / hg19.genes.bed"
+
+    jar_file: str = Field(examples=["MELT.jar"])
+
+    genes_file: str = Field(examples=["add_bed_files/1KGP_Hg19/hg19.genes.bed"])
     """adjust, e.g., Hg38/Hg38.genes.bed"""
+
+    me_refs_path: str = Field(examples=["me_refs"])
 
     skip_libraries: list[str] = []
     """
