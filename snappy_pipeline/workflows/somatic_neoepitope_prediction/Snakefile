@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline tumor mutational burden step Snakefile"""
+"""CUBI Pipeline somatic neoepitope prediction step Snakefile"""
 
 import os
 
