@@ -421,8 +421,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             )
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(ngs_mapping(tpl % key))
-            if donor.dna_ngs_library.name not in self.parent.ngs_library_to_kit:
-                continue
             path = (
                 f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/alfred_qc/"
                 f"{wildcards.mapper}.{donor.dna_ngs_library.name}.alfred.json.gz"
