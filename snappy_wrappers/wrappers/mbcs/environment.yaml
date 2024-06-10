@@ -13,3 +13,5 @@ dependencies:
   - gatk4==4.5.0.0
   - trimadap==r11
   - samblaster==0.1.26
+  - bwa==0.7.17
+
