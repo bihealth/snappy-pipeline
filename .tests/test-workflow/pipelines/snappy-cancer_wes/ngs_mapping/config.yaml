@@ -1,0 +1,5 @@
+pipeline_step:
+  name: ngs_mapping
+  version: 1
+
+$ref: 'file://../.snappy_pipeline/config.yaml'

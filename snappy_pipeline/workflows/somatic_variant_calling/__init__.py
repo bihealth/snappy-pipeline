@@ -28,30 +28,26 @@ with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
 - ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
+Two ``vcf`` files are produced:
+
+- ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{mapper}.{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- bwa.mutect.P001-N1-DNA1-WES1-4
+    +-- bwa.mutect2.P001-N1-DNA1-WES1-4
     |   `-- out
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.tbi
-    |       |-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.md5
-    |       `-- bwa.mutect.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.md5
+    |       `-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
     [...]
 
-Generally, these files will be unfiltered, i.e., contain low-quality variants and also variants
-flagged as being non-somatic.
-
-====================
-Global Configuration
-====================
-
-- If the somatic variant caller MuTect is used, then the global settings
-  ``static_data_config/dbsnp`` and ``static_data_config/cosmic`` must be given
-  as MuTect uses this in its algorithm.
-- ``static_data_config/reference/path`` must be set appropriately
+Generally, the callers are set up to return many variants to avoid missing clinically important ones.
+They are likely to contain low-quality variants and for some callers variants flagged as being non-somatic.
 
 =====================
 Default Configuration
@@ -67,8 +63,33 @@ Available Somatic Variant Callers
 
 The following somatic variant callers are currently available
 
-- ``"mutect"``
-- ``"scalpel"``
+- ``mutect2`` is the recommended caller
+- ``mutect`` & ``scalpel`` are deprecated
+- the joint variant callers ``bcftools``, ``platypus``, ``gatk`` & ``varscan`` are unsupported.
+
+==========================
+Efficient usage of mutect2
+==========================
+
+The recommended caller ``mutect2`` is implemented using a parallelisation mechanism to reduce execution time.
+During parallelisation, the genome is split into small chunks, and parallel jobs perform the somatic variant calling in their region only.
+All results are then assembled to generate the final output files.
+
+There is at least one chunk by contig defined in the reference genome, with the chunk size upper limit given by the ``window_length`` configuration option.
+So large chromosomes can be split into several chunks, while smaller contigs are left in one chunk.
+Even for large chunk size, this parallelisation can create hundreds of jobs when the reference genome contains many contigs
+(unplaced or unlocalized contigs, viral sequences, decoys, HLA alleles, ...).
+Somatic variant calling is generally meaningless for many of these small contigs.
+It is possible to configure the somatic variant calling to avoid the contigs irrelevant for downstream analysis, for example:
+
+.. code-block:: yaml
+
+  mutect2:
+    ignore_chroms: ['*_random', 'chrUn_*', '*_decoy', "EBV", "HPV*", "HBV", "HCV-*", "HIV-*", "HTLV-1", "CMV", "KSHV", "MCV", "SV40"] # GRCh38.d1.vd1
+    window_length: 300000000   # OK for WES, too large for WGS
+    keep_tmpdir: onerror       # Facilitates debugging
+    ...
+
 
 =======
 Reports
@@ -220,7 +241,7 @@ step_config:
       germline_resource: ''     # Germline variants resource (same as panel of normals)
       common_variants: ''       # Common germline variants for contamination estimation
       extra_arguments: []       # List additional Mutect2 arguments
-                                # Each additional argument xust be in the form:
+                                # Each additional argument must be in the form:
                                 # "--<argument name> <argument value>"
                                 # For example, to filter reads prior to calling & to
                                 # add annotations to the output vcf:
@@ -366,32 +387,41 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
             tumor_base_path = (
                 "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            input_files = {
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
             }
+
+            normal_library = self.get_normal_lib_name(wildcards)
+            if normal_library:
+                normal_base_path = (
+                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                        normal_library=normal_library, **wildcards
+                    )
+                )
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
+
+            return input_files
 
         return input_function
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.normal_sample.dna_ngs_library.name if pair else None
 
     def get_tumor_lib_name(self, wildcards):
         """Return name of tumor library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.tumor_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.tumor_sample.dna_ngs_library.name if pair else wildcards.tumor_library
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -556,18 +586,29 @@ class Mutect2StepPart(MutectBaseStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
-        )
         tumor_base_path = (
             "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
         ).format(**wildcards)
-        return {
-            "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-            "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+        input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
         }
+
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=normal_library, **wildcards
+                )
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
+
+        return input_files
 
     def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
@@ -588,9 +629,10 @@ class Mutect2StepPart(MutectBaseStepPart):
             "stats": base_path + ".raw.vcf.stats",
             "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
         }
-        if "contamination" in self.actions:
-            input_files["table"] = base_path + ".contamination.tbl"
-            input_files["segments"] = base_path + ".segments.tbl"
+        if self.get_normal_lib_name(wildcards):
+            if "contamination" in self.actions:
+                input_files["table"] = base_path + ".contamination.tbl"
+                input_files["segments"] = base_path + ".segments.tbl"
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
@@ -1175,20 +1217,19 @@ class SomaticVariantCallingWorkflow(BaseStep):
         Mutect.
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+            for bio_entity in sheet.sheet.bio_entities.values():
+                for bio_sample in bio_entity.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
 
     def _yield_result_files_joint(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

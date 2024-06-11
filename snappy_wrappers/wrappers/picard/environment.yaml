@@ -2,5 +2,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - picard
-  - bedtools
+  - picard==3.1.1
+  - bedtools==2.31.1

@@ -671,6 +671,9 @@ class BaseStep:
         #: Functions from sub workflows, can be used to generate output paths into these workflows
         self.sub_workflows = {}
 
+        if workflow.verbose:
+            self._write_step_config()
+
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
         # In the following, the "log" parameter to the handler functions is set to "_" as we
@@ -930,6 +933,14 @@ class BaseStep:
                 search_patterns=self.config["search_patterns"],
                 mixed_se_pe=False,
             )
+
+    def _write_step_config(self, f=sys.stdout):
+        print(f"\n\n----- Configuration for step {self.name}:\n", file=f)
+        yaml = ruamel_yaml.YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(sequence=4, mapping=4, offset=4)
+        yaml.dump(self.config, f)
+        print(f"\n------ Configuration for {self.name} ends here\n", file=f)
 
     @classmethod
     def wrapper_path(cls, path):

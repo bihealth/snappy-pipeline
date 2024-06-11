@@ -10,6 +10,11 @@ Pipeline User Docs
     Start here to learn about the pipeline.
     This section starts at :ref:`quickstart`.
 
+The somatic pipeline in detail
+    Documentation for the **users of the somatic pipeline**.
+    Details advanced usage of the somatic pipeline, for example the generation & usage of panel of normals.
+    This section starts at :ref:`somatic_ngs`.
+
 Pipeline Step Docs
     Documentation for the individual pipeline steps.
     This includes a general description, description of the related configuration settings, and a documentation of generated output files and input workflow steps.
@@ -39,6 +44,16 @@ Project Info
     installation
     usage
     overview
+
+.. toctree::
+    :caption: Somatic pipeline
+    :hidden:
+
+    somatic_ngs
+    panel_of_normals
+    somatic_variant_filtration
+    somatic_cnv
+    cbioportal_export
 
 .. toctree::
     :caption: Pipeline Step Docs

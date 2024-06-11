@@ -1,15 +1,15 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- cffi
-- pandas
-- numpy
-- snakemake-minimal
-- openjdk =17
-- seqtk
-- samtools
-- bwa-mem2 ==2.2.1
-- gatk4
-- trimadap
-- samblaster
+  - cffi==1.16.0
+  - pandas==2.2.1
+  - numpy==1.26.4
+  - snakemake-minimal==7.32.4
+  - openjdk==17.0.10
+  - seqtk==1.4
+  - samtools==1.19
+  - bwa-mem2==2.2.1
+  - gatk4==4.5.0.0
+  - trimadap==r11
+  - samblaster==0.1.26

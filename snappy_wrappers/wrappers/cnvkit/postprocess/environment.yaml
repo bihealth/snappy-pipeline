@@ -1,8 +1,7 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
 dependencies:
-- r-base
-- bioconductor-genomicranges
-- htslib
+  - r-base==4.3.3
+  - bioconductor-genomicranges==1.54.1
+  - htslib==1.19

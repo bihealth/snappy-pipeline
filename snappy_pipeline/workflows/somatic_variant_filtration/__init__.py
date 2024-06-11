@@ -1,6 +1,59 @@
 # -*- coding: utf-8 -*-
 """Implementation of the ``somatic_variant_filtration`` step
 
+The current implementation supports two filtration schema:
+
+- the *legacy* schema, now deprecated, always runs the `DKFZBiasFilter <https://github.com/DKFZ-ODCF/DKFZBiasFilter>`_ &
+  `EBFilter <https://doi.org/10.1093/nar/gkt126>`_, and produces files for all combinations of available filters.
+- the *new* schema focuses on flexibility, allows any combination of filters, and returns a single fitlered file for each sample.
+
+The *new* schema is used when the configuration option ``filter_list`` is not empty.
+The following document describes only this *new* schema.
+
+==========
+Step Input
+==========
+
+The step requires ``vcf`` files from either the ``somatic_variant_calling`` or ``somatic_variant_annotation`` steps.
+In the former case, the configuration option ``has_annotation`` must be set to ``False``.
+
+In both cases, it will use the regular output ``vcf`` file, not ``*.full.vcf.gz``.
+
+===========
+Step Output
+===========
+
+For each tumor DNA NGS library with name ``lib_name`` and each read mapper
+``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
+pipeline step will create a directory ``output/{mapper}.{var_caller}.{annotator}.{lib_name}/out``
+with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
+
+Two ``vcf`` files are produced:
+
+- ``{mapper}.{var_caller}.{annotator}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{mapper}.{var_caller}.{annotator}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+
+When the ``somatic_variant_annotation`` step has been omitted, and the filtration is done directly from the output of the ``somatic_variant_calling`` step,
+then the output files are stored in the ``output/{mapper}.{var_caller}.{lib_name}/out`` directory, under the names ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` &
+``{mapper}.{var_caller}.{lib_name}.full.vcf.gz``
+
+For example, it might look as follows for the example from above:
+
+::
+
+    output/
+    +-- bwa.mutect2.vep.filtered.P001-N1-DNA1-WES1
+    |   `-- out
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.tbi
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.md5
+    |       `-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.vcf.gz.tbi.md5
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.tbi
+    |       |-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.md5
+    |       `-- bwa.mutect2.vep.filtered.P001-T1-DNA1-WES1.full.vcf.gz.tbi.md5
+    [...]
+
 =====================
 Default Configuration
 =====================
@@ -9,43 +62,53 @@ The default configuration is as follows.
 
 .. include:: DEFAULT_CONFIG_somatic_variant_filtration.rst
 
-=========
-Important
-=========
-
-Because the EB Filter step is so time consuming, the data going
-can be heavily prefiltered! (e.g. using Jannovar with the offExome flag).
-
-TODO: document filter, for now see the eb_filter wrapper!
-
 =======
-Concept
+Filters
 =======
-All variants are annotated with the dkfz-bias-filter to remove sequencing
-and PCR artifacts. The variants annotatated with EBFilter are variable, i.e.
-only variants that have the PASS flag set because we assume only those will
-be kept.
 
-We borrowed the general workflow from variant_filtration, i.e. working with
-pre-defined filter sets and exon/region lists.
+The following filters are implemented:
 
-========
-Workflow
-========
+- ``dkfz``: uses orientiation biases to remove sequencing & PCR artifacts.
+  The current implementation doesn't allow any parametrisation of this filter.
+  This filter will add ``bSeq`` or ``bPcr`` to the FILTER column of rejected variants.
+- ``ebfilter``: Bayesian statistical model to score variants.
+  Variants with a score lower than ``ebfilter_threshold`` are rejected.
+  The scoring algorithm can be parameterised from the coniguration.
+  This filter will add ``ebfilter_<n>`` to the FILTER column of rejected variants.
+- ``bcftools``: flexible filter based on `bcftools expressions <https://samtools.github.io/bcftools/bcftools.html#expressions>`_.
+  The expression can be designed to ``include`` or ``exclude`` variants.
+  This filter will add ``bcftools_<n>`` to the FILTER column of rejected variants.
+- ``regions``: filter to exclude variants outside of user's defined regions.
+  Typically used to reject variants outside of coding regions.
+  This filter will add ``regions_<n>`` to the FILTER column of rejected variants.
+- ``protected``: anti-filter to avoid variants in protected regions to be otherwise filtered out.
+  This filter "whitelists" variants in specific regions. This is valuable to protect
+  known drivers against being filtered out, even if there is little experimental support for them.
+  This filter will add ``PROTECTED`` to the FILTER column of rejected variants.
 
-* 1. Do the filtering genome wide (this file needs to be there, always)
+In the above description, ``<n>`` is here the sequence number of the filter in the filter list.
 
-    - dkfz-ebfilter-filterset1-genomewide
+The filters can be used or not, and can be used multiple times. For example, it is possible to
+use the ``bcftools`` filter to reject differentially potential FFPE artifacts. The filter list would then be:
 
-* 2. optionally, subset to regions defined in bed file, which return
+.. code-block:: yaml
 
-    - dkfz-ebfilter-filterset1-regions1
+  filter_list:
+  - dkfz: {}
+  - ebfilter:
+    ebfilter_threshold: 2.4
+  - bcftools:
+    exclude: "AD[1:0]+AD[1:1]<50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.05"
+  - bcftools:
+    exclude: "((REF='C' & ALT='T') | (REF='G' & ALT='A')) & AD[1:1]/(AD[1:0]+AD[1:1])<0.10"
+  - protected:
+    path_bed: hotspots_locii.bed
 
-and so on for filterset1 to n
+This list of filters would apply the DKFZBiasFilter, the EBFilter, reject all variants with depth lower than 50, less than 5 reads supporting the alternative allele, or with a variant allele fraction below 5%.
+It would also reject all C-to-T and G-to-A variants with a VAF lower than 10%, because they might be FFPE artifacts.
+All variants overlapping with hotspots locii would be protected against filtration.
 
-filterset1: filter bPcr, bSeq flags from dkfz-bias-filter
-
-filterset2: additionally filter variants with EBscore < x, x is configurable
+Note that the parallelisation of ``ebfilter`` has been removed, even though this operation can be slow when there are many variants (from WGS data for example).
 """
 
 from collections import OrderedDict
@@ -86,14 +149,15 @@ DEFAULT_CONFIG = r"""
 # Default configuration variant_annotation
 step_config:
   somatic_variant_filtration:
-    path_somatic_variant: ../somatic_variant_annotation
-    path_ngs_mapping: ../ngs_mapping
-    tools_ngs_mapping: null
-    tools_somatic_variant_calling: null
-    tools_somatic_variant_annotation: null
+    path_somatic_variant: ../somatic_variant_annotation # When annotations are present, otherwise ../somatic_variant_calling
+    path_ngs_mapping: ../ngs_mapping                    # Needed for dkfz & ebfilter
+    tools_ngs_mapping: null                             # Default: use those defined in ngs_mapping step
+    tools_somatic_variant_calling: null                 # Default: use those defined in somatic_variant_calling step
+    tools_somatic_variant_annotation: null              # Default: use those defined in somatic_variant_annotation step
     has_annotation: True
-    filter_sets:
-    # no_filter: no_filters    # implicit, always defined
+    filtration_schema: "list"                           # Either "sets" (old scheme- filter_sets) or "list" (new scheme- filter_list)
+    filter_sets:                                        # Deprecated filtration method, use filter_list
+    # no_filter: no_filters                             # implicit, always defined
       dkfz_only: ''  # empty
       dkfz_and_ebfilter:
         ebfilter_threshold: 2.4
@@ -103,37 +167,17 @@ step_config:
       dkfz_and_oxog:
         vaf_threshold: 0.08
         coverage_threshold: 5
-    exon_lists: {}
-    # genome_wide: null         # implicit, always defined
+    exon_lists: {}                                     # Deprecated filtration method, use filter_list
+    # genome_wide: null                                # implicit, always defined
     # ensembl74: path/to/ensembl47.bed
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605    # herpes virus
-    - hs37d5       # GRCh37 decoy
-    - chrEBV       # Eppstein-Barr Virus
-    - '*_decoy'    # decoy contig
-    - 'HLA-*'      # HLA genes
-    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
-    eb_filter:
+    eb_filter:                                         # Deprecated filter, use in filter_list
       shuffle_seed: 1
       panel_of_normals_size: 25
       min_mapq: 20
       min_baseq: 15
-      # Parallelization configuration
-      window_length: 10000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
     filter_list: []
     # Available filters
-    # dkfz: {}                    # Not parametrisable (?)
+    # dkfz: {}                                         # Not parametrisable
     # ebfilter:
     #   ebfilter_threshold: 2.4
     #   shuffle_seed: 1
@@ -141,10 +185,12 @@ step_config:
     #   min_mapq: 20
     #   min_baseq: 15
     # bcftools:
-    #   include: ""               # Expression to be used in bcftools view --include
-    #   exclude: ""               # Expression to be used in bcftools view --exclude
+    #   include: ""                                   # Expression to be used in bcftools view --include
+    #   exclude: ""                                   # Expression to be used in bcftools view --exclude
     # regions:
-    #   path_bed: REQUIRED        # Bed file of regions to be considered (variants outside are filtered out)
+    #   path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    # protected:
+    #   path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
 """
 
 
@@ -181,8 +227,8 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.normal_sample.dna_ngs_library.name if pair else None
 
     def get_params(self, action):
         """Return arguments to pass down."""
@@ -209,32 +255,17 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    #: Default filtration resource usage (should be light)
+    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
+
     def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        """Return path to input or previous filter vcf file"""
         # Validate action
         self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
-            yield "bam", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                "{mapper}.{tumor_library}",
-                "out",
-                "{mapper}.{tumor_library}.bam",
-            )
-            normal_library = self.tumor_to_normal_library[wildcards["tumor_library"]]
-            yield "normal", os.path.join(
-                self.config["path_ngs_mapping"],
-                "output",
-                f"{{mapper}}.{normal_library}",
-                "out",
-                f"{{mapper}}.{normal_library}.bam",
-            )
             filter_nb = int(wildcards["filter_nb"])
-            filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
-            if filter_name == "ebfilter":
-                yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
             if filter_nb > 1:
                 prev = list(self.config["filter_list"][filter_nb - 2].keys())[0]
                 n = filter_nb - 1
@@ -295,45 +326,70 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
             )
 
-    def get_resource_usage(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
 
-        def time_usage(wildcards):
-            filter_nb = int(wildcards["filter_nb"]) - 1
-            filter_name = list(self.config["filter_list"][filter_nb].keys())[0]
-            if filter_name == "dkfz":
-                return "12:00:00"
-            elif filter_name == "ebfilter":
-                return "24:00:00"
-            else:
-                return "02:00:00"
+        def input_function(wildcards):
+            return {"filter_name": "{}_{}".format(self.filter_name, wildcards["filter_nb"])}
 
-        def memory_usage(wildcards):
-            filter_nb = int(wildcards["filter_nb"]) - 1
-            filter_name = list(self.config["filter_list"][filter_nb].keys())[0]
-            if filter_name == "dkfz":
-                return f"{3 * 1024}M"
-            elif filter_name == "ebfilter":
-                return f"{2 * 1024}M"
-            else:
-                return f"{8 * 1024}M"
-
-        return ResourceUsage(
-            threads=1,
-            time=time_usage,
-            memory=memory_usage,
-        )
+        return input_function
 
 
-class OneFilterDkfzStepPart(OneFilterStepPart):
+class OneFilterWithBamStepPart(OneFilterStepPart):
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
+            yield from parent(wildcards).items()
+
+            yield "bam", os.path.join(
+                self.config["path_ngs_mapping"],
+                "output",
+                "{mapper}.{tumor_library}",
+                "out",
+                "{mapper}.{tumor_library}.bam",
+            )
+            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
+                yield "normal", os.path.join(
+                    self.config["path_ngs_mapping"],
+                    "output",
+                    f"{{mapper}}.{normal_library}",
+                    "out",
+                    f"{{mapper}}.{normal_library}.bam",
+                )
+
+        return input_function
+
+
+class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     name = "one_dkfz"
     filter_name = "dkfz"
+    resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
 
 
-class OneFilterEbfilterStepPart(OneFilterStepPart):
+class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
     filter_name = "ebfilter"
+    resource_usage = {"run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M")}
+
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
+            yield from parent(wildcards).items()
+
+            yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+
+        return input_function
 
     @dictify
     def _get_output_files_write_panel(self):
@@ -343,12 +399,19 @@ class OneFilterEbfilterStepPart(OneFilterStepPart):
         )
 
     def get_params(self, action):
+        """Return add EBFilter parameters to parameters"""
         # Validate action
         self._validate_action(action)
 
         @dictify
         def input_function(wildcards):
-            yield "args", {"filter_nb": wildcards["filter_nb"]}
+            parent = super(OneFilterEbfilterStepPart, self).get_params(action)
+            parameters = parent(wildcards)
+            filter_nb = int(wildcards["filter_nb"])
+            ebfilter_config = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            parameters.update(ebfilter_config)
+            parameters["has_annotation"] = self.config.get("has_annotation", False)
+            return parameters
 
         return input_function
 
@@ -357,10 +420,86 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
     name = "one_bcftools"
     filter_name = "bcftools"
 
+    def get_params(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        def input_function(wildcards):
+            parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
+            parameters = parent(wildcards)
+            filter_nb = int(wildcards["filter_nb"])
+            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            msg = "Only one include or exclude expression is allowed in {} filter {} (configuration: {})"
+            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
+            keyword = list(keywords.keys())[0]
+            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude. Configuration: {})'
+            assert keyword in ("include", "exclude"), msg.format(
+                keyword, self.filter_name, filter_nb, keywords
+            )
+            parameters.update(keywords)
+            return parameters
+
+        return input_function
+
 
 class OneFilterRegionsStepPart(OneFilterStepPart):
     name = "one_regions"
     filter_name = "regions"
+
+    def get_params(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        def input_function(wildcards):
+            parent = super(OneFilterRegionsStepPart, self).get_params(action)
+            parameters = parent(wildcards)
+            filter_nb = int(wildcards["filter_nb"])
+            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            msg = (
+                "Only one include or exclude region is allowed in {} filter {} (configuration: {})"
+            )
+            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
+            keyword = list(keywords.keys())[0]
+            msg = 'Unknown keyword "{}" in {} filter {} (allowed values: include, exclude, path_bed (deprecated). Configuration: {})'
+            assert keyword in ("include", "exclude", "path_bed"), msg.format(
+                keyword, self.filter_name, filter_nb, keywords
+            )
+            if keyword == "path_bed":
+                keywords = {"exclude": keywords["path_bed"]}
+            parameters.update(keywords)
+            return parameters
+
+        return input_function
+
+
+class OneFilterProtectedStepPart(OneFilterStepPart):
+    name = "one_protected"
+    filter_name = "protected"
+
+    def get_params(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        def input_function(wildcards):
+            parent = super(OneFilterProtectedStepPart, self).get_params(action)
+            parameters = parent(wildcards)
+            filter_nb = int(wildcards["filter_nb"])
+            keywords = self.config["filter_list"][filter_nb - 1][self.filter_name]
+            msg = (
+                "Only one protected region bed file is allowed in {} filter {} (configuration: {})"
+            )
+            assert len(keywords) == 1, msg.format(self.filter_name, filter_nb, keywords)
+            keyword = list(keywords.keys())[0]
+            msg = (
+                'Unknown keyword "{}" in {} filter {} (allowed value: path_bed. Configuration: {})'
+            )
+            assert keyword in ("path_bed",), msg.format(
+                keyword, self.filter_name, filter_nb, keywords
+            )
+            parameters.update(keywords)
+            return parameters
+
+        return input_function
 
 
 class LastFilterStepPart(SomaticVariantFiltrationStepPart):
@@ -376,14 +515,23 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
 
+        filter_names = [list(filter_name.keys())[0] for filter_name in self.config["filter_list"]]
         filter_nb = len(self.config["filter_list"])
-        filter_name = list(self.config["filter_list"][filter_nb - 1].keys())[0]
-        return os.path.join(
+        filter_name = filter_names[filter_nb - 1]
+        vcf = os.path.join(
             "work",
             self.name_pattern,
             "out",
             self.name_pattern + f".{filter_name}_{filter_nb}.vcf.gz",
         )
+        prefix = os.path.join("work", self.name_pattern, "log", self.name_pattern)
+        logs = [
+            prefix + "." + filter_name + "_" + str(filter_nb + 1) + "." + e + m
+            for filter_nb, filter_name in enumerate(filter_names)
+            for e in ("log", "conda_list.txt", "conda_info.txt")
+            for m in ("", ".md5")
+        ]
+        return {"vcf": vcf, "logs": logs}
 
     @dictify
     def get_output_files(self, action):
@@ -394,6 +542,7 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
             name_pattern += ".{annotator}"
         name_pattern += ".filtered.{tumor_library}"
         vcf = os.path.join("work", name_pattern, "out", name_pattern)
+        merged_log = os.path.join("work", name_pattern, "log", name_pattern + ".merged.tar.gz")
         return {
             "vcf": vcf + ".vcf.gz",
             "vcf_tbi": vcf + ".vcf.gz.tbi",
@@ -403,6 +552,8 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
             "full_tbi": vcf + ".full.vcf.gz.tbi",
             "full_md5": vcf + ".full.vcf.gz.md5",
             "full_tbi_md5": vcf + ".full.vcf.gz.tbi.md5",
+            "log": merged_log,
+            "log_md5": merged_log + ".md5",
         }
 
     @dictify
@@ -438,11 +589,13 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return path to jannovar-annotated vcf input file"""
         # Validate action
         self._validate_action(action)
+
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+
         # VCF file and index
-        tpl = (
-            "output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
-            "{mapper}.{var_caller}.{annotator}.{tumor_library}"
-        )
+        tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         somatic_variant = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
@@ -459,10 +612,16 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
+
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+
         prefix = (
-            r"work/{mapper}.{var_caller}.{annotator}."
-            r"dkfz_bias_filter.{tumor_library,[^\.]+}/out/{mapper}.{var_caller}."
-            r"{annotator}.dkfz_bias_filter.{tumor_library}"
+            rf"work/{name_pattern}.{self.name}."
+            r"{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}.{self.name}."
+            r"{tumor_library}"
         )
         key_ext = {
             "vcf": ".vcf.gz",
@@ -482,14 +641,21 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.{tumor_library}"
+        name_pattern += f".{self.name}"
+        prefix = os.path.join(
+            "work",
+            name_pattern + r".{tumor_library,[^\.]+}",
+            "log",
+            name_pattern + ".{tumor_library}",
+        )
+
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
         for key, ext in key_ext:
-            yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
+            yield key, prefix + ext
 
     def get_resource_usage(self, action):
         """Get Resource Usage
@@ -524,18 +690,25 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
         # VCF file and index
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
         tpl = (
-            "work/{mapper}.{var_caller}.{annotator}."
-            "dkfz_bias_filter.{tumor_library}/out/{mapper}.{var_caller}."
-            "{annotator}.dkfz_bias_filter."
+            f"work/{name_pattern}."
+            "dkfz_bias_filter.{tumor_library}/"
+            f"out/{name_pattern}."
+            "dkfz_bias_filter."
             "{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         for key, ext in key_ext.items():
             yield key, tpl.format(**wildcards) + ext
         # BAM file and index
-        tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
+        tpl = r"output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         for key, ext in key_ext.items():
@@ -553,12 +726,25 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
+    def get_params(self, action):
+        """Return EBFilter parameters from the config"""
+        # Validate action
+        self._validate_action(action)
+        parameters = self.config["eb_filter"]
+        parameters.update(self.config["filter_sets"]["dkfz_and_ebfilter"])
+        parameters["has_annotation"] = self.config.get("has_annotation", False)
+        return parameters
+
     @dictify
     def _get_output_files_run(self):
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+        # VCF file and index
         prefix = (
-            r"work/{mapper}.{var_caller}.{annotator}."
-            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/out/"
-            r"{mapper}.{var_caller}.{annotator}."
+            rf"work/{name_pattern}."
+            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/"
+            rf"out/{name_pattern}."
             r"dkfz_bias_filter.eb_filter.{tumor_library}"
         )
         key_ext = {
@@ -590,14 +776,20 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             name_pattern = "{mapper}.{var_caller}"
             if self.config["has_annotation"]:
                 name_pattern += ".{annotator}"
-            name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}"
+            name_pattern += ".dkfz_bias_filter.eb_filter"
+            prefix = os.path.join(
+                "work",
+                name_pattern + r".{tumor_library,[^\.]+}",
+                "log",
+                name_pattern + ".{tumor_library}",
+            )
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
                 ("conda_list", ".conda_list.txt"),
             )
             for key, ext in key_ext:
-                yield key, os.path.join("work", name_pattern, "log", name_pattern + ext)
+                yield key, prefix + ext
 
     def write_panel_of_normals_file(self, wildcards):
         """Write out file with paths to panels-of-normal"""
@@ -636,51 +828,41 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="01:00:00",  # 6 days
+            time="04:00:00",  # 4 hours
             memory=f"{8 * 1024}M",
         )
 
 
-class ApplyFiltersStepPartBase(SomaticVariantFiltrationStepPart):
-    """Base class for the different filters."""
+class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
+    """Apply the configured filters."""
 
     #: Step name
-    name = None
+    name = "apply_filters"
 
     #: Class available actions
     actions = ("run",)
+
+    #: Default filtration resource usage (should be light)
+    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
 
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = "{mapper}.{var_caller}"
         if self.config["has_annotation"]:
             name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
-        self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern + "{ext}")
-        self.path_log = os.path.join("work", name_pattern, "log", name_pattern + ".log")
-
-    def get_resource_usage(self, action):
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            time="01:00:00",  # 1 hour
-            memory=f"{int(3.75 * 1024 * 2)}M",
+        name_pattern += ".dkfz_bias_filter.eb_filter"
+        self.base_path_out = os.path.join(
+            "work",
+            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}",
+            "out",
+            name_pattern + ".{tumor_library}.{filter_set}" + "{ext}",
         )
-
-
-class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "apply_filters"
+        self.path_log = os.path.join(
+            "work",
+            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}",
+            "log",
+            name_pattern + ".{tumor_library}.{filter_set}" + ".log",
+        )
 
     def get_args(self, action):
         # Validate action
@@ -713,21 +895,50 @@ class ApplyFiltersStepPart(ApplyFiltersStepPartBase):
         # Validate action
         self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{step}", self.name).replace(
-                "{exon_list}", "genome_wide"
-            ).replace("{ext}", ext)
+            yield key, self.base_path_out.replace("{ext}", ext)
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return self.path_log.replace("{step}", self.name).replace("{exon_list}", "genome_wide")
+        return self.path_log
 
 
-class FilterToExonsStepPart(ApplyFiltersStepPartBase):
+class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
     """Apply the configured filters."""
 
     #: Step name
     name = "filter_to_exons"
+
+    #: Class available actions
+    actions = ("run",)
+
+    #: Default filtration resource usage (should be light)
+    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        name_pattern = "{mapper}.{var_caller}"
+        if self.config["has_annotation"]:
+            name_pattern += ".{annotator}"
+        name_pattern += ".dkfz_bias_filter.eb_filter"
+        self.base_path_out = os.path.join(
+            "work",
+            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}",
+            "out",
+            name_pattern + ".{tumor_library}.{filter_set}.{exon_list}" + "{ext}",
+        )
+        self.path_log = os.path.join(
+            "work",
+            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}",
+            "log",
+            name_pattern + ".{tumor_library}.{filter_set}.{exon_list}" + ".log",
+        )
+        self.base_path_in_ = os.path.join(
+            "work",
+            name_pattern + ".{tumor_library}.{filter_set}",
+            "out",
+            name_pattern + ".{tumor_library}.{filter_set}" + "{ext}",
+        )
 
     def get_input_files(self, action):
         # Validate action
@@ -735,15 +946,14 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
 
         @dictify
         def input_function(wildcards):
-            # TODO: Possible bug, missing entry for `tumor_library`
-            #  tests lead to "KeyError: 'tumor_library'"
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield key, self.base_path_out.format(
-                    step="apply_filters",
+                yield key, self.base_path_in_.format(
+                    tumor_library=wildcards.tumor_library,
                     mapper=wildcards.mapper,
                     var_caller=wildcards.var_caller,
+                    annotator=wildcards.get("annotator", ""),
                     filter_set=wildcards.filter_set,
-                    exon_list="genome_wide",
+                    exon_list=wildcards.exon_list,
                     ext=ext,
                 )
 
@@ -754,12 +964,12 @@ class FilterToExonsStepPart(ApplyFiltersStepPartBase):
         # Validate action
         self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{step}", "filter_to_exons").replace("{ext}", ext)
+            yield key, self.base_path_out.replace("{ext}", ext)
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return self.path_log.replace("{step}", self.name)
+        return self.path_log
 
 
 class SomaticVariantFiltrationWorkflow(BaseStep):
@@ -772,7 +982,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
     sheet_shortcut_class = CancerCaseSheet
 
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=False)
     }
 
     @classmethod
@@ -798,6 +1008,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 ApplyFiltersStepPart,
                 FilterToExonsStepPart,
@@ -845,18 +1056,34 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         else:
             annotators = []
 
-        if len(self.config["filter_list"]) > 0:
+        log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
+
+        if self.config["filtration_schema"] == "list":
             name_pattern = "{mapper}.{caller}"
             if self.config["has_annotation"]:
                 name_pattern += ".{annotator}"
-            name_pattern += ".filtered.{tumor_library.name}"
+            name_pattern += ".filtered.{tumor_library}"
 
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=mappers,
                 caller=callers,
                 annotator=annotators,
-                ext=EXT_VALUES,
+                ext=[f + e for f in ("", ".full") for e in EXT_VALUES],
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                ext=log_ext,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".merged.tar.gz{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                ext=("", ".md5"),
             )
         else:
             filter_sets = ["no_filter"]
@@ -867,9 +1094,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             name_pattern = "{mapper}.{caller}"
             if self.config["has_annotation"]:
                 name_pattern += ".{annotator}"
-            name_pattern += (
-                ".dkfz_bias_filter.eb_filter.{tumor_library.name}.{filter_set}.{exon_list}"
-            )
+            name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
 
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
@@ -879,6 +1104,15 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 filter_set=filter_sets,
                 exon_list=exon_lists,
                 ext=EXT_VALUES,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                filter_set=filter_sets,
+                exon_list=exon_lists,
+                ext=("log",),
             )
 
         # TODO: filtration for joint calling not implemented yet
@@ -890,20 +1124,19 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Mutect.
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+            for bio_entity in sheet.sheet.bio_entities.values():
+                for bio_sample in bio_entity.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield from expand(tpl, tumor_library=[ngs_library.name], **kwargs)
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
@@ -911,3 +1144,9 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             ("step_config", "somatic_variant_filtration", "path_somatic_variant"),
             "Path to variant calling not configured but required for somatic variant annotation",
         )
+        assert self.config["filtration_schema"] in (
+            "sets",
+            "list",
+        ), "Filtration schema must be either 'list' or 'sets' (deprecated)"
+        if self.config["filtration_schema"] == "list":
+            assert len(self.config["filter_list"]) > 0, "No filter defined in the filter list"
