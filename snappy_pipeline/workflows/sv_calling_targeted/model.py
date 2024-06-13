@@ -15,8 +15,11 @@ class Tool(enum.StrEnum):
 
 
 class Gcnv(SnappyModel):
-    path_par_intervals: str = ""
-    """Path to interval block list with PAR region for contig calling."""
+    #path_par_intervals: str = ""
+    #"""Path to interval block list with PAR region for contig calling."""
+
+    # path_uniquely_mapable_bed: str
+    # """path to BED file with uniquely mappable regions."""
 
     path_target_interval_list_mapping: list[TargetIntervalEntry]
     """
@@ -27,8 +30,7 @@ class Gcnv(SnappyModel):
        path: "path/to/targets.bed"
     """
 
-    path_uniquely_mapable_bed: str
-
+    # Not sure if this can/should be empty be default; can we set a required flag?
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
     Path to gCNV model - will execute analysis in CASE MODE.

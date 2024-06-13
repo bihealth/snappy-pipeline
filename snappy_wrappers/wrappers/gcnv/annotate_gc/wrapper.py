@@ -6,7 +6,8 @@ import os
 from snakemake.shell import shell
 
 # Pick the target BED file to use.
-config = DictQuery(snakemake.config).get("step_config/sv_calling_targeted/gcnv")
+#TODO: why is 'target_interval_bed' not used?
+config = DictQuery(snakemake.config).get("step_config/helper_gcnv_model_targeted/gcnv")
 for item in config["path_target_interval_list_mapping"]:
     if item["name"] == snakemake.wildcards.library_kit:
         target_interval_bed = item["path"]
@@ -15,7 +16,7 @@ else:  # of for, did not break out
     raise Exception("Found no target intervals for %s" % item["name"])
 
 map_bed = DictQuery(snakemake.config).get(
-    "step_config/sv_calling_targeted/gcnv/path_uniquely_mapable_bed"
+    "step_config/helper_gcnv_model_targeted/gcnv/path_uniquely_mapable_bed"
 )
 
 shell(

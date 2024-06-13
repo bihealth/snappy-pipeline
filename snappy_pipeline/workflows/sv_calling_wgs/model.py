@@ -28,8 +28,11 @@ class Tools(SnappyModel):
 
 
 class Gcnv(SnappyModel):
-    path_par_intervals: str
-    """Path to interval block list with PAR region for contig calling."""
+    #path_par_intervals: str
+    #"""Path to interval block list with PAR region for contig calling."""
+
+    #path_uniquely_mapable_bed: str
+    #"""path to BED file with uniquely mappable regions."""
 
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
@@ -39,9 +42,6 @@ class Gcnv(SnappyModel):
         contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
         model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
     """
-
-    path_uniquely_mapable_bed: str  # "mapable" is a typo in the original code
-    """Path to BED file with uniquely mappable regions."""
 
     skip_libraries: list[str] = []
     """
