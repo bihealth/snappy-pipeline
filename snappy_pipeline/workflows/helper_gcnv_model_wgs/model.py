@@ -8,7 +8,8 @@ class Gcnv(SnappyModel):
     path_uniquely_mapable_bed: str
     """path to BED file with uniquely mappable regions."""
 
-    #NOTE: the wgs model do NOT need the path_target_interval_list_mapping
+    # NOTE: the wgs model do NOT need the path_target_interval_list_mapping
+
 
 class HelperGcnvModelWgs(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"

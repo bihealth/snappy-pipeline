@@ -62,6 +62,7 @@ def minimal_config():
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
                   path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
               path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
+              path_par_intervals: /path/to/par.intervals
 
         data_sets:
           first_batch:

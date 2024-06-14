@@ -44,8 +44,8 @@ def minimal_config():
               - melt
             delly2: {}
             gcnv:
-              path_par_intervals: /path/to/par.intervals
-              path_uniquely_mapable_bed: /path/to/uniquely_mapable.bed
+              # path_par_intervals: /path/to/par.intervals
+              # path_uniquely_mapable_bed: /path/to/uniquely_mapable.bed
               precomputed_model_paths:
                 - library: "default"
                   contig_ploidy: /path/to/ploidy-model
