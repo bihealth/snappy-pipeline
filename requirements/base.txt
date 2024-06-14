@@ -1,3 +1,5 @@
+setuptools ~=68.1.2
+
 # Nice, round-trip enabled YAML parsing
 ruamel.yaml ~=0.18.6
 
