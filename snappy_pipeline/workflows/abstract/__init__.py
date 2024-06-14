@@ -113,7 +113,9 @@ class BaseStepPart:
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
-        threads=1, time="01:00:00", memory="2G"  # 1h
+        threads=1,
+        time="01:00:00",
+        memory="2G",  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
@@ -238,9 +240,9 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__[
-        P: BaseStep
-    ](self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False):
+    def __init__[P: BaseStep](
+        self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False
+    ):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
@@ -646,9 +648,7 @@ class BaseStep:
         """
         return ""  # pragma: no cover
 
-    def __init__[
-        C: SnappyStepModel
-    ](
+    def __init__[C: SnappyStepModel](
         self,
         workflow: snakemake.Workflow,
         config: MutableMapping[str, Any],
@@ -1402,9 +1402,12 @@ class InputFilesStepPartMixin:
         @dictify
         def input_function(wildcards):
             if self.include_ped_file:
-                yield "ped", os.path.realpath(
-                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
-                ).format(**wildcards)
+                yield (
+                    "ped",
+                    os.path.realpath(
+                        "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                    ).format(**wildcards),
+                )
             name_pattern = self.prev_class.name_pattern.replace(r",[^\.]+", "")
             tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
             for key, ext in zip(self.ext_names, self.ext_values):

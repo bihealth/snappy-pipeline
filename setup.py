@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Installation driver (and development utility entry point) for snappy-pipeline
-"""
+"""Installation driver (and development utility entry point) for snappy-pipeline"""
 
 from itertools import chain
 import os
@@ -31,7 +30,7 @@ def parse_requirements(path):
 
 # Enforce python version >=3.12
 if sys.version_info < (3, 12):
-    print("At least Python 3.7 is required.\n", file=sys.stderr)
+    print("At least Python 3.12 is required.\n", file=sys.stderr)
     sys.exit(1)
 
 with open("README.md") as readme_file:

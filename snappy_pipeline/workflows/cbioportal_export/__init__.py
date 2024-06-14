@@ -332,12 +332,15 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
-        yield "DNAcopy", os.path.join(
-            self.config.path_copy_number,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + "_dnacopy.seg",
+        yield (
+            "DNAcopy",
+            os.path.join(
+                self.config.path_copy_number,
+                "output",
+                name_pattern,
+                "out",
+                name_pattern + "_dnacopy.seg",
+            ),
         )
 
     @dictify

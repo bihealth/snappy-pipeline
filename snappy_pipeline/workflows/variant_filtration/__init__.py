@@ -204,9 +204,12 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
         @dictify
         def input_function(wildcards):
-            yield "ped", os.path.realpath(
-                "work/write_pedigree.{index_library}/out/{index_library}.ped"
-            ).format(**wildcards)
+            yield (
+                "ped",
+                os.path.realpath(
+                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                ).format(**wildcards),
+            )
             variant_annotation = self.parent.sub_workflows["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (

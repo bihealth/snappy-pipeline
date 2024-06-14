@@ -250,12 +250,15 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         }
         yield from work_paths.items()
         # Generate paths in "output/" directory
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_paths.values(), self.get_log_file("annotate_seqvars").values()
-            )
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(
+                    work_paths.values(), self.get_log_file("annotate_seqvars").values()
+                )
+            ],
+        )
 
     def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -367,12 +370,15 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         }
         yield from work_paths.items()
         # Generate paths in "output/" directory
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_paths.values(), self.get_log_file("annotate_strucvars").values()
-            )
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(
+                    work_paths.values(), self.get_log_file("annotate_strucvars").values()
+                )
+            ],
+        )
 
     #: Alias the get params function.
     _get_params_annotate_strucvars = _get_params_annotate_seqvars
@@ -413,10 +419,13 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "bam_qc_md5": f"{prefix}.bam-qc.tsv.gz.md5",
         }
         yield from work_paths.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_paths.values(), self.get_log_file("bam_qc").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_paths.values(), self.get_log_file("bam_qc").values())
+            ],
+        )
 
     def _get_params_bam_qc(self, wildcards: Wildcards) -> typing.Dict[str, str]:
         """Get parameters for wrapper ``variant_annotator/bam_qc``
@@ -441,9 +450,9 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                library_name_to_file_identifier[
+                library_name_to_file_identifier[donor.dna_ngs_library.name] = (
                     donor.dna_ngs_library.name
-                ] = donor.dna_ngs_library.name
+                )
         return library_name_to_file_identifier
 
 

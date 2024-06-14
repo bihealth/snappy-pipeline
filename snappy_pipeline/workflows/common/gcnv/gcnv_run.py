@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the gCNV CASE mode run methods.
-"""
+"""Implementation of the gCNV CASE mode run methods."""
 
 from glob import glob
 from itertools import chain
@@ -349,10 +348,13 @@ class PostGermlineCallsMixin:
 
         # Yield cnv calls output
         name_pattern = f"{wildcards.mapper}.gcnv_call_cnvs.{library_kit}"
-        yield "calls", [
-            f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
-            for shard in model_dir_dict
-        ]
+        yield (
+            "calls",
+            [
+                f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
+                for shard in model_dir_dict
+            ],
+        )
 
         # Yield contig-ploidy output
         ext = "ploidy"
@@ -439,12 +441,15 @@ class MergeMultikitFamiliesMixin:
         for key, suffix in RESULT_EXTENSIONS.items():
             work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("merge_multikit_families").values()
-            )
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(
+                    work_files.values(), self.get_log_file("merge_multikit_families").values()
+                )
+            ],
+        )
 
     @dictify
     def _get_log_file_merge_multikit_families(self):

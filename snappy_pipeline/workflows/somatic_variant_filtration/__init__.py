@@ -225,16 +225,22 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
             if filter_nb > 1:
                 prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
                 n = filter_nb - 1
-                yield "vcf", os.path.join(
-                    "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
+                yield (
+                    "vcf",
+                    os.path.join(
+                        "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
+                    ),
                 )
             else:
-                yield "vcf", os.path.join(
-                    self.config.path_somatic_variant,
-                    "output",
-                    self.name_pattern,
-                    "out",
-                    self.name_pattern + ".vcf.gz",
+                yield (
+                    "vcf",
+                    os.path.join(
+                        self.config.path_somatic_variant,
+                        "output",
+                        self.name_pattern,
+                        "out",
+                        self.name_pattern + ".vcf.gz",
+                    ),
                 )
 
         return input_function
@@ -269,17 +275,23 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
             ("conda_list", ".conda_list.txt"),
         )
         for key, ext in key_ext:
-            yield key, os.path.join(
-                "work",
-                self.name_pattern,
-                "log",
-                self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext,
+            yield (
+                key,
+                os.path.join(
+                    "work",
+                    self.name_pattern,
+                    "log",
+                    self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext,
+                ),
             )
-            yield key + "_md5", os.path.join(
-                "work",
-                self.name_pattern,
-                "log",
-                self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
+            yield (
+                key + "_md5",
+                os.path.join(
+                    "work",
+                    self.name_pattern,
+                    "log",
+                    self.name_pattern + "." + self.filter_name + "_{filter_nb}" + ext + ".md5",
+                ),
             )
 
     def get_params(self, action):
@@ -303,20 +315,26 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
             parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
             yield from parent(wildcards).items()
 
-            yield "bam", os.path.join(
-                self.config.path_ngs_mapping,
-                "output",
-                "{mapper}.{tumor_library}",
-                "out",
-                "{mapper}.{tumor_library}.bam",
-            )
-            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
-                yield "normal", os.path.join(
+            yield (
+                "bam",
+                os.path.join(
                     self.config.path_ngs_mapping,
                     "output",
-                    f"{{mapper}}.{normal_library}",
+                    "{mapper}.{tumor_library}",
                     "out",
-                    f"{{mapper}}.{normal_library}.bam",
+                    "{mapper}.{tumor_library}.bam",
+                ),
+            )
+            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
+                yield (
+                    "normal",
+                    os.path.join(
+                        self.config.path_ngs_mapping,
+                        "output",
+                        f"{{mapper}}.{normal_library}",
+                        "out",
+                        f"{{mapper}}.{normal_library}.bam",
+                    ),
                 )
 
         return input_function
@@ -349,9 +367,12 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
 
     @dictify
     def _get_output_files_write_panel(self):
-        yield "txt", (
-            "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-            "panel_of_normals.txt"
+        yield (
+            "txt",
+            (
+                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
+                "panel_of_normals.txt"
+            ),
         )
 
     def get_params(self, action):
@@ -688,9 +709,12 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
 
     @dictify
     def _get_output_files_write_panel(self):
-        yield "txt", (
-            "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-            "panel_of_normals.txt"
+        yield (
+            "txt",
+            (
+                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
+                "panel_of_normals.txt"
+            ),
         )
 
     @dictify
@@ -877,14 +901,17 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
         @dictify
         def input_function(wildcards):
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield key, self.base_path_in_.format(
-                    tumor_library=wildcards.tumor_library,
-                    mapper=wildcards.mapper,
-                    var_caller=wildcards.var_caller,
-                    annotator=wildcards.get("annotator", ""),
-                    filter_set=wildcards.filter_set,
-                    exon_list=wildcards.exon_list,
-                    ext=ext,
+                yield (
+                    key,
+                    self.base_path_in_.format(
+                        tumor_library=wildcards.tumor_library,
+                        mapper=wildcards.mapper,
+                        var_caller=wildcards.var_caller,
+                        annotator=wildcards.get("annotator", ""),
+                        filter_set=wildcards.filter_set,
+                        exon_list=wildcards.exon_list,
+                        ext=ext,
+                    ),
                 )
 
         return input_function

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Code for crawling the file system and caching the results
-"""
+"""Code for crawling the file system and caching the results"""
 
 from collections import OrderedDict
 from fnmatch import fnmatch

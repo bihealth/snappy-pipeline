@@ -214,8 +214,9 @@ class AdapterTrimmingStepPart(BaseStepPart):
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
-        yield "done", "work/{trimmer}.{{library_name}}/log/.done".format(
-            trimmer=self.__class__.name
+        yield (
+            "done",
+            "work/{trimmer}.{{library_name}}/log/.done".format(trimmer=self.__class__.name),
         )
         for key, ext in key_ext:
             yield key, prefix + ext

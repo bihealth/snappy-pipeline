@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Definition for GATK HC variant caller in parallel, genome is split into windows
-"""
+"""Definition for GATK HC variant caller in parallel, genome is split into windows"""
 
 import os
 import sys

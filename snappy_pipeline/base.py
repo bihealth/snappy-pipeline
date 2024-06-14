@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Basic utility code for snappy_pipeline
-"""
+"""Basic utility code for snappy_pipeline"""
 
 from collections import OrderedDict
 from collections.abc import MutableMapping
@@ -76,9 +75,10 @@ def expand_ref(
     return resolved, tuple(lookup_paths), tuple(config_files)
 
 
-def validate_config[
-    C: SnappyStepModel
-](config: dict[Any, Any], model: type[C],) -> C:
+def validate_config[C: SnappyStepModel](
+    config: dict[Any, Any],
+    model: type[C],
+) -> C:
     return model(**config)
 
 

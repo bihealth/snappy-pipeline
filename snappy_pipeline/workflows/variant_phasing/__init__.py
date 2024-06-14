@@ -208,8 +208,9 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         @dictify
         def input_function(wildcards):
             # Pedigree file required for PhaseByTransmission.
-            yield "ped", "work/write_pedigree.{index_library}/out/{index_library}.ped".format(
-                **wildcards
+            yield (
+                "ped",
+                "work/write_pedigree.{index_library}/out/{index_library}.ped".format(**wildcards),
             )
             # Get name of real index
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index

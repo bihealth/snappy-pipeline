@@ -638,10 +638,13 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         paths_work = self._get_output_files_run_work()
         yield from paths_work.items()
         # Return list of paths to the links that will be created in ``output/``
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+            ],
+        )
 
     @dictify
     def _get_output_files_run_work(self):
@@ -836,13 +839,16 @@ class StarStepPart(ReadMappingStepPart):
             if key != "output_links":
                 yield key, paths
                 continue
-            yield key, list(
-                filter(
-                    lambda x: not (
-                        x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5")
-                    ),
-                    paths,
-                )
+            yield (
+                key,
+                list(
+                    filter(
+                        lambda x: not (
+                            x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5")
+                        ),
+                        paths,
+                    )
+                ),
             )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -894,24 +900,48 @@ class StrandednessStepPart(BaseStepPart):
         if action == "infer":
             for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
                 yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
-                yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+                yield (
+                    key + "_md5",
+                    "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
+                    + ext
+                    + ".md5",
+                )
             key, ext = ("output", ".decision.json")
             yield key, "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
-            yield key + "_md5", "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            yield (
+                key + "_md5",
+                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
+                + ext
+                + ".md5",
+            )
             for key, ext in (
                 ("log", ".log"),
                 ("conda_list", ".conda_list.txt"),
                 ("conda_info", ".conda_info.txt"),
             ):
-                yield key, "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext
-                yield key + "_md5", "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext + ".md5"
+                yield (
+                    key,
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext,
+                )
+                yield (
+                    key + "_md5",
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
+                    + ext
+                    + ".md5",
+                )
         elif action == "counts":
             key, ext = ("counts", ".GeneCounts.tab")
             yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
-            yield key + "_md5", "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5"
+            yield (
+                key + "_md5",
+                "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5",
+            )
             key, ext = ("output", ".GeneCounts.tab")
             yield key, "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext
-            yield key + "_md5", "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5"
+            yield (
+                key + "_md5",
+                "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5",
+            )
 
     def get_result_files(self):
         for mapper in self.config.tools.rna:
@@ -930,9 +960,10 @@ class StrandednessStepPart(BaseStepPart):
                     yield tpl_strandedness.format(mapper=mapper, library_name=library_name) + ".md5"
                     for ext in ("log", "conda_info.txt", "conda_list.txt"):
                         yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
-                        yield tpl_log.format(
-                            mapper=mapper, library_name=library_name, ext=ext
-                        ) + ".md5"
+                        yield (
+                            tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                            + ".md5"
+                        )
 
     @dictify
     def get_log_file(self, action):
@@ -1094,8 +1125,14 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_run_work(self):
-        yield "json", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
-        yield "json_md5", "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5"
+        yield (
+            "json",
+            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz",
+        )
+        yield (
+            "json_md5",
+            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5",
+        )
 
     @dictify
     def get_log_file(self, action):
@@ -1195,21 +1232,39 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         paths_work = self._get_output_files_run_work()
         yield from paths_work.items()
         # Return list of paths to the links that will be created in ``output/``
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+            ],
+        )
 
     @dictify
     def _get_output_files_run_work(self):
         yield "vcf", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
-        yield "vcf_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5"
-        yield "vcf_tbi", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi"
-        yield "vcf_tbi_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5"
+        yield (
+            "vcf_md5",
+            "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.md5",
+        )
+        yield (
+            "vcf_tbi",
+            "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi",
+        )
+        yield (
+            "vcf_tbi_md5",
+            "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz.tbi.md5",
+        )
         yield "cov_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw"
-        yield "cov_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5"
+        yield (
+            "cov_bw_md5",
+            "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.bw.md5",
+        )
         yield "mq_bw", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw"
-        yield "mq_bw_md5", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5"
+        yield (
+            "mq_bw_md5",
+            "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.mq.bw.md5",
+        )
 
     @dictify
     def get_log_file(self, action):
@@ -1282,15 +1337,21 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         paths_work = self._get_output_files_fingerprint_work()
         yield from paths_work.items()
         # Return list of paths to the links that will be created in ``output/``
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
+            ],
+        )
 
     @dictify
     def _get_output_files_fingerprint_work(self):
         yield "npz", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz"
-        yield "npz_md5", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5"
+        yield (
+            "npz_md5",
+            "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5",
+        )
 
     def get_log_file(self, action):
         self._check_action(action)

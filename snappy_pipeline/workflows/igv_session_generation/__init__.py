@@ -172,9 +172,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             r"""
             pushd $(dirname {output.xml})
             md5sum $(basename {output.xml}) >$(basename {output.xml}).md5
-            """.format(
-                output=output
-            )
+            """.format(output=output)
         )
 
 

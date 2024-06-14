@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``gene_expression_report`` step
-
-"""
+"""Implementation of the ``gene_expression_report`` step"""
 
 from collections import OrderedDict
 import os

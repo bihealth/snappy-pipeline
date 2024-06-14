@@ -425,8 +425,9 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
         yield "txt", "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt"
-        yield "txt_md5", (
-            "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"
+        yield (
+            "txt_md5",
+            ("work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"),
         )
 
     def get_log_file(self, action):
