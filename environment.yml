@@ -10,36 +10,56 @@ dependencies:
   # Fundamentals
   - python=3.12
   - pip
-  - git-lfs
+  - git-lfs ~=3.5.1
 
   # pydantic is used to validate configuration files
   - pydantic =2.7
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake =7
+  - snakemake =7.32
 
   # Additional libraries used by snappy
-  - ruamel.yaml             # Nice, round-trip enabled YAML parsing
-  - fasteners               # File-based locks
-  - termcolor               # Helpful for CLIs
-  - matplotlib              # Required for plotting
-  - jinja2                  # Jinja 2 template rendering
+  - ruamel.yaml ==0.18.6    # Nice, round-trip enabled YAML parsing
+  - fasteners ==0.17.3      # File-based locks
+  - termcolor ==1.1.0       # Helpful for CLIs
+  - matplotlib ==3.8.4      # Required for plotting
+  - jinja2 ==3.1.4          # Jinja 2 template rendering
 
   # Bioinformatics-related libraries used by snappy
-  - htslib >=1.15
-  - bcftools >=1.15
-  - samtools >=1.15
+  - htslib ==1.20
+  - bcftools ==1.20
+  - samtools ==1.20
 
-  # Parsing of ISA-tab
-  - altamisa
+  # packages for testing
+  - pytest ~=8.2.2
+  - coverage ~=7.5.3
+  - pytest-cov ~=5.0.0
+  - pytest-mock ~=3.14.0
+  - pytest-subprocess ~=1.5.0
+  - pyfakefs ~=5.5.0
+  - black ~=23.12.1
+  - snakefmt ~=0.8.0
+  - isort ~=5.10.1
+  - flake8 ~=7.0.0
+  - flake8-import-order ~=0.18.2
+  - pytest-flake8 ~=1.1.1
+  - coveralls ~=4.0.1
+  - sphinx ~=7.3.7
+  - sphinx_rtd_theme ~=2.0.0
+  - sphinx-mdinclude ~=0.6.0
 
-  # CUBI libraries required by snappy (installed through pip)
+  # misc packages
+  - pytest-sugar ~=0.9.6
+
+
   - pip:
-    - varfish-cli >=0.6.3
-    # We're trying to keep the PyPi package up to date, you might have to install
-    # from source, though.
-    # - biomedsheets >=0.11.7
-    # … which is what we do here:
+    # build varfish-cli from pypi
+    - varfish-cli ~=0.6.3
+    # specific compatible biomedsheets revision
     - git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8
-    - pysam >=0.22
-    - vcfpy >=0.13.8
+    # specific compatible altamisa revision
+    - git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c
+    
+    # build pysam and vcfpy via pip (to avoid python version + conda packaging issues)
+    - pysam ~=0.22
+    - vcfpy ~=0.13.8
