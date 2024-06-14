@@ -10,16 +10,10 @@ pytest-subprocess ~=1.5.0
 # Fake file system for testing
 pyfakefs ~=5.5.0
 
-# "Black" code formatter and checker.
-black ~=23.12.1
+# ruff code linter + formatter
+ruff ~=0.4.8
 # "snakefmt" code formatter and checker.
 snakefmt ~=0.8.0
-# isort code formatter - import order
-isort ~=5.10.1
-
-flake8 ~=7.0.0
-flake8-import-order ~=0.18.2
-pytest-flake8 ~=1.1.1
 
 # coveralls.io tooling
 coveralls ~=4.0.1
