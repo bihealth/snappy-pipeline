@@ -23,7 +23,7 @@ snakefmt:
 srcfmt: fmt snakefmt
 
 .PHONY: lint
-lint: check lint-snakefmt
+lint: check lint-fmt lint-snakefmt
 
 .PHONY: check
 check:
