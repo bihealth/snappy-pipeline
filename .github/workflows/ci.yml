@@ -61,7 +61,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-            pip install -r requirements/test.txt
+            pip install -r requirements/base.txt -r requirements/test.txt
             pip freeze
 
       - name: Build documentation
