@@ -12,7 +12,6 @@ import os
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage

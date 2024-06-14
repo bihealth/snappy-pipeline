@@ -6,11 +6,11 @@ from copy import deepcopy
 import io
 import textwrap
 
-from biomedsheets.io_tsv import read_cancer_tsv_sheet
 import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
+from biomedsheets.io_tsv import read_cancer_tsv_sheet
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .common import get_expected_log_files_dict

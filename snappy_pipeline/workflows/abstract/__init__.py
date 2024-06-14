@@ -17,6 +17,11 @@ import typing
 from typing import Any, Callable
 
 import attr
+import pydantic
+import ruamel.yaml as ruamel_yaml
+import snakemake
+from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -28,11 +33,6 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import pydantic
-import ruamel.yaml as ruamel_yaml
-import snakemake
-from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
-
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,

@@ -14,9 +14,9 @@ The default configuration is as follows.
 from itertools import chain
 import os
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import Namedlist, expand, touch
 
+from biomedsheets.shortcuts import GenericSampleSheet
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (

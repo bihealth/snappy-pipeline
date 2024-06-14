@@ -253,9 +253,9 @@ import sys
 import typing
 import warnings
 
-from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snakemake.io import Wildcards, expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

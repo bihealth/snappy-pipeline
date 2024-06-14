@@ -57,7 +57,6 @@ from itertools import chain
 import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator

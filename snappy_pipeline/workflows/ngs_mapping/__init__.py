@@ -432,9 +432,9 @@ import os
 import re
 import sys
 
-from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (

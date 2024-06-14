@@ -78,9 +78,9 @@ from itertools import chain
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

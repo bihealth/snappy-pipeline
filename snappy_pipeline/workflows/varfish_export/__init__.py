@@ -59,10 +59,10 @@ import re
 import typing
 import warnings
 
-from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
 from snakemake.io import Wildcards, expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (

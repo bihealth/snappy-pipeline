@@ -78,9 +78,9 @@ Parallel execution is not performed currently.
 import os
 import sys
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

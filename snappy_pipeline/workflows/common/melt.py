@@ -2,9 +2,9 @@ from itertools import chain
 import re
 import typing
 
-from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
 
+from biomedsheets.shortcuts import is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import (
