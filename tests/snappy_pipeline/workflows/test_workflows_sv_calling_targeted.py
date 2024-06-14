@@ -43,7 +43,7 @@ def minimal_config():
             delly2: {}  # use defaults
             manta: {}   # use defaults
             gcnv:
-              path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
+              # path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
