@@ -82,12 +82,13 @@ The default configuration is as follows.
 .. include:: DEFAULT_CONFIG_helper_gcnv_model_targeted.rst
 
 """
+
 import os
 import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
@@ -143,12 +144,15 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
-            for shard in shards
-        ]
+        yield (
+            "calls",
+            [
+                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                    name_pattern=name_pattern, shard=shard
+                )
+                for shard in shards
+            ],
+        )
         ext = "ploidy"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards

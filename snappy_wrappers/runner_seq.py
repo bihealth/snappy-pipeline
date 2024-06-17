@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Code for running a sequential CUBI+Snakemake wrappers
-"""
+"""Code for running a sequential CUBI+Snakemake wrappers"""
 
 import json
 import os

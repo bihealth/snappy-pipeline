@@ -12,7 +12,6 @@ import os
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
@@ -333,12 +332,15 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
-        yield "DNAcopy", os.path.join(
-            self.config.path_copy_number,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + "_dnacopy.seg",
+        yield (
+            "DNAcopy",
+            os.path.join(
+                self.config.path_copy_number,
+                "output",
+                name_pattern,
+                "out",
+                name_pattern + "_dnacopy.seg",
+            ),
         )
 
     @dictify

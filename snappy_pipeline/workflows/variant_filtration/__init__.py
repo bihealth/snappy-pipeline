@@ -96,9 +96,9 @@ import os
 import os.path
 import sys
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -204,9 +204,12 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
         @dictify
         def input_function(wildcards):
-            yield "ped", os.path.realpath(
-                "work/write_pedigree.{index_library}/out/{index_library}.ped"
-            ).format(**wildcards)
+            yield (
+                "ped",
+                os.path.realpath(
+                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                ).format(**wildcards),
+            )
             variant_annotation = self.parent.sub_workflows["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (

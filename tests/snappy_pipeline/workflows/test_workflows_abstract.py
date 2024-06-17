@@ -9,13 +9,13 @@ import textwrap
 from typing import TypedDict
 from unittest.mock import MagicMock
 
-from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 import pytest
 import ruamel.yaml
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import OutputFiles, Wildcards
 import yaml
 
+from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from snappy_pipeline.base import MissingConfiguration, merge_dictlikes
 import snappy_pipeline.workflow_model
 from snappy_pipeline.workflow_model import ConfigModel

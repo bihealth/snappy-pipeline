@@ -148,7 +148,6 @@ Panel of normals generation for tools
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -264,9 +263,12 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
-        yield "intervals", "work/purecn/out/{}_{}.list".format(
-            self.config.purecn.enrichment_kit_name,
-            self.config.purecn.genome_name,
+        yield (
+            "intervals",
+            "work/purecn/out/{}_{}.list".format(
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
+            ),
         )
         tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bam", self.ngs_mapping(tpl.format(**wildcards))
@@ -275,9 +277,13 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/{mapper}.purecn/out/{mapper}.purecn.{library_name}_coverage_loess.txt.gz"
-        yield "normals", [
-            tpl.format(mapper=wildcards.mapper, library_name=lib) for lib in self.normal_libraries
-        ]
+        yield (
+            "normals",
+            [
+                tpl.format(mapper=wildcards.mapper, library_name=lib)
+                for lib in self.normal_libraries
+            ],
+        )
 
     def get_output_files(self, action):
         self._validate_action(action)

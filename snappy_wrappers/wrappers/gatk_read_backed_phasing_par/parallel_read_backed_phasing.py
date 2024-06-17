@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Definition for GATK ReadBackedPhasing paralllel wrapper
-"""
+"""Definition for GATK ReadBackedPhasing paralllel wrapper"""
 
 import os
 import sys
@@ -75,8 +74,9 @@ class ParallelGaktReadBackedPhasingWrapper(ParallelVariantAnnotationBaseWrapper)
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         **{input_},
@@ -93,4 +93,7 @@ class ParallelGaktReadBackedPhasingWrapper(ParallelVariantAnnotationBaseWrapper)
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
 
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )

@@ -50,9 +50,9 @@ Available Gene Fusion Callers
 
 import os
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

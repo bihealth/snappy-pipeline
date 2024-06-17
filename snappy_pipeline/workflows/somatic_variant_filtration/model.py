@@ -146,9 +146,9 @@ class SomaticVariantFiltration(SnappyStepModel):
 
     exon_lists: Annotated[dict[str, Any], Field(deprecated="use filter_list instead")] = {}
 
-    eb_filter: Annotated[
-        EbfilterSet | None, Field(deprecated="use filter_list instead")
-    ] = EbfilterSet()
+    eb_filter: Annotated[EbfilterSet | None, Field(deprecated="use filter_list instead")] = (
+        EbfilterSet()
+    )
 
     filter_list: list[Filter] = []
     """

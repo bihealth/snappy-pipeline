@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Utilities for processing YAML configuration
-"""
+"""Utilities for processing YAML configuration"""
 
 from collections.abc import MutableMapping, MutableSequence
 import re

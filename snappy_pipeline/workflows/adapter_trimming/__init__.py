@@ -139,9 +139,9 @@ The following adpter trimming tools are currently available
 from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GenericSampleSheet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -214,8 +214,9 @@ class AdapterTrimmingStepPart(BaseStepPart):
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
-        yield "done", "work/{trimmer}.{{library_name}}/log/.done".format(
-            trimmer=self.__class__.name
+        yield (
+            "done",
+            "work/{trimmer}.{{library_name}}/log/.done".format(trimmer=self.__class__.name),
         )
         for key, ext in key_ext:
             yield key, prefix + ext

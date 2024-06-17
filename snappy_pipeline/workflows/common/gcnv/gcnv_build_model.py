@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the gCNV COHORT mode methods - used to build models.
-"""
+"""Implementation of the gCNV COHORT mode methods - used to build models."""
 
 from snakemake.io import expand, touch
 

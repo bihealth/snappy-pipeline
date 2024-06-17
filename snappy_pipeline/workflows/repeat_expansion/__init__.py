@@ -77,12 +77,13 @@ Parallel Execution
 
 Not available.
 """
+
 from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import KEY_SEX, GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import KEY_SEX, GermlineCaseSheet, is_not_background
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
@@ -225,8 +226,11 @@ class ExpansionHunterStepPart(BaseStepPart):
         ext_dict = {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}
         # Yield
         for key, ext in ext_dict.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @staticmethod
@@ -238,8 +242,11 @@ class ExpansionHunterStepPart(BaseStepPart):
         ext_dict = {"json": "json", "json_md5": "json.md5"}
         # Yield
         for key, ext in ext_dict.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @staticmethod

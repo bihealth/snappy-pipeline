@@ -52,6 +52,7 @@ def minimal_config():
             path_ngs_mapping: ../ngs_mapping
             gcnv:
               path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
+              path_par_intervals: /path/to/par.intervals
 
         data_sets:
           first_batch:

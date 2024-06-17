@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Helper code for guessing UCSC genome IDs from reference paths
-"""
+"""Helper code for guessing UCSC genome IDs from reference paths"""
 
 from collections import OrderedDict
 

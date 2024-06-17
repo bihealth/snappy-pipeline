@@ -78,11 +78,12 @@ Parallel Execution
 Not available.
 
 """
+
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -206,8 +207,11 @@ class ScrambleStepPart(BaseStepPart):
         """Yield output files' patterns for scramble cluster call."""
         name_pattern = "{mapper}.scramble.{library_name}"
         ext = "txt"
-        yield ext, "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
-            name_pattern=name_pattern, ext=ext
+        yield (
+            ext,
+            "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
+                name_pattern=name_pattern, ext=ext
+            ),
         )
 
     @staticmethod
@@ -225,8 +229,11 @@ class ScrambleStepPart(BaseStepPart):
             "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in ext_dict.items():
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     def _get_analysis_parameters(self, _wildcards):

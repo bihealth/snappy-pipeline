@@ -78,9 +78,9 @@ from itertools import chain
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -270,8 +270,11 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             name_pattern = "{mapper}.cnvetti_coverage.{library_name}".format(
                 library_name=library_name, **wildcards
             )
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=".bcf"
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=".bcf"
+                ),
             )
 
     @dictify
@@ -279,8 +282,11 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     def get_output_files(self, action):
@@ -293,24 +299,33 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_coverage(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_coverage.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify
     def _get_output_files_tumor_normal_ratio(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
             name_pattern = "{mapper}.cnvetti_segment.{library_name}"
-            yield key, "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                name_pattern=name_pattern, ext=ext
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
             )
 
     @dictify

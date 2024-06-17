@@ -47,11 +47,11 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -172,9 +172,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             r"""
             pushd $(dirname {output.xml})
             md5sum $(basename {output.xml}) >$(basename {output.xml}).md5
-            """.format(
-                output=output
-            )
+            """.format(output=output)
         )
 
 

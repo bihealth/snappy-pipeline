@@ -57,7 +57,6 @@ from itertools import chain
 import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
@@ -114,10 +113,13 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_extra_kv_pairs(self):
         return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}

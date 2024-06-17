@@ -86,9 +86,9 @@ The default configuration is as follows.
 import os
 
 import attr
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
@@ -148,8 +148,11 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.default"
-        yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=path_pattern, ext="tsv"
+        yield (
+            key,
+            "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                name_pattern=path_pattern, ext="tsv"
+            ),
         )
 
     @dictify
@@ -166,12 +169,15 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
-            for shard in shards
-        ]
+        yield (
+            "calls",
+            [
+                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                    name_pattern=name_pattern, shard=shard
+                )
+                for shard in shards
+            ],
+        )
         ext = "ploidy"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards

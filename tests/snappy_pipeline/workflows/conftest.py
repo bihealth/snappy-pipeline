@@ -8,12 +8,12 @@ import random
 import textwrap
 from unittest.mock import MagicMock, patch
 
-from biomedsheets.io_tsv import read_germline_tsv_sheet
-from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from pydantic import ConfigDict
 from pyfakefs import fake_filesystem
 import pytest
 
+from biomedsheets.io_tsv import read_germline_tsv_sheet
+from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.abstract import BaseStep
 

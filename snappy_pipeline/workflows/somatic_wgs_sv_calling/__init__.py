@@ -77,9 +77,9 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -264,8 +264,9 @@ class Delly2StepPart(BaseStepPart):
         normal_tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}{ext}"
         norm_lib = self.get_normal_lib_name(wildcards)
         for name, ext in {"normal_bam": ".bam", "normal_bai": ".bam.bai"}.items():
-            yield name, ngs_mapping(
-                normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)
+            yield (
+                name,
+                ngs_mapping(normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)),
             )
         tumor_tpl = "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}{ext}"
         for name, ext in {"tumor_bam": ".bam", "tumor_bai": ".bam.bai"}.items():
