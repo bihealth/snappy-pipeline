@@ -10,7 +10,17 @@ dependencies:
   # Fundamentals
   - python=3.12
   - pip
-  - git-lfs
+  - git-lfs =3.5
+
+  # for compiling packages from pip
+  - gcc_linux-64 =13.2
+  - gxx_linux-64 =13.2
+
+  # basics some snappy wrappers rely on
+  - coreutils =9.5
+  - gawk =5.3
+  - bash =5.2
+  - gzip =1.13
 
   # pydantic is used to validate configuration files
   - pydantic =2.7
