@@ -64,13 +64,8 @@ def minimal_config():
             tools_somatic_variant_calling: []
             max_depth: "4000"
             preparation:
-                format: 'star'
-                path_features: ''
+                format: 'snappy_custom'
                 mode: 'gene'
-                id-column: ''
-                expression-column: 'fr'
-                ignore-ensembl-id-version: True
-
         data_sets:
           first_batch:
             file: sheet.tsv
