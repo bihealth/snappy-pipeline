@@ -59,24 +59,22 @@ step_config:
   somatic_neoepitope_prediction:
     path_somatic_variant_annotation: ../somatic_variant_annotation  # REQUIRED
     path_rna_ngs_mapping: ../ngs_mapping
-    tools_somatic_variant_annotation: []
+    tools_somatic_variant_annotation: ["vep"]
     tools_rna_mapping: [] # deafult to those configured for ngs_mapping
     tools_ngs_mapping: [] # deafult to those configured for ngs_mapping
     tools_somatic_variant_calling: [] # deafult to those configured for somatic_variant_calling
-    max_depth: "4000"
     preparation:
-      format: 'star' # REQUIRED - The file format of the expression file to process. (stringtie,kallisto,cufflinks,custom)
+      format: 'snappy_custom' # REQUIRED - The file format of the expression file to process. (stringtie, kallisto, cufflinks, snappy_custom, custom)
       # Use `custom` to process file formats not explicitly supported.
       # The `custom` option requires the use of the --id-column and --expression-column arguments.
-      path_features: ''
-      mode: 'gene'  # REQUIRED
-      id-column: '' # The column header in the expression_file for the column containing gene/transcript ids. Required when using the `custom` format.
-      expression-column: 'fr' # REQUIRED
-                              # The column header in the expression_file for
-                              # the column containing expression data.
-                              # Required when using the `custom` and `star` format. For `star`, there are
-                              # only 3 options [unstranded,rf,fr]
-      ignore-ensembl-id-version: True #Ignore the ensemble id version
+      expression_file: '' # expression file path. If the format is not snappy_custom
+      path_features: '' # Gencode file path, required for star and snappy format
+      mode: 'gene'  # REQUIRED - Determine whether the expression file contains gene or transcript TPM values.
+      full_vep_annotation: True # The somatic_variant_annotation has been done in fully annotation mode
+      id_column:  # Gene/Transcript id column name. Need when using the `custom` format.
+      expression_column:  # Expression column name. Need when using the `custom` format.
+      ignore_ensembl_id_version: True #Ignore the ensemble id version
+      max_depth: 4000
 """
 
 
@@ -113,50 +111,46 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             "output/{mapper}.{var_caller}.{anno_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{anno_caller}.{tumor_library}"
         )
-        # Need to change for work on many different tools
-        key_ext = {"vcf": ".full.vcf.gz", "vcf_tbi": ".full.vcf.gz.tbi"}
+        if self.config["preparation"]["full_vep_annotation"]:
+            key_ext = {"vcf": ".full.vcf.gz", "vcf_tbi": ".full.vcf.gz.tbi"}
+        else:
+            key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, variant_annotation(tpl + ext)
         # Getting appropriate rna library
-        for sheet in filter(is_not_background, self.parent.sheets):
-            for donor in sheet.bio_entities.values():
-                for biosample in donor.bio_samples.values():
-                    if biosample.extra_infos["isTumor"]:
-                        for test_sample in biosample.test_samples.values():
-                            if test_sample.extra_infos["extractionType"] == "RNA":
-                                for lib in test_sample.ngs_libraries.values():
-                                    rna_library = lib.name
-                                    rna_tpl = (
-                                        "output/{mapper}.{library_name}/out/{mapper}.{library_name}"
-                                    ).format(
-                                        mapper="star",
-                                        library_name=rna_library,
-                                    )
-                                    ext = {"expression", "bam", "bai"}
-                                    yield "expression", ngs_mapping(rna_tpl + ".GeneCounts.tab")
-                                    yield "bam", ngs_mapping(rna_tpl + ".bam")
-                                    yield "bai", ngs_mapping(rna_tpl + ".bam.bai")
+        if self.config["preparation"]["format"] == "snappy_custom":
+            for sheet in filter(is_not_background, self.parent.sheets):
+                for donor in sheet.bio_entities.values():
+                    for biosample in donor.bio_samples.values():
+                        if biosample.extra_infos["isTumor"]:
+                            for test_sample in biosample.test_samples.values():
+                                if test_sample.extra_infos["extractionType"] == "RNA":
+                                    for lib in test_sample.ngs_libraries.values():
+                                        rna_library = lib.name
+                                        rna_tpl = (
+                                            "output/{mapper}.{library_name}/out/{mapper}.{library_name}"
+                                        ).format(
+                                            mapper="star",
+                                            library_name=rna_library,
+                                        )
+                                        ext = {"expression", "bam", "bai"}
+                                        yield "expression", ngs_mapping(rna_tpl + ".GeneCounts.tab")
+                                        yield "bam", ngs_mapping(rna_tpl + ".bam")
+                                        yield "bai", ngs_mapping(rna_tpl + ".bam.bai")
 
     @dictify
     def get_output_files(self, action):
         """Return output files"""
         # Validate action
-        # Need to add step for adding RAD also
         self._validate_action(action)
-        if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "gene"
-        ):
+        if self.config["preparation"]["mode"] == "gene":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
-        elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "transcript"
-        ):
+        elif self.config["preparation"]["mode"] == "transcript":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
@@ -171,18 +165,12 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
-        if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "gene"
-        ):
+        if self.config["preparation"]["mode"] == "gene":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
-        elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "transcript"
-        ):
+        elif self.config["preparation"]["mode"] == "transcript":
             prefix = (
                 "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
@@ -204,11 +192,22 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def get_params(self, action):
+        self._validate_action(action)
+        return {
+            "max_depth": self.config["preparation"]["max_depth"],
+            "format": self.config["preparation"]["format"],
+            "expression_column": self.config["preparation"]["expression_column"],
+            "id_column": self.config["preparation"]["id_column"],
+            "ignore_ensembl_id_version": self.config["preparation"]["ignore_ensembl_id_version"],
+            "mode": self.config["preparation"]["mode"],
+        }
+
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
     """Perform neoepitope prediction workflow"""
 
-    name = "neoepitope_prediction"
+    name = "somatic_neoepitope_prediction"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
@@ -236,79 +235,50 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         self.register_sub_step_classes((NeoepitopePreparationStepPart, LinkOutStepPart))
         self.register_sub_workflow(
             "somatic_variant_annotation",
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "path_somatic_variant_annotation"
-            ],
+            self.config["path_somatic_variant_annotation"],
         )
         self.register_sub_workflow(
             "ngs_mapping",
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["path_rna_ngs_mapping"],
+            self.config["path_rna_ngs_mapping"],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_ngs_mapping"]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_ngs_mapping"
-            ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "tools_somatic_variant_calling"
-        ]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_calling"
-            ] = self.w_config["step_config"]["somatic_variant_calling"]["tools"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"][
-            "tools_somatic_variant_annotation"
-        ]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_annotation"
-            ] = ["vep"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["tools_rna_mapping"]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_rna_mapping"
-            ] = self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"]
-        if not self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
-            "path_features"
-        ]:
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"][
-                "path_features"
-            ] = self.w_config["static_data_config"]["features"]["path"]
+        if not self.config["tools_ngs_mapping"]:
+            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
+                "dna"
+            ]
+        if not self.config["tools_somatic_variant_calling"]:
+            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+                "somatic_variant_calling"
+            ]["tools"]
+        if not self.config["tools_somatic_variant_annotation"]:
+            self.config["tools_somatic_variant_annotation"] = ["vep"]
+        if not self.config["tools_rna_mapping"]:
+            self.config["tools_rna_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
+                "rna"
+            ]
+        if not self.config["preparation"]["path_features"]:
+            self.config["preparation"]["path_features"] = self.w_config["static_data_config"][
+                "features"
+            ]["path"]
 
     @listify
     def get_result_files(self):
-        callers = set(
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_calling"
-            ]
-        )
-        anno_callers = set(
-            self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_somatic_variant_annotation"
-            ]
-        )
-        if (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "gene"
-        ):
+        callers = set(self.config["tools_somatic_variant_calling"])
+        anno_callers = set(self.config["tools_somatic_variant_annotation"])
+        if self.config["preparation"]["mode"] == "gene":
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library.name}"
-        elif (
-            self.w_config["step_config"]["somatic_neoepitope_prediction"]["preparation"]["mode"]
-            == "transcript"
-        ):
+        elif self.config["preparation"]["mode"] == "transcript":
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
-
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_ngs_mapping"
-            ],
+            mapper=self.config["tools_ngs_mapping"],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["somatic_neoepitope_prediction"][
-                "tools_ngs_mapping"
-            ],
+            mapper=self.config["tools_ngs_mapping"],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,
             ext=(
@@ -347,7 +317,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 )
 
     def check_config(self):
-        """Check that the path to the NGS mapping is present"""
+        """Check that path_somatic_variant_annotation, preparation/mode and preparation/format are present in the configuration"""
         self.ensure_w_config(
             (
                 "step_config",
@@ -364,5 +334,5 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
         self.ensure_w_config(
             ("step_config", "somatic_neoepitope_prediction", "preparation", "format"),
-            "Format is required for adding ",
+            "Format is required to determine which tool generated the TPM values. ",
         )

@@ -19,12 +19,23 @@ preparation_vcf = os.path.join(
     "comb_rna.py",
 )
 ensemble_id = (
-    "--ignore-ensembl-id-version" if config["preparation"]["ignore-ensembl-id-version"] else ""
+    "--ignore-ensembl-id-version" if snakemake.params.args["ignore_ensembl_id_version"] else ""
 )
-id_column = (
-    "--id-column " + str(config["preparation"]["id-column"])
-    if config["preparation"]["format"] == "custom"
+max_depth = snakemake.params.args["max_depth"]
+format = snakemake.params.args["format"]
+mode = snakemake.params.args["mode"]
+expression_column = snakemake.params.args["expression_column"]
+id_column = snakemake.params.args["id_column"]
+
+rna_vcf = (
+    f"--rna-vcf $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz "
+    if format == "snappy_custom"
     else ""
+)
+expression_file = (
+    f"--expression-file {snakemake.input.expression} "
+    if format == "snappy_custom"
+    else config["preparation"]["expression_file"]
 )
 
 shell(
@@ -53,32 +64,34 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-# Getting region of SNVs only
-bcftools filter -i 'TYPE="snp"' {snakemake.input.vcf} | bcftools query -f '%CHROM\t%POS0\t%END\n' > $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.bed
+if [[ {format}=="snappy_custom" ]]; then
+    # Getting region of SNVs only
+    bcftools filter -i 'TYPE="snp"' {snakemake.input.vcf} | bcftools query -f '%CHROM\t%POS0\t%END\n' > $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.bed
 
-# Getting snvs from RNA sequencing data
-bcftools mpileup -Ov \
-    --annotate FORMAT/AD,FORMAT/DP \
-    -R $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.bed \
-    -f {snakemake.config[static_data_config][reference][path]} \
-    --per-sample-mF \
-    --max-depth 4000 \
-    --redo-BAQ -Oz \
-    -o $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz \
-    {snakemake.input.bam}
-tabix -f $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz
+    # Getting snvs from RNA sequencing data
+    bcftools mpileup -Ov \
+        --annotate FORMAT/AD,FORMAT/DP \
+        -R $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.bed \
+        -f {snakemake.config[static_data_config][reference][path]} \
+        --per-sample-mF \
+        --max-depth {max_depth} \
+        --redo-BAQ -Oz \
+        -o $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz \
+        {snakemake.input.bam}
+    tabix -f $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz
+fi
 
 #Need to add option for RNA vcf as well
-python3 -W ignore {preparation_vcf} \
+python3 {preparation_vcf} \
     --genecode {snakemake.config[static_data_config][features][path]} \
-    --input_vcf {snakemake.input.vcf} --format {config[preparation][format]} \
-    --rna-vcf $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz \
-    --expression_file {snakemake.input.expression} \
-    --mode {config[preparation][mode]} \
-    -e {config[preparation][expression-column]} \
+    --input-vcf {snakemake.input.vcf} --format {format} \
+    --mode {mode} \
+    -e {expression_column} \
+    -i {id_column} \
     -s {snakemake.wildcards.tumor_library} \
     -o /dev/stdout \
-    "{id_column}" \
+    {expression_file}\
+    {rna_vcf}\
     "{ensemble_id}" \
 | bgzip -c > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}

@@ -5,365 +5,7 @@ import sys
 
 import pandas as pd
 import pyranges as pr
-import vcfpy
-
-
-########################## Reading vcf files ##########################
-def create_vcf_reader(args):
-    vcf_reader = vcfpy.Reader.from_path(args.input_vcf)
-    if args.rna_vcf:
-        rna_vcf_reader = vcfpy.Reader.from_path(args.rna_vcf)
-    else:
-        rna_vcf_reader = None
-    # expression part
-    is_multi_sample = len(vcf_reader.header.samples.names) > 1
-    if is_multi_sample and args.sample_name is None:
-        vcf_reader.close()
-        raise Exception(
-            "ERROR: VCF {} contains more than one sample. Please use the -s option to specify which sample to annotate.".format(
-                args.input_vcf
-            )
-        )
-    elif is_multi_sample and args.sample_name not in vcf_reader.header.samples.names:
-        vcf_reader.close()
-        raise Exception(
-            "ERROR: VCF {} does not contain a sample column for sample {}.".format(
-                args.input_vcf, args.sample_name
-            )
-        )
-    if "CSQ" not in vcf_reader.header.info_ids():
-        vcf_reader.close()
-        raise Exception(
-            "ERROR: VCF {} is not VEP-annotated. Please annotate the VCF with VEP before running this tool.".format(
-                args.input_vcf
-            )
-        )
-    if args.mode == "gene" and "GX" in vcf_reader.header.format_ids():
-        vcf_reader.close()
-        raise Exception(
-            "ERROR: VCF {} is already gene expression annotated. GX format header already exists.".format(
-                args.input_vcf
-            )
-        )
-    elif args.mode == "transcript" and "TX" in vcf_reader.header.format_ids():
-        vcf_reader.close()
-        raise Exception(
-            "ERROR: VCF {} is already transcript expression annotated. TX format header already exists.".format(
-                args.input_vcf
-            )
-        )
-    # snv part
-
-    return vcf_reader, rna_vcf_reader, is_multi_sample
-
-
-########################## Adding extra fields into Format ##########################
-def create_vcf_writer(args, vcf_reader):
-    (head, sep, tail) = args.input_vcf.rpartition(".vcf")
-    new_header = vcf_reader.header.copy()
-    if args.mode == "gene":
-        new_header.add_format_line(
-            vcfpy.OrderedDict(
-                [
-                    ("ID", "GX"),
-                    ("Number", "."),
-                    ("Type", "Float"),
-                    ("Description", "Gene Expressions"),
-                ]
-            )
-        )
-        output_file = ("").join([head, ".gx.vcf", tail])
-    elif args.mode == "transcript":
-        new_header.add_format_line(
-            vcfpy.OrderedDict(
-                [
-                    ("ID", "TX"),
-                    ("Number", "."),
-                    ("Type", "Float"),
-                    ("Description", "Transcript Expressions"),
-                ]
-            )
-        )
-        output_file = ("").join([head, ".tx.vcf", tail])
-    if args.rna_vcf:
-        new_header.add_format_line(
-            vcfpy.OrderedDict(
-                [
-                    ("ID", "RAD"),
-                    ("Number", "."),
-                    ("Type", "Integer"),
-                    (
-                        "Description",
-                        "Allelic depths from mRNA sequencing data of the same sample",
-                    ),
-                ]
-            )
-        )
-        new_header.add_format_line(
-            vcfpy.OrderedDict(
-                [
-                    ("ID", "ROT"),
-                    ("Number", "."),
-                    ("Type", "Integer"),
-                    (
-                        "Description",
-                        "Sum of allelic depths of other alternative allele from mRNA sequencing data of the same sample",
-                    ),
-                ]
-            )
-        )
-        (head, sep, tail) = output_file.rpartition(".vcf")
-        output_file = ("").join([head, ".pileup.vcf", tail])
-    if args.output_vcf:
-        output_file = args.output_vcf
-    return vcfpy.Writer.from_path(output_file, new_header)
-
-
-########################## Auto assign gene id column based on different tools ##########################
-def resolve_id_column(args):
-    if args.format == "cufflinks":
-        return "tracking_id"
-    elif args.format == "kallisto":
-        if args.mode == "gene":
-            return "gene"
-        elif args.mode == "transcript":
-            return "target_id"
-    elif args.format == "stringtie":
-        if args.mode == "gene":
-            return "Gene ID"
-    elif args.format == "star":
-        return "gene_id"  # NEED change
-    elif args.format == "custom":
-        if args.id_column is None:
-            raise Exception(
-                "ERROR: `--id-column` option is required when using the `custom` format"
-            )
-        else:
-            return args.id_column
-
-
-########################## Auto assign expression column based on different tools ##########################
-def resolve_expression_column(args):
-    if args.format == "cufflinks":
-        return "FPKM"
-    elif args.format == "kallisto":
-        if args.mode == "gene":
-            return "abundance"
-        elif args.mode == "transcript":
-            return "tpm"
-    elif args.format == "stringtie":
-        return "TPM"
-    elif args.format == "star":
-        args.expression_column = "read_count"
-        return "TPM_" + args.expression_column
-    elif args.format == "custom":
-        if args.expression_column is None:
-            raise Exception(
-                "ERROR: `--expression-column` option is required when using the `custom` format"
-            )
-        else:
-            return args.expression_column
-
-
-def to_array(dictionary):
-    array = []
-    for key, value in dictionary.items():
-        array.append("{}|{}".format(key, value))
-    return sorted(array)
-
-
-def resolve_stringtie_id_column(args, headers):
-    if "gene_id" in headers:
-        return "gene_id"
-    else:
-        return "transcript_id"
-
-
-def genecount_reader(genecount_path):
-    col_name = ["gene_id", "read_count"]
-    star_genecount = pd.read_csv(
-        genecount_path,
-        skiprows=4,
-        sep="\t",
-        names=col_name,
-        header=None,
-    ).sort_values(by=["gene_id"])
-    # star_genecount["Ensembl_gene_identifier"] = star_genecount.Ensembl_gene_identifier.map(lambda x: x.split(".")[0])
-    star_genecount.read_count = star_genecount.read_count.astype(int, copy=None)
-    # star_genecount.rf = star_genecount.rf.astype(int, copy=None)
-    # star_genecount.fr = star_genecount.fr.astype(int, copy=None)
-    # star_genecount.set_index("gene_id")
-    return star_genecount
-
-
-def genecode_reader(genecode_path, star_genecount):
-    expression_column = "read_count"
-    gc = pr.read_gtf(genecode_path, as_df=True)
-    gc = gc[gc["gene_id"].isin(star_genecount["gene_id"])]
-    gc = gc[(gc.Feature == "gene")]
-    exon = gc[["Chromosome", "Start", "End", "gene_id", "gene_name"]]
-    # Convert columns to proper types.
-    exon.Start = exon.Start.astype(int)
-    exon.End = exon.End.astype(int)
-    # Sort in place.
-    exon.sort_values(by=["Chromosome", "Start", "End"], inplace=True)
-    # Group the rows by the Ensembl gene identifier (with version numbers.)
-    groups = exon.groupby("gene_id")
-
-    lengths = groups.apply(count_bp)
-    # Create a new DataFrame with gene lengths and EnsemblID.
-    ensembl_no_version = lengths.index
-    ldf = pd.DataFrame({"length": lengths.values, "gene_id": ensembl_no_version})
-    star_tpm = pd.merge(ldf, star_genecount, how="inner", on="gene_id")
-    star_tpm["TPM_" + expression_column] = calculate_TPM(star_tpm, expression_column)
-    return star_tpm
-
-
-def calculate_TPM(df, strand):
-    effLen = (df["length"]) / 1000
-    rate = df[strand] / effLen
-    denom = sum(rate) / (10**6)
-    return rate / denom
-
-
-def count_bp(df):
-    """Given a DataFrame with the exon coordinates from Gencode for a single
-    gene, return the total number of coding bases in that gene.
-    Example:
-        >>> import numpy as np
-        >>> n = 3
-        >>> r = lambda x: np.random.sample(x) * 10
-        >>> d = pd.DataFrame([np.sort([a,b]) for a,b in zip(r(n), r(n))], columns=['start','end']).astype(int)
-        >>> d
-           start  end
-        0      6    9
-        1      3    4
-        2      4    9
-        >>> count_bp(d)
-        7
-    Here is a visual representation of the 3 exons and the way they are added:
-          123456789  Length
-        0      ----       4
-        1   --            2
-        2    ------       6
-            =======       7
-    """
-    start = df.Start.min()
-    end = df.End.max()
-    bp = [False] * (end - start + 1)
-    for i in range(df.shape[0]):
-        s = df.iloc[i]["Start"] - start
-        e = df.iloc[i]["End"] - start + 1
-        bp[s:e] = [True] * (e - s)
-    return sum(bp)
-
-
-def parse_expression_file(args, vcf_reader, vcf_writer):
-    if args.format == "stringtie" and args.mode == "transcript":
-        df_all = pr.read_gtf(args.expression_file)
-        df = df_all[df_all["feature"] == "transcript"]
-        id_column = resolve_stringtie_id_column(args, df.columns.values)
-    elif args.format == "star":
-        id_column = resolve_id_column(args)
-        star_genecount = genecount_reader(args.expression_file)
-        df = genecode_reader(args.genecode, star_genecount)
-    else:
-        id_column = resolve_id_column(args)
-        df = pd.read_csv(args.expression_file, sep="\t")
-    if args.ignore_ensembl_id_version:
-        df["transcript_without_version"] = df[id_column].apply(
-            lambda x: re.sub(r"\.[0-9]+$", "", x)
-        )
-    expression_column = resolve_expression_column(args)
-    if expression_column not in df.columns.values:
-        vcf_reader.close()
-        vcf_writer.close()
-        raise Exception(
-            "ERROR: expression_column header {} does not exist in expression_file {}".format(
-                expression_column, args.expression_file
-            )
-        )
-    if id_column not in df.columns.values:
-        vcf_reader.close()
-        vcf_writer.close()
-        raise Exception(
-            "ERROR: id_column header {} does not exist in expression_file {}".format(
-                id_column, args.expression_file
-            )
-        )
-    if args.ignore_ensembl_id_version:
-        df[id_column] = df[id_column].apply(lambda x: re.sub(r"\.[0-9]+$", "", x))
-    exp_df = df[[id_column, expression_column]]
-    exp_dict = exp_df.set_index(id_column)[expression_column].to_dict()
-    return exp_dict
-
-
-def add_AD_rna_file(entry, is_multi_sample, sample_name, rna_vcf):
-    RAD_temp = []
-    ROT = []
-    try:
-        rna_records = rna_vcf.fetch(entry.CHROM, entry.affected_start, entry.affected_end)
-        rna_record = next(rna_records)
-    except (StopIteration, ValueError):
-        # if there is no snp. RAD and RoT will be set to 0
-        if is_multi_sample:
-            entry.FORMAT += ["RAD"]
-            entry.call_for_sample[sample_name].data["RAD"] = 0
-            entry.FORMAT += ["ROT"]
-            entry.call_for_sample[sample_name].data["ROT"] = 0
-        else:
-            entry.add_format("RAD", 0)
-            entry.add_format("ROT", 0)
-    else:
-        rna_alt = [alt.value for alt in rna_record.ALT]
-        rna_AD = [c.data.get("AD") for c in rna_record.calls][0]
-        ROT_temp = sum(rna_AD) - rna_AD[0]
-        if rna_alt:
-            rna_AD = [c.data.get("AD") for c in rna_record.calls][0]
-            for dna_alt in entry.ALT:
-                if dna_alt.value in rna_alt:
-                    index = rna_record.ALT.index(dna_alt)
-                    RAD_temp.append(rna_AD[0])  # AD of REF
-                    RAD_temp.append(rna_AD[index + 1])  # AD of ALT
-                    ROT_temp = ROT_temp - rna_AD[index + 1]
-        ROT.append(ROT_temp)
-        if is_multi_sample:
-            entry.FORMAT += ["RAD"]
-            entry.call_for_sample[sample_name].data["RAD"] = RAD_temp
-            entry.FORMAT += ["ROT"]
-            entry.call_for_sample[sample_name].data["ROT"] = ROT
-        else:
-            entry.add_format("RAD", RAD_temp)
-            entry.add_format("ROT", ROT)
-    return entry
-
-
-def add_expressions(
-    entry,
-    is_multi_sample,
-    sample_name,
-    exp_dict,
-    items,
-    tag,
-    ignore_ensembl_id_version,
-    missing_expressions_count,
-    entry_count,
-):
-    expressions = {}
-    for item in items:
-        entry_count += 1
-        if ignore_ensembl_id_version:
-            item = re.sub(r"\.[0-9]+$", "", item)
-        if item in exp_dict:
-            expressions[item] = exp_dict[item]
-        else:
-            missing_expressions_count += 1
-    if is_multi_sample:
-        entry.FORMAT += [tag]
-        entry.call_for_sample[sample_name].data[tag] = to_array(expressions)
-    else:
-        entry.add_format(tag, to_array(expressions))
-    return (entry, missing_expressions_count, entry_count)
+from vcfpy import OrderedDict, Reader, Writer
 
 
 ########################## Define tool parameters ##########################
@@ -372,13 +14,13 @@ def define_parser():
         "comb_rna.py",
         description="A tool that will add the data from several expression tools' output files"
         + "and allelic depths from mRNA sequencing data for snvs"
-        + "to the VCF INFO column. Supported tools are StringTie, Kallisto, Star"
+        + "to the VCF INFO column. Supported tools are StringTie, Kallisto, Star, snappy_custom"
         + "and Cufflinks. There also is a ``custom`` option to annotate with data "
         + "from any tab-delimited file.",
     )
 
-    parser.add_argument("--input_vcf", help="A VEP-annotated VCF file")
-    parser.add_argument("--expression_file", help="A TSV file containing expression estimates")
+    parser.add_argument("--input-vcf", help="A VEP-annotated VCF file")
+    parser.add_argument("--expression-file", help="A expression file")
     parser.add_argument("--genecode", help="A genecode file for calculate TPM from star gene count")
     parser.add_argument(
         "--rna-vcf",
@@ -386,7 +28,7 @@ def define_parser():
     )
     parser.add_argument(
         "--format",
-        choices=["kallisto", "stringtie", "cufflinks", "star", "custom"],
+        choices=["kallisto", "stringtie", "cufflinks", "star", "snappy_custom", "custom"],
         help="The file format of the expression file to process. "
         + "Use `custom` to process file formats not explicitly supported. "
         + "The `custom` option requires the use of the --id-column and --expression-column arguments.",
@@ -426,6 +68,7 @@ def define_parser():
     return parser
 
 
+########################## Arguments check ##########################
 def args_check(args):
     if args.format == "custom":
         if args.id_column is None:
@@ -441,22 +84,343 @@ def args_check(args):
             raise Exception("--genecode is not set. This is required when using the `star` format")
 
 
+########################## Get expected column names ##########################
+def get_expected_column_names(format, mode, id_column, exp_column):
+    match (format, mode):
+        case ("star", _):
+            try:
+                exp = int(exp_column)
+                if 1 < exp and exp <= 4:
+                    return [0, exp - 1]
+                else:
+                    raise Exception("Expression column is invalid")
+            except ValueError:
+                raise ValueError("Expression column in star should be a number")
+        case ("snappy_custom", _):
+            return [0, 1]
+        case ("kallisto", "gene"):
+            return ["gene", "abundance"]
+        case ("kallisto", "transcript"):
+            return ["target_id", "tpm"]
+        case ("cufflinks", _):
+            return ["tracking_id", "FPKM"]
+        case ("stringtie", "gene"):
+            return ["Gene ID", "TPM"]
+        case ("stringtie", "transcript"):
+            return ["transcript_id", "TPM"]
+        case ("custom", _):
+            return [id_column, exp_column]
+        case _:
+            raise Exception("We don't support {format} with mode as {mode} yet.")
+
+
+########################## Genecode for star parser ##########################
+def count_to_TPM(genecode_path, exp_df, no_version=False):
+    gc = pr.read_gtf(genecode_path, as_df=True)
+    if no_version:
+        gc.loc[:, "gene_id"] = gc.loc[:, "gene_id"].apply(lambda x: re.sub(r"\.[0-9]+$", "", x))
+    gc = gc[gc["gene_id"].isin(exp_df.iloc[:, 0])]
+    gc = gc[(gc.Feature == "gene")]
+    exon = gc[["Chromosome", "Start", "End", "gene_id", "gene_name"]]
+    # Convert columns to proper types.
+    exon.loc[:, "Start"] = exon.loc[:, "Start"].astype(int)
+    exon.loc[:, "End"] = exon.loc[:, "End"].astype(int)
+    # Sort in place.
+    exon = exon.sort_values(by=["Chromosome", "Start", "End"])
+    # Group the rows by the Ensembl gene identifier.
+    groups = exon.groupby("gene_id")
+    lengths = groups.apply(count_bp)
+    # Create a new DataFrame with gene lengths and EnsemblID.
+    gene_id = lengths.index
+    if len(gene_id) != len(exp_df):
+        raise Exception("Duplicated gene id in expression file")
+    ldf = pd.DataFrame({"length": lengths.values, "gene_id": gene_id}).sort_values(by="gene_id")
+    # Calculate TPM
+    tpm = calculate_TPM(exp_df, ldf)
+    tpm_dict = {k: v for k, v in zip(exp_df.iloc[:, 0], tpm)}
+    return tpm_dict
+
+
+def calculate_TPM(exp_df, ldf):
+    "TPM = (reads_transcript / transcript_length_kb) / scaled_total_mapped_reads"
+    transcript_length_kb = ldf["length"] / 1000
+    RPK = exp_df.iloc[:, 1] / transcript_length_kb
+    scale_factor_permil = sum(RPK) / (10**6)
+    return RPK / scale_factor_permil
+
+
+def count_bp(df):
+    """Given a DataFrame with the exon coordinates from Gencode for a single
+    gene, return the total number of coding bases in that gene.
+    Example:
+        >>> import numpy as np
+        >>> n = 3
+        >>> r = lambda x: np.random.sample(x) * 10
+        >>> d = pd.DataFrame([np.sort([a,b]) for a,b in zip(r(n), r(n))], columns=['start','end']).astype(int)
+        >>> d
+           start  end
+        0      6    9
+        1      3    4
+        2      4    9
+        >>> count_bp(d)
+        7
+    Here is a visual representation of the 3 exons and the way they are added:
+          123456789  Length
+        0      ----       4
+        1   --            2
+        2    ------       6
+            =======       7
+    """
+    start = df.Start.min()
+    end = df.End.max()
+    bp = [False] * (end - start + 1)
+    for i in range(df.shape[0]):
+        s = df.iloc[i]["Start"] - start
+        e = df.iloc[i]["End"] - start + 1
+        bp[s:e] = [True] * (e - s)
+    return sum(bp)
+
+
+########################## Expression file parser ##########################
+def colnames_check(names, exp_names):
+    return set(names).issubset(set(exp_names))
+
+
+def expression_file_parser(
+    path, format, mode, id_column, exp_column, no_version=False, genecode=""
+):
+    col_names = get_expected_column_names(format, mode, id_column, exp_column)
+    if isinstance(col_names[0], int):
+        exp_df = pd.read_csv(path, skiprows=4, sep="\t", header=None)
+        exp_df = exp_df.iloc[:, col_names]
+        exp_df = exp_df.sort_values(by=0)
+        if no_version:
+            exp_df.iloc[:, 0] = exp_df.iloc[:, 0].apply(lambda x: re.sub(r"\.[0-9]+$", "", x))
+        tpm_dict = count_to_TPM(genecode, exp_df, no_version)
+    else:
+        if format == "stringtie" and mode == "transcript":
+            exp_df = pr.read_gtf(path, as_df=True)
+            exp_df = exp_df[exp_df["feature"] == "transcript"]
+        else:
+            exp_df = pd.read_csv(path, sep="\t", header=0)
+
+        if colnames_check(col_names, exp_df.columns):
+            exp_df = exp_df.loc[:, col_names]
+        else:
+            raise Exception(
+                "Gene id column or expression column is not presense in expression file"
+            )
+
+        if no_version:
+            exp_df.iloc[:, 0] = exp_df.iloc[:, 0].apply(lambda x: re.sub(r"\.[0-9]+$", "", x))
+        tpm_dict = {k: v for k, v in zip(exp_df.iloc[:, 0], exp_df.iloc[:, 1])}
+    return tpm_dict
+
+
+########################## Dna Vcf parser ##########################
+def dna_vcf_parser(path, sample_name):
+    vcf_reader = Reader.from_path(path)
+    is_multi_sample = len(vcf_reader.header.samples.names) > 1
+    if is_multi_sample and sample_name is None:
+        vcf_reader.close()
+        raise Exception(
+            "ERROR: VCF {} contains more than one sample. Please use the -s option to specify which sample to annotate.".format(
+                path
+            )
+        )
+    elif is_multi_sample and sample_name not in vcf_reader.header.samples.names:
+        vcf_reader.close()
+        raise Exception(
+            "ERROR: VCF {} does not contain a sample column for sample {}.".format(
+                path, sample_name
+            )
+        )
+    if "CSQ" not in vcf_reader.header.info_ids():
+        vcf_reader.close()
+        raise Exception(
+            "ERROR: VCF {} is not VEP-annotated. Please annotate the VCF with VEP before running this tool.".format(
+                path
+            )
+        )
+    return vcf_reader, is_multi_sample
+
+
+########################## Rna Vcf parser ##########################
+def rna_vcf_parser(path):
+    rna_vcf_reader = Reader.from_path(path)
+    return rna_vcf_reader
+
+
+########################## Add expression values functions ##########################
+def to_array(dictionary):
+    array = []
+    for key, value in dictionary.items():
+        array.append("{}|{}".format(key, value))
+    return sorted(array)
+
+
+def add_Expression_to_vcf(
+    entry,
+    is_multi_sample,
+    sample_name,
+    exp_dict,
+    genes,
+    tag,
+    no_version,
+    missing_expressions_count,
+    entry_count,
+):
+    expressions = {}
+    for gene in genes:
+        entry_count += 1
+        if no_version:
+            gene = re.sub(r"\.[0-9]+$", "", gene)
+        if gene in exp_dict:
+            expressions[gene] = exp_dict[gene]
+        else:
+            missing_expressions_count += 1
+    if is_multi_sample:
+        entry.FORMAT += [tag]
+        entry.call_for_sample[sample_name].data[tag] = to_array(expressions)
+    else:
+        entry.add_format(tag, to_array(expressions))
+    return (entry, missing_expressions_count, entry_count)
+
+
+def add_AD_to_vcf(entry, is_multi_sample, sample_name, rna_vcf):
+    RAD_temp = []
+    ROT = []
+    try:
+        rna_records = rna_vcf.fetch(entry.CHROM, entry.affected_start, entry.affected_end)
+        rna_record = next(rna_records)
+    except (StopIteration, ValueError):
+        # if there is no snp. RAD and RoT will be set to 0
+        if is_multi_sample:
+            entry.FORMAT += ["RAD"]
+            entry.call_for_sample[sample_name].data["RAD"] = 0
+            entry.FORMAT += ["ROT"]
+            entry.call_for_sample[sample_name].data["ROT"] = 0
+        else:
+            entry.add_format("RAD", 0)
+            entry.add_format("ROT", 0)
+    else:
+        rna_alt = [alt.value for alt in rna_record.ALT]
+        rna_AD = [c.data.get("AD") for c in rna_record.calls][0]
+        ROT_temp = sum(rna_AD) - rna_AD[0]
+        if rna_alt:
+            rna_AD = [c.data.get("AD") for c in rna_record.calls][0]
+            for dna_alt in entry.ALT:
+                if dna_alt.value in rna_alt:
+                    index = rna_record.ALT.index(dna_alt)
+                    RAD_temp.append(rna_AD[0])  # AD of REF
+                    RAD_temp.append(rna_AD[index + 1])  # AD of ALT
+                    ROT_temp = ROT_temp - rna_AD[index + 1]
+        ROT.append(ROT_temp)
+        if is_multi_sample:
+            entry.FORMAT += ["RAD"]
+            entry.call_for_sample[sample_name].data["RAD"] = RAD_temp
+            entry.FORMAT += ["ROT"]
+            entry.call_for_sample[sample_name].data["ROT"] = ROT_temp
+        else:
+            entry.add_format("RAD", RAD_temp)
+            entry.add_format("ROT", ROT_temp)
+    return entry
+
+
+########################## Add fields to header ##########################
+def create_vcf_writer(path, vcf_reader, mode, rna_vcf, output_vcf):
+    (head, _, tail) = path.rpartition(".vcf")
+    new_header = vcf_reader.header.copy()
+    if mode == "gene":
+        new_header.add_format_line(
+            OrderedDict(
+                [
+                    ("ID", "GX"),
+                    ("Number", "."),
+                    ("Type", "Float"),
+                    ("Description", "Gene Expressions"),
+                ]
+            )
+        )
+        output_file = ("").join([head, ".gx.vcf", tail])
+    elif mode == "transcript":
+        new_header.add_format_line(
+            OrderedDict(
+                [
+                    ("ID", "TX"),
+                    ("Number", "."),
+                    ("Type", "Float"),
+                    ("Description", "Transcript Expressions"),
+                ]
+            )
+        )
+        output_file = ("").join([head, ".tx.vcf", tail])
+    if rna_vcf:
+        new_header.add_format_line(
+            OrderedDict(
+                [
+                    ("ID", "RAD"),
+                    ("Number", "A"),
+                    ("Type", "Integer"),
+                    (
+                        "Description",
+                        "Allelic depths from mRNA sequencing data of the same sample",
+                    ),
+                ]
+            )
+        )
+        new_header.add_format_line(
+            OrderedDict(
+                [
+                    ("ID", "ROT"),
+                    ("Number", "1"),
+                    ("Type", "Integer"),
+                    (
+                        "Description",
+                        "Sum of allelic depths of other alternative allele from mRNA sequencing data of the same sample",
+                    ),
+                ]
+            )
+        )
+        (head, _, tail) = output_file.rpartition(".vcf")
+        output_file = ("").join([head, ".pileup.vcf", tail])
+    if output_vcf:
+        output_file = output_vcf
+    return Writer.from_path(output_file, new_header)
+
+
+########################## Generate new vcf file ##########################
 def adding_extra_information(args):
-    (vcf_reader, rna_vcf_reader, is_multi_sample) = create_vcf_reader(args)
-    # Only get contigs from vcf input file
-    CONTIGS = [x.id for x in vcf_reader.header.get_lines("contig")]
+    dna_vcf, is_multi_sample = dna_vcf_parser(args.input_vcf, args.sample_name)
+    if args.rna_vcf:
+        rna_vcf = rna_vcf_parser(args.rna_vcf)
+    # CONTIGS = [x.id for x in dna_vcf.header.get_lines("contig")]
     format_pattern = re.compile("Format: (.*)")
     csq_format = (
-        format_pattern.search(vcf_reader.header.get_info_field_info("CSQ").description)
+        format_pattern.search(dna_vcf.header.get_info_field_info("CSQ").description)
         .group(1)
         .split("|")
     )
+    if args.ignore_ensembl_id_version:
+        no_version = True
 
-    vcf_writer = create_vcf_writer(args, vcf_reader)
-    exp_dict = parse_expression_file(args, vcf_reader, vcf_writer)
+    vcf_writer = create_vcf_writer(
+        args.input_vcf, dna_vcf, args.mode, args.rna_vcf, args.output_vcf
+    )
+    exp_dict = expression_file_parser(
+        args.expression_file,
+        args.format,
+        args.mode,
+        args.id_column,
+        args.expression_column,
+        no_version,
+        args.genecode,
+    )
+
     missing_expressions_count = 0
     entry_count = 0
-    for entry in vcf_reader:
+
+    for entry in dna_vcf:
         # Add expression data
         transcript_ids = set()
         genes = set()
@@ -478,37 +442,38 @@ def adding_extra_information(args):
         if args.mode == "gene":
             genes = list(genes)
             if len(genes) > 0:
-                (entry, missing_expressions_count, entry_count) = add_expressions(
+                (entry, missing_expressions_count, entry_count) = add_Expression_to_vcf(
                     entry,
                     is_multi_sample,
                     args.sample_name,
                     exp_dict,
                     genes,
                     "GX",
-                    args.ignore_ensembl_id_version,
+                    no_version,
                     missing_expressions_count,
                     entry_count,
                 )
         elif args.mode == "transcript":
             transcript_ids = list(transcript_ids)
             if len(transcript_ids) > 0:
-                (entry, missing_expressions_count, entry_count) = add_expressions(
+                (entry, missing_expressions_count, entry_count) = add_Expression_to_vcf(
                     entry,
                     is_multi_sample,
                     args.sample_name,
                     exp_dict,
                     transcript_ids,
                     "TX",
+                    no_version,
                     missing_expressions_count,
                     entry_count,
                 )
         # Add RAD and ROT
-        if rna_vcf_reader is not None:
-            if (entry.CHROM in CONTIGS) and (entry.is_snv()):
-                entry = add_AD_rna_file(entry, is_multi_sample, args.sample_name, rna_vcf_reader)
+        if rna_vcf is not None:
+            if entry.is_snv():
+                entry = add_AD_to_vcf(entry, is_multi_sample, args.sample_name, rna_vcf)
         vcf_writer.write_record(entry)
 
-    vcf_reader.close()
+    dna_vcf.close()
     vcf_writer.close()
 
     if missing_expressions_count > 0:
@@ -519,10 +484,10 @@ def adding_extra_information(args):
         )
 
 
+########################## MAIN ##########################
 def main(args_input=sys.argv[1:]):
     parser = define_parser()
     args = parser.parse_args(args_input)
-    args_check(args)
     adding_extra_information(args)
 
 

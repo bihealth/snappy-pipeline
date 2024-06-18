@@ -2,9 +2,9 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-    - vcfpy
-    - numpy
-    - pyranges
-    - pandas
-    - python
-    - bcftools
+    - vcfpy>=0.12.3
+    - numpy>=1.25.2, <1.26
+    - pyranges>=0.0.129, <0.1
+    - pandas>=2.1.1, <2.2
+    - python>=3.10.8, <3.11
+    - bcftools>=1.17, <1.18
