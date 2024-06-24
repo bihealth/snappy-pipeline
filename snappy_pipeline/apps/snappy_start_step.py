@@ -77,7 +77,7 @@ class StartStepApp:
             return 1
 
         # Setup the step sub directory.
-        self._setup_step_dir(dest_dir, config_yaml)
+        self._setup_step_dir(dest_dir)
 
         # Setup the configuration
         if self.args.manage_config:
@@ -116,7 +116,7 @@ class StartStepApp:
             raise StartStepAppException("Config already exists")
         return config_yaml
 
-    def _setup_step_dir(self, dest_dir, config_yaml):
+    def _setup_step_dir(self, dest_dir):
         """Create and setup the step sub directory."""
         create_directory(dest_dir)
         create_directory(os.path.join(dest_dir, "slurm_log"))
