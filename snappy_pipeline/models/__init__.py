@@ -1,4 +1,5 @@
 import enum
+import logging
 from enum import Enum
 from inspect import isclass
 from io import StringIO
@@ -12,7 +13,7 @@ from annotated_types import Predicate
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_core import PydanticUndefined
 import ruamel
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, CommentedMap
 import typing_extensions
 
 
@@ -132,8 +133,12 @@ def _check_model_class(annotation, clazz: type = BaseModel) -> bool:
     return is_model_class
 
 
+def _has_annotations(annotation) -> bool:
+    return hasattr(annotation, "model_fields")
+
+
 def _annotate_model(
-    config_model: type[BaseModel],
+    config_model: type[BaseModel] | BaseModel,
     comment_map: ruamel.yaml.CommentedMap,
     max_column: int = 80,
     level: int = 0,
@@ -147,6 +152,7 @@ def _annotate_model(
     for key, field in config_model.model_fields.items():
         annotation = field.annotation
         is_union = _is_union_type(annotation)
+        has_annotations = _has_annotations(annotation)
         allows_none = types.NoneType in typing_extensions.get_args(annotation)
         is_optional = (is_union and allows_none) or not field.is_required()
 
@@ -190,8 +196,13 @@ def _annotate_model(
                         after=None,
                     )
                 )
+        else:
+            comment_map = CommentedMap()
 
-        if _check_model_class(annotation):
+        if not comment_map.get(key, None):
+            continue
+
+        if has_annotations:
             _annotate_model(
                 annotation,
                 comment_map[key],
@@ -199,13 +210,28 @@ def _annotate_model(
                 max_column=max_column,
                 path=path + [key],
             )
-        elif _is_union_type(annotation):
+        elif ann := getattr(annotation, "__annotations__", None):
+            # This is a workaround for `TypedDict`, which does have the __annotations__ field
+            # but not pydantic's `model_fields`
+            for k, v in ann.items():
+                try:
+                    _annotate_model(
+                        v,
+                        comment_map[key][k],
+                        level=level + 1,
+                        max_column=max_column,
+                        path=path + [key, k],
+                    )
+                except KeyError:
+                    # Skip KeyErrors silently, as we only want to annotate existing keys anyway
+                    pass
+        elif is_union:
             if len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
                 sub_model = next(filter(lambda s: s is not types.NoneType, args))
-                if _check_model_class(sub_model):
+                if _has_annotations(sub_model):
                     # when the default is set to None but the annotation inherits from basemodel,
                     # make sure to generate those entries as well
-                    if not comment_map[key]:
+                    if not comment_map.get(key, None):
                         sub_model_yaml, m = _model_to_commented_yaml(
                             _placeholder_model_instance(sub_model)
                         )
@@ -219,17 +245,19 @@ def _annotate_model(
                         path=path + [key],
                     )
         elif _check_model_class(annotation, typing.Collection):
-            for s in filter(lambda c: issubclass(c, BaseModel), typing.get_args(annotation)):
+            for s in filter(_has_annotations, typing.get_args(annotation)):
                 _annotate_model(
                     s, comment_map[key], level=level + 1, max_column=max_column, path=path + [key]
                 )
+        else:
+            logging.info(f"Skipping: {path}/{key}, {type(annotation)}")
 
 
 def _is_union_type(typ_) -> bool:
     return typing.get_origin(typ_) in (typing.Union, types.UnionType)
 
 
-def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
+def _placeholder_model_instance(model: type[BaseModel], placeholder=None, **kwargs):
     """
     Constructs a model instance where the values of required fields are replaced by a placeholder
     """
@@ -248,7 +276,7 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
 
         # required fields, i.e. `Model`
         if _check_model_class(annotation):
-            placeholders[name] = _placeholder_model_instance(annotation)
+            placeholders[name] = _placeholder_model_instance(annotation, kwargs.get(name))
 
     # replace values of undefined required fields with `placeholder`
     required_field_placeholders = {
@@ -260,6 +288,8 @@ def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
 
     # construct a model instance with invalid data, skipping validation!
     # this is only to be used to generate example configuration files
+    required_field_placeholders.update(kwargs)
+
     invalid_model_instance = model.model_construct(_fields_set=None, **required_field_placeholders)
     return invalid_model_instance
 
@@ -282,10 +312,13 @@ def _dump_yaml(comment_map: ruamel.yaml.CommentedMap) -> str:
         return out.getvalue()
 
 
-def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) -> str:
-    invalid_model_instance = _placeholder_model_instance(model)
+def _dump_commented_yaml(model: type[BaseModel] | BaseModel, comment_optional: bool = True) -> str:
+    if isinstance(model, BaseModel):
+        model_instance = model
+    else:
+        model_instance = _placeholder_model_instance(model)
 
-    cfg, max_column = _model_to_commented_yaml(invalid_model_instance)
+    cfg, max_column = _model_to_commented_yaml(model_instance)
     max_column = max(50, max_column)
     _annotate_model(model, cfg, max_column=max_column)
     key_paths = _optional_key_paths(model, cfg)
@@ -296,7 +329,7 @@ def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) 
         return cfg_yaml
 
 
-def _model_to_commented_yaml(model_instance: BaseModel, **kwargs):
+def _model_to_commented_yaml(model_instance: BaseModel, **kwargs) -> tuple[CommentedMap, int]:
     yaml = _yaml_instance()
     with StringIO() as s:
         yaml.dump(json.loads(model_instance.model_dump_json(**kwargs)), stream=s)
@@ -345,7 +378,7 @@ def _comment_key_paths_naive(
 
 
 def _optional_key_paths(
-    config_model: type[BaseModel],
+    config_model: type[BaseModel] | BaseModel,
     comment_map: ruamel.yaml.CommentedMap,
     path: list[str] = [],
 ):
@@ -359,8 +392,23 @@ def _optional_key_paths(
         if is_optional:
             optional_keys.append(path_)
 
-        if _check_model_class(annotation):
+        if not comment_map or not comment_map.get(key, None):
+            continue
+
+        if _has_annotations(annotation):
             optional_keys.extend(_optional_key_paths(annotation, comment_map[key], path_))
+        elif is_union and len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
+            sub_model = next(filter(lambda s: s is not types.NoneType, args))
+            if _has_annotations(sub_model):
+                optional_keys.extend(_optional_key_paths(sub_model, comment_map[key], path_))
+        elif ann := getattr(annotation, "__annotations__", None):
+            try:
+                for k, v in ann.items():
+                    optional_keys.extend(_optional_key_paths(v, comment_map[key][k], path_ + [k]))
+            except KeyError:
+                # Skip KeyErrors silently, as we only want to annotate existing keys anyway,
+                # same as in _annotate_model
+                pass
 
     return optional_keys
 

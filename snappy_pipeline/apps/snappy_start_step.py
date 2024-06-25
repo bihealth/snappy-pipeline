@@ -6,14 +6,17 @@ settings for the given step.
 """
 
 import argparse
-import io
 import os
 import sys
 
 import ruamel.yaml as ruamel_yaml
-from ruamel.yaml.comments import CommentedMap
 
-from .. import __version__
+from snappy_pipeline.models import (
+    SnappyStepModel,
+    _placeholder_model_instance,
+    _dump_commented_yaml,
+)
+from snappy_pipeline.workflow_model import ConfigModel, StepConfig
 from .impl.fsmanip import (
     assume_path_nonexisting,
     backup_file,
@@ -22,8 +25,8 @@ from .impl.fsmanip import (
     update_file,
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
-from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
 from .snappy_snake import STEP_TO_MODULE
+from .. import __version__
 
 #: Allowed steps
 STEPS = tuple(sorted(STEP_TO_MODULE))
@@ -72,7 +75,7 @@ class StartStepApp:
         # Load project-wide configuration and check that the step does not exist yet
         # (if configured).
         try:
-            config_yaml = self._load_config_yaml()
+            workflow_config = self._load_config()
         except StartStepAppException:
             return 1
 
@@ -81,7 +84,7 @@ class StartStepApp:
 
         # Setup the configuration
         if self.args.manage_config:
-            self._setup_configuration(config_yaml)
+            self._setup_configuration(workflow_config)
 
         log(
             "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
@@ -89,17 +92,14 @@ class StartStepApp:
         )
         log("Step {step} created.", args={"step": self.step}, level=LVL_SUCCESS)
 
-    def _load_config_yaml(self):
+    def _load_config(self) -> ConfigModel:
         """Load configuration."""
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         with open(config_filename, "rt") as f:
             yaml = ruamel_yaml.YAML()
             config_yaml = yaml.load(f.read())
-        if (
-            self.args.manage_config
-            and "step_config" in config_yaml
-            and self.step in config_yaml["step_config"]
-        ):
+            workflow_model = _placeholder_model_instance(ConfigModel, **config_yaml)
+        if self.args.manage_config and workflow_model.step_config.get(self.step, None):
             log(
                 "configuration for step {step} (/step_config/{step}) already present!",
                 args={"step": self.step},
@@ -114,7 +114,7 @@ class StartStepApp:
                 level=LVL_ERROR,
             )
             raise StartStepAppException("Config already exists")
-        return config_yaml
+        return workflow_model
 
     def _setup_step_dir(self, dest_dir):
         """Create and setup the step sub directory."""
@@ -149,31 +149,20 @@ class StartStepApp:
             message_args={"path": os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH)},
         )
 
-    def _setup_configuration(self, config_yaml):
+    def _setup_configuration(self, workflow_config: ConfigModel):
         """Setup configuration settings."""
-        # Ensure that a "step_config" setting is present and block style is used for it
-        if "step_config" not in config_yaml:
-            config_yaml["step_config"] = CommentedMap()
-        config_yaml["step_config"].fa.set_block_style()
 
         # Load default configuration, remove comment lines and lines not marked as required;
         # preserve comments
-        yaml = ruamel_yaml.YAML()
-        default_config_yaml = yaml.load(
-            remove_yaml_comment_lines(STEP_TO_MODULE[self.step].DEFAULT_CONFIG)
-        )
-        only_required = remove_non_required(default_config_yaml)
-        if only_required:
-            config_yaml["step_config"][self.step] = only_required["step_config"][self.step]
+        step_model_type: type[SnappyStepModel] = StepConfig.__annotations__.get(self.step, None)
+        step_model = _placeholder_model_instance(step_model_type)
+        workflow_config.step_config[self.step] = step_model
 
         # Create backup of config.yaml file and overwrite with new string, showing diff
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         backup_file(config_filename)
-        yaml = ruamel_yaml.YAML()
-        buf = io.StringIO()
-        yaml.dump(config_yaml, stream=buf)
-        buf.seek(0)
-        contents = buf.read()
+        contents = _dump_commented_yaml(workflow_config)
+        print(contents)
         update_file(
             path=config_filename,
             contents=contents,
