@@ -88,8 +88,15 @@ snappy-start-step = "snappy_pipeline.apps.snappy_start_step:main"
 snappy-refresh-step = "snappy_pipeline.apps.snappy_refresh_step:main"
 snappy-slurm-status = "snappy_pipeline.apps.snappy_slurm_status:main"
 
+[tool.setuptools.dynamic]
+entry-points = { file = ["tools.ini"] }
+
 [tool.setuptools]
 packages = ["snappy_pipeline", "snappy_wrappers"]
+script-files = [
+    "scripts/snappy-vcf_sort",
+    "scripts/snappy-vcf_split"
+]
 
 
 [tool.coverage.run]
