@@ -195,3 +195,20 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov=snappy_pipeline --cov-report=xml"
+testpaths = [
+    "tests",
+]
+norecursedirs = [
+    "docs",
+    "*.egg-info",
+    ".git"
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+]
