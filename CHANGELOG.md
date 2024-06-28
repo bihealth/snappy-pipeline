@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/bihealth/snappy-pipeline/compare/v0.1.0...v1.0.0) (2024-06-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* use pydantic models for validation ([#496](https://github.com/bihealth/snappy-pipeline/issues/496))
+
+### Code Refactoring
+
+* use pydantic models for validation ([#496](https://github.com/bihealth/snappy-pipeline/issues/496)) ([cd446f0](https://github.com/bihealth/snappy-pipeline/commit/cd446f043348844478f5843d8a29ae7b1a4f4c3a))
+
 ## 0.1.0 (2024-06-28)
 
 
