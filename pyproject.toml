@@ -77,9 +77,7 @@ test = [
     "sphinx ~=7.3.7",
     "sphinx_rtd_theme ~=2.0.0",
     "sphinx-mdinclude ~=0.6.0",
-]
-dev = [
-    "pytest-sugar ~=0.9.6"
+    "pytest-sugar ~=0.9.6",
 ]
 
 [project.scripts]

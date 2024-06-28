@@ -8,6 +8,11 @@ import pytest
 
 import snappy_pipeline.apps
 import snappy_pipeline.workflows
+from tests.snappy_pipeline.workflows.conftest import (
+    fake_fs,
+    germline_sheet_fake_fs,
+    germline_sheet_tsv,
+)
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
