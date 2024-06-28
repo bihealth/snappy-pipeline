@@ -86,7 +86,7 @@ def bash_scripts(names):
 package_root = os.path.abspath(os.path.dirname(__file__))
 
 version = {}
-with open(os.path.join(package_root, "snappy_pipeline/_version.py")) as fp:
+with open(os.path.join(package_root, "snappy_pipeline/version.py")) as fp:
     exec(fp.read(), version)
 version = version["__version__"]
 
