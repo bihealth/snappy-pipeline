@@ -24,6 +24,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
@@ -48,7 +50,7 @@ def minimal_config():
                 path_dataset_directory: REQUIRED
               arriba:
                 path_index: /path/to/star/index
-                features: /path/to/features.gtf
+              jaffa: {}
 
         data_sets:
           first_batch:
@@ -77,6 +79,7 @@ def somatic_gene_fusion_calling_workflow(
     """Return SomaticGeneFusionCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs(
         "snappy_pipeline.workflows.somatic_gene_fusion_calling", aligner_indices_fake_fs, mocker
@@ -123,7 +126,9 @@ def test_fusioncatcher_step_part_get_resource_usage(somatic_gene_fusion_calling_
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("fusioncatcher", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource(
+            "fusioncatcher", "run", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -158,7 +163,7 @@ def test_jaffa_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("jaffa", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("jaffa", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -193,7 +198,7 @@ def test_pizzly_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("pizzly", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("pizzly", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -228,7 +233,7 @@ def test_star_fusion_step_part_get_resource_usage(somatic_gene_fusion_calling_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("star_fusion", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("star_fusion", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -263,7 +268,7 @@ def test_defuse_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("defuse", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("defuse", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -298,7 +303,7 @@ def test_hera_step_part_get_resource_usage(somatic_gene_fusion_calling_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("hera", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("hera", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -377,7 +382,7 @@ def test_arriba_step_part_get_resource_usage(somatic_gene_fusion_calling_workflo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_gene_fusion_calling_workflow.get_resource("arriba", "run", resource)
+        actual = somatic_gene_fusion_calling_workflow.get_resource("arriba", "run", resource)()
         assert actual == expected, msg_error
 
 

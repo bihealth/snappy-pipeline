@@ -2,9 +2,9 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -18,6 +18,8 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
+from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
+
 #: Extensions of files to create as main payload
 EXT_VALUES = (".json", ".json.md5")
 
@@ -25,20 +27,7 @@ EXT_VALUES = (".json", ".json.md5")
 EXT_NAMES = ("json", "json_md5")
 
 #: Default configuration for the tmb calculation step
-DEFAULT_CONFIG = r"""
-step_config:
-    tumor_mutational_burden:
-        has_annotation: true       # REQUIRED
-        is_filtered: false         # REQUIRED
-        path_somatic_variant: ../somatic_variant_annotation   # REQUIRED
-        tools_ngs_mapping: []      # default to those configured for ngs_mapping
-        tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-        tools_somatic_variant_annotation: [] # default to those configured for somatic_variant_annotation
-        filters: []                # When using variants after the somatic_variant_filtration step, use "no_filter", "dkfz_only", "dkfz_and_ebfilter" or "dkfz_and_ebfilter_and_oxog"
-        filtered_regions: []       # When using variants after the somatic_variant_filtration step, use "genome_wide" or ""
-        target_regions:            # REQUIRED
-        missense_regex: '.*[\|&]missense_variant[\|&].*' #change if the annotation tool doesn't use 'missense_variant' to indicate missense variant
-"""
+DEFAULT_CONFIG = TumorMutationalBurdenConfigModel.default_config_yaml_string()
 
 
 class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
@@ -50,7 +39,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.config = parent.w_config["step_config"]["tumor_mutational_burden"]
+        self.config = parent.w_config.step_config["tumor_mutational_burden"]
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -69,17 +58,17 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         self._validate_action(action)
 
         additional_steps = ""
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             additional_steps += ".{anno_caller}"
-        if self.config["is_filtered"]:
-            if len(self.config["filters"]) == 0:
+        if self.config.is_filtered:
+            if len(self.config.filters) == 0:
                 additional_steps += ".filtered"
             else:
                 additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".{tumor_library}"
-        if self.config["filters"]:
+        if self.config.filters:
             base_name += ".{filter}"
-        if self.config["filtered_regions"]:
+        if self.config.filtered_regions:
             base_name += ".{region}"
         tpl = os.path.join("output", base_name, "out", base_name)
 
@@ -94,17 +83,17 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         self._validate_action(action)
 
         additional_steps = ""
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             additional_steps += ".{anno_caller}"
-        if self.config["is_filtered"]:
-            if len(self.config["filters"]) == 0:
+        if self.config.is_filtered:
+            if len(self.config.filters) == 0:
                 additional_steps += ".filtered"
             else:
                 additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".tmb.{tumor_library}"
-        if self.config["filters"]:
+        if self.config.filters:
             base_name += ".{filter}"
-        if self.config["filtered_regions"]:
+        if self.config.filtered_regions:
             base_name += ".{region}"
         tpl = os.path.join("output", base_name, "out", base_name)
 
@@ -118,17 +107,17 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         self._validate_action(action)
 
         additional_steps = ""
-        if self.config["has_annotation"]:
+        if self.config.has_annotation:
             additional_steps += ".{anno_caller}"
-        if self.config["is_filtered"]:
-            if len(self.config["filters"]) == 0:
+        if self.config.is_filtered:
+            if len(self.config.filters) == 0:
                 additional_steps += ".filtered"
             else:
                 additional_steps += ".dkfz_bias_filter.eb_filter"
         base_name = "{mapper}.{var_caller}" + additional_steps + ".tmb.{tumor_library}"
-        if self.config["filters"]:
+        if self.config.filters:
             base_name += ".{filter}"
-        if self.config["filtered_regions"]:
+        if self.config.filtered_regions:
             base_name += ".{region}"
         tpl = os.path.join("output", base_name, "log", base_name)
 
@@ -140,7 +129,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, tpl + ext
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
@@ -154,15 +143,13 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         return getattr(self, "_get_params_run")
 
     def _get_params_run(self, wildcards):
-        return {
-            "missense_re": self.w_config["step_config"]["tumor_mutational_burden"]["missense_regex"]
-        }
+        return {"missense_re": self.w_config.step_config["tumor_mutational_burden"].missense_regex}
 
 
 class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     """Perform TMB calculation"""
 
-    name = "tumormutation"
+    name = "tumor_mutational_burden"
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
@@ -180,7 +167,8 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=TumorMutationalBurdenConfigModel,
+            previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,
@@ -188,88 +176,80 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             ),
         )
         # Register sub workflows
-        config = self.w_config["step_config"]["tumor_mutational_burden"]
+        config = self.config
         sub_workflow = "somatic_variant_calling"
-        if config["has_annotation"]:
+        if config.has_annotation:
             sub_workflow = "somatic_variant_annotation"
-        if config["is_filtered"]:
+        if config.is_filtered:
             sub_workflow = "somatic_variant_filtration"
-        self.register_sub_workflow(sub_workflow, config["path_somatic_variant"], "somatic_variant")
+        self.register_sub_workflow(sub_workflow, config.path_somatic_variant, "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not config["tools_ngs_mapping"]:
-            config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not config["tools_somatic_variant_calling"]:
-            config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+        if not config.tools_ngs_mapping:
+            config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not config.tools_somatic_variant_calling:
+            config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
-            ]["tools"]
-        if not config["tools_somatic_variant_annotation"]:
-            config["tools_somatic_variant_annotation"] = self.w_config["step_config"][
+            ].tools
+        if not config.tools_somatic_variant_annotation:
+            config.tools_somatic_variant_annotation = self.w_config.step_config[
                 "somatic_variant_annotation"
-            ]["tools"]
-        if config["is_filtered"]:
-            if len(self.w_config["step_config"]["somatic_variant_filtration"]["filter_list"]) > 0:
-                config["filters"] = []
-                config["filtered_regions"] = []
+            ].tools
+        if config.is_filtered:
+            if len(self.w_config.step_config["somatic_variant_filtration"].filter_list) > 0:
+                config.filters = []
+                config.filtered_regions = []
             else:
-                if not config["filters"]:
-                    config["filters"] = list(
-                        self.w_config["step_config"]["somatic_variant_filtration"][
-                            "filter_sets"
-                        ].keys()
+                if not config.filters:
+                    config.filters = list(
+                        self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
                     )
-                    config["filters"].append("no_filter")
-                if not config["filtered_regions"]:
-                    config["filtered_regions"] = list(
-                        self.w_config["step_config"]["somatic_variant_filtration"][
-                            "exon_lists"
-                        ].keys()
+                    config.filters.append("no_filter")
+                if not config.filtered_regions:
+                    config.filtered_regions = list(
+                        self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
                     )
-                    config["filtered_regions"].append("genome_wide")
+                    config.filtered_regions.append("genome_wide")
         # Register sub step classes so the sub steps are available
-        self.w_config["step_config"]["tumor_mutational_burden"] = config
+        self.w_config.step_config["tumor_mutational_burden"] = config
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
 
     @listify
     def get_result_files(self):
-        config = self.w_config["step_config"]["tumor_mutational_burden"]
+        config = self.w_config.step_config["tumor_mutational_burden"]
         name_pattern = "{mapper}.{caller}"
-        if config["has_annotation"]:
+        if config.has_annotation:
             name_pattern += ".{anno_caller}"
-        if config["is_filtered"]:
-            if len(config["filters"]) > 0:
+        if config.is_filtered:
+            if len(config.filters) > 0:
                 name_pattern += ".dkfz_bias_filter.eb_filter"
             else:
                 name_pattern += ".filtered"
         name_pattern += ".tmb.{tumor_library.name}"
-        if config["is_filtered"] and len(config["filters"]) > 0:
+        if config.is_filtered and len(config.filters) > 0:
             name_pattern += ".{filter}.{region}"
 
-        mappers = set(config["tools_ngs_mapping"]) & set(
-            self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+        mappers = set(config.tools_ngs_mapping) & set(
+            self.w_config.step_config["ngs_mapping"].tools.dna
         )
         assert len(mappers) > 0, "No valid mapper"
-        callers = set(config["tools_somatic_variant_calling"]) & set(
-            SOMATIC_VARIANT_CALLERS_MATCHED
-        )
+        callers = set(config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS_MATCHED)
         assert len(callers) > 0, "No valid somatic variant caller"
-        if config["has_annotation"]:
-            anno_callers = set(config["tools_somatic_variant_annotation"]) & set(ANNOTATION_TOOLS)
+        if config.has_annotation:
+            anno_callers = set(config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
             assert len(anno_callers) > 0, "No valid somatic variant annotation tool"
         else:
             anno_callers = []
-        if config["is_filtered"]:
+        if config.is_filtered:
             filters = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["filter_sets"].keys()
+                self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
             )
             filters.append("no_filter")
-            filters = set(filters) & set(config["filters"])
+            filters = set(filters) & set(config.filters)
             regions = list(
-                self.w_config["step_config"]["somatic_variant_filtration"]["exon_lists"].keys()
+                self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
             )
             regions.append("genome_wide")
-            regions = set(regions) & set(config["filtered_regions"])
+            regions = set(regions) & set(config.filtered_regions)
         else:
             filters = []
             regions = []
@@ -323,21 +303,3 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
                     tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
                     **kwargs,
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "path_somatic_variant"),
-            "Path to variant (directory of vcf files) not configured but required for tmb calculation",
-        )
-
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "target_regions"),
-            "Path to target_regions file (bed format)"
-            "not configured but required for tmb calculation",
-        )
-
-        self.ensure_w_config(
-            ("step_config", "tumor_mutational_burden", "has_annotation"),
-            "TMB needs to know whether the vcf is annotated or not",
-        )

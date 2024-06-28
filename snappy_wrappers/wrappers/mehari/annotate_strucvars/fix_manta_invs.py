@@ -19,7 +19,7 @@ def looks_like_manta(header):
 
 
 @enum.unique
-class InversionType(enum.Enum):
+class InversionType(enum.StrEnum):
     """Inversion type."""
 
     INV3 = "INV3"

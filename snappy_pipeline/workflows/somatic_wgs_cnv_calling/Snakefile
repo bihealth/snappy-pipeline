@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
+    SomaticWgsCnvCallingWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

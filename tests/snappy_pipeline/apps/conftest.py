@@ -104,7 +104,7 @@ def germline_sheet_fake_project_ngs_mapping_fs(
         create_missing_dirs=True,
     )
     # Make the snappy_pipeline workflows visible
-    fake_fs.fs.add_real_directory(snappy_pipeline.workflows.__path__._path[0])
+    fake_fs.fs.add_real_directory(snappy_pipeline.workflows.__path__[0])
     # Go into pipeline step
     fake_fs.os.chdir("/project-dir/ngs_mapping")
     return fake_fs

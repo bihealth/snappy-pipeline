@@ -33,6 +33,22 @@ def minimal_config():
               rna: ['star']
             star:
               path_index: /path/to/star/index
+          gene_expression_quantification:
+            path_ngs_mapping: ../ngs_mapping
+            tools: [strandedness, featurecounts, dupradar, duplication, rnaseqc, salmon, stats]
+            featurecounts:
+              path_annotation_gtf: /path/to/annotation.gtf
+            strandedness:
+              path_exon_bed: /path/to/exon.bed
+            rnaseqc:
+              rnaseqc_path_annotation_gtf: /path/to/rnaseqc.gtf
+            dupradar:
+              dupradar_path_annotation_gtf: /path/to/dupradar.gtf
+            duplication: {}
+            stats: {}
+            salmon:
+              path_transcript_to_gene: /path/to/salmon/transcript_to_gene
+              path_index: /path/to/salmon/index
 
         data_sets:
           first_batch:
@@ -55,11 +71,13 @@ def gene_expression_quantification_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return GeneExpressionQuantificationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping.model", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return GeneExpressionQuantificationWorkflow(
@@ -124,7 +142,7 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
         msg_error = f"Assertion error for resource '{resource}'."
         actual = gene_expression_quantification_workflow.get_resource(
             "featurecounts", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -138,7 +156,7 @@ def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = gene_expression_quantification_workflow.get_resource("salmon", "run", resource)
+        actual = gene_expression_quantification_workflow.get_resource("salmon", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -154,7 +172,7 @@ def test_duplication_step_part_get_resource(gene_expression_quantification_workf
         msg_error = f"Assertion error for resource '{resource}'."
         actual = gene_expression_quantification_workflow.get_resource(
             "duplication", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -168,7 +186,7 @@ def test_dupradar_step_part_get_resource(gene_expression_quantification_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = gene_expression_quantification_workflow.get_resource("dupradar", "run", resource)
+        actual = gene_expression_quantification_workflow.get_resource("dupradar", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -182,7 +200,7 @@ def test_rnaseqc_step_part_get_resource(gene_expression_quantification_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = gene_expression_quantification_workflow.get_resource("rnaseqc", "run", resource)
+        actual = gene_expression_quantification_workflow.get_resource("rnaseqc", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -196,7 +214,7 @@ def test_stats_step_part_get_resource(gene_expression_quantification_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = gene_expression_quantification_workflow.get_resource("stats", "run", resource)
+        actual = gene_expression_quantification_workflow.get_resource("stats", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -326,4 +344,6 @@ def test_gene_expression_quantification_workflow_files(gene_expression_quantific
     # Get actual
     actual = set(gene_expression_quantification_workflow.get_result_files())
 
-    assert actual == expected
+    assert (
+        actual == expected
+    ), f"Missing from actual {expected - actual}\nMissing from expected {actual - expected}"

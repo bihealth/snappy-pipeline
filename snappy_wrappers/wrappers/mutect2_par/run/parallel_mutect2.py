@@ -23,7 +23,6 @@ from snappy_wrappers.wrapper_parallel import (  # noqa: E402
 
 
 class ParallelMutect2Wrapper(ParallelMutect2BaseWrapper):
-
     inner_wrapper = "mutect2/run"
     step_name = "somatic_variant_calling"
     tool_name = "mutect2"

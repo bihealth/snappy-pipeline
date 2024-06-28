@@ -2,6 +2,7 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
+- python =3.12
 - bcftools ==1.5
 - htslib ==1.5
 - parallel ==20170422
