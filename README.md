@@ -21,31 +21,17 @@ cd snappy-pipeline
 # WARNING- make sure that you are in your conda base environment
 
 # Create conda environment "snappy_env" with the minimal requirements:
-mamba env create --file environment.yml
+mamba env create --file environment.yml -n snappy_env
 conda activate snappy_env
 
-# Add testing & development requirements:
-pip install -r requirements/test.txt
-pip install -r requirements/dev.txt
-
-# Optionally add "pytest-pdb" missing from anaconda
-pip install pytest-pdb
-
 # Install snappy in snappy_env environment
-pip install -e .
-```
-
-**Note:** To create the environment under another name, replace the commands for the environment creation & activation of the correct environment by:
-
-```
-mamba env create --file environment.yml --name <other_environment_name>
-conda activate <other_environment_name>
+pip install -e ".[test]"
 ```
 
 
 See [user installation](docs/quickstart.rst) if you just want to use the pipeline.
 
-See [developer installation)[docs/installation.rst) for getting started with working on the pipeline code and also building the documentation.
+See [developer installation](docs/installation.rst) for getting started with working on the pipeline code and also building the documentation.
 
 ## Using GATK3
 
