@@ -9,7 +9,6 @@ import sys
 
 from setuptools import find_packages, setup
 
-import versioneer
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -84,6 +83,13 @@ def bash_scripts(names):
     """Return generator with bash scripts of the given ``names``"""
     return (os.path.join("scripts", name) for name in names)
 
+
+package_root = os.path.abspath(os.path.dirname(__file__))
+
+version = {}
+with open(os.path.join(package_root, "snappy_pipeline/_version.py")) as fp:
+    exec(fp.read(), version)
+version = version["__version__"]
 
 setup(
     name="snappy-pipeline",
