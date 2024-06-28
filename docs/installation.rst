@@ -37,26 +37,39 @@ You can of course clone the code anywhere you like.
     $ cd ~/Development/pipeline_dev
     $ git clone git@github.com:bihealth/snappy-pipeline.git
     $ cd snappy_pipeline
-    $ pip install -e .
-    $ pip install -r requirements/dev.txt
+    $ conda create env -n snappy_dev --file environment.yaml
+    $ conda activate snappy_dev
+    $ pip install -e ".[test]"
 
-It's also a good idea to install some packages required for testing through conda:
+
+Installing pre-commit-hooks
+===========================
+To make it easier to follow the coding style, we use `pre-commit <https://pre-commit.com>`_ hooks.
+These hooks will run the style checks before you commit your changes and will automatically fix some issues.
+
+First, install the pre-commit package (if not already installed):
 
 .. code-block:: shell
 
-    $ conda env update --name root --file environment.yaml
+    $ conda install pre-commit  # or pip install pre-commit
 
-(If you do not do this, please make sure that you have git-lfs in your PATH through other means)
+Then, install the pre-commit hooks:
+
+.. code-block:: shell
+
+    $ pre-commit install
+
+The next time you commit changes, the pre-commit hooks will run automatically.
 
 Running the Tests
 =================
 
-To run the tests, you need to add the packages in ``requirements/test.txt``.
+To run the tests, simply invoke ``pytest``:
 
 .. code-block:: shell
 
     $ cd ~/Development/pipeline_dev
-    $ py.test
+    $ pytest
 
 Running the Style Checks
 ========================
@@ -64,7 +77,7 @@ Running the Style Checks
 .. code-block:: shell
 
     $ cd ~/Development/pipeline_dev
-    $ flake8
+    $ make lint
 
 Developer Documentation
 =======================
