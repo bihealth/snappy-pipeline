@@ -457,7 +457,7 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
 
 def test_access_step_part_get_input_files_run(panel_of_normals_workflow):
     """Tests AccessStepPart._get_input_files_run()"""
-    assert panel_of_normals_workflow.get_input_files("access", "run") == None
+    assert panel_of_normals_workflow.get_input_files("access", "run") is None
 
 
 def test_access_step_part_get_output_files_run(panel_of_normals_workflow):
@@ -710,7 +710,7 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
         for chksum in ("", ".md5")
     ]
     expected += get_expected_log_files_dict(
-        base_out="output/purecn/log/unknown_unknown".format(mapper="bwa")
+        base_out="output/purecn/log/unknown_unknown".format()
     ).values()
 
     expected = list(sorted(expected))

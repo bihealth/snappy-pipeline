@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV CASE mode run methods."""
 
-from glob import glob
-from itertools import chain
 import json
 import os
 import re
 import warnings
+from glob import glob
+from itertools import chain
 
 from snakemake.io import Wildcards, expand, touch
 

@@ -9,10 +9,10 @@ Usage::
 from __future__ import print_function
 
 import argparse
-from collections import OrderedDict, defaultdict, namedtuple
 import os
 import re
 import sys
+from collections import OrderedDict, defaultdict, namedtuple
 
 __author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 

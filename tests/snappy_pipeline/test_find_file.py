@@ -5,8 +5,8 @@ import copy
 import json
 from unittest.mock import MagicMock, patch
 
-from pyfakefs import fake_filesystem
 import pytest
+from pyfakefs import fake_filesystem
 
 from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 

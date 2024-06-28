@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """Shared fixtures for the workflows unit tests"""
 
-from collections import namedtuple
 import io
 import os
 import random
 import textwrap
+from collections import namedtuple
 from unittest.mock import MagicMock, patch
 
-from pydantic import ConfigDict
-from pyfakefs import fake_filesystem
 import pytest
-
 from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
+from pydantic import ConfigDict
+from pyfakefs import fake_filesystem
+
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.abstract import BaseStep
 
@@ -938,7 +938,7 @@ def patch_module_fs(module_name: str, fake_fs, mocker):
     modules = [module_name]
     if module_name.startswith("snappy_pipeline.workflows.") and not module_name.endswith(".model"):
         # TODO replace with more robust solution
-        if not module_name.endswith("abstract") and not ".common." in module_name:
+        if not module_name.endswith("abstract") and ".common." not in module_name:
             modules.append(module_name + ".model")
 
     for module_name in modules:

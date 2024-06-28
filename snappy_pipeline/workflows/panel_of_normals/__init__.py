@@ -148,6 +148,7 @@ Panel of normals generation for tools
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

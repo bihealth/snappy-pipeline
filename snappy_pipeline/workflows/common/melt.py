@@ -1,10 +1,10 @@
-from itertools import chain
 import re
 import typing
-
-from snakemake.io import touch
+from itertools import chain
 
 from biomedsheets.shortcuts import is_not_background
+from snakemake.io import touch
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import (

@@ -162,6 +162,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["E501"]
+"snappy_wrappers/tools/gcnv_merge_vcfs.py" = ["E721"]
 "docs/conf.py" = ["ALL"]
 
 [tool.ruff.lint.flake8-quotes]

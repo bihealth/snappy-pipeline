@@ -8,13 +8,13 @@ The result it a data.frame tsv with the fraction of variants that each
 signature explains as well as a plot.
 """
 
-from collections import OrderedDict
 import os
 import sys
-
-from snakemake.io import expand
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from snakemake.io import expand
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage

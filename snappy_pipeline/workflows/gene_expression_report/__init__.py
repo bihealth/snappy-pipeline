@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Implementation of the ``gene_expression_report`` step"""
 
-from collections import OrderedDict
 import os
-
-from snakemake.io import expand
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from snakemake.io import expand
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow

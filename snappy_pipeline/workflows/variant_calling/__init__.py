@@ -246,16 +246,16 @@ bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/jannovar_stats/bwa.gatk4_hc_gvcf.ind
 ```
 """
 
-from collections import OrderedDict
-from itertools import chain
 import re
 import sys
 import typing
 import warnings
-
-from snakemake.io import Wildcards, expand
+from collections import OrderedDict
+from itertools import chain
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
+from snakemake.io import Wildcards, expand
+
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

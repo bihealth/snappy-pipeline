@@ -3,8 +3,8 @@
 
 from collections import namedtuple
 
-from pyfakefs import fake_filesystem
 import pytest
+from pyfakefs import fake_filesystem
 
 
 @pytest.fixture

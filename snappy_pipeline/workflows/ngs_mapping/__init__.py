@@ -427,14 +427,14 @@ Fingerprinting (.npz)
   fingerprints can detect contamination in samples.
 """
 
-from itertools import chain
 import os
 import re
 import sys
-
-from snakemake.io import expand
+from itertools import chain
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
+from snakemake.io import expand
+
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (

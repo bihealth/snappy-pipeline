@@ -111,14 +111,14 @@ All variants overlapping with hotspots locii would be protected against filtrati
 Note that the parallelisation of ``ebfilter`` has been removed, even though this operation can be slow when there are many variants (from WGS data for example).
 """
 
-from collections import OrderedDict
 import os
 import random
 import sys
-
-from snakemake.io import expand
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from snakemake.io import expand
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

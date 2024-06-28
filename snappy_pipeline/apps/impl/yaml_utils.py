@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Utilities for processing YAML configuration"""
 
-from collections.abc import MutableMapping, MutableSequence
 import re
+from collections.abc import MutableMapping, MutableSequence
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
