@@ -21,6 +21,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+
 # Helper functions ------------------------------------------------------------
 def pair_fastq_files(input_left, input_right):
     r1s = input_left.copy()

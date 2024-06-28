@@ -36,6 +36,8 @@ def minimal_config():
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
             filtration_schema: sets
+            filter_sets: {}
+            path_somatic_variant: "../somatic_variant_annotation"
 
         data_sets:
           first_batch:
@@ -58,11 +60,13 @@ def somatic_variant_filtration_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticVariantFiltrationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
@@ -129,7 +133,7 @@ def test_dkfz_bias_filter_step_part_get_resource_usage(somatic_variant_filtratio
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow.get_resource(
             "dkfz_bias_filter", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -233,7 +237,9 @@ def test_eb_filter_step_part_get_resource_usage(somatic_variant_filtration_workf
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_variant_filtration_workflow.get_resource("eb_filter", action, resource)
+            actual = somatic_variant_filtration_workflow.get_resource(
+                "eb_filter", action, resource
+            )()
             assert actual == expected, msg_error
 
 
@@ -285,7 +291,9 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_filtration_workflow.get_resource("apply_filters", "run", resource)
+        actual = somatic_variant_filtration_workflow.get_resource(
+            "apply_filters", "run", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -349,7 +357,7 @@ def test_filter_to_exons_step_part_get_resource_usage(somatic_variant_filtration
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow.get_resource(
             "filter_to_exons", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -445,11 +453,12 @@ def minimal_config_list():
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
+            path_somatic_variant: "../somatic_variant_annotation"
             filtration_schema: list
             filter_list:
             - dkfz: {}
             - ebfilter:
-                threshold: 2.3
+                ebfilter_threshold: 2.3
             - bcftools:
                 include: "include_statment"
             - regions:
@@ -479,11 +488,13 @@ def somatic_variant_filtration_workflow_list(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticVariantFiltrationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
@@ -562,7 +573,15 @@ def test_one_filter_step_part_get_params(somatic_variant_filtration_workflow_lis
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 2})
-    expected = {"filter_name": "ebfilter_2", "threshold": 2.3, "has_annotation": True}
+    expected = {
+        "filter_name": "ebfilter_2",
+        "ebfilter_threshold": 2.3,
+        "has_annotation": True,
+        "shuffle_seed": 1,
+        "panel_of_normals_size": 25,
+        "min_mapq": 20,
+        "min_baseq": 15,
+    }
     actual = somatic_variant_filtration_workflow_list.get_params("one_ebfilter", "run")(wildcards)
     assert actual == expected
 
@@ -591,7 +610,7 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_filtration_workflow_list.get_resource(
             "one_ebfilter", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

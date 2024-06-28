@@ -2,7 +2,7 @@
 CUBI Pipeline Documentation
 ===========================
 
-This is the documentatation for the CUBI Pipeline.
+This is the documentation for the CUBI Pipeline.
 This documentation is split into four parts:
 
 Pipeline User Docs

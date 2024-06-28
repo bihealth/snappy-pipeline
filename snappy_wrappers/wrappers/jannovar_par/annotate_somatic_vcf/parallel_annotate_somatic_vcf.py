@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Definition for Jannovar somatic annotation in parallel, genome is split into windows
-"""
+"""Definition for Jannovar somatic annotation in parallel, genome is split into windows"""
+
 import os
 import sys
 

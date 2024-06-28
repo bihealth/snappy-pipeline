@@ -71,13 +71,16 @@ def _check_config(config: typing.Dict[str, typing.Any]) -> typing.Dict[str, typi
             ), '"set" and/or "column" definition missing from element {} of inputs definition for output column {}'.format(
                 i + 1, k
             )
-            assert x["set"] in (
-                "annotation",
-                "constant",
-                "fixed",
-                "format",
-                "info",
-                "variant",
+            assert (
+                x["set"]
+                in (
+                    "annotation",
+                    "constant",
+                    "fixed",
+                    "format",
+                    "info",
+                    "variant",
+                )
             ), 'Illegal set "{}" for input column "{}" of inputs definition for output column {}, must be one of "annotation", "constant", "fixed", "format", "info" or "variant"'.format(
                 x["set"], x["column"], k
             )
@@ -88,11 +91,14 @@ def _check_config(config: typing.Dict[str, typing.Any]) -> typing.Dict[str, typi
                     x["set"], x["column"], k
                 )
             if "on_missing" in x:
-                assert x["on_missing"] in (
-                    "stop",
-                    "skip",
-                    "default",
-                    "ignore",
+                assert (
+                    x["on_missing"]
+                    in (
+                        "stop",
+                        "skip",
+                        "default",
+                        "ignore",
+                    )
                 ), 'Illegal value of requested action for missing input "{}" for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
                     x["column"], k
                 )
@@ -107,11 +113,14 @@ def _check_config(config: typing.Dict[str, typing.Any]) -> typing.Dict[str, typi
             else:
                 config["output"][k]["input"][i]["default"] = None
         if "on_missing" in v:
-            assert v["on_missing"] in (
-                "stop",
-                "skip",
-                "default",
-                "ignore",
+            assert (
+                v["on_missing"]
+                in (
+                    "stop",
+                    "skip",
+                    "default",
+                    "ignore",
+                )
             ), 'Illegal value of requested action for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
                 k
             )

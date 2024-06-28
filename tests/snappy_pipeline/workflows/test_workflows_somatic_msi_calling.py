@@ -58,11 +58,13 @@ def somatic_msi_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticMsiCallingWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return SomaticMsiCallingWorkflow(
@@ -122,7 +124,7 @@ def test_mantis_msi2_step_part_get_resource_usage(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_msi_calling_workflow.get_resource("mantis_msi2", "run", resource)
+        actual = somatic_msi_calling_workflow.get_resource("mantis_msi2", "run", resource)()
         assert actual == expected, msg_error
 
 

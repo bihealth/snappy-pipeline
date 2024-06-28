@@ -55,6 +55,7 @@ tabix {tempdir}/segments.bed.gz
 """
 )
 
+
 # Implmentation of R's quantile function for continuous quantiles.
 def quantile(x, probs, na_rm=False, method=7):
     if na_rm:

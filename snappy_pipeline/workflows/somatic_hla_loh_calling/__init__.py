@@ -25,24 +25,19 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
+
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_hla_loh_calling
-step_config:
-  somatic_hla_loh_calling:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    path_hla_typing: ../hla_typing  # REQUIRED
-    path_somatic_purity_ploidy: ../somatic_purity_ploidy_estimate  # REQUIRED
-"""
+DEFAULT_CONFIG = SomaticHlaLohCallingConfigModel.default_config_yaml_string()
 
 
 class LohhlaStepPart(BaseStepPart):
@@ -68,7 +63,6 @@ class LohhlaStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action):
-
         # Validate action
         self._validate_action(action)
 
@@ -155,13 +149,14 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticHlaLohCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        self.register_sub_workflow("hla_typing", self.config["path_hla_typing"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_sub_workflow("hla_typing", self.config.path_hla_typing)
 
     @listify
     def get_result_files(self):
@@ -172,12 +167,12 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.optitype.lohhla.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             ext=".done",
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             ext=(
                 ".log",
                 ".log.md5",
@@ -209,10 +204,3 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
                 yield from expand(
                     tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_hla_loh_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required.",
-        )

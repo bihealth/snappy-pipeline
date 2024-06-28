@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Pedigree manipulation related methods"""
+
 from biomedsheets.shortcuts import KEY_IS_AFFECTED, KEY_SEX
 
 

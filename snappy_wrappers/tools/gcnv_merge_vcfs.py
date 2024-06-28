@@ -120,9 +120,9 @@ class ContigCnvs:
     ncls: ncls.NCLS
 
     @staticmethod
-    def from_cnvs(
-        contig: str, cnvs: typing.Iterable[CopyNumberVariant]
-    ) -> typing.TypeVar("ContigCnvs"):
+    def from_cnvs(contig: str, cnvs: typing.Iterable[CopyNumberVariant]) -> typing.TypeVar(
+        "ContigCnvs"
+    ):
         """Build from name and list of CopyNumberVariant."""
         start = pd.Series([cnv.pos_begin for cnv in cnvs])
         ends = pd.Series([cnv.pos_end for cnv in cnvs])

@@ -948,8 +948,9 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         {input_bam},
@@ -965,7 +966,10 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -998,8 +1002,9 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         **{input_},
@@ -1015,7 +1020,10 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -1048,8 +1056,9 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         tumor_bam={tumor_bam},
@@ -1066,7 +1075,10 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
@@ -1099,8 +1111,9 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
                 rule chunk_{jobno}:
                     input:
                         **{input_},
@@ -1116,7 +1129,10 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{params}
                     wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
             """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
 
 class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
@@ -1319,8 +1335,9 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 "wrapper_prefix": "file://" + self.wrapper_base_dir,
                 "inner_wrapper": self.inner_wrapper,
             }
-            yield textwrap.dedent(
-                r"""
+            yield (
+                textwrap.dedent(
+                    r"""
             rule chunk_{jobno}:
                 input:
                     **{input}
@@ -1337,7 +1354,10 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     **{params}
                 wrapper: '{wrapper_prefix}/snappy_wrappers/wrappers/{inner_wrapper}'
         """
-            ).format(**vals).lstrip()
+                )
+                .format(**vals)
+                .lstrip()
+            )
 
     def construct_merge_rule(self):
         """Join the overall result files.

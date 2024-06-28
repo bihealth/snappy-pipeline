@@ -26,7 +26,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -42,10 +42,9 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v1.1.0
         with:
           message: |
-            - Please format your Python code with [black](https://black.readthedocs.io): `make black`
+            - Please format your Python code with [ruff](https://docs.astral.sh/ruff/): `make fmt`
+            - Please check your Python code with [ruff](https://docs.astral.sh/ruff/): `make check`
             - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`
-            - Please organize your imports [isorts](https://isort.readthedocs.io): `make isort`
-            - Please ensure that your code passes [flake8](https://flake8.pycqa.org/en/latest/): `make flake8`
 
             You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,11 +57,12 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-            pip install -r requirements/test.txt
+            pip install -r requirements/base.txt -r requirements/test.txt
+            pip install -e .
             pip freeze
 
       - name: Build documentation
@@ -75,7 +75,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.10"
+          - "3.12"
           # - "3.11"  # no compatible pysam yet
           # - "3.12"  # no compatible pysam yet
     needs: linting
@@ -95,7 +95,7 @@ jobs:
       - name: Prepare environment.yml file
         run: >
           cp environment.yml /tmp/environment.yml && sed -i -e
-          's/- python/- python=${{ matrix.python-version }}/'
+          's/- python=.*/- python=${{ matrix.python-version }}/'
           /tmp/environment.yml
       - name: Update environment using mamba
         run: mamba env update --name root --file /tmp/environment.yml

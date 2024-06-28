@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the panel_of_normals workflow module code"""
 
-from collections import OrderedDict
 import textwrap
 
 import pytest
@@ -33,8 +32,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -45,12 +42,13 @@ def minimal_config():
                   germline_resource: /path/to/germline_resource.vcf
                   path_normals_list: ""
               cnvkit:
-                  path_excluded_regions: ""
                   path_target_regions: /path/to/regions.bed  # WES mode
                   path_normals_list: ""
               purecn:
                   path_normals_list: ""
                   path_bait_regions: /path/to/baits/regions.bed
+                  path_genomicsDB: /path/to/mutect2/genomicsDB
+                  genome_name: "unknown"
 
         data_sets:
           first_batch:
@@ -73,11 +71,13 @@ def panel_of_normals_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return PanelOfNormalsWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
@@ -185,13 +185,13 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     # Evaluate action `create_panel`
     for resource, expected in create_panel_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'create_panel'."
-        actual = panel_of_normals_workflow.get_resource("mutect2", "create_panel", resource)
+        actual = panel_of_normals_workflow.get_resource("mutect2", "create_panel", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `prepare_panel`
     for resource, expected in prepare_panel_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'prepare_panel'."
-        actual = panel_of_normals_workflow.get_resource("mutect2", "prepare_panel", resource)
+        actual = panel_of_normals_workflow.get_resource("mutect2", "prepare_panel", resource)()
         assert actual == expected, msg_error
 
 
@@ -424,31 +424,31 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     # Evaluate action `target`
     for resource, expected in target_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'target'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `antitarget`
     for resource, expected in antitarget_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'antitarget'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `coverage`
     for resource, expected in coverage_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'coverage'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `create_panel`
     for resource, expected in reference_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'create_panel'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `report`
     for resource, expected in report_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'report'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)()
         assert actual == expected, msg_error
 
 
@@ -488,7 +488,7 @@ def test_access_step_part_get_resource_usage(panel_of_normals_workflow):
     }
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'run'."
-        actual = panel_of_normals_workflow.get_resource("access", "run", resource)
+        actual = panel_of_normals_workflow.get_resource("access", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -619,7 +619,7 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     }
     for action, resources in expected.items():
         for resource, value in resources.items():
-            actual = panel_of_normals_workflow.get_resource("purecn", action, resource)
+            actual = panel_of_normals_workflow.get_resource("purecn", action, resource)()
             assert actual == value
 
 
