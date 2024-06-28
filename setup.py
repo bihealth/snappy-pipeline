@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Installation driver (and development utility entry point) for snappy-pipeline"""
 
-from itertools import chain
 import os
 import sys
+from itertools import chain
 
 from setuptools import find_packages, setup
-
-import versioneer
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -84,10 +82,16 @@ def bash_scripts(names):
     return (os.path.join("scripts", name) for name in names)
 
 
+package_root = os.path.abspath(os.path.dirname(__file__))
+
+version = {}
+with open(os.path.join(package_root, "snappy_pipeline/_version.py")) as fp:
+    exec(fp.read(), version)
+version = version["__version__"]
+
 setup(
     name="snappy-pipeline",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version=version,
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
