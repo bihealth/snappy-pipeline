@@ -57,13 +57,13 @@ from itertools import chain
 import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
-from snappy_pipeline.workflows.abstract.exceptions import InvalidConfigurationException
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
+
+from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -79,30 +79,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 # TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_annotation
-step_config:
-  variant_annotation:
-    path_variant_calling: ../variant_calling
-    tools:
-      - vep
-    vep:
-      # We will always run VEP in cache mode.  You have to provide the directory to the
-      # cache to use (VEP would be ``~/.vep``).
-      cache_dir: null # OPTIONAL
-      # The cache version to use.  gnomAD v2 used 85, gnomAD v3.1 uses 101.
-      cache_version: "85"
-      # The assembly to use.  gnomAD v2 used "GRCh37", gnomAD v3.1 uses "GRCh38".
-      assembly: "GRCh37"
-      # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
-      tx_flag: "gencode_basic"
-      # Number of threads to use with forking, set to 0 to disable forking.
-      num_threads: 16
-      # Additional flags.
-      more_flags: "--af_gnomade --af_gnomadg"
-      # The --buffer_size parameter
-      buffer_size: 100000
-"""
+DEFAULT_CONFIG = VariantAnnotationConfigModel.default_config_yaml_string()
 
 
 class VepStepPart(GetResultFilesMixin, BaseStepPart):
@@ -136,13 +113,16 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("run").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("run").values())
+            ],
+        )
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.w_config["step_config"]["variant_calling"]["tools"]}
+        return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}
 
     @dictify
     def _get_log_file(self, action):
@@ -160,9 +140,9 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
             yield key, f"{prefix}{ext}"
             yield f"{key}_md5", f"{prefix}{ext}.md5"
 
-    def get_resource_usage(self, action) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name]["num_threads"]
+        num_threads = self.config[self.name].num_threads
         return ResourceUsage(
             threads=num_threads,
             time="1-00",
@@ -188,33 +168,25 @@ class VariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantAnnotationConfigModel,
+            previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
         self.register_sub_workflow(
-            "ngs_mapping", self.w_config["step_config"]["variant_calling"]["path_ngs_mapping"]
+            "ngs_mapping", self.w_config.step_config["variant_calling"].path_ngs_mapping
         )
-        self.register_sub_workflow("variant_calling", self.config["path_variant_calling"])
+        self.register_sub_workflow("variant_calling", self.config.path_variant_calling)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "variant_annotation", "path_variant_calling"),
-            "Path to variant calling not configured but required for variant annotation",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["variant_annotation"]["tools"])
-        invalid = list(sorted(selected - set(VARIANT_ANNOTATORS)))
-        if invalid:
-            raise InvalidConfigurationException(f"Invalid variant callers selected: {invalid}")

@@ -33,18 +33,20 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             tools:
-            - bcftools_call
-            - gatk3_hc
-            - gatk3_ug
+              - bcftools_call
+              - gatk3_hc
+              - gatk3_ug
+            bcftools_call: {}
+            gatk3_hc: {}
+            gatk3_ug: {}
           variant_annotation:
-            path_jannovar_ser: /path/to/jannovar.ser
+            tools: ['vep']
+            vep: {}
           variant_phasing:
             path_variant_annotation: ../variant_annotation
 
@@ -69,6 +71,7 @@ def variant_phasing_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return VariantPhasingWorkflow object pre-configured with germline sheet"""
@@ -79,6 +82,7 @@ def variant_phasing_workflow(
         create_missing_dirs=True,
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_phasing", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
@@ -161,7 +165,7 @@ def test_write_trio_pedigree_step_part_get_resource_usage(variant_phasing_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_phasing_workflow.get_resource("write_trio_pedigree", "run", resource)
+        actual = variant_phasing_workflow.get_resource("write_trio_pedigree", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -223,7 +227,7 @@ def test_gatk_phase_by_transmission_step_part_get_resource_usage(variant_phasing
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_phase_by_transmission", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -285,7 +289,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_resource_usage(variant_phas
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_read_backed_phasing_only", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -347,7 +351,7 @@ def test_gatk_read_backed_phasing_also_step_part_get_resource_usage(variant_phas
         msg_error = f"Assertion error for resource '{resource}'."
         actual = variant_phasing_workflow.get_resource(
             "gatk_read_backed_phasing_also", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

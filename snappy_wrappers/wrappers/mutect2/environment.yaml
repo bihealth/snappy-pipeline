@@ -3,7 +3,7 @@ channels:
   - bioconda
 
 dependencies:
-  - python==3.9.19
+  - python=3.12
   - gatk4==4.3.0.0
   - htslib==1.19.1
   - bcftools==1.19

@@ -63,9 +63,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -76,6 +76,8 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+
+from .model import VariantPhasing as VariantPhasingConfigModel
 
 #: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
@@ -91,39 +93,7 @@ CONFIG_TO_TOKEN = {
 }
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = r"""
-# Default configuration wgs_sv_filtration
-step_config:
-  variant_phasing:
-    path_ngs_mapping: ../ngs_mapping
-    path_variant_annotation: ../variant_annotation
-    tools_ngs_mapping: []       # expected tools for ngs mapping
-    tools_variant_calling: []   # expected tools for variant calling
-    phasings:
-    - gatk_phasing_both
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605               # herpes virus
-    - hs37d5                  # GRCh37 decoy
-    - chrEBV                  # Eppstein-Barr Virus
-    - '*_decoy'               # decoy contig
-    - 'HLA-*'                 # HLA genes
-    gatk_read_backed_phasing:
-      phase_quality_threshold: 20.0  # quality threshold for phasing
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 1000            # number of windows to process in parallel
-      use_profil: true          # use Snakemake profile for parallel processing
-      restart_times: 0          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-    gatk_phase_by_transmission:
-      de_novo_prior: 1e-8       # default, use 1e-6 when interested in phasing de novos
-"""
+DEFAULT_CONFIG = VariantPhasingConfigModel.default_config_yaml_string()
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
@@ -238,8 +208,9 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         @dictify
         def input_function(wildcards):
             # Pedigree file required for PhaseByTransmission.
-            yield "ped", "work/write_pedigree.{index_library}/out/{index_library}.ped".format(
-                **wildcards
+            yield (
+                "ped",
+                "work/write_pedigree.{index_library}/out/{index_library}.ped".format(**wildcards),
             )
             # Get name of real index
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
@@ -255,7 +226,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -268,7 +239,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         return ResourceUsage(
             threads=1,
             time="1-00:00:00",  # 1 day
-            memory=f"{ 14 * 1024}M",
+            memory=f"{14 * 1024}M",
         )
 
 
@@ -305,7 +276,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
                 ]
                 yield key, list(map(ngs_mapping, files))
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -406,7 +377,8 @@ class VariantPhasingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantPhasingConfigModel,
+            previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -419,17 +391,13 @@ class VariantPhasingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("variant_annotation", self.config["path_variant_annotation"])
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("variant_annotation", self.config.path_variant_annotation)
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
@@ -437,12 +405,12 @@ class VariantPhasingWorkflow(BaseStep):
         # Generate output paths without extracting individuals.
         name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.{phasing}.{index_library.name}"
         phasings = [
-            token for name, token in CONFIG_TO_TOKEN.items() if name in self.config["phasings"]
+            token for name, token in CONFIG_TO_TOKEN.items() if name in self.config.phasings
         ]
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             phasing=phasings,
             ext=EXT_VALUES,
         )
@@ -464,10 +432,3 @@ class VariantPhasingWorkflow(BaseStep):
                         and donor.mother.dna_ngs_library
                     ):  # only phase if both parents present
                         yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the variant annotation step is present"""
-        self.ensure_w_config(
-            ("step_config", "variant_phasing", "path_variant_annotation"),
-            "Path to variant calling not configured but required for somatic variant annotation",
-        )

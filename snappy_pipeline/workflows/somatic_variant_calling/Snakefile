@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+from snappy_pipeline.workflows.somatic_variant_calling import (
+    SomaticVariantCallingWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -72,7 +74,7 @@ rule somatic_variant_calling_mutect_run:
 
 # Run MuTect 2 ----------------------------------------------------------------
 
-if config["step_config"]["somatic_variant_calling"]["mutect2"]["common_variants"]:
+if wf.w_config.step_config["somatic_variant_calling"].mutect2.common_variants:
 
     rule somatic_variant_calling_mutect2_pileup_normal:
         input:

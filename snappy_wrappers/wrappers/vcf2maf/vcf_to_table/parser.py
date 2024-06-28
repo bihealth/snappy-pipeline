@@ -8,7 +8,7 @@ import vcfpy
 
 
 class VcfParser:
-    pattern = re.compile("^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")  # noqa: W605
+    pattern = re.compile(r"^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")
 
     def __init__(
         self,
@@ -59,9 +59,9 @@ class VcfParser:
         ):
             self.annotation = Annotation(
                 annotation_id=config["annotation"]["id"],
-                allele_column=config["annotation"]["allele"]
-                if "allele" in config["annotation"]
-                else None,
+                allele_column=(
+                    config["annotation"]["allele"] if "allele" in config["annotation"] else None
+                ),
                 extract=config["annotation"]["extract"],
                 split=config["annotation"]["split"],
             )

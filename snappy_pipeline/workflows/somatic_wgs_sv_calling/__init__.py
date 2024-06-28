@@ -77,9 +77,9 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -88,6 +88,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -101,16 +103,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 SOMATIC_VARIANT_CALLERS = ("manta", "delly2")
 
 #: Default configuration for the somatic_wgs_sv_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_wgs_sv_calling
-step_config:
-  somatic_wgs_sv_calling:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    tools: [manta]  # REQUIRED - available: 'delly2' and 'manta'
-    delly2:
-      path_exclude_tsv: null  # optional
-      max_threads: 16
-"""
+DEFAULT_CONFIG = SomaticWgsSvCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticWgsSvCallingStepPart(BaseStepPart):
@@ -196,7 +189,7 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -271,8 +264,9 @@ class Delly2StepPart(BaseStepPart):
         normal_tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}{ext}"
         norm_lib = self.get_normal_lib_name(wildcards)
         for name, ext in {"normal_bam": ".bam", "normal_bai": ".bam.bai"}.items():
-            yield name, ngs_mapping(
-                normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)
+            yield (
+                name,
+                ngs_mapping(normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)),
             )
         tumor_tpl = "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}{ext}"
         for name, ext in {"tumor_bam": ".bam", "tumor_bai": ".bam.bai"}.items():
@@ -389,7 +383,7 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes[action].replace(r",[^\.]+", "")
         return "work/" + infix + "/log/snakemake.log"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -431,12 +425,13 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticWgsSvCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -447,8 +442,8 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=self.config["tools"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            caller=self.config.tools,
             ext=EXT_VALUES,
         )
 
@@ -474,10 +469,6 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "somatic_wgs_sv_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic WGS SV calling",
-        )
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file required by not available",

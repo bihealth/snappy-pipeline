@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Code for genome regions
-"""
+"""Code for genome regions"""
 
 import re
 

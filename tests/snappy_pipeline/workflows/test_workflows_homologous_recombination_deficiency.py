@@ -32,11 +32,16 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: [bwa]
+            bwa:
+              path_index: /path/to/bwa/index.fasta.amb
           somatic_targeted_seq_cnv_calling:
             tools: ['sequenza']
+            sequenza: {}
           homologous_recombination_deficiency:
             tools: ['scarHRD']
             path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
+            scarHRD:
+              genome_name: grch37
 
         data_sets:
           first_batch:
@@ -59,11 +64,13 @@ def homologous_recombination_deficiency_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return HomologousRecombinationDeficiencyWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {"cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x}
     # Construct the workflow object
     return HomologousRecombinationDeficiencyWorkflow(
@@ -127,7 +134,7 @@ def test_scarHRD_step_part_get_resource_usage_run(homologous_recombination_defic
         msg_error = f"Assertion error for resource '{resource}'."
         actual = homologous_recombination_deficiency_workflow.get_resource(
             "scarHRD", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -157,7 +164,7 @@ def test_scarHRD_step_part_get_resource_usage_install(homologous_recombination_d
         msg_error = f"Assertion error for resource '{resource}'."
         actual = homologous_recombination_deficiency_workflow.get_resource(
             "scarHRD", "install", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

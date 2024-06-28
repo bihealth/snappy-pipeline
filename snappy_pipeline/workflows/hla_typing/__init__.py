@@ -57,9 +57,9 @@ The following HLA typing tools are currently available
 from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import GenericSampleSheet
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -72,6 +72,8 @@ from snappy_pipeline.workflows.abstract import (
     get_ngs_library_folder_name,
 )
 
+from .model import HlaTyping as HlaTypingConfigModel
+
 #: Extensions of files to create as main payload
 EXT_VALUES = (".txt", ".txt.md5")
 
@@ -82,19 +84,7 @@ EXT_NAMES = ("txt", "txt_md5")
 HLA_TYPERS = ("optitype", "arcashla")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = r"""
-# Default configuration ngs_mapping
-step_config:
-  hla_typing:
-    path_ngs_mapping: ../ngs_mapping
-    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [optitype]  # REQUIRED - available: 'optitype' and 'arcashla'
-    optitype:
-      max_reads: 5000  # suggestion by OptiType author
-      num_mapping_threads: 4
-    arcashla:
-      mapper: star
-""".lstrip()
+DEFAULT_CONFIG = HlaTypingConfigModel.default_config_yaml_string()
 
 
 class OptiTypeStepPart(BaseStepPart):
@@ -119,7 +109,7 @@ class OptiTypeStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @staticmethod
@@ -186,7 +176,7 @@ class OptiTypeStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -197,7 +187,7 @@ class OptiTypeStepPart(BaseStepPart):
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
         return library.test_sample.extra_infos.get("extractionType", "DNA").lower()
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -232,7 +222,7 @@ class ArcasHlaStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.mapper = self.config["arcashla"]["mapper"]
+        self.mapper = self.config.arcashla.mapper
         self.base_path_out = (
             "work/{mapper}.arcashla.{{library_name}}/out/{mapper}.arcashla.{{library_name}}{ext}"
         )
@@ -245,8 +235,11 @@ class ArcasHlaStepPart(BaseStepPart):
         def input_function(wildcards):
             yield "ref_done", "work/arcashla.prepare_reference/out/.done"
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-            yield "bam", self.parent.sub_workflows["ngs_mapping"](
-                tpl.format(mapper=self.mapper, **wildcards)
+            yield (
+                "bam",
+                self.parent.sub_workflows["ngs_mapping"](
+                    tpl.format(mapper=self.mapper, **wildcards)
+                ),
             )
 
         assert action == "run"
@@ -257,10 +250,10 @@ class ArcasHlaStepPart(BaseStepPart):
         """Return output files"""
         assert action == "run"
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, self.base_path_out.format(ext=ext, mapper=self.config["arcashla"]["mapper"])
+            yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
 
     def get_output_prefix(self):
-        return "%s." % self.config["arcashla"]["mapper"]
+        return "%s." % self.config.arcashla.mapper
 
     @staticmethod
     def get_log_file(action):
@@ -268,7 +261,7 @@ class ArcasHlaStepPart(BaseStepPart):
         _ = action
         return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -306,17 +299,23 @@ class HlaTypingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.register_sub_step_classes(
-            (OptiTypeStepPart, ArcasHlaStepPart, LinkInStep, LinkOutStepPart)
-        )
+        super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
+        sub_steps = [LinkInStep, LinkOutStepPart]
+        for tool in self.config.tools:
+            if self.config.get(str(tool)):
+                match tool:
+                    case "optitype":
+                        sub_steps.append(OptiTypeStepPart)
+                    case "arcashla":
+                        sub_steps.append(ArcasHlaStepPart)
+        self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -340,7 +339,7 @@ class HlaTypingWorkflow(BaseStep):
         """Build output paths from path template and extension list"""
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config["tools"]:
+                for tool in self.config.tools:
                     supported = self.sub_steps[tool].supported_extraction_types
                     extraction_type = ngs_library.test_sample.extra_infos.get(
                         "extractionType", "DNA"

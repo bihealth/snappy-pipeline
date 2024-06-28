@@ -1,23 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``gene_expression_report`` step
-
-"""
+"""Implementation of the ``gene_expression_report`` step"""
 
 from collections import OrderedDict
 import os
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-DEFAULT_CONFIG = r"""
-step_config:
-  gene_expression_report:
-    path_gene_expression_quantification: ''  # REQUIRED
-"""
+from .model import GeneExpressionReport as GeneExpressionReportConfigModel
+
+DEFAULT_CONFIG = GeneExpressionReportConfigModel.default_config_yaml_string()
 
 #: Names of the files to create for the extension (snakemake output)
 EXT_NAMES = ("tsv",)
@@ -164,7 +160,8 @@ class GeneExpressionReportWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=GeneExpressionReportConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -177,9 +174,9 @@ class GeneExpressionReportWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        if self.config["path_gene_expression_quantification"]:
+        if self.config.path_gene_expression_quantification:
             self.register_sub_workflow(
-                "gene_expression_quantification", self.config["path_gene_expression_quantification"]
+                "gene_expression_quantification", self.config.path_gene_expression_quantification
             )
 
     @listify
@@ -197,11 +194,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
+                            mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
                             tool="featurecounts",
                             ext=exts,
                         )
-
-    def check_config(self):
-        """Check config attributes for presence"""
-        # TODO: verify that `path_gene_expression_quantification` is defined in configuration.

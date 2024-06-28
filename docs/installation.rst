@@ -12,7 +12,7 @@ Installation
 Prerequisites
 -------------
 
-The CUBI pipeline requires Python >=3.7 (e.g., from a Miniconda3 installation).
+The CUBI pipeline requires Python >=3.12 (e.g., from a Miniconda3 installation).
 
 More recent versions also work but other requirements as Snakemake might make it depend on a more recent Python version.
 

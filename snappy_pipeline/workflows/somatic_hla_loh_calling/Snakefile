@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_hla_loh_calling import SomaticHlaLohCallingWorkflow
+from snappy_pipeline.workflows.somatic_hla_loh_calling import (
+    SomaticHlaLohCallingWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 
