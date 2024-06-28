@@ -93,7 +93,7 @@ version = version["__version__"]
 
 setup(
     name="snappy-pipeline",
-    version=versioneer.get_version(),
+    version=version,
     cmdclass=versioneer.get_cmdclass(),
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
