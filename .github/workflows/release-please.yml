@@ -3,6 +3,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 name: release-please
 
 jobs:
@@ -10,20 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: GoogleCloudPlatform/release-please-action@v2
-        id: release
+      - uses: googleapis/release-please-action@v4
         with:
           release-type: python
-          package-name: clinvar-this
+          token: ${{ secrets.SNAPPY_RELEASE_PLEASE_TOKEN }}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
         with:
           fetch-depth: 0
 
       - name: Set up Python
         if: ${{ steps.release.outputs.release_created }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -35,7 +38,7 @@ jobs:
 
       - name: Publish to PyPI
         if: ${{ steps.release.outputs.release_created }}
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
