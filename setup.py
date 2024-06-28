@@ -9,7 +9,6 @@ import sys
 
 from setuptools import find_packages, setup
 
-
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
