@@ -9,7 +9,7 @@ authors = [
 ]
 description = "SNAPPY Nucleic Acid Processing in Python (by CUBI)"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 keywords = ["bioinformatics"]
 license = {text = "MIT license"}
 classifiers = [
