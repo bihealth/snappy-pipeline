@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for applying the filter list.
-"""
+"""CUBI+Snakemake wrapper code for applying the filter list."""
 
 import gzip
 import re

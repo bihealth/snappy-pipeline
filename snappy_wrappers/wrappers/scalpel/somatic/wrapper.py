@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running scalpel in somatic mode
-"""
+"""Wrapper for running scalpel in somatic mode"""
 
 from snakemake.shell import shell
 

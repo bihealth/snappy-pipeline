@@ -1,24 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Code for testing the code in the "abstract" workflow
-"""
-from copy import deepcopy
+"""Code for testing the code in the "abstract" workflow"""
+
 import filecmp
+import textwrap
+from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-import textwrap
 from typing import TypedDict
-from unittest.mock import MagicMock
 
 import pytest
-import ruamel.yaml
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import OutputFiles, Wildcards
-import yaml
-
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
+from snakemake.io import OutputFiles, Wildcards
+
 from snappy_pipeline.base import MissingConfiguration, merge_dictlikes
-import snappy_pipeline.workflow_model
-from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     DataSearchInfo,

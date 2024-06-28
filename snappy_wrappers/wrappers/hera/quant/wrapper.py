@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for Hera: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for Hera: Snakemake wrapper.py"""
 
 from snakemake import shell
 

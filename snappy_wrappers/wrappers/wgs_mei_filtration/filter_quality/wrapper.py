@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for quality filter for wgs_mei_filtration.
-"""
+"""CUBI+Snakemake wrapper code for quality filter for wgs_mei_filtration."""
 
 # TODO: works for trios, singletons, or if only one parent available but NOT FOR MORE COMPLICATED CASES
 

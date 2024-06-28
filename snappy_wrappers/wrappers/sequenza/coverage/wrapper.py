@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)
-"""
+"""CUBI+Snakemake wrapper code for sequenza (sequenza-utils, pileups)"""
 
 import os
 import sys

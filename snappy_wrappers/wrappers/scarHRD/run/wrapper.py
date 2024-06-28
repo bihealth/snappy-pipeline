@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for scarHRD (non-conda package installation)
-"""
+"""CUBI+Snakemake wrapper code for scarHRD (non-conda package installation)"""
 
 import os
 

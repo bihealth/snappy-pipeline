@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for the variant_denovo_filtration workflow starting off variant_calling.
-"""
+"""Tests for the variant_denovo_filtration workflow starting off variant_calling."""
 
 import textwrap
 

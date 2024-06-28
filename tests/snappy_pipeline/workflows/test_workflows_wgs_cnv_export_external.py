@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_cnv_export_external workflow module code"""
-from copy import deepcopy
-import textwrap
 
-from pydantic import ValidationError
+import textwrap
+from copy import deepcopy
+
 import pytest
 import ruamel.yaml as ruamel_yaml
+from pydantic import ValidationError
 from snakemake.io import Wildcards
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.wgs_cnv_export_external import WgsCnvExportExternalWorkflow
 
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict

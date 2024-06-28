@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's calls tep
-"""
+"""Wrapper for running Delly2's calls tep"""
 
 import tempfile
 

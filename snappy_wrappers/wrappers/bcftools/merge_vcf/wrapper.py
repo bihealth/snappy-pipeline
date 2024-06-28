@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools merge - Structural VCF files (CNV, SV).
-"""
+"""Wrapper for running bcftools merge - Structural VCF files (CNV, SV)."""
 
 import tempfile
 

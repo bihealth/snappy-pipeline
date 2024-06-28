@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (R part, post-processing)
-"""
+"""CUBI+Snakemake wrapper code for sequenza (R part, post-processing)"""
 
 import os
 import sys

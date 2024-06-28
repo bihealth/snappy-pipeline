@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for applying the filter list.
-"""
+"""CUBI+Snakemake wrapper code for applying the filter list."""
 
 from snakemake import shell
 

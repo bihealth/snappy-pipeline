@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for finding heterozygous variants with bcftools
-"""
+"""Wrapper for finding heterozygous variants with bcftools"""
 
 from snakemake.shell import shell
 

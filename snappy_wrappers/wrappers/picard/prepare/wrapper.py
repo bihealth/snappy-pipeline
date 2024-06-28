@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for converting exome baits & targets from bed to interval lists
-"""
+"""CUBI+Snakemake wrapper code for converting exome baits & targets from bed to interval lists"""
 
 import os
 import re

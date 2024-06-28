@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for MTB-aware exome data
-"""
+"""CUBI+Snakemake wrapper code for MTB-aware exome data"""
 
 import os
 import shutil

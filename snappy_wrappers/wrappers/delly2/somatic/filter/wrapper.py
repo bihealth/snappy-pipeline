@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's "pre-filter" and "post-filter" steps
-"""
+"""Wrapper for running Delly2's "pre-filter" and "post-filter" steps"""
 
 from snakemake.shell import shell
 

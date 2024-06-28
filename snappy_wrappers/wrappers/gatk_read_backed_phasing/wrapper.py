@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running GATK ReadBackedPhasing in parallel, genome is split into windows
-"""
+"""Wrapper for running GATK ReadBackedPhasing in parallel, genome is split into windows"""
 
 from snakemake.shell import shell
 

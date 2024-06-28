@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running PB Honey Spots on Germline data
-"""
+"""Wrapper for running PB Honey Spots on Germline data"""
 
 from snakemake.shell import shell
 

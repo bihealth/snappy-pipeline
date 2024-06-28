@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for inheritance filter for wgs_mei_filtration.
-"""
+"""CUBI+Snakemake wrapper code for inheritance filter for wgs_mei_filtration."""
 
 # TODO: works for trios, singletons but NOT FOR MORE COMPLICATED CASES
 # TODO: how to make work if only one parent present?

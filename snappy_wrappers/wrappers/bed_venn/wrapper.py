@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI BEDVenn: Snakemake wrapper.py
-"""
+"""CUBI BEDVenn: Snakemake wrapper.py"""
 
 import itertools
 import textwrap
