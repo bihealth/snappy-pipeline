@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snappy-pipeline"
+authors = [
+    {name = "Manuel Holtgrewe", email = "manuel.holtgrewe@bih-charite.de"},
+]
+description = "SNAPPY Nucleic Acid Processing in Python (by CUBI)"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["bioinformatics"]
+license = {text = "MIT license"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+]
+dynamic = ["version"]
+dependencies = [
+    "attrs",
+    "ruamel.yaml>=0.15.35",
+    "fasteners==0.17.3",
+    "biomedsheets >=0.11.7",
+    "termcolor==1.1.0",
+    "snakemake==7.26.0",
+    "PyYAML>=6.0",
+    "matplotlib>=2.1.2",
+    "vcfpy >=0.13.2",
+    "pysam >=0.19.1",
+    "pytabix >=0.1",
+    "jinja2 >=3.1.2",
+    "altamisa >=0.2.6",
+    "varfish-cli >=0.2.0"
+]
+
+[project.urls]
+Repository = "https://github.com/bihealth/snappy-pipeline"
+Documentation = "https://snappy-pipeline.readthedocs.io/en/latest/"
+Issues = "https://github.com/bihealth/snappy-pipeline/issues"
+Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
+
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "coverage",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-subprocess",
+    "pyfakefs",
+    "black==22.8.0",
+    "snakefmt>=0.8.0,<0.9.0",
+    "isort==5.10.1",
+    "flake8",
+    "flake8-import-order",
+    "pytest-flake8",
+    "coveralls",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sphinx-mdinclude"
+]
+dev = [
+    "ipython",
+    "pytest-sugar"
+]
+
+[project.scripts]
+snappy-pull-sheet = "snappy_pipeline.apps.snappy_pull_sheet:main"
+snappy-snake = "snappy_pipeline.apps.snappy_snake:main"
+snappy-start-project = "snappy_pipeline.apps.snappy_start_project:main"
+snappy-start-step = "snappy_pipeline.apps.snappy_start_step:main"
+snappy-refresh-step = "snappy_pipeline.apps.snappy_refresh_step:main"
+snappy-slurm-status = "snappy_pipeline.apps.snappy_slurm_status:main"
+
+[tool.setuptools]
+packages = ["snappy_pipeline", "snappy_wrappers"]
+
+
+[tool.coverage.run]
+omit = ["snappy_pipeline/_version.py", "snappy_wrappers/wrappers/*/wrapper.p"]
+relative_files = true
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
