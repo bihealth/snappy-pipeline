@@ -1,6 +1,6 @@
 import enum
-from enum import Enum
 import os
+from enum import Enum
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
@@ -93,15 +93,19 @@ class Bwa(BwaMapper):
     @field_validator("path_index")
     @classmethod
     def validate_bwa_path_index(cls, v):
+        import logging
+
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
         if ext:
             if ext in {".fa", ".fasta"}:
                 prefix += ext
             else:
-                assert ext in extensions, f"unknown extension '{v}'"
+                if ext not in extensions:
+                    logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            assert os.path.exists(prefix + extension), f"{v} does not exist"
+            if not os.path.exists(prefix + extension):
+                logging.warning(f"{v} does not exist")
         return prefix
 
 
@@ -109,15 +113,19 @@ class BwaMem2(BwaMapper):
     @field_validator("path_index")
     @classmethod
     def validate_bwa_mem2_path_index(cls, v):
+        import logging
+
         extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
         prefix, ext = os.path.splitext(v)
         if ext:
             if ext in {".fa", ".fasta"}:
                 prefix += ext
             else:
-                assert ext in extensions, f"unknown extension '{v}'"
+                if ext not in extensions:
+                    logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            assert os.path.exists(prefix + extension), f"{v} does not exist"
+            if not os.path.exists(prefix + extension):
+                logging.warning(f"{v} does not exist")
         return prefix
 
 
