@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "snappy-pipeline"
 authors = [
-    {name = "Manuel Holtgrewe", email = "manuel.holtgrewe@bih-charite.de"},
+    { name = "Manuel Holtgrewe", email = "manuel.holtgrewe@bih-charite.de" },
 ]
 description = "SNAPPY Nucleic Acid Processing in Python (by CUBI)"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["bioinformatics"]
-license = {text = "MIT license"}
+license = { text = "MIT license" }
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
@@ -87,12 +87,21 @@ snappy-start-project = "snappy_pipeline.apps.snappy_start_project:main"
 snappy-start-step = "snappy_pipeline.apps.snappy_start_step:main"
 snappy-refresh-step = "snappy_pipeline.apps.snappy_refresh_step:main"
 snappy-slurm-status = "snappy_pipeline.apps.snappy_slurm_status:main"
-
-[tool.setuptools.dynamic]
-entry-points = { file = ["tools.ini"] }
+# additional tools
+snappy-bed_filter_jaccard = "snappy_wrappers.tools.bed_filter_jaccard:main"
+snappy-bam_cov_stats = "snappy_wrappers.tools.bam_cov_stats:main"
+snappy-fix_vcf = "snappy_wrappers.tools.fix_vcf:main"
+snappy-genome_windows = "snappy_wrappers.tools.genome_windows:main"
+snappy-quickvenn = "snappy_wrappers.tools.quickvenn:main"
+snappy-vcf_first_header = "snappy_wrappers.tools.vcf_first_header:main"
+snappy-vcf_filter_denovo = "snappy_wrappers.tools.vcf_filter_denovo:main"
+snappy-vcf_filter_from_info = "snappy_wrappers.tools.vcf_filter_from_info:main"
+snappy-vcf_filter_to_info = "snappy_wrappers.tools.vcf_filter_to_info:main"
+snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
 
 [tool.setuptools]
 packages = ["snappy_pipeline", "snappy_wrappers"]
+# bash scripts
 script-files = [
     "scripts/snappy-vcf_sort",
     "scripts/snappy-vcf_split"
