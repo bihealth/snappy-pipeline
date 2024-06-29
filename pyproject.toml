@@ -218,6 +218,11 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 
+[tool.snakefmt]
+line_length = 100
+include = "\.smk$|\.rules$|^Snakefile"
+
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--cov=snappy_pipeline --cov-report=xml"
