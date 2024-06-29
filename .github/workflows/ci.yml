@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-            pip install -e ".[test]"
+            pip install -e ".[dev]"
             pip freeze
 
       - name: Run linting tools
@@ -61,7 +61,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-            pip install -e ".[test]"
+            pip install -e ".[docs]"
             pip freeze
 
       - name: Build documentation

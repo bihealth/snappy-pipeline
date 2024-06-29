@@ -20,12 +20,12 @@ cd snappy-pipeline
 
 # WARNING- make sure that you are in your conda base environment
 
-# Create conda environment "snappy_env" with the minimal requirements:
+# Create conda environment "snappy_env" with all requirements:
 mamba env create --file environment.yml -n snappy_env
 conda activate snappy_env
 
 # Install snappy in snappy_env environment
-pip install -e ".[test]"
+pip install -e ".[all]"
 ```
 
 
