@@ -75,7 +75,7 @@ dev = [
     # ruff code linter + formatter
     "ruff ~=0.4.8",
     # "snakefmt" code formatter and checker.
-    "snakefmt ~=0.8.0",
+    "snakefmt ~=0.8.5",
     "pre-commit ~=3.7.1"
 ]
 docs = [
@@ -220,7 +220,7 @@ docstring-code-line-length = "dynamic"
 
 [tool.snakefmt]
 line_length = 100
-include = "\.smk$|\.rules$|^Snakefile"
+include = "\\.smk$|\\.rules$|^Snakefile"
 
 
 [tool.pytest.ini_options]
