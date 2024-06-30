@@ -99,13 +99,12 @@ Currently, no reports are generated.
 """
 
 from collections import OrderedDict
-from itertools import chain
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -114,6 +113,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -163,197 +164,22 @@ EXT_MATCHED = {
 }
 
 #: Available somatic variant callers assuming matched samples.
-SOMATIC_VARIANT_CALLERS_MATCHED = ("mutect", "mutect2", "scalpel")
+SOMATIC_VARIANT_CALLERS_MATCHED = {"mutect", "mutect2", "scalpel", "strelka2"}
 
 #: Available somatic variant callers that just call all samples from one donor together.
-SOMATIC_VARIANT_CALLERS_JOINT = (
+SOMATIC_VARIANT_CALLERS_JOINT = {
     "bcftools_joint",
     "platypus_joint",
     "gatk_hc_joint",
     "gatk_ug_joint",
     "varscan_joint",
-)
+}
 
 #: Available somatic variant callers
-SOMATIC_VARIANT_CALLERS = tuple(
-    chain(SOMATIC_VARIANT_CALLERS_MATCHED, SOMATIC_VARIANT_CALLERS_JOINT)
-)
-
-#: Available somatic variant callers assuming matched samples.
-SOMATIC_VARIANT_CALLERS_MATCHED = ("mutect", "mutect2", "scalpel", "strelka2")
-
-#: Available somatic variant callers that just call all samples from one donor together.
-SOMATIC_VARIANT_CALLERS_JOINT = (
-    "bcftools_joint",
-    "platypus_joint",
-    "gatk_hc_joint",
-    "gatk_ug_joint",
-    "varscan_joint",
-)
+SOMATIC_VARIANT_CALLERS = SOMATIC_VARIANT_CALLERS_MATCHED | SOMATIC_VARIANT_CALLERS_JOINT
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_variant_calling
-step_config:
-  somatic_variant_calling:
-    tools: ['mutect', 'scalpel']  # REQUIRED, examples: 'mutect' and 'scalpel'.
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    ignore_chroms:            # patterns of chromosome names to ignore
-    - NC_007605    # herpes virus
-    - hs37d5       # GRCh37 decoy
-    - chrEBV       # Eppstein-Barr Virus
-    - '*_decoy'    # decoy contig
-    - 'HLA-*'      # HLA genes
-    - 'GL000220.*' # Contig with problematic, repetitive DNA in GRCh37
-    # Configuration for joint calling with samtools+bcftools.
-    bcftools_joint:
-      max_depth: 4000
-      max_indel_depth: 4000
-      window_length: 10000000
-      num_threads: 16
-    # Configuration for joint calling with Platypus.
-    platypus_joint:
-      split_complex_mnvs: true  # whether or not to split complex and MNV variants
-      num_threads: 16
-    # VCF annotation databases are given as mapping from name to
-    #   {'file': '/path.vcf.gz',
-    #    'info_tag': 'VCF_TAG',
-    #    'description': 'VCF header description'}
-    # Configuration for MuTect
-    mutect:
-      # Parallelization configuration
-      num_cores: 2               # number of cores to use locally
-      window_length: 3500000     # split input into windows of this size, each triggers a job
-      num_jobs: 500              # number of windows to process in parallel
-      use_profile: true          # use Snakemake profile for parallel processing
-      restart_times: 5           # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2     # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0      # truncation to first N tokens (0 for none)
-      keep_tmpdir: never         # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1         # memory multiplier
-      job_mult_time: 1           # running time multiplier
-      merge_mult_memory: 1       # memory multiplier for merging
-      merge_mult_time: 1         # running time multiplier for merging
-    # Configuration for MuTect 2
-    mutect2:
-      panel_of_normals: ''      # Set path to panel of normals vcf if required
-      germline_resource: ''     # Germline variants resource (same as panel of normals)
-      common_variants: ''       # Common germline variants for contamination estimation
-      extra_arguments: []       # List additional Mutect2 arguments
-                                # Each additional argument xust be in the form:
-                                # "--<argument name> <argument value>"
-                                # For example, to filter reads prior to calling & to
-                                # add annotations to the output vcf:
-                                # - "--read-filter CigarContainsNoNOperator"
-                                # - "--annotation AssemblyComplexity BaseQuality"
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-    # Configuration for Scalpel
-    scalpel:
-      path_target_regions: REQUIRED  # REQUIRED
-    # Configuration for strelka2
-    strelka2:
-      path_target_regions: ""   # For exomes: include a bgzipped bed file with tabix index. That also triggers the --exome flag
-    gatk_hc_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK HC--specific configuration
-      allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    gatk_ug_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      debug_trunc_tokens: 0     # truncation to first N tokens (0 for none)
-      keep_tmpdir: never        # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1        # memory multiplier
-      job_mult_time: 1          # running time multiplier
-      merge_mult_memory: 1      # memory multiplier for merging
-      merge_mult_time: 1        # running time multiplier for merging
-      # GATK UG--specific configuration
-      downsample_to_coverage: 250
-      allow_seq_dict_incompatibility: false
-      annotations:
-      - BaseQualityRankSumTest
-      - FisherStrand
-      - GCContent
-      - HaplotypeScore
-      - HomopolymerRun
-      - MappingQualityRankSumTest
-      - MappingQualityZero
-      - QualByDepth
-      - ReadPosRankSumTest
-      - RMSMappingQuality
-      - DepthPerAlleleBySample
-      - Coverage
-      - ClippingRankSumTest
-      - DepthPerSampleHC
-    varscan_joint:
-      # Parallelization configuration
-      num_cores: 2              # number of cores to use locally
-      window_length: 5000000    # split input into windows of this size, each triggers a job
-      num_jobs: 500             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2    # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      # Configuration for samtools mpileup
-      max_depth: 4000
-      max_indel_depth: 4000
-      min_bq: 13
-      no_baq: True
-      # Configuration for Varscan
-      min_coverage: 8
-      min_reads2: 2
-      min_avg_qual: 15
-      min_var_freq: 0.01
-      min_freq_for_hom: 0.75
-      p_value: 99e-02
-"""
+DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticVariantCallingStepPart(BaseStepPart):
@@ -387,32 +213,41 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
             tumor_base_path = (
                 "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            input_files = {
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
             }
+
+            normal_library = self.get_normal_lib_name(wildcards)
+            if normal_library:
+                normal_base_path = (
+                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                        normal_library=normal_library, **wildcards
+                    )
+                )
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
+
+            return input_files
 
         return input_function
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.normal_sample.dna_ngs_library.name if pair else None
 
     def get_tumor_lib_name(self, wildcards):
         """Return name of tumor library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.tumor_sample.dna_ngs_library.name
+        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
+        return pair.tumor_sample.dna_ngs_library.name if pair else wildcards.tumor_library
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -448,7 +283,7 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
     """Base class for Mutect 1 and 2 step parts"""
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "cosmic", "path"),
@@ -469,7 +304,7 @@ class MutectBaseStepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -540,14 +375,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         super().__init__(parent)
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
-        if self.config[self.name]["common_variants"]:
-            self.actions.extend(["contamination", "pileup_normal", "pileup_tumor"])
 
     def get_input_files(self, action):
         """Return input function for Mutect2 rules.
@@ -577,18 +410,29 @@ class Mutect2StepPart(MutectBaseStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
-        )
         tumor_base_path = (
             "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
         ).format(**wildcards)
-        return {
-            "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-            "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+        input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
         }
+
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=normal_library, **wildcards
+                )
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
+
+        return input_files
 
     def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
@@ -609,9 +453,10 @@ class Mutect2StepPart(MutectBaseStepPart):
             "stats": base_path + ".raw.vcf.stats",
             "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
         }
-        if "contamination" in self.actions:
-            input_files["table"] = base_path + ".contamination.tbl"
-            input_files["segments"] = base_path + ".segments.tbl"
+        if self.get_normal_lib_name(wildcards):
+            if "contamination" in self.actions:
+                input_files["table"] = base_path + ".contamination.tbl"
+                input_files["segments"] = base_path + ".segments.tbl"
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
@@ -757,7 +602,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -782,7 +627,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
     actions = ("run",)
 
     def check_config(self):
-        if "scalpel" not in self.config["tools"]:
+        if "scalpel" not in self.config.tools:
             return  # scalpel not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -805,7 +650,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
         )
         return result
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -859,7 +704,7 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -963,8 +808,7 @@ class JointCallingStepPart(BaseStepPart):
                     for ngs_library in test_sample.ngs_libraries.values()
                 ]
             }
-            if "ignore_chroms" in self.parent.config:
-                ignore_chroms = self.parent.config["ignore_chroms"]
+            if ignore_chroms := self.parent.config.ignore_chroms:
                 result["ignore_chroms"] = ignore_chroms
             return result
 
@@ -981,7 +825,7 @@ class BcftoolsJointStepPart(JointCallingStepPart):
     #: Step name
     name = "bcftools_joint"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -991,9 +835,9 @@ class BcftoolsJointStepPart(JointCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        mem_mb = 1024 * self.parent.config["bcftools_joint"]["num_threads"]
+        mem_mb = 1024 * self.parent.config.bcftools_joint.num_threads
         return ResourceUsage(
-            threads=self.parent.config["bcftools_joint"]["num_threads"],
+            threads=self.parent.config.bcftools_joint.num_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
@@ -1008,7 +852,7 @@ class VarscanJointStepPart(JointCallingStepPart):
     #: Class available actions
     actions = ("run", "call_pedigree")
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1035,7 +879,7 @@ class PlatypusJointStepPart(JointCallingStepPart):
     #: Step name
     name = "platypus_joint"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1045,9 +889,9 @@ class PlatypusJointStepPart(JointCallingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        mem_mb = int(3.75 * 1024 * self.parent.config["platypus_joint"]["num_threads"])
+        mem_mb = int(3.75 * 1024 * self.parent.config.platypus_joint.num_threads)
         return ResourceUsage(
-            threads=self.parent.config["platypus_joint"]["num_threads"],
+            threads=self.parent.config.platypus_joint.num_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
@@ -1063,7 +907,7 @@ class GatkHcJointStepPart(JointCallingStepPart):
     #: Step name
     name = "gatk_hc_joint"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1090,7 +934,7 @@ class GatkUgJointStepPart(JointCallingStepPart):
     #: Step name
     name = "gatk_ug_joint"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1132,7 +976,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticVariantCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -1150,7 +995,13 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+
+        if "mutect2" in self.config.tools:
+            if self.config.mutect2.common_variants:
+                self.sub_steps["mutect2"].actions.extend(
+                    ["contamination", "pileup_normal", "pileup_tumor"]
+                )
 
     @listify
     def get_result_files(self):
@@ -1159,16 +1010,16 @@ class SomaticVariantCallingWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         name_pattern = "{mapper}.{caller}.{tumor_library.name}"
-        for caller in set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
+        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller=caller,
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller=caller,
                 ext=(
                     ".log",
@@ -1184,8 +1035,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-            caller=set(self.config["tools"]) & set(SOMATIC_VARIANT_CALLERS_JOINT),
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            caller=set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_JOINT),
             ext=EXT_VALUES,
         )
 
@@ -1196,20 +1047,19 @@ class SomaticVariantCallingWorkflow(BaseStep):
         Mutect.
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
+            for bio_entity in sheet.sheet.bio_entities.values():
+                for bio_sample in bio_entity.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                msg = "INFO: sample {} has missing extraction type, ignored"
+                                print(msg.format(test_sample.name), file=sys.stderr)
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
 
     def _yield_result_files_joint(self, tpl, **kwargs):
         """Build output paths from path template and extension list.
@@ -1220,10 +1070,3 @@ class SomaticVariantCallingWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )

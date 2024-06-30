@@ -33,14 +33,13 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
           variant_denovo_filtration:
             path_variant_calling: ../variant_calling
 
@@ -65,6 +64,7 @@ def variant_de_novo_filtration_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return VariantCallingWorkflow object pre-configured with germline sheet"""
@@ -75,6 +75,7 @@ def variant_de_novo_filtration_workflow(
         create_missing_dirs=True,
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_calling", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_denovo_filtration", germline_sheet_fake_fs, mocker
@@ -156,7 +157,9 @@ def test_filter_de_novo_from_variant_calling_step_part_get_resource(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)
+        actual = variant_de_novo_filtration_workflow.get_resource(
+            "filter_denovo", "run", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -222,7 +225,9 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_resource(
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_de_novo_filtration_workflow.get_resource("filter_denovo", "run", resource)
+        actual = variant_de_novo_filtration_workflow.get_resource(
+            "filter_denovo", "run", resource
+        )()
         assert actual == expected, msg_error
 
 

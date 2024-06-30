@@ -52,9 +52,9 @@ from collections import OrderedDict
 import os
 import sys
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -63,6 +63,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
@@ -86,16 +88,7 @@ MSI_CALLERS_MATCHED = ("mantis_msi2",)
 
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_msi_calling
-step_config:
-  somatic_msi_calling:
-    tools: ['mantis_msi2']  # REQUIRED - available: 'mantis_msi2'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    loci_bed: "" # REQUIRED
-                 # hg19: /fast/work/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed
-                 # hg38: /fast/work/groups/cubi/projects/biotools/Mantis/appData/hg38/GRCh38.d1.vd1.all_loci.bed
-"""
+DEFAULT_CONFIG = SomaticMsiCallingConfigModel.default_config_yaml_string()
 
 
 class Mantis2StepPart(BaseStepPart):
@@ -176,7 +169,7 @@ class Mantis2StepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -218,27 +211,28 @@ class SomaticMsiCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticMsiCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
         name_pattern = "{mapper}.{msi_caller}.{tumor_library.name}"
-        for msi_caller in set(self.config["tools"]) & set(MSI_CALLERS_MATCHED):
+        for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 msi_caller=msi_caller,
                 ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 msi_caller=msi_caller,
                 ext=(
                     ".log",
@@ -277,8 +271,4 @@ class SomaticMsiCallingWorkflow(BaseStep):
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
-        )
-        self.ensure_w_config(
-            ("step_config", "somatic_msi_calling", "loci_bed"),
-            "Path to bed file with microsatellite loci needed",
         )

@@ -148,7 +148,6 @@ Panel of normals generation for tools
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -158,73 +157,15 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import PanelOfNormals as PanelOfNormalsConfigModel
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Names of the tools that might use panel of normals
 TOOLS = ("mutect2", "cnvkit", "access", "purecn")
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_variant_calling
-step_config:
-  panel_of_normals:
-    tools: ['mutect2']  # REQUIRED - available: 'mutect2'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    ignore_chroms: []   # patterns of chromosome names to ignore
-                        # hs37d5: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']
-                        # GRCh38.d1.vd1: [chrEBV, 'HPV*', CMV, HBV, 'HCV-*', 'HIV-*', KSHV, 'HTLV-1', MCV, '*_decoy', 'chrUn_GL00220*', SV40]
-    # Configuration for mutect2
-    mutect2:
-      path_normals_list: null    # Optional file listing libraries to include in panel
-      germline_resource: REQUIRED
-      # Java options
-      java_options: ' -Xmx16g '
-      # Parallelization configuration
-      num_cores: 2               # number of cores to use locally
-      window_length: 100000000   # split input into windows of this size, each triggers a job
-      num_jobs: 500              # number of windows to process in parallel
-      use_profile: true          # use Snakemake profile for parallel processing
-      restart_times: 5           # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 2     # throttling of job creation
-      max_status_checks_per_second: 10 # throttling of status checks
-      debug_trunc_tokens: 0      # truncation to first N tokens (0 for none)
-      keep_tmpdir: never         # keep temporary directory, {always, never, onerror}
-      job_mult_memory: 1         # memory multiplier
-      job_mult_time: 1           # running time multiplier
-      merge_mult_memory: 1       # memory multiplier for merging
-      merge_mult_time: 1         # running time multiplier for merging
-    cnvkit:
-      path_normals_list: ""       # Optional file listing libraries to include in panel
-      path_target_regions: ""     # Bed files of targetted regions (Missing when creating a panel of normals for WGS data)
-      access: ""                  # Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)
-      annotate: ""                # [target] Optional targets annotations
-      target_avg_size: 0          # [target] Average size of split target bins (0: use default value)
-      bp_per_bin: 50000           # [autobin] Expected base per bin
-      split: True                 # [target] Split large intervals into smaller ones
-      antitarget_avg_size: 0      # [antitarget] Average size of antitarget bins (0: use default value)
-      min_size: 0                 # [antitarget] Min size of antitarget bins (0: use default value)
-      min_mapq: 0                 # [coverage] Mininum mapping quality score to count a read for coverage depth
-      count: False                # [coverage] Alternative couting algorithm
-      min_cluster_size: 0         # [reference] Minimum cluster size to keep in reference profiles. 0 for no clustering
-      gender: ""                  # [reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing
-      male_reference: False       # [reference & sex] Create male reference
-      gc_correction: True         # [reference] Use GC correction
-      edge_correction: True       # [reference] Use edge correction
-      rmask_correction: True      # [reference] Use rmask correction
-      drop_low_coverage: False    # [metrics] Drop very-low-coverage bins before calculations
-    access:                       # Creates access file for cnvkit, based on genomic sequence & excluded regions (optionally)
-      exclude: []                 # [access] Bed file of regions to exclude (mappability, blacklisted, ...)
-      min_gap_size: 0             # [access] Minimum gap size between accessible sequence regions (0: use default value)
-    purecn:
-      path_normals_list: ""       # Optional file listing libraries to include in panel
-      path_bait_regions: REQUIRED # Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect), recommended by PureCN author
-      path_genomicsDB: REQUIRED   # Mutect2 genomicsDB created during panel_of_normals
-      genome_name: "unknown"      # Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3
-      enrichment_kit_name: "unknown" # For filename only...
-      mappability: "" # GRCh38: /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
-      reptiming: ""   # Nothing for GRCh38
-      seed: 1234567
-"""
+DEFAULT_CONFIG = PanelOfNormalsConfigModel.default_config_yaml_string()
 
 
 class PanelOfNormalsStepPart(BaseStepPart):
@@ -241,11 +182,12 @@ class PanelOfNormalsStepPart(BaseStepPart):
         super().__init__(parent)
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.normal_libraries = list(self._get_normal_libraries())
-        if self.name and self.config[self.name].get("path_normals_list"):
-            self.normal_libraries = []
-            with open(self.config[self.name]["path_normals_list"], "rt") as f:
-                for line in f:
-                    self.normal_libraries.append(line.strip())
+        if self.name and (cfg := self.config.get(self.name)):
+            if path := cfg.get("path_normals_list"):
+                self.normal_libraries = []
+                with open(path, "rt") as f:
+                    for line in f:
+                        self.normal_libraries.append(line.strip())
 
     def _get_normal_libraries(self):
         for sheet in self.parent.shortcut_sheets:
@@ -321,9 +263,12 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
-        yield "intervals", "work/purecn/out/{}_{}.list".format(
-            self.config["purecn"]["enrichment_kit_name"],
-            self.config["purecn"]["genome_name"],
+        yield (
+            "intervals",
+            "work/purecn/out/{}_{}.list".format(
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
+            ),
         )
         tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bam", self.ngs_mapping(tpl.format(**wildcards))
@@ -332,9 +277,13 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/{mapper}.purecn/out/{mapper}.purecn.{library_name}_coverage_loess.txt.gz"
-        yield "normals", [
-            tpl.format(mapper=wildcards.mapper, library_name=lib) for lib in self.normal_libraries
-        ]
+        yield (
+            "normals",
+            [
+                tpl.format(mapper=wildcards.mapper, library_name=lib)
+                for lib in self.normal_libraries
+            ],
+        )
 
     def get_output_files(self, action):
         self._validate_action(action)
@@ -343,8 +292,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             return {"container": "work/containers/out/purecn.simg"}
         if action == "prepare":
             base_out = "{}_{}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             return {
                 "intervals": "work/purecn/out/" + base_out + ".list",
@@ -373,22 +322,14 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         tpls = {
             "install": "work/containers/log/purecn",
             "prepare": "work/purecn/log/{}_{}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             ),
             "coverage": "work/{mapper}.purecn/log/{mapper}.purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}",
             "create_panel": "work/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals",
         }
         assert action in self.actions
         return self._get_log_file(tpls[action])
-
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return  # PureCN not enabled, skip
-        self.parent.ensure_w_config(
-            ("step_config", "panel_of_normals", self.name, "path_bait_regions"),
-            "Path to exome panel bait regions not defined for tool {}".format(self.name),
-        )
 
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
@@ -415,7 +356,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     }
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -525,10 +466,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.is_wgs = self.config["cnvkit"]["path_target_regions"] == ""
+        self.is_wgs = self.config.cnvkit.path_target_regions == ""
 
     def check_config(self):
-        if self.name not in self.config["tools"]:
+        if self.name not in self.config.tools:
             return  # cnvkit not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -610,12 +551,16 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             for ext in ("log", "conda_list.txt", "conda_info.txt")
         ]
         return {
-            "target": targets
-            if targets
-            else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards),
-            "antitarget": antitargets
-            if antitargets
-            else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards),
+            "target": (
+                targets
+                if targets
+                else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards)
+            ),
+            "antitarget": (
+                antitargets
+                if antitargets
+                else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards)
+            ),
             "logs": logs if targets or antitargets else [],
         }
 
@@ -714,7 +659,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
     name = "access"
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
@@ -766,10 +711,11 @@ class PanelOfNormalsWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=PanelOfNormalsConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -798,7 +744,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             "conda_info.txt.md5",
         ]
 
-        if "mutect2" in set(self.config["tools"]) & set(TOOLS):
+        if "mutect2" in set(self.config.tools) & set(TOOLS):
             tpl = "output/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals.{ext}"
             ext_list = ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -808,7 +754,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "cnvkit" in set(self.config["tools"]) & set(TOOLS):
+        if "cnvkit" in set(self.config.tools) & set(TOOLS):
             tpls = [
                 ("output/{mapper}.cnvkit/out/{mapper}.cnvkit.target.{ext}", ("bed", "bed.md5")),
                 ("output/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.{ext}", ("bed", "bed.md5")),
@@ -838,13 +784,13 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.merged.tar.gz{ext}"
             result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
-        if "access" in set(self.config["tools"]) & set(TOOLS):
+        if "access" in set(self.config.tools) & set(TOOLS):
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"
             result_files.extend([tpl + md5 for md5 in ("", ".md5")])
             tpl = "output/cnvkit.access/log/cnvkit.access.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "purecn" in set(self.config["tools"]) & set(TOOLS):
+        if "purecn" in set(self.config.tools) & set(TOOLS):
             tpl = "output/{mapper}.purecn/out/{mapper}.purecn.panel_of_normals.{ext}"
             ext_list = ("rds", "rds.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -854,27 +800,20 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/{mapper}.purecn/log/{mapper}.purecn.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
             tpl = "output/purecn/out/{}_{}.{{ext}}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             ext_list = ("list", "list.md5", "bed.gz", "bed.gz.md5", "bed.gz.tbi", "bed.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
             tpl = "output/purecn/log/{}_{}.{{ext}}".format(
-                self.config["purecn"]["enrichment_kit_name"],
-                self.config["purecn"]["genome_name"],
+                self.config.purecn.enrichment_kit_name,
+                self.config.purecn.genome_name,
             )
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         return result_files
 
     def _expand_result_files(self, tpl, ext_list):
-        for mapper in self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]:
+        for mapper in self.w_config.step_config["ngs_mapping"].tools.dna:
             for ext in ext_list:
                 yield tpl.format(mapper=mapper, ext=ext)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "panel_of_normals", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )

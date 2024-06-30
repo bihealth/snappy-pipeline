@@ -29,7 +29,10 @@ def minimal_config():
            adapter_trimming:
              tools: ["bbduk", "fastp"]
              bbduk:
-               adapter_sequences: /path/to/adapter_sequences.fa
+               adapter_sequences:
+                 - /path/to/adapter_sequences.fa
+             fastp:
+               num_threads: 4
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -163,7 +166,7 @@ def test_bbduk_step_part_get_resource_usage(adapter_trimming_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = adapter_trimming_workflow.get_resource("bbduk", "run", resource)
+        actual = adapter_trimming_workflow.get_resource("bbduk", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -236,7 +239,7 @@ def test_fastp_step_part_get_resource_usage(adapter_trimming_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = adapter_trimming_workflow.get_resource("fastp", "run", resource)
+        actual = adapter_trimming_workflow.get_resource("fastp", "run", resource)()
         assert actual == expected, msg_error
 
 

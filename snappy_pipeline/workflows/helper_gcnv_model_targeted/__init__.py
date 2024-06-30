@@ -82,35 +82,22 @@ The default configuration is as follows.
 .. include:: DEFAULT_CONFIG_helper_gcnv_model_targeted.rst
 
 """
+
 import os
 import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
+
 #: Default configuration for the helper_gcnv_model_targeted schema
-DEFAULT_CONFIG = r"""
-# Default configuration helper_gcnv_model_targeted
-step_config:
-
-  helper_gcnv_model_targeted:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
-    gcnv:
-      path_uniquely_mapable_bed: null  # REQUIRED - path to BED file with uniquely mappable regions.
-      path_target_interval_list_mapping: []  # REQUIRED - define one or more set of target intervals.
-      # The following will match both the stock IDT library kit and the ones
-      # with spike-ins seen from Yale genomics.  The path above would be
-      # mapped to the name "default".
-      # - name: IDT_xGen_V1_0
-      #   pattern: "xGen Exome Research Panel V1\\.0*"
-      #   path: "path/to/targets.bed"
-"""
+DEFAULT_CONFIG = HelperGcnvModelTargetedConfigModel.default_config_yaml_string()
 
 
 class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
@@ -123,8 +110,8 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = DictQuery(self.w_config).get("step_config/helper_gcnv_model_targeted/gcnv")
-        if not gcnv_config["path_target_interval_list_mapping"]:
+        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        if not gcnv_config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
                 if donor.dna_ngs_library:
@@ -132,8 +119,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
         # Build mapping
         regexes = {
-            item["pattern"]: item["name"]
-            for item in gcnv_config["path_target_interval_list_mapping"]
+            item.pattern: item.name for item in gcnv_config.path_target_interval_list_mapping
         }
         result = {}
         for donor in self.parent.all_donors():
@@ -158,12 +144,15 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
-            for shard in shards
-        ]
+        yield (
+            "calls",
+            [
+                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                    name_pattern=name_pattern, shard=shard
+                )
+                for shard in shards
+            ],
+        )
         ext = "ploidy"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
@@ -192,7 +181,8 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=HelperGcnvModelTargetedConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -202,7 +192,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Build mapping from NGS DNA library to library kit
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
 
@@ -240,10 +230,3 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
         ]
         return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "helper_gcnv_model_targeted", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gCNV model building.",
-        )

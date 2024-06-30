@@ -6,40 +6,16 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-if "args" in snakemake.params and snakemake.params["args"].get("interval", None):
+params = dict(snakemake.params)["args"]
+filter_name = params["filter_name"] if "filter_name" in params else ""
+has_annotation = str(params["has_annotation"] if "has_annotation" in params else False)
+
+if "interval" in params:
     cmd_fetch = "tabix --print-header {} {}".format(
         snakemake.input.vcf, snakemake.params["args"]["interval"]
     )
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
-
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
-if "ebfilter_threshold" in config:
-    threshold = config.get("ebfilter_threshold", 0)
-elif "eb_filter" in config and "ebfilter_threshold" in config["eb_filter"]:
-    threshold = config["eb_filter"].get("ebfilter_threshold", 0)
-elif "ebfilter" in config and "ebfilter_threshold" in config["ebfilter"]:
-    threshold = config["ebfilter"].get("ebfilter_threshold", 0)
-else:
-    try:
-        filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
-        threshold = config["filter_list"][filter_nb]["ebfilter"].get("ebfilter_threshold", 0)
-    except:
-        threshold = 0
-
-if "filter_name" in config:
-    filter_name = config.get("filter_name", "")
-elif "eb_filter" in config and "filter_name" in config["eb_filter"]:
-    filter_name = config["eb_filter"].get("filter_name", "")
-elif "ebfilter" in config and "filter_name" in config["ebfilter"]:
-    filter_name = config["ebfilter"].get("filter_name", "")
-else:
-    try:
-        filter_name = "ebfilter_{}".format(int(snakemake.wildcards["filter_nb"]))
-    except:
-        filter_name = "+"
 
 shell(
     r"""
@@ -86,7 +62,11 @@ if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
     filter=$(echo "$filter" | sed -e "s/^ || //")
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
-    filter="$filter || $ann ~ \"stream_gene_variant\""
+    if [[ '{has_annotation}' == "True" ]]; then
+        filter="$filter || $ann ~ \"stream_gene_variant\""
+    else
+        filter="$filter"
+    fi
     {cmd_fetch} \
     | bcftools view \
         -e "$filter" \
@@ -112,16 +92,22 @@ if [[ $lines -gt 0 ]]; then
     EBFilter \
         -f vcf \
         -t 1 \
-        -q {snakemake.config[step_config][somatic_variant_filtration][eb_filter][min_mapq]} \
-        -Q {snakemake.config[step_config][somatic_variant_filtration][eb_filter][min_baseq]} \
+        -q {params[min_mapq]} \
+        -Q {params[min_baseq]} \
         $TMPDIR/for_eb_filter.vcf.gz \
         {snakemake.input.bam} \
         {snakemake.input.txt} \
         $TMPDIR/after_running_eb_filter.vcf
-    bcftools filter --soft-filter {filter_name} --mode + \
-        --exclude "INFO/EB < {threshold}" \
-        -O z -o $TMPDIR/after_eb_filter.vcf.gz \
-        $TMPDIR/after_running_eb_filter.vcf
+    if [[ -n "{filter_name}" ]]
+    then
+        bcftools filter --soft-filter {filter_name} --mode + \
+            --exclude "INFO/EB < {params[ebfilter_threshold]}" \
+            -O z -o $TMPDIR/after_eb_filter.vcf.gz \
+            $TMPDIR/after_running_eb_filter.vcf
+    else
+        mv $TMPDIR/after_running_eb_filter.vcf $TMPDIR/after_eb_filter.vcf
+        bgzip $TMPDIR/after_eb_filter.vcf
+    fi
 else
     mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
 fi

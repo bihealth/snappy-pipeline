@@ -27,6 +27,7 @@ paths_tsv = " ".join(snakemake.input.tsv)
 
 # Add interval block list for PAR regions if configured.
 par_intervals = snakemake.params.get("par_intervals", "")
+
 if par_intervals:
     par_args = f"-XL {par_intervals}"
 else:

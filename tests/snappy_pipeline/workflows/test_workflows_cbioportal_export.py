@@ -28,10 +28,14 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
+            tools:
+              rna: [star]
             star:
+              path_index: /path/to/star/index
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
             path_ngs_mapping: /NGS_MAPPING
+            path_gene_id_mappings: DUMMY
             expression_tool: star
             path_somatic_variant: /SOM_VAR_FILTRATION
             somatic_variant_calling_tool: mutect2
@@ -40,6 +44,9 @@ def minimal_config():
             path_copy_number: /COPY_NUMBER
             copy_number_tool: cnvkit
             exclude_variant_with_flag: LowFisherScore
+            vcf2maf:
+              ncbi_build: GRCh37
+              Center: DUMMY
             # Description of dataset in cBioPortal
             study:
               type_of_cancer: mixed
@@ -47,6 +54,7 @@ def minimal_config():
               study_description: "PeDiOn project A02P"
               study_name: PeDiOn_A02P
               study_name_short: A02P
+              reference_genome: grch37
 
         data_sets:
           first_batch:
@@ -69,11 +77,13 @@ def cbioportal_export_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return cbioportalExportWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
         "somatic_variant": lambda x: "/SOM_VAR_FILTRATION/" + x,
@@ -133,7 +143,7 @@ def test_cbioportal_meta_files_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_meta_files", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_meta_files", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -178,7 +188,7 @@ def test_cbioportal_clinical_data_step_part_get_resource_usage(cbioportal_export
         msg_error = f"Assertion error for resource '{resource}'."
         actual = cbioportal_export_workflow.get_resource(
             "cbioportal_clinical_data", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -238,7 +248,7 @@ def test_cbioportal_case_lists_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_case_lists", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_case_lists", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -359,7 +369,7 @@ def test_cbioportal_vcf2maf_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_vcf2maf", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_vcf2maf", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -408,7 +418,7 @@ def test_cbioportal_mutations_step_part_get_resource_usage(cbioportal_export_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_mutations", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_mutations", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -464,7 +474,7 @@ def test_cbioportal_cns2cna_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_cns2cna", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_cns2cna", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -557,7 +567,7 @@ def test_cbioportal_cna_step_part_get_resource_usage(cbioportal_export_workflow)
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = cbioportal_export_workflow.get_resource("cbioportal_cna", action, resource)
+            actual = cbioportal_export_workflow.get_resource("cbioportal_cna", action, resource)()
             assert actual == expected, msg_error
 
 
@@ -603,7 +613,7 @@ def test_cbioportal_segment_step_part_get_resource_usage(cbioportal_export_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_segment", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_segment", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -660,7 +670,7 @@ def test_cbioportal_expression_step_part_get_resource_usage(cbioportal_export_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = cbioportal_export_workflow.get_resource("cbioportal_expression", "run", resource)
+        actual = cbioportal_export_workflow.get_resource("cbioportal_expression", "run", resource)()
         assert actual == expected, msg_error
 
 

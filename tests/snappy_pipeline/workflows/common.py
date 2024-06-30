@@ -1,6 +1,5 @@
 """Shared method used in methods."""
 
-
 import typing
 
 

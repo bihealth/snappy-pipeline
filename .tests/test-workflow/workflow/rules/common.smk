@@ -23,7 +23,7 @@ def folder_names(pipeline: str) -> list[str]:
 
 def reference_path() -> str:
     if chrom := config["reference"].get("chromosome", None):
-        return f"resources/refs/{chrom}.fa.gz"
+        return "resources/refs/" + chrom + ".fa.gz"
     else:
         return "resources/refs/genome.fa.gz"
 
@@ -33,8 +33,8 @@ def reference_faidx_region_string(wildcards) -> str:
     region = config["reference"].get("region", None)
     match chrom, region:
         case None, None:
-            return f""
+            return ""
         case chrom, None:
-            return f"{chrom}"
+            return chrom
         case chrom, region:
-            return f"{chrom}:{region}"
+            return chrom + ":" + region

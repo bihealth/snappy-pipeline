@@ -101,7 +101,7 @@ def variant_type(x, args=None):
     return [variant_type]
 
 
-strip_sequence_version_pattern = re.compile("\.[0-9]+$")  # noqa: W605
+strip_sequence_version_pattern = re.compile(r"\.[0-9]+$")
 
 
 def strip_sequence_version(x, args):

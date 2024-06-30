@@ -23,9 +23,9 @@ step_config:
 
 
   somatic_variant_calling:
+    path_ngs_mapping: ../ngs_mapping
     tools: [mutect2]
     mutect2:
-      ngs_mapping: ../ngs_mapping
       extra_arguments: []
       window_length: 300000000
       keep_tmpdir: onerror
@@ -43,6 +43,7 @@ step_config:
   somatic_variant_filtration:
     path_somatic_variant: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
+    filtration_schema: list
     filter_list:
     - dkfz: {}
     - bcftools:

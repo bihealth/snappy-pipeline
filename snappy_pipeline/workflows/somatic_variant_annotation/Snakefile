@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
+from snappy_pipeline.workflows.somatic_variant_annotation import (
+    SomaticVariantAnnotationWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

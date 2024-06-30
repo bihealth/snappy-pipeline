@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Installation driver (and development utility entry point) for snappy-pipeline
-"""
+"""Installation driver (and development utility entry point) for snappy-pipeline"""
 
-from itertools import chain
 import os
 import sys
+from itertools import chain
 
 from setuptools import find_packages, setup
-
-import versioneer
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -29,9 +26,9 @@ def parse_requirements(path):
     return requirements
 
 
-# Enforce python version >=3.7
-if sys.version_info < (3, 7):
-    print("At least Python 3.7 is required.\n", file=sys.stderr)
+# Enforce python version >=3.12
+if sys.version_info < (3, 12):
+    print("At least Python 3.12 is required.\n", file=sys.stderr)
     sys.exit(1)
 
 with open("README.md") as readme_file:
@@ -85,10 +82,16 @@ def bash_scripts(names):
     return (os.path.join("scripts", name) for name in names)
 
 
+package_root = os.path.abspath(os.path.dirname(__file__))
+
+version = {}
+with open(os.path.join(package_root, "snappy_pipeline/version.py")) as fp:
+    exec(fp.read(), version)
+version = version["__version__"]
+
 setup(
     name="snappy-pipeline",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version=version,
     description="SNAPPY Nucleic Acid Processing in Python (by CUBI)",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
@@ -124,11 +127,12 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.12",
         # We are missing bioconda pysam packages for 3.11 and 3.12, cf.
         # https://github.com/bioconda/bioconda-recipes/issues/37805
         # "Programming Language :: Python :: 3.11",
         # "Programming Language :: Python :: 3.12",
+        # … but we can build pysam from pip instead
     ],
     test_suite="tests",
     tests_require=test_requirements,

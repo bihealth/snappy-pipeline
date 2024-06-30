@@ -8,37 +8,41 @@ import datetime
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
-import itertools
+import logging
 import os
 import os.path
 import sys
 import tempfile
 import typing
+from typing import Any, Callable
 
 import attr
+import pydantic
+import ruamel.yaml as ruamel_yaml
+import snakemake
+from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
-from biomedsheets.naming import NAMING_SCHEMES, NAMING_SECONDARY_ID_PK, name_generator_for_scheme
+from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import (
+    ShortcutSampleSheet,
     donor_has_dna_ngs_library,
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
-import ruamel.yaml as ruamel_yaml
-from snakemake.io import touch
-
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,
-    merge_dicts,
     merge_kwargs,
     print_config,
     print_sample_sheets,
     snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
+from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_wrappers.resource_usage import ResourceUsage
@@ -95,30 +99,36 @@ class ImplementationUnavailableError(NotImplementedError):
     """
 
 
+Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
+Outputs: typing.TypeAlias = OutputFiles | dict[str, Any]
+
+
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
-    name = "<base step>"
+    name: str
 
     #: The actions available in the class.
-    actions: typing.Tuple[str] = None
+    actions: tuple[str, ...]
 
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
-        threads=1, time="01:00:00", memory="2G"  # 1h
+        threads=1,
+        time="01:00:00",
+        memory="2G",  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
     #: ``default_resource_usage``.
-    resource_usage: typing.Dict[str, ResourceUsage] = {}
+    resource_usage: dict[str, ResourceUsage] = {}
 
-    def __init__(self, parent):
+    def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
-        self.parent = parent
+        self.parent: P = parent
         self.config = parent.config
         self.w_config = parent.w_config
 
-    def _validate_action(self, action):
+    def _validate_action(self, action: str):
         """Validate provided action
 
         Checks that the provided ``action`` is listed in the valid class actions list.
@@ -133,18 +143,20 @@ class BaseStepPart:
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Return the resource usage for the given action."""
         if action not in self.actions:
             raise ValueError(f"Invalid {action} not in {self.actions}")
         return self.resource_usage.get(action, self.default_resource_usage)
 
     @staticmethod
-    def get_default_partition() -> str:
+    def get_default_partition() -> str | None:
         """Helper that returns the default partition."""
         return os.getenv("SNAPPY_PIPELINE_PARTITION")
 
-    def get_resource(self, action: str, resource_name: str):
+    def get_resource(
+        self, action: str, resource_name: str
+    ) -> Callable[[Wildcards, InputFiles], Any]:
         """Return the amount of resources to be allocated for the given action.
 
         :param action: The action to return the resource requirement for.
@@ -152,27 +164,31 @@ class BaseStepPart:
         """
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
-        resource_usage = self.get_resource_usage(action)
-        if resource_name == "tmpdir" and not resource_usage.tmpdir:
-            return self.parent.get_tmpdir()
-        if resource_name == "partition" and not resource_usage.partition:
-            return self.get_default_partition()
-        else:
-            return getattr(resource_usage, resource_name)
 
-    def get_args(self, action):
+        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None) -> Any:
+            resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
+            if resource_name == "tmpdir" and not resource_usage.tmpdir:
+                return self.parent.get_tmpdir()
+            if resource_name == "partition" and not resource_usage.partition:
+                return self.get_default_partition()
+            else:
+                return getattr(resource_usage, resource_name)
+
+        return _get_resource
+
+    def get_args(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return args for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_input_files(self, action):
+    def get_input_files(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_output_files(self, action):
+    def get_output_files(self, action: str) -> Outputs:
         """Return output files for the given action of the sub step and"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_log_file(self, action):
+    def get_log_file(self, action: str) -> Outputs:
         """Return path to log file
 
         The default implementation tries to call ``self._get_log_files()`` and in the case of
@@ -194,13 +210,13 @@ class BaseStepPart:
                 "Log file name generation not implemented!"
             )  # pragma: no cover
 
-    def get_shell_cmd(self, action, wildcards):  # NOSONAR
+    def get_shell_cmd(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
         """Return shell command for the given action of the sub step and the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
 
-    def run(self, action, wildcards):  # NOSONAR
+    def run(self, action: str, wildcards: Wildcards):  # NOSONAR
         """Run the sub steps action action's code with the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
@@ -224,7 +240,9 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent, require_dna_ngs_library=False, only_trios=False):
+    def __init__[P: BaseStep](
+        self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False
+    ):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
@@ -238,7 +256,11 @@ class WritePedigreeStepPart(BaseStepPart):
                         in_trio = set()
                         for donor in pedigree.donors:
                             if donor.father and donor.mother:
-                                in_trio |= {donor.name, donor.father.name, donor.mother.name}
+                                in_trio |= {
+                                    donor.name,
+                                    donor.father.name,
+                                    donor.mother.name,
+                                }
                         if not any((donor.name in in_trio for donor in pedigree.donors)):
                             continue  # ignore empty pedigree post filtration
                         pedigree = pedigree.with_filtered_donors(
@@ -270,13 +292,16 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mappers = self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"]
+            mappers = self.w_config.step_config["ngs_mapping"].tools.dna
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name
                 for mapper in mappers:
                     path = tpl.format(
-                        library_name=library_name, mapper=mapper, ext=".bam", **wildcards
+                        library_name=library_name,
+                        mapper=mapper,
+                        ext=".bam",
+                        **wildcards,
                     )
                     yield ngs_mapping(path)
 
@@ -294,7 +319,7 @@ class WritePedigreeStepPart(BaseStepPart):
         #         yield tpl.format(index_ngs_library=index_ngs_library)
         return []
 
-    def run(self, wildcards, output):
+    def run(self, wildcards: Wildcards, output: OutputFiles):
         """Write out the pedigree information
 
         :param wildcards: Snakemake wildcards associated with rule (unused).
@@ -307,7 +332,8 @@ class WritePedigreeStepPart(BaseStepPart):
             write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
         else:
             write_pedigree_to_ped(
-                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library], str(output)
+                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
+                str(output),
             )
 
 
@@ -558,7 +584,10 @@ class DataSetInfo:
     def _set_is_background(cls, sheet, flag):
         """Override "is_background" flag"""
         # TODO: check whether is already there and fail if not compatible
-        sheet.json_data["extraInfoDefs"]["is_background"] = {"type": "boolean", "default": False}
+        sheet.json_data["extraInfoDefs"]["is_background"] = {
+            "type": "boolean",
+            "default": False,
+        }
         sheet.extra_infos["is_background"] = flag
         return sheet
 
@@ -581,10 +610,10 @@ class BaseStep:
     """
 
     #: Override with step name
-    name = None
+    name: str
 
     #: Override with the sheet shortcut class to use
-    sheet_shortcut_class = None
+    sheet_shortcut_class: type[ShortcutSampleSheet]
 
     #: Override with arguments to pass into sheet shortcut class constructor
     sheet_shortcut_args = None
@@ -619,18 +648,22 @@ class BaseStep:
         """
         return ""  # pragma: no cover
 
-    def __init__(
+    def __init__[C: SnappyStepModel](
         self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        work_dir,
-        previous_steps=None,
+        workflow: snakemake.Workflow,
+        config: MutableMapping[str, Any],
+        config_lookup_paths: tuple[str, ...],
+        config_paths: tuple[str, ...],
+        work_dir: str,
+        *,
+        config_model_class: type[C],
+        previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.name = self.__class__.name
         #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
+        #: Pydantic model class for configuration validation
+        self.config_model_class = config_model_class
         #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
         #: Classes of previously executed steps, used for merging their default configuration as
@@ -638,22 +671,47 @@ class BaseStep:
         self.previous_steps = tuple(previous_steps or [])
         #: Snakefile "workflow" object
         self.workflow = workflow
+        #: Setup logger for the step
+        self.logger = logging.getLogger(self.name)
         #: Merge default configuration with true configuration
-        self.w_config = config
-        self.w_config.update(self._update_config(config))
-        self.config = self.w_config["step_config"].get(self.name, OrderedDict())
+        workflow_config = config
+        local_config = workflow_config["step_config"].get(self.name, OrderedDict())
+        self.logger.info(local_config)
+
+        # #: Validate workflow step configuration using its accompanying pydantic model
+        # #: available through self.config_model_class (mandatory keyword arg for BaseStep)
+        # try:
+        #     self.config: C = validate_config(local_config, self.config_model_class)
+        #     # Also update the workflow config, just in case
+        #     workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
+        # except pydantic.ValidationError as ve:
+        #     self.logger.error(f"{self.name} failed validation:\n{local_config}")
+        #     raise ve
+
+        #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
+        #: This includes static_data_config, step_config and data_sets
+        try:
+            # local import of ConfigModel to avoid circular import
+            from snappy_pipeline.workflow_model import ConfigModel
+
+            self.w_config: ConfigModel = ConfigModel(**workflow_config)
+            self.config: C = self.w_config.step_config[self.name]
+        except pydantic.ValidationError as ve:
+            self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
+            raise ve
+
         #: Paths with configuration paths, important for later retrieving sample sheet files
-        self.config_lookup_paths = config_lookup_paths
-        self.sub_steps = {}
+        self.config_lookup_paths = list(config_lookup_paths)
+        self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
-        # Check configuration
-        self._check_config()
+
         #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
         #: Shortcut BioMed SampleSheet keyword arguments
         sheet_kwargs_list = [
             merge_kwargs(
-                first_kwargs=self.sheet_shortcut_kwargs, second_kwargs=info.pedigree_field_kwargs
+                first_kwargs=self.sheet_shortcut_kwargs,
+                second_kwargs=info.pedigree_field_kwargs,
             )
             for info in self.data_set_infos
         ]
@@ -669,10 +727,29 @@ class BaseStep:
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
         #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows = {}
+        self.sub_workflows: dict[str, snakemake.Workflow] = {}
+
+        # Even though we already validated via pydantic, we still call check_config here, as
+        # some of the checks done in substep check_config are not covered by the pydantic models yet
+        # and some of the checks actually influence program logic/flow
+        self._check_config()
+
+        config_string = self.config.model_dump_yaml(by_alias=True)
+        self.logger.info(f"Configuration for step {self.name}\n{config_string}")
+
+        config_string = self.w_config.model_dump_yaml(by_alias=True)
+        self.logger.info(f"Configuration for workflow\n{config_string}")
+
+        # Update snakemake.config (which `config` is a reference to)
+        # with the validated configuration.
+        # All fields with default values are explicitly defined.
+        _config = _cached_yaml_round_trip_load_str(config_string)
+        config.update(_config)
+        self.logger.info(f"Snakemake config\n{config}")
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
+
         # In the following, the "log" parameter to the handler functions is set to "_" as we
         # don't use them
         def on_start(_):
@@ -702,17 +779,6 @@ class BaseStep:
         self.workflow.onstart(on_start)
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
-
-    def _update_config(self, config):
-        """Update configuration config with the configuration returned by subclass'
-        ``default_config_yaml()`` and return
-        """
-        result = OrderedDict()
-        for cls in itertools.chain([self.__class__], self.previous_steps):
-            result = merge_dicts(
-                result, _cached_yaml_round_trip_load_str(cls.default_config_yaml())
-            )
-        return merge_dicts(result, config)
 
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
@@ -759,8 +825,7 @@ class BaseStep:
         # Iterate over required configuration keys
         for entry in config_keys:
             # Check if keys are present in config dictionary
-            if entry in handle:
-                handle = handle[entry]
+            if (handle := (getattr(handle, entry, None) or handle.get(entry, None))) is not None:
                 so_far.append(entry)
             else:
                 tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
@@ -768,7 +833,9 @@ class BaseStep:
                 )
                 raise e_class(tpl)
 
-    def register_sub_step_classes(self, classes):
+    def register_sub_step_classes(
+        self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
+    ):
         """Register an iterable of sub step classes
 
         Initializes objects in ``self.sub_steps`` dict
@@ -780,10 +847,12 @@ class BaseStep:
                 klass = pair_or_class
                 args = ()
             obj = klass(self, *args)
-            obj.check_config()
+            # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(self, step_name, workdir, sub_workflow_name=None):
+    def register_sub_workflow(
+        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
+    ):
         """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
 
         Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
@@ -804,42 +873,42 @@ class BaseStep:
         )
         self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
-    def get_args(self, sub_step, action):
+    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return arguments for action of substep with given wildcards
 
-        Delegates to the sub step object's get_input_files function
+        Delegates to the sub step object's get_args function
         """
         return self._get_sub_step(sub_step).get_args(action)
 
-    def get_input_files(self, sub_step, action):
+    def get_input_files(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for action of substep with given wildcards
 
         Delegates to the sub step object's get_input_files function
         """
         return self._get_sub_step(sub_step).get_input_files(action)
 
-    def get_output_files(self, sub_step, action):
+    def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
 
         Delegates to the sub step object's get_output_files function
         """
         return self._get_sub_step(sub_step).get_output_files(action)
 
-    def get_params(self, sub_step, action):
+    def get_params(self, sub_step: str, action: str) -> Any:
         """Return parameters
 
         Delegates to the sub step object's get_params function
         """
         return self.substep_dispatch(sub_step, "get_params", action)
 
-    def get_resource(self, sub_step, action, resource_name):
+    def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
         """Get resource
 
         Delegates to the sub step object's get_resource function
         """
         return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
 
-    def get_tmpdir(self):
+    def get_tmpdir(self) -> str:
         """Return temporary directory.
 
         To be used directly or via get_resource("step", "action", "tmpdir")
@@ -849,7 +918,7 @@ class BaseStep:
         2. If this fails, try to use environment variable TMPDIR.
         3. If this fails, use tempfile.gettempdir(), same as Snakemake default.
         """
-        tmpdir = self.w_config.get("global_config", {}).get("tmpdir", None)
+        tmpdir = getattr(self.w_config, "global_config", {}).get("tmpdir", None)
         if tmpdir:
             with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
                 tmpdir = os.path.expandvars(tmpdir)
@@ -861,40 +930,40 @@ class BaseStep:
         os.makedirs(tmpdir, exist_ok=True)
         return tmpdir
 
-    def get_log_file(self, sub_step, action):
+    def get_log_file(self, sub_step: str, action: str) -> Outputs:
         """Return path to the log file
 
         Delegates to the sub step object's get_log_file function
         """
         return self.substep_dispatch(sub_step, "get_log_file", action)
 
-    def get_shell_cmd(self, sub_step, action, wildcards):
+    def get_shell_cmd(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Return shell command for the pipeline sub step
 
         Delegates to the sub step object's get_shell_cmd function
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
 
-    def run(self, sub_step, action, wildcards):
+    def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
 
         Delegates to the sub step object's run function
         """
-        return self._get_sub_step(sub_step).get_shell_cmd(action, wildcards)
+        return self._get_sub_step(sub_step).run(action, wildcards)
 
-    def get_result_files(self):
+    def get_result_files(self) -> OutputFiles:
         """Return actual list of file names to build"""
         raise NotImplementedError("Implement me!")  # pragma: no cover
 
-    def substep_getattr(self, step, name):
+    def substep_getattr(self, step: str, name: str) -> Any:
         """Return attribute from substep"""
         return getattr(self._get_sub_step(step), name)
 
-    def substep_dispatch(self, step, function, *args, **kwargs):
+    def substep_dispatch(self, step: str, function: str, *args, **kwargs):
         """Dispatch call to function of sub step implementation"""
         return self.substep_getattr(step, function)(*args, **kwargs)
 
-    def _get_sub_step(self, sub_step):
+    def _get_sub_step(self, sub_step: str) -> BaseStepPart:
         if sub_step in self.sub_steps:
             return self.sub_steps[sub_step]
         else:
@@ -902,41 +971,47 @@ class BaseStep:
                 'Could not find sub step "{}" in workflow step "{}"'.format(sub_step, self.name)
             )  # pragma: no cover
 
-    def _load_data_set_infos(self):
+    def _load_data_set_infos(self) -> typing.Generator[DataSetInfo, None, None]:
         """Load BioMed Sample Sheets as given by configuration and yield them"""
-        for name, data_set in self.w_config["data_sets"].items():
+        for name, data_set in self.w_config.data_sets.items():
             yield DataSetInfo(
                 name,
-                data_set["file"],
+                data_set.file,
                 self.config_lookup_paths,
-                data_set["search_paths"],
-                data_set["search_patterns"],
-                data_set["type"],
-                data_set.get("is_background", False),
-                data_set.get("naming_scheme", NAMING_SECONDARY_ID_PK),
-                data_set.get("mixed_se_pe", False),
-                data_set.get("sodar_uuid", None),
-                data_set.get("sodar_title", None),
-                data_set.get("pedigree_field", None),
+                data_set.search_paths,
+                data_set.search_patterns,
+                data_set.type,
+                data_set.is_background,
+                data_set.naming_scheme,
+                data_set.mixed_se_pe,
+                data_set.sodar_uuid,
+                data_set.sodar_title,
+                data_set.pedigree_field,
             )
 
-    def _load_data_search_infos(self):
+    def _load_data_search_infos(self) -> typing.Generator[DataSearchInfo, None, None]:
         """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
-        for _, data_set in self.w_config["data_sets"].items():
+        for _, data_set in self.w_config.data_sets.items():
             yield DataSearchInfo(
-                sheet_path=data_set["file"],
+                sheet_path=data_set.file,
                 base_paths=self.config_lookup_paths,
-                search_paths=self.config["search_paths"],
-                search_patterns=self.config["search_patterns"],
+                search_paths=self.config.search_paths,
+                search_patterns=self.config.search_patterns,
                 mixed_se_pe=False,
             )
 
     @classmethod
-    def wrapper_path(cls, path):
+    def wrapper_path(cls, path: str) -> str:
         """Generate path to wrapper"""
         return "file://" + os.path.abspath(
             os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "snappy_wrappers", "wrappers", path
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "snappy_wrappers",
+                "wrappers",
+                path,
             )
         )
 
@@ -972,7 +1047,11 @@ class LinkInPathGenerator:
             os.path.join(self.work_dir, self.cache_file_name), invalidate_paths_list
         )
 
-    def run(self, folder_name, pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam")):
+    def run(
+        self,
+        folder_name,
+        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
+    ):
         """Yield (src_path, path_infix, filename) one-by-one
 
         Cache is saved after the last iteration
@@ -1038,7 +1117,8 @@ class LinkInPathGenerator:
             for search_path in info.search_paths:
                 yield os.path.abspath(
                     os.path.join(
-                        os.path.dirname(os.path.join(base_path, info.sheet_path)), search_path
+                        os.path.dirname(os.path.join(base_path, info.sheet_path)),
+                        search_path,
                     )
                 )
 
@@ -1056,7 +1136,6 @@ class LinkInPathGenerator:
         out_list = []
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
-
             # Search paths - expects a list already
             out_list.extend(getattr(info, "search_paths"))
 
@@ -1137,8 +1216,8 @@ class LinkInStep(BaseStepPart):
         # FASTQ files. That doesn't make sense for pipelines that are using externally generated
         # data already.
         try:
-            preprocessed_path = self.config["path_link_in"]
-        except KeyError:
+            preprocessed_path = self.config.path_link_in
+        except AttributeError:
             preprocessed_path = ""
 
         # Path generator.
@@ -1169,7 +1248,7 @@ class LinkInStep(BaseStepPart):
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
@@ -1189,7 +1268,10 @@ class LinkInStep(BaseStepPart):
             filenames[new_path] = src_path
             lines.append(
                 tpl.format(
-                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                    src_path=src_path,
+                    out_path=out_path,
+                    path_infix=path_infix,
+                    filename=filename,
                 )
             )
         if not lines:
@@ -1228,7 +1310,9 @@ class LinkInVcfExternalStepPart(LinkInStep):
         self._validate_action(action)
         # Define path generator
         path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
+            self.parent.work_dir,
+            self.parent.data_search_infos,
+            self.parent.config_lookup_paths,
         )
         # Get base out path
         out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
@@ -1252,7 +1336,10 @@ class LinkInVcfExternalStepPart(LinkInStep):
             filenames[new_path] = src_path
             lines.append(
                 tpl.format(
-                    src_path=src_path, out_path=out_path, path_infix=path_infix, filename=filename
+                    src_path=src_path,
+                    out_path=out_path,
+                    path_infix=path_infix,
+                    filename=filename,
                 )
             )
         if not lines:
@@ -1315,9 +1402,12 @@ class InputFilesStepPartMixin:
         @dictify
         def input_function(wildcards):
             if self.include_ped_file:
-                yield "ped", os.path.realpath(
-                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
-                ).format(**wildcards)
+                yield (
+                    "ped",
+                    os.path.realpath(
+                        "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                    ).format(**wildcards),
+                )
             name_pattern = self.prev_class.name_pattern.replace(r",[^\.]+", "")
             tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
             for key, ext in zip(self.ext_names, self.ext_values):

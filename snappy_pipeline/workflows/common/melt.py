@@ -2,9 +2,9 @@ from itertools import chain
 import re
 import typing
 
-from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
 
+from biomedsheets.shortcuts import is_not_background
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import (
@@ -202,7 +202,7 @@ class MeltStepPart(
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
         vcfs = []
-        for me_type in self.config["melt"]["me_types"]:
+        for me_type in self.config.melt.me_types:
             infix = f"{wildcards.mapper}.melt_make_vcf.{wildcards.library_name}.{me_type}"
             vcfs.append(f"work/{infix}/out/{infix}.final_comp.vcf.gz")
         yield "vcf", vcfs
@@ -217,10 +217,13 @@ class MeltStepPart(
             "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(work_files.values(), self.get_log_file("merge_vcf").values())
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(work_files.values(), self.get_log_file("merge_vcf").values())
+            ],
+        )
 
     @dictify
     def _get_log_file_merge_vcf(self):

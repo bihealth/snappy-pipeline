@@ -32,8 +32,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -43,13 +41,17 @@ def minimal_config():
             - scalpel
             scalpel:
               path_target_regions: /path/to/target/regions.bed
-        
+            mutect: {}
+
           somatic_variant_annotation:
+            path_somatic_variant_calling: /path/to/somatic_variant_calling
             tools: ["jannovar", "vep"]
             jannovar:
+              dbnsfp: {}
+              flag_off_target: true
               path_jannovar_ser: /path/to/jannover.ser
             vep:
-              path_dir_cache: /path/to/dir/cache
+              cache_dir: /path/to/dir/cache
 
         data_sets:
           first_batch:
@@ -72,11 +74,13 @@ def somatic_variant_annotation_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticVariantAnnotationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
@@ -153,7 +157,7 @@ def test_jannovar_step_part_get_resource_usage(somatic_variant_annotation_workfl
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_annotation_workflow.get_resource(
             "jannovar", "annotate_somatic_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -213,7 +217,7 @@ def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_annotation_workflow.get_resource("vep", "run", resource)
+        actual = somatic_variant_annotation_workflow.get_resource("vep", "run", resource)()
         assert actual == expected, msg_error
 
 

@@ -29,6 +29,9 @@ def minimal_config():
               dna: ['bwa']
             bwa:
               path_index: /path/to/bwa/index.fasta
+          repeat_expansion:
+            repeat_catalog: DUMMY
+            repeat_annotation: DUMMY
 
         data_sets:
           first_batch:
@@ -51,11 +54,13 @@ def repeat_expansion_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return RepeatExpansionWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
@@ -168,7 +173,7 @@ def test_expansionhunter_step_part_get_resource_usage(repeat_expansion_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = repeat_expansion_workflow.get_resource("expansionhunter", "run", resource)
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -210,5 +215,5 @@ def test_expansionhunter_annotate_step_part_get_resource_usage(repeat_expansion_
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = repeat_expansion_workflow.get_resource("expansionhunter", "annotate", resource)
+        actual = repeat_expansion_workflow.get_resource("expansionhunter", "annotate", resource)()
         assert actual == expected, msg_error

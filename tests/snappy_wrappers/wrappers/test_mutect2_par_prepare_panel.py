@@ -17,7 +17,7 @@ from snappy_wrappers.wrappers.mutect2_par.prepare_panel.parallel_prepare_panel i
     ParallelMutect2Wrapper,
 )
 
-from .conftest import mock_settings_env_vars, patch_module_fs
+from .conftest import patch_module_fs
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -38,8 +38,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 

@@ -29,14 +29,13 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
 
           variant_annotation:
             vep:
@@ -148,7 +147,7 @@ def test_vep_run_step_part_get_resource_usage(variant_annotation_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_annotation_workflow.get_resource("vep", "run", resource)
+        actual = variant_annotation_workflow.get_resource("vep", "run", resource)()
         assert actual == expected, msg_error
 
 
