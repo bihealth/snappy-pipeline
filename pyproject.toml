@@ -2,6 +2,7 @@
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "snappy-pipeline"
 authors = [
@@ -57,7 +58,6 @@ Documentation = "https://snappy-pipeline.readthedocs.io/en/latest/"
 Issues = "https://github.com/bihealth/snappy-pipeline/issues"
 Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
 
-
 [project.optional-dependencies]
 test = [
     "pytest ~=8.2.2",
@@ -106,6 +106,7 @@ snappy-vcf_filter_from_info = "snappy_wrappers.tools.vcf_filter_from_info:main"
 snappy-vcf_filter_to_info = "snappy_wrappers.tools.vcf_filter_to_info:main"
 snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
 
+
 [tool.setuptools]
 packages = ["snappy_pipeline", "snappy_wrappers"]
 # bash scripts
@@ -114,6 +115,9 @@ script-files = [
     "scripts/snappy-vcf_split"
 ]
 
+[tool.setuptools.dynamic]
+version = {attr = "snappy_pipeline.version.__version__"}
+
 
 [tool.coverage.run]
 omit = ["snappy_pipeline/_version.py", "snappy_wrappers/wrappers/*/wrapper.p"]
@@ -121,6 +125,7 @@ relative_files = true
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
+
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -158,17 +163,12 @@ exclude = [
     "splitMNPsAndComplex.py",
     "wrapper.py",
     "snappy_pipeline/__init__.py",
-    "versioneer.py",
     ".tests",
 ]
 
-
 line-length = 100
 indent-width = 4
-
-# Assume Python 3.8
 target-version = "py312"
-
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B9"]  # enable "B", "C" later
@@ -189,18 +189,11 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
-
 [tool.ruff.format]
-# Like Black, use double quotes for strings.
 quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
-
 # Like Black, respect magic trailing commas.
 skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
 # Enable auto-formatting of code examples in docstrings. Markdown,
