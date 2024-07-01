@@ -3,12 +3,9 @@
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
 
-import os
-
 
 def write_case_list(args, outfile):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""
-    category = os.path.basename(outfile).replace(".txt", "")
     with open(outfile, "w") as f:
         s = "\n".join(
             [

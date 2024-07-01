@@ -77,7 +77,7 @@ def snakemake_obj(minimal_config):
     bench_iteration = 2
     script_dir = "/work"
     input_base_name = (
-        "SOMATIC_VARIANT_CALLING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1"
+        "../somatic_variant_calling//output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1"
     )
     input_dict = {
         "vcf": input_base_name + ".vcf.gz",
