@@ -47,7 +47,7 @@ Installing pre-commit-hooks
 To make it easier to follow the coding style, we use `pre-commit <https://pre-commit.com>`_ hooks.
 These hooks will run the style checks before you commit your changes and will automatically fix some issues.
 
-First, install the pre-commit package (if not already installed):
+First, install the pre-commit package (if not already installed, part of the optional dependency group ``dev``):
 
 .. code-block:: shell
 
@@ -64,7 +64,7 @@ The next time you commit changes, the pre-commit hooks will run automatically.
 Running the Tests
 =================
 
-To run the tests, simply invoke ``pytest``:
+To run the tests, simply invoke ``pytest`` (part of the optional dependency group ``test``):
 
 .. code-block:: shell
 
