@@ -54,9 +54,6 @@ def minimal_config():
               path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
               path_par_intervals: /path/to/par.intervals
 
-          helper_gcnv_model_wgs:
-            path_ngs_mapping: ../ngs_mapping
-
         data_sets:
           first_batch:
             file: sheet.tsv

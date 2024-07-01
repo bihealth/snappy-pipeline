@@ -50,9 +50,6 @@ def minimal_config():
               path_transcript_to_gene: /path/to/salmon/transcript_to_gene
               path_index: /path/to/salmon/index
 
-          gene_expression_quantification:
-            path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
         data_sets:
           first_batch:
             file: sheet.tsv
