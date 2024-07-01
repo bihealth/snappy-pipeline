@@ -41,7 +41,7 @@ def minimal_config():
             gatk3_hc: {}
           variant_denovo_filtration:
             path_ngs_mapping: ../ngs_mapping
-            path_variant_annotation: VARIANT_ANNOTATION
+            path_variant_annotation: ../variant_annotation
 
         data_sets:
           first_batch:
@@ -107,7 +107,7 @@ def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
     variant_annotation_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=variant_annotation_name_out)

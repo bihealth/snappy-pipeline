@@ -108,7 +108,7 @@ rule all:
 
 rule chunk_0:
     input:
-        **{'tumor_bai': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'tumor_bai': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'raw': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz', 'raw_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.md5', 'raw_tbi': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi', 'raw_tbi_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi.md5', 'stats': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats', 'stats_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats.md5', 'f1r2': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz', 'f1r2_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz.md5'}
     log:
@@ -124,7 +124,7 @@ rule chunk_0:
 
 rule chunk_1:
     input:
-        **{'tumor_bai': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'tumor_bai': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'raw': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz', 'raw_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.md5', 'raw_tbi': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi', 'raw_tbi_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi.md5', 'stats': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats', 'stats_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats.md5', 'f1r2': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz', 'f1r2_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz.md5'}
     log:
@@ -140,7 +140,7 @@ rule chunk_1:
 
 rule chunk_2:
     input:
-        **{'tumor_bai': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'tumor_bai': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'raw': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz', 'raw_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.md5', 'raw_tbi': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi', 'raw_tbi_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi.md5', 'stats': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats', 'stats_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats.md5', 'f1r2': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz', 'f1r2_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz.md5'}
     log:
@@ -156,7 +156,7 @@ rule chunk_2:
 
 rule chunk_3:
     input:
-        **{'tumor_bai': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'tumor_bai': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'raw': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz', 'raw_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.md5', 'raw_tbi': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi', 'raw_tbi_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi.md5', 'stats': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats', 'stats_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats.md5', 'f1r2': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz', 'f1r2_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz.md5'}
     log:
@@ -172,7 +172,7 @@ rule chunk_3:
 
 rule chunk_4:
     input:
-        **{'tumor_bai': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': 'NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'tumor_bai': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai', 'tumor_bam': '../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam', 'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'raw': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz', 'raw_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.md5', 'raw_tbi': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi', 'raw_tbi_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.gz.tbi.md5', 'stats': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats', 'stats_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.vcf.stats.md5', 'f1r2': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz', 'f1r2_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-T1-DNA1-WGS1.raw.f1r2_tar.tar.gz.md5'}
     log:
@@ -203,7 +203,7 @@ rule merge_all:
         set -euo pipefail  # Unofficial Bash strict mode
 
         # Merge chunks output ------------------------------------------
-        
+
 # Concatenate raw calls vcfs & index result ----------------------
 bcftools concat \
     --allow-overlaps \

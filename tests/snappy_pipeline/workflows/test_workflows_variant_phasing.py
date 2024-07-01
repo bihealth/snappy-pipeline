@@ -172,7 +172,7 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
     """Tests PhaseByTransmissionStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
@@ -234,7 +234,7 @@ def test_gatk_read_backed_phasing_only_step_part_get_input_files(variant_phasing
     """Tests ReadBackedPhasingOnlyStepPart.get_input_files()"""
     # Define expected
     base_name_out = (
-        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
