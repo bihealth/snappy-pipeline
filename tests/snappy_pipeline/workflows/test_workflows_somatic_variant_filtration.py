@@ -91,8 +91,8 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
     expected = {
         "vcf": somatic_base_out + ".vcf.gz",
         "vcf_tbi": somatic_base_out + ".vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
-        "bai": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
+        "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
+        "bai": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
     }
     actual = somatic_variant_filtration_workflow.get_input_files("dkfz_bias_filter", "run")
     assert actual == expected
@@ -154,8 +154,8 @@ def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_work
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
     }
 
@@ -168,12 +168,12 @@ def test_eb_filter_step_part_get_input_files_write_panel(somatic_variant_filtrat
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         ],
     }
     actual = somatic_variant_filtration_workflow.get_input_files("eb_filter", "write_panel")(

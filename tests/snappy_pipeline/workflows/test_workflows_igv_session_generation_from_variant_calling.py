@@ -38,7 +38,7 @@ def minimal_config():
             gatk3_hc: {}
 
           igv_session_generation:
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
             path_variant_calling: VARIANT_CALLING
             tools_variant_calling: ['gatk3_hc']
 
@@ -93,7 +93,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_input_files(
 ):
     """Tests WriteIgvSessionFileStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_base_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    ngs_mapping_base_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
     variant_calling_base_out = (
         "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     )

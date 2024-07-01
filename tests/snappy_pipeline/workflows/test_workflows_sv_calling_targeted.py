@@ -556,7 +556,7 @@ def test_gcnv_coverage_step_part_get_input_files(sv_calling_targeted_workflow):
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
         "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
     )
-    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
         "interval_list": interval_list_out,
         "bam": bam_out + ".bam",

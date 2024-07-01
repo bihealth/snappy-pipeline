@@ -43,8 +43,8 @@ def minimal_config():
               path_panel_of_normals: DUMMY
 
           somatic_cnv_checking:
-            path_ngs_mapping: NGS_MAPPING
-            path_cnv_calling: CNV_CALLING
+            path_ngs_mapping: ../ngs_mapping
+            path_cnv_calling: ../cnv_calling
             cnv_assay_type: WES
 
         data_sets:
@@ -93,8 +93,8 @@ def test_pileup_normal_step_part_get_input_files(somatic_cnv_checking_workflow):
     """Tests CnvCheckingPileupStepPart.get_input_files() - action normal"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_cnv_checking_workflow.get_input_files("pileup", "normal")(wildcards)
     assert actual == expected
@@ -131,8 +131,8 @@ def test_pileup_tumor_step_part_get_input_files(somatic_cnv_checking_workflow):
     expected = {
         "locii": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz",
         "locii_tbi": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_cnv_checking_workflow.get_input_files("pileup", "tumor")(wildcards)
     assert actual == expected
@@ -169,7 +169,7 @@ def test_cnv_run_step_part_get_input_files(somatic_cnv_checking_workflow):
         fromdict={"mapper": "bwa", "caller": "cnvkit", "library_name": "P001-T1-DNA1-WGS1"}
     )
     expected = {
-        "cnv": "CNV_CALLING/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1_dnacopy.seg",
+        "cnv": "../cnv_calling/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1_dnacopy.seg",
         "normal": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz",
         "normal_tbi": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz.tbi",
         "tumor": "work/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.tumor.vcf.gz",

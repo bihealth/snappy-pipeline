@@ -31,7 +31,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_hla_loh_calling:
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
             path_hla_typing: HLA_TYPING
             path_somatic_purity_ploidy: ../somatic_purity_ploidy_estimate
 
@@ -81,10 +81,10 @@ def test_lohhla_step_part_get_input_files(somatic_hla_loh_calling_workflow):
     """Tests LohhlaStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "hla": "HLA_TYPING/output/optitype.P001-N1-DNA1-WGS1/out/optitype.P001-N1-DNA1-WGS1.txt",
     }
     actual = somatic_hla_loh_calling_workflow.get_input_files("lohhla", "run")(wildcards)

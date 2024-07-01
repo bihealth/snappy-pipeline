@@ -33,7 +33,7 @@ def minimal_config():
           ngs_data_qc:
             tools: ['picard']
             picard:
-              path_ngs_mapping: /NGS_MAPPING
+              path_ngs_mapping: ../ngs_mapping
               path_to_baits: /path/to/baits
               path_to_targets: /path/to/targets
               programs:
@@ -117,7 +117,7 @@ def test_picard_step_part_get_input_files(ngs_data_qc):
     expected = {
         "baits": "work/static_data/picard/out/baits.interval_list",
         "targets": "work/static_data/picard/out/targets.interval_list",
-        "bam": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     # Get actual and assert
     actual = ngs_data_qc.get_input_files("picard", "metrics")(wildcards)

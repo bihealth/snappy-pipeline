@@ -40,7 +40,7 @@ def minimal_config():
             - gatk3_hc
             gatk3_hc: {}
           variant_denovo_filtration:
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
             path_variant_annotation: VARIANT_ANNOTATION
 
         data_sets:
@@ -100,7 +100,7 @@ def test_filter_de_novo_from_variant_annotation_step_part_get_input_files(
 ):
     """Tests FilterDeNovosStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_name_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    ngs_mapping_name_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     bam_ped_dict = {
         "bai": ngs_mapping_name_out + ".bam.bai",
         "bam": ngs_mapping_name_out + ".bam",

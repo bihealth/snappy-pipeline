@@ -55,7 +55,7 @@ def minimal_config():
               path_par_intervals: /path/to/par.intervals
 
           helper_gcnv_model_wgs:
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
 
         data_sets:
           first_batch:
@@ -191,7 +191,7 @@ def test_gcnv_coverage_step_part_get_input_files(helper_gcnv_model_workflow):
         "work/gcnv_preprocess_intervals.default/out/"
         "gcnv_preprocess_intervals.default.interval_list"
     )
-    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
         "interval_list": interval_list_out,
         "bam": bam_out + ".bam",

@@ -34,7 +34,7 @@ def minimal_config():
               path_index: /path/to/star/index
           cbioportal_export:
             # Paths to snappy steps containing results to be uploaded
-            path_ngs_mapping: /NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
             path_gene_id_mappings: DUMMY
             expression_tool: star
             path_somatic_variant: /SOM_VAR_FILTRATION
@@ -619,7 +619,7 @@ def test_cbioportal_expression_step_part_get_input_files(cbioportal_export_workf
     # Define expected
     sample = "P00{i}-T{t}"
     base_name = (
-        "/NGS_MAPPING/output/star.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
+        "../ngs_mapping/output/star.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
         "star.P00{i}-T{t}-RNA1-mRNA_seq1.GeneCounts.tab"
     )
     expected = {sample.format(i=i, t=t): base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 2))}

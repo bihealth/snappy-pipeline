@@ -92,7 +92,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     def _get_path_bam(self, wildcards, donor):
         # TODO: This cannot be correct. For each set of donors it will return the same index bam.
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three time the
-        # TODO: same value: 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
+        # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
         ngs_mapping = self.parent.modules["ngs_mapping"]
         return ngs_mapping(

@@ -35,7 +35,7 @@ def minimal_config():
 
           repeat_expansion:
             # Path to the ngs_mapping step
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
 
         data_sets:
           first_batch:
@@ -118,7 +118,7 @@ def test_repeat_expansion_workflow_files(repeat_expansion_workflow):
 def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart._get_input_files_run()"""
     # Define expected
-    expected = ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
+    expected = ["../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = repeat_expansion_workflow.get_input_files("expansionhunter", "run")(wildcards)

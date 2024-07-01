@@ -94,14 +94,14 @@ def snakemake_obj(minimal_config):
     script_dir = "/work"
     input_dict = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     output_base_name = "work/bwa.varscan_joint.P001/log/bwa.varscan_joint.P001"
