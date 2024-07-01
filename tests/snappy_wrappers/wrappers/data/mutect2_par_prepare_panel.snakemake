@@ -108,7 +108,7 @@ rule all:
 
 rule chunk_0:
     input:
-        **{'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'normal_bai': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'vcf': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.0.d/out/tmp_0.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     log:
@@ -124,7 +124,7 @@ rule chunk_0:
 
 rule chunk_1:
     input:
-        **{'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'normal_bai': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'vcf': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.1.d/out/tmp_1.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     log:
@@ -140,7 +140,7 @@ rule chunk_1:
 
 rule chunk_2:
     input:
-        **{'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'normal_bai': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'vcf': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.2.d/out/tmp_2.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     log:
@@ -156,7 +156,7 @@ rule chunk_2:
 
 rule chunk_3:
     input:
-        **{'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'normal_bai': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'vcf': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.3.d/out/tmp_3.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     log:
@@ -172,7 +172,7 @@ rule chunk_3:
 
 rule chunk_4:
     input:
-        **{'normal_bai': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
+        **{'normal_bai': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai', 'normal_bam': '/ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'}
     output:
         **{'vcf': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz', 'vcf_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.md5', 'vcf_tbi': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi', 'vcf_tbi_md5': 'job_out.4.d/out/tmp_4.bwa.mutect2.P001-N1-DNA1-WGS1.vcf.gz.tbi.md5'}
     log:
@@ -201,7 +201,7 @@ rule merge_chunk_0:
         set -euo pipefail  # Unofficial Bash strict mode
 
         # Merge chunks output ------------------------------------------
-
+        
 # Concatenate raw calls vcfs & index result ----------------------
 bcftools concat \
     --allow-overlaps \
@@ -242,7 +242,7 @@ rule merge_chunk_1:
         set -euo pipefail  # Unofficial Bash strict mode
 
         # Merge chunks output ------------------------------------------
-
+        
 # Concatenate raw calls vcfs & index result ----------------------
 bcftools concat \
     --allow-overlaps \
@@ -285,7 +285,7 @@ rule merge_all:
         set -euo pipefail  # Unofficial Bash strict mode
 
         # Merge chunks output ------------------------------------------
-
+        
 # Concatenate raw calls vcfs & index result ----------------------
 bcftools concat \
     --allow-overlaps \
