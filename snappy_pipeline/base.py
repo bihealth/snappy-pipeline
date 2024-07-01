@@ -10,6 +10,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, AnyStr, Dict
 
+import pydantic
 import ruamel.yaml as ruamel_yaml
 
 from .models import SnappyModel, SnappyStepModel
@@ -59,6 +60,11 @@ def expand_ref(
     """
     lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent / ".snappy_pipeline")]
     resolver = RefResolver(lookup_paths=lookup_paths, dict_class=dict_class)
+    # In case of submodules, the dict_data can be a pydantic model
+    # To work with the ref_resolver, we convert it to a dict first, excluding None values
+    # which ref_resolver does not support
+    if isinstance(dict_data, pydantic.BaseModel):
+        dict_data = dict_data.model_dump(by_alias=True, exclude_none=True)
     # Perform resolution
     resolved = resolver.resolve("file://" + config_path, dict_data)
     # Collect paths of all included configuration files, important for
