@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/bihealth/snappy-pipeline/compare/v0.2.0...v0.2.1) (2024-07-01)
+
+
+### Bug Fixes
+
+* switch from setup.py to pyproject toml ([#526](https://github.com/bihealth/snappy-pipeline/issues/526)) ([91b1e38](https://github.com/bihealth/snappy-pipeline/commit/91b1e3840961ae26e88e13875ebb102c56ceebb9))
+
 ## [0.2.0](https://github.com/bihealth/snappy-pipeline/compare/v0.1.0...v0.2.0) (2024-06-28)
 
 
