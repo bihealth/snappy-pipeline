@@ -40,7 +40,6 @@ def minimal_config():
 
           somatic_targeted_seq_cnv_calling:
             path_ngs_mapping: ../ngs_mapping
-            path_variant_calling: SOMATIC_VARIANT_CALLING
             tools:
             - cnvetti_on_target
             - cnvkit
@@ -52,12 +51,11 @@ def minimal_config():
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
             purecn:
-              path_somatic_variants: SOMATIC_VARIANT_CALLING
+              path_somatic_variants: ../somatic_variant_calling
               path_container: /path/to/purecn/container
               path_intervals: /path/to/interval/list
               path_panel_of_normals: /path/to/purecn/pon
               path_mapping_bias: /path/to/mapping/bias
-              path_somatic_variants: /path/to/somatic/variants
             cnvetti_on_target:
               path_target_regions: /path/to/target/regions
             copywriter:
@@ -993,7 +991,7 @@ def test_purecn_step_part_get_input_files_run(somatic_targeted_seq_cnv_calling_w
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "tumor": "work/bwa.purecn.P001-T1-DNA1-WGS1/out/bwa.purecn.P001-T1-DNA1-WGS1_coverage_loess.txt.gz",
-        "vcf": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.full.vcf.gz",
+        "vcf": "../somatic_variant_calling/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.full.vcf.gz",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("purecn", "run")(wildcards)
     assert actual == expected
