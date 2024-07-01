@@ -30,6 +30,7 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
+from snakemake.api import Workflow
 from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
 
 from snappy_pipeline.base import (
@@ -648,7 +649,7 @@ class BaseStep:
 
     def __init__[C: SnappyStepModel](
         self,
-        workflow,
+        workflow: Workflow,
         config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
