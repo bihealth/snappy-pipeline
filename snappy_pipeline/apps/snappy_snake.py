@@ -14,7 +14,7 @@ from shutil import which
 
 import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main as snakemake_main
-from snakemake.settings import RerunTrigger
+from snakemake.settings.enums import RerunTrigger
 
 from .. import __version__
 from ..workflows import (
