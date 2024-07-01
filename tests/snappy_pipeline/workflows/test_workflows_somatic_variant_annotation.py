@@ -102,7 +102,7 @@ def somatic_variant_annotation_workflow(
 def test_jannovar_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests JannovarAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling//output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {
@@ -166,7 +166,7 @@ def test_jannovar_step_part_get_resource_usage(somatic_variant_annotation_workfl
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling//output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {
