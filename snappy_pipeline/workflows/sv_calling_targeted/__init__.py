@@ -8,13 +8,15 @@ import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
-from snappy_pipeline.utils import DictQuery, dictify, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import SvCallingTargeted as SvCallingTargetedConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -31,68 +33,7 @@ SV_CALLERS = ("gcnv", "delly2", "manta", "melt")
 GCNV_MIN_KIT_SAMPLES = 10
 
 #: Default configuration for the sv_calling_targeted step
-DEFAULT_CONFIG = r"""
-# Default configuration sv_calling_targeted
-step_config:
-  sv_calling_targeted:
-    # Path to the ngs_mapping step.
-    path_ngs_mapping: ../ngs_mapping
-
-    # List of used tools
-    tools: [gcnv, delly2, manta]  # REQUIRED
-
-    # The following allows to define one or more set of target intervals.  This is only used by gcnv.
-    #
-    # Example:
-    #
-    # - name: "Agilent SureSelect Human All Exon V6"
-    #   pattern: "Agilent SureSelect Human All Exon V6.*"
-    #   path: "path/to/targets.bed"
-    path_target_interval_list_mapping: []
-
-    gcnv:
-      # Path to interval block list with PAR region for contig calling.
-      path_par_intervals: null  # REQUIRED
-      # Path to gCNV model - will execute analysis in CASE MODE.
-      #
-      # Example:
-      #
-      # - library: "Agilent SureSelect Human All Exon V6"  # Kit name, match in path_target_interval_list_mapping
-      #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
-      #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
-      precomputed_model_paths: []
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-
-    delly2:
-      path_exclude_tsv: null  # optional
-      map_qual: 1
-      geno_qual: 5
-      qual_tra: 20
-      mad_cutoff: 9
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-
-    manta:
-      num_threads: 16
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-
-    melt:
-      me_refs_infix: 1KGP_Hg19
-      me_types:
-      - ALU
-      - LINE1
-      - SVA
-      jar_file: REQUIRED
-      genes_file: add_bed_files/1KGP_Hg19/hg19.genes.bed  # adjust, e.g., Hg38/Hg38.genes.bed
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-"""
+DEFAULT_CONFIG = SvCallingTargetedConfigModel.default_config_yaml_string()
 
 
 class GcnvTargetedStepPart(RunGcnvStepPart):
@@ -119,7 +60,8 @@ class SvCallingTargetedWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SvCallingTargetedConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Build mapping from NGS library name to kit
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
@@ -134,22 +76,20 @@ class SvCallingTargetedWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Build dictionary with sample count per library kit
         _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = DictQuery(self.w_config).get("step_config/sv_calling_targeted/gcnv")
-        if not config["path_target_interval_list_mapping"]:
+        config = self.w_config.step_config["sv_calling_targeted"].gcnv
+        if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():
                 if donor.dna_ngs_library:
                     yield donor.dna_ngs_library.name, "default"
         # Build mapping
-        regexes = {
-            item["pattern"]: item["name"] for item in config["path_target_interval_list_mapping"]
-        }
+        regexes = {item.pattern: item.name for item in config.path_target_interval_list_mapping}
         result = {}
         for donor in self.all_donors():
             if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
@@ -216,10 +156,3 @@ class SvCallingTargetedWorkflow(BaseStep):
             if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
         ]
         return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            config_keys=("step_config", "sv_calling_targeted", "path_ngs_mapping"),
-            msg="Path to NGS mapping not configured but required for targeted seq. CNV calling",
-        )

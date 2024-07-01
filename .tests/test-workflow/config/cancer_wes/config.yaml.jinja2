@@ -1,0 +1,62 @@
+static_data_config:
+  reference:
+    path: {{ params["reference"] }}
+
+step_config:
+  ngs_mapping:
+    tools:
+      dna: [bwa]    # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
+    bwa:
+      path_index: {{ params["bwa_index"] }}
+      mask_duplicates: false
+      memory_bam_sort: 2G
+      num_threads_bam_sort: 2
+      num_threads_bam_view: 2
+      num_threads_align: 2
+    ngs_chew_fingerprint:
+      enabled: false
+    target_coverage_report:
+      path_target_interval_list_mapping:
+      - name: MedExome_hg19_empirical_targets
+        pattern: MedExome
+        path: ../resources/Exome-MedExome.chr12.bed
+
+
+  somatic_variant_calling:
+    path_ngs_mapping: ../ngs_mapping
+    tools: [mutect2]
+    mutect2:
+      extra_arguments: []
+      window_length: 300000000
+      keep_tmpdir: onerror
+      job_mult_time: 5
+
+
+  somatic_variant_annotation:
+    path_somatic_variant_calling: ../somatic_variant_calling  # REQUIRED
+    tools: ["vep"]
+    vep:
+      cache_dir: {{ params["vep_cache"] }}
+      assembly: GRCh37
+
+
+  somatic_variant_filtration:
+    path_somatic_variant: ../somatic_variant_annotation
+    path_ngs_mapping: ../ngs_mapping
+    filtration_schema: list
+    filter_list:
+    - dkfz: {}
+    - bcftools:
+        exclude: FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025
+
+
+
+data_sets:
+  trbc:
+    file: samplesheet.tsv
+    search_patterns:
+    - {left: '*.R1.fastq.gz', right: '*.R2.fastq.gz'}
+    search_paths:
+    - ../raw
+    type: matched_cancer
+    naming_scheme: only_secondary_id

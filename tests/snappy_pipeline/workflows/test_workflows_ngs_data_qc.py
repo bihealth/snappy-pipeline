@@ -28,6 +28,8 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: [bwa]
+            bwa:
+              path_index: /path/to/bwa/index.fasta.amb
           ngs_data_qc:
             tools: ['picard']
             picard:
@@ -70,6 +72,7 @@ def ngs_data_qc(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_data_qc", aligner_indices_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Construct the workflow object
     return NgsDataQcWorkflow(
         dummy_workflow,
@@ -171,7 +174,7 @@ def test_picard_step_part_get_resource_usage(ngs_data_qc):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_data_qc.get_resource("picard", "metrics", resource)
+        actual = ngs_data_qc.get_resource("picard", "metrics", resource)()
         assert actual == expected, msg_error
 
 

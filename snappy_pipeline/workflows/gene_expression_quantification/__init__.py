@@ -65,6 +65,8 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
+
 # Extensions
 EXTENSIONS = {
     "featurecounts": {
@@ -112,30 +114,7 @@ EXTENSIONS = {
     "salmon": {"transcript_sf": ".transcript.sf", "transcript_sf_md5": ".transcript.sf.md5"},
 }
 
-DEFAULT_CONFIG = r"""
-step_config:
-  gene_expression_quantification:
-    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: [strandedness, featurecounts, duplication, dupradar, rnaseqc, stats, salmon]  # REQUIRED
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    strand: -1 # Use 0, 1 or 2 to force unstranded, forward or reverse strand
-    featurecounts:
-      path_annotation_gtf: REQUIRED  # REQUIRED
-    strandedness:
-      # needs column 6 with strand info, e.g. CCDS/15/GRCh37/CCDS.bed
-      path_exon_bed: REQUIRED  # REQUIRED
-      threshold: 0.85
-    rnaseqc:
-      rnaseqc_path_annotation_gtf: REQUIRED # REQUIRED
-    dupradar:
-      dupradar_path_annotation_gtf: REQUIRED  # REQUIRED
-      num_threads: 8
-    salmon:
-      path_transcript_to_gene: REQUIRED  # REQUIRED
-      path_index: REQUIRED # REQUIRED
-      salmon_params: " --gcBias --validateMappings"
-      num_threads: 16
-""".lstrip()
+DEFAULT_CONFIG = GeneExpressionQuantificationConfigModel.default_config_yaml_string()
 
 
 class SalmonStepPart(BaseStepPart):
@@ -153,8 +132,8 @@ class SalmonStepPart(BaseStepPart):
         self.base_path_out = "work/salmon.{{library_name}}/out/salmon.{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
         if (
-            self.config["salmon"]["path_transcript_to_gene"] is not None
-            and self.config["salmon"]["path_transcript_to_gene"] != ""
+            self.config.salmon.path_transcript_to_gene is not None
+            and self.config.salmon.path_transcript_to_gene != ""
         ):
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
@@ -162,7 +141,7 @@ class SalmonStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @classmethod
@@ -220,13 +199,13 @@ class SalmonStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -308,7 +287,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -338,7 +317,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -370,7 +349,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -394,7 +373,7 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -418,7 +397,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -442,7 +421,7 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -480,7 +459,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=GeneExpressionQuantificationConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -497,7 +477,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     def get_strandedness_file(self, action):
         _ = action
@@ -514,16 +494,16 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config["step_config"]["gene_expression_quantification"]["salmon"][
-            "path_transcript_to_gene"
-        ]:
+        if self.w_config.step_config[
+            "gene_expression_quantification"
+        ].salmon.path_transcript_to_gene:
             salmon_exts["gene_sf"] = ".gene.sf"
             salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling
         all_fns = []
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for ngs_library in sheet.all_ngs_libraries:
                     extraction_type = ngs_library.test_sample.extra_infos.get(
@@ -546,7 +526,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             fns = expand(
                                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["rna"],
+                                mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
                                 # tool=set(self.config['tools']),
                                 tool=tool,
                                 ext=EXTENSIONS[tool].values(),
@@ -554,45 +534,3 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             all_fns.extend(fns)
 
         return all_fns
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gene expression quantification",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "featurecounts",
-                "path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for featurecounts",
-        )
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "strandedness", "path_exon_bed"),
-            "Path to bed file with exon regions required for RSeQC",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "rnaseqc",
-                "rnaseqc_path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for RNA-SeQC",
-        )
-        self.ensure_w_config(
-            (
-                "step_config",
-                "gene_expression_quantification",
-                "dupradar",
-                "dupradar_path_annotation_gtf",
-            ),
-            "Path to gtf file with annotations required for dupradar",
-        )
-        self.ensure_w_config(
-            ("step_config", "gene_expression_quantification", "salmon", "path_index"),
-            "Path to directory containing salmon index files",
-        )

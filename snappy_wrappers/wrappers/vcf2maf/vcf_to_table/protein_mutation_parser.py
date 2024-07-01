@@ -167,28 +167,14 @@ short_to_long = {
 
 @functools.lru_cache
 def _build_protein_pattern():
-    prefix = "^(([A-z0-9_\.\(\)-]+):)?p\.\(?"  # noqa: W605
-    postfix = "\)?$"  # noqa: W605
+    prefix = r"^(([A-z0-9_\.\(\)-]+):)?p\.\(?"
+    postfix = r"\)?$"
 
     aa = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + ")"
-    aaTer = (
-        "("
-        + "|".join(aa_codes_short)
-        + "|"
-        + "|".join(aa_codes_long)
-        + "|\*|Ter"  # noqa: W605
-        + ")"
-    )
-    aaAll = (
-        "("
-        + "|".join(aa_codes_short)
-        + "|"
-        + "|".join(aa_codes_long)
-        + "|\*|Ter|=|\?"  # noqa: W605
-        + ")"
-    )
+    aaTer = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + r"|\*|Ter" + ")"
+    aaAll = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + r"|\*|Ter|=|\?" + ")"
     nb = "([0-9]+)"
-    nb_unknown = "([0-9]+|\?)"  # noqa: W605
+    nb_unknown = r"([0-9]+|\?)"
 
     interval = aa + nb + "_" + aa + nb
     one_or_interval = aa + nb + "(_" + aa + nb + ")?"
@@ -202,17 +188,17 @@ def _build_protein_pattern():
 
     delins = one_or_interval + "delins" + "(" + aa + "*)" + aaTer
 
-    frameshift = aaTer + nb + aa + "fs" + "(Ter|\*)" + nb_unknown  # noqa: W605
+    frameshift = aaTer + nb + aa + "fs" + r"(Ter|\*)" + nb_unknown
 
-    extensionN = "(Met|M)1" + "ext(-[0-9]+|\?)"  # noqa: W605
-    extensionC = "(Ter|\*)" + nb + aa + "ext" + "(Ter|\*)" + nb_unknown  # noqa: W605
+    extensionN = "(Met|M)1" + r"ext(-[0-9]+|\?)"
+    extensionC = r"(Ter|\*)" + nb + aa + "ext" + r"(Ter|\*)" + nb_unknown
 
     pattern = (
         prefix
         + "("
         + "|".join(
             [
-                "(0\??|=|\?)",  # noqa: W605
+                r"(0\??|=|\?)",
                 substitution,  # 4: ref, 5: position, 6: alt
                 duplication,  # 7: start, 8: start pos, 10: end, 11: end pos
                 deletion,  # 12: start, 13: start pos, 15: end, 16: end pos
@@ -232,18 +218,11 @@ def _build_protein_pattern():
 
 @functools.lru_cache
 def _build_silent_dinucleotide():
-    prefix = "^(([A-z0-9_\.\(\)-]+):)?p\.\(?"  # noqa: W605
-    postfix = "\)?$"  # noqa: W605
+    prefix = r"^(([A-z0-9_\.\(\)-]+):)?p\.\(?"
+    postfix = r"\)?$"
 
     aa = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + ")"
-    aaTer = (
-        "("
-        + "|".join(aa_codes_short)
-        + "|"
-        + "|".join(aa_codes_long)
-        + "|\*|Ter"  # noqa: W605
-        + ")"
-    )
+    aaTer = "(" + "|".join(aa_codes_short) + "|" + "|".join(aa_codes_long) + r"|\*|Ter" + ")"
     nb = "([0-9]+)"
 
     return re.compile(prefix + aa + aaTer + "*" + nb + "=" + postfix)

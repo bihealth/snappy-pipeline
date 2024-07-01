@@ -1,12 +1,10 @@
 channels:
-- conda-forge
-- bioconda
-- r
+  - conda-forge
+  - bioconda
 dependencies:
-- bcftools ==1.12
-- htslib ==1.12
-- jannovar-cli ==0.34
-- snakemake-minimal
-- ruamel
-- ruamel.yaml
-
+  - bcftools==1.12
+  - htslib==1.12
+  - jannovar-cli==0.34
+  - snakemake-minimal==8.9.0
+  - ruamel==1.0
+  - ruamel.yaml==0.18.6

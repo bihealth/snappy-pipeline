@@ -9,9 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
-from .common import (
-    get_expected_output_bcf_files_dict,
-)
+from .common import get_expected_output_bcf_files_dict
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -35,27 +33,25 @@ def minimal_config():
             tools:
               dna:
               - bwa
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           sv_calling_wgs:
-            path_ngs_mapping: NGS_MAPPING
-            variant_calling_tool: gatk3_ug
             tools:
               dna:
               - delly2
               - gcnv
               - melt
+            delly2: {}
             gcnv:
+              # path_par_intervals: /path/to/par.intervals
+              # path_uniquely_mapable_bed: /path/to/uniquely_mapable.bed
               precomputed_model_paths:
                 - library: "default"
                   contig_ploidy: /path/to/ploidy-model
                   model_pattern: "/data/model_*"
             melt:
-              path_genes_bed: /path/to/genes.bed
-              path_me_refs: /path/to/me/refs
+              jar_file: /path/to/melt.jar
 
         data_sets:
           first_batch:
@@ -78,10 +74,12 @@ def sv_calling_wgs_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SvCallingWgsWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
@@ -282,14 +280,14 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     for action in high_resource_actions:
 #         for resource, expected in high_res_expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)()
 #             assert actual == expected, msg_error
 
 #     # Evaluate - all other actions
 #     for action in default_actions:
 #         for resource, expected in default_expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("gcnv", action, resource)()
 #             assert actual == expected, msg_error
 
 
@@ -789,7 +787,7 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     for action in all_actions:
 #         for resource, expected in expected_dict.items():
 #             msg_error = f"Assertion error for resource '{resource}' for action '{action}'."
-#             actual = sv_calling_wgs_workflow.get_resource("melt", action, resource)
+#             actual = sv_calling_wgs_workflow.get_resource("melt", action, resource)()
 #             assert actual == expected, msg_error
 
 

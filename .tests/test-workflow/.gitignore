@@ -1,0 +1,8 @@
+**/.snappy_path_cache
+**/.*.lock
+**/output
+**/work
+logs
+snappy-pipeline
+pipelines/*/.snappy_pipeline/config.yaml
+**/__pycache__

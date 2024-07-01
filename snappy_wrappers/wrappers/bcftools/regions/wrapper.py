@@ -1,30 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools mpileup"""
+"""Wrapper for running bcftools filter over regions defined by a bed file"""
 
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
-if "path_bed" in config:
-    bed = config.get("path_bed", "")
-elif "bcftools" in config and "path_bed" in config["bcftools"]:
-    bed = config["bcftools"].get("path_bed", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_nb = int(snakemake.wildcards["filter_nb"]) - 1
-    bed = config["filter_list"][filter_nb]["regions"].get("path_bed", "")
-else:
-    bed = ""
-assert bed, "No bed file defining the regions to be filtered"
-
-if "filter_name" in config:
-    filter_name = config.get("filter_name", "")
-elif "bcftools" in config and "filter_name" in config["bcftools"]:
-    filter_name = config["bcftools"].get("filter_name", "")
-elif "filter_nb" in snakemake.wildcards.keys():
-    filter_name = "bcftools_{}".format(int(snakemake.wildcards["filter_nb"]))
-else:
-    filter_name = "+"
+params = dict(snakemake.params)["args"]
+filter_name = params["filter_name"]
+bed = f'^{params["include"]}' if "include" in params else params["exclude"]
 
 # Actually run the script.
 shell(
@@ -42,7 +23,7 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 bcftools filter --soft-filter {filter_name} --mode + \
-    --mask-file "^{bed}" \
+    --mask-file "{bed}" \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}
 tabix {snakemake.output.vcf}

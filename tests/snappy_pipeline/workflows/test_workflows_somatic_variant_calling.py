@@ -34,21 +34,31 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           somatic_variant_calling:
-            path_ngs_mapping: NGS_MAPPING
             tools:
-            - mutect
-            - scalpel
-            - mutect2
-            scalpel:
-              path_target_regions: /path/to/target/regions.bed
+              - mutect
+              - mutect2
+              - scalpel
+              - strelka2
+              - bcftools_joint
+              - platypus_joint
+              - gatk_hc_joint
+              - gatk_ug_joint
+              - varscan_joint
+            mutect: {}
             mutect2:
               common_variants: /path/to/common_variants.vcf
+            scalpel:
+              path_target_regions: /path/to/target/regions.bed
+            strelka2: {}
+            bcftools_joint: {}
+            platypus_joint: {}
+            gatk_hc_joint: {}
+            gatk_ug_joint: {}
+            varscan_joint: {}
 
         data_sets:
           first_batch:
@@ -95,11 +105,13 @@ def somatic_variant_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticVariantCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return SomaticVariantCallingWorkflow(
@@ -167,7 +179,7 @@ def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -429,7 +441,7 @@ def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -440,7 +452,7 @@ def test_mutect2_step_part_get_resource_usage_filter(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "filter", resource)
+        actual = somatic_variant_calling_workflow.get_resource("mutect2", "filter", resource)()
         assert actual == expected, msg_error
 
 
@@ -451,7 +463,9 @@ def test_mutect2_step_part_get_resource_usage_contamination(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "contamination", resource)
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "contamination", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -462,7 +476,9 @@ def test_mutect2_step_part_get_resource_usage_pileup_normal(somatic_variant_call
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_normal", resource)
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "pileup_normal", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -473,7 +489,9 @@ def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calli
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect2", "pileup_tumor", resource)
+        actual = somatic_variant_calling_workflow.get_resource(
+            "mutect2", "pileup_tumor", resource
+        )()
         assert actual == expected, msg_error
 
 
@@ -532,7 +550,7 @@ def test_scalpel_step_part_get_resource_usage(somatic_variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -597,7 +615,7 @@ def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -661,7 +679,7 @@ def test_bcftools_joint_step_part_get_resource_usage(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -725,7 +743,7 @@ def test_varscan_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -789,7 +807,7 @@ def test_platypus_joint_step_part_get_resource_usage(somatic_variant_calling_wor
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -853,7 +871,7 @@ def test_gatk_hc_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -917,7 +935,7 @@ def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)
+        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -926,64 +944,102 @@ def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_work
 
 def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
     """Test simple functionality of the workflow"""
-    # Perform the tests
-    #
+
+    matched_callers = {
+        "mutect",
+        "mutect2",
+        "scalpel",
+        "strelka2",
+    }
+    joint_callers = {
+        "bcftools_joint",
+        "gatk_hc_joint",
+        "gatk_ug_joint",
+        "platypus_joint",
+        "varscan_joint",
+    }
+    callers = matched_callers | joint_callers
+    expected = {"link_out"} | callers
     # Check created sub steps
-    expected = ["link_out", "mutect", "scalpel"]
-    assert set(expected).issubset(list(sorted(somatic_variant_calling_workflow.sub_steps.keys())))
+    assert expected == set(somatic_variant_calling_workflow.sub_steps.keys())
     # Check result file construction
-    tpl = (
+    mappers = ("bwa",)
+    matched_tpl = (
         "output/{mapper}.{var_caller}.P00{i}-T{t}-DNA1-WGS1/out/"
         "{mapper}.{var_caller}.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
+    output_exts = (
+        "vcf.gz",
+        "vcf.gz.md5",
+        "vcf.gz.tbi",
+        "vcf.gz.tbi.md5",
+        "full.vcf.gz",
+        "full.vcf.gz.md5",
+        "full.vcf.gz.tbi",
+        "full.vcf.gz.tbi.md5",
+    )
     expected = [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
+        matched_tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in (
-            "vcf.gz",
-            "vcf.gz.md5",
-            "vcf.gz.tbi",
-            "vcf.gz.tbi.md5",
-            "full.vcf.gz",
-            "full.vcf.gz.md5",
-            "full.vcf.gz.tbi",
-            "full.vcf.gz.tbi.md5",
-        )
-        for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel", "mutect2")
+        for ext in output_exts
+        for mapper in mappers
+        for var_caller in matched_callers
     ]
     # add special cases
     expected += [
-        tpl.format(mapper=mapper, var_caller="mutect", i=i, t=t, ext=ext)
+        matched_tpl.format(mapper=mapper, var_caller="mutect", i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("txt", "txt.md5", "wig", "wig.md5")
-        for mapper in ("bwa",)
+        for mapper in mappers
     ]
     expected += [
-        tpl.format(mapper=mapper, var_caller="scalpel", i=i, t=t, ext=ext)
+        matched_tpl.format(mapper=mapper, var_caller="scalpel", i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("tar.gz", "tar.gz.md5")
-        for mapper in ("bwa",)
+        for mapper in mappers
     ]
     # add log files
-    tpl = (
+    matched_tpl = (
         "output/{mapper}.{var_caller}.P00{i}-T{t}-DNA1-WGS1/log/"
         "{mapper}.{var_caller}.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
+    meta_exts = (
+        "conda_info.txt",
+        "conda_list.txt",
+        "log",
+        "conda_info.txt.md5",
+        "conda_list.txt.md5",
+        "log.md5",
+    )
     expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
+        matched_tpl.format(mapper=mapper, var_caller=var_caller, i=i, t=t, ext=ext)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in (
-            "conda_info.txt",
-            "conda_list.txt",
-            "log",
-            "conda_info.txt.md5",
-            "conda_list.txt.md5",
-            "log.md5",
-        )
+        for ext in meta_exts
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel", "mutect2")
+        for var_caller in matched_callers
     ]
+
+    output_exts = (
+        "vcf.gz",
+        "vcf.gz.md5",
+        "vcf.gz.tbi",
+        "vcf.gz.tbi.md5",
+    )
+
+    joint_tpl = "output/{mapper}.{var_caller}.P00{donor}/out/{mapper}.{var_caller}.P00{donor}.{ext}"
+    expected += [
+        joint_tpl.format(mapper=mapper, var_caller=var_caller, donor=donor, ext=ext)
+        for donor in (1, 2)
+        for ext in output_exts
+        for mapper in ("bwa",)
+        for var_caller in joint_callers
+    ]
+
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_calling_workflow.get_result_files()))
+
+    # TODO properly model strelka2 output files, skipping for now
+    expected = [s for s in expected if "strelka2" not in s]
+    actual = [s for s in actual if "strelka2" not in s]
+
     assert expected == actual

@@ -32,23 +32,22 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           sv_calling_targeted:
-            path_ngs_mapping: NGS_MAPPING
             tools:
               - delly2
               - manta
               - gcnv
+            delly2: {}  # use defaults
+            manta: {}   # use defaults
             gcnv:
+              # path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
                   path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
-                  path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
               precomputed_model_paths:
                 - library: "Agilent SureSelect Human All Exon V6"
                   contig_ploidy: /path/to/ploidy-model
@@ -102,6 +101,7 @@ def sv_calling_targeted_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """
@@ -111,6 +111,7 @@ def sv_calling_targeted_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run",
         germline_sheet_fake_fs2_gcnv_model,
@@ -140,6 +141,7 @@ def sv_calling_targeted_workflow_large_cohort(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """
@@ -148,6 +150,7 @@ def sv_calling_targeted_workflow_large_cohort(
     """
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
@@ -167,12 +170,14 @@ def sv_calling_targeted_workflow_large_cohort_background(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SvCallingTargetedWorkflow object pre-configured with germline sheet -
     large trio cohort as background."""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
@@ -194,6 +199,7 @@ def test_validate_request(
     work_dir,
     config_paths,
     germline_sheet_fake_fs2_gcnv_model,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Tests SvCallingTargetedWorkflow.validate_request()"""
@@ -201,6 +207,7 @@ def test_validate_request(
     patch_module_fs(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2_gcnv_model, mocker
     )
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run",
         germline_sheet_fake_fs2_gcnv_model,
@@ -379,14 +386,14 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
     for action in high_resource_actions:
         for resource, expected in high_res_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)()
             assert actual == expected, msg_error
 
     # Evaluate - all other actions
     for action in default_actions:
         for resource, expected in default_expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)
+            actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)()
             assert actual == expected, msg_error
 
 
@@ -408,37 +415,6 @@ def test_gcnv_get_params(sv_calling_targeted_workflow):
         else:
             with pytest.raises(UnsupportedActionException):
                 sv_calling_targeted_workflow.get_params("gcnv", action)
-
-
-def test_gcnv_validate_precomputed_model_paths_config(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart.validate_model_requirements()"""
-    # Initialise input
-    valid_dict = {
-        "library": "library",
-        "contig_ploidy": "/path/to/ploidy-model",
-        "model_pattern": "/path/to/model_*",
-    }
-    typo_dict = {
-        "library_n": "library",
-        "contig_ploidy": "/path/to/ploidy-model",
-        "model_pattern": "/path/to/model_*",
-    }
-    missing_key_dict = {"model_pattern": "/path/to/model_*"}
-
-    # Sanity check
-    sv_calling_targeted_workflow.substep_getattr("gcnv", "validate_precomputed_model_paths_config")(
-        config=[valid_dict]
-    )
-    # Test key typo
-    with pytest.raises(InvalidConfiguration):
-        sv_calling_targeted_workflow.substep_getattr(
-            "gcnv", "validate_precomputed_model_paths_config"
-        )(config=[valid_dict, typo_dict])
-    # Test key missing
-    with pytest.raises(InvalidConfiguration):
-        sv_calling_targeted_workflow.substep_getattr(
-            "gcnv", "validate_precomputed_model_paths_config"
-        )(config=[valid_dict, missing_key_dict])
 
 
 def test_gcnv_validate_ploidy_model_directory(

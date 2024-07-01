@@ -268,9 +268,10 @@ from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDictItemsGenerator,
     SnakemakeListItemsGenerator,
 )
-from snappy_pipeline.workflows.abstract.exceptions import InvalidConfigurationException
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import VariantCalling as VariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -290,65 +291,7 @@ VARIANT_CALLERS = (
 )
 
 #: Default configuration for the variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_calling
-step_config:
-  variant_calling:
-    # Common configuration
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
-    # Report generation
-    baf_file_generation:
-      enabled: true
-      min_dp: 10  # minimal DP of variant, must be >=1
-    bcftools_stats:
-      enabled: true
-    jannovar_stats:
-      enabled: true
-      path_ser: REQUIRED  # REQUIRED
-    bcftools_roh:
-      enabled: true
-      path_targets: null  # REQUIRED; optional
-      path_af_file: null  # REQUIRED
-      ignore_homref: false
-      skip_indels: false
-      rec_rate: 1e-8
-
-    # Variant calling tools and their configuration
-    #
-    # Common configuration
-    tools: ['gatk4_hc_gvcf']  # REQUIRED
-    ignore_chroms:
-    - '^NC_007605$' # herpes virus
-    - '^hs37d5$'    # GRCh37 decoy
-    - '^chrEBV$'    # Eppstein-Barr Virus
-    - '_decoy$'     # decoy contig
-    - '^HLA-'       # HLA genes
-
-    # Variant caller specific configuration
-    bcftools_call:
-      max_depth: 250
-      max_indel_depth: 250
-      window_length: 10000000
-      num_threads: 16
-    gatk3_hc:
-      num_threads: 16
-      window_length: 10000000
-      allow_seq_dict_incompatibility: false
-    gatk3_ug:
-      num_threads: 16
-      window_length: 10000000
-      allow_seq_dict_incompatibility: false
-      downsample_to_coverage: 250
-    gatk4_hc_joint:
-      window_length: 10000000
-      num_threads: 16
-      allow_seq_dict_incompatibility: false
-    gatk4_hc_gvcf:
-      window_length: 10000000
-      num_threads: 16
-      allow_seq_dict_incompatibility: false
-"""
+DEFAULT_CONFIG = VariantCallingConfigModel.default_config_yaml_string()
 
 
 class GetResultFilesMixin:
@@ -375,7 +318,7 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                        "mapper": self.w_config.step_config["ngs_mapping"].tools.dna,
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
@@ -391,7 +334,7 @@ class GetResultFilesMixin:
                     )
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.config["tools"]}
+        return {"var_caller": self.parent.config.tools}
 
     @dictify
     def _get_index_dna_ngs_libraries(
@@ -526,7 +469,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
     #: Step name
     name = "bcftools_call"
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
@@ -539,16 +482,16 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
 
     def check_config(self):
-        if self.__class__.name not in self.config["tools"]:
+        if self.__class__.name not in self.config.tools:
             return  # caller not enabled, skip  # pragma: no cover
         self.parent.ensure_w_config(
             ("static_data_config", "dbsnp", "path"),
             "dbSNP not configured but required for {}".format(self.__class__.name),
         )
 
-    def get_resource_usage(self, action) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name]["num_threads"]
+        num_threads = self.config[self.name].num_threads
         mem_per_thread = 5.5
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
@@ -742,7 +685,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
             ],
         )
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -802,7 +745,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
             ],
         )
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -865,7 +808,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
             ],
         )
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -927,7 +870,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             ],
         )
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
@@ -954,7 +897,8 @@ class VariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=VariantCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -972,28 +916,20 @@ class VariantCallingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             yield from self.sub_steps[tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
-            if self.w_config["step_config"]["variant_calling"][name]["enabled"]:
+            name_config = self.config.get(name)
+            if name_config and name_config.enabled:
                 yield from self.sub_steps[name].get_result_files()
 
     def check_config(self):
         # Checks for static data
         self.ensure_w_config(
-            ("step_config", "variant_calling", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for variant calling",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["variant_calling"]["tools"])
-        invalid = list(sorted(selected - set(VARIANT_CALLERS)))
-        if invalid:
-            raise InvalidConfigurationException(f"Invalid variant callers selected: {invalid}")

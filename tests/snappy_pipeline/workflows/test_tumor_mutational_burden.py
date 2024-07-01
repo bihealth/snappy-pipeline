@@ -34,8 +34,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -43,22 +41,27 @@ def minimal_config():
             tools:
             - mutect2
             - scalpel
+            mutect2: {}
             scalpel:
               path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_annotation:
+            path_somatic_variant_calling: ../somatic_variant_calling
             tools: ["vep", "jannovar"]
             jannovar:
               path_jannovar_ser: /path/to/jannover.ser
+              flag_off_target: False
+              dbnsfp: {}
             vep:
-              path_dir_cache: /path/to/dir/cache
+              cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
-            filters:
+            filtration_schema: sets
+            filter_sets:
               dkfz_only: ~
-              dkfz_and_ebfilter: ~
-              dkfz_and_oxog: ~
-              dkfz_and_ebfilter_and_oxog: ~
+              dkfz_and_ebfilter: {}
+              dkfz_and_oxog: {}
+              dkfz_and_ebfilter_and_oxog: {}
             exon_lists: {}
 
           tumor_mutational_burden:
@@ -90,11 +93,13 @@ def tumor_mutational_burden_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return TumorMutationalBurdenCalculationWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return TumorMutationalBurdenCalculationWorkflow(
@@ -152,7 +157,7 @@ def test_tumor_mutational_step_part_get_resource_usage(tumor_mutational_burden_w
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = tumor_mutational_burden_workflow.get_resource("tmb_gathering", "run", resource)
+        actual = tumor_mutational_burden_workflow.get_resource("tmb_gathering", "run", resource)()
         assert actual == expected, msg_error
 
 

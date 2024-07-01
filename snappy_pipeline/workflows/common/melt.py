@@ -202,7 +202,7 @@ class MeltStepPart(
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
         vcfs = []
-        for me_type in self.config["melt"]["me_types"]:
+        for me_type in self.config.melt.me_types:
             infix = f"{wildcards.mapper}.melt_make_vcf.{wildcards.library_name}.{me_type}"
             vcfs.append(f"work/{infix}/out/{infix}.final_comp.vcf.gz")
         yield "vcf", vcfs

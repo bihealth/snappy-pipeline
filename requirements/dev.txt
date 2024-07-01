@@ -1,7 +1,0 @@
--r test.txt
-
-# iPython is nice
-ipython
-
-# Prettier CLI for py.test
-pytest-sugar

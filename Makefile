@@ -4,42 +4,42 @@ default: help
 .PHONY: help
 help:
 	@echo help      -- display this help
-	@echo rufffmt   -- apply ruff code formatter
-	@echo black     -- apply black code formatter
+	@echo fmt       -- apply code formatter
 	@echo snakefmt  -- apply snakefmt code formatter
 	@echo srcfmt    -- apply black and snakefmt formatters
 	@echo lint      -- run linters
 	@echo test      -- run tests through pytest
+	@echo check     -- run code checker
 
-.PHONY: rufffmt
-rufffmt:
+.PHONY: fmt
+fmt:
 	ruff format .
-
-.PHONY: black
-black:
-	black -l 100 .
-
 
 .PHONY: snakefmt
 snakefmt:
 	snakefmt -l 100 . --include '(\.smk$$|\.rules$$|^Snakefile)'
 
 .PHONY: srcfmt
-srcfmt: black rufffmt snakefmt
+srcfmt: fmt snakefmt
 
 .PHONY: lint
-lint: lint-ruff lint-snakefmt
+lint: check lint-fmt lint-snakefmt
 
-.PHONY: lint-ruff
-lint-ruff:
+.PHONY: check
+check:
 	ruff check .
+
+.PHONY: lint-fmt
+lint-fmt:
+	ruff format --check .
 
 .PHONY: lint-snakefmt
 lint-snakefmt:
 	snakefmt -l 100 . --include '(\.smk$$|\.rules$$|^Snakefile)' --check
 
+
 test:
-	py.test
+	pytest
 
 coverage:
 	coverage report

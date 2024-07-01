@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.variant_export_external import VariantExportExternalWorkflow
+from snappy_pipeline.workflows.variant_export_external import (
+    VariantExportExternalWorkflow,
+)
 
 
 # Configuration ===============================================================
@@ -98,7 +100,7 @@ rule variant_export_external_write_pedigree_run:
 
 # Convert gVCF to VCF | Merge VCFs  ------------------------------------------------
 
-if config["step_config"]["variant_export_external"]["gvcf_option"]:
+if wf.w_config.step_config["variant_export_external"].gvcf_option:
 
     rule variant_export_external_gvcf_to_vcf:
         input:

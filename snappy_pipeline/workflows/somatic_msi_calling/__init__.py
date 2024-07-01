@@ -5,6 +5,11 @@ This step allows for the detection of microsatellite instability for cancer samp
 whole genomes, exomes or large panels).  MANTIS starts from the aligned reads
 (thus off ``ngs_mapping``) and generates a result file per tumor/normal pair.
 
+As MANTIS is not maintained anymore, the pipeline now supports only
+`MANTIS2 <https://github.com/nh13/MANTIS2>`_.
+The new version appears to be very silimar to the old one, both in terms of input & output files,
+and in terms of requirements.
+
 ==========
 Step Input
 ==========
@@ -19,13 +24,13 @@ Generally, the following links are generated to ``output/``.
 
 .. note:: Tool-Specific Output
 
-    As the only integrated tool is MANTIS at the moment, the output is very tailored to the result
+    As the only integrated tool is MANTIS2 at the moment, the output is very tailored to the result
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``mantis.{mapper}.{lib_name}-{lib_pk}/out/``
-    - ``mantis.{mapper}.{lib_name}-{lib_pk}.results.txt``
-    - ``mantis.{mapper}.{lib_name}-{lib_pk}.results.txt.status``
+- ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}/out/``
+    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt``
+    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt.status``
 
 =====================
 Default Configuration
@@ -39,14 +44,15 @@ The default configuration is as follows.
 Available Somatic Targeted CNV Caller
 =====================================
 
-- ``mantis``
+- ``mantis_msi2``
 
 """
 
+import os
 import sys
 from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -58,32 +64,45 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
+
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
+#: Extensions of files to create as main payload
+EXT_VALUES = (".results.txt", ".results.txt.status", ".results.txt.md5", ".results.txt.status.md5")
+
+#: Names of the files to create for the extension
+EXT_NAMES = ("result", "status", "result_md5", "status_md5")
+
+EXT_MATCHED = {
+    "mantis_msi2": {
+        "result": ".results.txt",
+        "status": ".results.txt.status",
+        "result_md5": ".results.txt.md5",
+        "status_md5": ".results.txt.status.md5",
+    },
+}
+
+#: Available somatic variant callers assuming matched samples.
+MSI_CALLERS_MATCHED = ("mantis_msi2",)
+
+
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_msi_calling
-step_config:
-  somatic_msi_calling:
-    tools: ['mantis']  # REQUIRED - available: 'mantis'
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    loci_bed: /fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed  # REQUIRED
-"""
+DEFAULT_CONFIG = SomaticMsiCallingConfigModel.default_config_yaml_string()
 
 
-class MantisStepPart(BaseStepPart):
-    """Perform somatic microsatellite instability with MANTIS"""
+class Mantis2StepPart(BaseStepPart):
+    """Perform somatic microsatellite instability with MANTIS_msi2"""
 
-    #: Step name
-    name = "mantis"
+    name = "mantis_msi2"
 
-    #: Class available actions
     actions = ("run",)
 
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/mantis.{{mapper}}.{{library_name}}/out/" "mantis.{{mapper}}.{{library_name}}{ext}"
+            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/out/"
+            "{{mapper}}.{msi_caller}.{{tumor_library}}{ext}"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -92,12 +111,10 @@ class MantisStepPart(BaseStepPart):
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
 
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.library_name]
-        return pair.normal_sample.dna_ngs_library.name
-
     def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shorcut to Snakemake sub workflow
@@ -110,7 +127,7 @@ class MantisStepPart(BaseStepPart):
                 )
             )
             tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
+                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
             ).format(**wildcards)
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
@@ -119,29 +136,40 @@ class MantisStepPart(BaseStepPart):
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
             }
 
-        assert action == "run", "Unsupported actions"
         return input_function
 
-    @dictify
+    def get_normal_lib_name(self, wildcards):
+        """Return name of normal (non-cancer) library"""
+        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
+        return pair.normal_sample.dna_ngs_library.name
+
     def get_output_files(self, action):
-        assert action == "run", "Unsupported actions"
-        exts = {"result": "results.txt", "status": "results.txt.status"}
-        for key, ext in exts.items():
-            yield (
-                key,
-                (
-                    "work/mantis.{{mapper}}.{{library_name}}/out/"
-                    "mantis.{{mapper}}.{{library_name}}_{sfx}"
-                ).format(sfx=ext),
-            )
+        # Validate action
+        self._validate_action(action)
+        return dict(
+            zip(EXT_NAMES, expand(self.base_path_out, msi_caller=[self.name], ext=EXT_VALUES))
+        )
 
-    @staticmethod
-    def get_log_file(action):
-        """Return path to log file for the given action"""
-        _ = action
-        return "work/mantis.{mapper}.{library_name}/log/snakemake.mantis_run.log"
+    @dictify
+    def _get_log_file(self, action):
+        """Return dict of log files."""
+        # Validate action
+        self._validate_action(action)
 
-    def get_resource_usage(self, action):
+        prefix = (
+            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/log/"
+            "{{mapper}}.{msi_caller}.{{tumor_library}}"
+        ).format(msi_caller=self.__class__.name)
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -153,7 +181,7 @@ class MantisStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=3,
-            time="08:00:00",  # 2 hours
+            time="08:00:00",  # 8 hours
             memory=f"{30 * 1024 * 3}M",
         )
 
@@ -167,9 +195,13 @@ class SomaticMsiCallingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
+    sheet_shortcut_kwargs = {
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+    }
+
     @classmethod
     def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
+        """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
@@ -179,17 +211,45 @@ class SomaticMsiCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticMsiCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((MantisStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the somatic targeted sequencing CNV calling step"""
-        tool_actions = {"mantis": ("run",)}
+        """Return list of result files for the MSI calling workflow"""
+        name_pattern = "{mapper}.{msi_caller}.{tumor_library.name}"
+        for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                msi_caller=msi_caller,
+                ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
+            )
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                msi_caller=msi_caller,
+                ext=(
+                    ".log",
+                    ".log.md5",
+                    ".conda_info.txt",
+                    ".conda_info.txt.md5",
+                    ".conda_list.txt",
+                    ".conda_list.txt.md5",
+                ),
+            )
+
+    def _yield_result_files_matched(self, tpl, **kwargs):
+        """Build output paths from path template and extension list.
+
+        This function returns the results from the matched msi callers such as
+        mantis.
+        """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (
@@ -202,29 +262,13 @@ class SomaticMsiCallingWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config["tools"]:
-                    for action in tool_actions[tool]:
-                        try:
-                            tpls = self.sub_steps[tool].get_output_files(action).values()
-                        except AttributeError:
-                            tpls = self.sub_steps[tool].get_output_files(action)
-                        for tpl in tpls:
-                            filenames = expand(
-                                tpl,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
-                                library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
-                            )
-                            for f in filenames:
-                                if ".tmp." not in f:
-                                    yield f.replace("work/", "output/")
+                yield from expand(
+                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                )
 
     def check_config(self):
         """Check that the necessary globalc onfiguration is present"""
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
-        )
-        self.ensure_w_config(
-            ("step_config", "somatic_msi_calling", "loci_bed"),
-            "Path to bed file with microsatellite loci needed",
         )

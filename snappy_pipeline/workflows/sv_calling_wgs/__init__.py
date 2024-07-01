@@ -27,6 +27,8 @@ from snappy_pipeline.workflows.common.sv_calling import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
 
+from .model import SvCallingWgs as SvCallingWgsConfigModel
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Available (short) DNA WGS SV callers
@@ -36,79 +38,7 @@ DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel", "melt", "gcnv")
 LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
 
 #: Default configuration for the sv_calling_wgs step
-DEFAULT_CONFIG = r"""
-# Default configuration
-step_config:
-  sv_calling_wgs:
-    tools:
-      dna: [delly2] # Required if short-read mapper used; otherwise, leave empty. Example: 'delly2'.
-      dna_long: []  # Required if long-read mapper used (PacBio/Oxford Nanopore); otherwise, leave empty. Example: 'sniffles'.
-
-    path_ngs_mapping: ../ngs_mapping    # REQUIRED
-
-    # Short-read SV calling tool configuration
-    delly2:
-      path_exclude_tsv: null  # optional
-      map_qual: 1
-      geno_qual: 5
-      qual_tra: 20
-      mad_cutoff: 9
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-    manta:
-      num_threads: 16
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-    popdel:
-      window_size: 10000000
-      max_sv_size: 20000  # == padding
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-    gcnv:
-      # Path to interval block list with PAR region for contig calling.
-      path_par_intervals: null  # REQUIRED
-      # Path to gCNV model - will execute analysis in CASE MODE.
-      #
-      # Example of precomputed model:
-      # - library: "Agilent SureSelect Human All Exon V6"  # Library name
-      #   contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
-      #   model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
-      # Path to BED file with uniquely mappable regions.
-      path_uniquely_mapable_bed: null  # REQUIRED
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-    melt:
-      me_refs_infix: 1KGP_Hg19
-      me_types:
-      - ALU
-      - LINE1
-      - SVA
-      jar_file: REQUIRED
-      genes_file: add_bed_files/1KGP_Hg19/hg19.genes.bed  # adjust, e.g., Hg38/Hg38.genes.bed
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-
-    # Long-read SV calling tool configuration
-    sniffles2:
-      tandem_repeats: /fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed  # REQUIRED
-      # Skip processing of the following libraries.  If the library is in
-      # family/pedigree then all of the family/pedigree will be skipped.
-      skip_libraries: []
-
-    # Common configuration
-    ignore_chroms:
-    - NC_007605  # herpes virus
-    - hs37d5     # GRCh37 decoy
-    - chrEBV     # Eppstein-Barr Virus
-    - '*_decoy'  # decoy contig
-    - 'HLA-*'    # HLA genes
-    - 'chrUn_*'  # unplaced contigs
-"""
+DEFAULT_CONFIG = SvCallingWgsConfigModel.default_config_yaml_string()
 
 
 class GcnvWgsStepPart(RunGcnvStepPart):
@@ -216,8 +146,8 @@ class PopDelStepPart(
 
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
-        window_size = self.config["popdel"]["window_size"]
-        padding = self.config["popdel"]["max_sv_size"]
+        window_size = self.config.popdel.window_size
+        padding = self.config.popdel.max_sv_size
         vcfs = []
         with open(self._get_fai_path(), "rt") as fai_file:
             for r in yield_regions(
@@ -234,10 +164,10 @@ class PopDelStepPart(
         yield "vcf", vcfs
 
     def _get_fai_path(self):
-        return self.w_config["static_data_config"]["reference"]["path"] + ".fai"
+        return self.w_config.static_data_config.reference.path + ".fai"
 
     def _get_ignore_chroms(self):
-        return self.config["ignore_chroms"]
+        return self.config.ignore_chroms
 
     @dictify
     def _get_output_files_concat_calls(self):
@@ -350,7 +280,8 @@ class SvCallingWgsWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SvCallingWgsConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -365,7 +296,7 @@ class SvCallingWgsWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def all_donors(self, include_background=True):
@@ -389,23 +320,6 @@ class SvCallingWgsWorkflow(BaseStep):
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
         self.ensure_w_config(
-            ("step_config", "sv_calling_wgs", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for variant calling",
-        )
-        self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant calling",
         )
-        # Check that only valid tools are selected
-        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna"])
-        invalid = selected - set(DNA_WGS_SV_CALLERS)
-        if invalid:
-            raise Exception(
-                "Invalid short-read WGS SV caller selected: {}".format(list(sorted(invalid)))
-            )
-        selected = set(self.w_config["step_config"]["sv_calling_wgs"]["tools"]["dna_long"])
-        invalid = selected - set(LONG_DNA_WGS_SV_CALLERS)
-        if invalid:
-            raise Exception(
-                "Invalid long-read WGS SV caller selected: {}".format(list(sorted(invalid)))
-            )

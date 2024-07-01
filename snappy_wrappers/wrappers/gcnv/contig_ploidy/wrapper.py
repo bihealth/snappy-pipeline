@@ -26,7 +26,7 @@ ploidy_y = {MALE: 1, FEMALE: 0}
 paths_tsv = " ".join(snakemake.input.tsv)
 
 # Add interval block list for PAR regions if configured.
-par_intervals = snakemake.config["step_config"]["helper_gcnv_model_targeted"]["gcnv"].get(
+par_intervals = snakemake.config["step_config"][snakemake.params.step_key]["gcnv"].get(
     "path_par_intervals"
 )
 if par_intervals:
@@ -43,14 +43,24 @@ export MKL_NUM_THREADS={snakemake.threads}
 export OMP_NUM_THREADS={snakemake.threads}
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 
+# Get contig name style
+egrep "^@SQ\s+SN:chr[0-9XY]{{1,2}}\s+" {snakemake.input.interval_list} > /dev/null && true
+exit_status=$?
+if [[ $exit_status == 0 ]]; then
+    STYLE="chr"
+else
+    STYLE=""
+fi
+
+
 PRIORS=$TMPDIR/ploidy_priors.tsv
 echo -e "CONTIG_NAME\tPLOIDY_PRIOR_0\tPLOIDY_PRIOR_1\tPLOIDY_PRIOR_2\tPLOIDY_PRIOR_3" \
 > $PRIORS
 for i in {{1..22}}; do
-    echo -e "$i\t0\t0.01\t0.98\t0.01" >> $PRIORS
+    echo -e "$STYLE$i\t0\t0.01\t0.98\t0.01" >> $PRIORS
 done
-echo -e "X\t0.01\t0.49\t0.49\t0.01" >> $PRIORS
-echo -e "Y\t0.495\t0.495\t0.01\t0" >> $PRIORS
+echo -e "${{STYLE}}X\t0.01\t0.49\t0.49\t0.01" >> $PRIORS
+echo -e "${{STYLE}}Y\t0.495\t0.495\t0.01\t0" >> $PRIORS
 
 set -x
 

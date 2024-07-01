@@ -7,7 +7,7 @@ import pytest
 import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
-from snappy_pipeline.workflows.sv_calling_wgs import WgsSvCallingWorkflow
+from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
 from .common import get_expected_output_bcf_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
@@ -32,8 +32,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -69,7 +67,7 @@ def sv_calling_wgs_workflow(
     mocker,
     fai_file_content,
 ):
-    """Return WgsSvCallingWorkflow object pre-configured with germline sheet"""
+    """Return SvCallingWgsWorkflow object pre-configured with germline sheet"""
     # Add Fasta file
     # Create FASTA files
     germline_sheet_fake_fs.fs.create_file(
@@ -83,7 +81,7 @@ def sv_calling_wgs_workflow(
     # can obtain paths from the function as if we really a NGSMappingPipelineStep here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
-    return WgsSvCallingWorkflow(
+    return SvCallingWgsWorkflow(
         dummy_workflow,
         minimal_config,
         config_lookup_paths,
@@ -783,7 +781,7 @@ def test_sniffles2_step_part_get_resource_usage_snf_to_vcf(sv_calling_wgs_workfl
         assert actual == expected, msg_error
 
 
-# Tests for WgsSvCallingWorkflow -----------------------------------------------------------
+# Tests for SvCallingWgsWorkflow -----------------------------------------------------------
 
 
 def test_sv_calling_wgs_workflow(sv_calling_wgs_workflow):

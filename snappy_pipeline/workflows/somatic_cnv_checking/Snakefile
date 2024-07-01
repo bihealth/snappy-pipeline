@@ -133,7 +133,7 @@ rule somatic_cnv_checking_pileup_tumor:
 
 # Add CNV status at the locii -------------------------------------------------
 
-if config["step_config"]["somatic_cnv_checking"]["path_cnv_calling"]:
+if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
 
     rule somatic_cnv_checking_cnv_run:
         input:

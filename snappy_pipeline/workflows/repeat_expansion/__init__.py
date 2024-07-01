@@ -92,22 +92,14 @@ from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import 
     AnnotateExpansionHunter,
 )
 
+from .model import RepeatExpansion as RepeatExpansionConfigModel
+
 #: Extensions of files to create as main payload - JSON.
 EXT_JSON = (".json", ".json.md5")
 #: Extensions of files to create as main payload - VCF.
 EXT_VCF = (".vcf", ".vcf.md5")
 #: Default configuration for the repeat_expansion step.
-DEFAULT_CONFIG = r"""
-# Default configuration repeat_expansion
-step_config:
-  repeat_expansion:
-    # Repeat expansions definitions - used in ExpansionHunter call
-    repeat_catalog: REQUIRED
-    # Repeat expansions annotations, e.g., normality range - custom file
-    repeat_annotation: REQUIRED
-    # Path to the ngs_mapping step
-    path_ngs_mapping: ../ngs_mapping
-"""
+DEFAULT_CONFIG = RepeatExpansionConfigModel.default_config_yaml_string()
 
 
 class ExpansionHunterStepPart(BaseStepPart):
@@ -304,7 +296,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         # Annotate
         AnnotateExpansionHunter(
             eh_json=input_path,
-            annotation_json=self.config["repeat_annotation"],
+            annotation_json=self.config.repeat_annotation,
             output_path=output_path,
         ).run()
 
@@ -325,12 +317,13 @@ class RepeatExpansionWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=RepeatExpansionConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):
@@ -356,7 +349,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             tool=tools,
             ext=EXT_JSON,
         )
@@ -364,7 +357,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             tool=tools,
             ext=EXT_VCF,
         )
@@ -377,11 +370,6 @@ class RepeatExpansionWorkflow(BaseStep):
 
     def check_config(self):
         """Check that the necessary configuration is available for the step"""
-        # Requires path to ngs_mapping output, i.e., the BAM files
-        self.ensure_w_config(
-            config_keys=("step_config", "repeat_expansion", "path_ngs_mapping"),
-            msg="Path to NGS mapping not configured but required for repeat expansion analysis.",
-        )
         # Requires path to reference genome FASTA
         self.ensure_w_config(
             config_keys=("static_data_config", "reference", "path"),

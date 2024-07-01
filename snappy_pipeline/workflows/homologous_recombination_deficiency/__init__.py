@@ -74,20 +74,12 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
 
+from .model import HomologousRecombinationDeficiency as HomologousRecombinationDeficiencyConfigModel
+
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Default configuration for the homologous recombination deficiency step
-DEFAULT_CONFIG = r"""
-# Default configuration homologous_recombination_deficiency
-step_config:
-  homologous_recombination_deficiency:
-    tools: ['scarHRD']  # REQUIRED - available: 'scarHRD'
-    path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
-    scarHRD:
-      genome_name: "grch37"  # Must be either "grch37", "grch38" or "mouse"
-      chr_prefix: False
-      length: 50             # Wiggle track for GC reference file
-"""
+DEFAULT_CONFIG = HomologousRecombinationDeficiencyConfigModel.default_config_yaml_string()
 
 
 class ScarHRDStepPart(BaseStepPart):
@@ -154,7 +146,7 @@ class ScarHRDStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         if action == "run":
             return ResourceUsage(
@@ -163,7 +155,7 @@ class ScarHRDStepPart(BaseStepPart):
                 time="24:00:00",
             )
         else:
-            return super().get_resource_usage(action)
+            return super().get_resource_usage(action, **kwargs)
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):
@@ -187,13 +179,14 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticTargetedSeqCnvCallingWorkflow,),
+            config_model_class=HomologousRecombinationDeficiencyConfigModel,
+            previous_steps=(SomaticTargetedSeqCnvCallingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
         # Initialize sub-workflows
         self.register_module(
-            "somatic_targeted_seq_cnv_calling", self.config["path_cnv_calling"], "cnv_calling"
+            "somatic_targeted_seq_cnv_calling", self.config.path_cnv_calling, "cnv_calling"
         )
 
     @listify
@@ -212,7 +205,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config["tools"]:
+                for tool in self.config.tools:
                     for action in tool_actions[tool]:
                         try:
                             tpls = self.sub_steps[tool].get_output_files(action).values()
@@ -223,7 +216,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                                 caller=["sequenza"],
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
@@ -237,6 +230,4 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        assert (
-            "sequenza" in self.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
-        )
+        assert "sequenza" in self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools

@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.wgs_cnv_export_external import WgsCnvExportExternalWorkflow
+from snappy_pipeline.workflows.wgs_cnv_export_external import (
+    WgsCnvExportExternalWorkflow,
+)
 
 
 # Configuration ===============================================================

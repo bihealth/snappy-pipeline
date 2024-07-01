@@ -94,28 +94,14 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
+
 #: Extensions of files to create as main payload.
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 
 #: Default configuration for the targeted_seq_mei_calling step.
-DEFAULT_CONFIG = r"""
-# Default configuration
-step_config:
-  targeted_seq_mei_calling:
-    # Path to the ngs_mapping step
-    path_ngs_mapping: ../ngs_mapping
-
-    tools: [scramble]  # REQUIRED - available: 'scramble'
-
-    scramble:
-      blast_ref: null  # REQUIRED: path to FASTA reference with BLAST DB (`makeblastdb`)
-      mei_refs: null  # OPTIONAL: MEI reference file (FASTA), if none provided will use default.
-      n_cluster: 5  # OPTIONAL: minimum cluster size, depth of soft-clipped reads.
-      mei_score: 50  # OPTIONAL: minimum MEI alignment score.
-      indel_score: 80  # OPTIONAL: minimum INDEL alignment score.
-      mei_polya_frac: 0.75  # OPTIONAL: minimum fraction of clipped length for calling polyA tail.
-"""
+DEFAULT_CONFIG = TargetedSeqMeiCallingConfigModel.default_config_yaml_string()
 
 
 class ScrambleStepPart(BaseStepPart):
@@ -261,7 +247,7 @@ class ScrambleStepPart(BaseStepPart):
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
-        blast_ref_path = self.config["scramble"]["blast_ref"]
+        blast_ref_path = self.config.scramble.blast_ref
         try:
             if not os.path.isfile(blast_ref_path):
                 raise InvalidConfiguration(
@@ -272,15 +258,15 @@ class ScrambleStepPart(BaseStepPart):
             raise TypeError("Path to reference genome ('blast_ref') cannot be empty.") from e
         params = {
             "reference_genome": blast_ref_path,
-            "mei_refs": self.config["scramble"]["mei_refs"],
-            "n_cluster": self.config["scramble"]["n_cluster"],
-            "mei_score": self.config["scramble"]["mei_score"],
-            "indel_score": self.config["scramble"]["indel_score"],
-            "mei_polya_frac": self.config["scramble"]["mei_polya_frac"],
+            "mei_refs": self.config.scramble.mei_refs,
+            "n_cluster": self.config.scramble.n_cluster,
+            "mei_score": self.config.scramble.mei_score,
+            "indel_score": self.config.scramble.indel_score,
+            "mei_polya_frac": self.config.scramble.mei_polya_frac,
         }
         return params
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -315,12 +301,13 @@ class MeiWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=TargetedSeqMeiCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):
@@ -349,7 +336,7 @@ class MeiWorkflow(BaseStep):
         name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             tool=tools,
             ext=EXT_VALUES,
         )
@@ -359,14 +346,3 @@ class MeiWorkflow(BaseStep):
         for donor in self._all_donors(include_background=False):
             if donor.dna_ngs_library:  # ignores samples without DNA library
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        # Requires path to ngs_mapping output, i.e., the BAM files
-        self.ensure_w_config(
-            config_keys=("step_config", "targeted_seq_mei_calling", "path_ngs_mapping"),
-            msg=(
-                "Path to NGS mapping not configured but required for mobile "
-                "element insertion detection."
-            ),
-        )

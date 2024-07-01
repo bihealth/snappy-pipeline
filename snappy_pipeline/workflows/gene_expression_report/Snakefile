@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.gene_expression_report import GeneExpressionReportWorkflow
+from snappy_pipeline.workflows.gene_expression_report import (
+    GeneExpressionReportWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 

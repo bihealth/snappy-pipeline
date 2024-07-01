@@ -107,6 +107,8 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
+from .model import VariantDenovoFiltration as VariantDenovoFiltrationConfigModel
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
@@ -116,31 +118,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the variant_denovo_filtration step
-DEFAULT_CONFIG = r"""
-step_config:
-  variant_denovo_filtration:
-    # One of the following must be given!
-    path_variant_phasing: ''
-    path_variant_annotation: ''
-    path_variant_calling: ''
-    path_ngs_mapping: ../ngs_mapping
-    tools_ngs_mapping: null          # defaults to ngs_mapping tool
-    tools_variant_calling: null      # defaults to variant_annotation tool
-    info_key_reliable_regions: []    # optional INFO keys with reliable regions
-    info_key_unreliable_regions: []  # optional INFO keys with unreliable regions
-    params_besenbacher:              # parameters for Besenbacher quality filter
-      min_gq: 50
-      min_dp: 10
-      max_dp: 120
-      min_ab: 0.20
-      max_ab: 0.9
-      max_ad2: 1
-    bad_region_expressions: []
-    # e.g.,
-    # - 'UCSC_CRG_MAPABILITY36 == 1'
-    # - 'UCSC_SIMPLE_REPEAT == 1'
-    collect_msdn: True               # whether or not to collect MSDN (requires GATK HC+UG)
-"""
+DEFAULT_CONFIG = VariantDenovoFiltrationConfigModel.default_config_yaml_string()
 
 
 class FilterDeNovosBaseStepPart(BaseStepPart):
@@ -163,7 +141,7 @@ class FilterDeNovosBaseStepPart(BaseStepPart):
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
                         self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -244,7 +222,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
         return self.path_log
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -435,7 +413,7 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
                     elif not donor.mother or not donor.mother.dna_ngs_library:
                         continue
                     else:
-                        for caller in self.config["tools_variant_calling"]:
+                        for caller in self.config.tools_variant_calling:
                             yield tpl.format(
                                 mapper="{mapper}",
                                 caller=caller,
@@ -479,17 +457,18 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantDenovoFiltrationConfigModel,
+            previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if self.config["path_%s" % prev]:
+            if cfg := self.config.get(f"path_{prev}"):
                 self.previous_step = prev
-                self.register_module(prev, self.config["path_%s" % prev])
+                self.register_module(prev, cfg)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
@@ -508,14 +487,10 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             )
         )
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
@@ -525,22 +500,22 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         ext_values = list(itertools.chain(EXT_VALUES, (".summary.txt", ".summary.txt.md5")))
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=ext_values,
         )
         # Summarise counts
         yield from expand(
             "output/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary{ext}",
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=(".txt", ".txt.md5"),
         )
         # Collect MSDN statistics
-        if self.w_config["step_config"]["variant_denovo_filtration"]["collect_msdn"]:
+        if self.w_config.step_config["variant_denovo_filtration"].collect_msdn:
             yield from expand(
                 "output/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo{ext}",
-                mapper=self.config["tools_ngs_mapping"],
+                mapper=self.config.tools_ngs_mapping,
                 ext=(".txt", ".txt.md5"),
             )
 
@@ -571,8 +546,13 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                             yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
 
     def check_config(self):
-        """Check that the path to the variant annotation step is present."""
-        self.ensure_w_config(
-            ("step_config", "variant_denovo_filtration", "path_ngs_mapping"),
-            "Path to ngs_mapping not configured but required for variant_denovo_filtration",
-        )
+        if not self.config.tools_ngs_mapping:
+            self.ensure_w_config(
+                ("step_config", "ngs_mapping", "tools", "dna"),
+                "Either define tools_ngs_mapping or provide a configuration for ngs_mapping",
+            )
+        if not self.config.tools_variant_calling:
+            self.ensure_w_config(
+                ("step_config", "variant_calling", "tools"),
+                "Either define tools_variant_calling or provide a configuration for variant_calling",
+            )

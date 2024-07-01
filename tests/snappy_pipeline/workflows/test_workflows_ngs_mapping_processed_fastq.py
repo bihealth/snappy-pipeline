@@ -40,11 +40,14 @@ def minimal_config():
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
             bwa:
-              path_index: /path/to/bwa/index.fasta
+              path_index: /path/to/bwa/index.fasta.amb
             star:
               path_index: /path/to/star/index
-              path_features: /path/to/features.gtf
               transcriptome: true
+              out_filter_intron_motifs: ""
+              out_sam_strand_field: ""
+            minimap2:
+              mapping_threads: 16
             bam_collect_doc:
               enabled: true
 
@@ -175,15 +178,14 @@ def test_project_validation_cancer(ngs_mapping_workflow, cancer_sheet_tsv, minim
     minimal_config_dict = deepcopy(minimal_config)
     minimal_config_dict = dict(minimal_config_dict)
     minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+    config = ngs_mapping_workflow.config_model_class(**minimal_config_dict)
 
     # Create germline sample sheet
     cancer_sheet_io = io.StringIO(cancer_sheet_tsv)
     cancer_sheet = read_cancer_tsv_sheet(cancer_sheet_io)
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
-    out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[cancer_sheet]
-    )
+    out = ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[cancer_sheet])
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
 
@@ -250,7 +252,7 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("bwa", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -342,7 +344,7 @@ def test_star_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("star", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("star", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -431,7 +433,7 @@ def test_strandedness_step_part_infer_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("strandedness", "infer", resource)
+        actual = ngs_mapping_workflow.get_resource("strandedness", "infer", resource)()
         assert actual == expected, msg_error
 
 
@@ -499,7 +501,7 @@ def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -546,7 +548,7 @@ def test_external_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("external", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("external", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -616,7 +618,7 @@ def test_target_coverage_report_step_part_get_resource(ngs_mapping_workflow):
     for action in actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = ngs_mapping_workflow.get_resource("target_coverage_report", action, resource)
+            actual = ngs_mapping_workflow.get_resource("target_coverage_report", action, resource)()
             assert actual == expected, msg_error
 
 

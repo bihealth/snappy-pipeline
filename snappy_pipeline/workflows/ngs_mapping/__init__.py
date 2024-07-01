@@ -383,11 +383,6 @@ Target Coverage Report (.alfred.json.gz)
     [...]
 
 
-Genome-wide Coverage Count (.bed.gz)
-  If ``ngs_mapping/compute_coverage_bed`` to be set to ``true`` a report is generated
-  that gives the depth at each base of the genome. (note: currently this report only appears
-  in ``work/`` and is not yet linked out into the ``output/`` directory).
-
   (TODO: add file name rules and example)
 
 ::
@@ -441,7 +436,7 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import DictQuery, dictify, flatten, listify
+from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -452,6 +447,8 @@ from snappy_pipeline.workflows.abstract import (
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+from .model import NgsMapping as NgsMappingConfigModel
 
 # TODO: Need something smarter still for @RG
 
@@ -471,112 +468,7 @@ READ_MAPPERS_RNA = ("star",)
 READ_MAPPERS_DNA_LONG = ("minimap2",)
 
 #: Default configuration
-DEFAULT_CONFIG = r"""
-step_config:
-  ngs_mapping:
-    # Aligners to use for the different NGS library types
-    tools:
-      dna: []      # Required if DNA analysis; otherwise, leave empty. Example: 'bwa'.
-      rna: []      # Required if RNA analysis; otherwise, leave empty. Example: 'star'.
-      dna_long: [] # Required if long-read mapper used; otherwise, leave empty. Example: 'minimap2'.
-    path_link_in: ""   # OPTIONAL Override data set configuration search paths for FASTQ files
-    # Thresholds for targeted sequencing coverage QC.
-    target_coverage_report:
-      # Mapping from enrichment kit to target region BED file, for either computing per--target
-      # region coverage or selecting targeted exons.
-      #
-      # The following will match both the stock IDT library kit and the ones
-      # with spike-ins seen fromr Yale genomics.  The path above would be
-      # mapped to the name "default".
-      # - name: IDT_xGen_V1_0
-      #   pattern: "xGen Exome Research Panel V1\\.0*"
-      #   path: "path/to/targets.bed"
-      path_target_interval_list_mapping: []
-    # Depth of coverage collection, mainly useful for genomes.
-    bam_collect_doc:
-      enabled: false
-      window_length: 1000
-    # Compute fingerprints with ngs-chew
-    ngs_chew_fingerprint:
-      enabled: true
-    # Configuration for BWA
-    bwa:
-      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
-      num_threads_align: 16
-      num_threads_trimming: 8
-      num_threads_bam_view: 4
-      num_threads_bam_sort: 4
-      memory_bam_sort: 4G
-      trim_adapters: false
-      mask_duplicates: true
-      split_as_secondary: false  # -M flag
-      extra_flags: []            # [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode
-    # Configuration for BWA-MEM2
-    bwa_mem2:
-      path_index: REQUIRED # Required if listed in ngs_mapping.tools.dna; otherwise, can be removed.
-      bwa_mode: auto  # in ['auto', 'bwa-aln', 'bwa-mem']
-      num_threads_align: 16
-      num_threads_trimming: 8
-      num_threads_bam_view: 4
-      num_threads_bam_sort: 4
-      memory_bam_sort: 4G
-      trim_adapters: false
-      mask_duplicates: true
-      split_as_secondary: true  # -M flag
-      extra_flags: []           # [ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode
-    # Configuration for somatic ngs_calling (separate read groups, molecular barcodes & base quality recalibration)
-    somatic:
-      mapping_tool: REQUIRED  # Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config
-      barcode_tool: agent     # Only agent currently implemented
-      use_barcodes: false
-      recalibrate: true
-    bqsr:
-      common_variants: REQUIRED # Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)
-    agent:
-      prepare:
-        path: REQUIRED
-        lib_prep_type: REQUIRED # One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)
-        extra_args: []        # Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data
-      mark_duplicates:
-        path: REQUIRED
-        path_baits: REQUIRED
-        consensus_mode: REQUIRED # One of "SINGLE", "HYBRID", "DUPLEX"
-        input_filter_args: [] # Consider -mm 13 (min base qual) -mr 13 (min barcode base qual) -mq 30 (min map qual)
-        consensus_filter_args: []
-        extra_args: []        # Consider -d 1 (max nb barcode mismatch)
-    # Configuration for STAR
-    star:
-      path_index: REQUIRED # Required if listed in ngs_mapping.tools.rna; otherwise, can be removed.
-      num_threads_align: 16
-      num_threads_trimming: 8
-      num_threads_bam_view: 4
-      num_threads_bam_sort: 4
-      memory_bam_sort: 4G
-      genome_load: NoSharedMemory
-      raw_star_options: ''
-      align_intron_max: 1000000                # ENCODE option
-      align_intron_min: 20                     # ENCODE option
-      align_mates_gap_max: 1000000             # ENCODE option
-      align_sjdb_overhang_min: 1               # ENCODE option
-      align_sj_overhang_min: 8                 # ENCODE option
-      out_filter_mismatch_n_max: 999           # ENCODE option
-      out_filter_mismatch_n_over_l_max: 0.04   # ENCODE option
-      out_filter_multimap_n_max: 20            # ENCODE option
-      out_filter_type: BySJout                 # ENCODE option
-      out_filter_intron_motifs: None    # or for cufflinks: RemoveNoncanonical
-      out_sam_strand_field: None        # or for cufflinks: intronMotif
-      transcriptome: false              # true to output transcript coordinate bam for RSEM
-      trim_adapters: false
-      mask_duplicates: false
-      include_unmapped: true
-    strandedness:
-      path_exon_bed: REQUIRED   # Location of usually highly expressed genes. Known protein coding genes is a good choice
-      strand: -1                # -1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)
-      threshold: 0.85           # Minimum proportion of reads mapped to forward/reverse direction to call the protocol
-    # Configuration for Minimap2
-    minimap2:
-      mapping_threads: 16
-"""
+DEFAULT_CONFIG = NgsMappingConfigModel.default_config_yaml_string()
 
 
 class MappingGetResultFilesMixin:
@@ -596,7 +488,7 @@ class MappingGetResultFilesMixin:
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
-            return self.name not in self.config["tools"][library_tool_category]
+            return self.name not in self.config.tools.get(library_tool_category)
 
     @listify
     def get_result_files(self):
@@ -609,9 +501,8 @@ class MappingGetResultFilesMixin:
         a library.
         """
         # Skip if step part has a tool category and it is not enabled
-        if (
-            self.tool_category != "__any__"
-            and self.name not in self.config["tools"][self.tool_category]
+        if self.tool_category != "__any__" and self.name not in getattr(
+            self.config.tools, self.tool_category, []
         ):
             return
 
@@ -705,7 +596,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     def get_args(self, action):
@@ -798,7 +689,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         seen = []
@@ -820,7 +711,7 @@ class BwaStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -834,38 +725,12 @@ class BwaStepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_mb = int(4.5 * 1024 * self.config["bwa"]["num_threads_align"])
+        mem_mb = int(4.5 * 1024 * self.config.bwa.num_threads_align)
         return ResourceUsage(
-            threads=self.config["bwa"]["num_threads_align"],
+            threads=self.config.bwa.num_threads_align,
             time="3-00:00:00",  # 3 days
             memory=f"{mem_mb}M",
         )
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]["dna"]:
-            return  # BWA not run, don't check configuration  # pragma: no cover
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "bwa", "path_index"),
-            msg="Path to BWA index is required",
-        )
-
-        # Check that the path to the BWA index is valid.
-        for ext in (".amb", ".ann", ".bwt", ".pac", ".sa"):
-            expected_path = self.config["bwa"]["path_index"] + ext
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected BWA input path {expected_path} does not exist!".format(
-                    expected_path=expected_path
-                )
-                raise InvalidConfiguration(tpl)
 
 
 class BwaMem2StepPart(ReadMappingStepPart):
@@ -874,7 +739,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
     name = "bwa_mem2"
     tool_category = "dna"
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -885,37 +750,12 @@ class BwaMem2StepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_mb = int(4.5 * 1024 * self.config["bwa_mem2"]["num_threads_align"])
+        mem_mb = int(4.5 * 1024 * self.config.bwa_mem2.num_threads_align)
         return ResourceUsage(
-            threads=self.config["bwa_mem2"]["num_threads_align"],
+            threads=self.config.bwa_mem2.num_threads_align,
             time="3-00:00:00",  # 3 days
             memory=f"{mem_mb}M",
         )
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA-MEM2 are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]["dna"]:
-            return  # BWA-MEM2 not run, don't check configuration  # pragma: no cover
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "bwa_mem2", "path_index"),
-            msg="Path to BWA-MEM2 index is required",
-        )
-
-        # Check that the path to the BWA-MEM2 index is valid.
-        for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"):
-            expected_path = self.config["bwa_mem2"]["path_index"] + ext
-            if not os.path.exists(expected_path):  # pragma: no cover
-                raise InvalidConfiguration(
-                    f"Expected BWA-MEM2 input path {expected_path} does not exist!"
-                )
 
 
 class MBCsStepPart(ReadMappingStepPart):
@@ -924,10 +764,7 @@ class MBCsStepPart(ReadMappingStepPart):
     name = "mbcs"
     tool_category = "dna"
 
-    LIB_PREP_TYPES = ("halo", "hs", "xt", "v2", "qxt")
-    CONSENSUS_MODES = ("SINGLE", "HYBRID", "DUPLEX")
-
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -944,50 +781,6 @@ class MBCsStepPart(ReadMappingStepPart):
             memory="4G",
             partition="medium",
         )
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA-MEM2 are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]["dna"]:
-            return  # mbcs not run, don't check configuration  # pragma: no cover
-
-        # Check mapper
-        mapper = self.config["somatic"]["mapping_tool"]
-        assert mapper != "mbcs" and mapper in READ_MAPPERS_DNA, f'Unknown mapper "{mapper}"'
-        self.parent.sub_steps[mapper].check_config()
-
-        if self.config["somatic"]["use_barcodes"]:
-            assert self.config["somatic"]["barcode_tool"] == "agent"
-            # Check trimmer & creak paths
-            path = self.config["agent"]["prepare"]["path"]
-            if not os.path.exists(path):
-                raise InvalidConfiguration(
-                    f"Expected agent's trimmer input path {path} does not exist!"
-                )
-            path = self.config["agent"]["mark_duplicates"]["path"]
-            if not os.path.exists(path):
-                raise InvalidConfiguration(
-                    f"Expected agent's creak input path {path} does not exist!"
-                )
-
-            # Check mandatory options
-            option = self.config["agent"]["prepare"]["lib_prep_type"]
-            if option not in self.__class__.LIB_PREP_TYPES:
-                options = '", "'.join(self.__class__.LIB_PREP_TYPES)
-                raise InvalidConfiguration(
-                    f'Unkown library preparation type "{option}", valid options are "{options}"'
-                )
-            option = self.config["agent"]["mark_duplicates"]["consensus_mode"]
-            if option not in self.__class__.CONSENSUS_MODES:
-                options = '", "'.join(self.__class__.CONSENSUS_MODES)
-                raise InvalidConfiguration(
-                    f'Unkown consensus mode "{option}", valid options are "{options}"'
-                )
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -1007,34 +800,22 @@ class StarStepPart(ReadMappingStepPart):
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]["rna"]:
+        if self.__class__.name not in self.config.tools.rna:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "ngs_mapping", "star", "path_index"),
-            msg="Path to STAR index is required",
-        )
+        # Check required global configuration settings present
         self.parent.ensure_w_config(
             config_keys=("static_data_config", "reference"),
             msg="No reference genome FASTA file given",
         )
 
-        # Check validity of the STAR index
-        full_path = self.config["star"]["path_index"]
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(full_path, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR index file {expected_path} does not exist!".format(
-                    expected_path=expected_path
-                )
-                raise InvalidConfiguration(tpl)
-
     @dictify
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run_work()
+        if (cfg := self.config.get(self.name)) is None:
+            return output_files
+
         output_files["gene_counts"] = self.base_path_out.format(
             mapper=self.name, ext=".GeneCounts.tab"
         )
@@ -1043,7 +824,7 @@ class StarStepPart(ReadMappingStepPart):
             mapper=self.name, ext=".Junctions.tab"
         )
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
-        if self.config[self.name]["transcriptome"]:
+        if cfg.transcriptome:
             output_files["transcriptome"] = self.base_path_out.format(
                 mapper=self.name, ext=".toTranscriptome.bam"
             )
@@ -1070,7 +851,7 @@ class StarStepPart(ReadMappingStepPart):
                 ),
             )
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1084,9 +865,9 @@ class StarStepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_gb = int(3.5 * self.config["star"]["num_threads_align"])
+        mem_gb = int(3.5 * self.config.star.num_threads_align)
         return ResourceUsage(
-            threads=self.config["star"]["num_threads_align"],
+            threads=self.config.star.num_threads_align,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
@@ -1163,7 +944,7 @@ class StrandednessStepPart(BaseStepPart):
             )
 
     def get_result_files(self):
-        for mapper in self.config["tools"]["rna"]:
+        for mapper in self.config.tools.rna:
             tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
             tpl_strandedness = (
                 "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
@@ -1208,7 +989,7 @@ class Minimap2StepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna_long"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1222,9 +1003,9 @@ class Minimap2StepPart(ReadMappingStepPart):
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        mem_gb = int(3.5 * self.config["minimap2"]["mapping_threads"])
+        mem_gb = int(3.5 * self.config.minimap2.mapping_threads)
         return ResourceUsage(
-            threads=self.config["minimap2"]["mapping_threads"],
+            threads=self.config.minimap2.mapping_threads,
             time="2-00:00:00",  # 2 days
             memory=f"{mem_gb}G",
         )
@@ -1253,7 +1034,7 @@ class ExternalStepPart(ReadMappingStepPart):
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if "external" not in self.config["tools"]["dna"]:
+        if "external" not in self.config.tools.dna:
             return  # External not run, don't check configuration  # pragma: no cover
 
     def get_args(self, action):
@@ -1277,7 +1058,7 @@ class ExternalStepPart(ReadMappingStepPart):
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
             yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1380,16 +1161,16 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         library_name = wildcards.library_name
         path_targets_bed = ""
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config["target_coverage_report"]["path_target_interval_list_mapping"]:
-            if item["name"] == kit_name:
-                path_targets_bed = item["path"]
+        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
+            if item.name == kit_name:
+                path_targets_bed = item.path
                 break
 
         return {
             "path_targets_bed": path_targets_bed,
         }
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1420,9 +1201,9 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     actions = ("run",)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config["bam_collect_doc"][
-            "enabled"
-        ] or super().skip_result_files_for_library(library_name)
+        return not self.config.bam_collect_doc.enabled or super().skip_result_files_for_library(
+            library_name
+        )
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -1500,7 +1281,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1531,7 +1312,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         super().__init__(parent)
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config["ngs_chew_fingerprint"]["enabled"]
+        return not self.config.ngs_chew_fingerprint.enabled
 
     def get_input_files(self, action):
         """Return required input files"""
@@ -1590,7 +1371,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -1623,7 +1404,14 @@ class NgsMappingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=NgsMappingConfigModel,
+        )
         self.register_sub_step_classes(
             (
                 BwaStepPart,
@@ -1644,7 +1432,7 @@ class NgsMappingWorkflow(BaseStep):
         # Create shortcut from library to all extra infos.
         self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
         # Validate project
-        self.validate_project(config_dict=self.config, sample_sheets_list=self.shortcut_sheets)
+        self.validate_project(config=self.config, sample_sheets_list=self.shortcut_sheets)
 
     def _build_ngs_library_to_extra_infos(self):
         result = {}
@@ -1657,15 +1445,15 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = DictQuery(self.w_config).get("step_config/ngs_mapping/target_coverage_report")
+        cov_config = self.w_config.step_config["ngs_mapping"].target_coverage_report
         # Build mapping.
         default_kit_configured = False
         regexes = {}
-        for item in cov_config["path_target_interval_list_mapping"]:
-            if item["name"] == "__default__":
+        for item in cov_config.path_target_interval_list_mapping:
+            if item.name == "__default__":
                 default_kit_configured = True
             else:
-                regexes[item["pattern"]] = item["name"]
+                regexes[item.pattern] = item.name
         result = {}
         for donor in self._all_donors():
             for bio_sample in donor.bio_samples.values():
@@ -1698,15 +1486,15 @@ class NgsMappingWorkflow(BaseStep):
             if sub_step.name not in (LinkInStep.name,):
                 yield from sub_step.get_result_files()
 
-    def validate_project(self, config_dict, sample_sheets_list):
+    def validate_project(self, config, sample_sheets_list):
         """Validates project.
 
         Method compares sample information included in the sample sheet and the configuration. If
         sheet contains 'DNA' samples, a DNA mapper should be defined. Similarly, if it contains
         'RNA', a RNA mapper should be defined.
 
-        :param config_dict: Dictionary with configurations as found in the project's yaml file.
-        :type config_dict: dict
+        :param config: SnappyStepModel with configurations as found in the project's yaml file.
+        :type config: SnappyStepModel
 
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
@@ -1716,7 +1504,7 @@ class NgsMappingWorkflow(BaseStep):
         rna_bool_list = []
 
         # Get tools dictionary
-        tools_dict = config_dict["tools"]
+        tools = config.tools
 
         # Iterate over sheets
         for sheet in sample_sheets_list:
@@ -1730,14 +1518,14 @@ class NgsMappingWorkflow(BaseStep):
         rna_analysis = any(rna_bool_list)
 
         # Validate DNA project
-        dna_tool_list = tools_dict.get("dna", [])
+        dna_tool_list = tools.dna
         if dna_analysis and not dna_tool_list:
             raise InvalidConfiguration(
                 "Sample sheet contains DNA but configuration has no DNA "
                 "mapper defined in tool list."
             )
         # Validate RNA project
-        rna_tool_list = tools_dict.get("rna", [])
+        rna_tool_list = tools.rna
         if rna_analysis and not rna_tool_list:
             raise InvalidConfiguration(
                 "Sample sheet contains RNA but configuration has no RNA "

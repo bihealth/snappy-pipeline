@@ -1,12 +1,12 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-- ebfilter >=0.2.2
-- vcfpy
-- pysam
-- scipy
-- numpy
-- samtools
-- htslib
-- bcftools
+  - ebfilter==0.2.2
+  - vcfpy==0.13.8
+  - pysam==0.22.0
+  - scipy==1.12.0
+  - numpy==1.26.4
+  - samtools==1.19.2
+  - htslib==1.19.1
+  - bcftools==1.19

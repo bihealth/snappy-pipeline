@@ -501,7 +501,7 @@ rule sv_calling_wgs_gcnv_contig_ploidy:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
         args=wf.get_params("gcnv", "contig_ploidy"),
-        step_key="sv_calling_targeted",
+        step_key="sv_calling_wgs",
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 

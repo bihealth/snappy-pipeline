@@ -29,14 +29,13 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
 
           igv_session_generation:
             path_ngs_mapping: NGS_MAPPING
@@ -64,11 +63,13 @@ def igv_session_generation(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return VariantCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_calling", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.igv_session_generation", germline_sheet_fake_fs, mocker
@@ -135,7 +136,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_resource_usag
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = igv_session_generation.get_resource("write_igv_session_file", "run", resource)
+        actual = igv_session_generation.get_resource("write_igv_session_file", "run", resource)()
         assert actual == expected, msg_error
 
 

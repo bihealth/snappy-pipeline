@@ -11,9 +11,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from biomedsheets.io_tsv import read_germline_tsv_sheet
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
+from pydantic import ConfigDict
 from pyfakefs import fake_filesystem
-from ruamel.yaml.comments import CommentedMap
 
+from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.abstract import BaseStep
 
 
@@ -27,7 +28,7 @@ def mock_settings_env_vars():
 @pytest.fixture
 def dummy_config():
     """Return dummy configuration OrderedDicts"""
-    return CommentedMap([("data_sets", CommentedMap())])
+    return {"data_sets": {}, "step_config": {"dummy": {"key": "value"}}}
 
 
 @pytest.fixture
@@ -61,6 +62,11 @@ def config_paths():
     return []
 
 
+class DummyModel(SnappyStepModel):
+    model_config = ConfigDict(extra="allow")
+    key: str = "value"
+
+
 @pytest.fixture
 def dummy_generic_step(
     dummy_workflow, dummy_config, dummy_cluster_config, work_dir, config_lookup_paths
@@ -79,7 +85,12 @@ def dummy_generic_step(
             return "step_config:\n  dummy:\n    key: value"
 
     return DummyBaseStep(
-        dummy_workflow, dummy_config, dummy_cluster_config, config_lookup_paths, work_dir
+        dummy_workflow,
+        dummy_config,
+        dummy_cluster_config,
+        config_lookup_paths,
+        work_dir,
+        config_model_class=DummyModel,
     )
 
 
@@ -604,6 +615,7 @@ def cancer_sheet_tsv():
         P002\tT1\tY\tWGS\tP002_T1_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
         P002\tT2\tY\tWGS\tP002_T2_DNA1_WGS1\tAgilent SureSelect Human All Exon V6\tDNA
         P002\tT2\tY\tmRNA_seq\tP002_T2-RNA1_mRNA_seq1\tNone\tRNA
+        # P003\tT1\tY\tWGS\tP003_T1_DNA1_WGS1\tNone\tDNA
         """
     ).lstrip()
 
@@ -898,7 +910,16 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {
-        "bwa": (".fasta.amb", ".fasta.ann", ".fasta.bwt", ".fasta.pac", ".fasta.sa"),
+        "bwa": [
+            pre + ext
+            for ext in (".amb", ".ann", ".bwt", ".pac", ".sa", "")
+            for pre in (".fasta", ".fa")
+        ],
+        "bwa_mem2": [
+            pre + ext
+            for ext in (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac", "")
+            for pre in (".fasta", ".fa")
+        ],
         "star": ("/Genome", "/SA", "/SAindex"),
     }
     for aligner, suffixes in d.items():
@@ -907,15 +928,26 @@ def aligner_indices_fake_fs(fake_fs):
     return fake_fs
 
 
-def patch_module_fs(module_name, fake_fs, mocker):
+def patch_module_fs(module_name: str, fake_fs, mocker):
     """Helper function to mock out the file-system related things in the module with the given
     name using the given fake_fs and pytest-mock mocker
     """
-    mocker.patch(f"{module_name}.open", fake_fs.open, create=True)
-    try:
-        mocker.patch(f"{module_name}.os", fake_fs.os)
-    except AttributeError:
-        pass  # swallo, "os" not imported
+
+    # Because workflows have a .model module which potentially uses filesystem operations for
+    # validation, make sure to patch both the main module and the model module
+    modules = [module_name]
+    if module_name.startswith("snappy_pipeline.workflows.") and not module_name.endswith(".model"):
+        # TODO replace with more robust solution
+        if not module_name.endswith("abstract") and ".common." not in module_name:
+            modules.append(module_name + ".model")
+
+    for module_name in modules:
+        mocker.patch(f"{module_name}.open", fake_fs.open, create=True)
+        try:
+            mocker.patch(f"{module_name}.os", fake_fs.os)
+        except AttributeError:
+            pass  # swallo, "os" not imported
+
     mocker.patch("snappy_pipeline.find_file.InterProcessLock", fake_fs.inter_process_lock)
     mocker.patch("snappy_pipeline.find_file.open", fake_fs.open, create=True)
     mocker.patch("snappy_pipeline.find_file.os", fake_fs.os)

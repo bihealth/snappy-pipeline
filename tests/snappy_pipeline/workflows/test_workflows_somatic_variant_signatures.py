@@ -30,8 +30,15 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_filtration:
+            tools_somatic_variant_calling: ['mutect']
+            filter_list:
+              - dkfz: {}
+
           somatic_variant_signatures:
-            path_somatic_variant: SOMATIC_VARIANT_FILTRATION
+            path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            tools_somatic_variant_annotation: ['vep']
+            tools_somatic_variant_calling: ['mutect']
             is_filtered: True
 
         data_sets:
@@ -55,11 +62,13 @@ def somatic_variant_signatures_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticVariantSignaturesWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return SomaticVariantSignaturesWorkflow(
@@ -77,8 +86,8 @@ def somatic_variant_signatures_workflow(
 def test_tabulate_vcf_step_part_get_input_files(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_input_files()"""
     base_name = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
     )
     expected = {
         "vcf": base_name + ".vcf.gz",
@@ -92,8 +101,8 @@ def test_tabulate_vcf_step_part_get_output_files(somatic_variant_signatures_work
     """Tests TabulateVariantsStepPart.get_output_files()"""
     expected = {
         "tsv": (
-            "work/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tabulate_vcf.{tumor_library}.{filter}.{region}/out/"
-            "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tabulate_vcf.{tumor_library}.{filter}.{region}.tsv"
+            "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/out/"
+            "{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}.tsv"
         )
     }
     actual = somatic_variant_signatures_workflow.get_output_files("tabulate_vcf", "run")
@@ -102,7 +111,7 @@ def test_tabulate_vcf_step_part_get_output_files(somatic_variant_signatures_work
 
 def test_tabulate_vcf_step_part_get_log_file(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_log_file()"""
-    expected = "work/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tabulate_vcf.{tumor_library}.{filter}.{region}/log/snakemake.tabulate_vcf.log"
+    expected = "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/log/snakemake.tabulate_vcf.log"
     actual = somatic_variant_signatures_workflow.get_log_file("tabulate_vcf", "run")
     assert actual == expected
 
@@ -122,7 +131,7 @@ def test_tabulate_vcf_step_part_get_resource_usage(somatic_variant_signatures_wo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_signatures_workflow.get_resource("tabulate_vcf", "run", resource)
+        actual = somatic_variant_signatures_workflow.get_resource("tabulate_vcf", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -133,8 +142,8 @@ def test_deconstruct_sigs_step_part_get_input_files(somatic_variant_signatures_w
     """Tests DeconstructSigsStepPart.get_input_files()"""
     expected = {
         "tsv": (
-            "work/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tabulate_vcf.{tumor_library}.{filter}.{region}/out/"
-            "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tabulate_vcf.{tumor_library}.{filter}.{region}.tsv"
+            "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/out/"
+            "{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}.tsv"
         )
     }
     actual = somatic_variant_signatures_workflow.get_input_files("deconstruct_sigs", "run")
@@ -144,8 +153,8 @@ def test_deconstruct_sigs_step_part_get_input_files(somatic_variant_signatures_w
 def test_deconstruct_sigs_step_part_get_output_files(somatic_variant_signatures_workflow):
     """Tests DeconstructSigsStepPart.get_output_files()"""
     base_name_out = (
-        "work/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.deconstruct_sigs.{tumor_library}.{filter}.{region}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.deconstruct_sigs.{tumor_library}.{filter}.{region}"
+        "work/{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}"
     )
     expected = {
         "tsv": base_name_out + ".tsv",
@@ -158,7 +167,7 @@ def test_deconstruct_sigs_step_part_get_output_files(somatic_variant_signatures_
 def test_deconstruct_sigs_step_part_get_log_file(somatic_variant_signatures_workflow):
     """Tests DeconstructSigsStepPart.get_log_file()"""
     expected = (
-        "work/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.deconstruct_sigs.{tumor_library}.{filter}.{region}/log/"
+        "work/{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}/log/"
         "snakemake.deconstruct_sigs.log"
     )
     actual = somatic_variant_signatures_workflow.get_log_file("deconstruct_sigs", "run")
@@ -174,7 +183,7 @@ def test_deconstruct_sigs_step_part_get_resource_usage(somatic_variant_signature
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_variant_signatures_workflow.get_resource(
             "deconstruct_sigs", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -189,7 +198,7 @@ def test_somatic_variant_signatures_workflow(somatic_variant_signatures_workflow
     assert actual == expected
 
     # Check result file construction
-    name_pattern = "{mapper}.{caller}.{annotator}.dkfz_bias_filter.eb_filter.deconstruct_sigs.P00{i}-T{t}-DNA1-WGS1.{filt}.{region}"
+    name_pattern = "{mapper}.{caller}.{annotator}.filtered.deconstruct_sigs.P00{i}-T{t}-DNA1-WGS1"
     tpl = "output/" + name_pattern + "/out/" + name_pattern + ".tsv"
     expected = [
         tpl.format(
@@ -198,21 +207,11 @@ def test_somatic_variant_signatures_workflow(somatic_variant_signatures_workflow
             annotator=annotator,
             i=i,
             t=t,
-            filt=filt,
-            region=region,
         )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for mapper in ("bwa",)
-        for caller in ("mutect", "scalpel")
-        for annotator in ("vep", "jannovar")
-        for filt in (
-            "no_filter",
-            "dkfz_only",
-            "dkfz_and_ebfilter",
-            "dkfz_and_ebfilter_and_oxog",
-            "dkfz_and_oxog",
-        )
-        for region in ("genome_wide",)
+        for caller in ("mutect",)
+        for annotator in ("vep",)
     ]
     expected = set(expected)
     actual = set(somatic_variant_signatures_workflow.get_result_files())

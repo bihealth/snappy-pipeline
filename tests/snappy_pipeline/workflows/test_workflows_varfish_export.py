@@ -28,7 +28,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fa
             target_coverage_report:
@@ -40,11 +39,16 @@ def minimal_config():
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
           variant_annotation:
-            path_jannovar_ser: /path/to/jannovar.ser
+            tools:
+              - vep
+            vep: {}
           varfish_export:
-            path_variant_calling: VAR_CALLING
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
+            path_variant_calling: ../variant_calling
+            path_exon_bed: /path/to/exons.bed
+            path_mehari_db: /path/to/mehari.db
 
         data_sets:
           first_batch:
@@ -282,7 +286,7 @@ def test_mehari_step_part_get_resource_usage(varfish_export_workflow):
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = varfish_export_workflow.get_resource("mehari", action, resource)
+            actual = varfish_export_workflow.get_resource("mehari", action, resource)()
             assert actual == expected, msg_error
 
 

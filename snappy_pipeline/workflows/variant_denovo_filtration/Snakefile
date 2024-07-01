@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
+from snappy_pipeline.workflows.variant_denovo_filtration import (
+    VariantDeNovoFiltrationWorkflow,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 

@@ -25,6 +25,9 @@ exec 2> >(tee -a "{snakemake.log.log}")
 set -x
 # -----------------------------------------------------------------------------
 
+# Ensure locale is set to C, such that the printf %f calls work correctly
+export LC_ALL=C
+
 # Write out information about conda installation
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}

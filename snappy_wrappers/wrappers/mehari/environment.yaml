@@ -2,10 +2,10 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bcftools >=1.9
-  - htslib >=1.9
-  - samtools >=1.9
-  - mehari ==0.21.1
-  - jq
-  - vcfpy
-  - pysam
+  - bcftools==1.19
+  - htslib==1.19.1
+  - samtools==1.19.2
+  - mehari==0.25.5
+  - jq==1.7.1
+  - vcfpy==0.13.8
+  - pysam==0.22.0

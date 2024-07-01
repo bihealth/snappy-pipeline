@@ -32,18 +32,15 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           panel_of_normals:
-              path_ngs_mapping: NGS_MAPPING
-              tools: ['cnvkit']
-              cnvkit:
-                  path_excluded_regions: ""
-                  path_target_regions: ""  # WGS mode
-                  path_normals_list: ""
+            path_ngs_mapping: NGS_MAPPING/
+            tools: ['cnvkit']
+            cnvkit:
+              path_target_regions: ""  # WGS mode
+              path_normals_list: ""
 
         data_sets:
           first_batch:
@@ -66,11 +63,13 @@ def panel_of_normals_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return PanelOfNormalsWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return PanelOfNormalsWorkflow(
@@ -318,31 +317,31 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     # Evaluate action `target`
     for resource, expected in target_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'target'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "target", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `antitarget`
     for resource, expected in antitarget_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'antitarget'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "antitarget", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `coverage`
     for resource, expected in coverage_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'coverage'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "coverage", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `create_panel`
     for resource, expected in reference_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'create_panel'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "create_panel", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `report`
     for resource, expected in report_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'report'."
-        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)
+        actual = panel_of_normals_workflow.get_resource("cnvkit", "report", resource)()
         assert actual == expected, msg_error
 
 

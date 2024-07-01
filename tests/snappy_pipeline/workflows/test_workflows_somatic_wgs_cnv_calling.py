@@ -37,14 +37,12 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           somatic_wgs_cnv_calling:
+            path_somatic_variant_calling: ../somatic_variant_calling
             somatic_variant_calling_tool: mutect
-            path_ngs_mapping: NGS_MAPPING
             tools:
             - canvas
             - cnvetti
@@ -53,13 +51,18 @@ def minimal_config():
             tools_ngs_mapping:
                 - bwa
             canvas:
-              reference: /path/to/reference.fasta
-              filter_bed: /path/to/filter.bed
-              genome_folder: /path/to/genome/folder
+              path_reference: /path/to/reference.fasta
+              path_filter_bed: /path/to/filter.bed
+              path_genome_folder: /path/to/genome/folder
             cnvkit:
               path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+            cnvetti: {}
+            control_freec:
+              path_chrlenfile: /path/to/chrlenfile
+              path_mappability: /path/to/mappability
+              convert: {}
 
 
         data_sets:
@@ -83,11 +86,13 @@ def somatic_wgs_cnv_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticWgsCnvCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
 
     # Construct the workflow object
     return SomaticWgsCnvCallingWorkflow(
@@ -138,7 +143,7 @@ def test_canvas_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("canvas", "run", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("canvas", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -213,13 +218,13 @@ def test_control_freec_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate action `run`
     for resource, expected in run_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' in action 'run'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("control_freec", "run", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("control_freec", "run", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `plot`
     for resource, expected in plot_expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' in action 'plot"
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("control_freec", "plot", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("control_freec", "plot", resource)()
         assert actual == expected, msg_error
 
     # Evaluate action `transform`
@@ -227,7 +232,7 @@ def test_control_freec_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
         msg_error = f"Assertion error for resource '{resource}' in action 'transform"
         actual = somatic_wgs_cnv_calling_workflow.get_resource(
             "control_freec", "transform", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -277,7 +282,7 @@ def test_cnvkit_coverage_step_part_get_resource(somatic_wgs_cnv_calling_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "coverage", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "coverage", resource)()
         assert actual == expected, msg_error
 
 
@@ -319,7 +324,7 @@ def test_cnvkit_fix_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "fix", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "fix", resource)()
         assert actual == expected, msg_error
 
 
@@ -357,7 +362,7 @@ def test_cnvkit_segment_step_part_get_resource(somatic_wgs_cnv_calling_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "segment", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "segment", resource)()
         assert actual == expected, msg_error
 
 
@@ -398,7 +403,7 @@ def test_cnvkit_call_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "call", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "call", resource)()
         assert actual == expected, msg_error
 
 
@@ -439,7 +444,7 @@ def test_cnvkit_postprocess_step_part_get_resource(somatic_wgs_cnv_calling_workf
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "postprocess", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "postprocess", resource)()
         assert actual == expected, msg_error
 
 
@@ -501,7 +506,7 @@ def test_cnvkit_plot_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "plot", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "plot", resource)()
         assert actual == expected, msg_error
 
 
@@ -545,7 +550,7 @@ def test_cnvkit_export_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "export", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "export", resource)()
         assert actual == expected, msg_error
 
 
@@ -602,7 +607,7 @@ def test_cnvkit_report_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "report", resource)
+        actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvkit", "report", resource)()
         assert actual == expected, msg_error
 
 
@@ -737,7 +742,7 @@ def test_cnvetti_step_part_get_resource(somatic_wgs_cnv_calling_workflow):
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvetti", action, resource)
+            actual = somatic_wgs_cnv_calling_workflow.get_resource("cnvetti", action, resource)()
             assert actual == expected, msg_error
 
 

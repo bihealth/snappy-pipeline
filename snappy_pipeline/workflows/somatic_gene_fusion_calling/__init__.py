@@ -53,7 +53,6 @@ import os
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
-from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -64,6 +63,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+
+from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -79,51 +80,7 @@ GENE_FUSION_CALLERS = (
 )
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_gene_fusion_calling:
-    path_link_in: ""  # OPTIONAL Override data set configuration search paths for FASTQ files
-    tools: ['fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion']  # REQUIRED, available: 'fusioncatcher', 'jaffa', 'arriba', 'defuse', 'hera', 'pizzly', 'star_fusion'.
-    fusioncatcher:
-      data_dir: REQUIRED   # REQUIRED
-      configuration: null  # optional
-      num_threads: 16
-    pizzly:
-      kallisto_index: REQUIRED    # REQUIRED
-      transcripts_fasta: REQUIRED # REQUIRED
-      annotations_gtf: REQUIRED       # REQUIRED
-      kmer_size: 31
-    hera:
-      path_index: REQUIRED   # REQUIRED
-      path_genome: REQUIRED  # REQUIRED
-    star_fusion:
-      path_ctat_resource_lib: REQUIRED
-    defuse:
-      path_dataset_directory: REQUIRED
-    arriba:
-      path_index: REQUIRED       # REQUIRED  STAR path index (preferably 2.7.10 or later)
-      blacklist: ""              # optional (provided in the arriba distribution, see /fast/work/groups/cubi/projects/biotools/static_data/app_support/arriba/v2.3.0)
-      known_fusions: ""          # optional
-      tags: ""                   # optional (can be set to the same path as known_fusions)
-      structural_variants: ""    # optional
-      protein_domains: ""        # optional
-      num_threads: 8
-      trim_adapters: false
-      num_threads_trimming: 2
-      star_parameters:
-      - " --outFilterMultimapNmax 50"
-      - " --peOverlapNbasesMin 10"
-      - " --alignSplicedMateMapLminOverLmate 0.5"
-      - " --alignSJstitchMismatchNmax 5 -1 5 5"
-      - " --chimSegmentMin 10"
-      - " --chimOutType WithinBAM HardClip"
-      - " --chimJunctionOverhangMin 10"
-      - " --chimScoreDropMax 30"
-      - " --chimScoreJunctionNonGTAG 0"
-      - " --chimScoreSeparation 1"
-      - " --chimSegmentReadGapMax 3"
-      - " --chimMultimapNmax 50"
-""".lstrip()
+DEFAULT_CONFIG = SomaticGeneFusionCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
@@ -141,7 +98,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config["path_link_in"],
+            preprocessed_path=self.config.path_link_in,
         )
 
     @dictify
@@ -172,7 +129,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config["path_link_in"]:
+        if self.config.path_link_in:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -205,7 +162,7 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -243,7 +200,7 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -281,7 +238,7 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -319,7 +276,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -357,7 +314,7 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -395,7 +352,7 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -417,32 +374,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "arriba"
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute STAR & arriba are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config["tools"]:
-            return  # arriba not run, don't check configuration  # pragma: no cover
-
-        # Check required configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("step_config", "somatic_gene_fusion_calling", "arriba", "path_index"),
-            msg="Path to STAR indices is required",
-        )
-
-        # Check that the path to the STAR index is valid.
-        for fn in ("Genome", "SA", "SAindex"):
-            expected_path = self.config["arriba"]["path_index"] + "/" + fn
-            if not os.path.exists(expected_path):  # pragma: no cover
-                tpl = "Expected STAR indices input path {expected_path} does not exist!".format(
-                    expected_path=expected_path
-                )
-                raise InvalidConfiguration(tpl)
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
@@ -496,7 +427,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -507,7 +438,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["arriba"]["num_threads"], time="24:00:00", memory=f"{96 * 1024}M"
+            threads=self.config.arriba.num_threads, time="24:00:00", memory=f"{96 * 1024}M"
         )  # 1 day
 
 
@@ -532,7 +463,14 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        super().__init__(workflow, config, config_lookup_paths, config_paths, workdir)
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=SomaticGeneFusionCallingConfigModel,
+        )
         self.register_sub_step_classes(
             (
                 FusioncatcherStepPart,
@@ -558,7 +496,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
         name_pattern = "{fusion_caller}.{ngs_library}"
-        for fusion_caller in self.config["tools"]:
+        for fusion_caller in self.config.tools:
             for ngs_library in library_names_list:
                 # Constant to all callers
                 name_pattern_value = name_pattern.format(
@@ -596,7 +534,3 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
             yield tpl.format(library_name=ngs_library, ext=ext)
             yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-
-    def check_config(self):
-        """Check that the required configurations are present."""
-        # TODO: implement check for REQUIRED configurations.
