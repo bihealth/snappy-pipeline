@@ -43,7 +43,7 @@ def minimal_config():
             path_variant_phasing: VARIANT_PHASING
             path_variant_calling: VARIANT_CALLING
             path_variant_annotation: VARIANT_ANNOTATION
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
 
         data_sets:
           first_batch:
@@ -103,7 +103,7 @@ def test_filter_de_novo_from_variant_phasing_step_part_get_input_files(
 ):
     """Tests FilterDeNovosStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    ngs_mapping_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
     bam_ped_dict = {
         "bai": ngs_mapping_out + "bwa.P001-N1-DNA1-WGS1.bam.bai",
         "bam": ngs_mapping_out + "bwa.P001-N1-DNA1-WGS1.bam",

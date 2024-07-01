@@ -134,10 +134,10 @@ def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_variant_calling_workflow.get_input_files("mutect", "run")(wildcards)
     expected = {
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     assert actual == expected
 
@@ -193,10 +193,10 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
     """Tests Mutect2StepPart._get_input_files_run()"""
     # Define expected
     expected = {
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
@@ -244,8 +244,8 @@ def test_mutect2_step_part_get_input_files_pileup_normal(
     """Tests Mutect2StepPart._get_input_files_pileup_normal()"""
     # Define expected
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_normal")(
@@ -260,8 +260,8 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     """Tests Mutect2StepPart._get_input_files_pileup_tumor()"""
     # Define expected
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_tumor")(
@@ -506,10 +506,10 @@ def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_variant_calling_workflow.get_input_files("scalpel", "run")(wildcards)
     expected = {
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     assert actual == expected
 
@@ -565,10 +565,10 @@ def test_strelka2_step_part_get_input_files(somatic_variant_calling_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
     actual = somatic_variant_calling_workflow.get_input_files("strelka2", "run")(wildcards)
     expected = {
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     assert actual == expected
 
@@ -630,14 +630,14 @@ def test_bcftools_joint_step_part_get_input_files(somatic_variant_calling_workfl
     wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     actual = somatic_variant_calling_workflow.get_input_files("bcftools_joint", "run")(wildcards)
@@ -694,14 +694,14 @@ def test_varscan_joint_step_part_get_input_files(somatic_variant_calling_workflo
     wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     actual = somatic_variant_calling_workflow.get_input_files("varscan_joint", "run")(wildcards)
@@ -758,14 +758,14 @@ def test_platypus_joint_step_part_get_input_files(somatic_variant_calling_workfl
     wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     actual = somatic_variant_calling_workflow.get_input_files("platypus_joint", "run")(wildcards)
@@ -822,14 +822,14 @@ def test_gatk_hc_joint_step_part_get_input_files(somatic_variant_calling_workflo
     wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     actual = somatic_variant_calling_workflow.get_input_files("gatk_hc_joint", "run")(wildcards)
@@ -886,14 +886,14 @@ def test_gatk_ug_joint_step_part_get_input_files(somatic_variant_calling_workflo
     wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
     }
     actual = somatic_variant_calling_workflow.get_input_files("gatk_ug_joint", "run")(wildcards)

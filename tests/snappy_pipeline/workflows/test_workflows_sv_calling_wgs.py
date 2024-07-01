@@ -110,7 +110,7 @@ def sv_calling_wgs_workflow(
 def test_delly2_step_part_get_input_files_call(sv_calling_wgs_workflow):
     """Tests Delly2StepPart._get_input_files_call()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    ngs_mapping_path = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
     expected = {
         "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
     }
@@ -178,8 +178,8 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
 #     actual = sv_calling_wgs_workflow.get_input_files("delly2", "genotype")(wildcards)
 #     expected = {
-#         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-#         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+#         "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+#         "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
 #         "bcf": (
 #             "work/bwa.delly2_merge_calls.P001-N1-DNA1-WGS1/out/"
 #             "bwa.delly2_merge_calls.P001-N1-DNA1-WGS1.bcf"
@@ -477,7 +477,7 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #         "work/gcnv_preprocess_intervals.default/out/"
 #         "gcnv_preprocess_intervals.default.interval_list"
 #     )
-#     bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+#     bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
 #     expected = {
 #         "interval_list": interval_list_out,
 #         "bam": bam_out + ".bam",
@@ -799,8 +799,8 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
 #     actual = sv_calling_wgs_workflow.get_input_files("melt", "preprocess")(wildcards)
 #     expected = {
-#         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-#         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+#         "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+#         "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
 #     }
 #     assert actual == expected
 

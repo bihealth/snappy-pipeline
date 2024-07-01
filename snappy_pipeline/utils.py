@@ -29,7 +29,7 @@ def listify(gen: Callable[..., Generator[T, None, None]]) -> Callable[..., list[
     return patched
 
 
-def dictify[**P](gen) -> typing.Callable[P, dict]:
+def dictify[**P](gen) -> Callable[P, dict]:
     """Decorator that converts a generator into a function which returns a dict
 
     Use it in the case where a generator is easier to write but you want

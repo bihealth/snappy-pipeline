@@ -36,7 +36,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           panel_of_normals:
-            path_ngs_mapping: NGS_MAPPING/
+            path_ngs_mapping: ../ngs_mapping/
             tools: ['cnvkit']
             cnvkit:
               path_target_regions: ""  # WGS mode
@@ -93,12 +93,12 @@ def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
     )
     expected = {
         "bams": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
         ],
         "bais": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
         ],
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
@@ -125,8 +125,8 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         }
     )
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
     }

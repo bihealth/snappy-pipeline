@@ -37,7 +37,7 @@ def minimal_config():
 
           panel_of_normals:
               tools: ['mutect2', 'cnvkit', 'access', 'purecn']
-              path_ngs_mapping: NGS_MAPPING
+              path_ngs_mapping: ../ngs_mapping
               mutect2:
                   germline_resource: /path/to/germline_resource.vcf
                   path_normals_list: ""
@@ -103,8 +103,8 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
         }
     )
     expected = {
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
     assert actual == expected
@@ -232,8 +232,8 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         }
     )
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
     }
@@ -548,7 +548,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
     expected = {
         "container": "work/containers/out/purecn.simg",
         "intervals": "work/purecn/out/unknown_unknown.list",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "coverage")(wildcards)
     assert actual == expected

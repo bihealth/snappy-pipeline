@@ -19,7 +19,6 @@ from typing import Any, Callable
 import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
-import snakemake
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -649,7 +648,7 @@ class BaseStep:
 
     def __init__[C: SnappyStepModel](
         self,
-        workflow: snakemake.Workflow,
+        workflow,
         config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],

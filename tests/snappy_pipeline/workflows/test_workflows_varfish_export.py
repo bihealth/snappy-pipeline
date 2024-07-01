@@ -127,9 +127,9 @@ def test_mehari_step_part_get_input_files_bam_qc(varfish_export_workflow):
     # Define expected
     donor_indices = (1, 2, 3)
     base_name_bam = (
-        "NGS_MAPPING/output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}"
+        "../ngs_mapping/output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}"
     )
-    base_name_cov = "NGS_MAPPING/output/bwa.P00{i}-N1-DNA1-WGS1/report/alfred_qc/bwa.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
+    base_name_cov = "../ngs_mapping/output/bwa.P00{i}-N1-DNA1-WGS1/report/alfred_qc/bwa.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
     expected = {
         "bamstats": [base_name_bam.format(i=i, ext="bam.bamstats.txt") for i in donor_indices],
         "flagstats": [base_name_bam.format(i=i, ext="bam.flagstats.txt") for i in donor_indices],

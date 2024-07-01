@@ -51,7 +51,7 @@ def minimal_config():
               path_index: /path/to/salmon/index
 
           gene_expression_quantification:
-            path_ngs_mapping: NGS_MAPPING  # REQUIRED
+            path_ngs_mapping: ../ngs_mapping  # REQUIRED
 
         data_sets:
           first_batch:
@@ -98,7 +98,7 @@ def gene_expression_quantification_workflow(
 def test_featurecounts_step_part_get_input_files(gene_expression_quantification_workflow):
     """Tests FeatureCountsStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_base_out = "NGS_MAPPING/output/star.P001-T1-RNA1-mRNA_seq1/out/"
+    ngs_mapping_base_out = "../ngs_mapping/output/star.P001-T1-RNA1-mRNA_seq1/out/"
     expected = {
         "bai": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam.bai",
         "bam": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam",
