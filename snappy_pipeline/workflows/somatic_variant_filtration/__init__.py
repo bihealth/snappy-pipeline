@@ -217,7 +217,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             filter_nb = int(wildcards["filter_nb"])
             if filter_nb > 1:
                 prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
