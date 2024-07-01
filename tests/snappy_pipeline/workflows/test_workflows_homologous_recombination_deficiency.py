@@ -92,7 +92,7 @@ def test_scarHRD_step_part_get_input_files_run(homologous_recombination_deficien
     )
     expected = {
         "done": "work/R_packages/out/scarHRD.done",
-        "seqz": "SOMATIC_CNV_CALLING/output/bwa.sequenza.P001-T1-DNA1-WGS1/out/bwa.sequenza.P001-T1-DNA1-WGS1.seqz.gz",
+        "seqz": "../somatic_targeted_seq_cnv_calling/output/bwa.sequenza.P001-T1-DNA1-WGS1/out/bwa.sequenza.P001-T1-DNA1-WGS1.seqz.gz",
     }
     actual = homologous_recombination_deficiency_workflow.get_input_files("scarHRD", "run")(
         wildcards
