@@ -27,7 +27,8 @@ conda activate snappy_env
 # Install snappy in snappy_env environment
 pip install -e ".[all]"
 ```
-
+The dependency group `all` includes all optional dependencies, i.e. `test` (for running tests with `pytest`), `dev` (for formatting, linting, pre-commit hooks) and `docs` (for building the documentation with `sphinx`).
+If you only want to install the core dependencies, you can omit the `[all]` part, or choose any combination of the other groups.
 
 See [user installation](docs/quickstart.rst) if you just want to use the pipeline.
 
