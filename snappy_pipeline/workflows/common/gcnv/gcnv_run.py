@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the gCNV CASE mode run methods.
-"""
+"""Implementation of the gCNV CASE mode run methods."""
 
-from glob import glob
-from itertools import chain
 import json
 import os
 import re
 import warnings
+from glob import glob
+from itertools import chain
 
 from snakemake.io import Wildcards, expand, touch
 
@@ -94,20 +93,17 @@ class ValidationMixin:
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
-        if "gcnv" not in self.config["tools"]:
+        if "gcnv" not in self.config.tools:
             return
 
         # Get precomputed models from configurations
-        path_to_models = self.config["gcnv"]["precomputed_model_paths"]
+        path_to_models = self.config.gcnv.precomputed_model_paths
 
         # No model provided
         if not path_to_models:
             msg_tpl = "Precomputed model paths must be configured (key: 'precomputed_model_paths')."
             raise InvalidConfiguration(msg_tpl)
         else:
-            # Validate configuration - check if only expected keys are present
-            self.validate_precomputed_model_paths_config(config=path_to_models)
-
             # Check model directories content
             for model in path_to_models:
                 # Validate ploidy-model
@@ -132,46 +128,6 @@ class ValidationMixin:
                             "does not contain all required call model files: {0}"
                         )
                         raise InvalidConfiguration(msg_tpl.format(str(model)))
-
-    def validate_precomputed_model_paths_config(self, config):
-        """Validate precomputed model config.
-
-        Evaluates if provided configuration has the following format:
-
-        precomputed_model_paths:
-          - library: "Agilent SureSelect Human All Exon V6"
-            contig_ploidy": /path/to/ploidy-model
-            model_pattern: /path/to/model_*
-
-        :param config: List of precomputed model configuration dictionary.
-        :type config: list
-
-        :raises InvalidConfiguration: if configuration not as expected for
-        ``precomputed_model_paths`` list.
-        """
-        # Initialise variables
-        expected_keys = ("library", "model_pattern", "contig_ploidy")
-        expected_format = (
-            '{\n    "library": "Agilent SureSelect Human All Exon V6"\n'
-            '    "contig_ploidy": /path/to/ploidy-model\n'
-            '    "model_pattern": "/path/to/model_*"\n}'
-        )
-        # Test
-        for model in config:
-            # Test keys
-            n_keys_pass = len(model) == 3
-            keys_pass = all(key in expected_keys for key in model)
-            # Test values
-            values_pass = all(isinstance(value, str) for value in model.values())
-            # Validate
-            if not (n_keys_pass and keys_pass and values_pass):
-                pretty_model = self._pretty_print_config(config=model)
-                msg = (
-                    "Provided configuration not as expected...\n"
-                    f"\nn_keys_pass={n_keys_pass}, keys_pass={keys_pass}, values_pass={values_pass}\n"
-                    f"Expected:\n{expected_format}\nObserved:\n{pretty_model}\n"
-                )
-                raise InvalidConfiguration(msg)
 
     def _pretty_print_config(self, config):
         """Pretty format configuration.
@@ -284,7 +240,7 @@ class ContigPloidyMixin:
         with `DetermineGermlineContigPloidy`.
         """
         path = "__no_ploidy_model_for_library_in_config__"
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == wildcards.library_kit:
@@ -340,7 +296,7 @@ class CallCnvsMixin:
         `GermlineCNVCaller`.
         """
         path = "__no_model_for_library_in_config__"
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == wildcards.library_kit:
@@ -377,7 +333,7 @@ class PostGermlineCallsMixin:
 
         # Get shards - based on scattered step
         model_dir_dict = None
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library name to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             if library_to_wildcard == library_kit:
@@ -392,10 +348,13 @@ class PostGermlineCallsMixin:
 
         # Yield cnv calls output
         name_pattern = f"{wildcards.mapper}.gcnv_call_cnvs.{library_kit}"
-        yield "calls", [
-            f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
-            for shard in model_dir_dict
-        ]
+        yield (
+            "calls",
+            [
+                f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
+                for shard in model_dir_dict
+            ],
+        )
 
         # Yield contig-ploidy output
         ext = "ploidy"
@@ -415,7 +374,7 @@ class PostGermlineCallsMixin:
         `PostprocessGermlineCNVCalls `.
         """
         paths = ["__no_model_available_for_library__"]
-        for model in self.config["gcnv"]["precomputed_model_paths"]:
+        for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
             # Get library kit associated with library name
@@ -482,12 +441,15 @@ class MergeMultikitFamiliesMixin:
         for key, suffix in RESULT_EXTENSIONS.items():
             work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
         yield from work_files.items()
-        yield "output_links", [
-            re.sub(r"^work/", "output/", work_path)
-            for work_path in chain(
-                work_files.values(), self.get_log_file("merge_multikit_families").values()
-            )
-        ]
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(
+                    work_files.values(), self.get_log_file("merge_multikit_families").values()
+                )
+            ],
+        )
 
     @dictify
     def _get_log_file_merge_multikit_families(self):
@@ -568,8 +530,8 @@ class RunGcnvStepPart(
 
         The function will skip pedigrees where samples have inconsistent library kits and print a warning.
         """
-        if "gcnv" not in self.config["tools"] and not (
-            hasattr(self.config["tools"], "get") and "gcnv" in self.config["tools"].get("dna", {})
+        if "gcnv" not in self.config.tools and not (
+            hasattr(self.config.tools, "dna") and "gcnv" in self.config.tools.dna
         ):
             return
 
@@ -600,6 +562,6 @@ class RunGcnvStepPart(
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,
-                    mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                    mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                     library_name=[index_library_name],
                 )

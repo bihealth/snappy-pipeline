@@ -4,7 +4,9 @@
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_variant_signatures import SomaticVariantSignaturesWorkflow
+from snappy_pipeline.workflows.somatic_variant_signatures import (
+    SomaticVariantSignaturesWorkflow,
+)
 
 __author__ = "Clemens Messerschmidt"
 

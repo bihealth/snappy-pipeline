@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for preparing PureCN panel of normals
-"""
+"""CUBI+Snakemake wrapper code for preparing PureCN panel of normals"""
 
 import os
 import tempfile

@@ -93,18 +93,12 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_wrappers.resource_usage import ResourceUsage
+
+from .model import HelperGcnvModelWgs as HelperGcnvModelWgsConfigModel
 
 #: Default configuration for the helper_gcnv_model_wgs schema
-DEFAULT_CONFIG = r"""
-# Default configuration helper_gcnv_model_wgs
-step_config:
-  helper_gcnv_model_wgs:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-
-    gcnv:
-      # Path to BED file with uniquely mappable regions.
-      path_uniquely_mapable_bed: null  # REQUIRED
-"""
+DEFAULT_CONFIG = HelperGcnvModelWgsConfigModel.default_config_yaml_string()
 
 
 class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
@@ -154,8 +148,11 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.default"
-        yield key, "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=path_pattern, ext="tsv"
+        yield (
+            key,
+            "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                name_pattern=path_pattern, ext="tsv"
+            ),
         )
 
     @dictify
@@ -172,19 +169,22 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
-        yield "calls", [
-            "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                name_pattern=name_pattern, shard=shard
-            )
-            for shard in shards
-        ]
+        yield (
+            "calls",
+            [
+                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
+                    name_pattern=name_pattern, shard=shard
+                )
+                for shard in shards
+            ],
+        )
         ext = "ploidy"
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -228,7 +228,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=HelperGcnvModelWgsConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -238,7 +239,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -260,10 +261,3 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         for sheet in sheets:
             for pedigree in sheet.cohort.pedigrees:
                 yield from pedigree.donors
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        self.ensure_w_config(
-            ("step_config", "helper_gcnv_model_wgs", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for gCNV model building.",
-        )

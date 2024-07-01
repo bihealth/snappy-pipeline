@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools mpileup
-"""
+"""Wrapper for running bcftools mpileup"""
 
 from snakemake.shell import shell
 

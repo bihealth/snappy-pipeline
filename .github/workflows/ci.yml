@@ -26,11 +26,11 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-            pip install -r requirements/test.txt
+            pip install -e ".[dev]"
             pip freeze
 
       - name: Run linting tools
@@ -42,10 +42,9 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v1.1.0
         with:
           message: |
-            - Please format your Python code with [black](https://black.readthedocs.io): `make black`
+            - Please format your Python code with [ruff](https://docs.astral.sh/ruff/): `make fmt`
+            - Please check your Python code with [ruff](https://docs.astral.sh/ruff/): `make check`
             - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`
-            - Please organize your imports [isorts](https://isort.readthedocs.io): `make isort`
-            - Please ensure that your code passes [flake8](https://flake8.pycqa.org/en/latest/): `make flake8`
 
             You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -53,16 +52,16 @@ jobs:
   sphinx-docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
       - name: Install Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-            pip install -r requirements/test.txt
+            pip install -e ".[docs]"
             pip freeze
 
       - name: Build documentation
@@ -75,9 +74,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.10"
-          # - "3.11"  # no compatible pysam yet
-          # - "3.12"  # no compatible pysam yet
+          - "3.12"
     needs: linting
     steps:
       - name: Install Python via conda
@@ -86,7 +83,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           conda-channels: defaults,bioconda,conda-forge
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           lfs: true
           fetch-depth: 2
@@ -95,7 +92,7 @@ jobs:
       - name: Prepare environment.yml file
         run: >
           cp environment.yml /tmp/environment.yml && sed -i -e
-          's/- python/- python=${{ matrix.python-version }}/'
+          's/- python=.*/- python=${{ matrix.python-version }}/'
           /tmp/environment.yml
       - name: Update environment using mamba
         run: mamba env update --name root --file /tmp/environment.yml
@@ -107,7 +104,7 @@ jobs:
           bcftools version
       - name: Install some more dependencies via pip
         # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
-        run: pip install -r requirements/test.txt; pip install --ignore-installed py
+        run: pip install ".[test]"; pip install --ignore-installed py
       - name: Run tests
         run: pytest
         env:

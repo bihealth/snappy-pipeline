@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for Kallisto+Pizzly: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for Kallisto+Pizzly: Snakemake wrapper.py"""
 
 from snakemake import shell
 

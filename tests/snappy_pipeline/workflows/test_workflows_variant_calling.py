@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_calling workflow module code"""
 
-from copy import deepcopy
 import textwrap
+from copy import deepcopy
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -33,22 +33,27 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
             bwa:
               path_index: /path/to/bwa/index.fa
-            target_cov_report:
-              path_target_interval_list_mapping:
-              - name: "Agilent SureSelect Human All Exon V6"
-                pattern: "Agilent SureSelect Human All Exon V6*"
-                path: "path/to/targets.bed"
 
           variant_calling:
             baf_file_generation:
               enabled: true
+            jannovar_stats:
+              enabled: true
+              path_ser: /path/to/jannovar.ser
+            bcftools_stats:
+              enabled: true
+            bcftools_roh:
+              enabled: true
+              path_af_file: /path/to/af_file.txt
             tools:
             - bcftools_call
             - gatk3_hc
             - gatk3_ug
+            bcftools_call: {}
+            gatk3_hc: {}
+            gatk3_ug: {}
 
         data_sets:
           first_batch:
@@ -71,6 +76,7 @@ def variant_calling_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return VariantCallingWorkflow object pre-configured with germline sheet"""
@@ -81,6 +87,7 @@ def variant_calling_workflow(
         create_missing_dirs=True,
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.variant_calling", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
@@ -144,7 +151,7 @@ def test_bcftools_call_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("bcftools_call", "run", resource)
+        actual = variant_calling_workflow.get_resource("bcftools_call", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -208,7 +215,7 @@ def test_gatk3_hc_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk3_hc", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_hc", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -272,7 +279,7 @@ def test_gatk3_ug_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("gatk3_ug", "run", resource)
+        actual = variant_calling_workflow.get_resource("gatk3_ug", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -338,7 +345,7 @@ def test_bcftools_stats_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("bcftools_stats", "run", resource)
+        actual = variant_calling_workflow.get_resource("bcftools_stats", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -402,7 +409,7 @@ def test_jannovar_stats_stats_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("jannovar_stats", "run", resource)
+        actual = variant_calling_workflow.get_resource("jannovar_stats", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -473,7 +480,7 @@ def test_baf_file_generation_step_part_get_resource(variant_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_calling_workflow.get_resource("baf_file_generation", "run", resource)
+        actual = variant_calling_workflow.get_resource("baf_file_generation", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -486,12 +493,12 @@ def test_variant_calling_workflow(variant_calling_workflow):
     expected = [
         "baf_file_generation",
         "bcftools_call",
-        "bcftools_roh",
         "bcftools_stats",
+        "bcftools_roh",
         "gatk3_hc",
         "gatk3_ug",
-        "gatk4_hc_gvcf",
         "gatk4_hc_joint",
+        "gatk4_hc_gvcf",
         "jannovar_stats",
         "write_pedigree",
     ]
@@ -516,6 +523,15 @@ def test_variant_calling_workflow(variant_calling_workflow):
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
         "{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{step}.{ext}"
     )
+
+    stats_steps = {"jannovar_stats", "bcftools_roh"} - {"bcftools_stats"}  # causes weird behaviour
+    stats_steps = {
+        step
+        for step in stats_steps
+        if ((s := variant_calling_workflow.config.get(step)) and s.enabled)
+    }
+    stats_steps_run = {f"{step}_run" for step in stats_steps}
+
     expected += [
         base_out.format(i=i, ext=ext, mapper=mapper, var_caller=var_caller, step=step)
         for i in (1, 4)  # only for indices
@@ -537,11 +553,7 @@ def test_variant_calling_workflow(variant_calling_workflow):
             "gatk3_hc",
             "gatk3_ug",
         )
-        for step in (
-            f"{var_caller}_run",
-            "jannovar_stats_run",
-            "bcftools_roh_run",
-        )
+        for step in ({f"{var_caller}_run"} | stats_steps_run)
     ]
     base_out = (
         "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/log/"
@@ -616,24 +628,28 @@ def test_variant_calling_workflow(variant_calling_workflow):
         )
         for ext in ("bw", "bw.md5")
     ]
-    tpl = (
-        "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
-        "roh/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
-    expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
-        for i in (1, 4)
-        for mapper in ("bwa",)
-        for var_caller in (
-            "bcftools_call",
-            "gatk3_hc",
-            "gatk3_ug",
+
+    if "bcftools_roh" in stats_steps:
+        tpl = (
+            "output/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1/report/"
+            "roh/{mapper}.{var_caller}.P00{i}-N1-DNA1-WGS1.{ext}"
         )
-        for ext in ("txt", "txt.md5")
-    ]
-    expected = list(sorted(expected))
-    actual = list(sorted(variant_calling_workflow.get_result_files()))
-    assert actual == expected
+        expected += [
+            tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
+            for i in (1, 4)
+            for mapper in ("bwa",)
+            for var_caller in (
+                "bcftools_call",
+                "gatk3_hc",
+                "gatk3_ug",
+            )
+            for ext in ("txt", "txt.md5")
+        ]
+    expected = set(sorted(expected))
+    actual = set(sorted(variant_calling_workflow.get_result_files()))
+    assert (
+        actual == expected
+    ), f"Missing from actual: {expected - actual}\nMissing from expected: {actual - expected}"
 
 
 def test_variant_calling_custom_pedigree_field(
@@ -643,6 +659,7 @@ def test_variant_calling_custom_pedigree_field(
     work_dir,
     config_paths,
     germline_trio_plus_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Tests VariantCallingWorkflow object pre-configured with germline trio plus sheet
@@ -662,6 +679,7 @@ def test_variant_calling_custom_pedigree_field(
         create_missing_dirs=True,
     )
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_trio_plus_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_calling", germline_trio_plus_sheet_fake_fs, mocker
     )

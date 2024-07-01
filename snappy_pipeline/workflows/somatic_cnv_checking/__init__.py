@@ -77,6 +77,8 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
 )
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
+from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
+
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Extensions of files to create as main payload
@@ -86,18 +88,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_cnv_checking schema
-DEFAULT_CONFIG = r"""
-# Default configuration somatic_cnv_checking
-step_config:
-  somatic_cnv_checking:
-    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    path_cnv_calling: ""              # Can use for instance ../somatic_targeted_seq_cnv_calling
-    cnv_assay_type: ""                # Empty: no CNV, WES for somatic_targeted_seq_snv_calling step, WGS for somatic_wgs_cnv_calling step
-    excluded_regions: ""              # Bed file of regions to be excluded
-    max_depth: 10000                  # Max depth for pileups
-    min_depth: 20                     # Minimum depth for reference and alternative alleles to consider variant
-    min_baf: 0.4                      # Maximum BAF to consider variant as heterozygous (between 0 & 1/2)
-"""
+DEFAULT_CONFIG = SomaticCnvCheckingConfigModel.default_config_yaml_string()
 
 
 class SomaticCnvCheckingStepPart(BaseStepPart):
@@ -177,7 +168,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             "work/{mapper}.{library_name}/log/{mapper}.{library_name}." + action
         )
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
@@ -301,25 +292,26 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=SomaticCnvCheckingConfigModel,
+            previous_steps=(
                 SomaticTargetedSeqCnvCallingWorkflow,
                 SomaticWgsCnvCallingWorkflow,
                 NgsMappingWorkflow,
             ),
         )
-        if self.config["path_cnv_calling"] and self.config["cnv_assay_type"]:
-            if self.config["cnv_assay_type"] == "WES":
+        if self.config.path_cnv_calling and self.config.cnv_assay_type:
+            if self.config.cnv_assay_type == "WES":
                 cnv_calling = "somatic_targeted_seq_cnv_calling"
-            elif self.config["cnv_assay_type"] == "WES":
+            elif self.config.cnv_assay_type == "WES":
                 cnv_calling = "somatic_wgs_cnv_calling"
             else:
                 raise InvalidConfiguration(
                     "Illegal cnv_assay_type {}, must be either WES or WGS".format(
-                        self.config["cnv_assay_type"]
+                        self.config.cnv_assay_type
                     )
                 )
-            self.register_sub_workflow(cnv_calling, self.config["path_cnv_calling"], "cnv_calling")
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+            self.register_sub_workflow(cnv_calling, self.config.path_cnv_calling, "cnv_calling")
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -359,24 +351,24 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         ext = ("log", "conda_info.txt", "conda_list.txt")
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             library_name=set(self.tumor_to_normal.values()),
             ext=ext,
             chksum=chksum,
         )
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             library_name=self.tumor_to_normal.keys(),
             ext=ext,
             chksum=chksum,
         )
         # Main result: vcf & optionally segment table if CNV available
         ext = {"out": [".vcf.gz", ".vcf.gz.tbi"]}
-        if self.config["path_cnv_calling"]:
+        if self.config.path_cnv_calling:
             # CNV avaliable
             name_pattern = "{mapper}.{caller}.{library_name}"
-            callers = self.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
+            callers = self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools
             ext["out"] += [".tsv"]
             ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
             ext["log"] = [
@@ -390,18 +382,9 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         for subdir, exts in ext.items():
             yield from expand(
                 os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
-                mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller=callers,
                 library_name=self.tumor_to_normal.keys(),
                 ext=exts,
                 chksum=chksum,
             )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_cnv_checking", "path_ngs_mapping"),
-            "Path to NGS mapping not configured but required for somatic variant calling",
-        )
-        if self.config["path_cnv_calling"]:
-            assert self.config["cnv_assay_type"] in ("WES", "WGS")

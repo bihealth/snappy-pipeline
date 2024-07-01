@@ -30,7 +30,10 @@ def minimal_config():
               path_index: /path/to/star/index
 
           gene_expression_quantification:
+            path_ngs_mapping: ../ngs_mapping
             tools: ['strandedness']
+            strandedness:
+              path_exon_bed: /path/to/exon.bed
 
           gene_expression_report:
             path_gene_expression_quantification: /work
@@ -56,11 +59,13 @@ def gene_expression_report_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return GeneExpressionReportWorkflow object pre-configured with cancer sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "gene_expression_quantification": lambda x: "GENE_EXPRESSION_QUANTIFICATION/" + x,
@@ -93,7 +98,7 @@ def test_all_steps_get_resource_usage(gene_expression_report_workflow):
     for step in steps:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in step '{step}'."
-            actual = gene_expression_report_workflow.get_resource(step, "run", resource)
+            actual = gene_expression_report_workflow.get_resource(step, "run", resource)()
             assert actual == expected, msg_error
 
 

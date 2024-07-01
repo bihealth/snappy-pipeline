@@ -111,6 +111,8 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
+from .model import VariantFiltration as VariantFiltrationConfigModel
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Extensions of files to create as main payload
@@ -120,97 +122,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  variant_filtration:
-    path_variant_annotation: ../variant_annotation
-    tools_ngs_mapping: null      # defaults to ngs_mapping tool
-    tools_variant_calling: null  # defaults to variant_annotation tool
-    thresholds:                  # quality filter sets, "keep_all" implicitely defined
-      conservative:
-        min_gq: 40
-        min_dp_het: 10
-        min_dp_hom: 5
-        include_expressions:
-        - 'MEDGEN_COHORT_INCONSISTENT_AC=0'
-      relaxed:
-        min_gq: 20
-        min_dp_het: 6
-        min_dp_hom: 3
-        include_expressions:
-        - 'MEDGEN_COHORT_INCONSISTENT_AC=0'
-    frequencies:             # values to use for frequency filtration
-      af_dominant: 0.001     # AF (allele frequency) values
-      af_recessive: 0.01
-      ac_dominant: 3         # AC (allele count in gnomAD) values
-    region_beds:             # regions to filter to, "whole_genome" implicitely defined
-      all_tads: /fast/projects/medgen_genomes/static_data/GRCh37/hESC_hg19_allTads.bed
-      all_genes: /fast/projects/medgen_genomes/static_data/GRCh37/gene_bed/ENSEMBL_v75.bed.gz
-      limb_tads: /fast/projects/medgen_genomes/static_data/GRCh37/newlimb_tads.bed
-      lifted_enhancers: /fast/projects/medgen_genomes/static_data/GRCh37/all_but_onlyMB.bed
-      vista_enhancers: /fast/projects/medgen_genomes/static_data/GRCh37/vista_limb_enhancers.bed
-    score_thresholds:        # thresholds on scores to filter to, "all_scores" implictely defined
-      coding:
-        require_coding: true
-        require_gerpp_gt2: false
-        min_cadd: null
-      conservative:  # unused; TODO: rename?
-        require_coding: false
-        require_gerpp_gt2: false
-        min_cadd: 0
-      conserved:  # TODO: rename?
-        require_coding: false
-        require_gerpp_gt2: true
-        min_cadd: null
-    filter_combinations: # dot-separated {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}
-    - conservative.de_novo.dominant_freq.lifted_enhancers.all_scores.passthrough
-    - conservative.de_novo.dominant_freq.lifted_enhancers.conserved.passthrough
-    - conservative.de_novo.dominant_freq.limb_tads.all_scores.passthrough
-    - conservative.de_novo.dominant_freq.limb_tads.coding.passthrough
-    - conservative.de_novo.dominant_freq.limb_tads.conserved.passthrough
-    - conservative.de_novo.dominant_freq.vista_enhancers.all_scores.passthrough
-    - conservative.de_novo.dominant_freq.vista_enhancers.conserved.passthrough
-    - conservative.de_novo.dominant_freq.whole_genome.all_scores.passthrough
-    - conservative.de_novo.dominant_freq.whole_genome.coding.passthrough
-    - conservative.de_novo.dominant_freq.whole_genome.conserved.passthrough
-    - conservative.dominant.dominant_freq.lifted_enhancers.all_scores.passthrough
-    - conservative.dominant.dominant_freq.lifted_enhancers.conserved.passthrough
-    - conservative.dominant.dominant_freq.limb_tads.all_scores.passthrough
-    - conservative.dominant.dominant_freq.limb_tads.coding.passthrough
-    - conservative.dominant.dominant_freq.limb_tads.conserved.passthrough
-    - conservative.dominant.dominant_freq.vista_enhancers.all_scores.passthrough
-    - conservative.dominant.dominant_freq.vista_enhancers.conserved.passthrough
-    - conservative.dominant.dominant_freq.whole_genome.all_scores.passthrough
-    - conservative.dominant.dominant_freq.whole_genome.coding.passthrough
-    - conservative.dominant.dominant_freq.whole_genome.conserved.passthrough
-    - conservative.dominant.recessive_freq.lifted_enhancers.all_scores.intervals500
-    - conservative.dominant.recessive_freq.lifted_enhancers.conserved.intervals500
-    - conservative.dominant.recessive_freq.lifted_enhancers.conserved.tads
-    - conservative.dominant.recessive_freq.limb_tads.all_scores.intervals500
-    - conservative.dominant.recessive_freq.limb_tads.coding.gene
-    - conservative.dominant.recessive_freq.limb_tads.conserved.intervals500
-    - conservative.dominant.recessive_freq.limb_tads.conserved.tads
-    - conservative.dominant.recessive_freq.vista_enhancers.all_scores.intervals500
-    - conservative.dominant.recessive_freq.vista_enhancers.conserved.intervals500
-    - conservative.dominant.recessive_freq.vista_enhancers.conserved.tads
-    - conservative.dominant.recessive_freq.whole_genome.all_scores.intervals500
-    - conservative.dominant.recessive_freq.whole_genome.coding.gene
-    - conservative.dominant.recessive_freq.whole_genome.conserved.intervals500
-    - conservative.dominant.recessive_freq.whole_genome.conserved.tads
-    - conservative.recessive_hom.recessive_freq.lifted_enhancers.all_scores.passthrough
-    - conservative.recessive_hom.recessive_freq.lifted_enhancers.conserved.passthrough
-    - conservative.recessive_hom.recessive_freq.limb_tads.all_scores.passthrough
-    - conservative.recessive_hom.recessive_freq.limb_tads.coding.passthrough
-    - conservative.recessive_hom.recessive_freq.limb_tads.conserved.passthrough
-    - conservative.recessive_hom.recessive_freq.vista_enhancers.all_scores.passthrough
-    - conservative.recessive_hom.recessive_freq.vista_enhancers.conserved.passthrough
-    - conservative.recessive_hom.recessive_freq.whole_genome.all_scores.passthrough
-    - conservative.recessive_hom.recessive_freq.whole_genome.coding.passthrough
-    - conservative.recessive_hom.recessive_freq.whole_genome.conserved.passthrough
-    # The following are for input to variant_combination.
-    - conservative.dominant.recessive_freq.whole_genome.coding.passthrough
-    - conservative.dominant.recessive_freq.whole_genome.conserved.passthrough
-"""
+DEFAULT_CONFIG = VariantFiltrationConfigModel.default_config_yaml_string()
 
 
 class FiltersVariantsStepPartBase(BaseStepPart):
@@ -236,7 +148,7 @@ class FiltersVariantsStepPartBase(BaseStepPart):
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
         )
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -292,9 +204,12 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
         @dictify
         def input_function(wildcards):
-            yield "ped", os.path.realpath(
-                "work/write_pedigree.{index_library}/out/{index_library}.ped"
-            ).format(**wildcards)
+            yield (
+                "ped",
+                os.path.realpath(
+                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
+                ).format(**wildcards),
+            )
             variant_annotation = self.parent.sub_workflows["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
@@ -454,7 +369,8 @@ class VariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=VariantFiltrationConfigModel,
+            previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -470,16 +386,12 @@ class VariantFiltrationWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("variant_annotation", self.config["path_variant_annotation"])
+        self.register_sub_workflow("variant_annotation", self.config.path_variant_annotation)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
@@ -490,8 +402,8 @@ class VariantFiltrationWorkflow(BaseStep):
         )
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 
@@ -510,13 +422,6 @@ class VariantFiltrationWorkflow(BaseStep):
                 yield from expand(
                     tpl,
                     index_library=[pedigree.index.dna_ngs_library],
-                    filters=self.config["filter_combinations"],
+                    filters=self.config.filter_combinations,
                     **kwargs,
                 )
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "variant_filtration", "path_variant_annotation"),
-            "Path to variant_annotation not configured but required for variant_filtration",
-        )

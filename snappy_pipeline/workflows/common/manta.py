@@ -30,7 +30,7 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -44,7 +44,7 @@ class MantaStepPart(
             actions_str = ", ".join(self.actions)
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
-        num_threads = self.config["manta"]["num_threads"]
+        num_threads = self.config.manta.num_threads
         return ResourceUsage(
             threads=num_threads,
             time="7-00:00:00",  # 3 days

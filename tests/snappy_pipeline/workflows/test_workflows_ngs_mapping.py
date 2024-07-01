@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the ngs_mapping workflow module code"""
 
-from collections import OrderedDict
-from copy import deepcopy
 import io
 import textwrap
+from collections import OrderedDict
+from copy import deepcopy
 
-from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
 import pytest
 import ruamel.yaml as ruamel_yaml
+from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -39,14 +39,22 @@ def minimal_config():
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
-            compute_coverage_bed: true
             bwa:
-              path_index: /path/to/bwa/index.fasta
+              path_index: /path/to/bwa/index.fasta.amb
             bwa_mem2:
-              path_index: /path/to/bwa_mem2/index.fasta
+              path_index: /path/to/bwa_mem2/index.fasta.amb
+            minimap2:
+              mapping_threads: 16
+            star:
+              path_index: /path/to/star/index
+              transcriptome: false
+              out_filter_intron_motifs: ""
+              out_sam_strand_field: ""
             mbcs:
               mapping_tool: bwa
-            bsqr:
+              use_barcodes: True
+              recalibrate: True
+            bqsr:
               common_variants: /path/to/common/variants
             agent:
               prepare:
@@ -54,6 +62,7 @@ def minimal_config():
                 lib_prep_type: v2
               mark_duplicates:
                 path: /path/to/creak
+                path_baits: /path/to/baits
                 consensus_mode: HYBRID
             bam_collect_doc:
               enabled: true
@@ -208,6 +217,7 @@ def test_project_validation_germline(
     minimal_config_dict = deepcopy(minimal_config)
     minimal_config_dict = dict(minimal_config_dict)
     minimal_config_dict = minimal_config_dict["step_config"].get("ngs_mapping", OrderedDict())
+    config = ngs_mapping_workflow.config_model_class(**minimal_config_dict)
 
     # Create germline sample sheet
     germline_sheet_io = io.StringIO(germline_sheet_tsv)
@@ -218,31 +228,27 @@ def test_project_validation_germline(
     rna_sheet = read_generic_tsv_sheet(rna_sheet_io)
 
     # Method returns None without exception, cause DNA sample sheet and DNA tool defined in config
-    out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
-    )
+    out = ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[germline_sheet])
     assert out is None, "No exception expected: DNA sample sheet and DNA tool defined in config."
 
     # Exception raised cause no RNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[rna_sheet]
-        )
+        ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[rna_sheet])
     error_msg = "RNA sample provided, but config only contains DNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
     # Exception raised cause only DNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+            config=config, sample_sheets_list=[germline_sheet, rna_sheet]
         )
     error_msg = "DNA and RNA sample provided, but config only contains DNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
     # Update config and remove RNA exception
-    minimal_config_dict["tools"]["rna"] = ["rna_mapper"]
+    config.tools.rna = ["rna_mapper"]
     out = ngs_mapping_workflow.validate_project(
-        config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+        config=config, sample_sheets_list=[germline_sheet, rna_sheet]
     )
     error_msg = (
         "No exception expected: DNA, RNA sample sheet and respective tools defined in config."
@@ -250,19 +256,17 @@ def test_project_validation_germline(
     assert out is None, error_msg
 
     # Update config and introduce DNA exception
-    minimal_config_dict["tools"]["dna"] = []
+    config.tools.dna = []
     with pytest.raises(Exception) as exec_info:
         ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet, rna_sheet]
+            config=config, sample_sheets_list=[germline_sheet, rna_sheet]
         )
     error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
     # Exception raised cause no DNA mapper defined in config
     with pytest.raises(Exception) as exec_info:
-        ngs_mapping_workflow.validate_project(
-            config_dict=minimal_config_dict, sample_sheets_list=[germline_sheet]
-        )
+        ngs_mapping_workflow.validate_project(config=config, sample_sheets_list=[germline_sheet])
     error_msg = "DNA and RNA sample provided, but config only contains RNA mapper."
     assert exec_info.value.args[0] is not None, error_msg
 
@@ -339,7 +343,7 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     for tool, v in expected_dict.items():
         for resource, expected in v.items():
             msg_error = f"Assertion error for tool '{tool}' & resource '{resource}'."
-            actual = ngs_mapping_workflow.get_resource(tool, "run", resource)
+            actual = ngs_mapping_workflow.get_resource(tool, "run", resource)()
             assert actual == expected, msg_error
 
 
@@ -424,7 +428,7 @@ def test_star_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("star", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("star", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -490,7 +494,7 @@ def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("minimap2", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -537,7 +541,7 @@ def test_external_step_part_get_resource(ngs_mapping_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = ngs_mapping_workflow.get_resource("external", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("external", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -678,7 +682,7 @@ def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
     expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2G", "partition": "medium"}
     for resource, expected in expected_dict.items():
-        actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)
+        actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)()
         assert actual == expected
 
 

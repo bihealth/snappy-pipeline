@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza GC reference file
-"""
+"""CUBI+Snakemake wrapper code for sequenza GC reference file"""
 
 import os
 

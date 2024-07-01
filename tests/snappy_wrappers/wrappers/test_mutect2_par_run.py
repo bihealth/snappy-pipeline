@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Code for testing mutect2_par/run wrapper"""
+
 import importlib.machinery
 import os
-from pathlib import Path
 import re
 import tempfile
 import textwrap
 import types
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -36,8 +37,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
           somatic_variant_calling:

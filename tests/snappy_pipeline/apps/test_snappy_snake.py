@@ -5,8 +5,8 @@ import os.path
 
 import pytest
 
-from snappy_pipeline.apps import snappy_snake
 import snappy_pipeline.workflows
+from snappy_pipeline.apps import snappy_snake
 from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
@@ -37,7 +37,7 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
     # Run the code under test
     assert 0 == snappy_snake.main(["-S", "--verbose"])
     # Check assersions
-    p = os.path.realpath(snappy_pipeline.workflows.__path__._path[0] + "/..")
+    p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
     m.assert_called_once_with(
         [
             "--directory",

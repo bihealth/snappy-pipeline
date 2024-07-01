@@ -71,7 +71,6 @@ def splitMAVariant(chrom, pos, theId, ref, alts, qual, filters, info, theRest):
 ###################################################################################################
 
 for line in sys.stdin:
-
     if line.startswith("#"):
         print(line.strip())
         continue

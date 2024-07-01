@@ -52,17 +52,17 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
           helper_gcnv_model_targeted:
+            path_ngs_mapping: ../ngs_mapping
             gcnv:
               path_target_interval_list_mapping:
                 - pattern: "Agilent SureSelect Human All Exon V6.*"
                   name: "Agilent_SureSelect_Human_All_Exon_V6"
                   path: /path/to/Agilent/SureSelect_Human_All_Exon_V6_r2/GRCh37/Exons.bed
               path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
+              path_par_intervals: /path/to/par.intervals
 
         data_sets:
           first_batch:
@@ -85,11 +85,13 @@ def helper_gcnv_model_workflow(
     work_dir,
     config_paths,
     germline_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return HelperBuildTargetSeqGcnvModelWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}

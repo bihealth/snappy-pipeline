@@ -1,5 +1,4 @@
-"""CUBI+Snakemake wrapper code for sequenza (coverage analysis in R)
-"""
+"""CUBI+Snakemake wrapper code for sequenza (coverage analysis in R)"""
 
 import os
 import sys

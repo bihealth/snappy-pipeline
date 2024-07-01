@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Code for testing gatk_hc_par/run wrapper"""
-from pathlib import Path
+
 import textwrap
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -30,8 +31,6 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 

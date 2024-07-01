@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_filtration workflow module code"""
 
-from pathlib import Path
 import textwrap
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -37,14 +37,13 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             tools:
             - gatk3_hc
+            gatk3_hc: {}
 
           variant_filtration:
             path_variant_annotation: ../variant_annotation
@@ -53,7 +52,7 @@ def minimal_config():
             # Testing 1 out 40+ possible combinations:
             # {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}
             filter_combinations:
-              - conservative.dominant.dominant_freq.all_genes.coding.passthrough
+              - conservative.dominant.dominant_freq.whole_genome.coding.passthrough
 
         data_sets:
           first_batch:
@@ -158,7 +157,7 @@ def test_filter_quality_step_part_get_resource_usage(variant_filtration_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_quality", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_quality", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -218,7 +217,7 @@ def test_filter_inheritance_step_part_get_resource_usage(variant_filtration_work
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_inheritance", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_inheritance", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -280,7 +279,7 @@ def test_filter_frequency_step_part_get_resource_usage(variant_filtration_workfl
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_frequency", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_frequency", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -345,7 +344,7 @@ def test_filter_regions_step_part_get_resource_usage(variant_filtration_workflow
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_regions", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_regions", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -362,14 +361,14 @@ def test_filter_scores_step_part_get_input_files(variant_filtration_workflow):
             "thresholds": "conservative",
             "inheritance": "dominant",
             "frequency": "af_dominant",
-            "regions": "all_genes",
+            "regions": "whole_genome",
         }
     )
     # Define expected
     base_name = (
         "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered."
-        "P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes"
+        "dominant.af_dominant.whole_genome/out/bwa.gatk3_hc.jannovar_annotate_vcf.filtered."
+        "P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.whole_genome"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -411,7 +410,7 @@ def test_filter_scores_step_part_get_resource_usage(variant_filtration_workflow)
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_scores", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_scores", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -428,15 +427,15 @@ def test_filter_het_comp_step_part_get_input_files(variant_filtration_workflow):
             "thresholds": "conservative",
             "inheritance": "dominant",
             "frequency": "af_dominant",
-            "regions": "all_genes",
+            "regions": "whole_genome",
             "scores": "coding",
         }
     )
     # Define expected
     base_name = (
         "work/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P001-N1-DNA1-WGS1.conservative."
-        "dominant.af_dominant.all_genes.coding/out/bwa.gatk3_hc.jannovar_annotate_vcf."
-        "filtered.P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.all_genes.coding"
+        "dominant.af_dominant.whole_genome.coding/out/bwa.gatk3_hc.jannovar_annotate_vcf."
+        "filtered.P001-N1-DNA1-WGS1.conservative.dominant.af_dominant.whole_genome.coding"
     )
     pedigree_dict = {"ped": "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=base_name)
@@ -480,7 +479,7 @@ def test_filter_het_comp_step_part_get_resource_usage(variant_filtration_workflo
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = variant_filtration_workflow.get_resource("filter_het_comp", "run", resource)
+        actual = variant_filtration_workflow.get_resource("filter_het_comp", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -506,9 +505,9 @@ def test_variant_filtration_workflow(variant_filtration_workflow):
     # Check result file construction
     tpl = (
         "output/bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
-        "dominant.dominant_freq.all_genes.coding.passthrough/out/"
+        "dominant.dominant_freq.whole_genome.coding.passthrough/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.filtered.P00{i}-N1-DNA1-WGS1.conservative."
-        "dominant.dominant_freq.all_genes.coding.passthrough.{ext}"
+        "dominant.dominant_freq.whole_genome.coding.passthrough.{ext}"
     )
     expected = [
         tpl.format(i=i, ext=ext)

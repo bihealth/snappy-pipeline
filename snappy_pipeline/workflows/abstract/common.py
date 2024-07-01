@@ -1,8 +1,8 @@
 """Commonly used code and types"""
 
-from itertools import chain
 import re
 import typing
+from itertools import chain
 
 from snakemake.io import Wildcards
 
@@ -57,7 +57,7 @@ class ForwardResourceUsageMixin:
     #: Resource usage definitions
     resource_usage_dict: typing.Optional[typing.Dict[str, ResourceUsage]] = None
 
-    def get_resource_usage(self, action: str) -> ResourceUsage:
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         assert self.resource_usage_dict is not None, "resource_usage_dict not set!"
         assert action in self.resource_usage_dict, f"No resource usage entry for {action}"

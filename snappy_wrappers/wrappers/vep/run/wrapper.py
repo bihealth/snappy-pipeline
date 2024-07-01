@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running VEP variant annotation
-"""
+"""Wrapper for running VEP variant annotation"""
 
 from snakemake.shell import shell
 

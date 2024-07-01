@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for oxo-G flagging.
-"""
+"""CUBI+Snakemake wrapper code for oxo-G flagging."""
 
 from snakemake import shell
 

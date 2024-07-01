@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_wgs_cnv_calling workflow module code"""
 
-
 import textwrap
 
 import pytest
@@ -31,14 +30,13 @@ def minimal_config():
           ngs_mapping:
             tools:
               dna: ['bwa']
-            compute_coverage_bed: true
-            path_target_regions: /path/to/regions.bed
             bwa:
               path_index: /path/to/bwa/index.fa
 
           somatic_wgs_sv_calling:
               path_ngs_mapping: ../ngs_mapping
               tools: ['manta']
+              manta: {}
 
         data_sets:
           first_batch:
@@ -61,11 +59,13 @@ def somatic_wgs_sv_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     """Return SomaticWgsSvCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had NGSMappingPipelineStep etc. here
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
@@ -117,7 +117,7 @@ def test_manta_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_wgs_sv_calling_workflow.get_resource("manta", "run", resource)
+        actual = somatic_wgs_sv_calling_workflow.get_resource("manta", "run", resource)()
         assert actual == expected, msg_error
 
 
@@ -134,7 +134,7 @@ def test_delly2_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     for action in all_actions:
         for resource, expected in expected_dict.items():
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
-            actual = somatic_wgs_sv_calling_workflow.get_resource("delly2", action, resource)
+            actual = somatic_wgs_sv_calling_workflow.get_resource("delly2", action, resource)()
             assert actual == expected, msg_error
 
 

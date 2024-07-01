@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy_wrappers.tools.bed_filter_jaccard``"""
 
-
 import pytest
 
 from snappy_wrappers.tools import bed_filter_jaccard

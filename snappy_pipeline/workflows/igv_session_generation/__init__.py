@@ -58,6 +58,8 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
+from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
+
 #: Extensions of files to create as main payload
 EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
 
@@ -65,18 +67,7 @@ EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
 EXT_NAMES = ("xml", "xml_md5")
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = r"""
-# Default configuration igv_session_generation
-step_config:
-  igv_session_generation:
-    path_ngs_mapping: ../ngs_mapping
-    # One of the following must be given!
-    path_variant_phasing: ''
-    path_variant_annotation: ''
-    path_variant_calling: ''
-    tools_ngs_mapping: [] # defaults to ngs_mapping tool
-    tools_variant_calling: [] # defaults to variant_annotation tool
-"""
+DEFAULT_CONFIG = IgvSessionGenerationConfigModel.default_config_yaml_string()
 
 
 class WriteIgvSessionFileStepPart(BaseStepPart):
@@ -114,7 +105,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
-            **wildcards
+            **wildcards,
         )
         return prev_step(input_path + ".vcf.gz")
 
@@ -181,9 +172,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             r"""
             pushd $(dirname {output.xml})
             md5sum $(basename {output.xml}) >$(basename {output.xml}).md5
-            """.format(
-                output=output
-            )
+            """.format(output=output)
         )
 
 
@@ -208,17 +197,18 @@ class IgvSessionGenerationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            config_model_class=IgvSessionGenerationConfigModel,
+            previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if self.config["path_%s" % prev]:
+            if prev_path := self.config.get(f"path_{prev}"):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, self.config["path_%s" % prev])
+                self.register_sub_workflow(prev, prev_path)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
@@ -228,14 +218,10 @@ class IgvSessionGenerationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_variant_calling"]:
-            self.config["tools_variant_calling"] = self.w_config["step_config"]["variant_calling"][
-                "tools"
-            ]
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not self.config.tools_variant_calling:
+            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
@@ -244,8 +230,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
-            caller=self.config["tools_variant_calling"],
+            mapper=self.config.tools_ngs_mapping,
+            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 
@@ -263,11 +249,3 @@ class IgvSessionGenerationWorkflow(BaseStep):
                         continue
                     else:
                         yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the variant annotation step is present."""
-        # TODO: Check that at least one path was provided in user provided config.
-        self.ensure_w_config(
-            ("step_config", "igv_session_generation", "path_ngs_mapping"),
-            "Path to ngs_mapping not configured but required for igv_session_generation",
-        )

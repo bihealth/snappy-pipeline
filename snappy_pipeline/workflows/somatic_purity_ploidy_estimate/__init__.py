@@ -11,8 +11,8 @@ The default configuration is as follows.
 
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
@@ -21,27 +21,15 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
+from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Tools for estimating purity and ploidy.
 PURITY_PLOIDY_TOOLS = "ascat"
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_purity_ploidy_estimate:
-    tools: ['ascat']  # REQUIRED - available: 'ascat'
-    tool_cnv_calling: cnvetti
-    # Configuration with read mapper and path to mapping output. Will use this
-    # for generating a pileup using samtools for obtaining the b allele
-    # fraction and computing coverage.
-    tool_ngs_mapping: bwa
-    path_ngs_mapping: ../ngs_mapping
-    # Configuration of ASCAT method.
-    ascat:
-      # BED file with loci for B allele frequency.
-      b_af_loci: REQUIRED  # REQUIRED
-""".lstrip()
+DEFAULT_CONFIG = SomaticPurityPloidyEstimateConfigModel.default_config_yaml_string()
 
 
 class AscatStepPart(BaseStepPart):
@@ -274,7 +262,7 @@ class AscatStepPart(BaseStepPart):
         }
         return {"log": log_dict[action]}
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -318,18 +306,16 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (NgsMappingWorkflow,),
+            config_model_class=SomaticPurityPloidyEstimateConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config["path_ngs_mapping"])
-        # TODO: potential bug here as this step requires an entry that is not available
-        #  in DEFAULT_CONFIG.
-        if self.config["tool_cnv_calling"] == "copywriter":
-
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        if self.config.tool_cnv_calling == "copywriter":
             self.register_sub_workflow(
                 "somatic_targeted_seq_cnv_calling",
-                self.config["path_somatic_targeted_seq_cnv_calling"],
+                self.config.path_somatic_targeted_seq_cnv_calling,
             )
 
     @listify
@@ -340,7 +326,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         sheets.
         """
         name_pattern = "{mapper}.{tool}.{ngs_library.name}"
-        for tool in self.config["tools"]:
+        for tool in self.config.tools:
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:
                     # Skip all donors that do not have a non-tumor bio sample, estimation only
@@ -354,7 +340,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                         for _test_sample in bio_sample.test_samples.values():
                             ngs_library = bio_sample.dna_ngs_library
                             name_pattern_value = name_pattern.format(
-                                mapper=self.config["tool_ngs_mapping"],
+                                mapper=self.config.tool_ngs_mapping,
                                 tool=tool,
                                 ngs_library=ngs_library,
                             )

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Canvas in somatic variant calling mode on WGS data
-"""
+"""Wrapper for running Canvas in somatic variant calling mode on WGS data"""
 
 from snakemake.shell import shell
 

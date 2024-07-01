@@ -92,7 +92,6 @@ class Pedigree:
 
 
 class ClippedRegion(genome_regions.GenomeRegion):
-
     NONE = 0
     LEFT = 1
     RIGHT = 2

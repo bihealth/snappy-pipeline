@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for region filter for wgs_mei_filtration.
-"""
-
+"""CUBI+Snakemake wrapper code for region filter for wgs_mei_filtration."""
 
 from snakemake import shell
 

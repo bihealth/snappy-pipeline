@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for computing CNV using PureCN
-"""
+"""CUBI+Snakemake wrapper code for computing CNV using PureCN"""
 
 import os
 

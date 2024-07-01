@@ -2,13 +2,13 @@ import logging
 import re
 import typing
 
-from annotation import Annotation
 import exceptions
 import vcfpy
+from annotation import Annotation
 
 
 class VcfParser:
-    pattern = re.compile("^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")  # noqa: W605
+    pattern = re.compile(r"^([^\[\]\s]+)(\[([0-9]+|REF)\])?$")
 
     def __init__(
         self,
@@ -37,12 +37,12 @@ class VcfParser:
         :param samples: samples mapping dict
         """
         if samples["normal"]:
-            if not samples["normal"] in header.samples.names:
+            if samples["normal"] not in header.samples.names:
                 raise exceptions.IllegalValue(
                     'Normal sample "{}" not found in vcf header'.format(samples["normal"])
                 )
         if samples["tumor"]:
-            if not samples["tumor"] in header.samples.names:
+            if samples["tumor"] not in header.samples.names:
                 raise exceptions.IllegalValue(
                     'Tumor sample "{}" not found in vcf header'.format(samples["tumor"])
                 )
@@ -59,9 +59,9 @@ class VcfParser:
         ):
             self.annotation = Annotation(
                 annotation_id=config["annotation"]["id"],
-                allele_column=config["annotation"]["allele"]
-                if "allele" in config["annotation"]
-                else None,
+                allele_column=(
+                    config["annotation"]["allele"] if "allele" in config["annotation"] else None
+                ),
                 extract=config["annotation"]["extract"],
                 split=config["annotation"]["split"],
             )

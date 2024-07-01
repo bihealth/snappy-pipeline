@@ -73,14 +73,13 @@ Reports
 Currently, no reports are generated.
 """
 
-from collections import OrderedDict
 import os
 import sys
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -89,6 +88,8 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
+
+from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -102,51 +103,7 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 ANNOTATION_TOOLS = ("jannovar", "vep")
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = r"""
-# Default configuration variant_annotation
-step_config:
-  somatic_variant_annotation:
-    tools: ["jannovar", "vep"]
-    path_somatic_variant_calling: ../somatic_variant_calling   # REQUIRED
-    tools_ngs_mapping: []      # default to those configured for ngs_mapping
-    tools_somatic_variant_calling: []  # default to those configured for somatic_variant_calling
-    jannovar:
-      path_jannovar_ser: REQUIRED                # REQUIRED
-      flag_off_target: False  # REQUIRED
-      dbnsfp:  # configuration for default genome release, needs change if differing
-        col_contig: 1
-        col_pos: 2
-        columns: []
-      annotation_tracks_bed: []
-      annotation_tracks_tsv: []
-      annotation_tracks_vcf: []
-      window_length: 50000000   # split input into windows of this size, each triggers a job
-      num_jobs: 100             # number of windows to process in parallel
-      use_profile: true         # use Snakemake profile for parallel processing
-      restart_times: 5          # number of times to re-launch jobs in case of failure
-      max_jobs_per_second: 10   # throttling of job creation
-      max_status_checks_per_second: 10   # throttling of status checks
-      ignore_chroms:            # patterns of chromosome names to ignore
-      - NC_007605  # herpes virus
-      - hs37d5     # GRCh37 decoy
-      - chrEBV     # Eppstein-Barr Virus
-      - 'GL*'      # problematic unplaced loci
-      - '*_decoy'  # decoy contig
-      - 'HLA-*'    # HLA genes
-    vep:
-      cache_dir: ""             # Defaults to $HOME/.vep Not a good idea on the cluster
-      species: homo_sapiens
-      assembly: GRCh38
-      cache_version: 102        # WARNING- this must match the wrapper's vep version!
-      tx_flag: "gencode_basic"  # The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged".
-      pick_order: ["biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length"]
-      num_threads: 8
-      buffer_size: 1000
-      output_options:
-      - everything
-      plugins: []   #Two required plugins for running pvactool are Frameshift and Wildtype
-      plugins_dir: ""
-"""
+DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
 
 
 class AnnotateSomaticVcfStepPart(BaseStepPart):
@@ -256,7 +213,7 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     #: Class available actions
     actions = ("annotate_somatic_vcf",)
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -270,14 +227,6 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
             threads=2,
             time="4-04:00:00",  # 4 days and 4 hours
             memory=f"{8 * 1024 * 2}M",
-        )
-
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return
-        self.parent.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "jannovar", "path_jannovar_ser"),
-            "Path to serialized Jannovar database",
         )
 
 
@@ -299,7 +248,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     #: Allowed keywords for pick order
     PICK_ORDER = ("biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length")
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -310,20 +259,10 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config["vep"]["num_threads"],
+            threads=self.config.vep.num_threads,
             time="24:00:00",  # 24 hours
             memory=f"{16 * 1024 * 1}M",
         )
-
-    def check_config(self):
-        if self.name not in self.config["tools"]:
-            return
-        if not self.config["vep"]["tx_flag"] in ("merged", "refseq", "gencode_basic"):
-            raise InvalidConfiguration("tx_flag must be 'gencode_basic', or 'merged' or 'refseq'")
-        if not all([x in self.PICK_ORDER for x in self.config["vep"]["pick_order"]]):
-            raise InvalidConfiguration(
-                "pick order keywords must be in {}".format(", ".join(self.PICK_ORDER))
-            )
 
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
@@ -347,7 +286,8 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            config_model_class=SomaticVariantAnnotationConfigModel,
+            previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -355,17 +295,15 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         )
         # Register sub workflows
         self.register_sub_workflow(
-            "somatic_variant_calling", self.config["path_somatic_variant_calling"]
+            "somatic_variant_calling", self.config.path_somatic_variant_calling
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_somatic_variant_calling"]:
-            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+        if not self.config.tools_somatic_variant_calling:
+            self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
-            ]["tools"]
+            ].tools
 
     @listify
     def get_result_files(self):
@@ -373,19 +311,19 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
         We will process all primary DNA libraries and perform joint calling within pedigrees
         """
-        annotators = set(self.config["tools"]) & set(ANNOTATION_TOOLS)
-        callers = set(self.config["tools_somatic_variant_calling"])
+        annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
+        callers = set(self.config.tools_somatic_variant_calling)
         name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=(
@@ -401,12 +339,12 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         full = list(
             filter(
                 lambda x: self.sub_steps[x].has_full,
-                set(self.config["tools"]) & set(ANNOTATION_TOOLS),
+                set(self.config.tools) & set(ANNOTATION_TOOLS),
             ),
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
-            mapper=self.config["tools_ngs_mapping"],
+            mapper=self.config.tools_ngs_mapping,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=full,
             ext=EXT_VALUES,
@@ -415,7 +353,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config["step_config"]["ngs_mapping"]["tools"]["dna"],
+            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
             annotator=annotators,
             ext=EXT_VALUES,
@@ -451,10 +389,3 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the path to the NGS mapping is present"""
-        self.ensure_w_config(
-            ("step_config", "somatic_variant_annotation", "path_somatic_variant_calling"),
-            "Path to variant calling not configured but required for somatic variant annotation",
-        )

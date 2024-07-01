@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's call step on tumor/matched-normal pairs
-"""
+"""Wrapper for running Delly2's call step on tumor/matched-normal pairs"""
 
 from snakemake.shell import shell
 

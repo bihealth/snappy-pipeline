@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for GATK UnifiedGenotyper: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for GATK UnifiedGenotyper: Snakemake wrapper.py"""
 
 from snakemake import shell
 

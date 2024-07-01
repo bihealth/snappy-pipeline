@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the variant_export_external workflow module code"""
-from copy import deepcopy
+
 import textwrap
+from copy import deepcopy
 
 import pytest
 import ruamel.yaml as ruamel_yaml
+from pydantic import ValidationError
 from snakemake.io import Wildcards
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.variant_export_external import VariantExportExternalWorkflow
 
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
@@ -73,6 +74,7 @@ def variant_export_external_workflow(
     # Create search path
     germline_sheet_fake_fs.fs.makedirs("/search_path")
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("pathlib", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_export_external", germline_sheet_fake_fs, mocker
@@ -100,12 +102,13 @@ def test_workflow_check_config_invalid_annotator_files(
     # Create search path
     germline_sheet_fake_fs.fs.makedirs("/search_path")
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("pathlib", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_export_external", germline_sheet_fake_fs, mocker
     )
     # Construct the workflow object
-    with pytest.raises(MissingConfiguration) as exec_info:
+    with pytest.raises(ValidationError) as exec_info:
         VariantExportExternalWorkflow(
             dummy_workflow,
             minimal_config,
@@ -113,9 +116,15 @@ def test_workflow_check_config_invalid_annotator_files(
             config_paths,
             work_dir,
         )
-    assert "path_refseq_ser" in exec_info.value.args[0]
-    assert "path_ensembl_ser" in exec_info.value.args[0]
-    assert "path_db" in exec_info.value.args[0]
+    errors = exec_info.value.errors()
+    assert len(errors) == 3
+    assert (
+        len(
+            {"path_refseq_ser", "path_ensembl_ser", "path_db"}
+            & set(s for e in errors for s in e["loc"])
+        )
+        == 3
+    )
 
 
 def test_workflow_check_config_invalid_search_directory(
@@ -136,12 +145,13 @@ def test_workflow_check_config_invalid_search_directory(
             create_missing_dirs=True,
         )
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("pathlib", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_export_external", germline_sheet_fake_fs, mocker
     )
     # Construct the workflow object
-    with pytest.raises(MissingConfiguration) as exec_info:
+    with pytest.raises(ValidationError) as exec_info:
         VariantExportExternalWorkflow(
             dummy_workflow,
             minimal_config,
@@ -149,7 +159,11 @@ def test_workflow_check_config_invalid_search_directory(
             config_paths,
             work_dir,
         )
-    assert " is not a directory: /search_path" in exec_info.value.args[0]
+
+    errors = exec_info.value.errors()
+    assert len(errors) == 1
+
+    assert "path_not_directory" in {e["type"] for e in errors}
 
 
 def test_workflow_check_config_invalid_search_pattern(
@@ -172,6 +186,7 @@ def test_workflow_check_config_invalid_search_pattern(
     # Create search path
     germline_sheet_fake_fs.fs.makedirs("/search_path")
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    patch_module_fs("pathlib", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs(
         "snappy_pipeline.workflows.variant_export_external", germline_sheet_fake_fs, mocker
@@ -183,7 +198,7 @@ def test_workflow_check_config_invalid_search_pattern(
         "*/*.vcf.gz",
     ]
     # Construct the workflow object
-    with pytest.raises(MissingConfiguration) as exec_info:
+    with pytest.raises(ValidationError) as exec_info:
         VariantExportExternalWorkflow(
             dummy_workflow,
             modified_config,
@@ -191,7 +206,25 @@ def test_workflow_check_config_invalid_search_pattern(
             config_paths,
             work_dir,
         )
-    assert "Value in 'search_patterns' is not a dictionary" in exec_info.value.args[0]
+
+    errors = exec_info.value.errors()
+
+    # there is 1 incorrectly defined search_patterns entry
+    # which is incorrectly defined as a list instead of a dict/key-value pairs,
+    # so pydantic tries to parse *2* dicts from the list and fails
+    assert len(errors) == 2
+
+    expected_errors = [
+        {
+            "input": input_str,
+            "loc": ("step_config", "variant_export_external", "search_patterns", i),
+            "msg": "Input should be a valid dictionary",
+            "type": "dict_type",
+            "url": "https://errors.pydantic.dev/2.7/v/dict_type",
+        }
+        for i, input_str in enumerate(["vcf", "*/*.vcf.gz"])
+    ]
+    assert expected_errors == errors
 
 
 # Tests for BamReportsExternalStepPart (bam_qc)   --------------------------------------------------
@@ -343,7 +376,7 @@ def test_varfish_annotator_step_part_get_resource_usage_gvcf_to_vcf(
         msg_error = f"Assertion error for resource '{resource}' for action 'gvcf_to_vcf'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "gvcf_to_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -408,7 +441,7 @@ def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(variant_export
         msg_error = f"Assertion error for resource '{resource}' for action 'merge_vcf'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "merge_vcf", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -507,7 +540,7 @@ def test_varfish_annotator_step_part_get_resource_usage_annotate(variant_export_
         msg_error = f"Assertion error for resource '{resource}' for action 'annotate'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "annotate", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
@@ -603,7 +636,7 @@ def test_varfish_annotator_step_part_get_resource_usage_bam_qc(variant_export_ex
         msg_error = f"Assertion error for resource '{resource}' for action 'bam_qc'."
         actual = variant_export_external_workflow.get_resource(
             "varfish_annotator_external", "bam_qc", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 

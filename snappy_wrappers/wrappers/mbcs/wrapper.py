@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for MTB-aware exome data
-"""
+"""CUBI+Snakemake wrapper code for MTB-aware exome data"""
 
 import os
 import shutil
@@ -20,6 +19,7 @@ from snappy_wrappers.wrapper_parallel import run_snakemake
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
+
 
 # Helper functions ------------------------------------------------------------
 def pair_fastq_files(input_left, input_right):

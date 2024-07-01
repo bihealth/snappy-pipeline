@@ -72,7 +72,6 @@ import sys
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -83,6 +82,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+
+from .model import WgsCnvExportExternal as WgsCnvExportExternalConfigModel
 
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
@@ -99,22 +100,7 @@ KEY_EXT = {
 }
 
 #: Default configuration for the wgs_cnv_export_external step
-DEFAULT_CONFIG = r"""
-# Default configuration wgs_cnv_export_external.
-step_config:
-  wgs_cnv_export_external:
-    tool_ngs_mapping: null       # OPTIONAL: used to create output file prefix.
-    tool_wgs_cnv_calling: null   # OPTIONAL: used to create output file prefix.
-    merge_vcf_flag: false        # OPTIONAL: true if pedigree VCFs still need merging (not recommended).
-    merge_option: id             # How to merge VCF, used in `bcftools --merge` call.
-    search_paths: []             # REQUIRED: path to all VCF files.
-    search_patterns: []          # REQUIRED: list of search pattern, ex.: [{"vcf": "*/*.vcf.gz"}]
-    release: GRCh37              # REQUIRED: default 'GRCh37'
-    path_refseq_ser: REQUIRED    # REQUIRED: path to RefSeq .ser file
-    path_ensembl_ser: REQUIRED   # REQUIRED: path to ENSEMBL .ser file
-    path_db: REQUIRED            # REQUIRED: path to annotator DB file to use
-    varfish_server_compatibility: false # OPTIONAL: build output compatible with varfish-server v1.2 (Anthenea) and early versions of the v2 (Bollonaster)
-"""
+DEFAULT_CONFIG = WgsCnvExportExternalConfigModel.default_config_yaml_string()
 
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
@@ -147,7 +133,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
         """"""
-        if self.config["merge_vcf_flag"]:
+        if self.config.merge_vcf_flag:
             pedigree = self.index_ngs_library_to_pedigree.get(wildcards.index_ngs_library)
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 for bio_sample in donor.bio_samples.values():
@@ -235,7 +221,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
         :param action: Action (i.e., step) in the workflow, example: 'run'.
@@ -265,13 +251,13 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
-            "merge_option": self.config["merge_option"],
+            "merge_option": self.config.merge_option,
             "gvcf_option": False,
         }
         return result
 
     def _get_params_annotate(self, wildcards):
-        varfish_server_compatibility_flag = self.config["varfish_server_compatibility"]
+        varfish_server_compatibility_flag = self.config.varfish_server_compatibility
         return {
             "step_name": "wgs_cnv_export_external",
             "varfish_server_compatibility": varfish_server_compatibility_flag,
@@ -309,8 +295,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         :return: Returns tag to be used to name intermediate and final files. Tag based on
         information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
         """
-        mapper = self.config["tool_ngs_mapping"]
-        caller = self.config["tool_wgs_cnv_calling"]
+        mapper = self.config.tool_ngs_mapping
+        caller = self.config.tool_wgs_cnv_calling
         if mapper and caller:
             return f"{mapper}.{caller}."
         elif mapper or caller:
@@ -342,7 +328,8 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
+            config_model_class=WgsCnvExportExternalConfigModel,
+            previous_steps=(),
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())
@@ -404,53 +391,3 @@ class WgsCnvExportExternalWorkflow(BaseStep):
                     )
                     continue  # pragma: no cover
                 yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
-
-    def check_config(self):
-        """Check configuration
-
-        :raises: MissingConfiguration: on missing or invalid configuration.
-        """
-        # Initialise variables
-        fail_test_bool = False
-        error_msg = "Missing or invalid configuration issue(s):\n"
-        required_file_keys = ("path_refseq_ser", "path_ensembl_ser", "path_db")
-
-        # Test files
-        for key in required_file_keys:
-            path_ = self.config[key]
-            try:
-                if not os.path.isfile(path_):
-                    error_msg += f"- Value for '{key}' is not a file: {path_}\n"
-                    fail_test_bool = True
-            except (ValueError, KeyError):
-                error_msg += f"- Value '{key}' is not properly defined: {path_}\n"
-                fail_test_bool = True
-
-        # Test search paths
-        search_paths = [item for item in self.config["search_paths"]]
-        if len(search_paths) == 0:
-            error_msg += "- Value for 'search_paths' cannot be empty.\n"
-            fail_test_bool = True
-        else:
-            for path_ in search_paths:
-                if not os.path.isdir(path_):
-                    error_msg += f"- Path in 'search_paths' is not a directory: {path_}\n"
-                    fail_test_bool = True
-
-        # Test search pattern
-        search_patterns = [item for item in self.config["search_patterns"]]
-        if len(search_patterns) == 0:
-            error_msg += "- Value for 'search_patterns' cannot be empty.\n"
-            fail_test_bool = True
-        else:
-            for value in search_patterns:
-                if not isinstance(value, dict):
-                    error_msg += (
-                        "- Value in 'search_patterns' is not a dictionary.\n"
-                        "Expected: [{'vcf': '*/*.vcf.gz'}]\n"
-                        f"Observed {type(value)}: '{value}'\n"
-                    )
-                    fail_test_bool = True
-        # Assert
-        if fail_test_bool:
-            raise MissingConfiguration(error_msg)

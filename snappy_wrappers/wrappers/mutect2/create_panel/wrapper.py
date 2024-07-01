@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py"""
 
 # WARNING- In rare cases, the parallel invokation of the prepare_panel
 #     wrapper creates multiple instances of variants located in padding

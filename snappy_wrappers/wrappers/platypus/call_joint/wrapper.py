@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Platypus in joint mode.
-"""
+"""Wrapper for running Platypus in joint mode."""
 
 import os
 

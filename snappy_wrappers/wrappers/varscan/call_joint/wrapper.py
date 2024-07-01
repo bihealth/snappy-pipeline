@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Varscan calling.
-"""
+"""Wrapper for running Varscan calling."""
 
 from snakemake.shell import shell
 

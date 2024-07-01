@@ -3,8 +3,8 @@
 
 import json
 import os
-from shutil import copyfile
 import tempfile
+from shutil import copyfile
 
 import pytest
 
