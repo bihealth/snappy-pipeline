@@ -295,7 +295,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             return {"filter_name": "{}_{}".format(self.filter_name, wildcards["filter_nb"])}
 
         return input_function
@@ -308,9 +308,9 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
+            yield from parent(wildcards, **_kwargs).items()
 
             yield (
                 "bam",
@@ -354,9 +354,9 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
+            yield from parent(wildcards, **_kwargs).items()
 
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
@@ -378,9 +378,9 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterEbfilterStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             ebfilter_config = self.config.filter_list[filter_nb - 1][self.filter_name]
             parameters.update(ebfilter_config)
@@ -398,9 +398,9 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -418,9 +418,9 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterRegionsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -438,9 +438,9 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterProtectedStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -900,7 +900,7 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield (
                     key,
