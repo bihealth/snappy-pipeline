@@ -337,7 +337,7 @@ def create_vcf_writer(path, vcf_reader, mode, rna_vcf, output_vcf):
                 [
                     ("ID", "GX"),
                     ("Number", "."),
-                    ("Type", "Float"),
+                    ("Type", "String"),
                     ("Description", "Gene Expressions"),
                 ]
             )
@@ -349,7 +349,7 @@ def create_vcf_writer(path, vcf_reader, mode, rna_vcf, output_vcf):
                 [
                     ("ID", "TX"),
                     ("Number", "."),
-                    ("Type", "Float"),
+                    ("Type", "String"),
                     ("Description", "Transcript Expressions"),
                 ]
             )

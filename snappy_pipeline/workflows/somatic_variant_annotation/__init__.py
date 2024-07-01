@@ -144,6 +144,8 @@ step_config:
       buffer_size: 1000
       output_options:
       - everything
+      plugins: []   #Two required plugins for running pvactool are Frameshift and Wildtype
+      plugins_dir: ""
 """
 
 
