@@ -43,7 +43,7 @@ def minimal_config():
               path_target_regions: /path/to/target/regions.bed
 mutect: {}
           somatic_variant_annotation:
-            path_somatic_variant_calling: SOMATIC_VARIANT_CALLING
+            path_somatic_variant_calling: ../somatic_variant_calling
             tools: ["jannovar", "vep"]
             jannovar:
               dbnsfp: {}
@@ -80,12 +80,7 @@ def somatic_variant_annotation_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
         dummy_workflow,
@@ -102,7 +97,7 @@ def somatic_variant_annotation_workflow(
 def test_jannovar_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests JannovarAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "../somatic_variant_calling//output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling/output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {
@@ -166,7 +161,7 @@ def test_jannovar_step_part_get_resource_usage(somatic_variant_annotation_workfl
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "../somatic_variant_calling//output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling/output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {

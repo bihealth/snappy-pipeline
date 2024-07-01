@@ -86,7 +86,7 @@ def somatic_variant_filtration_workflow(
 def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_input_files()"""
     somatic_base_out = (
-        "SOMATIC_VARIANT_ANNOTATION/output/"
+        "../somatic_variant_annotation/output/"
         "{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{annotator}.{tumor_library}"
     )

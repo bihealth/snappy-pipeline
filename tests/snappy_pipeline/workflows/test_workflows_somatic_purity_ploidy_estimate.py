@@ -180,7 +180,7 @@ def test_ascat_step_part_get_input_files_cnv_tumor_wes(
     wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "bins": (
-            "../somatic_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
+            "../somatic_targeted_seq_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }
@@ -197,7 +197,7 @@ def test_ascat_step_part_get_input_files_cnv_normal_wes(
     wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "bins": (
-            "../somatic_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
+            "../somatic_targeted_seq_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }
