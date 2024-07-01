@@ -78,7 +78,7 @@ def snakemake_obj(minimal_config):
     bench_iteration = 2
     script_dir = "/work"
     input_base_name = (
-        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     input_dict = {

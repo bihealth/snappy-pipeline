@@ -42,7 +42,7 @@ def minimal_config():
           variant_denovo_filtration:
             path_variant_phasing: VARIANT_PHASING
             path_variant_calling: VARIANT_CALLING
-            path_variant_annotation: VARIANT_ANNOTATION
+            path_variant_annotation: ../variant_annotation
             path_ngs_mapping: ../ngs_mapping
 
         data_sets:
