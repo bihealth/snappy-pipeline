@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running VCF2MAF incl VEP variant annotation
-"""
+"""Wrapper for running VCF2MAF incl VEP variant annotation"""
 
 import os
 

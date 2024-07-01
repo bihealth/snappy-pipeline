@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running BWA-MEM for PacBio data
-"""
+"""Wrapper for running BWA-MEM for PacBio data"""
 
 from snakemake.shell import shell
 

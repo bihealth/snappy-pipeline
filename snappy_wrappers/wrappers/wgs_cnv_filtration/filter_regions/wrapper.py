@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper for filtering WGS SV results for overlap with interesting regions.
-"""
-
+"""CUBI+Snakemake wrapper for filtering WGS SV results for overlap with interesting regions."""
 
 from snakemake import shell
 

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for picard metrics collection: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for picard metrics collection: Snakemake wrapper.py"""
 
 from snakemake import shell
 

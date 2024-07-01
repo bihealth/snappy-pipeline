@@ -6,12 +6,13 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'snappy-pipeline'
+project = "snappy-pipeline"
 copyright = "2015-2024, CUBI, Berlin Institute of Health"
-author = 'CUBI, Berlin Institute of Health'
+author = "CUBI, Berlin Institute of Health"
 
 # Get the project root dir, which is the parent dir of this
 import os, sys
+
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
 
@@ -21,6 +22,7 @@ project_root = os.path.dirname(cwd)
 sys.path.insert(0, project_root)
 
 import snappy_pipeline
+
 # The short X.Y version.
 version = snappy_pipeline.__version__
 # The full version, including alpha/beta/rc tags.
@@ -35,8 +37,8 @@ extensions = [
     "sphinx_mdinclude",
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "step/DEFAULT_CONFIG_*.rst"]
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "step/DEFAULT_CONFIG_*.rst"]
 source_suffix = ".rst"
 master_doc = "index"
 
@@ -73,8 +75,8 @@ texinfo_documents = [
 
 # html_theme = 'alabaster'
 pygments_style = "sphinx"
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = "snappy_pipelinedoc"
 html_last_updated_fmt = "%b %d, %Y"

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper code for GATK PhaseByTransmission
-"""
+"""Wrapper code for GATK PhaseByTransmission"""
 
 from snakemake.shell import shell
 

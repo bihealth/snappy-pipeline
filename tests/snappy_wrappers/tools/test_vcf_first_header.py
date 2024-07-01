@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy_wrappers.tools.vcf_first_header``"""
 
-from io import StringIO
 import textwrap
+from io import StringIO
 from unittest.mock import patch
 
 from snappy_wrappers.tools import vcf_first_header

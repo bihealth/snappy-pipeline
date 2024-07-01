@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for HTS Screen: Snakemake wrapper.py
-"""
-
+"""CUBI+Snakemake wrapper code for HTS Screen: Snakemake wrapper.py"""
 
 from snakemake import shell
 

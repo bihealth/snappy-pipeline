@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for EBFilter flagging.
-"""
+"""CUBI+Snakemake wrapper code for EBFilter flagging."""
 
 from snakemake import shell
 

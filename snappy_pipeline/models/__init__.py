@@ -1,19 +1,19 @@
 import enum
-from enum import Enum
-from inspect import isclass
-from io import StringIO
 import json
 import re
 import types
 import typing
+from enum import Enum
+from inspect import isclass
+from io import StringIO
 from typing import Annotated
 
+import ruamel
+import typing_extensions
 from annotated_types import Predicate
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_core import PydanticUndefined
-import ruamel
 from ruamel.yaml import YAML
-import typing_extensions
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:

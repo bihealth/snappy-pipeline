@@ -11,12 +11,12 @@ The default configuration is as follows.
 
 """
 
-from collections import OrderedDict
 import os
-
-from snakemake.io import touch
+from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
+from snakemake.io import touch
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage

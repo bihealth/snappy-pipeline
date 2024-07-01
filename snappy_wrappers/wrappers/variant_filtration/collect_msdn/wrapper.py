@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Snakemake wrapper for collecting the MSDN.
-"""
+"""Snakemake wrapper for collecting the MSDN."""
 
 import os.path
 import tempfile

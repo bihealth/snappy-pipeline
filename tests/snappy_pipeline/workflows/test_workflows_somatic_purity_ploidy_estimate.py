@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_purity_ploidy_estimate workflow module code"""
+
 import copy
 import textwrap
 
@@ -56,9 +57,9 @@ def minimal_config():
 def minimal_config_copywritter(minimal_config):
     """Returns minimum configuration file with copywritter as the CNV caller."""
     minimal_config_adjusted = copy.deepcopy(minimal_config)
-    minimal_config_adjusted["step_config"]["somatic_purity_ploidy_estimate"][
-        "tool_cnv_calling"
-    ] = "copywriter"
+    minimal_config_adjusted["step_config"]["somatic_purity_ploidy_estimate"]["tool_cnv_calling"] = (
+        "copywriter"
+    )
     return minimal_config_adjusted
 
 

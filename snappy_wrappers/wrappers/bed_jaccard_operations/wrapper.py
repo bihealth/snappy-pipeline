@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for BEDTools intersect + snappy-bed_filter_jaccard: Snakemake wrapper.py
-"""
+"""Wrapper for BEDTools intersect + snappy-bed_filter_jaccard: Snakemake wrapper.py"""
 
 from snakemake import shell
 

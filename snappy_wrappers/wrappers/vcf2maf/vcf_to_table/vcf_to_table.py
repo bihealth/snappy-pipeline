@@ -1,14 +1,14 @@
 import argparse
 import logging
-from parser import VcfParser
 import sys
 import typing
+from parser import VcfParser
 
-from action import Action
 import exceptions
+import vcfpy
+from action import Action
 from functions import Functions
 from ruamel.yaml import YAML
-import vcfpy
 
 
 def _get_command_line_parser():

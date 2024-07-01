@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-from collections import OrderedDict
-from collections.abc import MutableMapping
 import contextlib
 import datetime
-from fnmatch import fnmatch
-from functools import lru_cache
-from io import StringIO
 import logging
 import os
 import os.path
 import sys
 import tempfile
 import typing
+from collections import OrderedDict
+from collections.abc import MutableMapping
+from fnmatch import fnmatch
+from functools import lru_cache
+from io import StringIO
 from typing import Any, Callable
 
 import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
 import snakemake
-from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
-
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -33,6 +31,8 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
+from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+
 from snappy_pipeline.base import (
     MissingConfiguration,
     UnsupportedActionException,

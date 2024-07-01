@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Delly2's call step
-"""
+"""Wrapper for running Delly2's call step"""
 
 from snakemake.shell import shell
 

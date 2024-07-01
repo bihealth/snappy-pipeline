@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools filter over regions defined by a bed file
-"""
+"""Wrapper for running bcftools filter over regions defined by a bed file"""
 
 from snakemake.shell import shell
 

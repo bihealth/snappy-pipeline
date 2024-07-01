@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Snakemake wrapper for summarising the de novo counts.
-"""
+"""Snakemake wrapper for summarising the de novo counts."""
 
 import tempfile
 

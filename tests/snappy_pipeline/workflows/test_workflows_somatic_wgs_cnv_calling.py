@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_wgs_cnv_calling workflow module code"""
 
-
-from itertools import chain
 import textwrap
+from itertools import chain
 
 import pytest
 import ruamel.yaml as ruamel_yaml

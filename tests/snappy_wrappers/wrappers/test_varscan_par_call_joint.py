@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Code for testing varscan_par/call_joint wrapper"""
-from pathlib import Path
+
 import textwrap
+from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml

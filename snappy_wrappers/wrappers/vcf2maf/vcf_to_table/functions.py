@@ -5,8 +5,8 @@ import os
 import re
 import typing
 
-from common_functions import calc_end_pos, minimize_mutation, strip_sequence_version, variant_type
 import exceptions
+from common_functions import calc_end_pos, minimize_mutation, strip_sequence_version, variant_type
 from protein_mutation_parser import parse_protein_mutation
 from variant_classification import variant_classification_jannovar, variant_classification_vep
 
@@ -31,7 +31,7 @@ class Functions:
         self.compiled["variant_classification_jannovar"] = variant_classification_jannovar
 
         for col_name, col_def in config["output"].items():
-            if "function" in col_def and not col_def["function"] in self.compiled:
+            if "function" in col_def and col_def["function"] not in self.compiled:
                 raise exceptions.MissingValue(
                     'Function "{}" requested to process column "{}" not found'.format(
                         col_def["function"], col_name

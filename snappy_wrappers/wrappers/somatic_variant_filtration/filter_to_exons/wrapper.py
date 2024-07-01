@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for filtering to exons/regions of interest.
-"""
+"""CUBI+Snakemake wrapper code for filtering to exons/regions of interest."""
 
 import textwrap
 

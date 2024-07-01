@@ -1,9 +1,10 @@
 """Implementation of the ``sv_calling_wgs`` step"""
 
-from itertools import chain
 import re
+from itertools import chain
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Jannovar variant annotation
-"""
+"""Wrapper for running Jannovar variant annotation"""
 
 from snakemake.shell import shell
 

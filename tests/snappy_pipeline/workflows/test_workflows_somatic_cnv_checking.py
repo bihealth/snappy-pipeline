@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_cnv_checking workflow module code"""
 
-
 import textwrap
 
 import pytest

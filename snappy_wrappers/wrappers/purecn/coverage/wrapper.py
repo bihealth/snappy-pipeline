@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for computing PureCN coverage
-"""
+"""CUBI+Snakemake wrapper code for computing PureCN coverage"""
 
 import os
 

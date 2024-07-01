@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for ExpansionHunter: Snakemake wrapper.py
-"""
+"""CUBI+Snakemake wrapper code for ExpansionHunter: Snakemake wrapper.py"""
+
 import os
 
 from snakemake import shell

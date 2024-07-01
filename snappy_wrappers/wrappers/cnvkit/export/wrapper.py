@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py export
-"""
+"""Wrapper for cnvkit.py export"""
 
 from snakemake.shell import shell
 
