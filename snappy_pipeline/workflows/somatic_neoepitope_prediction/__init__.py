@@ -46,6 +46,8 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
+from .model import SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel
+
 
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
@@ -54,28 +56,7 @@ __email__ = "pham.gia-cuong@bih-charite.de"
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = r"""
-step_config:
-  somatic_neoepitope_prediction:
-    path_somatic_variant_annotation: ../somatic_variant_annotation  # REQUIRED
-    path_rna_ngs_mapping: ../ngs_mapping
-    tools_somatic_variant_annotation: ["vep"]
-    tools_rna_mapping: [] # deafult to those configured for ngs_mapping
-    tools_ngs_mapping: [] # deafult to those configured for ngs_mapping
-    tools_somatic_variant_calling: [] # deafult to those configured for somatic_variant_calling
-    preparation:
-      format: 'snappy_custom' # REQUIRED - The file format of the expression file to process. (stringtie, kallisto, cufflinks, snappy_custom, custom)
-      # Use `custom` to process file formats not explicitly supported.
-      # The `custom` option requires the use of the --id-column and --expression-column arguments.
-      expression_file: '' # expression file path. If the format is not snappy_custom
-      path_features: '' # Gencode file path, required for star and snappy format
-      mode: 'gene'  # REQUIRED - Determine whether the expression file contains gene or transcript TPM values.
-      full_vep_annotation: True # The somatic_variant_annotation has been done in fully annotation mode
-      id_column:  # Gene/Transcript id column name. Need when using the `custom` format.
-      expression_column:  # Expression column name. Need when using the `custom` format.
-      ignore_ensembl_id_version: True #Ignore the ensemble id version
-      max_depth: 4000
-"""
+DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
 
 class NeoepitopePreparationStepPart(BaseStepPart):
@@ -183,7 +164,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_resource_usage(self, action):
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         mem_mb = 6 * 1024  # 6GB
         return ResourceUsage(
@@ -225,41 +206,37 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (
+            config_model_class=SomaticNeoepitopePredictionConfigModel,
+            previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 NgsMappingWorkflow,
             ),
         )
         # Register sub step classes so the sub steps are available
+        config = self.config
         self.register_sub_step_classes((NeoepitopePreparationStepPart, LinkOutStepPart))
         self.register_sub_workflow(
             "somatic_variant_annotation",
-            self.config["path_somatic_variant_annotation"],
+            config["path_somatic_variant_annotation"],
         )
         self.register_sub_workflow(
             "ngs_mapping",
-            self.config["path_rna_ngs_mapping"],
+            config["path_rna_ngs_mapping"],
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config["tools_ngs_mapping"]:
-            self.config["tools_ngs_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "dna"
-            ]
-        if not self.config["tools_somatic_variant_calling"]:
-            self.config["tools_somatic_variant_calling"] = self.w_config["step_config"][
+        if not config.tools_ngs_mapping:
+            config.tools_ngs_mapping = self.w_config["step_config"]["ngs_mapping"].tools.dna
+        if not config.tools_somatic_variant_calling:
+            config.tools_somatic_variant_calling = self.w_config["step_config"][
                 "somatic_variant_calling"
-            ]["tools"]
-        if not self.config["tools_somatic_variant_annotation"]:
-            self.config["tools_somatic_variant_annotation"] = ["vep"]
-        if not self.config["tools_rna_mapping"]:
-            self.config["tools_rna_mapping"] = self.w_config["step_config"]["ngs_mapping"]["tools"][
-                "rna"
-            ]
-        if not self.config["preparation"]["path_features"]:
-            self.config["preparation"]["path_features"] = self.w_config["static_data_config"][
-                "features"
-            ]["path"]
+            ].tools
+        if not config.tools_somatic_variant_annotation:
+            config.tools_somatic_variant_annotation = ["vep"]
+        if not config.tools_rna_mapping:
+            config.tools_rna_mapping = self.w_config["step_config"]["ngs_mapping"].tools.rna
+        if not config.preparation.path_features:
+            config.preparation.path_features = self.w_config["static_data_config"].features.path
 
     @listify
     def get_result_files(self):

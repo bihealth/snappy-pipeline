@@ -36,6 +36,7 @@ from snappy_pipeline.workflows.somatic_variant_calling.model import SomaticVaria
 from snappy_pipeline.workflows.somatic_variant_filtration.model import SomaticVariantFiltration
 from snappy_pipeline.workflows.somatic_variant_signatures.model import SomaticVariantSignatures
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import SomaticWgsCnvCalling
+from snappy_pipeline.workflows.somatic_neoepitope_prediction.model import SomaticNeoepitopePrediction
 from snappy_pipeline.workflows.somatic_wgs_sv_calling.model import SomaticWgsSvCalling
 from snappy_pipeline.workflows.sv_calling_targeted.model import SvCallingTargeted
 from snappy_pipeline.workflows.sv_calling_wgs.model import SvCallingWgs
@@ -113,6 +114,7 @@ class StepConfig(TypedDict, total=False):
     somatic_gene_fusion_calling: SomaticGeneFusionCalling
     somatic_hla_loh_calling: SomaticHlaLohCalling
     somatic_msi_calling: SomaticMsiCalling
+    somatic_neoepitope_prediction: SomaticNeoepitopePrediction
     somatic_purity_ploidy_estimate: SomaticPurityPloidyEstimate
     somatic_targeted_seq_cnv_calling: SomaticTargetedSeqCnvCalling
     somatic_variant_annotation: SomaticVariantAnnotation
