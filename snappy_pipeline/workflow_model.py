@@ -36,7 +36,9 @@ from snappy_pipeline.workflows.somatic_variant_calling.model import SomaticVaria
 from snappy_pipeline.workflows.somatic_variant_filtration.model import SomaticVariantFiltration
 from snappy_pipeline.workflows.somatic_variant_signatures.model import SomaticVariantSignatures
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import SomaticWgsCnvCalling
-from snappy_pipeline.workflows.somatic_neoepitope_prediction.model import SomaticNeoepitopePrediction
+from snappy_pipeline.workflows.somatic_neoepitope_prediction.model import (
+    SomaticNeoepitopePrediction,
+)
 from snappy_pipeline.workflows.somatic_wgs_sv_calling.model import SomaticWgsSvCalling
 from snappy_pipeline.workflows.sv_calling_targeted.model import SvCallingTargeted
 from snappy_pipeline.workflows.sv_calling_wgs.model import SvCallingWgs
