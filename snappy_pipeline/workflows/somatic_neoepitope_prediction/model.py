@@ -1,25 +1,24 @@
+import enum
 from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
-# class Format:
-#     stringtie = "stringtie"
-#     snappy_custom = "snappy_custom"
-#     cufflinks = "cufflinks"
-#     kallisto = "kallisto"
-#     custom = "custom"
+
+class Format(enum.StrEnum):
+    stringtie = "stringtie"
+    snappy_custom = "snappy_custom"
+    cufflinks = "cufflinks"
+    kallisto = "kallisto"
+    custom = "custom"
 
 
 class Preparation(SnappyModel):
-    format: Annotated[
-        str, Field(examples=["stringtie", "snappy_custom", "cufflinks", "kallisto", "custom"])
-    ] = "snappy_custom"
-    # Literal["stringtie","snappy_custom","cufflinks","kallisto","custom"]
-    """The file format of the expression file to process. (stringtie, kallisto, cufflinks, snappy_custom, custom)
-    Use `custom` to process file formats not explicitly supported.
-    The `custom` option requires the use of the --id-column and --expression-column arguments."""
+    format: Annotated[Format, EnumField(Format)] = Format.snappy_custom
+    "The file format of the expression file to process. (stringtie, kallisto, cufflinks, snappy_custom, custom)"
+    "Use `custom` to process file formats not explicitly supported."
+    "The `custom` option requires the use of the --id-column and --expression-column arguments."
     path_features: str = ""
     """Gencode file path, required for star and snappy format"""
     mode: Annotated[str, Field(examples=["gene", "transcript"])] = "gene"

@@ -24,8 +24,11 @@ ensemble_id = (
 max_depth = snakemake.params.args["max_depth"]
 format = snakemake.params.args["format"]
 mode = snakemake.params.args["mode"]
-expression_column = snakemake.params.args["expression_column"]
-id_column = snakemake.params.args["id_column"]
+expression_column = (
+    f"--expression-file {snakemake.params.args['expression_column']}" if format == "custom" else ""
+)
+
+id_column = f"--expression-file {snakemake.params.args['id_column']}" if format == "custom" else ""
 
 rna_vcf = (
     f"--rna-vcf $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz "
@@ -86,8 +89,8 @@ python3 {preparation_vcf} \
     --genecode {snakemake.config[static_data_config][features][path]} \
     --input-vcf {snakemake.input.vcf} --format {format} \
     --mode {mode} \
-    -e {expression_column} \
-    -i {id_column} \
+    {expression_column} \
+    {id_column} \
     -s {snakemake.wildcards.tumor_library} \
     -o /dev/stdout \
     {expression_file}\

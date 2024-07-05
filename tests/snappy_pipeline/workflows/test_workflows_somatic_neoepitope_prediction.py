@@ -38,8 +38,7 @@ def minimal_config():
               dna: ['bwa']
               rna: ['star']
             star:
-              path_index: /path/to/index
-              path_features:
+              path_index: /path/to/star/index
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -47,22 +46,20 @@ def minimal_config():
             tools:
             - mutect2
             - scalpel
+            mutect2: {}
             scalpel:
               path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_annotation:
+            path_somatic_variant_calling: ../somatic_variant_calling
             tools: ["vep"]
             vep:
-              path_dir_cache: /path/to/dir/cache
+              cache_dir: /path/to/dir/cache
 
           somatic_neoepitope_prediction:
             path_somatic_variant_annotation: ../somatic_variant_annotation
             path_rna_ngs_mapping: ../ngs_mapping
-            tools_somatic_variant_annotation: []
-            tools_rna_mapping: []
-            tools_ngs_mapping: []
-            tools_somatic_variant_calling: []
-            max_depth: "4000"
+            tools_somatic_variant_annotation: ["vep"]
             preparation:
                 format: 'snappy_custom'
                 mode: 'gene'
@@ -87,12 +84,15 @@ def somatic_neoepitope_prediction_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
+    aligner_indices_fake_fs,
     mocker,
 ):
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.ngs_mapping.model", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
+
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "somatic_variant_annotation": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
@@ -149,7 +149,7 @@ def test_neoepitope_preparation_step_part_get_log_files(somatic_neoepitope_predi
     assert actual == expected
 
 
-def test_neoepitope_preparation_step_part_get_resource_usage(
+def test_neoepitope_preparation_step_part_get_resource(
     somatic_neoepitope_prediction_workflow,
 ):
     # Define expected
@@ -159,7 +159,7 @@ def test_neoepitope_preparation_step_part_get_resource_usage(
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_neoepitope_prediction_workflow.get_resource(
             "neoepitope_preparation", "run", resource
-        )
+        )()
         assert actual == expected, msg_error
 
 
