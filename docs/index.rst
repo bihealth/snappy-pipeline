@@ -68,23 +68,17 @@ Project Info
     step/igv_session_generation
     step/ngs_data_qc
     step/ngs_mapping
-    step/ngs_sanity_checking
     step/somatic_gene_fusion_calling
-    step/somatic_neoepitope_prediction
-    step/somatic_ngs_sanity_checking
     step/somatic_purity_ploidy_estimate
     step/somatic_targeted_seq_cnv_calling
     step/somatic_variant_annotation
     step/somatic_variant_calling
-    step/somatic_variant_checking
-    step/somatic_variant_expression
     step/somatic_variant_filtration
     step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
     step/sv_calling_targeted
     step/targeted_seq_mei_calling
     step/targeted_seq_repeat_analysis
-    step/tcell_crg_report
     step/variant_annotation
     step/variant_calling
     step/variant_checking
