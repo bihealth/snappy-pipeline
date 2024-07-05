@@ -59,6 +59,9 @@ class TargetCoverageReportEntry(SnappyModel):
       - name: IDT_xGen_V1_0
         pattern: "xGen Exome Research Panel V1\\.0*"
         path: "path/to/targets.bed"
+
+    Bed file for many Agilent exome panels can be found in
+    /fast/work/groups/cubi/projects/biotools/static_data/exome_panel/Agilent
     """
 
     name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
@@ -88,7 +91,14 @@ class BwaMode(Enum):
 
 
 class BwaMapper(SnappyModel):
-    path_index: str
+    path_index: str = Field(
+        examples=[
+            "/data/cephfs-1/work/projects/cubit/current/static_data/precomputed/BWA/0.7.17/GRCh37/hs37d5/hs37d5.fa",
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/GRCh38.d1.vd1/precomputed/BWA/0.7.17/GRCh38.d1.vd1.fa",
+            "/data/cephfs-1/work/groups/cubi/projects/biotools/bwa-mem2/GRCh37/hs37d5/hs37d5.fa",
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/GRCh38.d1.vd1/precomputed/BWA_MEM2/2.2.1/GRCh38.d1.vd1.fa",
+        ]
+    )
     """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
@@ -161,8 +171,13 @@ class Somatic(SnappyModel):
 
 
 class Bqsr(SnappyModel):
-    common_variants: str
-    """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
+    common_variants: str = Field(
+        examples=[
+            "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/b37/small_exac_common_3.vcf.gz",
+            "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/hg38/small_exac_common_3.hg38.vcf.gz",
+        ]
+    )
+    """Common germline variants (see https://console.cloud.google.com/storage/browser/gatk-best-practices)"""
 
 
 class AgentLibPrepType(Enum):
@@ -174,7 +189,11 @@ class AgentLibPrepType(Enum):
 
 
 class AgentPrepare(SnappyModel):
-    path: str
+    path: str = Field(
+        examples=[
+            "/fast/work/groups/cubi/projects/biotools/AGeNT_3.0.6/agent/lib/trimmer-3.0.5.jar"
+        ]
+    )
 
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
@@ -190,8 +209,17 @@ class AgentMarkDuplicatesConsensusMode(Enum):
 
 
 class AgentMarkDuplicates(SnappyModel):
-    path: str
+    path: str = Field(
+        examples=["/fast/work/groups/cubi/projects/biotools/AGeNT_3.0.6/agent/lib/creak-1.0.5.jar"]
+    )
     path_baits: str
+    """
+    Different exome panels cannot be accomodated here, because the selection method used for coverage is not used.
+    The absolute path of the exome panel must be input.
+
+    Bed file for many Agilent exome panels can be found in
+    /fast/work/groups/cubi/projects/biotools/static_data/exome_panel/Agilent
+    """
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 
@@ -210,7 +238,12 @@ class Agent(SnappyModel):
 
 
 class Star(SnappyModel):
-    path_index: str
+    path_index: str = Field(
+        examples=[
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/hs37d5/annotation/GENCODE/19/precomputed/STAR/2.7.10a/100",
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/GRCh38/annotations/GENCODE/36/precomputed/STAR/STAR_2.7.10a_100",
+        ]
+    )
     """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
@@ -261,7 +294,12 @@ class Strand(enum.IntEnum):
 
 
 class Strandedness(SnappyModel):
-    path_exon_bed: str
+    path_exon_bed: str = Field(
+        examples=[
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/hs37d5/annotation/GENCODE/19/gencode.v19.chr_scaff.annotation.cds.collapse_annotation.bed",
+            "/fast/work/groups/cubi/projects/biotools/static_data_by_ref/GRCh38/annotations/GENCODE/36/gencode.v36.primary_assembly.annotation.cds.collapse_annotation.bed",
+        ]
+    )
     """Location of usually highly expressed genes. Known protein coding genes is a good choice"""
 
     strand: Strand = Strand.UNKNOWN
