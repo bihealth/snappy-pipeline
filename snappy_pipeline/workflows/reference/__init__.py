@@ -11,8 +11,10 @@ The default configuration is as follows.
 
 """
 
-from snappy_pipeline.workflows.abstract import BaseStepPart
+from biomedsheets.shortcuts import GenericSampleSheet
 
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import BaseStepPart, BaseStep, LinkInStep
 from .model import ReferenceModel as ReferenceConfigModel
 
 #: Default configuration for the reference
