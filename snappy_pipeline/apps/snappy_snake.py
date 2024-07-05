@@ -96,7 +96,6 @@ STEP_TO_MODULE = {
     "somatic_wgs_sv_calling": somatic_wgs_sv_calling,
     "sv_calling_targeted": sv_calling_targeted,
     "sv_calling_wgs": sv_calling_wgs,
-    "tcell_crg_report": tcell_crg_report,
     "tumor_mutational_burden": tumor_mutational_burden,
     "varfish_export": varfish_export,
     "variant_annotation": variant_annotation,
