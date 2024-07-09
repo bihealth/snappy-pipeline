@@ -13,8 +13,9 @@ class Tool(enum.StrEnum):
     manta = "manta"
     melt = "melt"
 
-
+# Note: GCNV config for WGS & targeted has differences
 class Gcnv(SnappyModel):
+    # TODO: these two will only be used if the wrappers accessing this key are actually run by the workflow
     # path_par_intervals: str = ""
     # """Path to interval block list with PAR region for contig calling."""
 
@@ -31,6 +32,8 @@ class Gcnv(SnappyModel):
     """
 
     # Not sure if this can/should be empty be default; can we set a required flag?
+    # TODO: this can probably not be empty
+    # TODO: the 'library' fields need to also exist in path_target_interval_list_mapping (as name)
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
     Path to gCNV model - will execute analysis in CASE MODE.
@@ -46,9 +49,12 @@ class Gcnv(SnappyModel):
     If the library is in family/pedigree then all of the family/pedigree will be skipped.
     """
 
-
+# TODO: only a singular Delly2 config for germline WGS & targeted is needed
 class Delly2(SnappyModel):
-    path_exclude_tsv: str | None = None
+    path_exclude_tsv: str | None = Field(None, examples=[
+        "/data/cephfs-1/work/projects/cubit/20.05/static_data/app_support/Delly/0.8.3/human.hg19.excl.tsv",
+        "/data/cephfs-1/work/projects/cubit/20.05/static_data/app_support/Delly/0.8.3/human.hg38.excl.tsv"
+    ])
 
     map_qual: int = 1
 
@@ -64,7 +70,7 @@ class Delly2(SnappyModel):
     If the library is in family/pedigree then all of the family/pedigree will be skipped.
     """
 
-
+# TODO: only a singular manta config for WGS & targeted is needed
 class Manta(SnappyModel):
     num_threads: int = 16
 
@@ -74,7 +80,7 @@ class Manta(SnappyModel):
     If the library is in family/pedigree then all of the family/pedigree will be skipped.
     """
 
-
+# TODO: only a singular melt config for WGS & targeted is needed
 class Melt(SnappyModel):
     me_refs_infix: str = Field(examples=["1KGP_Hg19"])
 
@@ -86,6 +92,7 @@ class Melt(SnappyModel):
     """adjust, e.g., Hg38/Hg38.genes.bed"""
 
     me_refs_path: str = Field(examples=["me_refs"])
+    """Path to MELT reference files"""
 
     skip_libraries: list[str] = []
     """

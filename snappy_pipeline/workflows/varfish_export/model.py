@@ -38,8 +38,8 @@ class VarfishExport(SnappyStepModel):
     release: str = "GRCh37"
     """The release of the genome reference that data has been aligned to."""
 
-    path_exon_bed: str
+    path_exon_bed: str | None = None
     """Path to BED file with exons; used for reducing data to near-exon small variants."""
 
-    path_mehari_db: str
+    path_mehari_db: str = Field(examples=["/data/cephfs-1/work/groups/cubi/projects/biotools/mehari/0.21.0/db"])
     """Path to mehari database."""

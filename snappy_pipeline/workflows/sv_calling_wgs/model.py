@@ -23,22 +23,24 @@ class DnaLongTool(enum.StrEnum):
 
 
 class Tools(SnappyModel):
-    dna: Annotated[list[DnaTool], EnumField(DnaTool, [DnaTool.delly2])]
+    dna: Annotated[list[DnaTool], EnumField(DnaTool, [DnaTool.gcnv, DnaTool.delly2, DnaTool.manta, DnaTool.melt])]
     dna_long: Annotated[list[DnaLongTool], EnumField(DnaLongTool, [])]
 
 
 class Gcnv(SnappyModel):
+    # TODO: these two will only be used if the wrappers accessing this key are actually run by the workflow
     # path_par_intervals: str
     # """Path to interval block list with PAR region for contig calling."""
 
     # path_uniquely_mapable_bed: str
     # """path to BED file with uniquely mappable regions."""
 
+    # TODO: this can probably not be empty
     precomputed_model_paths: list[PrecomputedModelEntry] = []
     """
     Path to gCNV model - will execute analysis in CASE MODE.
     Example:
-      - library: "Agilent SureSelect Human All Exon V6"  # Kit name, match in path_target_interval_list_mapping
+      - library: wgs                                 # Kit name
         contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
         model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
     """
@@ -84,6 +86,9 @@ class Melt(SnappyModel):
     jar_file: str
     genes_file: str = "add_bed_files/1KGP_Hg19 / hg19.genes.bed"
     """adjust, e.g., Hg38/Hg38.genes.bed"""
+
+    me_refs_path: str = Field(examples=["me_refs"])
+    """Path to MELT reference files"""
 
     skip_libraries: list[str] = []
     """

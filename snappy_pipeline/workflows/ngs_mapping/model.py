@@ -38,8 +38,12 @@ class TargetCoverageReportEntry(SnappyModel):
     region coverage or selecting targeted exons.
 
     The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
+    with spike-ins seen from Yale genomics. The path above would be
     mapped to the name "default".
+    If no pattern macthes an entry in the sample sheet then an entry with name __default__ is used.
+      - name: __default__
+        path: /data/cephfs-1/work/projects/cubit/20.05/static_data/exon_list/ENSEMBL/86/GRCh38/ENSEMBL_86.bed
+    Or for exomes kits:
       - name: IDT_xGen_V1_0
         pattern: "xGen Exome Research Panel V1\\.0*"
         path: "path/to/targets.bed"
@@ -267,7 +271,13 @@ class Mbcs(SnappyModel):
 
 class NgsMapping(SnappyStepModel):
     tools: Tools
-    """Aligners to use for the different NGS library types"""
+    """
+    Aligners to use for the different NGS library types
+    Example / Default for germline workflows:
+    tools:
+      dna:
+      - bwa_mem2
+    """
 
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
