@@ -30,13 +30,16 @@ expression_column = (
 
 id_column = f"--expression-file {snakemake.params.args['id_column']}" if format == "custom" else ""
 
+bam_file = snakemake.input.bam
+gencount_file = snakemake.input.expression
+
 rna_vcf = (
     f"--rna-vcf $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz "
     if format == "snappy_custom"
     else ""
 )
 expression_file = (
-    f"--expression-file {snakemake.input.expression} "
+    f"--expression-file {gencount_file} "
     if format == "snappy_custom"
     else config["preparation"]["expression_file"]
 )
@@ -80,7 +83,7 @@ if [[ {format}=="snappy_custom" ]]; then
         --max-depth {max_depth} \
         --redo-BAQ -Oz \
         -o $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz \
-        {snakemake.input.bam}
+        {bam_file}
     tabix -f $TMPDIR/{snakemake.wildcards.tumor_library}.tmp.vcf.gz
 fi
 

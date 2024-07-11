@@ -38,11 +38,11 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     path_somatic_variant_annotation: Annotated[
         str, Field(examples=["../somatic_variant_annotation"])
     ]
+    path_hla_typing : Annotated[str, Field(examples=["../hla_typing"])]
     path_rna_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
     tools_somatic_variant_annotation: list[str] = ["vep"]
     tools_ngs_mapping: list[str] = []
     tools_somatic_variant_calling: list[str] = []
-    tools_rna_mapping: list[str] = []
     tools_rna_mapping: list[str] = []
     """Deafult to those configured for ngs_mapping"""
     tools_ngs_mapping: list[str] = []

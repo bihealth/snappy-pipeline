@@ -59,14 +59,14 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
 
-class NeoepitopePreparationStepPart(BaseStepPart):
+class PvacSeqStepPart(BaseStepPart):
     """
     Preparation VCF file for pvactool
     """
 
     #: Step name
-    name = "neoepitope_preparation"
-    actions = ("run",)
+    name = "pvacseq"
+    actions = ("prepare","predict")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -82,44 +82,74 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             for donor in sheet.donors:
                 self.donors[donor.name] = donor
 
-    @dictify
     def get_input_files(self, action):
+        self._validate_action(action)
+        return self._get_input_files_prepare
+
+    # @dictify
+    # def _get_input_files_predict(self,wildcards):
+    #     prepare_tpl = (
+    #         "work/prepare/{mapper}.{var_caller}.{anno_caller}.{mode}.{tumor_library}/out/"
+    #         "{mapper}.{var_caller}.{anno_caller}.{mode}.{tumor_library}.vcf.gz"
+    #     )
+    #     yield "combine_vcf",prepare_tpl
+    #     hla_typing = self.parent.sub_workflows["hla_typing"]
+    #     hla_tpl = {
+    #         "output/{hla_tool}.{ngs_library}/out/{hla_tool}.{ngs_library}.txt"
+    #     }
+    #     for sheet in filter(is_not_background, self.parent.shortcut_sheets):
+    #         for sample_pair in sheet.all_sample_pairs:
+    #             if sample_pair.tumor_sample.dna_ngs_library.name == wildcards.tumor_library:
+    #                 yield "hla_normal_dna", hla_typing((hla_tpl).format(
+    #                                     hla_tool=self.w_config.step_config["hla_typing"].tools[0],
+    #                                     ngs_library=sample_pair.normal_sample.dna_ngs_library.name,)
+    #                                     )
+    #                 yield "hla_tumor_dna", hla_typing((hla_tpl).format(
+    #                                     hla_tool=self.w_config.step_config["hla_typing"].tools[0],
+    #                                     ngs_library=sample_pair.tumor_sample.dna_ngs_library.name,)
+    #                                     )
+    #                 yield "hla_tumor_rna", hla_typing((hla_tpl).format(
+    #                                     hla_tool=self.w_config.step_config["hla_typing"].tools[0],
+    #                                     ngs_library=sample_pair.tumor_sample.rna_ngs_library.name,)
+    #                                     )
+    #     pass
+
+    @dictify
+    def _get_input_files_prepare(self, wildcards):
         """Return path to somatic variant annotated file"""
         # It only works with vep now.
         # Validate action
-        self._validate_action(action)
+        # self._validate_action(action)
         tpl = (
             "output/{mapper}.{var_caller}.{anno_caller}.{tumor_library}/out/"
             "{mapper}.{var_caller}.{anno_caller}.{tumor_library}"
         )
         if self.config["preparation"]["full_vep_annotation"]:
-            key_ext = {"vcf": ".full.vcf.gz", "vcf_tbi": ".full.vcf.gz.tbi"}
+            vep_key_ext = {"vcf": ".full.vcf.gz", "vcf_tbi": ".full.vcf.gz.tbi"}
         else:
-            key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
+            vep_key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        for key, ext in key_ext.items():
-            yield key, variant_annotation(tpl + ext)
-        # Getting appropriate rna library
         if self.config["preparation"]["format"] == "snappy_custom":
-            for sheet in filter(is_not_background, self.parent.sheets):
-                for donor in sheet.bio_entities.values():
-                    for biosample in donor.bio_samples.values():
-                        if biosample.extra_infos["isTumor"]:
-                            for test_sample in biosample.test_samples.values():
-                                if test_sample.extra_infos["extractionType"] == "RNA":
-                                    for lib in test_sample.ngs_libraries.values():
-                                        rna_library = lib.name
-                                        rna_tpl = (
-                                            "output/{mapper}.{library_name}/out/{mapper}.{library_name}"
-                                        ).format(
-                                            mapper="star",
-                                            library_name=rna_library,
+            for key,ext in vep_key_ext.items():
+                yield key,variant_annotation(tpl+ext)
+
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+        star_key_ext = {"expression": ".GeneCounts.tab",
+                        "bam": ".bam"}
+        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
+            for sample_pair in sheet.all_sample_pairs:
+                if sample_pair.tumor_sample.dna_ngs_library.name == wildcards.tumor_library:
+                    rna_tpl = (
+                        "output/{mapper}.{rna_library}/out/{mapper}.{rna_library}"
+                    )
+                    for key,ext in star_key_ext.items():
+                        yield key, ngs_mapping((rna_tpl + ext).format(
+                                        mapper=self.w_config.step_config["ngs_mapping"].tools.rna[0],
+                                        rna_library=sample_pair.tumor_sample.rna_ngs_library.name,)
                                         )
-                                        ext = {"expression", "bam", "bai"}
-                                        yield "expression", ngs_mapping(rna_tpl + ".GeneCounts.tab")
-                                        yield "bam", ngs_mapping(rna_tpl + ".bam")
-                                        yield "bai", ngs_mapping(rna_tpl + ".bam.bai")
+
+                    
 
     @dictify
     def get_output_files(self, action):
@@ -128,12 +158,12 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         self._validate_action(action)
         if self.config["preparation"]["mode"] == "gene":
             prefix = (
-                "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
+                "work/prepare/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
         elif self.config["preparation"]["mode"] == "transcript":
             prefix = (
-                "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/out/"
+                "work/prepare/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/out/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
             )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -148,12 +178,12 @@ class NeoepitopePreparationStepPart(BaseStepPart):
         self._validate_action(action)
         if self.config["preparation"]["mode"] == "gene":
             prefix = (
-                "work/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/log/"
+                "work/prepare/{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.GX.{tumor_library}"
             )
         elif self.config["preparation"]["mode"] == "transcript":
             prefix = (
-                "work/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/log/"
+                "work/preprare/{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}/log/"
                 "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library}"
             )
         key_ext = (
@@ -175,7 +205,10 @@ class NeoepitopePreparationStepPart(BaseStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return {
+        return getattr(self,"_get_params_run")
+    
+    def _get_params_run(self,wildcards):
+        d = {
             "max_depth": self.config["preparation"]["max_depth"],
             "format": self.config["preparation"]["format"],
             "expression_column": self.config["preparation"]["expression_column"],
@@ -183,6 +216,7 @@ class NeoepitopePreparationStepPart(BaseStepPart):
             "ignore_ensembl_id_version": self.config["preparation"]["ignore_ensembl_id_version"],
             "mode": self.config["preparation"]["mode"],
         }
+        return d
 
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
@@ -215,7 +249,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         config = self.config
-        self.register_sub_step_classes((NeoepitopePreparationStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((PvacSeqStepPart, LinkOutStepPart))
         self.register_sub_workflow(
             "somatic_variant_annotation",
             config["path_somatic_variant_annotation"],
@@ -247,14 +281,14 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         elif self.config["preparation"]["mode"] == "transcript":
             name_pattern = "{mapper}.{var_caller}.{anno_caller}.TX.{tumor_library.name}"
         yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            os.path.join("output/prepare", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+            os.path.join("output/prepare", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config["tools_ngs_mapping"],
             var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             anno_caller=anno_callers,

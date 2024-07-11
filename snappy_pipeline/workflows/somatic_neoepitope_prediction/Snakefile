@@ -48,18 +48,18 @@ rule neoepitope_preparation_link_out_run:
 
 rule neoepitope_preparation:
     input:
-        **wf.get_input_files("neoepitope_preparation", "run"),
+        unpack(wf.get_input_files("pvacseq","prepare")),
     output:
-        **wf.get_output_files("neoepitope_preparation", "run"),
+        **wf.get_output_files("pvacseq","prepare"),
     log:
-        **wf.get_log_file("neoepitope_preparation", "run"),
-    threads: wf.get_resource("neoepitope_preparation", "run", "threads")
+        **wf.get_log_file("pvacseq","prepare"),
+    threads: wf.get_resource("pvacseq","prepare", "threads")
     resources:
-        time=wf.get_resource("neoepitope_preparation", "run", "time"),
-        memory=wf.get_resource("neoepitope_preparation", "run", "memory"),
-        partition=wf.get_resource("neoepitope_preparation", "run", "partition"),
-        tmpdir=wf.get_resource("neoepitope_preparation", "run", "tmpdir"),
+        time=wf.get_resource("pvacseq","prepare", "time"),
+        memory=wf.get_resource("pvacseq","prepare", "memory"),
+        partition=wf.get_resource("pvacseq","prepare", "partition"),
+        tmpdir=wf.get_resource("pvacseq","prepare", "tmpdir"),
     params:
-        **{"args": wf.get_params("neoepitope_preparation", "run")},
+        **{"args": wf.get_params("pvacseq","prepare")},
     wrapper:
         wf.wrapper_path("pvactools/combining")
