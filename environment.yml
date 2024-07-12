@@ -13,7 +13,7 @@ dependencies:
   - git-lfs
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=7.0.2
+  - snakemake ==7.26.0
 
   # Additional libraries used by snappy
   - ruamel.yaml             # Nice, round-trip enabled YAML parsing
@@ -35,4 +35,5 @@ dependencies:
   # CUBI libraries required by snappy (installed through pip)
   - pip:
     - varfish-cli
-    - biomedsheets >=0.11.7
+    # specific compatible biomedsheets revision
+    - git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8
