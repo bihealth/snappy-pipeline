@@ -32,7 +32,6 @@ The default configuration is as follows.
 """
 
 from collections import OrderedDict
-import os
 import sys
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
