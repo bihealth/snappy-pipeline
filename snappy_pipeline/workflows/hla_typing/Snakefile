@@ -53,6 +53,7 @@ rule hla_typing_link_in_run:
 
 # Generic linking out ---------------------------------------------------------
 
+
 rule hla_typing_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
@@ -67,6 +68,7 @@ rule hla_typing_link_out_run:
 # OptiType --------------------------------------------------------------------
 
 if "optitype" in wf.w_config.step_config["hla_typing"].tools:
+
     rule hla_typing_optitype_run:
         input:
             **wf.get_input_files("optitype", "run"),
@@ -91,6 +93,7 @@ if "optitype" in wf.w_config.step_config["hla_typing"].tools:
 
 # NB: reference is updated in the installed package
 if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
+
     rule hla_typing_arcashla_prepare_reference:
         output:
             touch("work/arcashla.prepare_reference/out/.done"),
@@ -98,7 +101,6 @@ if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
             "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
         wrapper:
             wf.wrapper_path("arcashla/prepare_reference")
-
 
     rule hla_typing_arcashla_run:
         input:
