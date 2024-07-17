@@ -104,7 +104,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
         str, Field(examples=["../somatic_neoepitope_prediction/work/containers/out/pvactools.simg"])
     ]
     """
-    Running somatic neoepitope prediction with pvactools 
+    Running somatic neoepitope prediction with pvactools
     is required,with the container
     """
     path_hla_typing: Annotated[str, Field(examples=["../hla_typing"])]

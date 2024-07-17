@@ -1,6 +1,6 @@
 import os
 
-from snakemake.shell import shell
+from snakemake import shell
 
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
@@ -14,13 +14,13 @@ normal_smaple = snakemake.params.args["normal_sample"]
 BINDING_THRESHOLD = f"-b {snakemake.params.args["BINDING_THRESHOLD"]} "
 percentile_threshold = (
     f"--percentile-threshold {snakemake.params.args["percentile_threshold"]} "
-    if snakemake.params.args["percentile_threshold"] != None
+    if snakemake.params.args["percentile_threshold"] is not None
     else ""
 )
 
 
 allele_specific_binding_thresholds = (
-    f"--allele-specific-binding-thresholds "
+    "--allele-specific-binding-thresholds "
     if snakemake.params.args["allele_specific_binding_thresholds"]
     else ""
 )
@@ -29,7 +29,7 @@ aggregate_inclusion_binding_threshold = (
     f"--aggregate-inclusion-binding-threshold {snakemake.params.args["aggregate_inclusion_binding_threshold"]} ",
 )
 
-netmhc_stab = f"--netmhc-stab " if snakemake.params.args["netmhc_stab"] else ""
+netmhc_stab = "--netmhc-stab " if snakemake.params.args["netmhc_stab"] else ""
 
 NET_CHOP_THRESHOLD = (f"--net-chop-threshold {snakemake.params.args["NET_CHOP_THRESHOLD"]} ",)
 
@@ -57,7 +57,7 @@ pass_only = "--pass-only " if snakemake.params.args["pass_only"] else ""
 
 tumor_purity = (
     f"--tumor-purity {snakemake.params.args["tumor_purity"]} "
-    if snakemake.params.args["tumor_purity"] != None
+    if snakemake.params.args["tumor_purity"] is not None
     else ""
 )
 
