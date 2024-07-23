@@ -50,11 +50,11 @@ class Tools(SnappyModel):
 
 class TargetCoverageReportEntry(SnappyModel):
     """
-    Mapping from enrichment kit to target region BED file, for either computing per--target
+    Mapping from enrichment kit to target region BED file, for either computing per-target
     region coverage or selecting targeted exons.
 
     The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
+    with spike-ins seen from Yale genomics.  The path above would be
     mapped to the name "default".
       - name: IDT_xGen_V1_0
         pattern: "xGen Exome Research Panel V1\\.0*"

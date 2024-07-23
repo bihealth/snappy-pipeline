@@ -2,12 +2,12 @@
 #
 # created: %(created_at)s
 
-# Step Configuration ==============================================================================
+# Static data Configuration =======================================================================
 #
 # Configuration for paths with static data (GRCh37/hs37d5 genome release, no CHR prefix in contig names).
 # This has been preconfigured for the paths on the BIH cluster.
 #
-static_data_config:
+static_data_config:    # hs37d5
   cosmic:
     path: /data/cephfs-1/work/projects/cubit/current/static_data/db/COSMIC/v72/GRCh37/CosmicAll.vcf.gz
   dbnsfp:
@@ -33,7 +33,7 @@ static_data_config:
 #   (https://www.gencodegenes.org/human/releases.html)
 # - Some files have not yet been moved to Tier 1.   
 #
-# static_data_config:
+# static_data_config:    # GRCh38.d1.vd1
 #   cosmic:
 #     path: /data/cephfs-1/work/projects/cubit/current/static_data/db/COSMIC/v90/GRCh38/CosmicAll.vcf.gz
 #   dbnsfp:
