@@ -246,7 +246,20 @@ class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
         Field(
             examples=[
                 ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-                ["*_decoy", "EBV", "HPV*", "HBV", "HCV-*", "HIV-*", "HTLV-1", "CMV", "KSHV", "MCV", "SV40", "chrUn_GL000220v1"]
+                [
+                    "*_decoy",
+                    "EBV",
+                    "HPV*",
+                    "HBV",
+                    "HCV-*",
+                    "HIV-*",
+                    "HTLV-1",
+                    "CMV",
+                    "KSHV",
+                    "MCV",
+                    "SV40",
+                    "chrUn_GL000220v1",
+                ],
             ]
         ),
     ] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"]
