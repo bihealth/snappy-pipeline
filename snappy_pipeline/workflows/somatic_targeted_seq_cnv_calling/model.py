@@ -16,6 +16,13 @@ class Tool(enum.StrEnum):
     purecn = "purecn"
 
 
+class SequenzaQualityEncoding:
+    sanger = "sanger"
+    """Base quality format (Phred score). Adds an offset of 33 to the qlimit value"""
+    illumina = "illumina"
+    """Base quality format (Phred score). Adds an offset of 64 to the qlimit value"""
+
+
 class SequenzaExtraArgs(SnappyModel):
     hom: float = 0.9
     """Threshold to select homozygous positions"""
@@ -26,7 +33,7 @@ class SequenzaExtraArgs(SnappyModel):
     qlimit: float = 20
     """Minimum nucleotide quality score for inclusion in the counts"""
 
-    qformat: str = "sanger"
+    qformat: str = SequenzaQualityEncoding.sanger
     """Quality format, options are "sanger" or "illumina". This will add an offset of 33 or 64 respectively to the qlimit value"""
 
 
@@ -152,6 +159,23 @@ class GenomeName(enum.StrEnum):
     canFam3 = "canFam3"
 
 
+class PureCnModel(enum.StrEnum):
+    betabin = "betabin"
+    """beta-binomial ditribution for allelic fractions. Accounts for over-dispersion. Needs more than 10 normals"""
+    beta = "beta"
+    """beta distribution for allelic fractions"""
+
+
+class PureCnSegmentation(enum.StrEnum):
+    PSCBS = "PSCBS"
+    """Good and safe starting point. Version supporting interval weights downloaded from github, lime1/PSCBS"""
+    CBS = "CBS"
+    """Circular binary segmentation. Simple, fast & well-tested, Does not fully support SNP information"""
+    GATK4 = "GATK4"
+    """Untested, better choice when number of SNPs per interval is large"""
+    Hclust = "Hclust"
+
+
 class PureCn(SnappyModel):
     genome_name: Annotated[
         GenomeName | Literal["unknown"],
@@ -173,8 +197,8 @@ class PureCn(SnappyModel):
 
     seed: int = 1234567
     extra_commands: dict[str, Any] = {
-        "model": "betabin",
-        "fun-segmentation": "PSCBS",
+        "model": PureCnModel.betabin,
+        "fun-segmentation": PureCnSegmentation.PSCBS,
         "post-optimize": "",
     }
     """Recommended extra arguments for PureCN, extra_commands: {} to clear them all"""
@@ -213,7 +237,9 @@ class PureCn(SnappyModel):
     somatic_variant_caller: str = "mutect2"
     """
     IMPORTANT NOTE:
-    Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true
+    Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true".
+    Using these options, the results will include germline sites required by PureCN.
+    However, the somatic calls are DIFFERENT from the calls obtained in the somatic_variant_calling step.
     """
 
     path_somatic_variants: Annotated[str, Field(examples=["../somatic_variant_calling_for_purecn"])]
