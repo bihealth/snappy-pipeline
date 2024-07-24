@@ -51,7 +51,15 @@ class Bcftools(SnappyModel):
     include: str = ""
     """Expression to be used in bcftools view --include"""
 
-    exclude: str = ""
+    exclude: Annotated[
+        str,
+        Field(
+            examples=[
+                "FORMAT/AD[1:1] < 5 | FORMAT/DP[1] < 50 | AD[1:1]/(AD[1:0]+AD[1:1])<0.05",
+                "((REF='C' & ALT='T') | (REF='G' & ALT='A')) & AD[1:1]/(AD[1:0]+AD[1:1])<=0.10",
+            ]
+        ),
+    ] = ""
     """Expression to be used in bcftools view --exclude"""
 
     @model_validator(mode="after")

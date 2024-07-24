@@ -2,20 +2,48 @@
 #
 # created: %(created_at)s
 
+# Static data Configuration =======================================================================
+#
+# Configuration for paths with static data (GRCh37/hs37d5 genome release, no CHR prefix in contig names).
+# This has been preconfigured for the paths on the BIH cluster.
+#
+static_data_config:    # hs37d5
+  cosmic:
+    path: /data/cephfs-1/work/projects/cubit/current/static_data/db/COSMIC/v72/GRCh37/CosmicAll.vcf.gz
+  dbnsfp:
+    path: /data/cephfs-1/work/projects/cubit/current/static_data/db/dbNSFP/2.9/dbNSFP2.9.txt.gz
+  dbsnp:
+    path: /data/cephfs-1/work/projects/cubit/current/static_data/db/dbSNP/b147/GRCh37/All_20160408.vcf.gz
+  reference:
+    path: /data/cephfs-1/work/projects/cubit/current/static_data/reference/GRCh37/hs37d5/hs37d5.fa
+  features:
+    path: /data/cephfs-1/work/projects/cubit/current/static_data/annotation/GENCODE/19/GRCh37/gencode.v19.annotation.gtf
+
 # Step Configuration ==============================================================================
 #
-# Configuration for paths with static data.  This has been preconfigured for the paths on the BIH
-# cluster.
+# Configuration for paths with static data (GRCh38.d1.vd1 genome release, includes decoys & viral sequences).  
+# This has been preconfigured for the paths on the BIH cluster (CUBI group members only).
 #
-static_data_config:
-  cosmic:
-    path: /fast/projects/cubit/current/static_data/db/COSMIC/v72/GRCh37/CosmicAll.vcf.gz
-  dbnsfp:
-    path: /fast/projects/cubit/current/static_data/db/dbNSFP/2.9/dbNSFP2.9.txt.gz
-  dbsnp:
-    path: /fast/projects/cubit/current/static_data/db/dbSNP/b147/GRCh37/All_20160408.vcf.gz
-  reference:
-    path: /fast/projects/cubit/current/static_data/reference/GRCh37/hs37d5/hs37d5.fa
+# Notes: 
+# - GRCh38.d1.vd1 is the genome release used by the GDC consortium
+#   (https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/DNA_Seq_Variant_Calling_Pipeline/#alignment-workflow)
+# - GENCODE release 36 is the feature annotation used by the GDC consortium for its RNA pipeline
+#   (https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/#rna-seq-alignment-workflow)
+# - The GENCODE release 36 corresponds to ENSEMBL release 102
+#   (https://www.gencodegenes.org/human/releases.html)
+# - Some files have not yet been moved to Tier 1.   
+#
+# static_data_config:    # GRCh38.d1.vd1
+#   cosmic:
+#     path: /data/cephfs-1/work/projects/cubit/current/static_data/db/COSMIC/v90/GRCh38/CosmicAll.vcf.gz
+#   dbnsfp:
+#     path: /data/cephfs-1/work/projects/cubit/current/static_data/db/dbNSFP/3.5/GRCh38/dbNSFP.txt.gz
+#   dbsnp:
+#     path: /data/cephfs-1/work/projects/cubit/current/static_data/db/dbSNP/b147/GRCh38/common_all_20160407.vcf.gz
+#   reference:
+#     path: /fast/work/groups/cubi/projects/biotools/static_data/reference/GRCh38.d1.vd1/GRCh38.d1.vd1.fa
+#   features:
+#     path: /fast/work/groups/cubi/projects/biotools/static_data_by_ref/GRCh38/annotation/GENCODE/36/gencode.v36.primary_assembly.annotation.gtf
 
 # Step Configuration ==============================================================================
 #
