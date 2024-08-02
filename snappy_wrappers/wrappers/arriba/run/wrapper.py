@@ -17,7 +17,6 @@ reads_right = (
     if args["input"]["reads_right"]
     else ""
 )
-arriba_config = snakemake.config["step_config"]["somatic_gene_fusion_calling"]["arriba"]
 
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]
