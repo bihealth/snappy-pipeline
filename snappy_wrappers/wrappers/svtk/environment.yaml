@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - svtk==0.0.20190615
+  - bcftools==1.19
+  - htslib==1.19.1

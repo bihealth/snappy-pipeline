@@ -1,0 +1,9 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bcftools ==1.12
+- samtools ==1.12
+- htslib ==1.12
+- ucsc-wigtobigwig ==377
+- maelstrom-core ==0.1.1

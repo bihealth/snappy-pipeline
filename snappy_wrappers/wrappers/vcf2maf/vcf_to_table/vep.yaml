@@ -1,0 +1,782 @@
+annotation:                                           # Definition of annotations from VEP
+    id: "CSQ"                                         # INFO field ID (unless change with --vcf_info_field option)
+    allele: "Allele"                                  # Variant used to calculate consequence (https://www.ensembl.org/info/docs/tools/vep/vep_formats.html#defaultout)
+    extract: "^Consequence annotations from Ensembl VEP. Format: (.+)$" # Regular expression to extract annotation names from the description of INFO field. The annotation names are in group 1
+    split: "\\|"                                      # Regular expression to split annotations (& annotation names) from the INFO field
+    minimize: True                                    # Variant minimization applied by VEP (see https://www.ensembl.org/info/docs/tools/vep/script/vep_other.html#colocated)
+
+
+output:                                               # Output columns definition
+
+    Hugo_Symbol:                                      # Column name to output HGNC Symbol
+        input:                                        # Required input
+            - set: "annotation"                       # The "SYMBOL" annotation column contains the requested information
+              column: "SYMBOL"
+        on_missing: skip                              # Genomic regions variants are not attached to genes, skip them on output
+
+    Entrez_Gene_Id:                                   # Column name to output NCBI ID
+        input:
+            - set: "annotation"                       # VEP doesn't provide NCBI gene ids (formerly ENTREZ gene ids)
+              column: "SYMBOL"                        # The column value is obtained by mapping the HGNC symbol                         
+        function: "map"                               # The "map" function is invoked with one input (the annotation SYMBOL),
+        args:                                         # and one named argument, the mapping file (fixed for all variants)
+            filename: "hgnc_symbol_to_entrez_id.tsv"
+        on_missing: default                           # When no Entrez id is not for a symbol, the value is set to 0
+        default: 0
+
+    Center:                                           # Sequencing or processing center name
+        input:
+            - set: "constant"                         # The value is defined on the (optional) command-line arguments
+              column: "Center"                        # The argument is --Center
+              on_missing: default
+              default: "BIH"                          # When missing, the value "BIH" is used.
+
+    NCBI_Build:
+        input:
+            - set: "constant"
+              column: "NCBI_Build"
+              on_missing: default
+              default: "GRCh37"
+
+    Chromosome:                                       # Sequence name
+        input:
+            - set: "fixed"                            # The input is taken from the vcf fixed field "CHROM"
+              column: "CHROM"
+              on_missing: stop                        # This field must be present. When absent, the program stops with an error
+
+    Start_Position:                                   # Position of the start of the variant.
+        input:                                        # Note that vcf2maf.pl transforms the variant (position & allele sequences)
+            - set: "fixed"                            # to minimize them (see https://www.ensembl.org/info/docs/tools/vep/script/vep_other.html).
+              column: "POS"                           # This is *NOT* compatible with variant normalization as defined in
+              on_missing: stop                        # https://genome.sph.umich.edu/wiki/Variant_Normalization
+            - set: "variant"                          # The function "minimize_mutation" performs variant minimization, 
+              column: "REF"                           # so the output is (should be) identical to anything produced by vcf2maf.pl
+              on_missing: stop                        # If the user wants to keep the variant definition as in the vcf file,
+            - set: "variant"                          # the configuration should be updated, and the "Start_Position" column should be
+              column: "ALT"                           # defined similarly to the "Chromosome" column, simply copying the contents of
+              on_missing: stop                        # the vcf's "POS" column.
+        function: "minimize_mutation"                 # The same applies to the columns describing the reference & alternate allele sequences,
+        args:                                         # "Reference_Allele", "Tumor_Seq_Allele1" & "Tumor_Seq_Allele2", which should be
+            return_value: "pos"                       # copied from vcf columns "REF", "REF" & "ALT" respectively.
+        on_missing: stop
+
+    End_Position:                                     # Position of the end of the variant
+        input:                                        # This information is missing from the vcf
+            - set: "fixed"                            # It is reconstituted from the start position, and the lengths of the reference & alternative alleles
+              column: "POS"                           # The program stop if either values are missing.
+              on_missing: stop
+            - set: "variant"                          # If the user want to keep the variant definition as in the vcf file,
+              column: "REF"                           # another function is provided, which doesn't alter the variant's starting position,
+              on_missing: stop                        # and simply computes the end of the variant locus as:
+            - set: "variant"                          # POS + length(reference allele sequence) - 1    for substitutions & deletions, and
+              column: "ALT"                           # POS + 1                                        for insertions
+              on_missing: stop
+        function: "minimize_mutation"                 # This alternative function is "calc_end_pos".
+        args:                                         # It takes the same input as "minimize_mutation", but with additional arguments.
+            return_value: "end"                       # "calc_end_pos" assumes that the variant is normalized.
+        on_missing: stop
+
+    Strand:
+        input:
+            - set: "constant"
+              column: "Strand"
+              on_missing: default
+              default: "+"
+
+    Variant_Classification:                           # Variant classification
+        input:                                        # Maps the VEP variant classification defined in
+            - set: "annotation"                       # https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html#consequences
+              column: "Consequence"                   # to the cBioPortal/TCGA/GDC set of consequences defined in
+            - set: "annotation"                       # https://docs.gdc.cancer.gov/Encyclopedia/pages/Mutation_Annotation_Format_TCGAv2/
+              column: "VARIANT_CLASS"                 # Additional mapping values & methods were taken directly from the vcf2maf.pl code in
+            - set: "variant"                          # routine GetVariantClassification (https://github.com/mskcc/vcf2maf hash d13e404 2022-11-02)
+              column: "REF"
+            - set: "variant"                          # Note that a simple mapping was not possible, because the algorithm requires
+              column: "ALT"                           # the knowledge of substitution, insertion or deletion to assign some values.
+        function: "variant_classification_vep"
+        on_missing: default
+        default: ""
+
+    Variant_Type:                                     # Variant type (SNP/DNP/TNP/ONP/INS/DEL).
+        input:                                        # The type "Consolidated" is not implemented.
+            - set: "variant"
+              column: "REF"                           # The function "variant_type" outputs the type based only on the length of 
+            - set: "variant"                          # reference & alternative allele sequences.
+              column: "ALT"
+        function: "variant_type"
+        on_missing: default
+        default: ""
+
+    Reference_Allele:                                 # Reference allele (should be identical to the reference genome at the locus)
+        input:                                        # Rather, it is taken from the normal homozygous allele.
+            - set: "fixed"
+              column: "POS"                           # The configuration is set so that the vcf2maf.pl behaviour is reproduced.
+              on_missing: stop                        # If the user want to keep the variant definition as in the vcf file instead,
+            - set: "variant"                          # the configuration should be set so that the vcf "REF" column is simply copied
+              column: "REF"                           # to the output column ("Reference_Allele").
+              on_missing: stop
+            - set: "variant"
+              column: "ALT"
+              on_missing: stop
+        function: "minimize_mutation"
+        args:
+            return_value: "ref"
+        on_missing: stop
+
+    Tumor_Seq_Allele1:                                # Unmutated allele in the tumor sample
+        input:
+            - set: "fixed"
+              column: "POS"                           # The configuration is set so that the vcf2maf.pl behaviour is reproduced.
+              on_missing: stop                        # If the user want to keep the variant definition as in the vcf file instead,
+            - set: "variant"                          # the configuration should be set so that the vcf "REF" column is simply copied
+              column: "REF"                           # to the output column ("Tumor_Seq_Allele1").
+              on_missing: stop
+            - set: "variant"
+              column: "ALT"
+              on_missing: stop
+        function: "minimize_mutation"
+        args:
+            return_value: "ref"
+        on_missing: stop
+
+    Tumor_Seq_Allele2:                                # Mutated allele in the tumor sample
+        input:
+            - set: "fixed"
+              column: "POS"                           # The configuration is set so that the vcf2maf.pl behaviour is reproduced.
+              on_missing: stop                        # If the user want to keep the variant definition as in the vcf file instead,
+            - set: "variant"                          # the configuration should be set so that the vcf "ALT" column is simply copied
+              column: "REF"                           # to the output column ("Tumor_Seq_Allele2").
+              on_missing: stop
+            - set: "variant"
+              column: "ALT"
+              on_missing: stop
+        function: "minimize_mutation"
+        args:
+            return_value: "alt"
+        on_missing: stop
+
+    dbSNP_RS:                                         # dbSNP references
+        input:                                        # Note that VEP also includes COSMIC references in that field.
+            - set: "annotation"                       # TODO: create a function that parses the vcf field, extracts only the dbSNP 
+              column: "Existing_variation"            # ids and collapses them into a single strings separated by semicolumns.
+              on_missing: default
+              default: "novel"
+
+    dbSNP_Val_Status:
+        input:
+            - set: "constant"
+              column: "dbSNP_Val_Status"
+              on_missing: default
+              default: ""
+
+    Tumor_Sample_Barcode:
+        input:
+            - set: "constant"
+              column: "tumor_id"
+              on_missing: default
+              default: "tumor"
+
+    Matched_Normal_Sample_Barcode:
+        input:
+            - set: "constant"
+              column: "normal_id"
+              on_missing: default
+              default: "normal"
+
+    Match_Norm_Seq_Allele1:                           # Match normal allele1.
+        input:                                        # Should be identical to "Tumor_Allele1", but instead is set to the reference genome sequence
+            - set: "fixed"
+              column: "POS"                           # The configuration is set so that the vcf2maf.pl behaviour is reproduced.
+              on_missing: stop                        # If the user want to keep the variant definition as in the vcf file instead,
+            - set: "variant"                          # the configuration should be set so that the vcf "REF" column is simply copied
+              column: "REF"                           # to the output column ("Tumor_Seq_Allele1").
+              on_missing: stop
+            - set: "variant"
+              column: "ALT"
+              on_missing: stop
+        function: "minimize_mutation"
+        args:
+            return_value: "ref"
+        on_missing: stop
+
+    Match_Norm_Seq_Allele2:                           # Match normal allele2 (the allele mutated in the tumor)
+        input:
+            - set: "fixed"
+              column: "POS"                           # The configuration is set so that the vcf2maf.pl behaviour is reproduced.
+              on_missing: stop                        # If the user want to keep the variant definition as in the vcf file instead,
+            - set: "variant"                          # the configuration should be set so that the vcf "REF" column is simply copied
+              column: "REF"                           # to the output column ("Tumor_Seq_Allele1").
+              on_missing: stop
+            - set: "variant"
+              column: "ALT"
+              on_missing: stop
+        function: "minimize_mutation"
+        args:
+            return_value: "ref"
+        on_missing: stop
+
+    Tumor_Validation_Allele1:                         # Validation not implemented. All fields are empty
+        input:
+            - set: "constant"
+              column: "Tumor_Validation_Allele1"
+              on_missing: default
+              default: ""
+
+    Tumor_Validation_Allele2:                         # Validation not implemented. All fields are empty
+        input:
+            - set: "constant"
+              column: "Tumor_Validation_Allele2"
+              on_missing: default
+              default: ""
+
+    Match_Norm_Validation_Allele1:                    # Validation not implemented. All fields are empty
+        input:
+            - set: "constant"
+              column: "Match_Norm_Validation_Allele1"
+              on_missing: default
+              default: ""
+
+    Match_Norm_Validation_Allele2:                    # Validation not implemented. All fields are empty
+        input:
+            - set: "constant"
+              column: "Match_Norm_Validation_Allele1"
+              on_missing: default
+              default: ""
+
+    Verification_Status:
+        input:
+            - set: "constant"
+              column: "Verification_Status"
+              on_missing: default
+              default: "Unknown"
+
+    Validation_Status:
+        input:
+            - set: "constant"
+              column: "Validation_Status"
+              on_missing: default
+              default: "Unknown"
+
+    Mutation_Status:
+        input:
+            - set: "constant"
+              column: "Mutation_Status"
+              on_missing: default
+              default: "Somatic"
+
+    Sequencing_Phase:
+        input:
+            - set: "constant"
+              column: "Sequencing_Phase"
+              on_missing: default
+              default: "Unknown"
+
+    Sequence_Source:
+        input:
+            - set: "constant"
+              column: "Sequence_Source"
+              on_missing: default
+              default: "Unknown"
+
+    Validation_Method:
+        input:
+            - set: "constant"
+              column: "Validation_Method"
+              on_missing: default
+              default: "Unknown"
+
+    Score:
+        input:
+            - set: "constant"
+              column: "Score"
+              on_missing: default
+              default: ""
+
+    BAM_File:
+        input:
+            - set: "constant"
+              column: "BAM_File"
+              on_missing: default
+              default: ""
+
+    Sequencer:
+        input:
+            - set: "constant"
+              column: "Sequencer"
+              on_missing: default
+              default: ""
+
+    Tumor_Sample_UUID:
+        input:
+            - set: "constant"
+              column: "Tumor_Sample_UUID"
+              on_missing: default
+              default: ""
+
+    Matched_Norm_Sample_UUID:
+        input:
+            - set: "constant"
+              column: "Matched_Norm_Sample_UUID"
+              on_missing: default
+              default: ""
+
+    # Start of supplementary columns not defined in -----------------------------------------------
+    # https://docs.gdc.cancer.gov/Encyclopedia/pages/Mutation_Annotation_Format_TCGAv2/ -----------
+
+    # The columns belows are all defined in -------------------------------------------------------
+    # https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/#notes-about-gdc-maf-implementation
+    # Note that some columns are commented out, and will not be part of the output. ---------------
+
+    HGVSc:
+        input:
+            - set: "annotation"
+              column: "HGVSc"
+              on_missing: default
+              default: ""
+
+    HGVSp:
+        input:
+            - set: "annotation"
+              column: "HGVSp"
+              on_missing: default
+              default: ""
+
+    HGVSp_Short:                                      # Short version of the protein mutation defined in
+        input:                                        # VEP annotation column "HGVSp"
+            - set: "annotation"
+              column: "HGVSp"                         # The function "parse_protein_mutation" removed the 
+        function: "parse_protein_mutation"            # sequence identifier, and replaces 3-letter amino-acid codes
+        args:                                         # with single letter amino-acid codes.
+            add_sequence: False                       # The arguments "add_sequence", "want_short" & "want_long"
+            want_short: True                          # allow the user to change this behaviour.
+            want_long: False
+            illegal: False                            # Allow some illegal HGVSp format, replacing them with empty
+        on_missing: skip
+        # default: ""
+
+    Transcript_ID:
+        input:
+            - set: "annotation"
+              column: "Feature"
+              on_missing: default
+              default: ""
+
+    Exon_Number:                                      # VEP annotates the exon number & the total number of exons in the transcript.
+        input:                                        # It is unclear what the MAF documentation requires.
+            - set: "annotation"
+              column: "EXON"
+              on_missing: default
+              default: ""
+
+    t_depth:                                          # Read depth in the tumor sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "tumor"
+              column: "DP"
+              on_missing: default
+              default: ""
+
+    t_ref_count:                                      # Reference allele read counts in the tumor sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "tumor"
+              column: "AD[REF]"
+              on_missing: default
+              default: ""
+
+    t_alt_count:                                      # Alternative allele read counts in the tumor sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "tumor"
+              column: "AD[0]"
+              on_missing: default
+              default: ""
+
+    n_depth:                                          # Read depth in the normal sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "normal"
+              column: "DP"
+              on_missing: default
+              default: ""
+
+    n_ref_count:                                      # Reference allele read counts in the normal sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "normal"
+              column: "AD[REF]"
+              on_missing: default
+              default: ""
+
+    n_alt_count:                                      # Alternative allele read counts in the normal sample.
+        input:                                        # The VCF "FORMAT" fields are those used by "Mutect2"
+            - set: "format"
+              sample: "normal"
+              column: "AD[0]"
+              on_missing: default
+              default: ""
+
+    Protein_Position:
+        input:
+            - set: "annotation"
+              column: "Protein_position"
+              on_missing: default
+              default: ""
+
+    SWISSPROT:
+        input:
+            - set: "annotation"
+              column: "SWISSPROT"
+              on_missing: default
+              default: ""
+        function: "strip_sequence_version"
+
+    # The columns below are not mentioned at all in the cBioPortal documentation ------------------
+    # (https://docs.cbioportal.org/file-formats/#mutation-data) -----------------------------------
+    # They are displayed in the order they are found in the GDC documentation, --------------------
+    # except for "Protein_Position" & "SWISSPROT" which are mentioned as --------------------------
+    # optional columns in cBioPortal. -------------------------------------------------------------
+
+    # all_effects
+
+    Allele:
+        input:
+            - set: "annotation"
+              column: "Allele"
+              on_missing: default
+              default: ""
+    Gene:
+        input:
+            - set: "annotation"
+              column: "Gene"
+              on_missing: default
+              default: ""
+    Feature:
+        input:
+            - set: "annotation"
+              column: "Feature"
+              on_missing: default
+              default: ""
+    Feature_type:
+        input:
+            - set: "annotation"
+              column: "Feature_type"
+              on_missing: default
+              default: ""
+    # Consequence
+    cDNA_position:
+        input:
+            - set: "annotation"
+              column: "cDNA_position"
+              on_missing: default
+              default: ""
+    CDS_position:
+        input:
+            - set: "annotation"
+              column: "CDS_position"
+              on_missing: default
+              default: ""
+    Amino_acids:
+        input:
+            - set: "annotation"
+              column: "Amino_acids"
+              on_missing: default
+              default: ""
+    Codons:
+        input:
+            - set: "annotation"
+              column: "Codons"
+              on_missing: default
+              default: ""
+    Existing_variation:
+        input:
+            - set: "annotation"
+              column: "Existing_variation"
+              on_missing: default
+              default: ""
+    # ALLELE_NUM
+    DISTANCE:
+        input:
+            - set: "annotation"
+              column: "DISTANCE"
+              on_missing: default
+              default: ""
+    STRAND_VEP:
+        input:
+            - set: "annotation"
+              column: "STRAND"
+              on_missing: default
+              default: ""
+    SYMBOL:
+        input:
+            - set: "annotation"
+              column: "SYMBOL"
+              on_missing: default
+              default: ""
+    SYMBOL_SOURCE:
+        input:
+            - set: "annotation"
+              column: "SYMBOL_SOURCE"
+              on_missing: default
+              default: ""
+    HGNC_ID:
+        input:
+            - set: "annotation"
+              column: "HGNC_ID"
+              on_missing: default
+              default: ""
+    BIOTYPE:
+        input:
+            - set: "annotation"
+              column: "BIOTYPE"
+              on_missing: default
+              default: ""
+    CANONICAL:
+        input:
+            - set: "annotation"
+              column: "CANONICAL"
+              on_missing: default
+              default: ""
+    CCDS:
+        input:
+            - set: "annotation"
+              column: "CCDS"
+              on_missing: default
+              default: ""
+    ENSP:
+        input:
+            - set: "annotation"
+              column: "ENSP"
+              on_missing: default
+              default: ""
+    TREMBL:
+        input:
+            - set: "annotation"
+              column: "TREMBL"
+              on_missing: default
+              default: ""
+    UNIPARC:
+        input:
+            - set: "annotation"
+              column: "UNIPARC"
+              on_missing: default
+              default: ""
+    # RefSeq
+    SIFT:
+        input:
+            - set: "annotation"
+              column: "SIFT"
+              on_missing: default
+              default: ""
+    Polyphen:
+        input:
+            - set: "annotation"
+              column: "Polyphen"
+              on_missing: default
+              default: ""
+    EXON:
+        input:
+            - set: "annotation"
+              column: "EXON"
+              on_missing: default
+              default: ""
+    INTRON:
+        input:
+            - set: "annotation"
+              column: "INTRON"
+              on_missing: default
+              default: ""
+    DOMAINS:
+        input:
+            - set: "annotation"
+              column: "DOMAINS"
+              on_missing: default
+              default: ""
+    AF:
+        input:
+            - set: "annotation"
+              column: "AF"
+              on_missing: default
+              default: ""
+    AFR_AF:
+        input:
+            - set: "annotation"
+              column: "AFR_AF"
+              on_missing: default
+              default: ""
+    AMR_AF:
+        input:
+            - set: "annotation"
+              column: "AMR_AF"
+              on_missing: default
+              default: ""
+    # ASN_AF
+    EAS_AF:
+        input:
+            - set: "annotation"
+              column: "EAS_AF"
+              on_missing: default
+              default: ""
+    EUR_AF:
+        input:
+            - set: "annotation"
+              column: "EUR_AF"
+              on_missing: default
+              default: ""
+    SAS_AF:
+        input:
+            - set: "annotation"
+              column: "SAS_AF"
+              on_missing: default
+              default: ""
+    AA_AF:
+        input:
+            - set: "annotation"
+              column: "AA_AF"
+              on_missing: default
+              default: ""
+    EA_AF:
+        input:
+            - set: "annotation"
+              column: "EA_AF"
+              on_missing: default
+              default: ""
+    CLIN_SIG:
+        input:
+            - set: "annotation"
+              column: "CLIN_SIG"
+              on_missing: default
+              default: ""
+    SOMATIC:
+        input:
+            - set: "annotation"
+              column: "SOMATIC"
+              on_missing: default
+              default: ""
+    PUBMED:
+        input:
+            - set: "annotation"
+              column: "PUBMED"
+              on_missing: default
+              default: ""
+    MOTIF_NAME:
+        input:
+            - set: "annotation"
+              column: "MOTIF_NAME"
+              on_missing: default
+              default: ""
+    MOTIF_POS:
+        input:
+            - set: "annotation"
+              column: "MOTIF_POS"
+              on_missing: default
+              default: ""
+    HIGH_INF_POS:
+        input:
+            - set: "annotation"
+              column: "HIGH_INF_POS"
+              on_missing: default
+              default: ""
+    MOTIF_SCORE_CHANGE:
+        input:
+            - set: "annotation"
+              column: "MOTIF_SCORE_CHANGE"
+              on_missing: default
+              default: ""
+    IMPACT:
+        input:
+            - set: "annotation"
+              column: "IMPACT"
+              on_missing: default
+              default: ""
+    # PICK
+    VARIANT_CLASS:
+        input:
+            - set: "annotation"
+              column: "VARIANT_CLASS"
+              on_missing: default
+              default: ""
+    TSL:
+        input:
+            - set: "annotation"
+              column: "TSL"
+              on_missing: default
+              default: ""
+    HGVS_OFFSET:
+        input:
+            - set: "annotation"
+              column: "HGVS_OFFSET"
+              on_missing: default
+              default: ""
+    PHENO:
+        input:
+            - set: "annotation"
+              column: "PHENO"
+              on_missing: default
+              default: ""
+    # MINIMISED
+    GENE_PHENO:
+        input:
+            - set: "annotation"
+              column: "GENE_PHENO"
+              on_missing: default
+              default: ""
+    # FILTER
+    # flanking_bps
+    # vcf_id
+    # vcf_qual
+    gnomAD_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_AF"
+              on_missing: default
+              default: ""
+    gnomAD_AFR_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_AFR_AF"
+              on_missing: default
+              default: ""
+    gnomAD_AMR_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_AMR_AF"
+              on_missing: default
+              default: ""
+    gnomAD_ASJ_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_ASJ_AF"
+              on_missing: default
+              default: ""
+    gnomAD_EAS_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_EAS_AF"
+              on_missing: default
+              default: ""
+    gnomAD_FIN_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_FIN_AF"
+              on_missing: default
+              default: ""
+    gnomAD_NFE_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_NFE_AF"
+              on_missing: default
+              default: ""
+    gnomAD_OTH_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_OTH_AF"
+              on_missing: default
+              default: ""
+    gnomAD_SAS_AF:
+        input:
+            - set: "annotation"
+              column: "gnomAD_SAS_AF"
+              on_missing: default
+              default: ""
+

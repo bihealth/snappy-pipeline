@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python==3.10.14
+  - cnvkit==0.9.10
+  - htslib==1.19.1

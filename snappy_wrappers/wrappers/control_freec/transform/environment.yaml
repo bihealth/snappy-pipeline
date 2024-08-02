@@ -1,0 +1,14 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base==4.3.3
+  - r-tidyverse==2.0.0
+  - bioconductor-annotationdbi==1.64.1
+  - bioconductor-bsgenome==1.70.1
+  - bioconductor-genomicranges==1.54.1
+  - bioconductor-org.hs.eg.db==3.18.0
+  - bioconductor-txdb.hsapiens.ucsc.hg19.knowngene==3.2.2
+  - bioconductor-txdb.hsapiens.ucsc.hg38.knowngene==3.18.0
+  - bioconductor-bsgenome.hsapiens.1000genomes.hs37d5==0.99.1
+  - bioconductor-bsgenome.hsapiens.ucsc.hg38==1.4.5

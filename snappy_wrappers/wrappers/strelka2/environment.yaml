@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - manta==1.6.0
+  - strelka==2.9.10
+  - htslib==1.17
+  - bcftools==1.17

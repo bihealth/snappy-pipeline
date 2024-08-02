@@ -1,0 +1,4 @@
+name: bed_jaccard_operations
+description: Perform BED intersection or subtraction based on Jaccard index
+authors:
+  - Manuel Holtgrewe

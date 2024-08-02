@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - star ==2.7.3a
+  - samtools ==1.9
+  - samblaster ==0.1.24
+  - seqtk ==1.3
+  - trimadap ==r11

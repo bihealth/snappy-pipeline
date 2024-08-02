@@ -1,0 +1,293 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline ngs_mapping step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = NgsMappingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking the FASTQ files in and linking out the alignments should
+    # be done locally by the Snakemake master process
+    ngs_mapping_link_in_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Link in FASTQ files ---------------------------------------------------------
+
+
+rule ngs_mapping_link_in_run:  # localrule
+    input:
+        wf.get_input_files("link_in", "run"),
+    output:
+        wf.get_output_files("link_in", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+
+
+# Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run link in external bam files ----------------------------------------------
+
+
+rule ngs_mapping_external_run:
+    input:
+        wf.get_input_files("external", "run"),
+    output:
+        **wf.get_output_files("external", "run"),
+    threads: wf.get_resource("external", "run", "threads")
+    resources:
+        time=wf.get_resource("external", "run", "time"),
+        memory=wf.get_resource("external", "run", "memory"),
+        partition=wf.get_resource("external", "run", "partition"),
+        tmpdir=wf.get_resource("external", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("external", "get_args", "run"),
+    log:
+        **wf.get_log_file("external", "run"),
+    wrapper:
+        wf.wrapper_path("link_in_bam")
+
+
+# Run BWA ---------------------------------------------------------------------
+
+
+rule ngs_mapping_bwa_run:
+    input:
+        wf.get_input_files("bwa", "run"),
+    output:
+        **wf.get_output_files("bwa", "run"),
+    threads: wf.get_resource("bwa", "run", "threads")
+    resources:
+        time=wf.get_resource("bwa", "run", "time"),
+        memory=wf.get_resource("bwa", "run", "memory"),
+        partition=wf.get_resource("bwa", "run", "partition"),
+        tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("bwa", "get_args", "run"),
+    log:
+        **wf.get_log_file("bwa", "run"),
+    wrapper:
+        wf.wrapper_path("bwa")
+
+
+# Run BWA-MEM2 ----------------------------------------------------------------
+
+
+rule ngs_mapping_bwa_mem2_run:
+    input:
+        wf.get_input_files("bwa_mem2", "run"),
+    output:
+        **wf.get_output_files("bwa_mem2", "run"),
+    threads: wf.get_resource("bwa_mem2", "run", "threads")
+    resources:
+        time=wf.get_resource("bwa_mem2", "run", "time"),
+        memory=wf.get_resource("bwa_mem2", "run", "memory"),
+        partition=wf.get_resource("bwa_mem2", "run", "partition"),
+        tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("bwa_mem2", "get_args", "run"),
+    log:
+        **wf.get_log_file("bwa_mem2", "run"),
+    wrapper:
+        wf.wrapper_path("bwa_mem2")
+
+
+# Run Molecular Barcodes meta-tool --------------------------------------------
+
+
+rule ngs_mapping_mbcs_run:
+    input:
+        wf.get_input_files("mbcs", "run"),
+    output:
+        **wf.get_output_files("mbcs", "run"),
+    threads: wf.get_resource("mbcs", "run", "threads")
+    resources:
+        time=wf.get_resource("mbcs", "run", "time"),
+        memory=wf.get_resource("mbcs", "run", "memory"),
+        partition=wf.get_resource("mbcs", "run", "partition"),
+        tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("mbcs", "get_args", "run"),
+    log:
+        **wf.get_log_file("mbcs", "run"),
+    wrapper:
+        wf.wrapper_path("mbcs")
+
+
+# Run STAR --------------------------------------------------------------------
+
+
+rule ngs_mapping_star_run:
+    input:
+        wf.get_input_files("star", "run"),
+    output:
+        **wf.get_output_files("star", "run"),
+    threads: wf.get_resource("star", "run", "threads")
+    resources:
+        time=wf.get_resource("star", "run", "time"),
+        memory=wf.get_resource("star", "run", "memory"),
+        partition=wf.get_resource("star", "run", "partition"),
+        tmpdir=wf.get_resource("star", "run", "tmpdir"),
+    params:
+        args=wf.substep_dispatch("star", "get_args", "run"),
+    log:
+        **wf.get_log_file("star", "run"),
+    wrapper:
+        wf.wrapper_path("star")
+
+
+# Run minimap2 ---------------------------------------------------------------
+
+
+rule ngs_mapping_minimap2_run:
+    input:
+        wf.get_input_files("minimap2", "run"),
+    output:
+        **wf.get_output_files("minimap2", "run"),
+    threads: wf.get_resource("minimap2", "run", "threads")
+    resources:
+        time=wf.get_resource("minimap2", "run", "time"),
+        memory=wf.get_resource("minimap2", "run", "memory"),
+        partition=wf.get_resource("minimap2", "run", "partition"),
+        tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("minimap2", "run"),
+    wrapper:
+        wf.wrapper_path("minimap2")
+
+
+# QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generate target region coverage report --------------------------------------
+
+
+rule ngs_mapping_target_coverage_report_run:
+    input:
+        unpack(wf.get_input_files("target_coverage_report", "run")),
+    output:
+        **wf.get_output_files("target_coverage_report", "run"),
+    threads: wf.get_resource("target_coverage_report", "run", "threads")
+    resources:
+        time=wf.get_resource("target_coverage_report", "run", "time"),
+        memory=wf.get_resource("target_coverage_report", "run", "memory"),
+        partition=wf.get_resource("target_coverage_report", "run", "partition"),
+        tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
+    params:
+        **{"args": wf.get_params("target_coverage_report", "run")},
+    log:
+        **wf.get_log_file("target_coverage_report", "run"),
+    wrapper:
+        wf.wrapper_path("alfred/qc")
+
+
+# Compute depth of coverage files (VCF and bigWig) ----------------------------
+
+
+rule ngs_mapping_bam_collect_doc_run:
+    input:
+        **wf.get_input_files("bam_collect_doc", "run")(),
+    output:
+        **wf.get_output_files("bam_collect_doc", "run"),
+    threads: wf.get_resource("bam_collect_doc", "run", "threads")
+    resources:
+        time=wf.get_resource("bam_collect_doc", "run", "time"),
+        memory=wf.get_resource("bam_collect_doc", "run", "memory"),
+        partition=wf.get_resource("bam_collect_doc", "run", "partition"),
+        tmpdir=wf.get_resource("bam_collect_doc", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("bam_collect_doc", "run"),
+    wrapper:
+        wf.wrapper_path("maelstrom/bam_collect_doc")
+
+
+# Compute fingerprint ---------------------------------------------------------
+
+
+rule ngs_mapping_ngs_chew_fingerprint:
+    input:
+        **wf.get_input_files("ngs_chew", "fingerprint")(),
+    output:
+        **wf.get_output_files("ngs_chew", "fingerprint"),
+    threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
+    resources:
+        time=wf.get_resource("ngs_chew", "fingerprint", "time"),
+        memory=wf.get_resource("ngs_chew", "fingerprint", "memory"),
+        partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
+        tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
+    log:
+        **wf.get_log_file("ngs_chew", "fingerprint"),
+    wrapper:
+        wf.wrapper_path("ngs_chew/fingerprint")
+
+
+# Compute protocol strandedness for STAR --------------------------------------
+
+
+rule ngs_mapping_infer_strandedness:
+    input:
+        **wf.get_input_files("strandedness", "infer"),
+    output:
+        **wf.get_output_files("strandedness", "infer"),
+    threads: wf.get_resource("strandedness", "infer", "threads")
+    resources:
+        time=wf.get_resource("strandedness", "infer", "time"),
+        memory=wf.get_resource("strandedness", "infer", "memory"),
+        partition=wf.get_resource("strandedness", "infer", "partition"),
+        tmpdir=wf.get_resource("strandedness", "infer", "tmpdir"),
+    log:
+        **wf.get_log_file("strandedness", "infer"),
+    wrapper:
+        wf.wrapper_path("rseqc")
+
+
+# Gene counts from mapper & strandedness --------------------------------------
+
+
+rule ngs_mapping_counts_with_strand:
+    input:
+        **wf.get_input_files("strandedness", "counts"),
+    output:
+        **wf.get_output_files("strandedness", "counts"),
+    shell:
+        r"""
+            set -x
+            if [[ "{wildcards[mapper]}" == "star" ]]
+            then
+                strand=$(grep -E '^ *"decision": "[012]"$' {input.decision} | sed -re 's/.*"([012])"$/\1/')
+                column=$(($strand + 2))
+                cut -f 1,$column {input.counts} > {output.counts}
+            else
+                ln -sr {input.counts} {output.counts}
+            fi
+            pushd $(dirname {output.counts})
+            md5sum $(basename {output.counts}) > $(basename {output.counts_md5})
+            popd
+            ln -sr {output.counts} {output.output}
+            ln -sr {output.counts_md5} {output.output_md5}
+        """

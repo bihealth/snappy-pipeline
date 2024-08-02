@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - gatk4==4.5.0.0
+  - parallel==20221122
+  - bcftools==1.16
+  - samtools==1.16.1
+  - htslib==1.16

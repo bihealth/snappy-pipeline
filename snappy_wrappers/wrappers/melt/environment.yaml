@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - htslib==1.16
+  - bcftools==1.16
+  - samtools==1.16.1
+  - perl==5.32.1
+  - bowtie2==2.5.3
+  - openjdk==21.0.2

@@ -1,0 +1,199 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_wgs_cnv_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
+    SomaticWgsCnvCallingWorkflow,
+)
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticWgsCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_wgs_cnv_calling_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_wgs_cnv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run Canvas ------------------------------------------------------------------
+
+
+rule somatic_wgs_cnv_calling_canvas_run:
+    input:
+        unpack(wf.get_input_files("canvas", "run")),
+    output:
+        **wf.get_output_files("canvas", "run"),
+    threads: wf.get_resource("canvas", "run", "threads")
+    resources:
+        time=wf.get_resource("canvas", "run", "time"),
+        memory=wf.get_resource("canvas", "run", "memory"),
+        partition=wf.get_resource("canvas", "run", "partition"),
+        tmpdir=wf.get_resource("canvas", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("canvas", "run"),
+    wrapper:
+        wf.wrapper_path("canvas/somatic_wgs")
+
+
+# Run CNVetti pipeline --------------------------------------------------------
+
+# Run CNVetti (shallow WGS) ---------------------------------------------------
+
+
+# Compute coverage from single BAM file.
+rule somatic_wgs_cnv_calling_cnvetti_coverage:
+    input:
+        unpack(wf.get_input_files("cnvetti", "coverage")),
+    output:
+        **wf.get_output_files("cnvetti", "coverage"),
+    threads: wf.get_resource("cnvetti", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvetti", "coverage", "time"),
+        memory=wf.get_resource("cnvetti", "coverage", "memory"),
+        partition=wf.get_resource("cnvetti", "coverage", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "coverage", "tmpdir"),
+    log:
+        **wf.get_log_file("cnvetti", "coverage"),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/coverage")
+
+
+# Combine matched tumor/normal BAM files or just forward singleton tumor BAM.
+rule somatic_wgs_cnv_calling_cnvetti_tumor_normal_ratio:
+    input:
+        unpack(wf.get_input_files("cnvetti", "tumor_normal_ratio")),
+    output:
+        **wf.get_output_files("cnvetti", "tumor_normal_ratio"),
+    threads: wf.get_resource("cnvetti", "tumor_normal_ratio", "threads")
+    resources:
+        time=wf.get_resource("cnvetti", "tumor_normal_ratio", "time"),
+        memory=wf.get_resource("cnvetti", "tumor_normal_ratio", "memory"),
+        partition=wf.get_resource("cnvetti", "tumor_normal_ratio", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "tumor_normal_ratio", "tmpdir"),
+    log:
+        **wf.get_log_file("cnvetti", "tumor_normal_ratio"),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/tumor_normal_ratio")
+
+
+# Segment log2-scaled values from tumor/normal log2-ratio or log2-transformed
+# relative coverage from tumor only BAM.
+rule somatic_wgs_cnv_calling_cnvetti_segment:
+    input:
+        unpack(wf.get_input_files("cnvetti", "segment")),
+    output:
+        **wf.get_output_files("cnvetti", "segment"),
+    threads: wf.get_resource("cnvetti", "segment", "threads")
+    resources:
+        time=wf.get_resource("cnvetti", "segment", "time"),
+        memory=wf.get_resource("cnvetti", "segment", "memory"),
+        partition=wf.get_resource("cnvetti", "segment", "partition"),
+        tmpdir=wf.get_resource("cnvetti", "segment", "tmpdir"),
+    log:
+        **wf.get_log_file("cnvetti", "segment"),
+    wrapper:
+        wf.wrapper_path("cnvetti/wgs/segment")
+
+
+# Run Control-FreeC -----------------------------------------------------------
+
+
+rule somatic_wgs_cnv_calling_control_freec_run:
+    input:
+        unpack(wf.get_input_files("control_freec", "run")),
+    output:
+        **wf.get_output_files("control_freec", "run"),
+    threads: wf.get_resource("control_freec", "run", "threads")
+    resources:
+        time=wf.get_resource("control_freec", "run", "time"),
+        memory=wf.get_resource("control_freec", "run", "memory"),
+        partition=wf.get_resource("control_freec", "run", "partition"),
+        tmpdir=wf.get_resource("control_freec", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("control_freec", "run"),
+    wrapper:
+        wf.wrapper_path("control_freec")
+
+
+# -----------------------------------------------------------
+
+
+rule somatic_wgs_cnv_calling_control_freec_transform_output:
+    input:
+        **(wf.get_output_files("control_freec", "run")),
+    output:
+        **wf.get_output_files("control_freec", "transform"),
+    threads: wf.get_resource("control_freec", "transform", "threads")
+    resources:
+        time=wf.get_resource("control_freec", "transform", "time"),
+        memory=wf.get_resource("control_freec", "transform", "memory"),
+        partition=wf.get_resource("control_freec", "transform", "partition"),
+        tmpdir=wf.get_resource("control_freec", "transform", "tmpdir"),
+    log:
+        **wf.get_log_file("control_freec", "transform"),
+    wrapper:
+        wf.wrapper_path("control_freec/transform")
+
+
+# -----------------------------------------------------------
+
+
+rule somatic_wgs_cnv_calling_control_freec_plot:
+    input:
+        **(wf.get_output_files("control_freec", "transform")),
+    output:
+        **wf.get_output_files("control_freec", "plot"),
+    threads: wf.get_resource("control_freec", "plot", "threads")
+    resources:
+        time=wf.get_resource("control_freec", "plot", "time"),
+        memory=wf.get_resource("control_freec", "plot", "memory"),
+        partition=wf.get_resource("control_freec", "plot", "partition"),
+        tmpdir=wf.get_resource("control_freec", "plot", "tmpdir"),
+    log:
+        **wf.get_log_file("control_freec", "plot"),
+    wrapper:
+        wf.wrapper_path("cnvkit/plot")  # we're using the plotting tool from cnvkit
+
+
+# Run cnvkit ------------------------------------------------
+
+
+include: "cnvkit.rules"

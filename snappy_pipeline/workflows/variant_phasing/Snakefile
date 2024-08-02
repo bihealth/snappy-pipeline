@@ -1,0 +1,123 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline variant_phasing step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VariantPhasingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    variant_phasing_link_out_run,
+    # Writing pedigrees should be done locally as well
+    variant_checking_write_trio_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule variant_phasing_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Variant Phasing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out trio pedigree file ------------------------------------------------
+
+
+rule variant_checking_write_trio_pedigree_run:
+    output:
+        wf.get_output_files("write_trio_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_trio_pedigree", "run", wildcards, output)
+
+
+# GATK PhaseByTransmission ----------------------------------------------------
+
+
+rule variant_phasing_gatk_phase_by_transmission_run:
+    input:
+        unpack(wf.get_input_files("gatk_phase_by_transmission", "run")),
+    output:
+        **wf.get_output_files("gatk_phase_by_transmission", "run"),
+    threads: wf.get_resource("gatk_phase_by_transmission", "run", "threads")
+    resources:
+        time=wf.get_resource("gatk_phase_by_transmission", "run", "time"),
+        memory=wf.get_resource("gatk_phase_by_transmission", "run", "memory"),
+        partition=wf.get_resource("gatk_phase_by_transmission", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_phase_by_transmission", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("gatk_phase_by_transmission", "run"),
+    wrapper:
+        wf.wrapper_path("gatk_phase_by_transmission")
+
+
+# GATK ReadBackedPhasing (only) -----------------------------------------------
+
+
+rule variant_phasing_gatk_read_backed_phasing_only_run:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_only", "run")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_only", "run"),
+    threads: wf.get_resource("gatk_read_backed_phasing_only", "run", "threads")
+    resources:
+        time=wf.get_resource("gatk_read_backed_phasing_only", "run", "time"),
+        memory=wf.get_resource("gatk_read_backed_phasing_only", "run", "memory"),
+        partition=wf.get_resource("gatk_read_backed_phasing_only", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_only", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_only", "run"),
+    wrapper:
+        wf.wrapper_path("gatk_read_backed_phasing_par")
+
+
+# GATK ReadBackedPhasing (after PhaseByTransmission) --------------------------
+
+
+rule variant_phasing_gatk_read_backed_phasing_also_run:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_also", "run")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_also", "run"),
+    threads: wf.get_resource("gatk_read_backed_phasing_also", "run", "threads")
+    resources:
+        time=wf.get_resource("gatk_read_backed_phasing_also", "run", "time"),
+        memory=wf.get_resource("gatk_read_backed_phasing_also", "run", "memory"),
+        partition=wf.get_resource("gatk_read_backed_phasing_also", "run", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_also", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_also", "run"),
+    wrapper:
+        wf.wrapper_path("gatk_read_backed_phasing_par")

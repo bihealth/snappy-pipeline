@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base==4.0
+  - bioconductor-dupradar==1.20.0
+  - samtools==1.12
+  - rna-seqc==1.1.8
+  - openjdk==7.0.161
+  - rseqc==5.0.3
+  - freetype==2.9.1

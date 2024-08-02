@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches_ignore: []
+
+jobs:
+  cancel-previous:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+    steps:
+      - uses: khan/pull-request-workflow-cancel@1.0.0
+        with:
+          workflows: "main.yml"
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+            pip install -e ".[dev]"
+            pip freeze
+
+      - name: Run linting tools
+        run: |
+          make lint
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request' && failure()
+        uses: marocchino/sticky-pull-request-comment@v1.1.0
+        with:
+          message: |
+            - Please format your Python code with [ruff](https://docs.astral.sh/ruff/): `make fmt`
+            - Please check your Python code with [ruff](https://docs.astral.sh/ruff/): `make check`
+            - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`
+
+            You can trigger all lints locally by running `make lint`
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sphinx-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+            pip install -e ".[docs]"
+            pip freeze
+
+      - name: Build documentation
+        run: |
+          cd docs
+          make html
+
+  testing:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+    needs: linting
+    steps:
+      - name: Install Python via conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          conda-channels: defaults,bioconda,conda-forge
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 2
+      - name: Install mamba
+        run: conda install -y mamba>=1.0.0
+      - name: Prepare environment.yml file
+        run: >
+          cp environment.yml /tmp/environment.yml && sed -i -e
+          's/- python=.*/- python=${{ matrix.python-version }}/'
+          /tmp/environment.yml
+      - name: Update environment using mamba
+        run: mamba env update --name root --file /tmp/environment.yml
+      - name: Fail early on htslib etc. problems
+        run: |
+          set -euo pipefail
+          bgzip -c /dev/null >/dev/null
+          samtools version
+          bcftools version
+      - name: Install some more dependencies via pip
+        # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
+        run: pip install ".[test]"; pip install --ignore-installed py
+      - name: Run tests
+        run: pytest
+        env:
+          DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
+          DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
+      - name: Create text report
+        run: coverage report
+      - name: Coveralls
+        uses: AndreMiras/coveralls-python-action@develop

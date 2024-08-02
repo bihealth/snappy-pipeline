@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - star==2.7.11b
+  - trimadap==r11
+  - arriba==2.4.0

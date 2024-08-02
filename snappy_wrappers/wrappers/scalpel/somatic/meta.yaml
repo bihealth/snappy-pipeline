@@ -1,0 +1,4 @@
+name: scalpel/somatic
+description: Somatic indel calling using Scalpel
+authors:
+- Manuel Holtgrewe

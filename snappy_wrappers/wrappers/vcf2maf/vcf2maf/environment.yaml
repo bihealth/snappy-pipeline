@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcf2maf==1.6.18
+  - ensembl-vep==100.4
+  - samtools==1.9
+  - htslib==1.9
+  - bcftools==1.9

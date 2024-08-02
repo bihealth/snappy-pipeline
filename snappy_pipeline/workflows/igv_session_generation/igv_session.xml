@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+
+{% for bam in bams %}
+- {{ bam.label }}: {{ bam.path }}
+{% endfor %}
+
+{% for vcf in vcfs %}
+- {{ vcf.label }}: {{ vcf.path }}
+{% endfor %}

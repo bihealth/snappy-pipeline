@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - lohhla==20171108
+  - kmer-jellyfish==2.3.1

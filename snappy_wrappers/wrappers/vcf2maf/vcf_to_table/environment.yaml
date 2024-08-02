@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python==3.10.14
+  - vcfpy==0.13.8
+  - ruamel.yaml==0.18.6

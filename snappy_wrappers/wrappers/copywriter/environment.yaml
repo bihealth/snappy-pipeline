@@ -1,0 +1,22 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base==3.6
+  - r-rcpp==1.0.6
+  - r-dplyr==1.0.6
+  - r-assertthat==0.2.1
+  - r-matrixstats==0.58.0
+  - bioconductor-copywriter==2.18.0
+  - bioconductor-dnacopy==1.60.0
+  - bioconductor-cghcall==2.48.0
+  - bioconductor-rsamtools==2.2.0
+  - bioconductor-org.hs.eg.db==3.10.0
+  - bioconductor-ensdb.hsapiens.v75==2.99.0
+  - bioconductor-ensdb.hsapiens.v86==2.99.0
+  - bioconductor-txdb.hsapiens.ucsc.hg19.knowngene==3.2.2
+  - bioconductor-txdb.hsapiens.ucsc.hg38.knowngene==3.10.0
+  - bcftools==1.12
+  - samtools==1.12
+  - htslib==1.12
+  - openblas==0.3.12

@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - popdel==1.1.2
+  - htslib==1.19.1
+  - bcftools==1.19
+  - samtools==1.19.2

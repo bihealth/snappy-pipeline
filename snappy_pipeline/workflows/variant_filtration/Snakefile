@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline variant_filtration step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Writing the PED files should be done locally
+    variant_filtration_write_pedigree_run,
+    # Linking files from work/ to output/ should be done locally
+    variant_filtration_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule variant_filtration_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Write out pedigree file -----------------------------------------------------
+
+
+rule variant_filtration_write_pedigree_run:
+    output:
+        wf.get_output_files("write_pedigree", "run"),
+    run:
+        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+
+
+# Filter for Quality ----------------------------------------------------------
+
+
+rule variant_filtration_filter_quality_run:
+    input:
+        unpack(wf.get_input_files("filter_quality", "run")),
+    output:
+        **wf.get_output_files("filter_quality", "run"),
+    threads: wf.get_resource("filter_quality", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_quality", "run", "time"),
+        memory=wf.get_resource("filter_quality", "run", "memory"),
+        partition=wf.get_resource("filter_quality", "run", "partition"),
+        tmpdir=wf.get_resource("filter_quality", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_quality", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_quality")
+
+
+# Filter for Inheritance ------------------------------------------------------
+
+
+rule variant_filtration_filter_inheritance_run:
+    input:
+        unpack(wf.get_input_files("filter_inheritance", "run")),
+    output:
+        **wf.get_output_files("filter_inheritance", "run"),
+    threads: wf.get_resource("filter_inheritance", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_inheritance", "run", "time"),
+        memory=wf.get_resource("filter_inheritance", "run", "memory"),
+        partition=wf.get_resource("filter_inheritance", "run", "partition"),
+        tmpdir=wf.get_resource("filter_inheritance", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_inheritance", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_inheritance")
+
+
+# Filter for Frequency --------------------------------------------------------
+
+
+rule variant_filtration_filter_frequency:
+    input:
+        unpack(wf.get_input_files("filter_frequency", "run")),
+    output:
+        **wf.get_output_files("filter_frequency", "run"),
+    threads: wf.get_resource("filter_frequency", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_frequency", "run", "time"),
+        memory=wf.get_resource("filter_frequency", "run", "memory"),
+        partition=wf.get_resource("filter_frequency", "run", "partition"),
+        tmpdir=wf.get_resource("filter_frequency", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_frequency", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_frequency")
+
+
+# Filter for Region -----------------------------------------------------------
+
+
+rule variant_filtration_filter_regions:
+    input:
+        unpack(wf.get_input_files("filter_regions", "run")),
+    output:
+        **wf.get_output_files("filter_regions", "run"),
+    threads: wf.get_resource("filter_regions", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_regions", "run", "time"),
+        memory=wf.get_resource("filter_regions", "run", "memory"),
+        partition=wf.get_resource("filter_regions", "run", "partition"),
+        tmpdir=wf.get_resource("filter_regions", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_regions", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_regions")
+
+
+# Filter for Scores -----------------------------------------------------------
+
+
+rule variant_filtration_filter_scores:
+    input:
+        unpack(wf.get_input_files("filter_scores", "run")),
+    output:
+        **wf.get_output_files("filter_scores", "run"),
+    threads: wf.get_resource("filter_scores", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_scores", "run", "time"),
+        memory=wf.get_resource("filter_scores", "run", "memory"),
+        partition=wf.get_resource("filter_scores", "run", "partition"),
+        tmpdir=wf.get_resource("filter_scores", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_scores", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_scores")
+
+
+# Filter for het. comp. Variants ----------------------------------------------
+
+
+rule variant_filtration_filter_het_comp:
+    input:
+        unpack(wf.get_input_files("filter_het_comp", "run")),
+    output:
+        **wf.get_output_files("filter_het_comp", "run"),
+    threads: wf.get_resource("filter_het_comp", "run", "threads")
+    resources:
+        time=wf.get_resource("filter_het_comp", "run", "time"),
+        memory=wf.get_resource("filter_het_comp", "run", "memory"),
+        partition=wf.get_resource("filter_het_comp", "run", "partition"),
+        tmpdir=wf.get_resource("filter_het_comp", "run", "tmpdir"),
+    log:
+        wf.get_log_file("filter_het_comp", "run"),
+    wrapper:
+        wf.wrapper_path("variant_filtration/filter_het_comp")

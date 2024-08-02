@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_variant_annotation step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_variant_annotation import (
+    SomaticVariantAnnotationWorkflow,
+)
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_variant_annotation_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_variant_annotation_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run VEP ---------------------------------------------------------------------
+
+
+rule somatic_variant_annotation_vep:
+    input:
+        **wf.get_input_files("vep", "run"),
+    output:
+        **wf.get_output_files("vep", "run"),
+    threads: wf.get_resource("vep", "run", "threads")
+    resources:
+        time=wf.get_resource("vep", "run", "time"),
+        memory=wf.get_resource("vep", "run", "memory"),
+        partition=wf.get_resource("vep", "run", "partition"),
+        tmpdir=wf.get_resource("vep", "run", "tmpdir"),
+    params:
+        **{"args": wf.get_params("vep", "run")},
+    log:
+        **wf.get_log_file("vep", "run"),
+    wrapper:
+        wf.wrapper_path("vep/run")
+
+
+# Run Jannovar ----------------------------------------------------------------
+
+
+rule somatic_variant_annotation_jannovar:
+    input:
+        **wf.get_input_files("jannovar", "annotate_somatic_vcf"),
+    output:
+        **wf.get_output_files("jannovar", "annotate_somatic_vcf"),
+    threads: wf.get_resource("jannovar", "annotate_somatic_vcf", "threads")
+    resources:
+        time=wf.get_resource("jannovar", "annotate_somatic_vcf", "time"),
+        memory=wf.get_resource("jannovar", "annotate_somatic_vcf", "memory"),
+        partition=wf.get_resource("jannovar", "annotate_somatic_vcf", "partition"),
+        tmpdir=wf.get_resource("jannovar", "annotate_somatic_vcf", "tmpdir"),
+    params:
+        **{"args": wf.get_params("jannovar", "annotate_somatic_vcf")},
+    log:
+        **wf.get_log_file("jannovar", "annotate_somatic_vcf"),
+    wrapper:
+        wf.wrapper_path("jannovar/annotate_somatic_vcf")
+
+
+# Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Run Jannovar statistics -----------------------------------------------------
+# TODO
+# Run bcftools stats ----------------------------------------------------------
+# TODO

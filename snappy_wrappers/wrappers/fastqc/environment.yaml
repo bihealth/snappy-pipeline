@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - perl ==5.32.1
+  - fastqc ==0.11.9

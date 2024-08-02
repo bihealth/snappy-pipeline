@@ -1,0 +1,4 @@
+name: bcftools_call
+description: (Germline) variant calling calling using bcftools
+authors:
+  - Manuel Holtgrewe

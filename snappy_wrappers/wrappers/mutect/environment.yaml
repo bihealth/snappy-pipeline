@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+  - http://conda.cubi.bihealth.org/cubiconda
+dependencies:
+  - mutect_nonfree==1.1.7
+  - htslib==1.19.1
+  - bcftools==1.19

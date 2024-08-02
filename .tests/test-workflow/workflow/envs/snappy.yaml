@@ -1,0 +1,74 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+
+  # Fundamentals
+  - python >=3.12.0
+  - pip =24
+  - git-lfs =3.5
+  - gcc_linux-64 =13.2
+  - gxx_linux-64 =13.2
+
+  # basics some snappy wrappers rely on
+  - coreutils =9.5
+  - gawk =5.3
+  - bash =5.2
+  - gzip =1.13
+
+  # Snakemake is used for providing the actual wrapper calling functionality
+  - snakemake >=7,<8
+
+  # Additional libraries used by snappy
+  - ruamel.yaml =0.18               # Nice, round-trip enabled YAML parsing
+  - fasteners =0.17                 # File-based locks
+  - termcolor =2.4                  # Helpful for CLIs
+  - matplotlib =3.8                 # Required for plotting
+  - jinja2 =3.1                     # Jinja 2 template rendering
+
+  # Bioinformatics-related libraries used by snappy
+  - htslib >=1.19
+  - bcftools >=1.19
+  - samtools >=1.19
+  # both vcfpy and pysam are only used in wrappers -- and tools, which should probably be wrappers in their own regard?
+  # current versions compatible with py>=3.11 aren't yet available from bioconda, so install via pip instead
+  # - vcfpy >=0.13.8                   # Library for working with VCF files
+  # - pysam                            # Support for vcfpy
+  # pytabix seems not to be used anywhere (and hasn't been updated in 9 years)
+  # nvm, it does see use in wrappers/vcfpy/add_bed/wrapper.py and wrappers/vcf_sv_filter/vcf_sv_filter.py
+  # - pytabix =0.1
+
+  # Parsing of ISA-tab
+  - altamisa =0.2.9
+
+  # miscellaneous
+  - attrs =23.2
+
+  # Dependencies for testing
+  - pytest-sugar =1
+  - pytest =8.1
+  - pytest-cov =5.0
+  - coverage =7.4
+  - pytest-mock =3.14
+  - pytest-subprocess = 1.5
+  - pyfakefs =5.4
+  - snakefmt =0.10
+  - ruff =0.3
+  - coveralls =1.8
+
+  # Dependencies for documentation
+  - sphinx =7
+  - sphinx_rtd_theme =2
+  - sphinx-mdinclude =0.5
+
+  # CUBI libraries required by snappy (installed through pip)
+  - pip:
+    - varfish-cli >=0.6.3
+    # We're trying to keep the PyPi package up to date, you might have to install
+    # from source, though.
+    # - biomedsheets >=0.11.7
+    # … which is what we do here:
+    - git+https://github.com/bihealth/biomedsheets.git@a355c396b6e6b2f52f96f73d58cd26c3f1f5e18c
+    - pysam >=0.22
+    - vcfpy >=0.13.8
+    - pytabix
