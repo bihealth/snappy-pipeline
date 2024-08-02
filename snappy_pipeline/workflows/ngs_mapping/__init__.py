@@ -1166,7 +1166,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 path_targets_bed = item.path
                 break
 
+        path_reference = self.w_config.static_data_config.reference.path
+        path_reference_genome = path_reference + ".genome"
+
         return {
+            "path_reference": path_reference,
+            "path_reference_genome": path_reference_genome,
             "path_targets_bed": path_targets_bed,
         }
 
