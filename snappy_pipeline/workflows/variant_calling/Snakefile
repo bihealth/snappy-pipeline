@@ -247,6 +247,8 @@ rule variant_calling_baf_file_generation:
         **wf.get_input_files("baf_file_generation", "run"),
     output:
         **wf.get_output_files("baf_file_generation", "run"),
+    params:
+        args=wf.get_params("baf_file_generation", "run"),
     threads: wf.get_resource("baf_file_generation", "run", "threads")
     resources:
         time=wf.get_resource("baf_file_generation", "run", "time"),
