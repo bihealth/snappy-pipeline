@@ -35,4 +35,7 @@ class Vep(SnappyModel):
     ]
     num_threads: int = 8
     buffer_size: int = 1000
+    plugins: list[str] = []
+    """To use this option in VEP, you should download the plugin repository from the link https://github.com/Ensembl/VEP_plugins"""
+    plugins_dir: str = ""
     output_options: list[str] = ["everything"]
