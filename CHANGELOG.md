@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/bihealth/snappy-pipeline/compare/v0.2.1...v0.2.2) (2024-08-02)
+
+
+### Bug Fixes
+
+* chr format detection in gcnv wrappers needs to always use egrep ([#529](https://github.com/bihealth/snappy-pipeline/issues/529)) ([ac52a6f](https://github.com/bihealth/snappy-pipeline/commit/ac52a6f7aeab79fa9b676a281bf526af82714831))
+
 ## [0.2.1](https://github.com/bihealth/snappy-pipeline/compare/v0.2.0...v0.2.1) (2024-07-01)
 
 
