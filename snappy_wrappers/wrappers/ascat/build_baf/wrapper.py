@@ -2,6 +2,7 @@
 """Wrapper for building BAF files for ASCAT"""
 
 from snakemake import shell
+from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -13,6 +14,9 @@ library_name = getattr(
     getattr(snakemake.wildcards, "normal_library_name", None),
 )
 assert library_name is not None
+
+path_b_af_loci = snakemake.params["args"]["b_af_loci"]
+reference_path = snakemake.params["args"]["reference_path"]
 
 shell(
     r"""
@@ -36,12 +40,12 @@ fi
 # Perform pileups at the spot positions.
 #
 samtools mpileup \
-    -l {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
+    -l {path_b_af_loci} \
     -I \
     -u \
     -v \
     -t AD \
-    -f {snakemake.config[static_data_config][reference][path]} \
+    -f {reference_path} \
     {snakemake.input.bam} \
 | bcftools call \
     -c \
@@ -59,7 +63,7 @@ echo "##fileformat=VCFv4.2" \
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
 >> $TMPDIR/spots.vcf
 
-zcat -f {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
+zcat -f {path_b_af_loci} \
 | awk \
     -F $'\t' \
     'BEGIN {{ OFS=FS; }}

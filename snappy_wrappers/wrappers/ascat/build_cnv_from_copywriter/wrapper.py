@@ -2,6 +2,7 @@
 """Wrapper for building CNV files for ASCAT"""
 
 from snakemake import shell
+from snakemake.script import snakemake
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
@@ -19,6 +20,8 @@ if snakemake.wildcards.get("tumor_library_name", False):
     log2_column = 5
 else:
     log2_column = 6
+
+path_b_af_loci = snakemake.params["args"]["b_af_loci"]
 
 shell(
     r"""
@@ -46,7 +49,7 @@ echo "##fileformat=VCFv4.2" \
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
 >> $TMPDIR/spots.vcf
 
-zcat -f {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
+zcat -f {path_b_af_loci} \
 | awk \
     -F $'\t' '
     BEGIN {{ OFS=FS; }}
