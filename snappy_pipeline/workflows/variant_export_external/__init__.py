@@ -433,6 +433,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_gvcf(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
+            "reference_path": self.w_config.static_data_config.reference.path,
         }
         return result
 
