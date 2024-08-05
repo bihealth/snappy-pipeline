@@ -6,13 +6,21 @@ variant calling.
 """
 
 from snakemake.shell import shell
+from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = snakemake.params["args"]
 args_ignore_chroms = ""
-if snakemake.params.args["ignore_chroms"]:
-    args_ignore_chroms = " ".join(["--ignore-chroms"] + snakemake.params.args["ignore_chroms"])
+if ignore_chroms := args.get("ignore_chroms"):
+    args_ignore_chroms = " ".join(["--ignore-chroms"] + ignore_chroms)
+
+reference_path = args["reference_path"]
+max_depth = args["max_depth"]
+max_indel_depth = args["max_indel_depth"]
+window_length = args["window_length"]
+num_threads = args["num_threads"]
 
 shell(
     r"""
@@ -23,15 +31,15 @@ set -x
 # -----------------------------------------------------------------------------
 
 
-export REF={snakemake.config[static_data_config][reference][path]}
+export REF={reference_path}
 
 bcftools_joint()
 {{
     samtools mpileup \
         --BCF \
         --fasta-ref $REF \
-        --max-depth {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][max_depth]} \
-        --max-idepth {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][max_indel_depth]} \
+        --max-depth {max_depth} \
+        --max-idepth {max_indel_depth} \
         --output-tags DP,AD,ADF,ADR,SP,INFO/AD,INFO/ADF,INFO/ADR \
         --per-sample-mF \
         --redo-BAQ \
@@ -53,13 +61,13 @@ trap "rm -rf $TMPDIR" EXIT
 
 snappy-genome_windows \
     --fai-file $REF.fai \
-    --window-size {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][window_length]} \
+    --window-size {window_length} \
     {args_ignore_chroms} \
 | parallel \
     --plain \
     --keep-order \
     --verbose \
-    --max-procs {snakemake.config[step_config][somatic_variant_calling][bcftools_joint][num_threads]} \
+    --max-procs {num_threads} \
     bcftools_joint \
 | snappy-vcf_first_header \
 | bcftools norm \

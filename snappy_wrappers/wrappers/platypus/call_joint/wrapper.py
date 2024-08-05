@@ -4,13 +4,20 @@
 import os
 
 from snakemake.shell import shell
+from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = snakemake.params["args"]
 args_ignore_chroms = ""
-if snakemake.params.args["ignore_chroms"]:
-    args_ignore_chroms = " ".join(["--ignore-chroms"] + snakemake.params.args["ignore_chroms"])
+if ignore_chroms := args.get("ignore_chroms"):
+    args_ignore_chroms = " ".join(["--ignore-chroms"] + ignore_chroms)
+
+reference_path = args["reference_path"]
+num_threads = args["num_threads"]
+split_complex_mnvs = str(args["split_complex_mnvs"])
+
 
 split_script = os.path.join(os.path.dirname(__file__), "splitMNPsAndComplex.py")
 
@@ -28,7 +35,7 @@ trap "rm -rf \"$TMPDIR\"" EXIT
 
 # Platypus Variant Calling ----------------------------------------------------
 
-REF={snakemake.config[static_data_config][reference][path]}
+REF={reference_path}
 out_final={snakemake.output.vcf}
 #out_tmp=$TMPDIR/out_tmp.vcf.gz
 out_tmp=${{out_final%.vcf.gz}}.tmp.vcf.gz
@@ -39,7 +46,7 @@ export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
 platypus callVariants \
     --logFileName=$(dirname {snakemake.log})/platypus.log \
     --bamFiles=$(echo "{snakemake.input.bam}" | tr ' ' ',') \
-    --nCPU={snakemake.config[step_config][somatic_variant_calling][platypus_joint][num_threads]} \
+    --nCPU={num_threads} \
     --refFile=$REF \
     --output=${{out_tmp%.gz}} \
     --regions=$(snappy-genome_windows \
@@ -50,7 +57,7 @@ platypus callVariants \
                 | tr '\n' ',' \
                 | sed -e 's/,$//g')
 
-if [[ "{snakemake.config[step_config][somatic_variant_calling][platypus_joint][split_complex_mnvs]}" == "True" ]]; then
+if [[ "{split_complex_mnvs}" == "True" ]]; then
     cat ${{out_tmp%.gz}} \
     | python2 {split_script} \
     | snappy-vcf_sort $REF.fai \
