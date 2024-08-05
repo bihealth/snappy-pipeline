@@ -2,6 +2,7 @@
 """CUBI+Snakemake wrapper code for bbduk: Snakemake wrapper.py"""
 
 from snakemake import shell
+from snakemake.script import snakemake
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -39,8 +40,7 @@ else:
 
 this_file = __file__
 
-this_step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][this_step]["bbduk"]
+config = snakemake.params["args"]["config"]
 
 shell(
     r"""
@@ -177,7 +177,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         ecco={config[ecco]}                           \
         ktrim={config[ktrim]}                         \
         $(if [[ -n "{config[kmask]}" ]] ; then \
-            echo kmask={config[kmask]} 
+            echo kmask={config[kmask]}
         fi) \
         maskfullycovered={config[maskfullycovered]}   \
         ksplit={config[ksplit]}                       \
@@ -211,7 +211,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         chastityfilter={config[chastityfilter]}       \
         barcodefilter={config[barcodefilter]}         \
         $(if [[ -n "{config[barcodes]}" ]]; then \
-            echo barcodes={config[barcodes]}  
+            echo barcodes={config[barcodes]}
         fi) \
         xmin={config[xmin]}                           \
         ymin={config[ymin]}                           \
@@ -232,7 +232,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         cardinality={config[cardinality]}             \
         cardinalityout={config[cardinalityout]}       \
         loglogk={config[loglogk]}                     \
-        loglogbuckets={config[loglogbuckets]} 
+        loglogbuckets={config[loglogbuckets]}
 
     fns="$out $outm"
     if [[ $paired -eq 1 ]]; then
