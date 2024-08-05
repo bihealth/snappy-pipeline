@@ -442,6 +442,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config.merge_option,
+            "reference_path": self.w_config.static_data_config.reference.path,
         }
         return result
 
