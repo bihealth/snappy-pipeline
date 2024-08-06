@@ -753,6 +753,23 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
+    def get_params(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            return {
+                name: self.config.bcftools_roh.get(name)
+                for name in [
+                    "path_targets",
+                    "path_af_file",
+                    "ignore_homref",
+                    "skip_indels",
+                    "rec_rate",
+                ]
+            }
+
+        return args_fn
+
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}

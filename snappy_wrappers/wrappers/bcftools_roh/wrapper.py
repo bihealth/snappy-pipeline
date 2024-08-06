@@ -1,6 +1,19 @@
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+args = snakemake.params["args"]
+
+path_targets = args["path_targets"]
+path_af_file = args["path_af_file"]
+ignore_homref = args["ignore_homref"]
+skip_indels = args["skip_indels"]
+rec_rate = args["rec_rate"]
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -56,20 +69,20 @@ out={snakemake.output.txt}
 raw_out=${{out%.regions.txt.gz}}.raw.txt.gz
 
 bcftools roh \
-    $(if [[ "{snakemake.config[step_config][variant_calling][bcftools_roh][path_targets]}" != "None" ]]; then
-        echo --regions-file "{snakemake.config[step_config][variant_calling][bcftools_roh][path_targets]}"
+    $(if [[ "{path_targets}" != "None" ]]; then
+        echo --regions-file "{path_targets}"
     fi) \
-    $(if [[ "{snakemake.config[step_config][variant_calling][bcftools_roh][path_af_file]}" != "None" ]]; then
-        echo --AF-file "{snakemake.config[step_config][variant_calling][bcftools_roh][path_af_file]}"
+    $(if [[ "{path_af_file}" != "None" ]]; then
+        echo --AF-file "{path_af_file}"
     fi) \
-    $(if [[ "{snakemake.config[step_config][variant_calling][bcftools_roh][ignore_homref]}" != "False" ]]; then
+    $(if [[ "{ignore_homref}" != "False" ]]; then
         echo --ignore-homref
     fi) \
-    $(if [[ "{snakemake.config[step_config][variant_calling][bcftools_roh][skip_indels]}" != "False" ]]; then
+    $(if [[ "{skip_indels}" != "False" ]]; then
         echo --skip-indels
     fi) \
-    $(if [[ "{snakemake.config[step_config][variant_calling][bcftools_roh][rec_rate]}" != "None" ]]; then
-        echo --rec-rate "{snakemake.config[step_config][variant_calling][bcftools_roh][rec_rate]}"
+    $(if [[ "{rec_rate}" != "None" ]]; then
+        echo --rec-rate "{rec_rate}"
     fi) \
     --output $raw_out \
     --output-type srz \
