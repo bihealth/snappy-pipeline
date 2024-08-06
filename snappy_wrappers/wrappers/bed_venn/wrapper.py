@@ -3,8 +3,12 @@
 
 import itertools
 import textwrap
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
