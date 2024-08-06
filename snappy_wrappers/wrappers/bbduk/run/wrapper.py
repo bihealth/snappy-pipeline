@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for bbduk: Snakemake wrapper.py"""
 
-from snakemake import shell
-from snakemake.script import snakemake
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
