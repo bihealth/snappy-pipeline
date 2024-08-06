@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Wrapper for BEDTools intersect + snappy-bed_filter_jaccard: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
