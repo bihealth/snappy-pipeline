@@ -225,6 +225,14 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
+    def get_params(self, action):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            return dict(self.config.canvas.path_reference)
+
+        return args_fn
+
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with CNVetti"""

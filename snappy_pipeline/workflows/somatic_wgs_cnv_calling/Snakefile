@@ -61,6 +61,8 @@ rule somatic_wgs_cnv_calling_canvas_run:
         unpack(wf.get_input_files("canvas", "run")),
     output:
         **wf.get_output_files("canvas", "run"),
+    params:
+        args=wf.get_params("canvas", "run"),
     threads: wf.get_resource("canvas", "run", "threads")
     resources:
         time=wf.get_resource("canvas", "run", "time"),
