@@ -602,6 +602,8 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
                 donors[donor_name][sample_name][extraction_type] = lib.name
+        assert "__config" not in donors.keys(), "__config is a reserved key, not a valid donor"
+        donors["__config"] = dict(self.config)
         return donors
 
     @dictify
