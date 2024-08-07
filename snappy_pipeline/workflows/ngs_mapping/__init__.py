@@ -732,6 +732,14 @@ class BwaStepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def get_args(self, action):
+        def args_fn(wildcards):
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(dict(self.config.bwa))
+            return parent_args
+
+        return args_fn
+
 
 class BwaMem2StepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using BWA-MEM 2"""
