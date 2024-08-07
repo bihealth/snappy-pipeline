@@ -732,6 +732,14 @@ class BwaStepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def get_args(self, action):
+        def args_fn(wildcards):
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(dict(self.config.bwa))
+            return parent_args
+
+        return args_fn
+
 
 class BwaMem2StepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using BWA-MEM 2"""
@@ -756,6 +764,14 @@ class BwaMem2StepPart(ReadMappingStepPart):
             time="3-00:00:00",  # 3 days
             memory=f"{mem_mb}M",
         )
+
+    def get_args(self, action):
+        def args_fn(wildcards):
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(dict(self.config.bwa_mem2))
+            return parent_args
+
+        return args_fn
 
 
 class MBCsStepPart(ReadMappingStepPart):
@@ -1166,7 +1182,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 path_targets_bed = item.path
                 break
 
+        path_reference = self.w_config.static_data_config.reference.path
+        path_reference_genome = path_reference + ".genome"
+
         return {
+            "path_reference": path_reference,
+            "path_reference_genome": path_reference_genome,
             "path_targets_bed": path_targets_bed,
         }
 

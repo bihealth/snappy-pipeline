@@ -602,6 +602,8 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
                 donors[donor_name][sample_name][extraction_type] = lib.name
+        assert "__config" not in donors.keys(), "__config is a reserved key, not a valid donor"
+        donors["__config"] = dict(self.config)
         return donors
 
     @dictify
@@ -654,6 +656,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
             for sample_name in args["cnaseq"]["samples"]:
                 if sample_name in args["rna_seq_mrna"]["samples"]:
                     args["3way_complete"]["samples"] += [sample_name]
+        args["__cancer_study_id"] = self.config.study.cancer_study_identifier
         return args
 
     @dictify
