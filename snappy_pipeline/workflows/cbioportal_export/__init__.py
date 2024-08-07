@@ -654,6 +654,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
             for sample_name in args["cnaseq"]["samples"]:
                 if sample_name in args["rna_seq_mrna"]["samples"]:
                     args["3way_complete"]["samples"] += [sample_name]
+        args["__cancer_study_id"] = self.config.study.cancer_study_identifier
         return args
 
     @dictify

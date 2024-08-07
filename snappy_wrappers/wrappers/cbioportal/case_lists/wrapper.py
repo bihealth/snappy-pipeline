@@ -2,8 +2,11 @@
 """CUBI+Snakemake wrapper code for preparing cbioportal patient metadata table from biomedsheets
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
-
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 
 def write_case_list(args, outfile):
@@ -21,9 +24,7 @@ def write_case_list(args, outfile):
                 "",
             ]
         ).format(
-            cancer_study_id=snakemake.config["step_config"]["cbioportal_export"]["study"][
-                "cancer_study_id"
-            ],
+            cancer_study_id=snakemake.params["args"]["__cancer_study_id"],
             stable_id=args["stable_id"],
             name=args["name"],
             description=args["description"],
