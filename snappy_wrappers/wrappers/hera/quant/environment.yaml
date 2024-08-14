@@ -1,5 +1,6 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- hera ==1.1
+  - hera ==1.1

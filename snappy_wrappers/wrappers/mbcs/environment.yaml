@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - cffi==1.16.0
   - pandas==2.2.1

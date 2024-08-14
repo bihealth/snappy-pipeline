@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - htslib==1.5
   - bedtools==2.26.0

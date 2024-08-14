@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - r-base==3.6
   - r-rcpp==1.0.6
