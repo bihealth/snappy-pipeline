@@ -1,7 +1,8 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- bcftools ==1.5
-- samtools ==1.5
-- htslib ==1.5
+  - bcftools ==1.5
+  - samtools ==1.5
+  - htslib ==1.5

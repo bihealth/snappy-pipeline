@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - vcfpy==0.11.1
   - pytabix==0.0.2

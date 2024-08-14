@@ -1,5 +1,6 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- mantis-msi2
+  - mantis-msi2

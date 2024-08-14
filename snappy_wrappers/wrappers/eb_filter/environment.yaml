@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - ebfilter==0.2.2
   - vcfpy==0.13.8

@@ -87,3 +87,4 @@ docs/step/DEFAULT_CONFIG_*.rst
 
 # Test directory
 work/
+.tests/

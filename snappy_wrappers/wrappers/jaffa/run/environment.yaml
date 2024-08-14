@@ -1,7 +1,8 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- jaffa==1.09
-- r-base==4.2.2
-- htslib==1.17
+  - jaffa==1.09
+  - r-base==4.2.2
+  - htslib==1.17

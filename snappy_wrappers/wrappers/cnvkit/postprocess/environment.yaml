@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - r-base==4.3.3
   - bioconductor-genomicranges==1.54.1
