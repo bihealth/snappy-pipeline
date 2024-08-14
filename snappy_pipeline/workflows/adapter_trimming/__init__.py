@@ -237,6 +237,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
                     "reads_left": {key: reads_left[key] for key in sorted(reads_left.keys())},
                     "reads_right": {key: reads_right[key] for key in sorted(reads_right.keys())},
                 },
+                "config": self.config.bbduk,
             }
 
         # Validate action

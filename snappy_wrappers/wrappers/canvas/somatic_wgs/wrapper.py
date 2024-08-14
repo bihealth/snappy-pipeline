@@ -1,10 +1,20 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Canvas in somatic variant calling mode on WGS data"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
+
+args = snakemake.params["args"]
+path_reference = args["path_reference"]
+path_genome_folder = args["path_genome_folder"]
+path_filter_bed = args["path_filter_bed"]
 
 shell(
     r"""
@@ -40,9 +50,9 @@ mono $EBROOTCANVAS/Canvas.exe Somatic-WGS \
     --bam={snakemake.input.tumor_bam} \
     --b-allele-vcf={snakemake.input.somatic_vcf} \
     --output=$(dirname {snakemake.output.vcf}) \
-    --reference={snakemake.config[step_config][somatic_wgs_cnv_calling][canvas][path_reference]} \
-    --genome-folder={snakemake.config[step_config][somatic_wgs_cnv_calling][canvas][path_genome_folder]} \
-    --filter-bed={snakemake.config[step_config][somatic_wgs_cnv_calling][canvas][path_filter_bed]} \
+    --reference={path_reference} \
+    --genome-folder={path_genome_folder} \
+    --filter-bed={path_filter_bed} \
     --sample-name={snakemake.wildcards.cancer_library}
 
 tabix -f {snakemake.output.vcf}

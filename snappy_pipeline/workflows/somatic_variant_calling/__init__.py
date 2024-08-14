@@ -799,6 +799,7 @@ class JointCallingStepPart(BaseStepPart):
         self._validate_action(action)
 
         def arg_function(wildcards):
+            reference_path = self.w_config.static_data_config.reference.path
             donor = self.donor_by_name[wildcards.donor_name]
             result = {
                 "sample_list": [
@@ -806,7 +807,8 @@ class JointCallingStepPart(BaseStepPart):
                     for bio_sample in donor.bio_samples.values()
                     for test_sample in bio_sample.test_samples.values()
                     for ngs_library in test_sample.ngs_libraries.values()
-                ]
+                ],
+                "reference_path": reference_path,
             }
             if ignore_chroms := self.parent.config.ignore_chroms:
                 result["ignore_chroms"] = ignore_chroms
@@ -841,6 +843,18 @@ class BcftoolsJointStepPart(JointCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
+
+    def get_args(self, action):
+        def args_fn(_wildcards):
+            parent_args = super().get_args(action)(_wildcards)
+            args = {
+                name: getattr(self.config, name)
+                for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
+            }
+            args.update(parent_args)
+            return args
+
+        return args_fn
 
 
 class VarscanJointStepPart(JointCallingStepPart):
@@ -895,6 +909,17 @@ class PlatypusJointStepPart(JointCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
+
+    def get_args(self, action):
+        def args_fn(_wildcards):
+            parent_args = super().get_args(action)(_wildcards)
+            args = {
+                name: getattr(self.config, name) for name in ["num_threads", "split_complex_mnvs"]
+            }
+            args.update(parent_args)
+            return args
+
+        return args_fn
 
 
 class GatkHcJointStepPart(JointCallingStepPart):
