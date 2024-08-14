@@ -1,7 +1,7 @@
 channels:
   - conda-forge
   - bioconda
-
+  - nodefaults
 dependencies:
   - python=3.12
   - gatk4==4.3.0.0
