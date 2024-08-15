@@ -22,6 +22,21 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = NgsDataQcWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+if "picard" in wf.config["tools"]:
+
+    module ngs_mapping:
+        snakefile:
+            "../ngs_mapping/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config["picard"]["path_ngs_mapping"]
+
+    use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -32,9 +47,10 @@ localrules:
     data_qc_link_out_run,
 
 
-rule all:
+rule ngs_data_qc_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,7 +58,7 @@ rule all:
 # Link in FASTQ files ---------------------------------------------------------
 
 
-rule data_qc_link_in_run:
+rule ngs_data_qc_link_in_run:
     input:
         wf.get_input_files("link_in", "run"),
     output:
@@ -54,7 +70,7 @@ rule data_qc_link_in_run:
 # Generic linking out ---------------------------------------------------------
 
 
-rule data_qc_link_out_run:
+rule ngs_data_qc_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:
@@ -68,7 +84,7 @@ rule data_qc_link_out_run:
 # Run FastQC ------------------------------------------------------------------
 
 
-rule data_qc_fastqc_run:
+rule ngs_data_qc_fastqc_run:
     input:
         wf.get_input_files("fastqc", "run"),
     output:
@@ -92,7 +108,7 @@ rule data_qc_fastqc_run:
 # Run picard ------------------------------------------------------------------
 
 
-rule data_qc_picard_prepare:
+rule ngs_data_qc_picard_prepare:
     output:
         **wf.get_output_files("picard", "prepare"),
     threads: wf.get_resource("picard", "prepare", "threads")
@@ -107,7 +123,7 @@ rule data_qc_picard_prepare:
         wf.wrapper_path("picard/prepare")
 
 
-rule data_qc_picard_metrics:
+rule ngs_data_qc_picard_metrics:
     input:
         unpack(wf.get_input_files("picard", "metrics")),
     output:

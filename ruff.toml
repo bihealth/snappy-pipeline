@@ -1,0 +1,21 @@
+line-length = 100
+exclude = [
+  "**/Snakefile",
+]
+
+[lint]
+select = ["E", "F", "I"] # "B": flake8-bugbear, "COM": trailing commas, "W": whitespace, "C"
+ignore = ["D", "F821", "E501"]  # E501: line too long, F821: name used but unknown (e.g. "snakemake" in wrapper files)
+exclude = [
+  "docs/conf.py",
+  "docs",
+  "tests",
+  "venv",
+  ".*.py",
+  ".snakemake.*.wrapper.py",
+  "splitMNPsAndComplex.py",
+  "wrapper.py",
+  "snappy_pipeline/__init__.py",
+  "versioneer.py",
+  "**/Snakefile"
+]

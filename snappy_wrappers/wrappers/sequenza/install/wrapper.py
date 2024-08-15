@@ -2,8 +2,8 @@
 """Installation of sequenza non-standard packages"""
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
