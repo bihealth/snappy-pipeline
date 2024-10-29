@@ -148,7 +148,7 @@ rule build_gcnv_model_contig_ploidy:
             {params.pedigrees} \
             {params.tsvs} \
             --threads {threads} \
-            --output-done {input.done}
+            --output-done {output.done}
         """
 
 
