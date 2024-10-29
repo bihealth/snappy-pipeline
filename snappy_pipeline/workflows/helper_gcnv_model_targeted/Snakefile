@@ -137,7 +137,7 @@ rule build_gcnv_model_contig_ploidy:
         tsvs=lambda wildcards, input: " ".join(f"--tsv {t}" for t in input.tsv),
         pedigrees=lambda wildcards, input: " ".join(f"--pedigree {p}" for p in input.ped),
         path_par_intervals=(
-            "--path-par-intervals " + wf.config.gcnv.path_par_intervals
+            "--par-intervals " + wf.config.gcnv.path_par_intervals
             if wf.config.gcnv.path_par_intervals
             else ""
         ),
