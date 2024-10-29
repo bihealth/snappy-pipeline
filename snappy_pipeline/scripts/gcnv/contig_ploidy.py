@@ -120,26 +120,26 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Determine Germline Contig Ploidy")
     parser.add_argument(
-        "pedigrees",
         "--pedigree",
+        dest="pedigrees",
         required=True,
         help="Path(s) to pedigree file(s)",
         action="append",
     )
     parser.add_argument(
-        "tsvs", "--tsv", required=True, action="append", help="Path(s) to TSV file(s)"
+        "--tsv", dest="tsvs", required=True, action="append", help="Path(s) to TSV file(s)"
     )
     parser.add_argument(
-        "interval_list", "--interval-list", required=True, help="Path to interval list"
+        "--interval-list", required=True, help="Path to interval list"
     )
     parser.add_argument(
-        "par_intervals", "--par-intervals", required=False, help="Path to PAR intervals BED file"
+        "--par-intervals", required=False, help="Path to PAR intervals BED file"
     )
     parser.add_argument(
-        "threads", "--threads", required=True, type=int, help="Number of threads", default=1
+        "--threads", required=True, type=int, help="Number of threads", default=1
     )
     parser.add_argument(
-        "output_done", "--output-done", required=True, help="Path to .done output marker"
+        "--output-done", required=True, help="Path to .done output marker"
     )
     args = parser.parse_known_args()
     main(args)

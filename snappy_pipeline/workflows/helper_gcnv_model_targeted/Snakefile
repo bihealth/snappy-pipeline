@@ -133,7 +133,7 @@ rule build_gcnv_model_contig_ploidy:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
         step_key="helper_gcnv_model_targeted",
-        script=workflow.source_path("../../scripts/gcnv/contig_ploidy.py"),
+        script=os.path.abspath(workflow.source_path("../../scripts/gcnv/contig_ploidy.py")),
         tsvs=lambda wildcards, input: "--tsv ".join(input.tsv),
         pedigrees=lambda wildcards, input: "--pedigree ".join(input.ped),
         path_par_intervals=(
