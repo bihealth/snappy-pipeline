@@ -134,8 +134,8 @@ rule build_gcnv_model_contig_ploidy:
     params:
         step_key="helper_gcnv_model_targeted",
         script=os.path.abspath(workflow.source_path("../../scripts/gcnv/contig_ploidy.py")),
-        tsvs=lambda wildcards, input: "--tsv ".join(input.tsv),
-        pedigrees=lambda wildcards, input: "--pedigree ".join(input.ped),
+        tsvs=lambda wildcards, input: " ".join(f"--tsv {t}" for t in input.tsv),
+        pedigrees=lambda wildcards, input: " ".join(f"--pedigree {p}" for p in input.ped),
         path_par_intervals=(
             "--path-par-intervals " + wf.config.gcnv.path_par_intervals
             if wf.config.gcnv.path_par_intervals
