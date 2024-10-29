@@ -10,7 +10,7 @@ def main(args):
 
         def shell(cmd):
             return subprocess.run(
-                cmd.split(" "), shell=True, check=True, text=True, capture_output=True
+                cmd.split(" "), shell=False, check=True
             )
 
     # We will first call the GATK tool.  However, there are issues with the reliability of the contig
