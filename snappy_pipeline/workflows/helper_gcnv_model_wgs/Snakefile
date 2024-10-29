@@ -15,6 +15,9 @@ from snappy_pipeline.workflows.helper_gcnv_model_wgs import (
 configfile: "config.yaml"
 
 
+container: "docker://broadinstitute/gatk:4.3.0.0"
+
+
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
@@ -57,8 +60,9 @@ rule build_gcnv_model_preprocess_intervals:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     params:
         step_key="helper_gcnv_model_wgs",
-    wrapper:
-        wf.wrapper_path("gcnv/preprocess_intervals_wgs")
+        mode="wgs",
+    script:
+        "../../scripts/gcnv/preprocess_intervals.py"
 
 
 rule build_gcnv_model_annotate_gc:
