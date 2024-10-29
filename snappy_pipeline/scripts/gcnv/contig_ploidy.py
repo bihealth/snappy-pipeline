@@ -141,5 +141,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-done", required=True, help="Path to .done output marker"
     )
-    args = parser.parse_known_args()
+    args = parser.parse_args()
     main(args)
