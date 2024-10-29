@@ -25,7 +25,7 @@ def main(args):
     FEMALE = "female"
 
     sex_map = {}
-    for ped_path in args.pedigree:
+    for ped_path in args.pedigrees:
         with open(ped_path, "rt") as inputf:
             for line in inputf:
                 arr = line.strip().split("\t")
@@ -45,7 +45,7 @@ def main(args):
 
     threads = args.threads
     interval_list = args.interval_list
-    output = args.output
+    output_done = args.output_done
 
     shell(
         rf"""
@@ -83,7 +83,7 @@ def main(args):
         --interval-merging-rule OVERLAPPING_ONLY \
         $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
         --contig-ploidy-priors $PRIORS \
-        --output $(dirname {output}) \
+        --output $(dirname {output_done}) \
         --output-prefix ploidy
     """
     )
@@ -120,7 +120,11 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Determine Germline Contig Ploidy")
     parser.add_argument(
-        "pedigree", "--pedigree", required=True, help="Path(s) to pedigree file(s)", action="append"
+        "pedigrees",
+        "--pedigree",
+        required=True,
+        help="Path(s) to pedigree file(s)",
+        action="append",
     )
     parser.add_argument(
         "tsvs", "--tsv", required=True, action="append", help="Path(s) to TSV file(s)"
@@ -134,7 +138,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "threads", "--threads", required=True, type=int, help="Number of threads", default=1
     )
-    parser.add_argument("output", "--output", required=True, help="Path to output")
     parser.add_argument(
         "output_done", "--output-done", required=True, help="Path to .done output marker"
     )

@@ -133,8 +133,23 @@ rule build_gcnv_model_contig_ploidy:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
         step_key="helper_gcnv_model_targeted",
-    wrapper:
-        wf.wrapper_path("gcnv/contig_ploidy")
+        script=workflow.source_path("../../scripts/gcnv/contig_ploidy.py"),
+        tsvs=lambda wildcards, input: "--tsv ".join(input.tsv),
+        pedigrees=lambda wildcards, input: "--pedigree ".join(input.pedigree),
+        path_par_intervals=(
+            "--path-par-intervals " + wf.config.gcnv.path_par_intervals
+            if wf.config.gcnv.path_par_intervals
+            else ""
+        ),
+    shell:
+        """python {params.script} \
+            --interval-list {input.interval_list} \
+            {params.path_par_intervals} \
+            {params.pedigrees} \
+            {params.tsvs} \
+            --threads {threads} \
+            --output-done {input.done}
+        """
 
 
 rule build_gcnv_model_call_cnvs:
