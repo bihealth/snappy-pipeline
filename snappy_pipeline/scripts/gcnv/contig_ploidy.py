@@ -1,18 +1,10 @@
 import pathlib
 import argparse
+import shutil
+import subprocess
 
 
 def main(args):
-    try:
-        from snakemake.shell import shell
-    except ImportError:
-        import subprocess
-
-        def shell(cmd):
-            return subprocess.run(
-                cmd.split(), shell=False, check=True
-            )
-
     # We will first call the GATK tool.  However, there are issues with the reliability of the contig
     # ploidy calls.  This causes an exception in the  JointGermlineCNVSegmentation further downstream.
     # We thus rewrite the genotype calls based on the ones from the PED files as a workaround.
@@ -47,8 +39,7 @@ def main(args):
     interval_list = args.interval_list
     output_done = args.output_done
 
-    shell(
-        rf"""
+    cmd = rf"""
     export TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" ERR EXIT
 
@@ -86,7 +77,9 @@ def main(args):
         --output $(dirname {output_done}) \
         --output-prefix ploidy
     """
-    )
+
+    bash_binary = shutil.which("bash")
+    subprocess.run(cmd, shell=True, check=True, executable=bash_binary)
 
     ploidy_calls = out_path / "ploidy-calls"
     for sample_dir in ploidy_calls.glob("SAMPLE_*"):
