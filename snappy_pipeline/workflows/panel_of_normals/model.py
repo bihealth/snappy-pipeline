@@ -60,6 +60,11 @@ class Mutect2(SnappyModel):
     """running time multiplier for merging"""
 
 
+class CnvkitSex(enum.StrEnum):
+    MALE = "male"
+    FEMALE = "female"
+
+
 class CnvKit(SnappyModel):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
@@ -70,22 +75,19 @@ class CnvKit(SnappyModel):
     access: str = ""
     """Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)"""
 
-    annotate: str = ""
-    """[target] Optional targets annotations"""
+    target_avg_size: float | None = None
+    """[target] Average size of split target bins (None: use default value, or use autobin for wgs)"""
 
-    target_avg_size: int = 0
-    """[target] Average size of split target bins (0: use default value)"""
-
-    bp_per_bin: int = 50000
-    """[autobin] Expected base per bin"""
-
-    split: bool = True
+    split: bool = False
     """[target] Split large intervals into smaller ones"""
 
-    antitarget_avg_size: int = 0
+    bp_per_bin: float = 50000
+    """[autobin] Expected base per bin"""
+
+    antitarget_avg_size: float = 0
     """[antitarget] Average size of antitarget bins (0: use default value)"""
 
-    min_size: int = 0
+    min_size: float = 0
     """[antitarget] Min size of antitarget bins (0: use default value)"""
 
     min_mapq: int = 0
@@ -97,7 +99,7 @@ class CnvKit(SnappyModel):
     min_cluster_size: int = 0
     """[reference] Minimum cluster size to keep in reference profiles. 0 for no clustering"""
 
-    gender: str = ""
+    sample_sex: CnvkitSex | None = None
     """[reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing"""
 
     male_reference: bool = False
@@ -106,8 +108,8 @@ class CnvKit(SnappyModel):
     gc_correction: bool = True
     """[reference] Use GC correction"""
 
-    edge_correction: bool = True
-    """[reference] Use edge correction"""
+    edge_correction: bool | None = None
+    """[reference] Use edge correction (automatic when None, edge correction for WES only)"""
 
     rmask_correction: bool = True
     """[reference] Use rmask correction"""
@@ -207,6 +209,6 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
 
     cnvkit: CnvKit | None = None
 
-    access: Access = Access()
+    access: Access | None = None
 
     purecn: PureCn | None = None
