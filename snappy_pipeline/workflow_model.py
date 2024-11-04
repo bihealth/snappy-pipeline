@@ -21,6 +21,7 @@ from snappy_pipeline.workflows.ngs_data_qc.model import NgsDataQc
 from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
 from snappy_pipeline.workflows.panel_of_normals.model import PanelOfNormals
 from snappy_pipeline.workflows.repeat_expansion.model import RepeatExpansion
+from snappy_pipeline.workflows.somatic_cnv_calling.model import SomaticCnvCalling
 from snappy_pipeline.workflows.somatic_cnv_checking.model import SomaticCnvChecking
 from snappy_pipeline.workflows.somatic_gene_fusion_calling.model import SomaticGeneFusionCalling
 from snappy_pipeline.workflows.somatic_hla_loh_calling.model import SomaticHlaLohCalling
@@ -109,6 +110,7 @@ class StepConfig(TypedDict, total=False):
     ngs_mapping: NgsMapping
     panel_of_normals: PanelOfNormals
     repeat_expansion: RepeatExpansion
+    somatic_cnv_calling: SomaticCnvCalling
     somatic_cnv_checking: SomaticCnvChecking
     somatic_gene_fusion_calling: SomaticGeneFusionCalling
     somatic_hla_loh_calling: SomaticHlaLohCalling
