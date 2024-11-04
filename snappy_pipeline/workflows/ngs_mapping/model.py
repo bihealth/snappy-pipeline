@@ -35,6 +35,7 @@ CombinedDnaTool = Enum(
         )
     },
 )
+"""DNA mappers or (mbcs) meta-tool"""
 
 
 class Tools(SnappyModel):
@@ -147,17 +148,6 @@ class BwaMem2(BwaMapper):
 
 class BarcodeTool(Enum):
     AGENT = "agent"
-
-
-class Somatic(SnappyModel):
-    mapping_tool: DnaMapper
-    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
-
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
-    """Only agent currently implemented"""
-
-    use_barcodes: bool = False
-    recalibrate: bool = True
 
 
 class Bqsr(SnappyModel):
@@ -277,9 +267,13 @@ class Minimap2(SnappyModel):
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
-    barcode_tool: BarcodeTool
-    use_barcodes: bool
-    recalibrate: bool
+    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
+
+    barcode_tool: BarcodeTool = BarcodeTool.AGENT
+    """Only agent currently implemented"""
+
+    use_barcodes: bool = False
+    recalibrate: bool = True
 
 
 class NgsMapping(SnappyStepModel):
@@ -320,8 +314,6 @@ class NgsMapping(SnappyStepModel):
     strandedness: Strandedness | None = None
 
     minimap2: Minimap2 | None = None
-
-    mbcs: Mbcs | None = None
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):
