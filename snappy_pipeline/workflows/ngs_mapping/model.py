@@ -1,4 +1,5 @@
 import enum
+import itertools
 import os
 from enum import Enum
 from typing import Annotated
@@ -21,8 +22,24 @@ class RnaMapper(Enum):
     STAR = "star"
 
 
+class MetaTool(Enum):
+    MBCS = "mbcs"
+
+
+CombinedDnaTool = enum.Enum(
+    "CombinedDnaTool",
+    {
+        (name, member.value)
+        for name, member in itertools.chain(
+            DnaMapper.__members__.items(), MetaTool.__members__.items()
+        )
+    },
+)
+"""DNA mappers or (mbcs) meta-tool"""
+
+
 class Tools(SnappyModel):
-    dna: Annotated[list[DnaMapper], EnumField(DnaMapper, [])]
+    dna: Annotated[list[CombinedDnaTool], EnumField(CombinedDnaTool, [])]
     """Required if DNA analysis; otherwise, leave empty."""
 
     rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
@@ -131,17 +148,6 @@ class BwaMem2(BwaMapper):
 
 class BarcodeTool(Enum):
     AGENT = "agent"
-
-
-class Somatic(SnappyModel):
-    mapping_tool: DnaMapper
-    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
-
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
-    """Only agent currently implemented"""
-
-    use_barcodes: bool = False
-    recalibrate: bool = True
 
 
 class Bqsr(SnappyModel):
@@ -261,8 +267,13 @@ class Minimap2(SnappyModel):
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
-    use_barcodes: bool
-    recalibrate: bool
+    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
+
+    barcode_tool: BarcodeTool = BarcodeTool.AGENT
+    """Only agent currently implemented"""
+
+    use_barcodes: bool = False
+    recalibrate: bool = True
 
 
 class NgsMapping(SnappyStepModel):
@@ -287,7 +298,7 @@ class NgsMapping(SnappyStepModel):
     bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
 
-    somatic: Somatic | None = None
+    mbcs: Mbcs | None = None
     """
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
@@ -303,8 +314,6 @@ class NgsMapping(SnappyStepModel):
     strandedness: Strandedness | None = None
 
     minimap2: Minimap2 | None = None
-
-    mbcs: Mbcs | None = None
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):
