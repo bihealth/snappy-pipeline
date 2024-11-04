@@ -1,0 +1,279 @@
+rule somatic_targeted_seq_cnv_calling_cnvkit_access:
+    output:
+        **wf.get_output_files("cnvkit", "access"),
+    params:
+        wf.get_params("cnvkit", "access"),
+    log:
+        **wf.get_log_file("cnvkit", "access"),
+    threads: wf.get_resource("cnvkit", "access", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "access", "time"),
+        memory=wf.get_resource("cnvkit", "access", "memory"),
+        partition=wf.get_resource("cnvkit", "access", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "access", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/access")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_target:
+    input:
+        unpack(wf.get_input_files("cnvkit", "target")),
+    params:
+        wf.get_params("cnvkit", "target"),
+    output:
+        **wf.get_output_files("cnvkit", "target"),
+    log:
+        **wf.get_log_file("cnvkit", "target"),
+    threads: wf.get_resource("cnvkit", "target", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "target", "time"),
+        memory=wf.get_resource("cnvkit", "target", "memory"),
+        partition=wf.get_resource("cnvkit", "target", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "target", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/target")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_antitarget:
+    input:
+        unpack(wf.get_input_files("cnvkit", "antitarget")),
+    params:
+        wf.get_params("cnvkit", "antitarget"),
+    output:
+        **wf.get_output_files("cnvkit", "antitarget"),
+    log:
+        **wf.get_log_file("cnvkit", "antitarget"),
+    threads: wf.get_resource("cnvkit", "antitarget", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "antitarget", "time"),
+        memory=wf.get_resource("cnvkit", "antitarget", "memory"),
+        partition=wf.get_resource("cnvkit", "antitarget", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "antitarget", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/antitarget")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_coverage:
+    input:
+        unpack(wf.get_input_files("cnvkit", "coverage")),
+    params:
+        wf.get_params("cnvkit", "coverage"),
+    output:
+        **wf.get_output_files("cnvkit", "coverage"),
+    log:
+        **wf.get_log_file("cnvkit", "coverage"),
+    threads: wf.get_resource("cnvkit", "coverage", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "coverage", "time"),
+        memory=wf.get_resource("cnvkit", "coverage", "memory"),
+        partition=wf.get_resource("cnvkit", "coverage", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "coverage", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/coverage")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_reference:
+    input:
+        unpack(wf.get_input_files("cnvkit", "reference")),
+    params:
+        wf.get_params("cnvkit", "reference"),
+    output:
+        **wf.get_output_files("cnvkit", "reference"),
+    log:
+        **wf.get_log_file("cnvkit", "reference"),
+    threads: wf.get_resource("cnvkit", "reference", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "reference", "time"),
+        memory=wf.get_resource("cnvkit", "reference", "memory"),
+        partition=wf.get_resource("cnvkit", "reference", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "reference", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/reference")
+
+
+# rule somatic_targeted_seq_cnv_calling_cnvkit_flat_reference_panel:
+#     input:
+#         unpack(wf.get_input_files("cnvkit", "flat_reference_panel")),
+#     params:
+#         wf.get_params("cnvkit", "reference"),
+#     output:
+#         **wf.get_output_files("cnvkit", "flat_reference_panel"),
+#     log:
+#         **wf.get_log_file("cnvkit", "reference"),
+#     threads: wf.get_resource("cnvkit", "reference", "threads")
+#     resources:
+#         time=wf.get_resource("cnvkit", "reference", "time"),
+#         memory=wf.get_resource("cnvkit", "reference", "memory"),
+#         partition=wf.get_resource("cnvkit", "reference", "partition"),
+#         tmpdir=wf.get_resource("cnvkit", "reference", "tmpdir"),
+#     wrapper:
+#         wf.wrapper_path("cnvkit/reference")
+
+
+# rule somatic_targeted_seq_cnv_calling_cnvkit_flat_reference_wgs:
+#     input:
+#         unpack(wf.get_input_files("cnvkit", "flat_reference_wgs")),
+#     params:
+#         wf.get_params("cnvkit", "reference"),
+#     output:
+#         **wf.get_output_files("cnvkit", "flat_reference_wgs"),
+#     log:
+#         **wf.get_log_file("cnvkit", "reference"),
+#     threads: wf.get_resource("cnvkit", "reference", "threads")
+#     resources:
+#         time=wf.get_resource("cnvkit", "reference", "time"),
+#         memory=wf.get_resource("cnvkit", "reference", "memory"),
+#         partition=wf.get_resource("cnvkit", "reference", "partition"),
+#         tmpdir=wf.get_resource("cnvkit", "reference", "tmpdir"),
+#     wrapper:
+#         wf.wrapper_path("cnvkit/reference")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_fix:
+    input:
+        unpack(wf.get_input_files("cnvkit", "fix")),
+    params:
+        wf.get_params("cnvkit", "fix"),
+    output:
+        **wf.get_output_files("cnvkit", "fix"),
+    log:
+        **wf.get_log_file("cnvkit", "fix"),
+    threads: wf.get_resource("cnvkit", "fix", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "fix", "time"),
+        memory=wf.get_resource("cnvkit", "fix", "memory"),
+        partition=wf.get_resource("cnvkit", "fix", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "fix", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/fix")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_segment:
+    input:
+        unpack(wf.get_input_files("cnvkit", "segment")),
+    params:
+        wf.get_params("cnvkit", "segment"),
+    output:
+        **wf.get_output_files("cnvkit", "segment"),
+    log:
+        **wf.get_log_file("cnvkit", "segment"),
+    threads: wf.get_resource("cnvkit", "segment", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "segment", "time"),
+        memory=wf.get_resource("cnvkit", "segment", "memory"),
+        partition=wf.get_resource("cnvkit", "segment", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "segment", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/segment")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_call:
+    input:
+        unpack(wf.get_input_files("cnvkit", "call")),
+    params:
+        wf.get_params("cnvkit", "call"),
+    output:
+        **wf.get_output_files("cnvkit", "call"),
+    log:
+        **wf.get_log_file("cnvkit", "call"),
+    threads: wf.get_resource("cnvkit", "call", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "call", "time"),
+        memory=wf.get_resource("cnvkit", "call", "memory"),
+        partition=wf.get_resource("cnvkit", "call", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "call", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/call")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_bintest:
+    output:
+        **wf.get_output_files("cnvkit", "bintest"),
+    params:
+        wf.get_params("cnvkit", "bintest"),
+    log:
+        **wf.get_log_file("cnvkit", "bintest"),
+    threads: wf.get_resource("cnvkit", "bintest", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "bintest", "time"),
+        memory=wf.get_resource("cnvkit", "bintest", "memory"),
+        partition=wf.get_resource("cnvkit", "bintest", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "bintest", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/bintest")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_plot_diagram:
+    input:
+        unpack(wf.get_input_files("cnvkit", "plot/diagram")),
+    params:
+        wf.get_params("cnvkit", "plot/diagram"),
+    output:
+        **wf.get_output_files("cnvkit", "plot/diagram"),
+    log:
+        **wf.get_log_file("cnvkit", "plot/diagram"),
+    threads: wf.get_resource("cnvkit", "plot/diagram", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "plot/diagram", "time"),
+        memory=wf.get_resource("cnvkit", "plot/diagram", "memory"),
+        partition=wf.get_resource("cnvkit", "plot/diagram", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "plot/diagram", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/plot/diagram")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_plot_scatter:
+    input:
+        unpack(wf.get_input_files("cnvkit", "plot/scatter")),
+    params:
+        wf.get_params("cnvkit", "plot/scatter"),
+    output:
+        **wf.get_output_files("cnvkit", "plot/scatter"),
+    log:
+        **wf.get_log_file("cnvkit", "plot/scatter"),
+    threads: wf.get_resource("cnvkit", "plot/scatter", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "plot/scatter", "time"),
+        memory=wf.get_resource("cnvkit", "plot/scatter", "memory"),
+        partition=wf.get_resource("cnvkit", "plot/scatter", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "plot/scatter", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/plot/scatter")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_report_metrics:
+    input:
+        unpack(wf.get_input_files("cnvkit", "report/metrics")),
+    params:
+        wf.get_params("cnvkit", "report/metrics"),
+    output:
+        **wf.get_output_files("cnvkit", "report/metrics"),
+    log:
+        **wf.get_log_file("cnvkit", "report/metrics"),
+    threads: wf.get_resource("cnvkit", "report/metrics", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "report/metrics", "time"),
+        memory=wf.get_resource("cnvkit", "report/metrics", "memory"),
+        partition=wf.get_resource("cnvkit", "report/metrics", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "report/metrics", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/report/metrics")
+
+
+rule somatic_targeted_seq_cnv_calling_cnvkit_report_segmetrics:
+    input:
+        unpack(wf.get_input_files("cnvkit", "report/segmetrics")),
+    params:
+        wf.get_params("cnvkit", "report/segmetrics"),
+    output:
+        **wf.get_output_files("cnvkit", "report/segmetrics"),
+    log:
+        **wf.get_log_file("cnvkit", "report/segmetrics"),
+    threads: wf.get_resource("cnvkit", "report/segmetrics", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "report/segmetrics", "time"),
+        memory=wf.get_resource("cnvkit", "report/segmetrics", "memory"),
+        partition=wf.get_resource("cnvkit", "report/segmetrics", "partition"),
+        tmpdir=wf.get_resource("cnvkit", "report/segmetrics", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("cnvkit/report/segmetrics")
