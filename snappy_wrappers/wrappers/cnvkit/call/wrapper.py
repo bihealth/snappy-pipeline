@@ -1,72 +1,60 @@
 # -*- coding: utf-8 -*-
 """Wrapper vor cnvkit.py call"""
 
-from snakemake.shell import shell
+import re
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+class CnvkitWrapperCall(CnvkitWrapper):
+    PURITY_PATTERN = re.compile("^Purity: +([+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([EeDd][+-]?[0-9]+)?) *$")
+    PLOIDY_PATTERN = re.compile("^Ploidy: +([+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([EeDd][+-]?[0-9]+)?) *$")
 
-center = config["center"]
-if center:
-    if center in set("mean", "median", "mode", "biweight"):
-        center = " --center " + center
-    else:
-        center = " --center-at" + center
+    def preamble(self):
+        if "purity" in self.snakemake.input:
+            with open(self.snakemake.input.purity, "rt") as f:
+                for line in f:
+                    m = CnvkitWrapperCall.PURITY_PATTERN.match(line.strip())
+                    if m:
+                        self.purity = float(m.groups()[1])
+                    else:
+                        m = CnvkitWrapperCall.PLOIDY_PATTERN.match(line.strip())
+                        if m:
+                            self.ploidy = float(m.groups()[1])
+        else:
+            self.purity = self.snakemake.params.purity if "purity" in self.snakemake.params else None
+            self.ploidy = self.snakemake.params.ploidy if "ploidy" in self.snakemake.params else None
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+        self.cmd = self.cmd.format(purity=self.purity, ploidy=self.ploidy)
 
-shell(
-    r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
+if "variants" in snakemake.input:
+    variants = r"""
+        ---vcf {snakemake.input.variants} \
+        {snakemake.params.sample_id} {snakemake.params.normal_id} \
+        {snakemake.params.min_variant_depth} {snakemake.params.zygocity_freq}
+    """.format(
+        snakemake=snakemake,
+    )
+else:
+    variants = ""
 
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-set -x
-
-# -----------------------------------------------------------------------------
-
+cmd = r"""
 cnvkit.py call \
-    --output {snakemake.output.calls} \
-    --method {config[calling_method]} \
-    --thresholds={config[call_thresholds]} \
-    $(if [[ "{config[filter]}" ]]; then \
-        echo --filter {config[filter]}
-    fi) \
-    {center} {gender} {male} \
-    --ploidy {config[ploidy]} \
-    $(if [[ {config[purity]} -gt 0 ]]; then \
-        echo --purity {config[purity]}
-    fi) \
-    {snakemake.input}
-
-d=$(dirname "{snakemake.output.calls}")
-pushd $d
-fn=$(basename "{snakemake.output.calls}")
-md5sum $fn > $fn.md5
-popd
-"""
+    -o {snakemake.output.calls} \
+    --method {snakemake.params.method} --thresholds={snakemake.params.thresholds} \
+    --filter {snakemake.params.filter} \
+    {center} \
+    {drop_low_coverage} \
+    {sample_sex} {male_reference} \
+    {variants} \
+    {{purity}} {{ploidy}} \
+    {snakemake.input.segments}
+""".format(
+    snakemake=snakemake,
+    center=f"--center-at {snakemake.params.center_at}" if "center_at" in snakemake.params else f"--center {snakemake.params.center}",
+    drop_low_coverage="--drop-low-coverage" if snakemake.params.drop_low_coverage else "",
+    sample_sex=f"--sample-sex {snakemake.params.sample_sex}" if "sample_sex" in snakemake.params else "",
+    male_reference="--male-reference" if snakemake.params.male_reference else "",
+    variants=variants,
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+CnvkitWrapperCall(snakemake, cmd).run()
