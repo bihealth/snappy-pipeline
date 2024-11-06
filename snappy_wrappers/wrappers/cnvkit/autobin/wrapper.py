@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py coverage"""
+"""Wrapper for cnvkit.py autobin (replicating cnvkit batch)"""
 
 import os
 import sys
@@ -18,15 +18,19 @@ __email__ = "eric.blanc@bih-charite.de"
 args = snakemake.params.get("args", {})
 
 cmd = r"""
-cnvkit.py coverage --processes {snakemake.resources._cores} \
-    -o {snakemake.output.coverage} \
-    --fasta {args[reference]} \
-    --min-mapq {args[min_mapq]} {count} \
-    {snakemake.input.bam} {snakemake.input.intervals}
+cnvkit.py autobin --method {args[method]} \
+    {out_target} {out_antitarget} \
+    {access} {target} \
+    --bp-per-bin {args[bp_per_bin]} \
+    {snakemake.input.bams} \
+    > {snakemake.output.result}
 """.format(
     snakemake=snakemake,
     args=args,
-    count="--count" if "count" in args else "",
+    out_target=f"--target-output-bed {snakemake.output.target}" if snakemake.output.get("target", "") != "" else "",
+    out_antitarget=f"--antitarget-output-bed {snakemake.output.antitarget}" if snakemake.output.get("antitarget", "") != "" else "",
+    access=f"--access {snakemake.input.access}" if snakemake.input.get("access", None) else "",
+    target=f"--targets {args['target']}" if "target" in args else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

@@ -225,6 +225,7 @@ def test_cnvkit_step_part_get_input_files_autobin(panel_of_normals_workflow):
             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
         ],
+        "access": "work/bwa.cnvkit/out/cnvkit.access.bed",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "autobin")(wildcards)
     assert actual == expected
@@ -282,7 +283,7 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
         }
     )
     expected = {
-        "references": [
+        "normals": [
             "work/bwa.cnvkit/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
             "work/bwa.cnvkit/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
         ],
@@ -291,75 +292,75 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_access(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_access()"""
+def test_cnvkit_step_part_get_args_access(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_access()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
-    expected = {"reference": "/path/to/ref.fa"}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "access")(wildcards)
+    expected = {"reference": "/path/to/ref.fa", "min_gap_size": 5000}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "access")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_autobin(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_autobin()"""
+def test_cnvkit_step_part_get_args_autobin(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_autobin()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
-    expected = {"method": "wgs"}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "autobin")(wildcards)
+    expected = {"method": "wgs", "bp_per_bin": 50000}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "autobin")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_target(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_target()"""
+def test_cnvkit_step_part_get_args_target(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_target()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
-    expected = {"annotate": "/path/to/annotations.gtf"}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "target")(wildcards)
+    expected = {"annotate": "/path/to/annotations.gtf", "split": True, "target": ""}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "target")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_antitarget(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_antitarget()"""
+def test_cnvkit_step_part_get_args_antitarget(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_antitarget()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
     expected = {"avg_size": 0, "min_size": 0}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "antitarget")(wildcards)
+    actual = panel_of_normals_workflow.get_args("cnvkit", "antitarget")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_coverage(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_coverage()"""
+def test_cnvkit_step_part_get_args_coverage(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_coverage()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
     expected = {"reference": "/path/to/ref.fa", "min_mapq": 0}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "coverage")(wildcards)
+    actual = panel_of_normals_workflow.get_args("cnvkit", "coverage")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_params_create_panel(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_params_create_panel()"""
+def test_cnvkit_step_part_get_args_create_panel(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_create_panel()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
         }
     )
     expected = {"reference": "/path/to/ref.fa", "no_edge": True}
-    actual = panel_of_normals_workflow.get_params("cnvkit", "create_panel")(wildcards)
+    actual = panel_of_normals_workflow.get_args("cnvkit", "create_panel")(wildcards)
     assert actual == expected
 
 
@@ -504,14 +505,14 @@ def test_access_step_part_get_input_files_run(panel_of_normals_workflow):
     assert panel_of_normals_workflow.get_input_files("access", "run") is None
 
 
-def test_access_step_part_get_params_run(panel_of_normals_workflow):
-    """Tests AccessStepPart._get_params_run()"""
+def test_access_step_part_get_args_run(panel_of_normals_workflow):
+    """Tests AccessStepPart._get_args_run()"""
     expected = {
         "reference": "/path/to/ref.fa",
         "exclude": ["/path/to/exclude.bed"],
         "min_gap_size": 0
     }
-    actual = panel_of_normals_workflow.get_params("access", "run")
+    actual = panel_of_normals_workflow.get_args("access", "run")
     assert actual == expected
 
 

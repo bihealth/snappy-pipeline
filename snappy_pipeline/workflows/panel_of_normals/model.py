@@ -75,19 +75,22 @@ class CnvKit(SnappyModel):
     access: str = ""
     """Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)"""
 
-    target_avg_size: float | None = None
+    min_gap_size: int = 5000
+    """[access] Minimum gap size between accessible regions"""
+
+    target_avg_size: int | None = None
     """[target] Average size of split target bins (None: use default value, or use autobin for wgs)"""
 
-    split: bool = False
+    split: bool = True
     """[target] Split large intervals into smaller ones"""
 
-    bp_per_bin: float = 50000
+    bp_per_bin: int = 50000
     """[autobin] Expected base per bin"""
 
-    antitarget_avg_size: float = 0
+    antitarget_avg_size: int = 0
     """[antitarget] Average size of antitarget bins (0: use default value)"""
 
-    min_size: float = 0
+    min_size: int = 0
     """[antitarget] Min size of antitarget bins (0: use default value)"""
 
     min_mapq: int = 0

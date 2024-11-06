@@ -16,31 +16,35 @@ from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
-# WGS: targets are all accessible regions, WES: targets are baits
-interval = snakemake.input.access if "access" in snakemake.input else snakemake.params.target
+args = snakemake.params.get("args", {})
 
-if "avg_size" in snakemake.input:
+# WGS: targets are all accessible regions, WES: targets are baits
+interval = snakemake.input.access if snakemake.input.get("access", None) else args["target"]
+
+if snakemake.input.get("avg_size", "") != "":
     pattern = re.compile("^Target:[ \t]+([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)[ \t]+([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)$")
     with open(snakemake.input.avg_size) as f:
         for line in f:
             m = pattern.match(line)
             if m:
-                avg_size = float(m.groups()[4])
+                avg_size = int(float(m.groups()[4]))
                 break
 
 else:
-    avg_size = snakemake.params.avg_size
+    avg_size = args["avg_size"]
 
 cmd = r"""
 cnvkit.py target \
     -o {snakemake.output.target} \
-    {avg_size} {split} \
+    {avg_size} {split} {annotate} \
     {interval}
 """.format(
     snakemake=snakemake,
+    args=args,
     interval=interval,
     avg_size=f"--avg-size {avg_size}",
-    split=f"--split" if snakemake.params.split else "",
+    split=f"--split" if "split" in args and args["split"] else "",
+    annotate=f"--annotate {args['annotate']}" if "annotate" in args else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()
