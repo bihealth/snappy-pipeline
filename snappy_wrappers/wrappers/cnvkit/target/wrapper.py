@@ -29,9 +29,10 @@ if snakemake.input.get("avg_size", "") != "":
             if m:
                 avg_size = int(float(m.groups()[4]))
                 break
-
-else:
+elif "avg_size" in args:
     avg_size = args["avg_size"]
+else:
+    avg_size = None
 
 cmd = r"""
 cnvkit.py target \
@@ -42,7 +43,7 @@ cnvkit.py target \
     snakemake=snakemake,
     args=args,
     interval=interval,
-    avg_size=f"--avg-size {avg_size}",
+    avg_size=f"--avg-size {avg_size}" if avg_size is not None else "",
     split=f"--split" if "split" in args and args["split"] else "",
     annotate=f"--annotate {args['annotate']}" if "annotate" in args else "",
 )
