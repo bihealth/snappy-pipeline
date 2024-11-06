@@ -15,15 +15,18 @@ from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
+args = snakemake.params.get("args", {})
+
 cmd = r"""
 cnvkit.py access \
     -o {snakemake.output.access} \
-    --min-gap-size {snakemake.params.min_gap_size} \
+    --min-gap-size {args[min_gap_size]} \
     {exclude} \
-    {snakemake.params.reference}
+    {args[reference]}
 """.format(
     snakemake=snakemake,
-    exclude=" ".join([f"--exclude {x}" for x in snakemake.params.exclude]) if snakemake.params.exclude else "",
+    args=args,
+    exclude=" ".join([f"--exclude {x}" for x in args["exclude"]]) if "exclude" in args else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

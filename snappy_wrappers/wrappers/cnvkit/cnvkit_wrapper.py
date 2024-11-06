@@ -1,5 +1,7 @@
 """Abstract wrapper for cnvkit.py"""
 
+import os
+import stat
 import textwrap
 
 from snakemake.shell import shell
@@ -10,7 +12,7 @@ __email__ = "eric.blanc@bih-charite.de"
 
 class CnvkitWrapper:
     header = r"""
-        # Also pipe everything to log file
+        # Pipe everything to log file
         if [[ -n "{snakemake.log.log}" ]]; then
             if [[ "$(set +e; tty; set -e)" != "" ]]; then
                 rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
@@ -21,13 +23,18 @@ class CnvkitWrapper:
             fi
         fi
 
+        # Compute md5 except when filename ends with .md5
         compute_md5() {{
             fn=$1
             f=$(basename $fn)
             d=$(dirname $fn)
-            pushd $d 1> /dev/null 2>&1
-            md5sum $f > $f.md5
-            popd 1> /dev/null 2>&1
+            ext="${{f##*.}}"
+            if [[ $ext != "md5" ]]
+            then
+                pushd $d 1> /dev/null 2>&1
+                md5sum $f > $f.md5
+                popd 1> /dev/null 2>&1
+            fi
         }}
 
         # Write out information about conda installation.
@@ -72,14 +79,23 @@ class CnvkitWrapper:
     def run(self) -> None:
         self.preamble()
 
-        with open(self.snakemake.log.sh, "wt") as f:
+        cmd_path = self.snakemake.log.sh
+        with open(cmd_path, "wt") as f:
             print(
                 textwrap.dedent(
-                    "\n".join((CnvkitWrapper.header, self.command, CnvkitWrapper.footer))
+                    "\n".join(
+                        (
+                            CnvkitWrapper.header.format(snakemake=self.snakemake),
+                            self.command,
+                            CnvkitWrapper.footer.format(snakemake=self.snakemake),
+                        )
+                    )
                 ),
                 file=f,
             )
+        current_permissions = stat.S_IMODE(os.lstat(cmd_path).st_mode)
+        os.chmod(cmd_path, current_permissions | stat.S_IXUSR)
 
-        shell(self.snakemake.log.sh)
+        shell(cmd_path)
 
         shell(CnvkitWrapper.md5_log.format(log=str(self.snakemake.log.log)))
