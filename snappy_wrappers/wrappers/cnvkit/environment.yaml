@@ -2,6 +2,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.12
-  - cnvkit==0.9.8
-  - htslib=1.21
+  - python=3.10
+  - cnvkit=0.9.11
+  - htslib==1.21
