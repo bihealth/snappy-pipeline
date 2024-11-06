@@ -323,7 +323,7 @@ def test_cnvkit_step_part_get_args_target(panel_of_normals_workflow):
             "mapper": "bwa",
         }
     )
-    expected = {"annotate": "/path/to/annotations.gtf", "split": True, "target": ""}
+    expected = {"annotate": "/path/to/annotations.gtf", "split": True}
     actual = panel_of_normals_workflow.get_args("cnvkit", "target")(wildcards)
     assert actual == expected
 

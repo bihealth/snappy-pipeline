@@ -633,27 +633,19 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         ), "Trying to estimate average target size for non-WGS samples"
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
-        bams = [
-            ngs_mapping(tpl.format(mapper=wildcards["mapper"], normal_library=x))
-            for x in self.normal_libraries
-        ]
-        input_files = {"bams": bams}
-        if self.config.cnvkit.get("access", "") == "":
-            input_files["access"] = "work/{mapper}.cnvkit/out/cnvkit.access.bed".format(**wildcards)
-        return input_files
+        return {
+            "bams": [
+                ngs_mapping(tpl.format(mapper=wildcards["mapper"], normal_library=x))
+                for x in self.normal_libraries
+            ],
+            "access": "work/{mapper}.cnvkit/out/cnvkit.access.bed".format(**wildcards),
+        }
 
     def _get_args_autobin(self, wildcards):
         assert (
             self.libraryType == LibraryType.WGS
         ), "Trying to estimate average target size for non-WGS samples"
-        params = {"bp_per_bin": 50000}
-        if self.name in self.config.tools and self.config.cnvkit:
-            if self.config.cnvkit.get("access", "") == "":
-                params["method"] = "wgs"
-            else:
-                params["method"] = "amplicon"
-                params["target"] = self.config.cnvkit.get("access")
-        return params
+        return {"method": "wgs", "bp_per_bin": 50000}
 
     def _get_output_files_autobin(self):
         return {"result": "work/{mapper}.cnvkit/out/cnvkit.autobin.txt"}
@@ -663,10 +655,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         input_files = {}
         if self.libraryType == LibraryType.WGS and self.config.cnvkit.get("access", "") == "":
             input_files["access"] = "work/{mapper}.cnvkit/out/cnvkit.access.bed".format(**wildcards)
-            if self.config.cnvkit.get("target_avg_size", None) is None:
-                input_files["avg_size"] = "work/{mapper}.cnvkit/out/cnvkit.autobin.txt".format(
-                    **wildcards
-                )
+        if self.config.cnvkit.get("target_avg_size", None) is None:
+            input_files["avg_size"] = "work/{mapper}.cnvkit/out/cnvkit.autobin.txt".format(
+                **wildcards
+            )
         return input_files
 
     def _get_args_target(self, wildcards):
@@ -674,7 +666,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if self.name in self.config.tools:
             if self.libraryType == LibraryType.WES:
                 params["target"] = self.config.cnvkit.path_target_regions
-            if self.libraryType == LibraryType.WGS and self.config.cnvkit.get("access", "") == "":
+            if self.libraryType == LibraryType.WGS and self.config.cnvkit.get("access", "") != "":
                 params["target"] = self.config.cnvkit.get("access")
             if self.w_config.static_data_config.get("features", None):
                 params["annotate"] = self.w_config.static_data_config.features.path
