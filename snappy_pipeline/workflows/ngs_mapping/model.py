@@ -1,4 +1,5 @@
 import enum
+import itertools
 import os
 from enum import Enum
 from typing import Annotated
@@ -21,8 +22,23 @@ class RnaMapper(Enum):
     STAR = "star"
 
 
+class MetaTool(Enum):
+    MBCS = "mbcs"
+
+
+CombinedDnaTool = Enum(
+    "CombinedDnaTool",
+    {
+        (name, member.value)
+        for name, member in itertools.chain(
+            DnaMapper.__members__.items(), MetaTool.__members__.items()
+        )
+    },
+)
+
+
 class Tools(SnappyModel):
-    dna: Annotated[list[DnaMapper], EnumField(DnaMapper, [])]
+    dna: Annotated[list[CombinedDnaTool], EnumField(CombinedDnaTool, [])]
     """Required if DNA analysis; otherwise, leave empty."""
 
     rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
@@ -261,6 +277,7 @@ class Minimap2(SnappyModel):
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
+    barcode_tool: BarcodeTool
     use_barcodes: bool
     recalibrate: bool
 
@@ -287,7 +304,7 @@ class NgsMapping(SnappyStepModel):
     bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
 
-    somatic: Somatic | None = None
+    mbcs: Mbcs | None = None
     """
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
