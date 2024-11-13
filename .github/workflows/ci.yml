@@ -90,6 +90,9 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
+          # https://github.com/marketplace/actions/setup-miniconda#activate-base-environment
+          auto-activate-base: true
+          activate-environment: ""
       - name: Install some more dependencies via pip
         # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
         run: pip install ".[test]"; pip install --ignore-installed py
