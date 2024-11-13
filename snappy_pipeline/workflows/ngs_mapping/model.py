@@ -7,6 +7,7 @@ from typing import Annotated
 from pydantic import Field, field_validator, model_validator
 
 from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
+from snappy_pipeline.models.library_kit import LibraryKit
 
 
 class DnaMapper(Enum):
@@ -47,30 +48,6 @@ class Tools(SnappyModel):
 
     dna_long: Annotated[list[LongDnaMapper], EnumField(LongDnaMapper, [])]
     """Required if long-read mapper used; otherwise, leave empty."""
-
-
-class TargetCoverageReportEntry(SnappyModel):
-    """
-    Mapping from enrichment kit to target region BED file, for either computing per--target
-    region coverage or selecting targeted exons.
-
-    The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
-    mapped to the name "default".
-      - name: IDT_xGen_V1_0
-        pattern: "xGen Exome Research Panel V1\\.0*"
-        path: "path/to/targets.bed"
-    """
-
-    name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
-
-    pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
-
-    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
-
-
-class TargetCoverageReport(SnappyModel):
-    path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 
 class BamCollectDoc(SnappyModel):
@@ -283,7 +260,7 @@ class NgsMapping(SnappyStepModel):
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    target_coverage_report: TargetCoverageReport | None = None
+    target_coverage_report: LibraryKit | None = None
     """Thresholds for targeted sequencing coverage QC."""
 
     bam_collect_doc: BamCollectDoc = BamCollectDoc()
