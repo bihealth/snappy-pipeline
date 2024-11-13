@@ -77,22 +77,19 @@ jobs:
           - "3.12"
     needs: linting
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 2
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
-      - name: Install Python via conda
-        uses: s-weigand/setup-conda@v1
-        with:
-          python-version: ${{ matrix.python-version }}
           channels: conda-forge,bioconda,nodefaults
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          fetch-depth: 2
+          channel-priority: strict
       - name: Fail early on htslib etc. problems
         run: |
           set -euo pipefail
