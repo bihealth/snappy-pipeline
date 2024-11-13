@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2](https://github.com/bihealth/snappy-pipeline/compare/v0.2.1...v0.2.2) (2024-11-13)
+
+
+### Bug Fixes
+
+* chr format detection in gcnv wrappers needs to always use egrep ([#529](https://github.com/bihealth/snappy-pipeline/issues/529)) ([ac52a6f](https://github.com/bihealth/snappy-pipeline/commit/ac52a6f7aeab79fa9b676a281bf526af82714831))
+* mehari wrapper fix_manta_invs.py requires python &gt;=3.11, update conda env ([#542](https://github.com/bihealth/snappy-pipeline/issues/542)) ([c44aaea](https://github.com/bihealth/snappy-pipeline/commit/c44aaead5583acf19fa23e89fe91c2a53013960e))
+* unconditionally add optitype and arcashla sub_steps ([#547](https://github.com/bihealth/snappy-pipeline/issues/547)) ([73bbf66](https://github.com/bihealth/snappy-pipeline/commit/73bbf66c29dfdb02f7648e7f065c9826b6da05a9))
+
 ## [0.2.1](https://github.com/bihealth/snappy-pipeline/compare/v0.2.0...v0.2.1) (2024-07-01)
 
 
