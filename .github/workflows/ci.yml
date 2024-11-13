@@ -8,6 +8,13 @@ on:
     branches_ignore: []
 
 jobs:
+  default-shell:
+    name: Default shell
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+
   cancel-previous:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main'
