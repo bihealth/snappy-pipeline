@@ -90,12 +90,6 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
-      - name: Fail early on htslib etc. problems
-        run: |
-          set -euo pipefail
-          bgzip -c /dev/null >/dev/null
-          samtools version
-          bcftools version
       - name: Install some more dependencies via pip
         # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
         run: pip install ".[test]"; pip install --ignore-installed py
