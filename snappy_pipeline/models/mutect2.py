@@ -4,251 +4,235 @@ from snappy_pipeline.models import SnappyModel
 
 
 class Annotation(StrEnum):
-    AS_BASEQUALITYRANKSUMTEST = 'AS_BaseQualityRankSumTest'
-    AS_FISHERSTRAND = 'AS_FisherStrand'
-    AS_INBREEDINGCOEFF = 'AS_InbreedingCoeff'
-    AS_MAPPINGQUALITYRANKSUMTEST = 'AS_MappingQualityRankSumTest'
-    AS_QUALBYDEPTH = 'AS_QualByDepth'
-    AS_RMSMAPPINGQUALITY = 'AS_RMSMappingQuality'
-    AS_READPOSRANKSUMTEST = 'AS_ReadPosRankSumTest'
-    AS_STRANDBIASMUTECTANNOTATION = 'AS_StrandBiasMutectAnnotation'
-    AS_STRANDODDSRATIO = 'AS_StrandOddsRatio'
-    ALLELEFRACTION = 'AlleleFraction'
-    ALLELEPSEUDODEPTH = 'AllelePseudoDepth'
-    ASSEMBLYCOMPLEXITY = 'AssemblyComplexity'
-    BASEQUALITY = 'BaseQuality'
-    BASEQUALITYHISTOGRAM = 'BaseQualityHistogram'
-    BASEQUALITYRANKSUMTEST = 'BaseQualityRankSumTest'
-    CHROMOSOMECOUNTS = 'ChromosomeCounts'
-    CLIPPINGRANKSUMTEST = 'ClippingRankSumTest'
-    COUNTNS = 'CountNs'
-    COVERAGE = 'Coverage'
-    CYCLESKIPSTATUS = 'CycleSkipStatus'
-    DEPTHPERALLELEBYSAMPLE = 'DepthPerAlleleBySample'
-    DEPTHPERSAMPLEHC = 'DepthPerSampleHC'
-    EXCESSHET = 'ExcessHet'
-    FEATURIZEDREADSETS = 'FeaturizedReadSets'
-    FISHERSTRAND = 'FisherStrand'
-    FRAGMENTDEPTHPERALLELEBYSAMPLE = 'FragmentDepthPerAlleleBySample'
-    FRAGMENTLENGTH = 'FragmentLength'
-    GCCONTENT = 'GcContent'
-    GENOTYPESUMMARIES = 'GenotypeSummaries'
-    HAPLOTYPEFILTERINGANNOTATION = 'HaplotypeFilteringAnnotation'
-    HMERINDELLENGTH = 'HmerIndelLength'
-    HMERINDELNUC = 'HmerIndelNuc'
-    HMERMOTIFS = 'HmerMotifs'
-    INBREEDINGCOEFF = 'InbreedingCoeff'
-    INDELCLASSIFY = 'IndelClassify'
-    INDELLENGTH = 'IndelLength'
-    LIKELIHOODRANKSUMTEST = 'LikelihoodRankSumTest'
-    MAPPINGQUALITY = 'MappingQuality'
-    MAPPINGQUALITYRANKSUMTEST = 'MappingQualityRankSumTest'
-    MAPPINGQUALITYZERO = 'MappingQualityZero'
-    ORIENTATIONBIASREADCOUNTS = 'OrientationBiasReadCounts'
-    ORIGINALALIGNMENT = 'OriginalAlignment'
-    POSSIBLEDENOVO = 'PossibleDeNovo'
-    QUALBYDEPTH = 'QualByDepth'
-    RMSMAPPINGQUALITY = 'RMSMappingQuality'
-    RAWGTCOUNT = 'RawGtCount'
-    READPOSRANKSUMTEST = 'ReadPosRankSumTest'
-    READPOSITION = 'ReadPosition'
-    REFERENCEBASES = 'ReferenceBases'
-    SAMPLELIST = 'SampleList'
-    STRANDBIASBYSAMPLE = 'StrandBiasBySample'
-    STRANDODDSRATIO = 'StrandOddsRatio'
-    TANDEMREPEAT = 'TandemRepeat'
-    UNIQUEALTREADCOUNT = 'UniqueAltReadCount'
-    VARIANTTYPE = 'VariantType'
-
+    AS_BASEQUALITYRANKSUMTEST = "AS_BaseQualityRankSumTest"
+    AS_FISHERSTRAND = "AS_FisherStrand"
+    AS_INBREEDINGCOEFF = "AS_InbreedingCoeff"
+    AS_MAPPINGQUALITYRANKSUMTEST = "AS_MappingQualityRankSumTest"
+    AS_QUALBYDEPTH = "AS_QualByDepth"
+    AS_RMSMAPPINGQUALITY = "AS_RMSMappingQuality"
+    AS_READPOSRANKSUMTEST = "AS_ReadPosRankSumTest"
+    AS_STRANDBIASMUTECTANNOTATION = "AS_StrandBiasMutectAnnotation"
+    AS_STRANDODDSRATIO = "AS_StrandOddsRatio"
+    ALLELEFRACTION = "AlleleFraction"
+    ALLELEPSEUDODEPTH = "AllelePseudoDepth"
+    ASSEMBLYCOMPLEXITY = "AssemblyComplexity"
+    BASEQUALITY = "BaseQuality"
+    BASEQUALITYHISTOGRAM = "BaseQualityHistogram"
+    BASEQUALITYRANKSUMTEST = "BaseQualityRankSumTest"
+    CHROMOSOMECOUNTS = "ChromosomeCounts"
+    CLIPPINGRANKSUMTEST = "ClippingRankSumTest"
+    COUNTNS = "CountNs"
+    COVERAGE = "Coverage"
+    CYCLESKIPSTATUS = "CycleSkipStatus"
+    DEPTHPERALLELEBYSAMPLE = "DepthPerAlleleBySample"
+    DEPTHPERSAMPLEHC = "DepthPerSampleHC"
+    EXCESSHET = "ExcessHet"
+    FEATURIZEDREADSETS = "FeaturizedReadSets"
+    FISHERSTRAND = "FisherStrand"
+    FRAGMENTDEPTHPERALLELEBYSAMPLE = "FragmentDepthPerAlleleBySample"
+    FRAGMENTLENGTH = "FragmentLength"
+    GCCONTENT = "GcContent"
+    GENOTYPESUMMARIES = "GenotypeSummaries"
+    HAPLOTYPEFILTERINGANNOTATION = "HaplotypeFilteringAnnotation"
+    HMERINDELLENGTH = "HmerIndelLength"
+    HMERINDELNUC = "HmerIndelNuc"
+    HMERMOTIFS = "HmerMotifs"
+    INBREEDINGCOEFF = "InbreedingCoeff"
+    INDELCLASSIFY = "IndelClassify"
+    INDELLENGTH = "IndelLength"
+    LIKELIHOODRANKSUMTEST = "LikelihoodRankSumTest"
+    MAPPINGQUALITY = "MappingQuality"
+    MAPPINGQUALITYRANKSUMTEST = "MappingQualityRankSumTest"
+    MAPPINGQUALITYZERO = "MappingQualityZero"
+    ORIENTATIONBIASREADCOUNTS = "OrientationBiasReadCounts"
+    ORIGINALALIGNMENT = "OriginalAlignment"
+    POSSIBLEDENOVO = "PossibleDeNovo"
+    QUALBYDEPTH = "QualByDepth"
+    RMSMAPPINGQUALITY = "RMSMappingQuality"
+    RAWGTCOUNT = "RawGtCount"
+    READPOSRANKSUMTEST = "ReadPosRankSumTest"
+    READPOSITION = "ReadPosition"
+    REFERENCEBASES = "ReferenceBases"
+    SAMPLELIST = "SampleList"
+    STRANDBIASBYSAMPLE = "StrandBiasBySample"
+    STRANDODDSRATIO = "StrandOddsRatio"
+    TANDEMREPEAT = "TandemRepeat"
+    UNIQUEALTREADCOUNT = "UniqueAltReadCount"
+    VARIANTTYPE = "VariantType"
 
 
 class AnnotationGroup(StrEnum):
-    AS_STANDARDANNOTATION = 'AS_StandardAnnotation'
-    ALLELESPECIFICANNOTATION = 'AlleleSpecificAnnotation'
-    GENOTYPEANNOTATION = 'GenotypeAnnotation'
-    INFOFIELDANNOTATION = 'InfoFieldAnnotation'
-    JUMBOGENOTYPEANNOTATION = 'JumboGenotypeAnnotation'
-    JUMBOINFOANNOTATION = 'JumboInfoAnnotation'
-    REDUCIBLEANNOTATION = 'ReducibleAnnotation'
-    STANDARDANNOTATION = 'StandardAnnotation'
-    STANDARDFLOWBASEDANNOTATION = 'StandardFlowBasedAnnotation'
-    STANDARDHCANNOTATION = 'StandardHCAnnotation'
-    STANDARDMUTECTANNOTATION = 'StandardMutectAnnotation'
-    VARIANTANNOTATION = 'VariantAnnotation'
-
+    AS_STANDARDANNOTATION = "AS_StandardAnnotation"
+    ALLELESPECIFICANNOTATION = "AlleleSpecificAnnotation"
+    GENOTYPEANNOTATION = "GenotypeAnnotation"
+    INFOFIELDANNOTATION = "InfoFieldAnnotation"
+    JUMBOGENOTYPEANNOTATION = "JumboGenotypeAnnotation"
+    JUMBOINFOANNOTATION = "JumboInfoAnnotation"
+    REDUCIBLEANNOTATION = "ReducibleAnnotation"
+    STANDARDANNOTATION = "StandardAnnotation"
+    STANDARDFLOWBASEDANNOTATION = "StandardFlowBasedAnnotation"
+    STANDARDHCANNOTATION = "StandardHCAnnotation"
+    STANDARDMUTECTANNOTATION = "StandardMutectAnnotation"
+    VARIANTANNOTATION = "VariantAnnotation"
 
 
 class AnnotationExclude(StrEnum):
-    AS_STRANDBIASMUTECTANNOTATION = 'AS_StrandBiasMutectAnnotation'
-    BASEQUALITY = 'BaseQuality'
-    COVERAGE = 'Coverage'
-    DEPTHPERALLELEBYSAMPLE = 'DepthPerAlleleBySample'
-    DEPTHPERSAMPLEHC = 'DepthPerSampleHC'
-    FRAGMENTDEPTHPERALLELEBYSAMPLE = 'FragmentDepthPerAlleleBySample'
-    FRAGMENTLENGTH = 'FragmentLength'
-    MAPPINGQUALITY = 'MappingQuality'
-    ORIENTATIONBIASREADCOUNTS = 'OrientationBiasReadCounts'
-    READPOSITION = 'ReadPosition'
-    STRANDBIASBYSAMPLE = 'StrandBiasBySample'
-    TANDEMREPEAT = 'TandemRepeat'
-
+    AS_STRANDBIASMUTECTANNOTATION = "AS_StrandBiasMutectAnnotation"
+    BASEQUALITY = "BaseQuality"
+    COVERAGE = "Coverage"
+    DEPTHPERALLELEBYSAMPLE = "DepthPerAlleleBySample"
+    DEPTHPERSAMPLEHC = "DepthPerSampleHC"
+    FRAGMENTDEPTHPERALLELEBYSAMPLE = "FragmentDepthPerAlleleBySample"
+    FRAGMENTLENGTH = "FragmentLength"
+    MAPPINGQUALITY = "MappingQuality"
+    ORIENTATIONBIASREADCOUNTS = "OrientationBiasReadCounts"
+    READPOSITION = "ReadPosition"
+    STRANDBIASBYSAMPLE = "StrandBiasBySample"
+    TANDEMREPEAT = "TandemRepeat"
 
 
 class DisableReadFilter(StrEnum):
-    GOODCIGARREADFILTER = 'GoodCigarReadFilter'
-    MAPPEDREADFILTER = 'MappedReadFilter'
-    MAPPINGQUALITYAVAILABLEREADFILTER = 'MappingQualityAvailableReadFilter'
-    MAPPINGQUALITYNOTZEROREADFILTER = 'MappingQualityNotZeroReadFilter'
-    MAPPINGQUALITYREADFILTER = 'MappingQualityReadFilter'
-    NONCHIMERICORIGINALALIGNMENTREADFILTER = 'NonChimericOriginalAlignmentReadFilter'
-    NONZEROREFERENCELENGTHALIGNMENTREADFILTER = 'NonZeroReferenceLengthAlignmentReadFilter'
-    NOTDUPLICATEREADFILTER = 'NotDuplicateReadFilter'
-    NOTSECONDARYALIGNMENTREADFILTER = 'NotSecondaryAlignmentReadFilter'
-    PASSESVENDORQUALITYCHECKREADFILTER = 'PassesVendorQualityCheckReadFilter'
-    READLENGTHREADFILTER = 'ReadLengthReadFilter'
-    WELLFORMEDREADFILTER = 'WellformedReadFilter'
-
+    GOODCIGARREADFILTER = "GoodCigarReadFilter"
+    MAPPEDREADFILTER = "MappedReadFilter"
+    MAPPINGQUALITYAVAILABLEREADFILTER = "MappingQualityAvailableReadFilter"
+    MAPPINGQUALITYNOTZEROREADFILTER = "MappingQualityNotZeroReadFilter"
+    MAPPINGQUALITYREADFILTER = "MappingQualityReadFilter"
+    NONCHIMERICORIGINALALIGNMENTREADFILTER = "NonChimericOriginalAlignmentReadFilter"
+    NONZEROREFERENCELENGTHALIGNMENTREADFILTER = "NonZeroReferenceLengthAlignmentReadFilter"
+    NOTDUPLICATEREADFILTER = "NotDuplicateReadFilter"
+    NOTSECONDARYALIGNMENTREADFILTER = "NotSecondaryAlignmentReadFilter"
+    PASSESVENDORQUALITYCHECKREADFILTER = "PassesVendorQualityCheckReadFilter"
+    READLENGTHREADFILTER = "ReadLengthReadFilter"
+    WELLFORMEDREADFILTER = "WellformedReadFilter"
 
 
 class IntervalMergingRule(StrEnum):
-    ALL = 'ALL'
-    OVERLAPPING_ONLY = 'OVERLAPPING_ONLY'
-
+    ALL = "ALL"
+    OVERLAPPING_ONLY = "OVERLAPPING_ONLY"
 
 
 class IntervalSetRule(StrEnum):
-    INTERSECTION = 'INTERSECTION'
-    UNION = 'UNION'
-
+    INTERSECTION = "INTERSECTION"
+    UNION = "UNION"
 
 
 class ReadFilter(StrEnum):
-    ALIGNMENTAGREESWITHHEADERREADFILTER = 'AlignmentAgreesWithHeaderReadFilter'
-    ALLOWALLREADSREADFILTER = 'AllowAllReadsReadFilter'
-    AMBIGUOUSBASEREADFILTER = 'AmbiguousBaseReadFilter'
-    CIGARCONTAINSNONOPERATOR = 'CigarContainsNoNOperator'
-    EXCESSIVEENDCLIPPEDREADFILTER = 'ExcessiveEndClippedReadFilter'
-    FIRSTOFPAIRREADFILTER = 'FirstOfPairReadFilter'
-    FLOWBASEDTPATTRIBUTESYMETRICREADFILTER = 'FlowBasedTPAttributeSymetricReadFilter'
-    FLOWBASEDTPATTRIBUTEVALIDREADFILTER = 'FlowBasedTPAttributeValidReadFilter'
-    FRAGMENTLENGTHREADFILTER = 'FragmentLengthReadFilter'
-    GOODCIGARREADFILTER = 'GoodCigarReadFilter'
-    HASREADGROUPREADFILTER = 'HasReadGroupReadFilter'
-    HMERQUALITYSYMETRICREADFILTER = 'HmerQualitySymetricReadFilter'
-    INTERVALOVERLAPREADFILTER = 'IntervalOverlapReadFilter'
-    JEXLEXPRESSIONREADTAGVALUEFILTER = 'JexlExpressionReadTagValueFilter'
-    LIBRARYREADFILTER = 'LibraryReadFilter'
-    MAPPEDREADFILTER = 'MappedReadFilter'
-    MAPPINGQUALITYAVAILABLEREADFILTER = 'MappingQualityAvailableReadFilter'
-    MAPPINGQUALITYNOTZEROREADFILTER = 'MappingQualityNotZeroReadFilter'
-    MAPPINGQUALITYREADFILTER = 'MappingQualityReadFilter'
-    MATCHINGBASESANDQUALSREADFILTER = 'MatchingBasesAndQualsReadFilter'
-    MATEDIFFERENTSTRANDREADFILTER = 'MateDifferentStrandReadFilter'
-    MATEDISTANTREADFILTER = 'MateDistantReadFilter'
-    MATEONSAMECONTIGORNOMAPPEDMATEREADFILTER = 'MateOnSameContigOrNoMappedMateReadFilter'
-    MATEUNMAPPEDANDUNMAPPEDREADFILTER = 'MateUnmappedAndUnmappedReadFilter'
-    METRICSREADFILTER = 'MetricsReadFilter'
-    NONCHIMERICORIGINALALIGNMENTREADFILTER = 'NonChimericOriginalAlignmentReadFilter'
-    NONZEROFRAGMENTLENGTHREADFILTER = 'NonZeroFragmentLengthReadFilter'
-    NONZEROREFERENCELENGTHALIGNMENTREADFILTER = 'NonZeroReferenceLengthAlignmentReadFilter'
-    NOTDUPLICATEREADFILTER = 'NotDuplicateReadFilter'
-    NOTOPTICALDUPLICATEREADFILTER = 'NotOpticalDuplicateReadFilter'
-    NOTPROPERLYPAIREDREADFILTER = 'NotProperlyPairedReadFilter'
-    NOTSECONDARYALIGNMENTREADFILTER = 'NotSecondaryAlignmentReadFilter'
-    NOTSUPPLEMENTARYALIGNMENTREADFILTER = 'NotSupplementaryAlignmentReadFilter'
-    OVERCLIPPEDREADFILTER = 'OverclippedReadFilter'
-    PAIREDREADFILTER = 'PairedReadFilter'
-    PASSESVENDORQUALITYCHECKREADFILTER = 'PassesVendorQualityCheckReadFilter'
-    PLATFORMREADFILTER = 'PlatformReadFilter'
-    PLATFORMUNITREADFILTER = 'PlatformUnitReadFilter'
-    PRIMARYLINEREADFILTER = 'PrimaryLineReadFilter'
-    PROPERLYPAIREDREADFILTER = 'ProperlyPairedReadFilter'
-    READGROUPBLACKLISTREADFILTER = 'ReadGroupBlackListReadFilter'
-    READGROUPHASFLOWORDERREADFILTER = 'ReadGroupHasFlowOrderReadFilter'
-    READGROUPREADFILTER = 'ReadGroupReadFilter'
-    READLENGTHEQUALSCIGARLENGTHREADFILTER = 'ReadLengthEqualsCigarLengthReadFilter'
-    READLENGTHREADFILTER = 'ReadLengthReadFilter'
-    READNAMEREADFILTER = 'ReadNameReadFilter'
-    READSTRANDFILTER = 'ReadStrandFilter'
-    READTAGVALUEFILTER = 'ReadTagValueFilter'
-    SAMPLEREADFILTER = 'SampleReadFilter'
-    SECONDOFPAIRREADFILTER = 'SecondOfPairReadFilter'
-    SEQISSTOREDREADFILTER = 'SeqIsStoredReadFilter'
-    SOFTCLIPPEDREADFILTER = 'SoftClippedReadFilter'
-    VALIDALIGNMENTENDREADFILTER = 'ValidAlignmentEndReadFilter'
-    VALIDALIGNMENTSTARTREADFILTER = 'ValidAlignmentStartReadFilter'
-    WELLFORMEDFLOWBASEDREADFILTER = 'WellformedFlowBasedReadFilter'
-    WELLFORMEDREADFILTER = 'WellformedReadFilter'
-
+    ALIGNMENTAGREESWITHHEADERREADFILTER = "AlignmentAgreesWithHeaderReadFilter"
+    ALLOWALLREADSREADFILTER = "AllowAllReadsReadFilter"
+    AMBIGUOUSBASEREADFILTER = "AmbiguousBaseReadFilter"
+    CIGARCONTAINSNONOPERATOR = "CigarContainsNoNOperator"
+    EXCESSIVEENDCLIPPEDREADFILTER = "ExcessiveEndClippedReadFilter"
+    FIRSTOFPAIRREADFILTER = "FirstOfPairReadFilter"
+    FLOWBASEDTPATTRIBUTESYMETRICREADFILTER = "FlowBasedTPAttributeSymetricReadFilter"
+    FLOWBASEDTPATTRIBUTEVALIDREADFILTER = "FlowBasedTPAttributeValidReadFilter"
+    FRAGMENTLENGTHREADFILTER = "FragmentLengthReadFilter"
+    GOODCIGARREADFILTER = "GoodCigarReadFilter"
+    HASREADGROUPREADFILTER = "HasReadGroupReadFilter"
+    HMERQUALITYSYMETRICREADFILTER = "HmerQualitySymetricReadFilter"
+    INTERVALOVERLAPREADFILTER = "IntervalOverlapReadFilter"
+    JEXLEXPRESSIONREADTAGVALUEFILTER = "JexlExpressionReadTagValueFilter"
+    LIBRARYREADFILTER = "LibraryReadFilter"
+    MAPPEDREADFILTER = "MappedReadFilter"
+    MAPPINGQUALITYAVAILABLEREADFILTER = "MappingQualityAvailableReadFilter"
+    MAPPINGQUALITYNOTZEROREADFILTER = "MappingQualityNotZeroReadFilter"
+    MAPPINGQUALITYREADFILTER = "MappingQualityReadFilter"
+    MATCHINGBASESANDQUALSREADFILTER = "MatchingBasesAndQualsReadFilter"
+    MATEDIFFERENTSTRANDREADFILTER = "MateDifferentStrandReadFilter"
+    MATEDISTANTREADFILTER = "MateDistantReadFilter"
+    MATEONSAMECONTIGORNOMAPPEDMATEREADFILTER = "MateOnSameContigOrNoMappedMateReadFilter"
+    MATEUNMAPPEDANDUNMAPPEDREADFILTER = "MateUnmappedAndUnmappedReadFilter"
+    METRICSREADFILTER = "MetricsReadFilter"
+    NONCHIMERICORIGINALALIGNMENTREADFILTER = "NonChimericOriginalAlignmentReadFilter"
+    NONZEROFRAGMENTLENGTHREADFILTER = "NonZeroFragmentLengthReadFilter"
+    NONZEROREFERENCELENGTHALIGNMENTREADFILTER = "NonZeroReferenceLengthAlignmentReadFilter"
+    NOTDUPLICATEREADFILTER = "NotDuplicateReadFilter"
+    NOTOPTICALDUPLICATEREADFILTER = "NotOpticalDuplicateReadFilter"
+    NOTPROPERLYPAIREDREADFILTER = "NotProperlyPairedReadFilter"
+    NOTSECONDARYALIGNMENTREADFILTER = "NotSecondaryAlignmentReadFilter"
+    NOTSUPPLEMENTARYALIGNMENTREADFILTER = "NotSupplementaryAlignmentReadFilter"
+    OVERCLIPPEDREADFILTER = "OverclippedReadFilter"
+    PAIREDREADFILTER = "PairedReadFilter"
+    PASSESVENDORQUALITYCHECKREADFILTER = "PassesVendorQualityCheckReadFilter"
+    PLATFORMREADFILTER = "PlatformReadFilter"
+    PLATFORMUNITREADFILTER = "PlatformUnitReadFilter"
+    PRIMARYLINEREADFILTER = "PrimaryLineReadFilter"
+    PROPERLYPAIREDREADFILTER = "ProperlyPairedReadFilter"
+    READGROUPBLACKLISTREADFILTER = "ReadGroupBlackListReadFilter"
+    READGROUPHASFLOWORDERREADFILTER = "ReadGroupHasFlowOrderReadFilter"
+    READGROUPREADFILTER = "ReadGroupReadFilter"
+    READLENGTHEQUALSCIGARLENGTHREADFILTER = "ReadLengthEqualsCigarLengthReadFilter"
+    READLENGTHREADFILTER = "ReadLengthReadFilter"
+    READNAMEREADFILTER = "ReadNameReadFilter"
+    READSTRANDFILTER = "ReadStrandFilter"
+    READTAGVALUEFILTER = "ReadTagValueFilter"
+    SAMPLEREADFILTER = "SampleReadFilter"
+    SECONDOFPAIRREADFILTER = "SecondOfPairReadFilter"
+    SEQISSTOREDREADFILTER = "SeqIsStoredReadFilter"
+    SOFTCLIPPEDREADFILTER = "SoftClippedReadFilter"
+    VALIDALIGNMENTENDREADFILTER = "ValidAlignmentEndReadFilter"
+    VALIDALIGNMENTSTARTREADFILTER = "ValidAlignmentStartReadFilter"
+    WELLFORMEDFLOWBASEDREADFILTER = "WellformedFlowBasedReadFilter"
+    WELLFORMEDREADFILTER = "WellformedReadFilter"
 
 
 class ValidationStringency(StrEnum):
-    LENIENT = 'LENIENT'
-    SILENT = 'SILENT'
-    STRICT = 'STRICT'
-
+    LENIENT = "LENIENT"
+    SILENT = "SILENT"
+    STRICT = "STRICT"
 
 
 class LogLevel(StrEnum):
-    DEBUG = 'DEBUG'
-    ERROR = 'ERROR'
-    INFO = 'INFO'
-    WARNING = 'WARNING'
-
+    DEBUG = "DEBUG"
+    ERROR = "ERROR"
+    INFO = "INFO"
+    WARNING = "WARNING"
 
 
 class WriterType(StrEnum):
-    ALL_POSSIBLE_HAPLOTYPES = 'ALL_POSSIBLE_HAPLOTYPES'
-    CALLED_HAPLOTYPES = 'CALLED_HAPLOTYPES'
-    CALLED_HAPLOTYPES_NO_READS = 'CALLED_HAPLOTYPES_NO_READS'
-    NO_HAPLOTYPES = 'NO_HAPLOTYPES'
-
+    ALL_POSSIBLE_HAPLOTYPES = "ALL_POSSIBLE_HAPLOTYPES"
+    CALLED_HAPLOTYPES = "CALLED_HAPLOTYPES"
+    CALLED_HAPLOTYPES_NO_READS = "CALLED_HAPLOTYPES_NO_READS"
+    NO_HAPLOTYPES = "NO_HAPLOTYPES"
 
 
 class ReferenceConfidenceMode(StrEnum):
-    BP_RESOLUTION = 'BP_RESOLUTION'
-    GVCF = 'GVCF'
-    NONE = 'NONE'
-
+    BP_RESOLUTION = "BP_RESOLUTION"
+    GVCF = "GVCF"
+    NONE = "NONE"
 
 
 class FlowMode(StrEnum):
-    ADVANCED = 'ADVANCED'
-    NONE = 'NONE'
-    STANDARD = 'STANDARD'
-
+    ADVANCED = "ADVANCED"
+    NONE = "NONE"
+    STANDARD = "STANDARD"
 
 
 class Implementation(StrEnum):
-    FLOWBASED = 'FlowBased'
-    FLOWBASEDHMM = 'FlowBasedHMM'
-    PAIRHMM = 'PairHMM'
-
+    FLOWBASED = "FlowBased"
+    FLOWBASEDHMM = "FlowBasedHMM"
+    PAIRHMM = "PairHMM"
 
 
 class PairHMMImplementation(StrEnum):
-    AVX_LOGLESS_CACHING = 'AVX_LOGLESS_CACHING'
-    AVX_LOGLESS_CACHING_OMP = 'AVX_LOGLESS_CACHING_OMP'
-    EXACT = 'EXACT'
-    FASTEST_AVAILABLE = 'FASTEST_AVAILABLE'
-    LOGLESS_CACHING = 'LOGLESS_CACHING'
-    ORIGINAL = 'ORIGINAL'
-
+    AVX_LOGLESS_CACHING = "AVX_LOGLESS_CACHING"
+    AVX_LOGLESS_CACHING_OMP = "AVX_LOGLESS_CACHING_OMP"
+    EXACT = "EXACT"
+    FASTEST_AVAILABLE = "FASTEST_AVAILABLE"
+    LOGLESS_CACHING = "LOGLESS_CACHING"
+    ORIGINAL = "ORIGINAL"
 
 
 class PCRErrorModel(StrEnum):
-    AGGRESSIVE = 'AGGRESSIVE'
-    CONSERVATIVE = 'CONSERVATIVE'
-    HOSTILE = 'HOSTILE'
-    NONE = 'NONE'
-
+    AGGRESSIVE = "AGGRESSIVE"
+    CONSERVATIVE = "CONSERVATIVE"
+    HOSTILE = "HOSTILE"
+    NONE = "NONE"
 
 
 class SmithWatermanImplementation(StrEnum):
-    AVX_ENABLED = 'AVX_ENABLED'
-    FASTEST_AVAILABLE = 'FASTEST_AVAILABLE'
-    JAVA = 'JAVA'
-
+    AVX_ENABLED = "AVX_ENABLED"
+    FASTEST_AVAILABLE = "FASTEST_AVAILABLE"
+    JAVA = "JAVA"
 
 
 class Mutect2(SnappyModel):
@@ -264,11 +248,6 @@ class Mutect2(SnappyModel):
     # germline_resource: FeatureInput | None = None  # No options for class FeatureInput
     germline_resource: str | None = None  # No options for class FeatureInput
     """Population vcf of germline sequencing containing allele fractions"""
-
-    # Arguments that must be set by derived classes (pon & calling)
-
-    # Panel of normals arguments
-
 
     # Calling-specific arguments
 
@@ -293,7 +272,6 @@ class Mutect2(SnappyModel):
     # pair_hmm_results_file: bool = False  # Was class GATKPath
     # """Write exact pairHMM inputs/outputs to for debugging purposes"""
 
-
     # Optional arguments
 
     add_output_vcf_command_line: bool = True
@@ -315,7 +293,7 @@ class Mutect2(SnappyModel):
     callable_depth: int = 10
     """Minimum depth to be considered callable for Mutect stats.  Does not affect genotyping"""
     disable_bam_index_caching: bool = False
-    """If true, don't cache bam indexes, this will reduce memory requirements but may harm performance if many intervals are specified.  Caching is automatically disabled if there are no intervals specified"""
+    """If true, don"t cache bam indexes, this will reduce memory requirements but may harm performance if many intervals are specified.  Caching is automatically disabled if there are no intervals specified"""
     disable_read_filter: list[DisableReadFilter] = []
     """Read filters to be disabled before analysis"""
     dont_use_dragstr_pair_hmm_scores: bool = False
@@ -381,7 +359,7 @@ class Mutect2(SnappyModel):
     read_validation_stringency: ValidationStringency = ValidationStringency.SILENT
     """Validation stringency for all SAM/BAM/CRAM/SRA files read by this program.  The default stringency value SILENT can improve performance when processing a BAM file in which variable-length data (read, qualities, tags) do not otherwise need to be decoded"""
     sites_only_vcf_output: bool = False
-    """If true, don't emit genotype fields when writing vcf file output"""
+    """If true, don"t emit genotype fields when writing vcf file output"""
     tumor_lod_to_emit: float = 3.0
     """Log 10 odds threshold to emit variant to VCF"""
     use_jdk_deflater: bool = False
@@ -609,4 +587,3 @@ class Mutect2(SnappyModel):
     # """BAM sample name of normal(s), if any.  May be URL-encoded as output by GetSampleName with -encode argument"""
     # tumor_sample: str | None = None
     # """BAM sample name of tumor.  May be URL-encoded as output by GetSampleName with -encode argument"""
-
