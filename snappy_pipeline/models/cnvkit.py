@@ -74,7 +74,7 @@ class Target(SnappyModel):
     """Path to baits file (Agilent Covered), unset for WGS data"""
     split: bool = True
     """Split large tiled intervals into smaller, consecutive targets."""
-    avg_size: float = (800/3)
+    avg_size: float = 800 / 3
     """Average size of split target bins (results are approximate)"""
     short_names: bool = False
     """Reduce multi-accession bait labels to be short and consistent"""
@@ -248,7 +248,11 @@ class CnvkitToReference(SnappyModel):
 
     @model_validator(mode="after")
     def ensure_males_for_reference(self):
-        if self.male_reference and self.sex.source == SexOrigin.CONFIG and self.sex.sample_sex == SexValue.FEMALE:
+        if (
+            self.male_reference
+            and self.sex.source == SexOrigin.CONFIG
+            and self.sex.sample_sex == SexValue.FEMALE
+        ):
             raise ValueError("Male reference requested for female cohort")
         return self
 
