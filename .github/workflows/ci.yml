@@ -8,6 +8,13 @@ on:
     branches_ignore: []
 
 jobs:
+  default-shell:
+    name: Default shell
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+
   cancel-previous:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main'
@@ -77,31 +84,19 @@ jobs:
           - "3.12"
     needs: linting
     steps:
-      - name: Install Python via conda
-        uses: s-weigand/setup-conda@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-          conda-channels: defaults,bioconda,conda-forge
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: true
           fetch-depth: 2
-      - name: Install mamba
-        run: conda install -y mamba>=1.0.0
-      - name: Prepare environment.yml file
-        run: >
-          cp environment.yml /tmp/environment.yml && sed -i -e
-          's/- python=.*/- python=${{ matrix.python-version }}/'
-          /tmp/environment.yml
-      - name: Update environment using mamba
-        run: mamba env update --name root --file /tmp/environment.yml
-      - name: Fail early on htslib etc. problems
-        run: |
-          set -euo pipefail
-          bgzip -c /dev/null >/dev/null
-          samtools version
-          bcftools version
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          environment-file: environment.yml
+          channels: conda-forge,bioconda,nodefaults
+          channel-priority: strict
       - name: Install some more dependencies via pip
         # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
         run: pip install ".[test]"; pip install --ignore-installed py
