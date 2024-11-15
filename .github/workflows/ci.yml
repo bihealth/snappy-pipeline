@@ -95,9 +95,10 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
+          activate-environment: test
       - run: which pip
       - name: Install some more dependencies via pip
-        run: pip install 'pyproject.toml[test]'
+        run: pip install '.[test]'  # 'pyproject.toml[test]'
       - name: Run tests
         run: pytest
         env:
