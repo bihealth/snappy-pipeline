@@ -7,13 +7,11 @@ on:
   pull_request:
     branches_ignore: []
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  default-shell:
-    name: Default shell
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -el {0}
 
   cancel-previous:
     runs-on: ubuntu-latest
