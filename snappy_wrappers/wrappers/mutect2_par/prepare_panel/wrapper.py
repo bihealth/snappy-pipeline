@@ -10,8 +10,7 @@ import sys
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from parallel_prepare_panel import ParallelMutect2Wrapper
-from snakemake import shell
+from parallel_prepare_panel import ParallelMutect2Wrapper  # noqa: E402
 
 # Kick off execution using the wrapper class defined above.
 ParallelMutect2Wrapper(snakemake).run().shutdown_logging()

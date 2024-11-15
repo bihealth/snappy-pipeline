@@ -20,7 +20,7 @@ for param in (
     "segmetrics_bootstrap",
     "smooth_bootstrap",
 ):
-    if not param in config.keys():
+    if param not in config.keys():
         config[param] = ""
 
 gender = " --gender {}".format(config["gender"]) if config["gender"] else ""

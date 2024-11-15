@@ -192,7 +192,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Build mapping from NGS DNA library to library kit
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
 

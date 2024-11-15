@@ -54,7 +54,8 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
             "--verbose",
             "--cores",
             "1",
-            "--use-conda",
+            "--software-deployment-method",
+            "conda",
             "--conda-frontend",
             "mamba",
         ]

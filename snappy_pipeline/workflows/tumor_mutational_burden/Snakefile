@@ -26,14 +26,38 @@ wf = TumorMutationalBurdenCalculationWorkflow(
 )
 
 
+# Modules =====================================================================
+sub_workflow = "somatic_variant_calling"
+if config["has_annotation"]:
+    sub_workflow = "somatic_variant_annotation"
+if config["is_filtered"]:
+    sub_workflow = "somatic_variant_filtration"
+
+
+module somatic_variant:
+    snakefile:
+        f"../{sub_workflow}/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_somatic_variant", os.path.join("..", sub_workflow))
+
+
+use rule * from somatic_variant
+
+
+# Rules =======================================================================
+
+
 localrules:
     # Linking files from work/ to output/ should be done locally
     tumor_mutational_burden_link_out_run,
 
 
-rule all:
+rule tumor_mutational_burden_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # Generic linking out ---------------------------------------------------------
