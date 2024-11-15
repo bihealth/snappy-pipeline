@@ -95,8 +95,8 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
+      - run: tree -L 4
       - name: Install some more dependencies via pip
-        # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
         run: pip install ".[test]"
       - name: Run tests
         run: pytest
