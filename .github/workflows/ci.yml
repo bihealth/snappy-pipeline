@@ -95,9 +95,9 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
-      - run: tree -L 4
+      - run: which pip
       - name: Install some more dependencies via pip
-        run: pip install ".[test]"
+        run: pip install 'pyproject.toml[test]'
       - name: Run tests
         run: pytest
         env:
