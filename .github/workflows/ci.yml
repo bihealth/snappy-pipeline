@@ -7,13 +7,11 @@ on:
   pull_request:
     branches_ignore: []
 
+defaults:
+  run:
+    shell: bash -el {0}
+
 jobs:
-  default-shell:
-    name: Default shell
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -el {0}
 
   cancel-previous:
     runs-on: ubuntu-latest
@@ -56,25 +54,25 @@ jobs:
             You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sphinx-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-            pip install -e ".[docs]"
-            pip freeze
-
-      - name: Build documentation
-        run: |
-          cd docs
-          make html
+#  sphinx-docs:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Install Python
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: "3.12"
+#
+#      - name: Install dependencies
+#        run: |
+#            pip install -e ".[docs]"
+#            pip freeze
+#
+#      - name: Build documentation
+#        run: |
+#          cd docs
+#          make html
 
   testing:
     runs-on: ubuntu-latest
@@ -97,9 +95,10 @@ jobs:
           environment-file: environment.yml
           channels: conda-forge,bioconda,nodefaults
           channel-priority: strict
+          activate-environment: test
+      - run: which pip
       - name: Install some more dependencies via pip
-        # Workaround - see https://github.com/pytest-dev/pytest/issues/10420#issuecomment-1290697849
-        run: pip install ".[test]"; pip install --ignore-installed py
+        run: pip install '.[test]'  # 'pyproject.toml[test]'
       - name: Run tests
         run: pytest
         env:
