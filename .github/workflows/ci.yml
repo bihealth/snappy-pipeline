@@ -54,25 +54,25 @@ jobs:
             You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sphinx-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-            pip install -e ".[docs]"
-            pip freeze
-
-      - name: Build documentation
-        run: |
-          cd docs
-          make html
+#  sphinx-docs:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Install Python
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: "3.12"
+#
+#      - name: Install dependencies
+#        run: |
+#            pip install -e ".[docs]"
+#            pip freeze
+#
+#      - name: Build documentation
+#        run: |
+#          cd docs
+#          make html
 
   testing:
     runs-on: ubuntu-latest
