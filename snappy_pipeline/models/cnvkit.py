@@ -6,6 +6,61 @@ from pydantic import model_validator
 from snappy_pipeline.models import SnappyModel
 
 
+# Parameters for each action & those shared between actions
+# param_table = {
+#     "shared": {
+#         "short_names": bool,
+#         "drop_low_coverage": bool,
+#         "male_reference": bool,
+#         "sample_sex": Enum,
+#         "zigocity_freq": float,
+#         "min_variant_depth": int,
+#         "diploid_parx_genome": str,
+#         "normal_id": str,
+#         "sample_id": str,
+#         "cluster": bool,
+#     },
+#     "access": {"min_gap_size": int, "exclude": list},
+#     "antitarget": {"avg_size": int, "min_size": float},
+#     "autobin": {
+#         "method": Enum,
+#         "bp_per_bin": float,
+#         "antitarget_max_size": int,
+#         "antitarget_min_size": int,
+#         "target_max_size": int,
+#         "target_min_size": int,
+#     },
+#     "bintest": {"target": bool, "alpha": float},
+#     "call": {
+#         "center": Enum,
+#         "filter": Enum,
+#         "method": Enum,
+#         "center_at": float,
+#         "purity": float,
+#         "ploidy": float,
+#         "thresholds": list,
+#     },
+#     "coverage": {"count": bool, "min_mapq": int},
+#     "fix": {"smoothing_window_fraction": float},
+#     "genemetrics": {"alpha": float, "threshold": float, "bootstrap": int},
+#     "metrics": {},
+#     "reference": {"min_cluster_size": int},
+#     "segment": {
+#         "smooth_cbs": bool,
+#         "method": Enum,
+#         "threshold": float,
+#         "drop_outliers": int,
+#     },
+#     "segmetrics": {
+#         "alpha": float,
+#         "threshold": float,
+#         "bootstrap": int,
+#         "min_probes": int,
+#     },
+#     "target": {"split": bool, "avg_size": float},
+# }
+
+
 class SexOrigin(enum.StrEnum):
     AUTOMATIC = "auto"
     """Sex determined from the data"""
@@ -33,51 +88,72 @@ class Sex(SnappyModel):
 
 
 class SegmentationMethod(enum.StrEnum):
-    cbs = "cbs"
-    flasso = "flasso"
-    haar = "haar"
-    hmm = "hmm"
-    hmm_tumor = "hmm-tumor"
-    hmm_germline = "hmm-germline"
-    none = "none"
+    CBS = "cbs"
+    FLASSO = "flasso"
+    HAAR = "haar"
+    HMM = "hmm"
+    HMM_TUMOR = "hmm-tumor"
+    HMM_GERMLINE = "hmm-germline"
+    NONE = "none"
 
 
 class CenterMethod(enum.StrEnum):
-    mean = "mean"
-    median = "median"
-    mode = "mode"
-    biweight = "biweight"
+    MEAN = "mean"
+    MEDIAN = "median"
+    MODE = "mode"
+    BIWEIGHT = "biweight"
 
 
 class FilterMethod(enum.StrEnum):
-    ampdel = "ampdel"
-    cn = "cn"
-    ci = "ci"
-    sem = "sem"
+    AMPDEL = "ampdel"
+    CN = "cn"
+    CI = "ci"
+    SEM = "sem"
 
 
 class CallingMethod(enum.StrEnum):
-    threshold = "threshold"
-    clonal = "clonal"
-    none = ""
+    THRESHOLD = "threshold"
+    CLONAL = "clonal"
+    NONE = "none"
 
 
 class Access(SnappyModel):
     exclude: list[str] = []
     """Regions accessible to mapping"""
-    min_gap_size: int = 5000
-    """Minimum gap size between accessible sequence regions. Regions separated by less than this distance will be joined together."""
+    min_gap_size: int | None = None
+    """
+    Minimum gap size between accessible sequence regions. Regions separated by less than this distance will be joined together.
+
+    In WGS mode, the _target_ regions are set to the accessible regions in the genome.
+    These accessible regions can be provided by the user, or computed by the `access`
+    module. In the latter case, the optimal bin size is computed by the `autobin` module
+    unless this value is provided by the user.
+    `autobin` uses the `wgs` method _only_ if the list of excluded region is empty and if
+    the `min_gap_size` parameter remains unassigned. If any of these conditions is not met,
+    or if a files of accessible regions is provided by the user, then then `amplicon` method
+    is used.
+    It is recommended to leave the excluded regions empty and not set the `min_gap_size`
+    parameter for WGS data, unless the accessible regions are much reduced (for example excluding
+    all intergenic regions, repeats, low complexity, ...)
+    """
 
 
 class Target(SnappyModel):
-    path_baits: str | None = None
-    """Path to baits file (Agilent Covered), unset for WGS data"""
     split: bool = True
     """Split large tiled intervals into smaller, consecutive targets."""
-    avg_size: float = 800 / 3
-    """Average size of split target bins (results are approximate)"""
-    short_names: bool = False
-    """Reduce multi-accession bait labels to be short and consistent"""
+    avg_size: float | None = None
+    """
+    Average size of split target bins (results are approximate).
+
+    When the parameter is left unassigned, the cnvkit default is used for WES data,
+    and an optimal value is computed for WGS data, if there is data for normal control(s).
+    """
+    short_names: bool = True
+    """
+    Reduce multi-accession bait labels to be short and consistent.
+
+    Only valid when a gff/gtf features file is defined in the static part of the configuration.
+    """
 
 
 class Antitarget(SnappyModel):
@@ -101,9 +177,13 @@ class Fix(SnappyModel):
 
 class Segment(SnappyModel):
     method: SegmentationMethod = SegmentationMethod.CBS
-    """Segmentation method, or 'NONE' for chromosome arm-level averages as segments"""
-    threshold: float = 0.0001
-    """Significance threshold (p-value or FDR, depending on method) to accept breakpoints during segmentation. For HMM methods, this is the smoothing window size."""
+    """Segmentation method, or 'none' for chromosome arm-level averages as segments"""
+    threshold: float
+    """
+    Significance threshold (p-value or FDR, depending on method) to accept breakpoints during segmentation.
+
+    For HMM methods, this is the smoothing window size.
+    """
     drop_outliers: int = 10
     """Drop outlier bins more than this many multiples of the 95th quantile away from the average within a rolling window. Set to 0 for no outlier filtering."""
     smooth_cbs: bool = False
@@ -116,21 +196,25 @@ class Segment(SnappyModel):
 
 
 class Call(SnappyModel):
-    method: CallingMethod | None = None
+    method: CallingMethod = CallingMethod.THRESHOLD
     """Calling method."""
     thresholds: list[float] = [-1.1, -0.25, 0.2, 0.7]
-    """Hard thresholds for calling each integer copy number, separated by commas"""
-    center: CenterMethod = CenterMethod.MEDIAN
+    """Hard thresholds for calling each integer copy number"""
+    center: CenterMethod | None = None
     """Re-center the log2 ratio values using this estimator of the center or average value. ('median' if no argument given.)"""
     center_at: float | None = None
-    """Subtract a constant number from all log2 ratios. For "manual" re-centering."""
+    """
+    Subtract a constant number from all log2 ratios. For "manual" re-centering.
+
+    When this parameter is set, the centering method should be left empty.
+    """
     filter: FilterMethod | None = None
     """Merge segments flagged by the specified filter(s) with the adjacent segment(s)."""
 
     @model_validator(mode="after")
-    def avoid_center_center_at_conflict(self) -> Self:
-        if self.center is not None and self.center_at is not None:
-            raise ValueError("'call' options 'center' and 'center_at' cannot be used together")
+    def ensure_center_without_center_at(self) -> Self:
+        if self.center_at is not None and self.center is not None:
+            raise ValueError("'center' and 'center_at' parameters cannot be used together")
         return self
 
 
@@ -157,9 +241,11 @@ class PlotDiagram(Plot):
 
 class PlotScatter(Plot):
     path_range_list: str | None = None
-    """File listing the chromosomal ranges to display, as BED, interval list or 'chr:start-end' text"""
+    """File listing the chromosomal ranges to display, as BED, interval list or 'chr:start-end' text (currently not implemented)"""
+    chromosome: str | None = None
+    """Name of the chromosome to display (whole genome if empty)"""
     gene: str | None = None
-    """Name of gene or genes (comma-separated) to display."""
+    """Name of gene or genes (comma-separated) to display (currently not implemented)"""
     width: int = 1000000
     """Width of margin to show around the selected gene(s)"""
     antitarget_marker: str = "o"
@@ -188,6 +274,21 @@ class Report(SnappyModel):
     enabled: bool = True
 
 
+class ReportStats(enum.StrEnum):
+    MEAN = "mean"
+    MEDIAN = "median"
+    MODE = "mode"
+    T_TEST = "t-test"
+    STDEV = "stdev"
+    SEM = "sem"
+    MAD = "mad"
+    MSE = "mse"
+    IQR = "iqr"
+    BIVAR = "bivar"
+    CI = "ci"
+    PI = "pi"
+
+
 class ReportSegmetrics(Report):
     alpha: float = 0.05
     """Level to estimate confidence and prediction intervals; use with --ci and --pi."""
@@ -195,6 +296,20 @@ class ReportSegmetrics(Report):
     """Number of bootstrap iterations to estimate confidence interval; use with --ci."""
     smooth_bootstrap: bool = False
     """Apply Gaussian noise to bootstrap samples, a.k.a. smoothed bootstrap, to estimate confidence interval"""
+    stats: list[ReportStats] = [
+        ReportStats.MEAN,
+        ReportStats.MEDIAN,
+        ReportStats.MODE,
+        ReportStats.T_TEST,
+        ReportStats.STDEV,
+        ReportStats.SEM,
+        ReportStats.MAD,
+        ReportStats.MSE,
+        ReportStats.IQR,
+        ReportStats.BIVAR,
+        ReportStats.CI,
+        ReportStats.PI,
+    ]
 
 
 class ReportGenemetrics(Report):
@@ -206,24 +321,33 @@ class ReportGenemetrics(Report):
     """Copy number change threshold to report a gene gain/loss"""
     min_probes: int = 3
     """Minimum number of covered probes to report a gain/loss"""
-
-
-class Report(enum.StrEnum):
-    GENEMETRICS = "genemetrics"
-    SEGMETRICS = "segmetrics"
+    stats: list[ReportStats] = [
+        ReportStats.MEAN,
+        ReportStats.MEDIAN,
+        ReportStats.MODE,
+        ReportStats.T_TEST,
+        ReportStats.STDEV,
+        ReportStats.SEM,
+        ReportStats.MAD,
+        ReportStats.MSE,
+        ReportStats.IQR,
+        ReportStats.BIVAR,
+        ReportStats.CI,
+        ReportStats.PI,
+    ]
 
 
 class CnvkitToReference(SnappyModel):
     # Substep-secific parameters
-    access: Access
-    target: Target
-    antitarget: Antitarget
+    access: Access = Access()
+    target: Target = Target()
+    antitarget: Antitarget = Antitarget()
 
-    coverage: Coverage
+    coverage: Coverage = Coverage()
 
-    metrics: Report
-    segmetrics: ReportSegmetrics
-    genemetrics: ReportGenemetrics
+    metrics: Report = Report()
+    segmetrics: ReportSegmetrics = ReportSegmetrics()
+    genemetrics: ReportGenemetrics = ReportGenemetrics()
 
     # Generic parameters (used in different substeps & must agree)
     male_reference: bool = False
@@ -236,11 +360,11 @@ class CnvkitToReference(SnappyModel):
     min_cluster_size: int = 4
     """Minimum cluster size to keep in reference profiles."""
 
-    gc: bool = False
+    gc: bool = True
     """Skip GC correction."""
-    edge: bool = None
+    edge: bool | None = None
     """Skip edge correction. Automatic selection when None (True for WGS & Panel, False for WES)"""
-    rmask: bool = False
+    rmask: bool = True
     """Skip RepeatMasker correction."""
 
     drop_low_coverage: bool = False
@@ -258,15 +382,10 @@ class CnvkitToReference(SnappyModel):
 
 
 class Cnvkit(CnvkitToReference):
-    fix: Fix
+    fix: Fix = Fix()
     segment: Segment
-    call: Call
-    bintest: Bintest
+    call: Call = Call()
+    bintest: Bintest = Bintest()
 
-    diagram: PlotDiagram
-    scatter: PlotScatter
-
-    min_variant_depth: int = 20
-    """Minimum read depth for a SNV to be displayed in the b-allele frequency plot."""
-    zygocity_freq: float = 0.25
-    """Ignore VCF's genotypes (GT field) and instead infer zygosity from allele frequencies."""
+    diagram: PlotDiagram = PlotDiagram()
+    scatter: PlotScatter = PlotScatter()

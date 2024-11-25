@@ -176,7 +176,7 @@ class BaseStepPart:
 
         return _get_resource
 
-    def get_args(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+    def get_args(self, action: str) -> Inputs | Callable[[Wildcards, InputFiles], Inputs]:
         """Return args for the given action of the sub step"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
@@ -873,7 +873,9 @@ class BaseStep:
         )
         self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
-    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+    def get_args(
+        self, sub_step: str, action: str
+    ) -> Inputs | Callable[[Wildcards, InputFiles], Inputs]:
         """Return arguments for action of substep with given wildcards
 
         Delegates to the sub step object's get_args function

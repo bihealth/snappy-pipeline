@@ -1,10 +1,11 @@
 import enum
 import typing
 from typing import Annotated
-
 from pydantic import Field, model_validator  #  , validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, Parallel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models.cnvkit import Cnvkit as CnvkitGeneric
+from snappy_pipeline.models.library_kit import LibraryKitEntry
 
 
 class WgsCaller(enum.StrEnum):
@@ -19,26 +20,11 @@ class WesCaller(enum.StrEnum):
 
 
 class Tools(SnappyModel):
-    wgs: Annotated[typing.List[WgsCaller], EnumField(WgsCaller, [])]
+    wgs: Annotated[list[WgsCaller], EnumField(WgsCaller, [])]
     """WGS calling tools"""
 
-    wes: Annotated[typing.List[WesCaller], EnumField(WesCaller, [])]
+    wes: Annotated[list[WesCaller], EnumField(WesCaller, [])]
     """WES calling tools"""
-
-
-class Sex(enum.StrEnum):
-    SAMPLESHEET = "samplesheet"
-    """Obtain the sex from the samplesheet"""
-    DIPLOID_ONLY = "diploid_only"
-    """Compute CNV for diploid chromosomes only"""
-    AUTO = "auto"
-    """Automatic sex detection using X/Y coverage"""
-    FEMALE = "female"
-    """Assume all samples are female"""
-    MALE = "male"
-    """Assume all samples are male"""
-    UNKNOWN = "unknown"
-    """Sex is unknown"""
 
 
 class SequencingMethod(enum.StrEnum):
@@ -47,89 +33,73 @@ class SequencingMethod(enum.StrEnum):
     WGS = "wgs"
 
 
-class LibraryKitDefinition(SnappyModel):
-    """
-    Mapping from enrichment kit to target region BED file, for either computing per--target
-    region coverage or selecting targeted exons.
+class SexValue(enum.StrEnum):
+    MALE = "male"
+    FEMALE = "female"
 
-    The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
-    mapped to the name "default".
-      - name: IDT_xGen_V1_0
-        pattern: "xGen Exome Research Panel V1\\.0*"
-        path: "path/to/targets.bed"
-    """
 
-    name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
+class SexOrigin(enum.StrEnum):
+    AUTOMATIC = "auto"
+    SAMPLESHEET = "samplesheet"
+    CONFIG = "config"
 
-    pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
+class Sex(SnappyModel):
+    source: SexOrigin = SexOrigin.AUTOMATIC
+    default: SexValue | None = None
+
+    @model_validator(mode="after")
+    def ensure_default_value(self):
+        if self.source == SexOrigin.CONFIG and not self.default:
+            raise ValueError("Undefined default sex value in configuration file")
+        return self
 
 
 class PanelOfNormalsOrigin(enum.StrEnum):
-    PREVIOUS_STEP = "previous_step"
+    COHORT = "cohort"
     """Use (& possibly create) a panel of normals from the current cohort of normals in the panel_of_normals step"""
-    STATIC = "static"
+
+    FILE = "file"
     """Use an panel of normals from another cohort or from public data"""
+
+    FLAT = "flat"
+    """Use a flat panel of normal (no panel of normals, actually)"""
 
 
 class PanelOfNormals(SnappyModel):
     enabled: bool = False
-    origin: PanelOfNormalsOrigin = PanelOfNormalsOrigin.PREVIOUS_STEP
-    path_panel_of_normals: str = "../panel_of_normals"
+    """Use panel of normals during CNV calling"""
+
+    source: PanelOfNormalsOrigin = PanelOfNormalsOrigin.FILE
+    """Which type of panel of normals should be used"""
+
+    path_panel_of_normals: str = ""
     """
-    Path to panel of normals created in current project
+    Path to panel of normals.
 
-    The panel of normals can be either a file (typically from another project),
-    or from the current project's panel_of_normals step.
+    The panel of normals can be either a file (typically from another project, or from the software's own data),
+    or the path to the pipeline's ```panel_of _normals``` step, depending on the choice of source.
 
-    In the latter case, the missing one(s) (in case there are more than one panel, or if there are WES & WGS)
-    will be created when not present.
-    The matching of genome release & exome baits is done on genome name & exome baits md5 checksum.
-    These are computed in the panel of normals step, and saved with the panel itself.
-
-    There is no such matching if a panel of normal file is provided. The panel of normals validity is left to the user.
-    """
-
-
-class Mutect2(Parallel):
-    panel_of_normals: PanelOfNormals | None = None
-    """
-    Panel of normals created by the PanelOfNormals program.
+    Note that there is no test that the panel of normals is suitable for that cohort.
     """
 
-    germline_resource: str
+    @model_validator(mode="after")
+    def ensure_panel_of_normals_path(self):
+        if (
+            self.enabled
+            and self.source != PanelOfNormalsOrigin.FLAT
+            and not self.path_panel_of_normals
+        ):
+            raise ValueError("Undefined panel of normal path")
+        return self
 
-    common_variants: str | None = ""
-    """Common germline variants for contamination estimation"""
 
-    arguments_for_purecn: bool = True
-    """
-    PureCN requires that Mutect2 be called with arguments:
-    --genotype-germline-sites true --genotype-pon-sites true
-    """
+class VariantOrigin(enum.StrEnum):
+    COHORT = "cohort"
+    """Call somatic variants from the current cohort of normals in the somatic_variant_calling step"""
 
-    extra_arguments: Annotated[
-        typing.List[str],
-        # AfterValidator(argument),
-        Field(
-            examples=[
-                "--read-filter CigarContainsNoNOperator",
-                "--annotation AssemblyComplexity BaseQuality",
-            ]
-        ),
-    ] = []
-    """
-    List additional Mutect2 arguments.
-    Each additional argument must be of the form:
-    "--<argument name> <argument value>"
-    For example, to filter reads prior to calling & to add annotations to the output vcf:
-      - "--read-filter CigarContainsNoNOperator"
-      - "--annotation AssemblyComplexity BaseQuality"
-    """
-
-    window_length: int = 300000000
+    FILE = "file"
+    """Use an panel of normals from another cohort or from public data"""
 
 
 class VariantTool(enum.StrEnum):
@@ -138,14 +108,33 @@ class VariantTool(enum.StrEnum):
 
 class Variant(SnappyModel):
     enabled: bool = False
-    tool: VariantTool | None = None
+    """Use variants (somatic &/or germline) to improve CNV calling"""
 
-    mutect2: Mutect2 | None = None
+    source: VariantOrigin = VariantOrigin.FILE
+    """Where are the variants obrained from"""
 
+    path_somatic_variant_calling: str = ""
+    """
+    Path to the variants to use for CNV calling.
 
-class Ascat(SnappyModel):
-    pass
-    """TODO: configure purity tools (except for PureCN)"""
+    The path can be either to the ```somatic_variant_calling``` step in the pipeline, if "cohort" is selected,
+    or to the vcf file with the variants when "file" is selected as source.
+    """
+
+    tool: VariantTool = VariantTool.MUTECT2
+    """Tool used to call somatic variants in the pipeline"""
+
+    @model_validator(mode="after")
+    def ensure_path_to_variants(self):
+        if (
+            self.enabled
+            and self.source == VariantOrigin.FILE
+            and not self.path_somatic_variant_calling
+        ):
+            raise ValueError(
+                "A path to the variant vcf file must be provided when selecting 'file' as source"
+            )
+        return self
 
 
 class Sequenza(SnappyModel):
@@ -157,13 +146,24 @@ class ControlFreec(SnappyModel):
 
 
 class PureCn(SnappyModel):
-    panel_of_normals: PanelOfNormals
+    panel_of_normals: PanelOfNormals = PanelOfNormals()
     """
     Panel of normals created by the NormalDB.R script.
     This is required even if the normal/tumor paired mode won't use it.
     """
 
-    variants: VariantTool
+    @model_validator(mode="after")
+    def restrict_pon_mode(self) -> typing.Self:
+        if not self.panel_of_normals.enabled:
+            raise ValueError("PureCN requires a panel of normals")
+        return self
+
+    path_target_interval_list_mapping: list[LibraryKitEntry] = []
+    """
+    Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect)
+    """
+
+    somatic_variant_calling: Variant = Variant()
 
     mappability: str = ""
     """
@@ -202,307 +202,98 @@ class PurityTool(enum.StrEnum):
     PURECN = "purecn"
 
 
+class PurityOrigin(enum.StrEnum):
+    AUTOMATIC = "auto"
+    """Use current tool to compute purity & ploidy (PureCn & squenza estimate purity & ploidy)"""
+
+    COHORT = "cohort"
+    """Use external tool from the pipleine to compute purity & ploidy"""
+
+    SAMPLESHEET = "samplesheet"
+    """Extract purity/ploidy from sample sheet"""
+
+    CONFIG = "config"
+    """Extract purity/ploidy from configuration file (all samples have the same value)"""
+
+
 class Purity(SnappyModel):
     enabled: bool = False
+    """Use sample purity during CNV calling"""
 
-    ignore_samplesheet: bool = False
-    """Discard purity values in samplesheet when they exist"""
-    default_value: float | None = None
-    """Purity value for all samples"""
+    source: PurityOrigin = PurityOrigin.SAMPLESHEET
 
-    tool: PurityTool | None = None
+    path_somatic_purity_ploidy_estimate: str = "../somatic_purity_ploidy_estimate"
+
+    tool: PurityTool = PurityTool.PURECN
     """Tool used for purity estimation, if not set, try samplesheet, otherwise default_value"""
 
-    ascat: Ascat | None = None
+    purity: float | None = None
+    """Default purity estimate"""
+    ploidy: float = 2.0
+    """Default ploidy value"""
+
+    @model_validator(mode="after")
+    def ensure_valid_params_for_source(self):
+        if self.enabled and self.source == PurityOrigin.CONFIG and self.purity is None:
+            raise ValueError("Missing default purity value")
+        return self
 
 
-class CnvkitSegmentationMethod(enum.StrEnum):
-    CBS = "cbs"
-    FLASSO = "flasso"
-    HAAR = "haar"
-    HMM = "hmm"
-    HMM_TUMOR = "hmm-tumor"
-    HMM_GERMLINE = "hmm-germline"
-    NONE = "none"
+class PanelOfNormalsCnvkit(PanelOfNormals):
+    path_targets: str | None = None
+    """Path to target file (used only when pon is obtained from file, taken from pipeline step otherwise)"""
+    path_antitargets: str | None = None
+    """Path to antitarget file (used only when pon is obtained from file, taken from pipeline step otherwise)"""
+
+    @model_validator(mode="after")
+    def ensure_paths_target_antitarget(self):
+        if self.enabled and self.source == PanelOfNormalsOrigin.FILE:
+            if self.path_targets is None or self.path_antitargets is None:
+                raise ValueError(
+                    "When using a previous pon, target & antitarget files must be defined"
+                )
+        return self
 
 
-class CnvkitCallingMethod(enum.StrEnum):
-    THRESHOLD = "threshold"
-    CLONAL = "clonal"
-    NONE = "none"
-
-
-class CnvkitCenterMethod(enum.StrEnum):
-    MEAN = "mean"
-    MEDIAN = "median"
-    MODE = "mode"
-    BIWEIGHT = "biweight"
-
-
-class CnvkitFilterMethod(enum.StrEnum):
-    AMPDEL = "ampdel"
-    CN = "cn"
-    CI = "ci"
-    SEM = "sem"
-
-
-class CnvkitAccess(SnappyModel):
-    exclude: Annotated[
-        str | None,
-        Field(
-            examples=[
-                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/cnvkit/access-5k-mappable.grch37.bed"
-            ]
-        ),
-    ] = None
-    """Regions accessible to mapping"""
-
-    min_gap_size: int = 5000
-    """Minimum gap size between accessible sequence regions. Regions separated by less than this distance will be joined together."""
-
-
-class CnvkitTarget(SnappyModel):
-    split: bool = False
-    """Split large tiled intervals into smaller, consecutive targets."""
-    avg_size: float = 800 / 3
-    """Average size of split target bins (results are approximate)"""
-
-
-class CnvkitAntitarget(SnappyModel):
-    avg_size: float = 150000
-    """Average size of split antitarget bins (results are approximate)"""
-    min_size: float | None = None
-    """Minimum size of antitarget bins (smaller regions are dropped). When missing, 1/16 avg size"""
-
-
-class CnvkitCoverage(SnappyModel):
-    count: bool = False
-    """Get read depths by counting read midpoints within each bin."""
-    min_mapq: int = 0
-    """Minimum mapping quality score (phred scale 0-60) to count a read for coverage depth."""
-
-
-class CnvkitReference(SnappyModel):
-    cluster: bool = False
-    """Calculate and store summary stats for clustered subsets of the normal samples with similar coverage profiles."""
-    min_cluster_size: int = 4
-    """Minimum cluster size to keep in reference profiles."""
-    no_gc: bool = False
-    """Skip GC correction."""
-    no_edge: bool = None
-    """Skip edge correction. Automatic selection when None (True for WGS & Panel, False for WES)"""
-    no_rmask: bool = False
-    """Skip RepeatMasker correction."""
-
-
-class CnvkitFix(SnappyModel):
-    cluster: bool = False
-    """Compare and use cluster-specific values present in the reference profile."""
-    no_gc: bool = False
-    """Skip GC correction."""
-    no_edge: bool = False
-    """Skip edge correction."""
-    no_rmask: bool = False
-    """Skip RepeatMasker correction."""
-
-
-class CnvkitSegment(SnappyModel):
-    method: CnvkitSegmentationMethod = CnvkitSegmentationMethod.CBS
-    """Segmentation method, or 'NONE' for chromosome arm-level averages as segments"""
-    threshold: float = 0.0001
-    """Significance threshold (p-value or FDR, depending on method) to accept breakpoints during segmentation. For HMM methods, this is the smoothing window size."""
-    drop_low_coverage: bool = False
-    """Drop very-low-coverage bins before segmentation to avoid false-positive deletions in poor-quality tumor samples."""
-    drop_outliers: float = 10
-    """Drop outlier bins more than this many multiples of the 95th quantile away from the average within a rolling window. Set to 0 for no outlier filtering."""
-    smooth_cbs: bool = False
-
-    min_variant_depth: float = 20
+class VariantCnvkit(Variant):
+    min_variant_depth: int = 20
     """Minimum read depth for a SNV to be displayed in the b-allele frequency plot."""
-    zygocity_freq: float = 0.25
-    """Ignore VCF's genotypes (GT field) and instead infer zygosity from allele frequencies."""
-
-    @model_validator(mode="after")
-    def ensure_smooth_for_cbs_only(self) -> typing.Self:
-        if self.smooth_cbs and self.method != CnvkitSegmentationMethod.CBS:
-            raise ValueError("'smooth_cbs' option can be used only with 'CBS' segmentation method")
-        return self
-
-
-class CnvkitCall(SnappyModel):
-    method: CnvkitCallingMethod = CnvkitCallingMethod.THRESHOLD
-    """Calling method."""
-    thresholds: str | None = None
-    """Hard thresholds for calling each integer copy number, separated by commas"""
-    center: CnvkitCenterMethod | None = CnvkitCenterMethod.MEDIAN
-    """Re-center the log2 ratio values using this estimator of the center or average value. ('median' if no argument given.)"""
-    center_at: float | None = None
-    """Subtract a constant number from all log2 ratios. For "manual" re-centering."""
-    filter: CnvkitFilterMethod | None = None
-    """Merge segments flagged by the specified filter(s) with the adjacent segment(s)."""
-    ploidy: float | None = 2
-    """Ploidy of the sample cells."""
-    drop_low_coverage: bool = False
-    """Drop very-low-coverage bins before segmentation to avoid false-positive deletions in poor-quality tumor samples."""
-
-    min_variant_depth: float = 20
-    """Minimum read depth for a SNV to be displayed in the b-allele frequency calculation."""
-    zygocity_freq: float = 0.25
+    zygocity_freq: float | None = None
     """Ignore VCF's genotypes (GT field) and instead infer zygosity from allele frequencies."""
 
 
-class CnvkitBintest(SnappyModel):
-    alpha: float = 0.005
-    """Significance threhold."""
-    target: bool = False
-    """Test target bins only; ignore off-target bins."""
+class Cnvkit(CnvkitGeneric):
+    panel_of_normals: PanelOfNormalsCnvkit = PanelOfNormalsCnvkit()
 
-
-class CnvkitPlotDiagram(SnappyModel):
-    threshold: float = 0.5
-    """Copy number change threshold to label genes."""
-    min_probes: int = 3
-    """Minimum number of covered probes to label a gene."""
-    no_shift_xy: bool = False
-
-
-class CnvkitPlotScatter(SnappyModel):
-    antitarget_marker: str | None = None
-    """Plot antitargets using this symbol when plotting in a selected chromosomal region."""
-    by_bin: bool = False
-    """Plot data x-coordinates by bin indices instead of genomic coordinates."""
-    segment_color: str | None = None
-    """Plot segment lines in this color. Value can be any string accepted by matplotlib."""
-    trend: bool = False
-    """Draw a smoothed local trendline on the scatter plot."""
-    y_max: float | None = None
-    """y-axis upper limit."""
-    y_min: float | None = None
-    """y-axis lower limit."""
-    fig_size: typing.Tuple[float, float] | None = None
-    """Width and height of the plot in inches."""
-
-    min_variant_depth: float = 20
-    """Minimum read depth for a SNV to be displayed in the b-allele frequency calculation."""
-    zygocity_freq: float = 0.25
-    """Ignore VCF's genotypes (GT field) and instead infer zygosity from allele frequencies."""
-
-
-class CnvkitPlot(SnappyModel):
-    diagram: CnvkitPlotDiagram = CnvkitPlotDiagram()
-    scatter: CnvkitPlotScatter = CnvkitPlotScatter()
-
-
-class CnvkitReportMetrics(SnappyModel):
-    drop_low_coverage: bool = False
-    """Drop very-low-coverage bins before segmentation to avoid false-positive deletions in poor-quality tumor samples."""
-
-
-class CnvkitReportSegmetrics(SnappyModel):
-    drop_low_coverage: bool = False
-    """Drop very-low-coverage bins before segmentation to avoid false-positive deletions in poor-quality tumor samples."""
-    alpha: float = 0.05
-    """Level to estimate confidence and prediction intervals; use with --ci and --pi."""
-    bootstrap: int = 100
-    """Number of bootstrap iterations to estimate confidence interval; use with --ci."""
-
-
-class CnvkitReport(enum.StrEnum):
-    METRICS = "metrics"
-    SEGMETRICS = "segmetrics"
-
-
-class Cnvkit(SnappyModel):
-    panel_of_normals: PanelOfNormals | None = None
-
-    variants: VariantTool | None = None
-
-    purity: Purity
+    path_target_interval_list_mapping: list[LibraryKitEntry] = []
     """
-    When present, purity estimates can be used for calling segments. The requested tool must be configured.
-    Or the purity can be provided in the samplesheet, as an extra information attached to the library.
-
-    Note that PureCN cannot be used to estimate purity for WGS samples (because PureCN is WES & Panel-only).
-    TODO: This should be tested by a validation method, I don't know how to do (Till help!!)
-    TODO: The exact name is not yet set.
+    Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect)
     """
 
-    access: CnvkitAccess = CnvkitAccess()
-    target: CnvkitTarget = CnvkitTarget()
-    antitarget: CnvkitAntitarget = CnvkitAntitarget()
-    coverage: CnvkitCoverage = CnvkitCoverage()
+    somatic_variant_calling: VariantCnvkit = VariantCnvkit()
 
-    reference: CnvkitReference | None = None
+    somatic_purity_ploidy_estimate: Purity = Purity()
 
     @model_validator(mode="after")
-    def set_default_reference(self) -> typing.Self:
-        if self.reference is None and not self.panel_of_normals.enabled:
-            self.reference = CnvkitReference()
+    def ensure_purity_not_auto(self):
+        if self.somatic_purity_ploidy_estimate.source == PurityOrigin.AUTOMATIC:
+            raise ValueError("Cnvkit cannot compute purity/ploidy by itself")
         return self
 
-    fix: CnvkitFix = CnvkitFix()
-    segment: CnvkitSegment = CnvkitSegment()
-    call: CnvkitCall = CnvkitCall()
-    bintest: CnvkitBintest = CnvkitBintest()
+    sample_sex: Sex = Sex()
 
-    use_male_reference: bool = False
-    """Create/use a male reference. Must be identical to panel of normals creation, when using one"""
-
-    plots: typing.List[CnvkitPlot] = []
-
-    reports: typing.List[CnvkitReport] = []
-    metrics: CnvkitReportMetrics | None = None
-
-    # @validator("metrics")
-    # def get_default_reference(cls, v, values) -> CnvkitReportMetrics | None:
-    #     if v is None and "metrics" in values["reports"]:
-    #         return CnvkitReportMetrics()
-    #     return None
-
-    segmetrics: CnvkitReportSegmetrics | None = None
-
-    # @validator("segmetrics")
-    # def get_default_reference(cls, v, values) -> CnvkitReportSegmetrics | None:
-    #     if v is None and "segmetrics" in values["reports"]:
-    #         return CnvkitReportSegmetrics()
-    #     return None
+    path_access: str | None = None
+    """Overrides access when not None"""
 
 
 class SomaticCnvCalling(SnappyStepModel):
-    path_ngs_mapping: str
+    path_ngs_mapping: str = "../ngs_mapping"
     """Path to bam files"""
 
     tools: Tools
     """Tools for WGS & WES data"""
 
-    path_target_interval_list_mapping: typing.List[LibraryKitDefinition] | None = None
-
-    sex: Sex = Sex.DIPLOID_ONLY
-
-    cnvkit: Cnvkit
+    cnvkit: Cnvkit | None = None
     purecn: PureCn | None = None
     sequenza: Sequenza | None = None
     control_freec: ControlFreec | None = None
-
-    mutect2: Mutect2 | None = None
-
-    default_ploidy: float | None = None
-
-    # @model_validator(mode="after")
-    # def ensure_single_pon_step(self) -> typing.Self:
-    #     """
-    #     I am not sure this is absolutely required.
-    #     I am trying to avoid registering the panel_of_normals step when initializing SomaticCnvCalling
-    #     """
-    #     pon_steps = set()
-    #     for tool in itertools.chain(self.tools.wgs, self.tools.wes):
-    #         tool_config = getattr(self, tool)
-    #         if (
-    #             tool_config
-    #             and getattr(tool_config, "use_panel_of_normals")
-    #             and tool_config.use_panel_of_normals == PanelOfNormalsUse.PREVIOUS_STEP
-    #         ):
-    #             pon_steps.add(str(tool_config.panel_of_normals.panel_of_normals))
-    #     if len(pon_steps) > 1:
-    #         raise ValueError("Too many panel_of_normals steps")
-    #     return self

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py access"""
+"""Wrapper for cnvkit.py bintest"""
 
 import os
 import sys
@@ -18,15 +18,15 @@ __email__ = "eric.blanc@bih-charite.de"
 args = snakemake.params.get("args", {})
 
 cmd = r"""
-cnvkit.py access \
-    -o {snakemake.output.access} \
-    {min_gap_size} {exclude} \
-    {args[reference]}
+cnvkit.py bintest \
+    -o {snakemake.output.tests} \
+    --segment {args[segments]} \
+    --alpha {args[alpha]} {target} \
+    {args[ratios]}
 """.format(
     snakemake=snakemake,
     args=args,
-    min_gap_size=f"--min-gap-size {args['min-gap-size']}" if args.get("min-gap-size", None) is not None else "",
-    exclude=" ".join([f"--exclude {x}" for x in args["exclude"]]),
+    target=f"--target" if args.get("target", False) else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()
