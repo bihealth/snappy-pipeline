@@ -18,34 +18,18 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
 
-# WGS: targets are all accessible regions, WES: targets are baits
-interval = snakemake.input.access if snakemake.input.get("access", None) else args["target"]
-
-if snakemake.input.get("avg_size", "") != "":
-    pattern = re.compile("^Target:[ \t]+([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)[ \t]+([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)$")
-    with open(snakemake.input.avg_size) as f:
-        for line in f:
-            m = pattern.match(line)
-            if m:
-                avg_size = int(float(m.groups()[4]))
-                break
-elif "avg_size" in args:
-    avg_size = args["avg_size"]
-else:
-    avg_size = None
-
 cmd = r"""
 cnvkit.py target \
     -o {snakemake.output.target} \
-    {avg_size} {split} {annotate} \
-    {interval}
+    {avg_size} {split} {annotate} {short_names} \
+    {args[interval]}
 """.format(
     snakemake=snakemake,
     args=args,
-    interval=interval,
-    avg_size=f"--avg-size {avg_size}" if avg_size is not None else "",
-    split=f"--split" if "split" in args and args["split"] else "",
+    avg_size=f"--avg-size {args['avg-size']}" if args['avg-size'] is not None else "",
+    split=f"--split" if args.get("split", False) else "",
     annotate=f"--annotate {args['annotate']}" if "annotate" in args else "",
+    short_names="--short-names" if args.get("short-names", False) else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

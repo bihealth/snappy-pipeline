@@ -20,13 +20,13 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py coverage --processes {snakemake.resources._cores} \
     -o {snakemake.output.coverage} \
-    --fasta {args[reference]} \
+    --fasta {args['reference']} \
     --min-mapq {args[min_mapq]} {count} \
-    {snakemake.input.bam} {snakemake.input.intervals}
+    {args['bam']} {args['intervals']}
 """.format(
     snakemake=snakemake,
     args=args,
-    count="--count" if "count" in args else "",
+    count="--count" if args.get("count", False) else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

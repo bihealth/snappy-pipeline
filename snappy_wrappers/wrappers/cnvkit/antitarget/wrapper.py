@@ -17,19 +17,16 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
 
-if snakemake.input.get("target", "") != "":
-    cmd = r"""
-    cnvkit.py antitarget \
-        -o {snakemake.output.antitarget} \
-        --avg-size {args['avg_size']} --min-size {args['min_size']} \
-        {access} \
-        {snakemake.input.target}
-    """.format(
-        snakemake=snakemake,
-        args=args,
-        access=f"--access {args['access']}" if "access" in args else "",
-    )
-else:
-    cmd = f"touch {snakemake.output.antitarget}"
+cmd = r"""
+cnvkit.py antitarget \
+    -o {snakemake.output.antitarget} \
+    --avg-size {args[avg-size]} {min_size}
+    --access {files[access]} \
+    {args[target]}
+""".format(
+    snakemake=snakemake,
+    args=args,
+    min_size=f"--min-size {args['min-size']}" if args.get("min-size") is not None else "",
+)
 
 CnvkitWrapper(snakemake, cmd).run()

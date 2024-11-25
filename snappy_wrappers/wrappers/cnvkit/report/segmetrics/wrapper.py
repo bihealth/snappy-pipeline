@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py access"""
+"""Wrapper for cnvkit.py segmetrics"""
 
 import os
 import sys
@@ -12,21 +12,22 @@ sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-__author__ = "Eric Blanc"
-__email__ = "eric.blanc@bih-charite.de"
-
 args = snakemake.params.get("args", {})
 
 cmd = r"""
-cnvkit.py access \
-    -o {snakemake.output.access} \
-    {min_gap_size} {exclude} \
-    {args[reference]}
+cnvkit.py segmetrics \
+    -o {snakemake.output.report} \
+    --segment {args['segments']} \
+    --alpha {args['alpha']} --bootstrap {args['bootstrap']} {smooth_bootstrap} \
+    {drop_low_coverage} \
+    {stats} \
+    {args[ratios]}
 """.format(
     snakemake=snakemake,
     args=args,
-    min_gap_size=f"--min-gap-size {args['min-gap-size']}" if args.get("min-gap-size", None) is not None else "",
-    exclude=" ".join([f"--exclude {x}" for x in args["exclude"]]),
+    drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
+    smooth_bootstrap="--smooth-bootstrap" if args.get("smooth-bootstrap", False) else "",
+    stats=" ".join([f"--{stat}" for stat in args["stats"]]),
 )
 
 CnvkitWrapper(snakemake, cmd).run()

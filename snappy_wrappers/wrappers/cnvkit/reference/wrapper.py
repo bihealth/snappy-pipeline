@@ -17,9 +17,12 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
 
+target = f"--target {args['target']}" if "target" in args else ""
+antitarget = f"--antitarget {args['antitarget']}" if "antitarget" in args else ""
+
 cmd = r"""
 cnvkit.py reference \
-    -o {snakemake.output.panel} \
+    -o {snakemake.output.reference} \
     --fasta {args[reference]} \
     {cluster} {min_cluster_size} \
     {sample_sex} {male_reference} {diploid_parx_genome} \
@@ -28,17 +31,17 @@ cnvkit.py reference \
 """.format(
     snakemake=snakemake,
     args=args,
-    cluster="--cluster" if "cluster" in args else "",
-    min_cluster_size=f"--min-cluster-size {args['min_cluster_size']}" if "cluster" in args and "min_cluster_size" in args else "",
-    no_gc="--no-gc" if "no_gc" in args else "",
-    no_edge="--no-edge" if "no_edge" in args else "",
-    no_rmask="--no-rmask" if "no_rmask" in args else "",
-    sample_sex=f"--sample-sex {args['sample_sex']}" if "sample_sex" in args else "",
-    male_reference="--male-reference" if "male_reference" in args else "",
-    diploid_parx_genome=f"--diploid_parx_genome {args['diploid_parx_genome']}" if "diploid_parx_genome" in args else "",
-    target=f"--target {snakemake.input.target}" if snakemake.input.get("target", None) else "",
-    antitarget=f"--antitarget {snakemake.input.antitarget}" if  snakemake.input.get("antitarget", None) else "",
-    normals=" ".join(snakemake.input.normals) if snakemake.input.get("normals", None) else "",
+    target=target,
+    antitarget=antitarget,
+    normals=" ".join(args["normals"]) if len(args.get("normals", [])) > 0 else "",
+    cluster="--cluster" if args.get("cluster", False) else "",
+    male_reference="--male-reference" if args.get("male-reference", False) else "",
+    no_gc="--no-gc" if args.get("no-gc", False) else "",
+    no_edge="--no-edge" if args.get("no-edge", False) else "",
+    no_rmask="--no-rmask" if args.get("no-rmask", False) else "",
+    min_cluster_size=f"--min-cluster-size {args['min-cluster-size']}" if "min-cluster-size" in args else "",
+    sample_sex=f"--sample-sex {args['sample-sex']}" if "sample-sex" in args else "",
+    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if "diploid-parx-genome" in args else ""
 )
 
 CnvkitWrapper(snakemake, cmd).run()

@@ -154,11 +154,14 @@ with the output of the tool of her choice.
 import os
 import os.path
 import re
-import typing
+from copy import deepcopy
+from enum import Enum
+from typing import Callable, Iterator, Iterable, NamedTuple, Any
 
 from biomedsheets.models import BioEntity, BioSample, TestSample, NGSLibrary
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import OutputFiles, Wildcards
+from biomedsheets.io_tsv.base import LIBRARY_TYPES, LIBRARY_TO_EXTRACTION, EXTRACTION_TYPE_DNA
+from snakemake.io import OutputFiles, Wildcards, InputFiles
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
@@ -169,8 +172,11 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from snappy_pipeline.models.cnvkit import SegmentationMethod as CnvkitSegmentationMethod
+
 from .model import SomaticCnvCalling as SomaticCnvCallingConfigModel
-from .model import Sex, LibraryKitDefinition, PanelOfNormalsOrigin
+from .model import Cnvkit as CnvkitConfig
+from .model import Sex, SexOrigin, SexValue, PanelOfNormalsOrigin, PurityOrigin, VariantOrigin
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -204,18 +210,9 @@ class SomaticCnvCallingStepPart(BaseStepPart):
     def __init__(self, parent: "SomaticCnvCallingWorkflow"):
         super().__init__(parent)
 
-    def _get_sample_sex(self, library_name: str) -> Sex:
-        if self.config.sex == Sex.MALE or self.config.sex == Sex.FEMALE:
-            sample_sex = self.config.sex
-        elif self.config.sex == Sex.SAMPLESHEET and library_name in self.parent.sex:
-            sample_sex = self.parent.sex[library_name]
-        else:
-            sample_sex = Sex.UNKNOWN
-        return sample_sex
-
     @staticmethod
     @dictify
-    def _get_log_file_from_prefix(prefix: str) -> typing.Iterator[typing.Dict[str, str]]:
+    def _get_log_file_from_prefix(prefix: str) -> Iterator[dict[str, str]]:
         key_ext = (
             ("log", ".log"),
             ("sh", ".sh"),
@@ -236,20 +233,19 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     #: Class available actions
     actions = (
         "access",
+        "autobin",
         "target",
         "antitarget",
         "coverage",
         "reference",
-        "flat_reference_panel",
-        "flat_reference_wgs",
         "fix",
         "segment",
         "call",
         "bintest",
-        "plot/diagram",
-        "plot/scatter",
-        "report/metrics",
-        "report/segmetrics",
+        "scatter",
+        "metrics",
+        "genemetrics",
+        "segmetrics",
     )
 
     # Overwrite defaults
@@ -258,518 +254,767 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def __init__(self, parent: SomaticCnvCallingStepPart):
         super().__init__(parent)
 
-    def get_input_files(self, action: str) -> typing.Callable:
+        self.is_wgs = (
+            any([libraryKit is None for libraryKit in self.parent.tumors.keys()])
+            and self.name in self.config.tools.wgs
+        )
+        self.is_wes = (
+            any([libraryKit is not None for libraryKit in self.parent.tumors.keys()])
+            and self.name in self.config.tools.wes
+        )
+        assert not (self.is_wgs and self.is_wes), "WES & WGS are mixed"
+
+        if self.is_wgs or self.is_wes:
+            assert (
+                len(self.parent.tumors) == 1
+            ), "Current cnvkit tool implementation can't handle multiple library types or kits"
+
+            self.libraryKit = list(self.parent.tumors.keys())[0]
+            self.tumors = {x.library.name: x for x in self.parent.tumors[self.libraryKit]}
+
+            self.cfg: CnvkitConfig = self.config.get(self.name)
+            self.pon_source = (
+                self.cfg.panel_of_normals.source if self.cfg.panel_of_normals.enabled else None
+            )
+
+            self._set_cnvkit_pipeline_logic()
+
+            self.path_baits = self._get_path_baits()
+
+            if (
+                self.cfg.somatic_purity_ploidy_estimate.enabled
+                and self.cfg.somatic_purity_ploidy_estimate.source == PurityOrigin.SAMPLESHEET
+            ):
+                assert not any(
+                    [x.purity is None for x in self.tumors.values()]
+                ), "Missing purity value from samplesheet"
+
+            self.base_out = "work/{mapper}.cnvkit/out/cnvkit."
+            self.base_out_lib = (
+                "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}."
+            )
+
+    def _set_cnvkit_pipeline_logic(self):
+        """
+        Creates instance variables to choose path in cnvkit pipeline
+
+        Access: regions accessible for CNV calling (unmasked)
+            path_access or when missing build from genome reference + optional list of excluded region
+
+        Target: regions of good coverage
+            From baits (WES) or accessible regions (WGS) + estimate of target size from config or autobin step
+
+        Antitarget: regions of low coverage
+            antitarget = access - target, only WES, otherwise empty
+
+        Reference:
+            Flat: based on targets & antitargets only
+            Cohort: from panel_of_normals step
+            File: from another cohort or public data (reference + target + antitarget [WES only])
+            Paired (panel of normal disabled): reference built from the target & antitarget coverage of one normal sample only (paired with the tumor)
+
+        Therefore, a reference must be created for flat & paired choices (one reference per normal sample in the latter case).
+        The logic to create the reference is (panel of normal is pon):
+        - access created if path_access is missing or average target size estimated
+        - average target size estimated if value not in config and dataset is WGS
+        - target created always
+        - antitarget created when dataset is WES
+        """
+        self.paired = not self.cfg.panel_of_normals.enabled
+        self.build_ref = self.paired or self.pon_source == PanelOfNormalsOrigin.FLAT
+        self.compute_avg_target_size = (
+            self.is_wgs and self.paired and self.cfg.target.avg_size is None
+        )
+        self.create_access = self.build_ref and (not self.cfg.path_access)
+        self.plain_access = (
+            not self.cfg.path_access
+            and len(self.cfg.access.exclude) == 0
+            and self.cfg.access.min_gap_size is None
+        )
+
+        self.variants_from_cohort = (
+            self.cfg.somatic_variant_calling.enabled
+            and self.cfg.somatic_variant_calling.source == VariantOrigin.COHORT
+        )
+        self.variants_from_file = (
+            self.cfg.somatic_variant_calling.enabled
+            and self.cfg.somatic_variant_calling.source == VariantOrigin.FILE
+        )
+
+    def _get_sample_sex(self, library_name: str | None) -> SexValue | None:
+        if self.cfg.sample_sex.source == SexOrigin.SAMPLESHEET and library_name:
+            sample_sex = self.tumors[library_name].sex
+        elif self.cfg.sample_sex.source == SexOrigin.CONFIG:
+            sample_sex = self.cfg.sample_sex.default
+        else:
+            sample_sex = None
+        return sample_sex
+
+    def _get_path_baits(self) -> str | None:
+        if not self.is_wes:
+            return None
+        default = None
+        for item in self.cfg.path_target_interval_list_mapping:
+            if item.name == self.libraryKit:
+                return item.path
+            elif item.name == "__default__":
+                default = item.path
+        if default is None:
+            raise ValueError(f"Missing library kit definition for {self.libraryKit}")
+        return default
+
+    def get_input_files(self, action: str) -> Callable:
         """Return input paths input function, dependent on rule"""
         # Validate action
         self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action.replace("/", "_")))
 
-    def get_params(self, action: str) -> typing.Callable:
+    def get_args(self, action: str) -> Callable:
         """Return parameters input function, dependent on rule"""
         # Validate action
         self._validate_action(action)
-        return getattr(self, "_get_params_{}".format(action.replace("/", "_")))
+        return getattr(self, "_get_args_{}".format(action.replace("/", "_")))
 
-    def get_output_files(self, action: str) -> typing.Callable:
-        """Return input paths input function, dependent on rule"""
+    @dictify
+    def get_output_files(self, action: str):
+        """
+        Return output paths, dependent on rule
+
+        It is important to take good care of wildcards, because
+        when a paired reference is used on WGS without setting the avg target size,
+        the output of autobin and target are built for the normal library.
+        So in this case, library_name stands for the normal library, rather than
+        for the tumor.
+        """
+        self._validate_action(action)
+
+        base_report_lib = (
+            "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}."
+        )
+
+        output_files = {}
+        match action:
+            case "access":
+                output_files = {"access": self.base_out + "access.bed"}
+            case "autobin":
+                output_files = {"result": self.base_out_lib + "autobin.txt"}
+            case "target":
+                if self.compute_avg_target_size and self.paired:
+                    output_files = {"target": self.base_out_lib + "target.bed"}
+                else:
+                    output_files = {"target": self.base_out + "target.bed"}
+            case "antitarget":
+                output_files = {"antitarget": self.base_out + "antitarget.bed"}
+            case "coverage":
+                output_files = {"coverage": self.base_out_lib + "{region,(target|antitarget)}.cnn"}
+            case "reference":
+                if self.paired:
+                    output_files = {"reference": self.base_out_lib + "reference.cnn"}
+                else:
+                    output_files = {"reference": self.base_out + "reference.cnn"}
+            case "fix":
+                output_files = {"ratios": self.base_out_lib + "cnr"}
+            case "segment":
+                output_files = {
+                    "segments": self.base_out_lib + "segments.cns",
+                    "dataframe": self.base_out_lib + "rds",
+                }
+            case "call":
+                output_files = {"calls": self.base_out_lib + "cns"}
+            case "bintest":
+                output_files = {"tests": self.base_out_lib + "bintest.cns"}
+            case "metrics":
+                output_files = {"report": base_report_lib + "metrics.tsv"}
+            case "segmetrics":
+                output_files = {"report": base_report_lib + "segmetrics.tsv"}
+            case "genemetrics":
+                output_files = {"report": base_report_lib + "genemetrics.tsv"}
+            case "scatter":
+                output_files = {
+                    "plot": "work/{mapper}.cnvkit.{library_name}/plot/{mapper}.cnvkit.{library_name}.scatter.{contig_name}.jpeg"
+                }
+
+        for k, v in output_files.items():
+            yield k, v
+            yield k + "_md5", v + ".md5"
+
+    @dictify
+    def get_log_file(self, action):
+        """Return panel of normal files"""
         # Validate action
         self._validate_action(action)
-        f = getattr(self, "_get_output_files_{}".format(action.replace("/", "_")))
-        return f()
 
-    def get_log_file(self, action: str) -> typing.Dict[str, str]:
-        """Return log files, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
-        base_name = os.path.join("work", f"{{mapper}}.{self.name}.{{library_name}}", "log")
-        # Access, target & antitarget steps are cohort-wide, the others are library-dependent
-        if action in ("access",):
-            prefix = f"work/{self.name}/log/{action}"
-        elif action in ("target", "antitarget"):
-            prefix = f"work/{self.name}/log/{action}" + ".{panel_name}"
-        elif action in ("coverage",):
-            prefix = os.path.join(base_name, action + ".{region}")
+        base_log = "work/{mapper}.cnvkit/log/cnvkit."
+        base_log_lib = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.{library_name}."
+
+        if action in ("access", "antitarget"):
+            tpl = base_log + action
         elif action in (
-            "reference",
+            "autobin",
             "fix",
             "segment",
             "call",
             "bintest",
-            "report/metrics",
-            "report/segmetrics",
+            "metrics",
+            "segmetrics",
+            "genemetrics",
         ):
-            prefix = os.path.join(base_name, action.replace("/", "_"))
-        elif action in ("plot/diagram", "plot/scatter"):
-            prefix = os.path.join(base_name, action.replace("/", "_") + ".{contig_name}")
-        elif action == "flat_reference_panel":
-            prefix = f"work/{{mapper}}.{self.name}/log/reference.{{panel_name}}"
-        elif action == "flat_reference_wgs":
-            prefix = f"work/{{mapper}}.{self.name}/log/reference"
-        return SomaticCnvCallingStepPart._get_log_file_from_prefix(prefix)
+            tpl = base_log_lib + action
+        elif action == "target":
+            if self.compute_avg_target_size and self.paired:
+                tpl = base_log_lib + "target"
+            else:
+                tpl = base_log + "target"
+        elif action == "reference":
+            if self.paired:
+                tpl = base_log_lib + "reference"
+            else:
+                tpl = base_log + "reference"
+        elif action == "coverage":
+            tpl = base_log_lib + "{region,(target|antitarget)}coverage"
+        elif action in ("scatter",):
+            tpl = base_log_lib + action + ".{contig_name}"
+        else:
+            raise ValueError(f"Logs of action '{action}' not implemented yet")
 
-    def get_result_files(self, library_name: str, mapper: str) -> typing.List[str]:
+        for key, ext in (
+            ("conda_list", ".conda_list.txt"),
+            ("conda_info", ".conda_info.txt"),
+            ("log", ".log"),
+            ("sh", ".sh"),
+        ):
+            yield key, tpl + ext
+            yield key + "_md5", tpl + ext + ".md5"
+
+    def get_result_files(self, library_name: str, mapper: str) -> list[str]:
         """Files to symlink to output"""
-        base_name = f"{mapper}.{self.name}.{library_name}"
+        base_out_lib = (
+            "output/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}."
+        ).format(mapper=mapper, library_name=library_name)
+
+        base_report_lib = (
+            "output/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}."
+        ).format(mapper=mapper, library_name=library_name)
+
+        base_plot_lib = (
+            "output/{mapper}.cnvkit.{library_name}/plot/{mapper}.cnvkit.{library_name}."
+        ).format(mapper=mapper, library_name=library_name)
+
         result_files = []
-        # Tumor samples
-        if library_name in self.parent.normal_library:
-            # Main results
-            prefix = os.path.join("output", base_name, "out", base_name)
-            for suffix in ("cnr", "segments.cns", "cns", "bintest.cnr"):
-                result_files.append(prefix + "." + suffix)
-            # Log files
-            prefix = os.path.join("output", base_name, "log")
-            for ext in ("log", "conda_list.txt", "conda_info.txt", "sh"):
-                result_files.append(os.path.join(prefix, f"coverage.target.{ext}"))
-                result_files.append(os.path.join(prefix, f"coverage.antitarget.{ext}"))
-            for suffix in ("fix", "segment", "call", "bintest"):
-                for ext in ("log", "conda_list.txt", "conda_info.txt", "sh"):
-                    result_files.append(prefix + "/" + suffix + "." + ext)
-            # Log of reference is no panel of normals
-            # if not self.config[self.name]["panel_of_normals"]["enabled"]:
-            #     normal_library = self.parent.normal_library[library_name]
-            #     prefix = os.path.join("output", f"{mapper}.{self.name}.{normal_library}", "log", f"{mapper}.{self.name}.{normal_library}.reference")
-            #     for ext in ("log", "conda_list.txt", "conda_info.txt", "sh"):
-            #         result_files.append(prefix + "." + ext)
-            # Reports
-            if "reports" in self.config[self.name]:
-                prefix = os.path.join("output", base_name, "report", base_name)
-                for report in ("metrics", "segmetrics"):
-                    if report in self.config[self.name]["reports"]:
-                        result_files.append(prefix + "." + report + ".tsv")
-            # Plots (per chromosome)
-            if "plots" in self.config[self.name]:
-                prefix = os.path.join("output", base_name, "plot")
-                for plot in ("diagram", "scatter"):
-                    if plot in self.config[self.name]["plots"]:
-                        for contig in self.parent.contigs:
-                            result_files.append(os.path.join(prefix, plot, contig + ".png"))
-        # else:  # Normal samples
-        #     prefix = os.path.join("output", base_name, "log", "reference")
-        #     for ext in ("log", "conda_list.txt", "conda_info.txt", "sh"):
-        #         result_files.append(prefix + "." + ext)
+
+        for suffix in ("cnr", "segments.cns", "cns", "bintest.cns"):
+            result_files.append(base_out_lib + suffix)
+
+        actions_to_log = ("fix", "segment", "call", "bintest")
+        for action in actions_to_log:
+            result_files += [
+                path.replace("work", "output", 1).format(mapper=mapper, library_name=library_name)
+                for path in filter(
+                    lambda p: not p.endswith(".md5"), self.get_log_file(action).values()
+                )
+            ]
+
+        # Logs of metrics not linked
+        for report in ("metrics", "segmetrics", "genemetrics"):
+            if self.cfg.get(report).get("enabled"):
+                result_files.append(base_report_lib + report + ".tsv")
+
+        # Logs of plots not links
+        # TODO: Mouse date: only chromosomes 1 to 19
+        chrs = ["all"] + list(map(str, range(1, 23))) + ["X"]
+        if (
+            self.cfg.sample_sex.source != SexOrigin.CONFIG
+            or self.cfg.sample_sex.default == SexValue.FEMALE
+        ):
+            chrs.append("Y")
+
+        for plot in ("scatter",):
+            if self.cfg.get(plot).get("enabled"):
+                for chr in chrs:
+                    result_files.append(base_plot_lib + f"{plot}.{chr}.jpeg")
+
+        result_files += [x + ".md5" for x in result_files]
         return result_files
 
     # ----- Access --------------------------------------------------------------------------------
 
-    def _get_input_files_access(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return None
+    def _get_input_files_access(self, wildcards: Wildcards) -> dict[str, str]:
+        assert self.create_access, "Should not build access, already available"
+        return {}
 
-    def _get_params_access(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        params = {"reference": self.w_config.static_data_config.reference.path}
-        params["min_gap_size"] = self.config[self.name]["access"]["min_gap_size"]
-        access = self.config[self.name]["access"].get("exclude", None)
-        if access:
-            params["access"] = access
+    def _get_args_access(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        """
+        Arguments used to compute accessible regions for mapping
 
-    def _get_output_files_access(self) -> typing.Dict[str, str]:
-        return {"access": f"work/{self.name}/out/access.bed"}
+        When accessible regions are needed to compute average target size
+        (WGS without average target size set in the config)
+        then accessible region must cover the full genome (except masked).
+        Otherwise, access is built with excluded regions.
+        This happens when the average target size is set in the config in WGS,
+        or for WES.
+        """
+        assert self.create_access, "Should not build access, already available"
+        return dict(input) | {
+            "reference": self.w_config.static_data_config.reference.path,
+            "min-gap-size": self.cfg.access.min_gap_size,
+            "exclude": self.cfg.access.exclude,
+        }
+
+    # ----- Autobin (never used directly, only to compute target size in WGS settings) ------------
+
+    def _get_input_files_autobin(self, wildcards: Wildcards) -> dict[str, str]:
+        """
+        Input files used to get a good estimate of the average target size
+
+        This is only used for WGS data when the average target size isn't set in the config.
+        The access must be computed over the whole genome (no exclude files)
+        """
+        assert wildcards["library_name"] not in self.tumors, "Autobin always computed on normals"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam".format(**wildcards)
+        input_files = {"bams": [ngs_mapping(tpl)]}
+        if self.create_access:
+            if self.plain_access:
+                input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+            else:
+                input_files["target"] = self.base_out.format(**wildcards) + "access.bed"
+        return input_files
+
+    def _get_args_autobin(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        assert (
+            self.compute_avg_target_size
+        ), "Trying to estimate average target size for non-WGS samples"
+        args = dict(input) | {"bp-per-bin": 50000}
+        if self.plain_access:
+            args["method"] = "wgs"
+        else:
+            args["method"] = "amplicon"
+            if "target" not in args:
+                args["target"] = self.cfg.path_access
+        return args
 
     # ----- Target --------------------------------------------------------------------------------
 
-    def _get_input_files_target(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        for panel in self.config.path_target_interval_list_mapping:
-            if panel.name == wildcards.panel_name:
-                return {"region": panel.path}
+    def _get_input_files_target(self, wildcards: Wildcards) -> dict[str, str]:
+        """Input files to compute the target regions
 
-    def _get_params_target(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "split": self.config[self.name]["target"]["split"],
-            "avg_size": self.config[self.name]["target"]["avg_size"],
-        }
+        For WES, no input files, it comes from the baits (in arguments) or
+        the pon, a previously computed file or the baits (no reference needed)
 
-    def _get_output_files_target(self) -> typing.Dict[str, str]:
-        return {"region": f"work/{self.name}/out/{{panel_name}}_target.bed"}
+        For WGS, target is access, with avg size from the config, or 5000 when
+        no normal is available (flat prior) or autobin-computed avg size when paired.
+        In the latter case, the access must be computed from whole genome
+        (no exclude, no min_avg_size)
+        """
+        assert self.build_ref, "Should not build targets, already available"
+        input_files = {}
+        if self.is_wgs:
+            if self.create_access:
+                input_files["interval"] = self.base_out.format(**wildcards) + "access.bed"
+            if self.compute_avg_target_size:
+                input_files["avg-size"] = self.base_out_lib.format(**wildcards) + "autobin.txt"
+        return input_files
+
+    def _get_args_target(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        assert self.build_ref, "Should not build targets, already available"
+        if self.is_wes:
+            args = {
+                "avg-size": self.cfg.target.avg_size,
+                "split": self.cfg.target.split,
+                "interval": self.path_baits,
+            }
+        else:
+            assert self.is_wgs, "Panel not implemented yet"
+            args = dict(input) | {"split": self.cfg.target.split}
+            if args.get("avg-size", None) is not None:
+                args["avg-size"] = self._read_autobin_output(args["avg-size"])
+            elif self.cfg.target.avg_size is not None:
+                args["avg-size"] = self.cfg.target.avg_size
+            else:
+                args["avg-size"] = 5000
+        if self.w_config.static_data_config.get("features", None):
+            args["annotate"] = self.w_config.static_data_config.features.path
+            args["short-names"] = self.cfg.target.short_names
+        return args
 
     # ----- Antitarget ----------------------------------------------------------------------------
 
-    def _get_input_files_antitarget(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        # No antitarget for WGS
-        return {
-            "target": f"work/{self.name}/out/{wildcards.panel_name}_target.bed",
-            "access": f"work/{self.name}/out/access.bed",
-        }
+    def _get_input_files_antitarget(self, wildcards: Wildcards) -> dict[str, str]:
+        input_files = {"target": self.base_out.format(**wildcards) + "target.bed"}
+        if self.create_access:
+            input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+        return input_files
 
-    def _get_params_antitarget(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "avg_size": self.config[self.name]["antitarget"]["avg_size"],
-            "min_size": self.config[self.name]["antitarget"]["min_size"],
+    def _get_args_antitarget(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "avg-size": self.cfg.antitarget.avg_size,
+            "min-size": self.cfg.antitarget.min_size,
         }
-
-    def _get_output_files_antitarget(self) -> typing.Dict[str, str]:
-        return {"region": f"work/{self.name}/out/{{panel_name}}_antitarget.bed"}
+        if "access" not in args:
+            args["access"] = self.cfg.path_access
+        return args
 
     # ----- Coverage ------------------------------------------------------------------------------
 
-    def _get_input_files_coverage(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_input_files_coverage(self, wildcards: Wildcards) -> dict[str, str]:
+        """
+        Compute coverage of region (either target or antitarget)
+
+        Except when region provided with file, the region is computed by the pipeline,
+        and must be inculded with the inputs (possibly from the panel_of_normals step).
+        For WGS paired, the target regions are sample-dependent, because the optimal
+        average target size is sample-dependent (via the rough normal sample coverage).
+        In that case, the target regions must be taken from the normal sample, to
+        avoid requesting to build targets from the tumor sample.
+        """
         # BAM/BAI file
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
-        input_files = {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
-        }
+        input_files = {"bam": ngs_mapping(base_path + ".bam")}
 
         # Region (target or antitarget) file
-        panel = self.parent.libraryKit.get(wildcards.library_name, None)
-        if panel is None:
-            input_files["region"] = f"work/{self.name}/out/access.bed"
+        if self.build_ref:
+            if self.compute_avg_target_size:
+                tpl = self.base_out_lib + "{region}.bed"
+                if wildcards["library_name"] in self.tumors:
+                    input_files["intervals"] = tpl.format(
+                        mapper=wildcards["mapper"],
+                        library_name=self.parent.matched_normal[wildcards["library_name"]],
+                        region=wildcards["region"],
+                    )
+                else:
+                    input_files["intervals"] = tpl.format(**wildcards)
+            else:
+                input_files["intervals"] = self.base_out.format(**wildcards) + "{region}.bed"
+        elif self.pon_source == PanelOfNormalsOrigin.COHORT:
+            panel_of_normals = self.parent.sub_workflows["panel_of_normals_cnvkit"]
+            base_path = "output/{mapper}.cnvkit/out/cnvkit.{region}.bed"
+            input_files["intervals"] = panel_of_normals(base_path)
+
+        return input_files
+
+    def _get_args_coverage(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "reference": self.w_config.static_data_config.reference.path,
+            "min-mapq": self.cfg.coverage.min_mapq,
+            "count": self.cfg.coverage.count,
+        }
+        if "intervals" not in args:
+            intervals = self.cfg.panel_of_normals.get("path_{region}".format(**wildcards), "")
+            assert intervals != "", "Missing path to {region}".format(**wildcards)
+            args["intervals"] = intervals
+        return args
+
+    # ----- Reference (flat or pairwise) ----------------------------------------------------------
+
+    def _get_input_files_reference(self, wildcards: Wildcards) -> dict[str, str]:
+        """Builds reference from the paired normal, or flat prior in absence of normal"""
+        assert self.build_ref, "Should not build reference"
+        input_files = {}
+        if self.paired:
+            input_files["normals"] = [self.base_out_lib.format(**wildcards) + "target.cnn"]
+            if self.is_wes:
+                input_files["normals"].append(
+                    self.base_out_lib.format(**wildcards) + "antitarget.cnn"
+                )
+        elif self.pon_source == PanelOfNormalsOrigin.FLAT:
+            input_files["target"] = self.base_out.format(**wildcards) + "target.bed"
+            if self.is_wes:
+                input_files["antitarget"] = self.base_out.format(**wildcards) + "antitarget.bed"
+        return input_files
+
+    def _get_args_reference(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        assert self.build_ref, "Should not build reference"
+        args = dict(input) | {
+            "reference": self.w_config.static_data_config.reference.path,
+            "cluster": self.cfg.cluster,
+            "no-gc": not self.cfg.gc,
+            "no-rmask": not self.cfg.rmask,
+            "no-edge": not self.cfg.get("edge", self.is_wes),
+        }
+        if self.cfg.cluster:
+            args["min-cluster-size"] = self.cfg.min_cluster_size
+        if self.cfg.diploid_parx_genome:
+            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
+        sample_sex = self._get_sample_sex(wildcards.get("library_name", None))
+        if sample_sex is not None:
+            args["sample-sex"] = str(sample_sex)
+            if sample_sex == SexValue.MALE and self.paired:
+                args["male-reference"] = True
+            else:
+                args["male-reference"] = self.cfg.male_reference
         else:
-            input_files["region"] = f"work/{self.name}/out/{panel.name}_{wildcards.region}.bed"
-        return input_files
-
-    def _get_params_coverage(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "fasta": self.w_config.static_data_config.reference.path,
-            "count": self.config[self.name]["coverage"]["count"],
-            "min_mapq": self.config[self.name]["coverage"]["min_mapq"],
-            "processes": self.default_resource_usage.threads,
-        }
-
-    def _get_output_files_coverage(self) -> typing.Dict[str, str]:
-        return {"coverage": f"work/{{mapper}}.{self.name}.{{library_name}}/out/{{region}}.cnn"}
-
-    # ----- Reference -----------------------------------------------------------------------------
-
-    def _get_input_files_reference(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        """Builds reference from the paired normal, or flat prior in absence of normal"""
-        input_files = {}
-        normal_library = self.parent.normal_library.get(wildcards.library_name, None)
-        input_files["normals"] = [
-            f"work/{wildcards.mapper}.{self.name}.{normal_library}/out/target.cnn",
-            f"work/{wildcards.mapper}.{self.name}.{normal_library}/out/antitarget.cnn",
-        ]
-        return input_files
-
-    def _get_params_reference(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        params = {
-            "fasta": self.w_config.static_data_config.reference.path,
-            "cluster": self.config[self.name]["reference"]["cluster"],
-            "min_cluster_size": self.config[self.name]["reference"]["min_cluster_size"],
-            "male_reference": self.config[self.name]["use_male_reference"],
-            "no_gc": self.config[self.name]["reference"]["no_gc"],
-            "no_edge": self.config[self.name]["reference"]["no_edge"],
-            "no_rmask": self.config[self.name]["reference"]["no_rmask"],
-        }
-        sample_sex = self._get_sample_sex(wildcards.library_name)
-        if sample_sex == Sex.MALE or sample_sex == Sex.FEMALE:
-            params["sample_sex"] = str(sample_sex)
-        return
-
-    def _get_output_files_reference(self) -> typing.Dict[str, str]:
-        """TODO: flat prior reference should be library-independent"""
-        return {"reference": f"work/{{mapper}}.{self.name}.{{library_name}}/out/reference.cnn"}
-
-    def _get_input_files_flat_reference_panel(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        """Builds reference from the paired normal, or flat prior in absence of normal"""
-        input_files = {}
-        panel = self.parent.libraryKit.get(wildcards.library_name, None)
-        if panel is None:  # WGS, target is access, no antitarget
-            input_files["target"] = f"work/{self.name}/out/access.bed"
-        else:  # WES, both target & antitarget
-            input_files["target"] = f"work/{self.name}/out/{panel.name}_target.bed"
-            input_files["antitarget"] = f"work/{self.name}/out/{panel.name}_antitarget.bed"
-        return input_files
-
-    def _get_input_files_flat_reference_panel(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return self._get_input_files_flat_reference_panel(wildcards)
-
-    def _get_params_flat_reference_panel(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return self._get_params_reference(wildcards)
-
-    def _get_output_files_flat_reference_panel(self) -> typing.Dict[str, str]:
-        """TODO: flat prior reference should be library-independent"""
-        return {"reference": f"work/{{mapper}}.{self.name}/out/reference.{{panel_name}}.cnn"}
-
-    def _get_input_files_flat_reference_wgs(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return self._get_input_files_flat_reference_panel(wildcards)
-
-    def _get_params_flat_reference_wgs(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return self._get_params_reference(wildcards)
-
-    def _get_output_files_flat_reference_wgs(self) -> typing.Dict[str, str]:
-        """TODO: flat prior reference should be library-independent"""
-        return {"reference": f"work/{{mapper}}.{self.name}/out/reference.cnn"}
+            args["male-reference"] = self.cfg.male_reference
+        return args
 
     # ----- Fix -----------------------------------------------------------------------------------
 
-    def _get_input_files_fix(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        # Coverage on targets
-        input_files = {
-            "target": f"work/{wildcards.mapper}.{self.name}.{wildcards.library_name}/out/target.cnn"
-        }
-        # Coverage on antitargets when present (absent for WGS)
-        panel = self.parent.libraryKit.get(wildcards.library_name, None)
-        if panel is not None:  # WGS - no antitarget
-            input_files["antitarget"] = (
-                f"work/{wildcards.mapper}.{self.name}.{wildcards.library_name}/out/antitarget.cnn"
+    def _get_input_files_fix(self, wildcards: Wildcards) -> dict[str, str]:
+        # Coverage on targets & optionally on antitargets
+        input_files = {"target": self.base_out_lib.format(**wildcards) + "target.cnn"}
+        if self.is_wes:
+            input_files["antitarget"] = self.base_out_lib.format(**wildcards) + "antitarget.cnn"
+        if self.paired:
+            tpl = "{mapper}.cnvkit.{normal_library}".format(
+                mapper=wildcards["mapper"],
+                normal_library=self.parent.matched_normal[wildcards["library_name"]],
             )
-        # Get reference from panel of normals if available, otherwise from normal or flat when no normal
-        if not self.config[self.name]["panel_of_normals"]["enabled"]:  # Paired normal or flat
-            normal_library = self.parent.normal_library.get(wildcards.library_name, None)
-            if normal_library:
-                input_files["reference"] = (
-                    f"work/{{mapper}}.{self.name}.{normal_library}/out/reference.cnn"
-                )
-            else:
-                if panel:
-                    input_files["reference"] = (
-                        f"work/{{mapper}}.{self.name}/out/reference.{panel.name}.cnn"
-                    )
-                else:
-                    input_files["reference"] = f"work/{{mapper}}.{self.name}/out/reference.cnn"
-        elif (
-            self.config[self.name]["panel_of_normals"]["origin"]
-            == PanelOfNormalsOrigin.PREVIOUS_STEP
-        ):  # Panel_of_normals step
-            input_files["reference"] = self.parent._get_panel_of_normals_path(self.name, panel)
-        else:
-            input_files["reference"] = self.config[self.name]["panel_of_normals"][
-                "path_panel_of_normals"
-            ]
+            input_files["reference"] = os.path.join("work", tpl, "out", tpl + ".reference.cnn")
+        elif self.pon_source == PanelOfNormalsOrigin.FLAT:
+            input_files["reference"] = self.base_out.format(**wildcards) + "reference.cnn"
+        elif self.pon_source == PanelOfNormalsOrigin.COHORT:
+            panel_of_normals = self.parent.sub_workflows["panel_of_normals_cnvkit"]
+            base_path = "output/{mapper}.cnvkit/out/cnvkit.panel_of_normals.cnn"
+            input_files["reference"] = panel_of_normals(base_path)
         return input_files
 
-    def _get_params_fix(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "sample_id": wildcards.library_name,
-            "cluster": self.config[self.name]["fix"]["cluster"],
-            "no_gc": self.config[self.name]["fix"]["no_gc"],
-            "no_edge": self.config[self.name]["fix"]["no_edge"],
-            "no_rmask": self.config[self.name]["fix"]["no_rmask"],
+    def _get_args_fix(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "cluster": self.cfg.cluster,
+            "no-gc": not self.cfg.gc,
+            "no-rmask": not self.cfg.rmask,
+            "no-edge": not self.cfg.get("edge", self.is_wes),
         }
+        args["sample-id"] = wildcards.library_name
+        if self.cfg.diploid_parx_genome:
+            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
+        if "reference" not in args:
+            args["reference"] = self.cfg.panel_of_normals.path_panel_of_normals
+        return args
 
-    def _get_output_files_fix(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"coverage": os.path.join("work", base_name, "out", base_name + ".cnr")}
+    # ----- Variant-related convenience functions -------------------------------------------------
+
+    def _variants_from_cohort_input(self) -> str:
+        variants = self.parent.sub_workflows["somatic_variant_calling_cnvkit"]
+        tpl = f"{{mapper}}.{self.cfg.somatic_variant_calling.tool}.{{library_name}}"
+        base_path = os.path.join("output", tpl, "out", tpl + ".vcf.gz")
+        return variants(base_path)
+
+    def _variants_args(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "min-variant-depth": self.cfg.somatic_variant_calling.min_variant_depth,
+            "sample-id": wildcards.library_name,
+            "normal-id": self.parent.matched_normal[wildcards.library_name],
+        }
+        if self.cfg.somatic_variant_calling.zygocity_freq is not None:
+            args["zygicity-freq"] = self.cfg.somatic_variant_calling.zygocity_freq
+        return args
 
     # ----- Segment -------------------------------------------------------------------------------
 
-    def _get_input_files_segment(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_input_files_segment(self, wildcards: Wildcards) -> dict[str, str]:
         # Coverage
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
-        input_files = {"coverage": f"work/{base_name}/out/{base_name}.cnr"}
-        # Segmentation using SNVs if requested and available (normal must be present)
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            input_files["variants"] = f"work/{base_name}/out/{base_name}.vcf.gz"
+        input_files = {"ratios": self.base_out_lib.format(**wildcards) + "cnr"}
+        # Segmentation using SNVs from cohort
+        if self.variants_from_cohort:
+            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
         return input_files
 
-    def _get_params_segment(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_args_segment(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         # Segmentation parameters
-        params = {
-            "method": self.config[self.name]["segment"]["method"],
-            "threshold": self.config[self.name]["segment"]["threshold"],
-            "drop_low_coverage": self.config[self.name]["segment"]["drop_low_coverage"],
-            "drop_outliers": self.config[self.name]["segment"]["drop_outliers"],
+        args = dict(input) | {
+            "method": self.cfg.segment.method,
+            "threshold": self.cfg.segment.threshold,
+            "drop-outliers": self.cfg.segment.drop_outliers,
+            "drop-low-coverage": self.cfg.drop_low_coverage,
         }
-        if self.config[self.name]["segment"]["method"] == "cbs":
-            params["smooth_cbs"] = self.config[self.name]["segment"]["smooth_cbs"]
-        params["processes"] = self.default_resource_usage.threads
-        # Normal & tumor sample ids if SNVs
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            params["sample_id"] = wildcards.library_name
-            params["normal_id"] = self.normal_library[wildcards.library_name]
-            params["min_variant_depth"] = self.config[self.name]["segment"]["min_variant_depth"]
-            params["zygocity_freq"] = self.config[self.name]["segment"]["zygocity_freq"]
-        return params
-
-    def _get_output_files_segment(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {
-            "segments": os.path.join("work", base_name, "out", base_name + ".segments.cns"),
-            "dataframe": os.path.join("work", base_name, "out", "dataframe.rds"),
-        }
+        if self.cfg.segment.method == CnvkitSegmentationMethod.CBS:
+            args["smooth-cbs"] = self.cfg.segment.smooth_cbs
+        if self.cfg.somatic_variant_calling.enabled:
+            args |= self._variants_args(wildcards, input)
+            if "variants" not in args:
+                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
+        return args
 
     # ----- Call ----------------------------------------------------------------------------------
 
-    def _get_input_files_call(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_input_files_call(self, wildcards: Wildcards) -> dict[str, str]:
         # Segmentation
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
-        input_files = {"segments": f"work/{base_name}/out/{base_name}.segments.cns"}
-        # SNVs if requested and available (normal must be present)
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            input_files["variants"] = f"work/{base_name}/out/{base_name}.vcf.gz"
-        # Purity from the tool if requested and not from the samplesheet
+        input_files = {"segments": self.base_out_lib.format(**wildcards) + "segments.cns"}
+        # Segmentation using SNVs from cohort
+        if self.variants_from_cohort:
+            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
+        # Purity from the tool
         if (
-            self.config[self.name]["purity"]["enabled"] and self.config[self.name]["purity"]["tool"]
-        ):  # Need purity, and can use tool to obain it
-            if (
-                self.config[self.name]["purity"]["ignore_samplesheet"]
-                or wildcards.library_name not in self.parent.purity
-            ):
-                # Don't use samplesheet
-                input_files["purity"] = (
-                    f"work/{base_name}/out/{wildcards.mapper}.{self.config.purity.tool}.txt"
-                )
+            self.cfg.somatic_purity_ploidy_estimate.enabled
+            and self.cfg.somatic_purity_ploidy_estimate.source == PurityOrigin.COHORT
+        ):
+            purity = self.parent.sub_workflows["somatic_purity_ploidy_estimate_cnvkit"]
+            tpl = f"{{mapper}}.{self.cfg.somatic_purity_ploidy_estimate.tool}.{{library_name}}"
+            base_path = os.path.join("output", tpl, "out", tpl + ".txt")
+            input_files["purity_file"] = purity(base_path).format(**wildcards)
         return input_files
 
-    def _get_params_call(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_args_call(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         # Call parameters
-        params = {
-            "method": self.config[self.name]["call"]["method"],
-            "thresholds": self.config[self.name]["call"]["thresholds"],
-            "filter": self.config[self.name]["call"]["filter"],
-            "drop_low_coverage": self.config[self.name]["call"]["drop_low_coverage"],
-            "male_reference": self.config[self.name]["use_male_reference"],
+        args = dict(input) | {
+            "method": self.cfg.call.method,
+            "thresholds": self.cfg.call.thresholds,
+            "drop-low-coverage": self.cfg.drop_low_coverage,
+            "male-reference": self.cfg.male_reference,
         }
-        # If center_at defined, use it, otherwise use the center method
-        center = self.config[self.name]["call"].get("center_at", None)
-        if center is not None:
-            params["center_at"] = center
+        if self.cfg.call.center_at is not None:
+            args["center-at"] = self.cfg.call.center_at
         else:
-            params["center"] = self.config[self.name]["call"].get("center", "None")
-        # Normal & tumor sample ids if SNVs
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            params["sample_id"] = wildcards.library_name
-            params["normal_id"] = self.normal_library[wildcards.library_name]
+            if self.cfg.call.center is not None:
+                args["center"] = self.cfg.call.center
+        if self.cfg.diploid_parx_genome:
+            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
+        if self.cfg.somatic_variant_calling.enabled:
+            args |= self._variants_args(wildcards, input)
+            if "variants" not in args:
+                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
         # Sample sex if known, otherwise guessed by the tool
         sample_sex = self._get_sample_sex(wildcards.library_name)
-        if sample_sex == Sex.MALE or sample_sex == Sex.FEMALE:
-            params["sample_sex"] = sample_sex
-        # If requested, purity from samplesheet or from default if no tool
-        if self.config[self.name]["purity"]["enabled"]:
-            purity = self.parent.purity.get(
-                wildcards.library_name, self.config.purity.default_purity
-            )
-            if purity is not None and not self.config[self.name]["purity"]["ignore_samplesheet"]:
-                params["purity"] = purity
-                if self.config.default_ploidy:
-                    params["ploidy"] = self.config.default_ploidy
-        return params
-
-    def _get_output_files_call(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"calls": os.path.join("work", base_name, "out", base_name + ".cns")}
+        if sample_sex is not None:
+            args["sample-sex"] = str(sample_sex)
+            if sample_sex == SexValue.MALE and self.paired:
+                args["male-reference"] = True
+        # If requested, purity from samplesheet or from default
+        if self.cfg.somatic_purity_ploidy_estimate.enabled:
+            if args.get("purity_file", None) is not None:
+                (purity, ploidy) = self._read_purity_ploidy_output(args["purity_file"])
+            elif self.cfg.somatic_purity_ploidy_estimate.source == PurityOrigin.SAMPLESHEET:
+                purity = self.tumors[wildcards.library_name].purity
+                ploidy = self.tumors[wildcards.library_name].ploidy
+            elif self.cfg.somatic_purity_ploidy_estimate.source == PurityOrigin.CONFIG:
+                purity = self.cfg.purity.purity
+                ploidy = self.cfg.purity.ploidy
+            args["purity"] = purity
+            args["ploidy"] = ploidy
+        return args
 
     # ----- Bintest -------------------------------------------------------------------------------
 
-    def _get_input_files_bintest(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
+    def _get_input_files_bintest(self, wildcards: Wildcards) -> dict[str, str]:
         return {
-            "coverage": f"work/{base_name}/out/{base_name}.cnr",
-            "segments": f"work/{base_name}/out/{base_name}.segments.cns",
+            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
+            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
         }
 
-    def _get_params_bintest(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "alpha": self.config[self.name]["bintest"]["alpha"],
-            "target": self.config[self.name]["bintest"]["target"],
+    def _get_args_bintest(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        return dict(input) | {
+            "alpha": self.cfg.bintest.alpha,
+            "target": self.cfg.bintest.target,
         }
-
-    def _get_output_files_bintest(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"coverage": os.path.join("work", base_name, "out", base_name + ".bintest.cnr")}
 
     # ----- Plots --------------------------------------------------------------------------------
 
-    def _get_input_files_plot_diagram(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
+    def _get_input_files_scatter(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {
-            "coverage": f"work/{base_name}/out/{base_name}.cnr",
-            "segments": f"work/{base_name}/out/{base_name}.segments.cns",
+            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
+            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
         }
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            input_files["variants"] = f"work/{base_name}/out/{base_name}.vcf.gz"
+        if self.variants_from_cohort:
+            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
         return input_files
 
-    def _get_params_plot_diagram(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "threshold": self.config[self.name]["plots"]["diagram"]["threshold"],
-            "min_probes": self.config[self.name]["plots"]["diagram"]["min_probes"],
-            "no_shift_xy": self.config[self.name]["plots"]["diagram"]["no_shift_xy"],
+    def _get_args_scatter(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "antitarget-marker": self.cfg.scatter.antitarget_marker,
+            "by-bin": self.cfg.scatter.by_bin,
+            "segment-color": self.cfg.scatter.segment_color,
+            "trend": self.cfg.scatter.trend,
+            "fig-size": self.cfg.scatter.fig_size,
+            "width": self.cfg.scatter.width,
         }
-
-    def _get_output_files_plot_diagram(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"figure": os.path.join("work", base_name, "plot", "diagram", "{contig_name}.pdf")}
-
-    def _get_input_files_plot_scatter(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
-        input_files = {
-            "coverage": f"work/{base_name}/out/{base_name}.cnr",
-            "segments": f"work/{base_name}/out/{base_name}.segments.cns",
-        }
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            input_files["variants"] = f"work/{base_name}/out/{base_name}.vcf.gz"
-        return input_files
-
-    def _get_params_plot_scatter(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        params = {
-            "chromosome": wildcards.contig_name,
-            "antitarget_marker": self.config[self.name]["plots"]["scatter"]["antitarget_marker"],
-            "by_bin": self.config[self.name]["plots"]["scatter"]["by_bin"],
-            "segment_color": self.config[self.name]["plots"]["scatter"]["segment_color"],
-            "trend": self.config[self.name]["plots"]["scatter"]["trend"],
-            "y_max": self.config[self.name]["plots"]["scatter"]["y_max"],
-            "y_min": self.config[self.name]["plots"]["scatter"]["y_min"],
-            "fig_size": self.config[self.name]["plots"]["scatter"]["fig_size"],
-            "sample_id": wildcards.library_name,
-        }
-        variants = self.config[self.name].get("variants", None)
-        if variants and wildcards.library_name in self.normal_library:
-            params["normal_id"] = self.normal_library[wildcards.library_name]
-            params["min_variant_depth"] = self.config[self.name]["plots"]["scatter"][
-                "min_variant_depth"
-            ]
-            params["zygocity_freq"] = self.config[self.name]["plots"]["scatter"]["zygocity_freq"]
-        return params
-
-    def _get_output_files_plot_scatter(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"figure": os.path.join("work", base_name, "plot", "scatter", "{contig_name}.pdf")}
+        if self.cfg.scatter.y_min is not None:
+            args["y-min"] = self.cfg.scatter.y_min
+        if self.cfg.scatter.y_min is not None:
+            args["y-min"] = self.cfg.scatter.y_min
+        if wildcards["contig_name"] != "all":
+            args["chromosome"] = wildcards["contig_name"]
+        if self.cfg.somatic_variant_calling.enabled:
+            args |= self._variants_args(wildcards, input)
+            if "variants" not in args:
+                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
+        args["title"] = f"{wildcards['library_name']} - {wildcards['contig_name']}"
+        return args
 
     # ----- Metrics (metrics & segmetrics) --------------------------------------------------------
 
-    def _get_input_files_report_metrics(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
+    def _get_input_files_metrics(self, wildcards: Wildcards) -> dict[str, str]:
         return {
-            "coverage": f"work/{base_name}/out/{base_name}.cnr",
-            "segments": f"work/{base_name}/out/{base_name}.segments.cns",
+            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
+            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
         }
 
-    def _get_params_report_metrics(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {"drop_low_coverage": self.config[self.name]["reports"]["drop_low_coverage"]}
+    def _get_args_metrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        return dict(input) | {"drop-low-coverage": self.cfg.drop_low_coverage}
 
-    def _get_output_files_report_metrics(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"report": os.path.join("work", base_name, "report", base_name + ".metrics.tsv")}
-
-    def _get_input_files_report_segmetrics(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        base_name = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
+    def _get_input_files_segmetrics(self, wildcards: Wildcards) -> dict[str, str]:
         return {
-            "coverage": f"work/{base_name}/out/{base_name}.cnr",
-            "segments": f"work/{base_name}/out/{base_name}.segments.cns",
+            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
+            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
         }
 
-    def _get_params_report_segmetrics(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        return {
-            "drop_low_coverage": self.config[self.name]["reports"]["drop_low_coverage"],
-            "stats": (
-                "mean",
-                "median",
-                "mode",
-                "t-test",
-                "stdev",
-                "sem",
-                "mad",
-                "mse",
-                "iqr",
-                "bivar",
-                "ci",
-                "pi",
-            ),
-            "alpha": self.config[self.name]["reports"]["alpha"],
-            "bootstrap": self.config[self.name]["reports"]["bootstrap"],
+    def _get_args_segmetrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        return dict(input) | {
+            "drop-low-coverage": self.cfg.drop_low_coverage,
+            "alpha": self.cfg.segmetrics.alpha,
+            "bootstrap": self.cfg.segmetrics.bootstrap,
+            "smooth-bootstrap": self.cfg.segmetrics.smooth_bootstrap,
+            "stats": self.cfg.segmetrics.stats,
         }
 
-    def _get_output_files_report_segmetrics(self) -> typing.Dict[str, str]:
-        base_name = f"{{mapper}}.{self.name}.{{library_name}}"
-        return {"report": os.path.join("work", base_name, "report", base_name + ".segmetrics.tsv")}
+    def _get_input_files_genemetrics(self, wildcards: Wildcards) -> dict[str, str]:
+        return {
+            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
+            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+        }
+
+    def _get_args_genemetrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(input) | {
+            "drop-low-coverage": self.cfg.drop_low_coverage,
+            "male-reference": self.cfg.male_reference,
+            "threshold": self.cfg.genemetrics.threshold,
+            "min-probes": self.cfg.genemetrics.min_probes,
+            "alpha": self.cfg.genemetrics.alpha,
+            "bootstrap": self.cfg.genemetrics.bootstrap,
+            "stats": [x.replace("t-test", "ttest") for x in self.cfg.genemetrics.stats],
+        }
+        if self.cfg.diploid_parx_genome:
+            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
+        sample_sex = self._get_sample_sex(wildcards.library_name)
+        if sample_sex is not None:
+            args["sample-sex"] = str(sample_sex)
+            if sample_sex == SexValue.MALE and self.paired:
+                args["male-reference"] = True
+        return args
+
+    # ----- Read small files to put values in parameters
+
+    def _read_autobin_output(self, filename: str) -> int:
+        nb = r"([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)"
+        pattern = re.compile("^Target:[ \t]+" + nb + "[ \t]+" + nb + "$")
+        with open(filename) as f:
+            for line in f:
+                m = pattern.match(line)
+                if m:
+                    return int(float(m.groups()[4]))
+        return -1
+
+    def _read_purity_ploidy_output(self, filename: str) -> tuple[float, float]:
+        # TODO: Tool-dependent parsing of purity/ploidy file
+        nb = r"([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)"
+        pattern = re.compile("^Purity/ploidy:[ \t]+" + nb + "[ \t]+" + nb + "$")
+        with open(filename) as f:
+            for line in f:
+                m = pattern.match(line)
+                if m:
+                    return (float(m.groups()[1]), float(m.groups()[4]))
+        return (-1.0, -1.0)
+
+
+class LibraryInfo(NamedTuple):
+    library: NGSLibrary
+    donor: str
+    is_tumor: bool
+    libraryType: str
+    libraryKit: str | None
+    sex: Sex | None
+    purity: float | None
+    ploidy: float = 2
 
 
 class SomaticCnvCallingWorkflow(BaseStep):
@@ -800,6 +1045,21 @@ class SomaticCnvCallingWorkflow(BaseStep):
             config_model_class=SomaticCnvCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
         )
+        # Collect extra information per library
+        self.valid_dna_libraries = {}
+        for sheet in self.shortcut_sheets:
+            self.valid_dna_libraries |= SomaticCnvCallingWorkflow._get_dna_libraries(sheet)
+
+        # All tumor samples, by libraryKit, with None for WGS
+        self.tumors = SomaticCnvCallingWorkflow._split_by(
+            SomaticCnvCallingWorkflow._filter_by(
+                self.valid_dna_libraries.values(), "is_tumor", lambda x: x
+            ),
+            "libraryKit",
+        )
+
+        self.matched_normal = self._match_normals()
+
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -812,194 +1072,153 @@ class SomaticCnvCallingWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
-        self.registered_pons = self._optionally_register_pon()
-
-        # Collect extra information per library
-        self.normal_library = self._get_normal_library()
-        self.libraryKit = self._get_panel_information()
-        self.sex = self._get_sex()
-        self.purity = self._get_purity()
+        for subworkflow in (
+            "panel_of_normals",
+            "somatic_variant_calling",
+            "somatic_purity_ploidy_estimate",
+        ):
+            self._optionally_register_subworkflow(subworkflow)
 
     def get_result_files(self) -> OutputFiles:
         fns = []
-        for seq_type, tools in self.config.tools:
-            for library in self._get_libraries():
-                if library.extra_infos.get("libraryType", "").lower() != seq_type:
-                    continue
-                test_sample = library.test_sample
-                if test_sample.extra_infos.get("extractionType", "") != "DNA":
-                    continue
-                bio_sample = test_sample.bio_sample
-                is_tumor = bio_sample.extra_infos.get("isTumor", True)
-                if is_tumor:
-                    for tool in tools:
-                        f = self.substep_getattr(tool, "get_result_files")
-                        for mapper in self.w_config.step_config["ngs_mapping"]["tools"]["dna"]:
-                            for fn in f(library.name, mapper):
-                                fns.append(fn)
+
+        for tool in self.config.tools.wgs:
+            for mapper in self.w_config.step_config["ngs_mapping"].tools.dna:
+                for library in self.tumors.get(None):
+                    fns += self.sub_steps.get(tool).get_result_files(library.library.name, mapper)
+
+        for tool in self.config.tools.wes:
+            for mapper in self.w_config.step_config["ngs_mapping"].tools.dna:
+                for libraryKit in self.tumors.keys():
+                    if libraryKit is None:
+                        continue
+                    for library in self.tumors.get(libraryKit):
+                        fns += self.sub_steps.get(tool).get_result_files(
+                            library.library.name, mapper
+                        )
+
         return OutputFiles(fns)
 
-    def _get_libraries(self) -> typing.Iterator[NGSLibrary]:
-        for sheet in self.shortcut_sheets:
-            for donor in sheet.sheet.bio_entities.values():
-                for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
-                        for library in test_sample.ngs_libraries.values():
-                            yield library
+    def _match_normals(self):
+        normals = SomaticCnvCallingWorkflow._split_by(
+            SomaticCnvCallingWorkflow._filter_by(
+                self.valid_dna_libraries.values(), "is_tumor", lambda x: not x
+            ),
+            "libraryKit",
+        )
 
-    def _get_normal_library(self) -> typing.Dict[str, str]:
-        normal_for_donor = {}
-        for library in self._get_libraries():
-            test_sample = library.test_sample
-            if test_sample.extra_infos.get("extractionType", "") != "DNA":
-                continue
-            bio_sample = test_sample.bio_sample
-            is_tumor = bio_sample.extra_infos.get("isTumor", None)
-            if is_tumor is None:
-                raise ValueError(f"Missing 'isTumor' value for library '{library.name}'")
-            if is_tumor:
-                continue
-            donor = bio_sample.bio_entity
-            if donor.name in normal_for_donor:
-                raise ValueError(f"Multiple normals for donor '{donor.name}'")
-            normal_for_donor[donor.name] = library.name
+        # Pairing between tumor & normals (must share the same libraryKit)
+        matched_normal = {
+            sample.library.name: None for samples in self.tumors.values() for sample in samples
+        }
+        for libraryKit, samples in self.tumors.items():
+            if libraryKit in normals:
+                normals_by_donor = SomaticCnvCallingWorkflow._split_by(normals[libraryKit], "donor")
+                for sample in samples:
+                    donor = sample.donor
+                    normal = normals_by_donor.get(donor, [])
+                    assert (
+                        len(normal) < 2
+                    ), f"Muliple valid donor samples for tumor library {sample.library.name}"
+                    if normal:
+                        normal_library = normal[0].library
+                        matched_normal[sample.library.name] = normal_library.name
+        return matched_normal
 
-        normal_library = {}
-        for library in self._get_libraries():
-            test_sample = library.test_sample
-            if test_sample.extra_infos.get("extractionType", "") != "DNA":
-                continue
-            bio_sample = test_sample.bio_sample
-            donor = bio_sample.bio_entity
-            if bio_sample.extra_infos.get("isTumor", True):
-                normal_library[library.name] = normal_for_donor[donor.name]
-        return normal_library
-
-    def _optionally_register_pon(self) -> typing.Dict[str, str]:
-        """
-        Register all possible combination of panel of normals:
-        - WGS PON for all configured WGS tools which require/can use it
-        - WES PON for all configured WES tools which require/can use it, one for each enrichment kit
-
-        Note that there is no need to specify the genome release,
-        because the panel_of_normals step used here MUST be in the same project,
-        so it has the same configuration, and only one genome release is allowed per configuration.
-        """
-        registered_pons = list()
-        for tool in self.config.tools.wgs:
-            pon_name = f"wgs.{tool}"
-            if pon_name in registered_pons:
-                continue
-            if self.config[tool].get("panel_of_normals", None) and self.config[
-                tool
-            ].panel_of_normals.get("path_panel_of_normals_step", None):
+    def _optionally_register_subworkflow(self, subworkflow):
+        for tool in set(self.config.tools.wgs + self.config.tools.wes):
+            assert self.config.get(tool) is not None, f"Requested tool '{tool}' not configured"
+            cfg = self.config.get(tool)
+            subworkflow_config = cfg.get(subworkflow)
+            if (
+                subworkflow_config
+                and subworkflow_config.enabled
+                and str(subworkflow_config.source) == "cohort"
+            ):
                 self.register_sub_workflow(
-                    "panel_of_normals",
-                    self.config[tool].panel_of_normals.path_panel_of_normals_step,
-                    pon_name,
+                    subworkflow,
+                    subworkflow_config.get(f"path_{subworkflow}"),
+                    f"{subworkflow}_{tool}",
                 )
-                registered_pons.append(pon_name)
-        for tool in self.config.tools.wes:
-            for panel in self.config.path_target_interval_list_mapping:
-                pon_name = f"wes.{tool}.{panel.name}"
-                if pon_name in registered_pons:
-                    continue
-                if self.config[tool].get("panel_of_normals", None) and self.config[
-                    tool
-                ].panel_of_normals.get("path_panel_of_normals_step", None):
-                    self.register_sub_workflow(
-                        "panel_of_normals",
-                        self.config[tool].panel_of_normals.path_panel_of_normals_step,
-                        pon_name,
-                    )
-                    registered_pons.append(pon_name)
-        return registered_pons
 
-    def _get_panel_information(self) -> typing.Dict[str, str]:
-        # Set default panel
-        default = None
-        for panel in self.config.path_target_interval_list_mapping:
-            if panel.name == "__default__":
-                default = panel
-                break
+    @staticmethod
+    def _get_dna_libraries(sheet) -> dict[str, LibraryInfo]:
+        allowed_library_types = [
+            k for k, v in LIBRARY_TO_EXTRACTION.items() if v == EXTRACTION_TYPE_DNA
+        ]
 
-        # Extract library pattern (the "libraryKit" column in samplesheet)
-        # On output:
-        # - the panel name and panel path if libraryKit is present & known
-        # - the default panel path if libraryKit is undefined or not found
-        # - None for WGS
-        # - ValueError if libraryType is missing or unknown (not WES nor WGS)
-        libraryKit = {}
-        for library in self._get_libraries():
-            test_sample = library.test_sample
-            if test_sample.extra_infos.get("extractionType", "") != "DNA":
-                continue
-
-            libraryType = library.extra_infos.get("libraryType", None)
-            if libraryType is None:
-                raise ValueError(f"Missing library type for library '{library.name}'")
-            elif libraryType == "WES":
-                if library.extra_infos.get("libraryKit", None):
-                    for panel in self.config.path_target_interval_list_mapping:
-                        if re.match(panel.pattern, library.extra_infos.get("libraryKit")):
-                            libraryKit[library.name] = panel
-                            break
-                    if library.name not in libraryKit:
-                        libraryKit[library.name] = default
+        valid_dna_libraries = {}
+        for donor in sheet.sheet.bio_entities.values():
+            sex: SexValue = donor.extra_infos.get("sex", None)
+            for bio_sample in donor.bio_samples.values():
+                is_tumor = bio_sample.extra_infos.get("isTumor", None)
+                assert (
+                    is_tumor is not None
+                ), f"Missing 'isTumor' value for sample '{donor.name}-{bio_sample.name}'"
+                if is_tumor:
+                    purity = bio_sample.extra_infos.get("purity", None)
+                    ploidy = bio_sample.extra_infos.get("ploidy", 2)
                 else:
-                    libraryKit[library.name] = default
-                if libraryKit[library.name] is None:
-                    raise ValueError(f"Undefined panel for library '{library.name}")
-            elif libraryType == "WGS":
-                libraryKit[library.name] = None
-            else:
-                raise ValueError(
-                    f"Unknown library type '{libraryType}' for library '{library.name}'"
-                )
+                    purity = None
+                    ploidy = 2
+                for test_sample in bio_sample.test_samples.values():
+                    if (
+                        test_sample.extra_infos.get("extractionType", "").upper()
+                        != EXTRACTION_TYPE_DNA
+                    ):
+                        continue
+                    for library in test_sample.ngs_libraries.values():
+                        assert (
+                            library.name not in valid_dna_libraries
+                        ), f"Duplicate entry for library {library.name}"
+                        libraryType = library.extra_infos.get("libraryType", None)
+                        assert (
+                            libraryType is not None
+                        ), f"Missing library type for library '{library.name}'"
+                        if libraryType.upper() not in allowed_library_types:
+                            continue
+                        libraryKit = None
+                        if libraryType.upper() == "WES" or libraryType.upper() == "Panel":
+                            libraryKit = library.extra_infos.get("libraryKit", None)
+                            assert (
+                                libraryKit is not None
+                            ), f"Missing library kit for library '{library.name}'"
+                        valid_dna_libraries[library.name] = LibraryInfo(
+                            library,
+                            donor.name,
+                            is_tumor,
+                            libraryType,
+                            libraryKit,
+                            purity,
+                            ploidy,
+                            sex,
+                        )
 
-        return libraryKit
+        return valid_dna_libraries
 
-    def _get_purity(self) -> typing.Dict[str, str]:
-        """Returns the purity value from the 'purity' library extra_infos. Missing otherwise"""
-        purity = {}
-        for library in self._get_libraries():
-            p = library.extra_infos.get("purity", None)
-            if p:
-                try:
-                    p = float(p)
-                    if 0 <= p and p <= 1:
-                        purity[library.name] = p
-                except:
-                    pass
-        return purity
+    @staticmethod
+    def _split_by(
+        valid_dna_libraries: list[LibraryInfo], i: str = "library"
+    ) -> dict[Any, list[LibraryInfo]]:
+        split = {}
+        for entry in valid_dna_libraries:
+            index = getattr(entry, i)
+            if isinstance(index, (int, float, complex, bool)):
+                index = str(index)
+            if index not in split:
+                split[index] = []
+            split[index].append(entry)
+        return split
 
-    def _get_sex(self) -> typing.Dict[str, Sex]:
-        sex = {}
-        for library in self._get_libraries():
-            donor = library.test_sample.bio_sample.bio_entity
-            donor_sex = donor.extra_infos.get("sex", None)
-            if donor_sex == "male":
-                donor_sex = Sex.MALE
-            elif donor_sex == "female":
-                donor_sex = Sex.FEMALE
-            else:
-                donor_sex = Sex.UNKNOWN
-            sex[library.name] = donor_sex
-        return sex
-
-    def _get_panel_of_normals_path(self, tool: str, panel: LibraryKitDefinition | None) -> str:
-        pon_path = None
-        assert self.config[tool]["panel_of_normals"][
-            "enabled"
-        ], f"Panel of normals not enabled for '{tool}'"
-        assert (
-            self.config[tool]["panel_of_normals"]["origin"] == PanelOfNormalsOrigin.PREVIOUS_STEP
-        ), f"'{tool}' panel of normals not from previous step"
-        if panel is None:
-            pon_id = f"wgs.{tool}"
-        else:
-            pon_id = f"wes.{tool}.{panel.name}"
-        assert pon_id in self.registered_pons, f"Requested panel '{pon_id}' not registered"
-        pon = self.parent.sub_workflows[pon_id]
-        pon_path = pon(f"output/{{mapper}}.{tool}/out/{panel.name}.ext")
-        return pon_path
+    @staticmethod
+    def _filter_by(
+        valid_dna_libraries: list[LibraryInfo],
+        i: str = "library",
+        f: Callable[[Any], bool] = lambda x: True,
+    ) -> list[LibraryInfo]:
+        filtered = []
+        for entry in valid_dna_libraries:
+            index = getattr(entry, i)
+            if f(index):
+                filtered.append(entry)
+        return filtered
