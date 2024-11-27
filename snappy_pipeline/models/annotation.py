@@ -26,7 +26,7 @@ class Vep(SnappyModel):
     pick_order: list[str] = [
         "biotype",
         "mane_select",
-        "mane_plus_clinial",
+        "mane_plus_clinical",
         "appris",
         "tsl",
         "ccds",
