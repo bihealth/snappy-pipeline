@@ -1,5 +1,7 @@
+import enum
+
 from typing import Annotated
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel
 
@@ -27,3 +29,25 @@ class LibraryKitEntry(SnappyModel):
 class LibraryKit(SnappyModel):
     path_target_interval_list_mapping: list[LibraryKitEntry] = []
     """Connects sample-based library kit in sample sheets with corresponding bed files"""
+
+
+class SexValue(enum.StrEnum):
+    MALE = "male"
+    FEMALE = "female"
+
+
+class SexOrigin(enum.StrEnum):
+    AUTOMATIC = "auto"
+    SAMPLESHEET = "samplesheet"
+    CONFIG = "config"
+
+
+class Sex(SnappyModel):
+    source: SexOrigin = SexOrigin.AUTOMATIC
+    default: SexValue | None = None
+
+    @model_validator(mode="after")
+    def ensure_default_value(self):
+        if self.source == SexOrigin.CONFIG and not self.default:
+            raise ValueError("Undefined default sex value in configuration file")
+        return self

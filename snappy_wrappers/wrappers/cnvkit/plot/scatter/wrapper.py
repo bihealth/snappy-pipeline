@@ -8,7 +8,7 @@ import sys
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
 # own conda environment which cannot see the snappy_pipeline installation.
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
@@ -18,8 +18,8 @@ args = snakemake.params.get("args", {})
 if "variants" in args:
     variants = r"""
         ---vcf {args[variants]} \
-        --sample-id {args['sample-id']} --normal-id {args['normal-id']} \
-        --min-variant-depth {args['min-variant-depth']} {zygocity_freq}
+        --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
+        --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
     """.format(
         snakemake=snakemake,
         args=args,
@@ -31,14 +31,14 @@ else:
 cmd = r"""
 cnvkit.py scatter \
     -o {snakemake.output.plot} \
-    --segment {args['segments']} \
+    --segment {args[segments]} \
     {chromosome} {gene} {range_list} \
-    --width {args['width']} \
-    --antitarget-marker {args['antitarget-marker']} --segment-color {args['segment-color']} \
-    {by_bin} {trend} --title {args['title']} \
+    --width {args[width]} \
+    --antitarget-marker {args[antitarget-marker]} --segment-color {args[segment-color]} \
+    {by_bin} {trend} --title "{args[title]}" \
     {y_min} {y_max} {fig_size} \
     {variants} \
-    {args['ratios']}
+    {args[ratios]}
 """.format(
     snakemake=snakemake,
     args=args,
