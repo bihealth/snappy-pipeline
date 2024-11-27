@@ -2,13 +2,12 @@
 """Implementation of the ``somatic_cnv_calling`` step
 
 This step allows for the detection of CNV events for cancer samples from targeted sequenced (e.g.,
-exomes or large panels) or whole genome sequencing.
+exomes or large panels) or whole genome sequencing. Panel sequencing is not implemented yet, it might be in a later release.
 The wrapped tools start from the aligned reads (thus off ``ngs_mapping``) and generate CNV calls for somatic variants.
 
 The wrapped tools implement different strategies.  Some work "reference free" and just use the
 somatic BAM files for their input, some work in "matched cancer normal mode" and need the cancer
-and normal BAM files, others again cancer BAM files, and additionally a
-set of non-cancer BAM files for their background (the panel of normals).
+and normal BAM files, and finally others use a set of non-cancer BAM files for their background (the panel of normals).
 
 Some tools may also use germline & somatic variants to estimate allele-specific copy number changes,
 and resolve loss-of-heterozygocity. In this case, the small variants need to be computed separately from the ``somatic_variant_calling`` step.
@@ -25,45 +24,53 @@ Gene somatic CNV calling for targeted sequencing starts off the aligned reads, i
 
 Tools that use panel of normals can obtain their input in two different ways:
 
-- A static file, from another cohort or from public datasets.
+- A static file or files, from another cohort or from public datasets.
   In this case, the user is responsible to make sure that the data & methods used to create the panel are compatible to the cohort's.
 - The ``panel_of_normals`` step.
-  The panel will be created if necessary, using the same conditions that for the cohort (genome release, exome kit assignment, ...)
+  The panel will be created if necessary, using data from normal samples from the cohort.
 
-When requested, the optional germline and somatic small variant calls are created using a modified version of the ``somatic_variant_calling`` step.
-The ``somatic__cnv_calling`` step generates the small variants (TODO: how exactly) and stores them (TODO: where exactly).
+When requested, the optional germline and somatic small variant calls are created in the ``somatic_variant_calling`` step.
+Once again, it is the responsability of the user to make sure that variants creeated in that way are suitable for CNV calling.
 
 Likewise, purity estimations can be automatically computed by the ``somatic__cnv_calling`` step,
-to supplement or replace the estimations that may be provided in the samplesheet.
+when estimations are not provided in the samplesheet or configuration file.
 
 ===========
 Step Output
 ===========
 
 TODO: The whole section of output needs revision. Main question is: what is the best format to encode CNAs?
+``vcf`` is an possibility, the benefits are a (more or less) well-defined format, but the major drawback is
+that (as far as I know), most CNV analysis tools (from ``R`` in particular) don't recognize this format (for CNAs).
 
-There is no widely used standard to report copy number alterations.
-In absence of a better solution, all CNV tools implemented in somatic pipeline output the segmentation table loosely following the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.`
-The copy number call may or may not be present, and the chromosome number is replaced by its name.
-The segmentation output is in file ``output/<mapper>.<cnv caller>.<lib name>/out/<mapper>.<cnv caller>.<lib name>_dnacopy.seg``.
+Currently, the only implemented tool is ``cnvkit``. Therefore, the ``cnvkit`` output is left as produced by the software.
+
+------
+cnvkit
+------
+
+The structure of the output is:
 
 ::
 
     output/
     +-- bwa.cnvkit.P001-N1-DNA1-WES1
     |   |-- out
-    |   |   |-- bwa.cnvkitP001-N1-DNA1-WES1_dnacopy.seg
+    |   |   |-- bwa.cnvkitP001-N1-DNA1-WES1.<extension>
             [...]
 
-Note that tool ``cnvetti`` doesn't follow the snappy convention above:
-the tool name is followed by an underscore & the action, where the action is one of ``coverage``, ``segment`` and ``postprocess``.
-For example, the output directory would contain a directory named ``bwa.cnvetti_coverage.P002-T1-DNA1-WES1``.
+There are 4 main outputs:
 
-.. note:: Tool-Specific Output
+- The ratios (extension ``.cnr``) contains the ratio of expected coverage between tumor and the reference
+  in each bin, or logarithmic scale.
+  This can be used to examine the data or experiment with different segmentation algorithms.
+- The segments (extension ``.segments.cns``) contains the output of the segmentation. A single log2 ratio value is
+  attributed to each segment.
+  The segmentation covers most of the part of the genome accessible to mapping.
+- The calls (extension ``calls.cns``) contains only the non-diploid segments, called after thresholding.
+- The results of differential coverage tests by bins (extension ``bintest.cns``). Only significant tests are listed.
 
-    Each tool produces its own set of outputs, generally not in standard format.
-    Some of these files are linked from ``work`` to ``output``, but not necessarily all of them.
-    Some tools (for example ``cnvkit``) also produces a report, with tables and figures.
+Reports & plots are also available on user's request, found in ``report`` and ``plot`` sub-directories.
 
 
 =====================
@@ -72,27 +79,24 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_somatic_targeted_seq_cnv_calling.rst
+.. include:: DEFAULT_CONFIG_somatic_cnv_calling.rst
 
 =====================================
 Available Somatic Targeted CNV Caller
 =====================================
 
 - ``cnvkit`` (for both WGS & WES)
-- ``sequenza`` (only WES)
-- ``purecn`` (only WES)
-- ``Control-FREEC`` (only WGS - this tools might not be supported)
 
-================================
-Logic of the step for ``cnvkit``
-================================
+===========================================
+Description of the step for ``cnvkit`` tool
+===========================================
 
 --------
 Overview
 --------
 
 ``cnvkit`` was designed to call CNV on whole exome data. It has the concept of _targets_ (the regions enriched by the exome kit),
-and the _antitargets_ (those regions outside of enrichment).
+and the _antitargets_ (those regions accessible for CNV calling, but outside of enrichment).
 The coverage of _targets_ and _antitargets_ are expected to be very different,
 but there is still information to be gained in the _antitarget_ regions,
 albeit at a much lower resolution than for _target_ regions.
@@ -100,67 +104,93 @@ albeit at a much lower resolution than for _target_ regions.
 ``cnvkit`` was later used with some success on whole genome data.
 WGS data was defined as _target_ regions covering the whole genome, with empty _antitarget_ regions.
 
-------------------------
-Sample-independent files
-------------------------
+.. tip:: For Agilent kits, the ``cnvkit`` authors recommend to use baits as targets. Baits are in the ``*_Covered.bed`` file.
 
-``cvnkit`` allows the user to define _accessible_ regions (_via_ the ``access`` bed file).
-This excludes repeats, low complexity or PAR regions, that cannot be properly mapped, and therefore used for CNV calling.
+---------------------------------
+Regions accessible to CNV calling
+---------------------------------
 
-For exome data, the _target_ regions are supposed to be well curated, so they are not affected by the _access_ regions.
-The _antitarget_ regions, however, are only defined within _accessible_ regions.
-For WGS data, the _antitarget_ regions are empty, and the _target_ regions are set to the _accessible_ regions, when present.
-Even in the absence of user-defined _accessible_ regions, the _target_ and _antitarget_ regions will not contain long ``N`` sequences.
+``cnvkit`` needs to know about the regions of the genome accessible to CNV calling.
+Typically, regions masked with ``N`` are excluded, but a user may also want to exclude
+repeats, segmental duplications, or low complexity regions.
 
-Finally, the pipeline builds separates ``bed`` files for _target_ and _antitarget_ regions, for each exome kit present in the cohort,
-and for WGS data if there is any.
+There are multiple ways to get this information:
 
----------
-Reference
----------
+1. The user can provide a ``bed`` file detailing accessible regions, using the ``path_access`` option in the ``access`` part of the configuration.
+2. The user can specifically exclude regions using the ``exclude`` option is the ``access`` part of the configuration.
+   In this case, the pipeline will create an accessible regions file from the whole genome and the excluded parts.
+3. Otherwise, the pipeline creates the accessible regions file from the reference genome sequence, by removing
+   only parts masked with ``N``.
 
-The ``cnvkit`` authors recommend to use a panel of normals to normalize the coverage over bins.
-This is usually created by running the ``panel_of_normals`` step.
-The ``somatic_cnv_calling`` step will create a reference (panel of normals) if requested.
-Otherwise, it is possible to use references created for different cohorts, but the user
-must ensure that the data & methods used for the current cohort and to create the reference are compatible.
-In particular, the exome enrichment kit must be identical, and the sex of the donors should be
-similar (not to use a female-only reference for a male cohort, for example).
+-----------------------
+The reference coverage
+-----------------------
 
-If there are not enough normal samples to create such a reference, the corresponding normal sample
-can be used, in a normal/tumor pair setting similar to the somatic small variant calling situation.
+``cnvkit`` build a reference coverage to compensate locii effects when assessing coverage changes in tumor samples.
+Because this reference is best constructed from multiple normal samples, the pipeline implements it under the
+``panel_of_normals`` section.
+The pipeline offers 4 different ways to built this reference:
 
-In case no normals are available at all, a flat prior can be used.
+1. ``cohort``: the reference is taken from the pipeline's ``panel_of_normals`` step.
+   If it isn't there, it will be created, according to its configuration (which must be present).
+   The ``cnvkit`` authors suggest that `10 to 20 normal samples <https://www.biostars.org/p/296422/>`_
+   are sufficient to build a good reference. When there are more samples, the selected one should be taken from those with average file size.
+2. ``file``: the reference is taken from another panel of normals, possibly from another cohort or from public data.
+   Beside the reference coverage itself, the target and antitarget bed files must also be provided.
+   Note that it is the user's responsability to make sure that the panel of normal is suitable for the cohort.
+3. ``paired``: the reference is built only from one normal sample, paired with the tumor.
+   It is _not_ recommended by the ``cnvkit`` authors, but can be beneficial in some circumstances
+   (for example experimental designs with treated cell lines).
+4. ``flat``: a _flat_ reference is computed, which discards locus-specific effects.
+   It should only be used when there are no normals nor suitable panel, or for benchmarking purposes.
 
-------------
-Calling CNVs
-------------
+------------------
+WGS-specific notes
+------------------
 
-The _target_ and _antitarget_ ``bed`` files created in the earlier sub-steps are used as input,
-based on the exome kit (or WGS status).
+In WGS mode, the _antitarget_ regions (defined as accessible regions without target regions) are empty.
 
-The coverage is computed for the tumor sample, and normalised using the reference.
-As seen previously, the reference can be either exome kit-based, or sample-specific.
+But _target_ regions need to be carefully selected: the size of the bins used to identify CNAs must be
+selected so that discovery of focal events is possible.
+When the reference is taken from the current cohort, or from another panel of normals, the target regions
+are taken from either panel of normals, and no other consideration is necessary.
+But otherwise, it must be computed provided by the user (configuration option ``avg_size`` in the ``target`` section),
+or from the available data.
 
-The normalised coverage is the segmented, and copy numbers are called, optionally using
-small variants and/or purity estimates.
+In the latter case, the algorithm is as follows:
 
-If B-allele fractions are used, the pipeline will create the small variants, only for samples
-with a corresponding normal.
-If purity is used, the user can choose to override the values in the sample sheet (when present)
-with the output of the tool of her choice.
+- When no normal sample data is available, then ``cvnkit`` default value is used.
+- Otherwise, the value is computed by ``cnvkit``'s ``autobin`` module.
+  It is run in ``wgs`` mode if the access regions cover the complete genome
+  (no access file provided, no exclude files, and the ``min_gap_size`` parameter not set),
+  else it is run in ``amplicon`` mode.
+  Note that the latter should only be used when user-defined accessible regions are quite restricted
+  (limited to protein-coding exons devoid of repeats or low complexity regions, for example).
+
+-----------------------------
+Other notes on implementation
+-----------------------------
+
+.. note:: CNA calling on panel data is not implemented yet, even though ``cnvkit`` allows it in principle.
+
+.. note:: The current pipeline tries to replicate the behaviour of the ``batch`` module of ``cnvkit``,
+   while keeping the flexibility to diverge from it.
+   In particular, the possibility of obtaining the reference coverage from the paired normal is implemented.
+
+.. note:: The current implementation doesn't allow to mix multiple exome enrichment kits.
+   Future versions will hopefully lift this restriction. However, mixing WES, WGS & possibly panel data is
+   more challenging, and is not on the roadmap for future improvements.
+
 """
 
 import os
 import os.path
 import re
-from copy import deepcopy
-from enum import Enum
-from typing import Callable, Iterator, Iterable, NamedTuple, Any
+from typing import Callable, NamedTuple, Any
 
-from biomedsheets.models import BioEntity, BioSample, TestSample, NGSLibrary
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from biomedsheets.io_tsv.base import LIBRARY_TYPES, LIBRARY_TO_EXTRACTION, EXTRACTION_TYPE_DNA
+from biomedsheets.models import NGSLibrary
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
+from biomedsheets.io_tsv.base import LIBRARY_TO_EXTRACTION, EXTRACTION_TYPE_DNA
 from snakemake.io import OutputFiles, Wildcards, InputFiles
 
 from snappy_pipeline.utils import dictify
@@ -172,36 +202,17 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from snappy_pipeline.models.common import Sex, SexOrigin, SexValue
 from snappy_pipeline.models.cnvkit import SegmentationMethod as CnvkitSegmentationMethod
 
 from .model import SomaticCnvCalling as SomaticCnvCallingConfigModel
 from .model import Cnvkit as CnvkitConfig
-from .model import Sex, SexOrigin, SexValue, PanelOfNormalsOrigin, PurityOrigin, VariantOrigin
+from .model import PanelOfNormalsOrigin, PurityOrigin, VariantOrigin
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Default configuration for the somatic_targeted_seq_cnv_calling step
 DEFAULT_CONFIG = SomaticCnvCallingConfigModel.default_config_yaml_string()
-
-#: JSON key for "isCancer"
-KEY_IS_CANCER = "isCancer"
-
-#: Value for "libraryType" is whole exome sequencing
-VALUE_WES = "WES"
-
-#: Value for "libraryType" is panel sequencing
-VALUE_PANEL = "Panel-seq"
-
-#: Values for targeted sequencing
-VALUES_TARGETED_SEQ = (VALUE_WES, VALUE_PANEL)
-
-#: Standard key/extension values for BCF files
-BCF_KEY_EXTS = (
-    ("bcf", ".bcf"),
-    ("bcf_md5", ".bcf.md5"),
-    ("bcf_csi", ".bcf.csi"),
-    ("bcf_csi_md5", ".bcf.csi.md5"),
-)
 
 
 class SomaticCnvCallingStepPart(BaseStepPart):
@@ -209,19 +220,6 @@ class SomaticCnvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent: "SomaticCnvCallingWorkflow"):
         super().__init__(parent)
-
-    @staticmethod
-    @dictify
-    def _get_log_file_from_prefix(prefix: str) -> Iterator[dict[str, str]]:
-        key_ext = (
-            ("log", ".log"),
-            ("sh", ".sh"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
 
 
 class CnvKitStepPart(SomaticCnvCallingStepPart):
@@ -273,9 +271,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             self.tumors = {x.library.name: x for x in self.parent.tumors[self.libraryKit]}
 
             self.cfg: CnvkitConfig = self.config.get(self.name)
-            self.pon_source = (
-                self.cfg.panel_of_normals.source if self.cfg.panel_of_normals.enabled else None
-            )
+            self.pon_source = self.cfg.panel_of_normals.source
 
             self._set_cnvkit_pipeline_logic()
 
@@ -311,16 +307,16 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             Flat: based on targets & antitargets only
             Cohort: from panel_of_normals step
             File: from another cohort or public data (reference + target + antitarget [WES only])
-            Paired (panel of normal disabled): reference built from the target & antitarget coverage of one normal sample only (paired with the tumor)
+            Paired: reference built from the target & antitarget coverage of one normal sample only (paired with the tumor)
 
         Therefore, a reference must be created for flat & paired choices (one reference per normal sample in the latter case).
         The logic to create the reference is (panel of normal is pon):
-        - access created if path_access is missing or average target size estimated
+        - access created if path_access is missing or average target size must be estimated
         - average target size estimated if value not in config and dataset is WGS
         - target created always
         - antitarget created when dataset is WES
         """
-        self.paired = not self.cfg.panel_of_normals.enabled
+        self.paired = self.pon_source == PanelOfNormalsOrigin.PAIRED
         self.build_ref = self.paired or self.pon_source == PanelOfNormalsOrigin.FLAT
         self.compute_avg_target_size = (
             self.is_wgs and self.paired and self.cfg.target.avg_size is None
@@ -420,7 +416,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                     "dataframe": self.base_out_lib + "rds",
                 }
             case "call":
-                output_files = {"calls": self.base_out_lib + "cns"}
+                output_files = {"calls": self.base_out_lib + "calls.cns"}
             case "bintest":
                 output_files = {"tests": self.base_out_lib + "bintest.cns"}
             case "metrics":
@@ -502,7 +498,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
         result_files = []
 
-        for suffix in ("cnr", "segments.cns", "cns", "bintest.cns"):
+        for suffix in ("cnr", "segments.cns", "calls.cns", "bintest.cns"):
             result_files.append(base_out_lib + suffix)
 
         actions_to_log = ("fix", "segment", "call", "bintest")
@@ -1058,7 +1054,7 @@ class SomaticCnvCallingWorkflow(BaseStep):
             "libraryKit",
         )
 
-        self.matched_normal = self._match_normals()
+        self.matched_normal = self._match_normals(self.valid_dna_libraries)
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -1099,10 +1095,10 @@ class SomaticCnvCallingWorkflow(BaseStep):
 
         return OutputFiles(fns)
 
-    def _match_normals(self):
+    def _match_normals(self, valid_dna_libraries: list[LibraryInfo]) -> dict[str, str]:
         normals = SomaticCnvCallingWorkflow._split_by(
             SomaticCnvCallingWorkflow._filter_by(
-                self.valid_dna_libraries.values(), "is_tumor", lambda x: not x
+                valid_dna_libraries.values(), "is_tumor", lambda x: not x
             ),
             "libraryKit",
         )
@@ -1121,11 +1117,14 @@ class SomaticCnvCallingWorkflow(BaseStep):
                         len(normal) < 2
                     ), f"Muliple valid donor samples for tumor library {sample.library.name}"
                     if normal:
+                        assert (
+                            normal[0].sex == sample.sex
+                        ), f"Normal & tumor samples {normal[0].library.name} & {sample.library.name} from donor {donor} have different sex"
                         normal_library = normal[0].library
                         matched_normal[sample.library.name] = normal_library.name
         return matched_normal
 
-    def _optionally_register_subworkflow(self, subworkflow):
+    def _optionally_register_subworkflow(self, subworkflow: str):
         for tool in set(self.config.tools.wgs + self.config.tools.wes):
             assert self.config.get(tool) is not None, f"Requested tool '{tool}' not configured"
             cfg = self.config.get(tool)
@@ -1159,7 +1158,7 @@ class SomaticCnvCallingWorkflow(BaseStep):
                     purity = bio_sample.extra_infos.get("purity", None)
                     ploidy = bio_sample.extra_infos.get("ploidy", 2)
                 else:
-                    purity = None
+                    purity = 0
                     ploidy = 2
                 for test_sample in bio_sample.test_samples.values():
                     if (
@@ -1189,9 +1188,9 @@ class SomaticCnvCallingWorkflow(BaseStep):
                             is_tumor,
                             libraryType,
                             libraryKit,
+                            sex,
                             purity,
                             ploidy,
-                            sex,
                         )
 
         return valid_dna_libraries

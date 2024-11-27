@@ -61,32 +61,6 @@ from snappy_pipeline.models import SnappyModel
 # }
 
 
-class SexOrigin(enum.StrEnum):
-    AUTOMATIC = "auto"
-    """Sex determined from the data"""
-    SAMPLESHEET = "samplesheet"
-    """Donor sex obtained from sample sheet"""
-    CONFIG = "config"
-    """Donor sex obtained from the configuration (all donors have the same sex)"""
-
-
-class SexValue(enum.StrEnum):
-    MALE = "male"
-    FEMALE = "female"
-
-
-class Sex(SnappyModel):
-    source: SexOrigin = SexOrigin.AUTOMATIC
-
-    sample_sex: SexValue | None = None
-
-    @model_validator(mode="after")
-    def ensure_valid_sex_value(self):
-        if self.source == SexOrigin.CONFIG and self.sample_sex is None:
-            raise ValueError("No definition of donors' sex from the configuration")
-        return self
-
-
 class SegmentationMethod(enum.StrEnum):
     CBS = "cbs"
     FLASSO = "flasso"
@@ -118,24 +92,24 @@ class CallingMethod(enum.StrEnum):
 
 
 class Access(SnappyModel):
-    exclude: list[str] = []
-    """Regions accessible to mapping"""
-    min_gap_size: int | None = None
     """
-    Minimum gap size between accessible sequence regions. Regions separated by less than this distance will be joined together.
-
     In WGS mode, the _target_ regions are set to the accessible regions in the genome.
     These accessible regions can be provided by the user, or computed by the `access`
     module. In the latter case, the optimal bin size is computed by the `autobin` module
     unless this value is provided by the user.
     `autobin` uses the `wgs` method _only_ if the list of excluded region is empty and if
     the `min_gap_size` parameter remains unassigned. If any of these conditions is not met,
-    or if a files of accessible regions is provided by the user, then then `amplicon` method
+    or if a files of accessible regions is provided by the user, then the `amplicon` method
     is used.
     It is recommended to leave the excluded regions empty and not set the `min_gap_size`
     parameter for WGS data, unless the accessible regions are much reduced (for example excluding
     all intergenic regions, repeats, low complexity, ...)
     """
+    
+    exclude: list[str] = []
+    """Regions accessible to mapping"""
+    min_gap_size: int | None = None
+    """Minimum gap size between accessible sequence regions. Regions separated by less than this distance will be joined together."""
 
 
 class Target(SnappyModel):
@@ -369,16 +343,6 @@ class CnvkitToReference(SnappyModel):
 
     drop_low_coverage: bool = False
     """Drop very-low-coverage bins before segmentation to avoid false-positive deletions in poor-quality tumor samples."""
-
-    @model_validator(mode="after")
-    def ensure_males_for_reference(self):
-        if (
-            self.male_reference
-            and self.sex.source == SexOrigin.CONFIG
-            and self.sex.sample_sex == SexValue.FEMALE
-        ):
-            raise ValueError("Male reference requested for female cohort")
-        return self
 
 
 class Cnvkit(CnvkitToReference):

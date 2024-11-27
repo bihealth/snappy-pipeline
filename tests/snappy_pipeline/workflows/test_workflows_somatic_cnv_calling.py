@@ -56,7 +56,7 @@ def minimal_config():
               cnvkit:
                 diploid_parx_genome: GRCh38
                 panel_of_normals:
-                  enabled: False
+                  source: paired
                 somatic_variant_calling:
                   enabled: True
                   source: cohort
@@ -464,7 +464,7 @@ def test_cnvkit_step_parts_get_output_files(somatic_cnv_calling_workflow):
             "segments": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segments.cns",
             "dataframe": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.rds",
         },
-        "call": {"calls": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns"},
+        "call": {"calls": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.calls.cns"},
         "bintest": {"tests": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.bintest.cns"},
         "metrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.metrics.tsv"},
         "genemetrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.genemetrics.tsv"},
@@ -537,7 +537,7 @@ def test_somatic_cnv_calling_workflow(somatic_cnv_calling_workflow):
     tpl = "output/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
     expected += [
         tpl.format(mapper=mapper, library_name=library_name, ext=ext)
-        for ext in ("cnr", "segments.cns", "cns", "bintest.cns")
+        for ext in ("cnr", "segments.cns", "calls.cns", "bintest.cns")
         for library_name in tumor_libraries
         for mapper in ("bwa",)
     ]

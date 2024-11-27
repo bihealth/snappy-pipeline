@@ -16,9 +16,9 @@ args = snakemake.params.get("args", {})
 
 if "variants" in args:
     variants = r"""
-        ---vcf {args['variants']} \
-        --sample-id {args['sample-id']} --normal-id {args['normal-id']} \
-        {args['min-variant-depth']} {zygocity_freq}
+        ---vcf {args[variants]} \
+        --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
+        {args[min-variant-depth]} {zygocity_freq}
     """.format(
         snakemake=snakemake,
         args=args,
@@ -30,10 +30,10 @@ else:
 cmd = r"""
 cnvkit.py segment --processes {snakemake.resources._cores} \
     -o {snakemake.output.segments} --dataframe {snakemake.output.dataframe} \
-    --method {args['method']} --threshold {args['threshold']} {smooth_cbs} \
-    {drop_low_coverage} --drop-outliers {args['drop-outliers']} \
+    --method {args[method]} --threshold {args[threshold]} {smooth_cbs} \
+    {drop_low_coverage} --drop-outliers {args[drop-outliers]} \
     {variants} \
-    {args[coverage]}
+    {args[ratios]}
 """.format(
     snakemake=snakemake,
     args=args,

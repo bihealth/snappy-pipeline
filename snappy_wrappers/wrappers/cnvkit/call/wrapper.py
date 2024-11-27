@@ -21,8 +21,8 @@ PATTERN = re.compile("^(Purity|Ploidy): +([+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([EeD
 if "variants" in args:
     variants = r"""
         ---vcf {args[variants]} \
-        --sample-id {args['sample-id']} --normal-id {args['normal-id']} \
-        --min-variant-depth {args['min-variant-depth']} {zygocity_freq}
+        --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
+        --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
     """.format(
         snakemake=snakemake,
         args=args,
@@ -34,12 +34,12 @@ else:
 cmd = r"""
 cnvkit.py call \
     -o {snakemake.output.calls} \
-    --method {args['method']} {thresholds} \
+    --method {args[method]} {thresholds} \
     {filter} \
     {center} {center_at} {drop_low_coverage} {sample_sex} {male_reference} \
     {purity} {ploidy} \
     {variants} \
-    {args['segments']}
+    {args[segments]}
 """.format(
     snakemake=snakemake,
     args=args,
