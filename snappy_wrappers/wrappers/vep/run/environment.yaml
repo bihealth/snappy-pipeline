@@ -1,6 +1,1 @@
-channels:
-  - conda-forge
-  - bioconda
-  - nodefaults
-dependencies:
-  - ensembl-vep==102.0
+../environment.yaml

@@ -246,7 +246,17 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     has_full = True
 
     #: Allowed keywords for pick order
-    PICK_ORDER = ("biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length")
+    PICK_ORDER = (
+        "biotype",
+        "mane_select",
+        "mane_plus_clinical",
+        "appris",
+        "tsl",
+        "ccds",
+        "canonical",
+        "rank",
+        "length",
+    )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
