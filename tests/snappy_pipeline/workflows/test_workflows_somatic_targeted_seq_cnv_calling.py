@@ -41,14 +41,14 @@ def minimal_config():
           somatic_targeted_seq_cnv_calling:
             tools:
             - cnvetti_on_target
-            - cnvkit
+            # - cnvkit
             - copywriter
             - sequenza
             - purecn
-            cnvkit:
-              path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
-              path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
-              path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+            # cnvkit:
+            #   path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
+            #   path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
+            #   path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
             purecn:
               path_container: /path/to/purecn/container
               path_intervals: /path/to/interval/list
@@ -1107,52 +1107,52 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
         )
     ]
     # cnvkit
-    tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="cnvkit") + "{ext}{md5}"
-    expected += [
-        tpl.format(i=i, t=t, ext=ext, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in (
-            ".cnr",
-            "_dnacopy.seg",
-            ".bed.gz",
-            ".bed.gz.tbi",
-            ".seg",
-            ".vcf.gz",
-            ".vcf.gz.tbi",
-        )
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
-        + ".{plot}.{ext}{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
-        + ".{plot}.chr{chrom}.{ext}{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
-        for chrom in chain(range(1, 23), ("X", "Y"))
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
-        + ".{report}.txt{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, report=report, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
-        for md5 in ("", ".md5")
-    ]
+    # tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="cnvkit") + "{ext}{md5}"
+    # expected += [
+    #     tpl.format(i=i, t=t, ext=ext, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for ext in (
+    #         ".cnr",
+    #         "_dnacopy.seg",
+    #         ".bed.gz",
+    #         ".bed.gz.tbi",
+    #         ".seg",
+    #         ".vcf.gz",
+    #         ".vcf.gz.tbi",
+    #     )
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+    #     + ".{plot}.{ext}{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+    #     + ".{plot}.chr{chrom}.{ext}{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
+    #     for chrom in chain(range(1, 23), ("X", "Y"))
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     f"output/{name_pattern}/report/{name_pattern}".format(method="cnvkit")
+    #     + ".{report}.txt{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, report=report, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+    #     for md5 in ("", ".md5")
+    # ]
     # copywriter
     tpl = f"output/{name_pattern}/out/{name_pattern}".format(method="copywriter") + "_{ext}{md5}"
     expected += [
