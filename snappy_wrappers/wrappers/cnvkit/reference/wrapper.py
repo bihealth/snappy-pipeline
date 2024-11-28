@@ -39,9 +39,9 @@ cnvkit.py reference \
     no_gc="--no-gc" if args.get("no-gc", False) else "",
     no_edge="--no-edge" if args.get("no-edge", False) else "",
     no_rmask="--no-rmask" if args.get("no-rmask", False) else "",
-    min_cluster_size=f"--min-cluster-size {args['min-cluster-size']}" if "min-cluster-size" in args else "",
-    sample_sex=f"--sample-sex {args['sample-sex']}" if "sample-sex" in args else "",
-    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if "diploid-parx-genome" in args else ""
+    min_cluster_size=f"--min-cluster-size {args['min-cluster-size']}" if args.get("min-cluster-size", None) is not None else "",
+    sample_sex=f"--sample-sex {args['sample-sex']}" if args.get("sample-sex", None) is not None else "",
+    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if args.get("diploid-parx-genome", None) is not None else ""
 )
 
 CnvkitWrapper(snakemake, cmd).run()

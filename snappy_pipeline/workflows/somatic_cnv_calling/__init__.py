@@ -221,6 +221,10 @@ class SomaticCnvCallingStepPart(BaseStepPart):
     def __init__(self, parent: "SomaticCnvCallingWorkflow"):
         super().__init__(parent)
 
+        self.ignored = []
+        if len(self.config.get("ignore_chroms", [])) > 0:
+            self.ignored += self.config.ignore_chroms
+
 
 class CnvKitStepPart(SomaticCnvCallingStepPart):
     """Perform somatic targeted CNV calling using cnvkit"""
@@ -248,6 +252,10 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     # Overwrite defaults
     default_resource_usage = ResourceUsage(threads=1, time="03:59:59", memory="7680M")  # 4h
+    resource_usage = {
+        "coverage": ResourceUsage(threads=8, time="11:59:59", memory="7680M"),
+        "segment": ResourceUsage(threads=8, time="11:59:59", memory="7680M"),
+    }
 
     def __init__(self, parent: SomaticCnvCallingStepPart):
         super().__init__(parent)
@@ -273,6 +281,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             self.cfg: CnvkitConfig = self.config.get(self.name)
             self.pon_source = self.cfg.panel_of_normals.source
 
+            self.ignored += self.cfg.ignore_chroms
+            self.ignored = set(self.ignored)
+
             self._set_cnvkit_pipeline_logic()
 
             self.path_baits = self._get_path_baits()
@@ -285,7 +296,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                     [x.purity is None for x in self.tumors.values()]
                 ), "Missing purity value from samplesheet"
 
-            self.base_out = "work/{mapper}.cnvkit/out/cnvkit."
+            self.base_out = "work/{mapper}.cnvkit/out/{mapper}.cnvkit."
             self.base_out_lib = (
                 "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}."
             )
@@ -440,7 +451,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
 
-        base_log = "work/{mapper}.cnvkit/log/cnvkit."
+        base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit."
         base_log_lib = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.{library_name}."
 
         if action in ("access", "antitarget"):
@@ -484,6 +495,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     def get_result_files(self, library_name: str, mapper: str) -> list[str]:
         """Files to symlink to output"""
+        if not (self.is_wes or self.is_wgs):
+            return []
+
         base_out_lib = (
             "output/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}."
         ).format(mapper=mapper, library_name=library_name)
@@ -554,6 +568,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             "reference": self.w_config.static_data_config.reference.path,
             "min-gap-size": self.cfg.access.min_gap_size,
             "exclude": self.cfg.access.exclude,
+            "ignore_chroms": list(self.ignored),
         }
 
     # ----- Autobin (never used directly, only to compute target size in WGS settings) ------------
@@ -666,7 +681,10 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         # BAM/BAI file
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
-        input_files = {"bam": ngs_mapping(base_path + ".bam")}
+        input_files = {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
+        }
 
         # Region (target or antitarget) file
         if self.build_ref:
@@ -684,7 +702,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 input_files["intervals"] = self.base_out.format(**wildcards) + "{region}.bed"
         elif self.pon_source == PanelOfNormalsOrigin.COHORT:
             panel_of_normals = self.parent.sub_workflows["panel_of_normals_cnvkit"]
-            base_path = "output/{mapper}.cnvkit/out/cnvkit.{region}.bed"
+            base_path = "output/{mapper}.cnvkit/out/{mapper}.cnvkit.{region}.bed".format(
+                **wildcards
+            )
             input_files["intervals"] = panel_of_normals(base_path)
 
         return input_files
@@ -727,11 +747,10 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             "no-gc": not self.cfg.gc,
             "no-rmask": not self.cfg.rmask,
             "no-edge": not self.cfg.get("edge", self.is_wes),
+            "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
         if self.cfg.cluster:
             args["min-cluster-size"] = self.cfg.min_cluster_size
-        if self.cfg.diploid_parx_genome:
-            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
         sample_sex = self._get_sample_sex(wildcards.get("library_name", None))
         if sample_sex is not None:
             args["sample-sex"] = str(sample_sex)
@@ -760,7 +779,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             input_files["reference"] = self.base_out.format(**wildcards) + "reference.cnn"
         elif self.pon_source == PanelOfNormalsOrigin.COHORT:
             panel_of_normals = self.parent.sub_workflows["panel_of_normals_cnvkit"]
-            base_path = "output/{mapper}.cnvkit/out/cnvkit.panel_of_normals.cnn"
+            base_path = "output/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn".format(
+                **wildcards
+            )
             input_files["reference"] = panel_of_normals(base_path)
         return input_files
 
@@ -770,10 +791,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             "no-gc": not self.cfg.gc,
             "no-rmask": not self.cfg.rmask,
             "no-edge": not self.cfg.get("edge", self.is_wes),
+            "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
         args["sample-id"] = wildcards.library_name
-        if self.cfg.diploid_parx_genome:
-            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
         if "reference" not in args:
             args["reference"] = self.cfg.panel_of_normals.path_panel_of_normals
         return args
@@ -848,14 +868,13 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             "thresholds": self.cfg.call.thresholds,
             "drop-low-coverage": self.cfg.drop_low_coverage,
             "male-reference": self.cfg.male_reference,
+            "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
         if self.cfg.call.center_at is not None:
             args["center-at"] = self.cfg.call.center_at
         else:
             if self.cfg.call.center is not None:
                 args["center"] = self.cfg.call.center
-        if self.cfg.diploid_parx_genome:
-            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
         if self.cfg.somatic_variant_calling.enabled:
             args |= self._variants_args(wildcards, input)
             if "variants" not in args:
@@ -968,9 +987,8 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             "alpha": self.cfg.genemetrics.alpha,
             "bootstrap": self.cfg.genemetrics.bootstrap,
             "stats": [x.replace("t-test", "ttest") for x in self.cfg.genemetrics.stats],
+            "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
-        if self.cfg.diploid_parx_genome:
-            args["diploid-parx-genome"] = self.cfg.diploid_parx_genome
         sample_sex = self._get_sample_sex(wildcards.library_name)
         if sample_sex is not None:
             args["sample-sex"] = str(sample_sex)
@@ -1126,14 +1144,16 @@ class SomaticCnvCallingWorkflow(BaseStep):
 
     def _optionally_register_subworkflow(self, subworkflow: str):
         for tool in set(self.config.tools.wgs + self.config.tools.wes):
-            assert self.config.get(tool) is not None, f"Requested tool '{tool}' not configured"
             cfg = self.config.get(tool)
-            subworkflow_config = cfg.get(subworkflow)
+            subworkflow_config = cfg.get(subworkflow, None)
             if (
-                subworkflow_config
+                subworkflow_config is not None
                 and subworkflow_config.enabled
                 and str(subworkflow_config.source) == "cohort"
             ):
+                assert (
+                    self.w_config.step_config.get(subworkflow, None) is not None
+                ), f"Upstream step {subworkflow} not configured"
                 self.register_sub_workflow(
                     subworkflow,
                     subworkflow_config.get(f"path_{subworkflow}"),

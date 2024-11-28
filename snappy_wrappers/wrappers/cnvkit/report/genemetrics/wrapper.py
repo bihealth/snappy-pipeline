@@ -27,8 +27,8 @@ cnvkit.py genemetrics \
     args=args,
     drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
     male_reference="--male-reference" if args.get("male-reference", False) else "",
-    sample_sex=f"--sample-sex {args['sample-sex']}" if "sample-sex" in args else "",
-    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if "diploid-parx-genome" in args else "",
+    sample_sex=f"--sample-sex {args['sample-sex']}" if args.get("sample-sex", None) is not None else "",
+    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if args.get("diploid-parx-genome", None) is not None else "",
     stats=" ".join([f"--{stat}" for stat in args["stats"]]),
 )
 

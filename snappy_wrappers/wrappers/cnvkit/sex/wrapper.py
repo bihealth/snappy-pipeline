@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for cnvkit.py target"""
+"""Wrapper for cnvkit.py sex"""
 
 import os
 import re
@@ -19,17 +19,15 @@ __email__ = "eric.blanc@bih-charite.de"
 args = snakemake.params.get("args", {})
 
 cmd = r"""
-cnvkit.py target \
-    -o {snakemake.output.target} \
-    {avg_size} {split} {annotate} {short_names} \
-    {args[interval]}
+cnvkit.py sex \
+    -o {snakemake.output.sex} \
+    {diploid_parx_genome} \
+    {coverages}
 """.format(
     snakemake=snakemake,
     args=args,
-    avg_size=f"--avg-size {args['avg-size']}" if args.get("avg-size", None) is not None else "",
-    split=f"--split" if args.get("split", False) else "",
-    annotate=f"--annotate {args['annotate']}" if args.get("annotate", None) is not None else "",
-    short_names="--short-names" if args.get("short-names", False) else "",
+    diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if args.get('diploid-parx-genome', None) is not None else "",
+    coverages=" ".join(args["coverages"]),
 )
 
 CnvkitWrapper(snakemake, cmd).run()

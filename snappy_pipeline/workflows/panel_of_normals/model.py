@@ -3,7 +3,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, Parallel, validators
+from snappy_pipeline.models.common import LibraryKitEntry, Sex
+from snappy_pipeline.models.cnvkit import CnvkitToReference as CnvkitGeneric
+from snappy_pipeline.models.mutect2 import Mutect2 as Mutect2Generic
 
 
 class Tool(enum.StrEnum):
@@ -13,122 +16,32 @@ class Tool(enum.StrEnum):
     access = "access"
 
 
-class Mutect2(SnappyModel):
-    path_normals_list: str = ""
-
-    germline_resource: str
-
-    java_options: str = " -Xmx16g"
-
-    num_cores: int = 2
-    """number of cores to use locally"""
-
-    window_length: int = 100000000
-    """split input into windows of this size, each triggers a job"""
-
-    num_jobs: int = 500
-    """number of windows to process in parallel"""
-
-    use_profile: bool = True
-    """use Snakemake profile for parallel processing"""
-
-    restart_times: int = 5
-    """number of times to re-launch jobs in case of failure"""
-
-    max_jobs_per_second: int = 2
-    """throttling of job creation"""
-
-    max_status_checks_per_second: int = 10
-    """throttling of status checks"""
-
-    debug_trunc_tokens: int = 0
-    """truncation to first N tokens (0 for none)"""
-
-    keep_tmpdir: KeepTmpdir = KeepTmpdir.never
-    """keep temporary directory, {always, never, onerror}"""
-
-    job_mult_memory: float = 1
-    """memory multiplier"""
-
-    job_mult_time: float = 1
-    """running time multiplier"""
-
-    merge_mult_memory: float = 1
-    """memory multiplier for merging"""
-
-    merge_mult_time: float = 1
-    """running time multiplier for merging"""
-
-
-class CnvkitSex(enum.StrEnum):
-    MALE = "male"
-    FEMALE = "female"
-
-
-class CnvKit(SnappyModel):
+class Mutect2(Parallel, Mutect2Generic):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
 
-    path_target_regions: str = ""
-    """Bed files of targetted regions (Missing when creating a panel of normals for WGS data)"""
-
-    access: str = ""
-    """Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)"""
-
-    min_gap_size: int = 5000
-    """[access] Minimum gap size between accessible regions"""
-
-    target_avg_size: int | None = None
-    """[target] Average size of split target bins (None: use default value, or use autobin for wgs)"""
-
-    split: bool = True
-    """[target] Split large intervals into smaller ones"""
-
-    bp_per_bin: int = 50000
-    """[autobin] Expected base per bin"""
-
-    antitarget_avg_size: int = 0
-    """[antitarget] Average size of antitarget bins (0: use default value)"""
-
-    min_size: int = 0
-    """[antitarget] Min size of antitarget bins (0: use default value)"""
-
-    min_mapq: int = 0
-    """[coverage] Mininum mapping quality score to count a read for coverage depth"""
-
-    count: bool = False
-    """[coverage] Alternative couting algorithm"""
-
-    min_cluster_size: int = 0
-    """[reference] Minimum cluster size to keep in reference profiles. 0 for no clustering"""
-
-    sample_sex: CnvkitSex | None = None
-    """[reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing"""
-
-    male_reference: bool = False
-    """[reference & sex] Create male reference"""
-
-    gc_correction: bool = True
-    """[reference] Use GC correction"""
-
-    edge_correction: bool | None = None
-    """[reference] Use edge correction (automatic when None, edge correction for WES only)"""
-
-    rmask_correction: bool = True
-    """[reference] Use rmask correction"""
-
-    drop_low_coverage: bool = False
-    """[metrics] Drop very-low-coverage bins before calculations"""
+    java_options: str = " -Xmx16g"
+    """Optional java run-time options"""
 
 
-class Access(SnappyModel):
-    """Creates access file for cnvkit, based on genomic sequence & excluded regions (optionally)"""
+class CnvKit(CnvkitGeneric):
+    path_normals_list: str | None = None
+    """Optional file listing libraries to include in panel"""
 
-    exclude: list[str] = []
-    """[access] Bed file of regions to exclude (mappability, blacklisted, ...)"""
+    path_target_interval_list_mapping: list[LibraryKitEntry] = []
+    """
+    Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect),
+    recommended by PureCN author
+    """
 
-    min_gap_size: int = 0
-    """[access] Minimum gap size between accessible sequence regions (0: use default value)"""
+    sample_sex: Sex = Sex()
+    """Sets the sex of all normals used in the panel"""
+
+    path_access: str | None = None
+    """Overrides access when not None"""
+
+    ignore_chroms: list[str] = []
+    """Additional contigs to ignore"""
 
 
 class GenomeName(enum.StrEnum):
@@ -147,7 +60,7 @@ class PureCn(SnappyModel):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
 
-    path_bait_regions: str
+    # targets_definition: list[LibraryKitEntry] = []
     """
     Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect),
     recommended by PureCN author
@@ -161,7 +74,7 @@ class PureCn(SnappyModel):
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
     ] = "unknown"
 
-    enrichment_kit_name: str = "unknown"
+    path_target_interval_list_mapping: list[LibraryKitEntry] = []
     """For filename only..."""
 
     mappability: str = ""
@@ -211,7 +124,5 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
     mutect2: Mutect2 | None = None
 
     cnvkit: CnvKit | None = None
-
-    access: Access | None = None
 
     purecn: PureCn | None = None

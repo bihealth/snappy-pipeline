@@ -20,8 +20,8 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py antitarget \
     -o {snakemake.output.antitarget} \
-    --avg-size {args[avg-size]} {min_size}
-    --access {files[access]} \
+    --avg-size {args[avg-size]} {min_size} \
+    --access {args[access]} \
     {args[target]}
 """.format(
     snakemake=snakemake,
