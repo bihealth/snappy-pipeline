@@ -7,7 +7,7 @@ from typing import Annotated
 from pydantic import Field, field_validator, model_validator
 
 from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
-from snappy_pipeline.models.library_kit import LibraryKit
+from snappy_pipeline.models.common import LibraryKit
 
 
 class DnaMapper(Enum):

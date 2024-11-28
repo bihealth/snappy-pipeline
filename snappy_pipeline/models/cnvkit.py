@@ -105,7 +105,7 @@ class Access(SnappyModel):
     parameter for WGS data, unless the accessible regions are much reduced (for example excluding
     all intergenic regions, repeats, low complexity, ...)
     """
-    
+
     exclude: list[str] = []
     """Regions accessible to mapping"""
     min_gap_size: int | None = None
@@ -115,7 +115,7 @@ class Access(SnappyModel):
 class Target(SnappyModel):
     split: bool = True
     """Split large tiled intervals into smaller, consecutive targets."""
-    avg_size: float | None = None
+    avg_size: int | None = None
     """
     Average size of split target bins (results are approximate).
 
@@ -131,9 +131,9 @@ class Target(SnappyModel):
 
 
 class Antitarget(SnappyModel):
-    avg_size: float = 150000
+    avg_size: int = 150000
     """Average size of split antitarget bins (results are approximate)"""
-    min_size: float | None = None
+    min_size: int | None = None
     """Minimum size of antitarget bins (smaller regions are dropped). When missing, 1/16 avg size"""
 
 

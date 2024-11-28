@@ -12,7 +12,11 @@ import argparse
 import csv
 import fnmatch
 import os
+import re
 import sys
+
+from pathlib import Path
+
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
@@ -31,6 +35,12 @@ DEFAULT_FORMAT = "regions"
 
 #: Allowed values for ``--format``
 CHOICES_FORMAT = ("regions", "bed")
+
+#: Regular expression patterns to parse *.fai, *.genome, *.dict & fastq files
+PATTERN_FAI = re.compile(r"^([^\s]+)\t([0-9]+)\t([0-9]+)\t([0-9]+)\t([0-9]+)\s*$")
+PATTERN_GENOME = re.compile(r"^([^\s]+)\t([0-9]+)\s*$")
+PATTERN_DICT = re.compile(r"^@SQ\tSN:([^\s]+)\tLN:([0-9]+).*$")
+PATTERN_FASTA = re.compile(r"^\s*>\s*([^\s]+).*$")
 
 
 def matches_any(query, patterns):
@@ -76,6 +86,58 @@ def yield_regions(fai_file, window_size, subtract_end=0, ignore_chroms=None, pad
             if begin < end - subtract_end:
                 yield region
             begin = end
+
+
+def ignore_chroms(path_ref: str, ignored: set[str] = [], return_ignored: bool = False):
+    path_ref = Path(path_ref).resolve()
+    if Path(str(path_ref) + ".fai").exists():
+        contigs = _parse_index(Path(str(path_ref) + ".fai"), PATTERN_FAI)
+    elif Path(str(path_ref) + ".genome").exists():
+        contigs = _parse_index(Path(str(path_ref) + ".genome"), PATTERN_GENOME)
+    elif path_ref.with_suffix("dict").exists():
+        contigs = _parse_index(path_ref.with_suffix("dict"), PATTERN_DICT, True)
+    else:
+        contigs = _read_fasta(path_ref)
+    for contig_name, contig_length in contigs:
+        m = matches_any(contig_name, ignored)
+        if (m and return_ignored) or (not m and not return_ignored):
+            yield contig_name, contig_length
+
+
+def _parse_index(filename: Path, pattern: re.Pattern, allow_mismatch: bool = False):
+    with open(filename, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            m = pattern.match(line)
+            if m:
+                groups = m.groups()
+                yield groups[0], int(groups[1])
+            else:
+                if not allow_mismatch:
+                    raise ValueError(f"Unexpected record '{line}' in reference file '{filename}'")
+
+
+def _read_fasta(filename: Path):
+    contig_name = None
+    contig_length = None
+    with open(filename, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            m = PATTERN_FASTA.match(line)
+            if m:
+                if contig_name:
+                    yield contig_name, contig_length
+                groups = m.groups()
+                contig_name = groups[0]
+                contig_length = 0
+            else:
+                contig_length += len(line)
+    assert contig_name is not None, f"No contig found in reference file {filename}"
+    yield contig_name, contig_length
 
 
 def run(args):
