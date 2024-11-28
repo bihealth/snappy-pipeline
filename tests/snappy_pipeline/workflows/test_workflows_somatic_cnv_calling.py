@@ -50,10 +50,12 @@ def minimal_config():
               b_af_loci: /path/to/locii.bed
 
           somatic_cnv_calling:
+              ignore_chroms: [GL*]
               tools:
                 wgs: ['cnvkit']
               path_ngs_mapping: ../ngs_mapping
               cnvkit:
+                ignore_chroms: [MT]
                 diploid_parx_genome: GRCh38
                 panel_of_normals:
                   source: paired
@@ -92,14 +94,14 @@ def somatic_cnv_calling_workflow(
     work_dir,
     config_paths,
     cancer_sheet_fake_fs,
-    autobin_result_fake_fs,
+    autobin_result_calling_fake_fs,
     purity_result_fake_fs,
     aligner_indices_fake_fs,
     mocker,
 ):
     """Return PanelOfNormalsWorkflow object pre-configured with germline sheet"""
     # Patch out file-system to enable reading autobin output
-    autobin_result_fake_fs.fs.create_file(
+    autobin_result_calling_fake_fs.fs.create_file(
         file_path="work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.autobin.txt",
         contents="Target: -1 2000\n",
         create_missing_dirs=True,
@@ -111,7 +113,7 @@ def somatic_cnv_calling_workflow(
         create_missing_dirs=True,
     )
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.somatic_cnv_calling", autobin_result_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.somatic_cnv_calling", autobin_result_calling_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
@@ -146,7 +148,9 @@ def test_cnvkit_step_part_get_args_access(somatic_cnv_calling_workflow):
         wildcards,
         somatic_cnv_calling_workflow.get_input_files("cnvkit", "access")(wildcards),
     )
-    expected = {"reference": "/path/to/ref.fa", "min-gap-size": None, "exclude": []}
+    if actual.get("ignore_chroms", None) is not None:
+        actual["ignore_chroms"].sort()
+    expected = {"reference": "/path/to/ref.fa", "min-gap-size": None, "exclude": [], "ignore_chroms": ["GL*", "MT"]}
     assert actual == expected
 
 
@@ -160,7 +164,7 @@ def test_cnvkit_step_part_get_args_autobin(somatic_cnv_calling_workflow):
     )
     expected = {
         "bams": ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"],
-        "access": "work/bwa.cnvkit/out/cnvkit.access.bed",
+        "access": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
         "method": "wgs",
         "bp-per-bin": 50000,
     }
@@ -180,7 +184,7 @@ def test_cnvkit_step_part_get_args_target(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "interval": "work/bwa.cnvkit/out/cnvkit.access.bed",
+        "interval": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
         "avg-size": 2000,
         "split": True,
         "annotate": "/path/to/annotations.gtf",
@@ -206,6 +210,7 @@ def test_cnvkit_step_part_get_args_coverage(somatic_cnv_calling_workflow):
     expected = {
         "intervals": "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.target.bed",
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "reference": "/path/to/ref.fa",
         "min-mapq": 0,
         "count": False,
@@ -453,10 +458,10 @@ def test_cnvkit_step_part_get_args_scatter(somatic_cnv_calling_workflow):
 def test_cnvkit_step_parts_get_output_files(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart.get_output_files() for all actions"""
     actions = {
-        "access": {"access": "work/{mapper}.cnvkit/out/cnvkit.access.bed"},
+        "access": {"access": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.access.bed"},
         "autobin": {"result": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.autobin.txt"},
         "target": {"target": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.target.bed"},
-        "antitarget": {"antitarget": "work/{mapper}.cnvkit/out/cnvkit.antitarget.bed"},
+        "antitarget": {"antitarget": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed"},
         "coverage": {"coverage": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{region,(target|antitarget)}.cnn"},
         "reference": {"reference": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.reference.cnn"},
         "fix": {"ratios": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"},
@@ -492,7 +497,7 @@ def test_cnvkit_step_parts_get_log_file(somatic_cnv_calling_workflow):
 def test_cnvkit_step_parts_get_log_file_access(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart.get_log_file() for access"""
     exts = (("conda_info", "conda_info.txt"), ("conda_list", "conda_list.txt"), ("log", "log"), ("sh", "sh"))
-    base_log = "work/{mapper}.cnvkit/log/cnvkit.access"
+    base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit.access"
     result = {k: base_log + f".{v}" for k, v in exts} 
     expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
     actual = somatic_cnv_calling_workflow.get_log_file("cnvkit", "access")

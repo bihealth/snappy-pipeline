@@ -5,8 +5,6 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit as CnvkitGeneric
-from snappy_pipeline.models.purecn import IntervalFilter
-from snappy_pipeline.models.purecn import Segmentation as PureCNSegmentation
 from snappy_pipeline.models.purecn import PureCN as PureCNBase
 from snappy_pipeline.models.purecn import Variant as PureCNVariantParams
 from snappy_pipeline.models.common import LibraryKitEntry, Sex
@@ -252,6 +250,9 @@ class Cnvkit(CnvkitGeneric):
     path_access: str | None = None
     """Overrides access when not None"""
 
+    ignore_chroms: list[str] = []
+    """List of contig name patterns to ignore for processing"""
+
 
 class SomaticCnvCalling(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"
@@ -264,3 +265,6 @@ class SomaticCnvCalling(SnappyStepModel):
     purecn: PureCN | None = None
     sequenza: Sequenza | None = None
     control_freec: ControlFreec | None = None
+
+    ignore_chroms: list[str] = []
+    """List of contig name patterns to ignore for processing"""

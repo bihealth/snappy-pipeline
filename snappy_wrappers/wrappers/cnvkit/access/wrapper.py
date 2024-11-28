@@ -10,12 +10,25 @@ import sys
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
+from snappy_wrappers.tools.genome_windows import ignore_chroms
 from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
+
+prefix = ""
+
+# Add the "ignore_chrom" contents to the excluded regions
+if len(args.get("ignore_chroms", [])) > 0:
+    ignored_contigs = ignore_chroms(args["reference"], args["ignore_chroms"], return_ignored=True)
+    lines = ["cat << __EOF > $TMPDIR/ignore_chroms.bed"]
+    for (contig_name, contig_length) in ignored_contigs:
+        lines.append(f"{contig_name}\t0\t{contig_length}")
+    lines.append("__EOF")
+    prefix = "\n".join(lines) + "\n"
+    args["exclude"].append("$TMPDIR/ignore_chroms.bed")
 
 cmd = r"""
 cnvkit.py access \
@@ -29,4 +42,4 @@ cnvkit.py access \
     exclude=" ".join([f"--exclude {x}" for x in args["exclude"]]),
 )
 
-CnvkitWrapper(snakemake, cmd).run()
+CnvkitWrapper(snakemake, prefix + cmd).run()

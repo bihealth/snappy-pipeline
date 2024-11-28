@@ -29,8 +29,8 @@ cnvkit.py autobin --method {args[method]} \
     args=args,
     out_target=f"--target-output-bed {snakemake.output.target}" if snakemake.output.get("target", "") != "" else "",
     out_antitarget=f"--antitarget-output-bed {snakemake.output.antitarget}" if snakemake.output.get("antitarget", "") != "" else "",
-    access=f"--access {args['access']}" if "access" in args else "",
-    target=f"--targets {args['target']}" if "target" in args else "",
+    access=f"--access {args['access']}" if args.get("access", None) is not None else "",
+    target=f"--targets {args['target']}" if args.get("target", None) is not None else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

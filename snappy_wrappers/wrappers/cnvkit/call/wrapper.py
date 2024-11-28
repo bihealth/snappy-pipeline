@@ -36,7 +36,7 @@ cnvkit.py call \
     -o {snakemake.output.calls} \
     --method {args[method]} {thresholds} \
     {filter} \
-    {center} {center_at} {drop_low_coverage} {sample_sex} {male_reference} \
+    {center} {center_at} {drop_low_coverage} {sample_sex} {male_reference} {diploid_parx_genome} \
     {purity} {ploidy} \
     {variants} \
     {args[segments]}
@@ -53,6 +53,7 @@ cnvkit.py call \
     drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
     sample_sex=f"--sample-sex {args['sample-sex']}" if args.get("sample-sex", None) is not None else "",
     male_reference=f"--male-reference" if args.get("male-reference", False) else "",
+    diploid_parx_genome=f"--diploid-parx-genome {args['diploid_parx_genome']}" if args.get("diploid-parx-genome", None) is not None else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()
