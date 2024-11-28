@@ -907,7 +907,7 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 
 
 @pytest.fixture
-def autobin_result_fake_fs(fake_fs, cancer_sheet_tsv):
+def autobin_result_calling_fake_fs(fake_fs, cancer_sheet_tsv):
     """Return fake file autobin.txt"""
     # Create work directory
     fake_fs.fs.makedirs("/work", exist_ok=True)
@@ -920,6 +920,17 @@ def autobin_result_fake_fs(fake_fs, cancer_sheet_tsv):
             fake_fs.fs.create_file(
                 tpl.format(mapper="bwa", library_name=library_name), create_missing_dirs=True
             )
+    return fake_fs
+
+
+@pytest.fixture
+def autobin_result_pon_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file autobin.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{mapper}.cnvkit/out/{mapper}.cnvkit.autobin.txt"
+    fake_fs.fs.create_file(tpl.format(mapper="bwa"), create_missing_dirs=True)
     return fake_fs
 
 
