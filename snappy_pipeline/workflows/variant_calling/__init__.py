@@ -477,6 +477,31 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            reference_path = self.w_config.static_data_config.reference.path
+            if "GRCh37" in reference_path or "hg19" in reference_path:
+                assembly = "GRCh37"
+            elif "GRCh38" in reference_path or "hg38" in reference_path:
+                assembly = "GRCh38"
+            else:
+                assembly = "unknown"
+
+            return {
+                "reference_path": reference_path,
+                "reference_index_path": reference_path + ".fai",
+                "assembly": assembly,
+                "ignore_chroms": self.config.ignore_chroms,
+                "gatk4_hc_joint_window_length": self.config.gatk4_hc_joint.window_length,
+                "gatk4_hc_joint_num_threads": self.config.gatk4_hc_joint.num_threads,
+                "max_depth": self.config.bcftools_call.max_depth,
+                "max_indel_depth": self.config.bcftools_call.max_indel_depth,
+            }
+
+        return args_fn
+
 
 class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
@@ -728,6 +753,23 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
+    def get_params(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            return {
+                name: self.config.bcftools_roh.get(name)
+                for name in [
+                    "path_targets",
+                    "path_af_file",
+                    "ignore_homref",
+                    "skip_indels",
+                    "rec_rate",
+                ]
+            }
+
+        return args_fn
+
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
@@ -869,6 +911,15 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
                 for work_path in chain(work_files.values(), self.get_log_file("run").values())
             ],
         )
+
+    def get_args(self, action: str):
+        def args_function(_wildcards):
+            return {
+                "min_dp": self.config.baf_file_generation.min_dp,
+                "reference_index_path": self.w_config.static_data_config.reference.path + ".fai",
+            }
+
+        return args_function
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)

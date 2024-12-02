@@ -1,6 +1,10 @@
 from snakemake.shell import shell
+from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+min_dp = snakemake.params["args"]["min_dp"]
+reference_index_path = snakemake.params["args"]["reference_index_path"]
 
 shell(
     r"""
@@ -49,7 +53,7 @@ bcftools query \
                 dp = old3;
                 split(old4, a, ",");
                 rd = a[1];
-                if (dp >= {snakemake.config[step_config][variant_calling][baf_file_generation][min_dp]}) {{
+                if (dp >= {min_dp}) {{
                     printf("%s\t%f\n", old2, (dp - rd) / dp);
                 }}
             }}
@@ -61,7 +65,7 @@ bcftools query \
     }}' \
 > $TMPDIR/tmp.wig
 
-cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
+cut -f 1-2 {reference_index_path} \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/tmp.wig $TMPDIR/chrom.sizes {snakemake.output.bw}

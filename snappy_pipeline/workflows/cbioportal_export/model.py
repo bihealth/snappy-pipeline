@@ -177,6 +177,8 @@ class CbioportalExport(SnappyStepModel):
                     datatype="NUMBER",
                     priority="2",
                     column="TMB",
+                    # FIXME: the cbioportal/clinical_data wrapper mentions key named "path"
+                    #  which seems to be mandatory but is not listed here
                 )
             }
         ],
