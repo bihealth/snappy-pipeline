@@ -309,7 +309,11 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": left,
+                "right": right,
+                "path_dataset_directory": self.config.get(self.name).get("path_dataset_directory"),
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
