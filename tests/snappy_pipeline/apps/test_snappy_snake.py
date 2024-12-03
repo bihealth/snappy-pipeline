@@ -38,6 +38,8 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
     assert 0 == snappy_snake.main(["-S", "--verbose"])
     # Check assersions
     p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
+    import shutil
+    mamba_available = shutil.which("mamba") is not None
     m.assert_called_once_with(
         [
             "--directory",
@@ -56,6 +58,6 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
             "1",
             "--use-conda",
             "--conda-frontend",
-            "mamba",
+            "mamba" if mamba_available else "conda",
         ]
     )

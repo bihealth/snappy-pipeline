@@ -1,7 +1,7 @@
 channels:
-  - nodefaults
   - conda-forge
   - bioconda
+  - nodefaults
 
 name: snappy_env
 
