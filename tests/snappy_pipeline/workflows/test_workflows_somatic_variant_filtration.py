@@ -36,7 +36,8 @@ def minimal_config():
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
             filtration_schema: sets
-            filter_sets: {}
+            filter_sets:
+              dkfz_and_ebfilter_and_oxog: {}
             path_somatic_variant: "../somatic_variant_annotation"
 
         data_sets:
@@ -121,6 +122,13 @@ def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_work
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_log_file("dkfz_bias_filter", "run")
+    assert actual == expected
+
+
+def test_dkfz_bias_filter_step_part_get_args(somatic_variant_filtration_workflow):
+    """Tests DkfzBiasFilterStepPart.get_log_file()"""
+    expected = {"reference": "/path/to/ref.fa"}
+    actual = somatic_variant_filtration_workflow.get_params("dkfz_bias_filter", "run")
     assert actual == expected
 
 
@@ -224,6 +232,23 @@ def test_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration
     """Tests EbFilterStepPart._get_log_file_write_panel()"""
     expected = {}
     actual = somatic_variant_filtration_workflow.get_log_file("eb_filter", "write_panel")
+    assert actual == expected
+
+
+def test_eb_filter_step_part_get_params_run(somatic_variant_filtration_workflow):
+    """Tests EbFilterStepPart.get_params()"""
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "ebfilter_threshold": 2.4,
+        "vaf_threshold": 0.08,
+        "coverage_threshold": 5,
+        "has_annotation": True,
+        "shuffle_seed": 1,
+        "panel_of_normals_size": 25,
+        "min_mapq": 20,
+        "min_baseq": 15,
+    }
+    actual = somatic_variant_filtration_workflow.get_params("eb_filter", "run")
     assert actual == expected
 
 
@@ -565,15 +590,19 @@ def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_l
     assert actual == expected
 
 
-def test_one_filter_step_part_get_params(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list):
     """Tests OneFilterStepPart.get_params()"""
     wildcards = Wildcards(fromdict={"filter_nb": 1})
-    expected = {"filter_name": "dkfz_1"}
-    actual = somatic_variant_filtration_workflow_list.get_params("one_dkfz", "run")(wildcards)
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "filter_name": "dkfz_1",
+    }
+    actual = somatic_variant_filtration_workflow_list.get_args("one_dkfz", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 2})
     expected = {
+        "reference": "/path/to/ref.fa",
         "filter_name": "ebfilter_2",
         "ebfilter_threshold": 2.3,
         "has_annotation": True,
@@ -582,22 +611,22 @@ def test_one_filter_step_part_get_params(somatic_variant_filtration_workflow_lis
         "min_mapq": 20,
         "min_baseq": 15,
     }
-    actual = somatic_variant_filtration_workflow_list.get_params("one_ebfilter", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow_list.get_args("one_ebfilter", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 3})
-    expected = {"filter_name": "bcftools_3", "include": "include_statment"}
-    actual = somatic_variant_filtration_workflow_list.get_params("one_bcftools", "run")(wildcards)
+    expected = {"filter_name": "bcftools_3", "include": "include_statment", "exclude": ""}
+    actual = somatic_variant_filtration_workflow_list.get_args("one_bcftools", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 4})
-    expected = {"filter_name": "regions_4", "exclude": "/path/to/regions.bed"}
-    actual = somatic_variant_filtration_workflow_list.get_params("one_regions", "run")(wildcards)
+    expected = {"filter_name": "regions_4", "exclude": "/path/to/regions.bed", "include": "", "path_bed": ""}
+    actual = somatic_variant_filtration_workflow_list.get_args("one_regions", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 5})
     expected = {"filter_name": "protected_5", "path_bed": "/path/to/protected.bed"}
-    actual = somatic_variant_filtration_workflow_list.get_params("one_protected", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow_list.get_args("one_protected", "run")(wildcards)
     assert actual == expected
 
 

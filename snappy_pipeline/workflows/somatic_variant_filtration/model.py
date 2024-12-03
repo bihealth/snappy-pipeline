@@ -12,12 +12,13 @@ class DkfzAndEbfilter(SnappyModel):
 
 class DkfzAndEbfilterAndOxog(SnappyModel):
     vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
+    coverage_threshold: int = 5
+    ebfilter_threshold: float = 2.4
 
 
 class DkfzAndOxog(SnappyModel):
     vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
+    coverage_threshold: int = 5
 
 
 class FilterSets(SnappyModel):
@@ -31,16 +32,16 @@ class FilterSets(SnappyModel):
 class EbfilterSet(SnappyModel):
     shuffle_seed: int = 1
     panel_of_normals_size: int = 25
-    min_mapq: float = 20
-    min_baseq: float = 15
+    min_mapq: int = 20
+    min_baseq: int = 15
 
 
 class Ebfilter(SnappyModel):
     ebfilter_threshold: float = 2.4
     shuffle_seed: int = 1
     panel_of_normals_size: int = 25
-    min_mapq: float = 20
-    min_baseq: float = 15
+    min_mapq: int = 20
+    min_baseq: int = 15
 
 
 class Dkfz(SnappyModel):
