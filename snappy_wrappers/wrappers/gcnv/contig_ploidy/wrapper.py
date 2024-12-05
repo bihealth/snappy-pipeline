@@ -42,6 +42,7 @@ trap "rm -rf $TMPDIR" ERR EXIT
 export MKL_NUM_THREADS={snakemake.threads}
 export OMP_NUM_THREADS={snakemake.threads}
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 # Get contig name style
 egrep "^@SQ\s+SN:chr[0-9XY]{{1,2}}\s+" {snakemake.input.interval_list} > /dev/null && true

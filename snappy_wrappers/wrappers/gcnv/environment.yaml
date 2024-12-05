@@ -2,40 +2,8 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - gatk4==4.3.0.0
-  - bcftools==1.10.2
-  - htslib==1.10.2
+  - gatk4==4.6.1.0
+  - bcftools
+  - htslib
   - parallel==20240122
-  # the hard to install gcnvkernel
-  - gcnvkernel==0.8
-  # gcnvkernel dependencies
-  - python==3.6.10
-  - pip==21.3.1
-  - mkl==2019.5
-  - mkl-service==2.3.0
-  - numpy==1.17.5
-  - theano==1.0.4
-  - tensorflow==1.10.0
-  - scipy==1.0.0
-  - pymc3==3.1
-  - joblib==1.2.0
-  - h5py==2.10.0
-  - keras==2.2.4
-  - intel-openmp==2022.1.0
-  - scikit-learn==0.23.1
-  - matplotlib==3.2.1
-  - pandas==1.0.3
-  - typing_extensions==4.1.1
-  - dill==0.3.4
-  - r-base==3.6.2
-  - r-data.table==1.12.8
-  - r-dplyr==0.8.5
-  - r-getopt==1.20.3
-  - r-ggplot2==3.3.0
-  - r-gplots==3.0.3
-  - r-gsalib==2.1
-  - r-optparse==1.6.4
-  - r-backports==1.1.10
-  - biopython==1.76
-  - pyvcf==0.6.8
-  - pysam==0.15.3
+  - gcnvkernel==0.9
