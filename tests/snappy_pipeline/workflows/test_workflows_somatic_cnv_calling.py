@@ -137,25 +137,42 @@ def somatic_cnv_calling_workflow(
 # Tests for CnvkitStepPart ------------------------------------------------------------------------
 
 
-def test_cnvkit_step_part_get_args_access(somatic_cnv_calling_workflow):
-    """Tests CnvkitStepPart._get_args_access()"""
-    wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-        }
-    )
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "access")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "access")(wildcards),
-    )
-    if actual.get("ignore_chroms", None) is not None:
-        actual["ignore_chroms"].sort()
-    expected = {"reference": "/path/to/ref.fa", "min-gap-size": None, "exclude": [], "ignore_chroms": ["GL*", "MT"]}
+def test_cnvkit_step_part_get_input_files_ignore(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_ignore()"""
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "ignore")(None)
+    expected = {"reference": "/path/to/ref.fa"}
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_autobin(somatic_cnv_calling_workflow):
+def test_cnvkit_step_part_get_args_ignore(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_args_ignore()"""
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "ignore")(None, None)
+    actual["ignore_chroms"].sort()
+    expected = {"ignore_chroms": ["GL*", "MT"]}
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_access(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_access()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "access")(wildcards)
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "exclude": [],
+        "ignore_chroms": "work/bwa.cnvkit/out/bwa.cnvkit.ignored.bed",
+    }
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_access(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart._get_args_access()"""
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "access")(None, None)
+    expected = {"min-gap-size": None}
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_autobin(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_access()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -165,13 +182,32 @@ def test_cnvkit_step_part_get_args_autobin(somatic_cnv_calling_workflow):
     expected = {
         "bams": ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"],
         "access": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
-        "method": "wgs",
-        "bp-per-bin": 50000,
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "autobin")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "autobin")(wildcards),
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "autobin")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_autobin(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_args_access()"""
+    expected = {"method": "wgs", "bp-per-bin": 50000}
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "autobin")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_target(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_target()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-N1-DNA1-WGS1",
+        }
     )
+    expected = {
+        "interval": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
+        "avg_size": "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.autobin.txt",
+        "annotate": "/path/to/annotations.gtf",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "target")(wildcards)
     assert actual == expected
 
 
@@ -183,47 +219,42 @@ def test_cnvkit_step_part_get_args_target(somatic_cnv_calling_workflow):
             "library_name": "P001-N1-DNA1-WGS1",
         }
     )
-    expected = {
-        "interval": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
-        "avg-size": 2000,
-        "split": True,
-        "annotate": "/path/to/annotations.gtf",
-        "short-names": True,
-
-    }
+    expected = {"avg-size": 2000, "split": True, "short-names": True}
     actual = somatic_cnv_calling_workflow.get_args("cnvkit", "target")(
         wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "target")(wildcards),
+        somatic_cnv_calling_workflow.get_input_files("cnvkit", "target")(wildcards)
     )
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_coverage(somatic_cnv_calling_workflow):
-    """Tests CnvkitStepPart._get_args_coverage()"""
+def test_cnvkit_step_part_get_input_files_coverage(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_coverage()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
-            "library_name": "P001-N1-DNA1-WGS1",
+            "library_name": "P001-T1-DNA1-WGS1",
             "region": "target",
         }
     )
     expected = {
         "intervals": "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.target.bed",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "reference": "/path/to/ref.fa",
-        "min-mapq": 0,
-        "count": False,
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "coverage")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "coverage")(wildcards),
-    )
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "coverage")(wildcards)
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_reference(somatic_cnv_calling_workflow):
-    """Tests CnvkitStepPart._get_args_reference()"""
+def test_cnvkit_step_part_get_args_coverage(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_args_coverage()"""
+    expected = {"min-mapq": 0, "count": False}
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "coverage")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_reference(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_create_panel()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -232,8 +263,24 @@ def test_cnvkit_step_part_get_args_reference(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "normals": ["work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.target.cnn"],
+        "normals": [
+            "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+        ],
         "reference": "/path/to/ref.fa",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "reference")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_reference(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_args_create_panel()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+        }
+    )
+    expected = {
         "cluster": False,
         "no-gc": False,
         "no-edge": True,
@@ -241,10 +288,23 @@ def test_cnvkit_step_part_get_args_reference(somatic_cnv_calling_workflow):
         "male-reference": False,
         "diploid-parx-genome": "GRCh38",
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "reference")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "reference")(wildcards),
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "reference")(wildcards, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_fix(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_fix()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+        }
     )
+    expected = {
+        "target": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.targetcoverage.cnn",
+        "reference": "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.reference.cnn",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "fix")(wildcards)
     assert actual == expected
 
 
@@ -257,8 +317,6 @@ def test_cnvkit_step_part_get_args_fix(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "target": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.target.cnn",
-        "reference": "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.reference.cnn",
         "cluster": False,
         "no-gc": False,
         "no-edge": True,
@@ -266,10 +324,23 @@ def test_cnvkit_step_part_get_args_fix(somatic_cnv_calling_workflow):
         "diploid-parx-genome": "GRCh38",
         "sample-id": "P001-T1-DNA1-WGS1",
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "fix")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "fix")(wildcards),
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "fix")(wildcards, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_segment(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_segment()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+        }
     )
+    expected = {
+        "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
+        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "segment")(wildcards)
     assert actual == expected
 
 
@@ -282,21 +353,33 @@ def test_cnvkit_step_part_get_args_segment(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
         "method": "cbs",
         "threshold": 0.0001,
         "smooth-cbs": False,
         "drop-low-coverage": False,
         "drop-outliers": 10,
-        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
         "sample-id": "P001-T1-DNA1-WGS1",
         "normal-id": "P001-N1-DNA1-WGS1",
         "min-variant-depth": 20,
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "segment")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "segment")(wildcards),
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "segment")(wildcards, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_call(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_call()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+        }
     )
+    expected = {
+        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/report/bwa.cnvkit.P001-T1-DNA1-WGS1.segmetrics.cns",
+        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
+        "purity_file": "SOMATIC_PURITY_PLOIDY_ESTIMATE/output/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.txt",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "call")(wildcards)
     assert actual == expected
 
 
@@ -309,19 +392,17 @@ def test_cnvkit_step_part_get_args_call(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
         "method": "threshold",
         "thresholds": [-1.1, -0.25, 0.2, 0.7],
         "drop-low-coverage": False,
         "male-reference": False,
         "diploid-parx-genome": "GRCh38",
-        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
         "sample-id": "P001-T1-DNA1-WGS1",
         "normal-id": "P001-N1-DNA1-WGS1",
         "min-variant-depth": 20,
-        "purity_file": "SOMATIC_PURITY_PLOIDY_ESTIMATE/output/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.txt",
         "purity": 0.35,
         "ploidy": 2.2,
+        "filter": ["ci"],
     }
     actual = somatic_cnv_calling_workflow.get_args("cnvkit", "call")(
         wildcards,
@@ -330,8 +411,8 @@ def test_cnvkit_step_part_get_args_call(somatic_cnv_calling_workflow):
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_bintest(somatic_cnv_calling_workflow):
-    """Tests CnvkitStepPart._get_args_bintest()"""
+def test_cnvkit_step_part_get_input_files_bintest(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_bintest()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -339,21 +420,48 @@ def test_cnvkit_step_part_get_args_bintest(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
+        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns",
         "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "bintest")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_bintest(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_args_bintest()"""
+    expected = {
         "alpha": 0.005,
         "target": False,
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "bintest")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "bintest")(wildcards),
-    )
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "bintest")(None, None)
     assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_metrics(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_metrics()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+        }
+    )
+    expected = {
+        "segments": ["work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns"],
+        "ratios": ["work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr"],
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "metrics")(wildcards)
     assert actual == expected
 
 
 def test_cnvkit_step_part_get_args_metrics(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart._get_args_metrics()"""
+    expected = {"drop-low-coverage": False}
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "metrics")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_segmetrics(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_segmetrics()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -361,19 +469,28 @@ def test_cnvkit_step_part_get_args_metrics(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
+        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns",
         "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
-        "drop-low-coverage": False,
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "metrics")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "metrics")(wildcards),
-    )
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "segmetrics")(wildcards)
     assert actual == expected
 
 
 def test_cnvkit_step_part_get_args_segmetrics(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart._get_args_segmetrics()"""
+    expected = {
+        "drop-low-coverage": False,
+        "alpha": 0.05,
+        "bootstrap": 100,
+        "smooth-bootstrap": True,
+        "stats": ["mean", "median", "mode", "t-test", "stdev", "sem", "mad", "mse", "iqr", "bivar", "ci", "pi"]
+    }
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "segmetrics")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_genemetric(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_genemetrics()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -381,18 +498,10 @@ def test_cnvkit_step_part_get_args_segmetrics(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
+        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns",
         "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
-        "drop-low-coverage": False,
-        "alpha": 0.05,
-        "bootstrap": 100,
-        "smooth-bootstrap": False,
-        "stats": ["mean", "median", "mode", "t-test", "stdev", "sem", "mad", "mse", "iqr", "bivar", "ci", "pi"]
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "segmetrics")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "segmetrics")(wildcards),
-    )
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "genemetrics")(wildcards)
     assert actual == expected
 
 
@@ -405,8 +514,6 @@ def test_cnvkit_step_part_get_args_genemetric(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
-        "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
         "threshold": 0.2,
         "min-probes": 3,
         "drop-low-coverage": False,
@@ -416,10 +523,25 @@ def test_cnvkit_step_part_get_args_genemetric(somatic_cnv_calling_workflow):
         "bootstrap": 100,
         "stats": ["mean", "median", "mode", "ttest", "stdev", "sem", "mad", "mse", "iqr", "bivar", "ci", "pi"]
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "genemetrics")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "genemetrics")(wildcards),
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "genemetrics")(wildcards, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_scatter(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart._get_input_files_scatter()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "library_name": "P001-T1-DNA1-WGS1",
+            "contig_name": "1",
+        }
     )
+    expected = {
+        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cns",
+        "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
+        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
+    }
+    actual = somatic_cnv_calling_workflow.get_input_files("cnvkit", "scatter")(wildcards)
     assert actual == expected
 
 
@@ -433,8 +555,6 @@ def test_cnvkit_step_part_get_args_scatter(somatic_cnv_calling_workflow):
         }
     )
     expected = {
-        "segments": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.segments.cns",
-        "ratios": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.cnr",
         "chromosome": "1",
         "width": 1000000,
         "antitarget-marker": "o",
@@ -442,38 +562,35 @@ def test_cnvkit_step_part_get_args_scatter(somatic_cnv_calling_workflow):
         "trend": False,
         "segment-color": "darkorange",
         "title": "P001-T1-DNA1-WGS1 - 1",
-        "variants": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.vcf.gz",
         "sample-id": "P001-T1-DNA1-WGS1",
         "normal-id": "P001-N1-DNA1-WGS1",
         "min-variant-depth": 20,
-        "fig-size": (6.4, 4.8),
+        "fig-size": (12.256, 16.192),
     }
-    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "scatter")(
-        wildcards,
-        somatic_cnv_calling_workflow.get_input_files("cnvkit", "scatter")(wildcards),
-    )
+    actual = somatic_cnv_calling_workflow.get_args("cnvkit", "scatter")(wildcards, None)
     assert actual == expected
 
 
 def test_cnvkit_step_parts_get_output_files(somatic_cnv_calling_workflow):
     """Tests CnvkitStepPart.get_output_files() for all actions"""
     actions = {
+        "ignore": {"ignore_chroms": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.ignored.bed"},
         "access": {"access": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.access.bed"},
         "autobin": {"result": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.autobin.txt"},
         "target": {"target": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.target.bed"},
         "antitarget": {"antitarget": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed"},
-        "coverage": {"coverage": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{region,(target|antitarget)}.cnn"},
+        "coverage": {"coverage": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{region,(target|antitarget)}coverage.cnn"},
         "reference": {"reference": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.reference.cnn"},
         "fix": {"ratios": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"},
         "segment": {
-            "segments": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segments.cns",
+            "segments": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cns",
             "dataframe": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.rds",
         },
-        "call": {"calls": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.calls.cns"},
+        "call": {"calls": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"},
         "bintest": {"tests": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.bintest.cns"},
         "metrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.metrics.tsv"},
         "genemetrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.genemetrics.tsv"},
-        "segmetrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.segmetrics.tsv"},
+        "segmetrics": {"report": "work/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.segmetrics.cns"},
         "scatter": {"plot": "work/{mapper}.cnvkit.{library_name}/plot/{mapper}.cnvkit.{library_name}.scatter.{contig_name}.jpeg"},
     }
     for action, result in actions.items():
@@ -494,14 +611,16 @@ def test_cnvkit_step_parts_get_log_file(somatic_cnv_calling_workflow):
         assert actual == expected
 
 
-def test_cnvkit_step_parts_get_log_file_access(somatic_cnv_calling_workflow):
-    """Tests CnvkitStepPart.get_log_file() for access"""
+def test_cnvkit_step_parts_get_log_file_no_lib(somatic_cnv_calling_workflow):
+    """Tests CnvkitStepPart.get_log_file() for all actions not dependent on library"""
     exts = (("conda_info", "conda_info.txt"), ("conda_list", "conda_list.txt"), ("log", "log"), ("sh", "sh"))
-    base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit.access"
-    result = {k: base_log + f".{v}" for k, v in exts} 
-    expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
-    actual = somatic_cnv_calling_workflow.get_log_file("cnvkit", "access")
-    assert actual == expected
+    actions = ("ignore", "access")
+    base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit."
+    for action in actions:
+        result = {k: base_log + f"{action}.{v}" for k, v in exts} 
+        expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
+        actual = somatic_cnv_calling_workflow.get_log_file("cnvkit", action)
+        assert actual == expected
 
 
 def test_cnvkit_step_parts_get_log_file_coverage(somatic_cnv_calling_workflow):
@@ -542,7 +661,7 @@ def test_somatic_cnv_calling_workflow(somatic_cnv_calling_workflow):
     tpl = "output/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
     expected += [
         tpl.format(mapper=mapper, library_name=library_name, ext=ext)
-        for ext in ("cnr", "segments.cns", "calls.cns", "bintest.cns")
+        for ext in ("cnr", "cns", "call.cns", "bintest.cns")
         for library_name in tumor_libraries
         for mapper in ("bwa",)
     ]
@@ -561,8 +680,7 @@ def test_somatic_cnv_calling_workflow(somatic_cnv_calling_workflow):
     tpl = "output/{mapper}.cnvkit.{library_name}/report/{mapper}.cnvkit.{library_name}.{step}.{ext}"
     expected += [
         tpl.format(mapper=mapper, library_name=library_name, step=step, ext=ext)
-        for ext in ("tsv",)
-        for step in ("metrics", "genemetrics", "segmetrics")
+        for step, ext in (("metrics", "tsv"), ("genemetrics", "tsv"), ("segmetrics", "cns"))
         for library_name in tumor_libraries
         for mapper in ("bwa",)
     ]

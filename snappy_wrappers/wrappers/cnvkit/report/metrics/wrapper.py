@@ -19,13 +19,13 @@ cmd = r"""
 cnvkit.py metrics \
     -o {snakemake.output.report} \
     {drop_low_coverage} \
-    {args[ratios]} \
-    --segment {segments}
+    {snakemake.input.ratios} \
+    {segments}
 """.format(
     snakemake=snakemake,
     args=args,
     drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
-    segments=" ".join(args["segments"]),
+    segments=f"--segments {snakemake.input.segments}" if snakemake.input.get("segments", None) is not None else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

@@ -20,9 +20,9 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py bintest \
     -o {snakemake.output.tests} \
-    --segment {args[segments]} \
+    --segment {snakemake.input.segments} \
     --alpha {args[alpha]} {target} \
-    {args[ratios]}
+    {snakemake.input.ratios}
 """.format(
     snakemake=snakemake,
     args=args,

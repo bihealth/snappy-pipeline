@@ -10,28 +10,24 @@ import sys
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
+from snappy_wrappers.tools.genome_windows import ignore_chroms
 from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
-exclude = args.get("exclude", [])
 
-# Add the "ignore_chrom" contents to the excluded regions
-if snakemake.input.get("ignore_chroms", None) is not None:
-    exclude.append(snakemake.input.get("ignore_chroms"))
+ignored_contigs = ignore_chroms(snakemake.input.reference, args["ignore_chroms"], return_ignored=True)
+lines = []
+for (contig_name, contig_length) in ignored_contigs:
+    lines.append(f"{contig_name}\t0\t{contig_length}")
+lines = "\n".join(lines)
 
-cmd = r"""
-cnvkit.py access \
-    -o {snakemake.output.access} \
-    {min_gap_size} {exclude} \
-    {snakemake.input.reference}
-""".format(
-    snakemake=snakemake,
-    args=args,
-    min_gap_size=f"--min-gap-size {args['min-gap-size']}" if args.get("min-gap-size", None) is not None else "",
-    exclude=" ".join([f"--exclude {x}" for x in exclude]),
-)
+cmd = f"""
+cat << __EOF > {snakemake.output.ignore_chroms}
+{lines}
+__EOF
+"""
 
 CnvkitWrapper(snakemake, cmd).run()

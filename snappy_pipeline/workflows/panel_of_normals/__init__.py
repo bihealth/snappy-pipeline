@@ -44,10 +44,25 @@ augmentation of the panel by new files when they become available.
 Notes on the ``cnvkit`` workflow
 ================================
 
+--------
+Overview
+--------
+
 ``cnvkit`` is a set of tools originally designed to call somatic copy number alterations from exome data.
 Its design is modular, which enables its use for whole genome and amplicon data.
 
-Provided that sufficient normal samples are available, the ``cnvkit`` `documentation <https://cnvkit.readthedocs.io/en/stable/>`_
+Because it was designed primarily for whole exome data. It has the concept of _targets_ (the regions enriched by the exome kit),
+and the _antitargets_ (those regions accessible for CNV calling, but outside of enrichment).
+The coverage of _targets_ and _antitargets_ are expected to be very different,
+but there is still information to be gained in the _antitarget_ regions,
+albeit at a much lower resolution than for _target_ regions.
+
+For WGS data, the _target_ regions generally cover the whole accessible genome, with empty _antitarget_ regions.
+
+.. tip:: For Agilent kits, the ``cnvkit`` authors recommend to use baits as targets. Baits are in the ``*_Covered.bed`` file.
+
+Provided that sufficient normal samples are available (`10 to 20 are considered sufficient <https://www.biostars.org/p/296422/>`_),
+the ``cnvkit`` `documentation <https://cnvkit.readthedocs.io/en/stable/>`_
 recommends the creation of a panel of normal (called ``reference``) for exome and whole genome data.
 
 .. note::
@@ -56,56 +71,48 @@ recommends the creation of a panel of normal (called ``reference``) for exome an
     The actual workflow to generate this reference is slightly different between exome and whole genome data.
     The current implementation recapitulates the common practice, while still dispaching computations on multiple cluster nodes.
 
------------
-Access file
------------
+---------------------------------
+Regions accessible to CNV calling
+---------------------------------
 
-``cnvkit`` can use a bed file describing the accessible regions for coverage computations.
-The ``cnvkit`` distribution provides it for the ``GRCh37`` human genome release, but incompletely only for ``GRCh38``.
-Therefore, a tentative ``access`` tool has been added, to generate this bed file when the user knows which locii should be excluded from coverage.
-Its output (``output/cnvkit.access/out/cnvkit.access.bed``) is optional, but its presence impacts of the way the target and antitarget regions are computed in whole genome mode.
+``cnvkit`` needs to know about the regions of the genome accessible to CNV calling.
+Typically, regions masked with ``N`` are excluded, but a user may also want to exclude
+repeats, segmental duplications, or low complexity regions.
+
+There are multiple ways to get this information:
+
+1. The user can provide a ``bed`` file detailing accessible regions, using the ``path_access`` option in the ``access`` part of the configuration.
+2. The user can specifically exclude regions using the ``exclude`` option is the ``access`` part of the configuration.
+   In this case, the pipeline will create an accessible regions file from the whole genome and the excluded parts.
+3. Otherwise, the pipeline creates the accessible regions file from the reference genome sequence, by removing
+   only parts masked with ``N``.
+
+.. note:: An additional constraints to pick option 3 is that the ``min_gap_size`` parameter cannot be set.
 
 .. note::
+    Some short contigs (the mitochondrion, unplaced & unlocalized contigs, decoys, viral sequences, ...) are too short
+    for a reliable estimation of copy number changes.
+    ``snappy`` provides a generic way to ignore those contigs during processing (post-mapping), through the ``ignore_chroms`` configuration option.
+    This parameter is generally set at the _step_ level, typically ignoring decoys, HLA variants and viral sequences.
+    This is suitable for small variant calling (calling variants for genes on unplaced/unlocalized contigs is fine),
+    but not for CNA calling.
+    Therefore, ``ignore_chroms`` can also be set at the _tool_ level in the configuration. In that case, contigs from both options will be ignored.
+    Contigs ignored during panel of normals creation will _not_ be assessed during calling.
 
-    In a nutshell, for exome data, the accessibility file is only used to create antitarget regions.
-    These regions are essentially the accessible regions minus the target regions (with edge effect correction).
-
-Access files can be generated from the genome reference ``fasta`` file, and optionally ``bed`` file(s) containing regions to exclude from further computations.
-In this case, the user must proceed in two steps:
-
-First, she needs to run the ``access`` tool to create the desired access file
-
-.. code-block:: yaml
-
-    panel_of_normals:
-        tools: [access]
-        access:
-            exclude: <absolute path to excluded locii bed file>
-
-This will create ``output/cnvkit.access/out/cnvkit.access.bed`` from the genomic sequence & excluded regions.
-
-When there are no exclusion regions, the access file is automatically created using only the reference genome, and removing masked regions.
+.. note:: In WES mode, using ``ignore_chroms`` options is generally not necessary, unless the baits definition includes small contigs.
 
 ------------------------
 Panel of normal creation
 ------------------------
 
-If the user wants to create her own access file, then the panel of normal can only be created after the ``access`` tool has been run.
-If she decides that the access file provided in the ``cnvkit`` distribution is suitable (no excluded region),
-then she can skip the ``access`` tool step and directly creates her panel of normals.
+By default, the panel is built using all normal samples in the cohort.
+However, it is possible to select a sub-set of samples using the ``path_normals_list`` configruation option.
+This is the path to a file with one library name per line.
 
-In both cases, the configuration might read:
+The current implementation doesn't allow for mixing WES & WGS data, not mixing multiple exome enrichment kits.
+The selection of enrichment kit is done through the ``path_target_interval_list_mapping`` option.
 
-.. code-block:: yaml
-
-    panel_of_normals:
-        tools: [cnvkit]                                               # , access]
-        access: <absolute path to access file>                        # Even when created by the ``access`` tool.
-        path_target_regions: <absolute path to baits>                 # Keep empty for WGS data
-        path_normals_list: <absolute path to list of normal samples>  # Keep empty to use all available normals
-
-Note that there is no provision (yet) to automatically create separate panel of normals for males & females.
-If the number of samples collected in the same fashion is large enough, it is nevertheless the way to achieve best results.
+TODO: implement support for cohorts collected using different enrichment kits (mixing WGS & WES is more difficult, and may never happen)
 
 -------
 Reports
@@ -135,11 +142,53 @@ But when she has left this option empty, the accessible regions are automaticall
 To create the target regions from the baits (or from the accessible regions), the target average bin size must be set.
 There is a reasonable default value for exome data, but an additional ``autobin`` step is required for the whole genome data.
 In ``batch`` mode, this value is computed from the coverage over the full genome
+
 .. note::
 
     The ``cnvkit batch`` command also allows the creation of a flat reference, when there are no normal samples.
     This is not implemented in the ``panel_of_normals`` step, for obvious reasons.
     Using a flat reference for CNV computations is nevertheless possible, it is implemented in the ``somatic_cnv_calling`` step.
+
+``cnvkit`` can infer the sex of a donor from a sample's coverage over sex chromosomes.
+The decision is taken by the ratio of _G_ test statistics over the autosomes & sex chromosome coverage.
+More precisely, the _G_ statistic is computed (with Yates continuity correction) from the contingency table built using
+the number of bins with coverage higher or lower than the grand median, from the autosomes and the sex chromosome.
+
+.. math::
+    G(x) = G \\left( \\begin{array}{cc} N(c_a > m) & N(c_x > m) \\\\ N(c_a < m) & N(c_x < m) \\end{array} \\right)
+
+where :math:`c_a` the coverage over the autosomes  :math:`c_x` the coverage over the sex chromosome `x` & :math:`m = \\text{median}(c_a, c_x)`.
+The coverages are defined as the base-2 logarithm of the coverage depth.
+
+The final score is obtained after shifting the coverages by 0, 1 or 3, depending on the case.
+
+.. math::
+    \\text{score} = G(X)/G(X+1) \\cdot G(Y+3)/G(Y)
+
+When the score is higher than 1, the sex is inferred as male.
+
+For each sample, the scores are computed on target & antitarget regions separately. When the inferred sex are different, the anitarget is selected.
+
+.. warning: The sex inference results are questionable. We have observed similar behaviour as decribed `here <https://github.com/etal/cnvkit/issues/915>`_.
+
+For validation, the _G_ statistic can be obtained from the ``*.cnn`` output using the following:
+
+.. code-block:: R
+
+    coverage <- read.table("work/mapper.cnvkit.library/out/mapper.cnvkit.library.cnn", sep="\t", header=1)
+    median_test <- function(x, X=TRUE, shift=0, prefix=c("chr", "")) {
+        auto <- x$log2[x$chromosome %in% sprintf("%s%d", prefix, 1:22)]
+        if (X) sex <- x$log2[x$chromosome == sprintf("%sX", prefix)] + shift
+        else   sex <- x$log2[x$chromosome == sprintf("%sY", prefix)] + shift
+        m <- median(c(auto, sex), na.rm=TRUE)
+        contigency <- cbind(
+            c(sum(auto>m, na.rm=TRUE), sum(auto<m, na.rm=TRUE)),
+            c(sum(sex>m, na.rm=TRUE), sum(sex<m, na.rm=TRUE))
+        )
+        DescTools::GTest(contigency, correct="yates")
+    }
+    score <- (median_test(coverage, X=TRUE, shift=0)$stat/median_test(coverage, X=TRUE, shift=1)$stat) *
+        (median_test(coverage, X=FALSE, shift=3)$stat/median_test(coverage, X=FALSE, shift=0)$stat)
 
 ================
 Notes ``purecn``
@@ -490,6 +539,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     #: Class available actions
     actions = (
+        "ignore",
         "access",
         "autobin",
         "target",
@@ -497,6 +547,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         "coverage",
         "create_panel",
         "sex",
+        "metrics",
     )
 
     # Overwrite defaults
@@ -600,8 +651,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def get_output_files(self, action):
         """Return panel of normal output files"""
         self._validate_action(action)
+        base_report = "work/{mapper}.cnvkit/report/{mapper}.cnvkit."
         output_files = {}
         match action:
+            case "ignore":
+                output_files = {"ignore_chroms": self.base_out + "ignored.bed"}
             case "access":
                 output_files = {"access": self.base_out + "access.bed"}
             case "autobin":
@@ -611,11 +665,15 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             case "antitarget":
                 output_files = {"antitarget": self.base_out + "antitarget.bed"}
             case "coverage":
-                output_files = {"coverage": self.base_out_lib + "{region,(target|antitarget)}.cnn"}
+                output_files = {
+                    "coverage": self.base_out_lib + "{region,(target|antitarget)}coverage.cnn"
+                }
             case "create_panel":
                 output_files = {"reference": self.base_out + "panel_of_normals.cnn"}
             case "sex":
-                output_files = {"sex": self.base_out + "sex.tsv"}
+                output_files = {"sex": base_report + "sex.tsv"}
+            case "metrics":
+                output_files = {"metrics": base_report + "metrics.tsv"}
 
         for k, v in output_files.items():
             yield k, v
@@ -629,7 +687,16 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
         base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit."
         base_log_lib = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.{library_name}."
-        if action in ("access", "autobin", "target", "antitarget", "create_panel", "sex"):
+        if action in (
+            "ignore",
+            "access",
+            "autobin",
+            "target",
+            "antitarget",
+            "create_panel",
+            "sex",
+            "metrics",
+        ):
             tpl = base_log + action
         elif action in ("coverage",):
             tpl = base_log_lib + "{region,(target|antitarget)}"
@@ -652,33 +719,37 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
         result_files = []
 
-        result_files += list(self.get_output_files("create_panel").values())
-        result_files += list(self.get_log_file("create_panel").values())
-
-        result_files += list(self.get_output_files("target").values())
-        result_files += list(self.get_log_file("target").values())
-
+        actions = ["create_panel", "target", "sex", "metrics"]
         if self.libraryType == LibraryType.WES:
-            result_files += list(self.get_output_files("antitarget").values())
-            result_files += list(self.get_log_file("antitarget").values())
+            actions.append("antitarget")
 
-        result_files += list(self.get_output_files("sex").values())
-        result_files += list(self.get_log_file("sex").values())
+        for action in actions:
+            result_files += list(self.get_output_files(action).values())
+            result_files += list(self.get_log_file(action).values())
 
         return filter(lambda x: not x.endswith(".md5"), result_files)
 
+    def _get_input_files_ignore(self, wildcards: Wildcards) -> dict[str, str]:
+        assert self.create_access, "No need for ignored chroms, access already exists"
+        return {"reference": self.w_config.static_data_config.reference.path}
+
+    def _get_args_ignore(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        assert self.create_access, "No need for ignored chroms, access already exists"
+        return {"ignore_chroms": sorted(list(self.ignored))}
+
     def _get_input_files_access(self, wildcards: Wildcards) -> dict[str, str]:
         assert self.create_access, "Access shouldn't be created, already available"
-        return {}
+        input_files = {
+            "reference": self.w_config.static_data_config.reference.path,
+            "exclude": self.cfg.access.exclude,
+        }
+        if self.ignored:
+            input_files["ignore_chroms"] = self.base_out.format(**wildcards) + "ignored.bed"
+        return input_files
 
     def _get_args_access(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         assert self.create_access, "Access shouldn't be created, already available"
-        return dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
-            "min-gap-size": self.cfg.access.min_gap_size,
-            "exclude": self.cfg.access.exclude,
-            "ignore_chroms": list(self.ignored),
-        }
+        return {"min-gap-size": self.cfg.access.min_gap_size}
 
     def _get_input_files_autobin(self, wildcards: Wildcards) -> dict[str, str]:
         assert (
@@ -697,19 +768,18 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
             else:
                 input_files["target"] = self.base_out.format(**wildcards) + "access.bed"
+        else:
+            input_files["target"] = self.cfg.path_access
         return input_files
 
     def _get_args_autobin(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         assert (
             self.compute_avg_target_size
         ), "Trying to estimate average target size for non-WGS samples"
-        args = dict(input) | {"bp-per-bin": 50000}
-        if self.plain_access:
-            args["method"] = "wgs"
-        else:
-            args["method"] = "amplicon"
-            if "target" not in args:
-                args["target"] = self.cfg.path_access
+        args = {
+            "bp-per-bin": 50000,
+            "method": "wgs" if self.plain_access else "amplicon",
+        }
         return args
 
     def _get_input_files_target(self, wildcards: Wildcards) -> dict[str, str]:
@@ -719,7 +789,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             if self.create_access:
                 input_files["interval"] = self.base_out.format(**wildcards) + "access.bed"
             if self.compute_avg_target_size:
-                input_files["avg-size"] = self.base_out.format(**wildcards) + "autobin.txt"
+                input_files["avg_size"] = self.base_out.format(**wildcards) + "autobin.txt"
+        else:
+            input_files["interval"] = self.path_baits
+        if self.w_config.static_data_config.get("features", None):
+            input_files["annotate"] = self.w_config.static_data_config.features.path
         return input_files
 
     def _get_args_target(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
@@ -727,30 +801,31 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             args = {
                 "avg-size": self.cfg.target.avg_size,
                 "split": self.cfg.target.split,
-                "interval": self.path_baits,
             }
         else:
             assert self.is_wgs, "Panel not implemented yet"
-            args = dict(input) | {"split": self.cfg.target.split}
-            if args.get("avg-size", None) is not None:
-                args["avg-size"] = self._read_autobin_output(args["avg-size"])
+            args = {"split": self.cfg.target.split}
+            if input.get("avg_size", None) is not None:
+                args["avg-size"] = self._read_autobin_output(input.get("avg_size"))
             elif self.cfg.target.avg_size is not None:
                 args["avg-size"] = self.cfg.target.avg_size
             else:
                 args["avg-size"] = 5000
         if self.w_config.static_data_config.get("features", None):
-            args["annotate"] = self.w_config.static_data_config.features.path
             args["short-names"] = self.cfg.target.short_names
         return args
 
     def _get_input_files_antitarget(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {"target": self.base_out.format(**wildcards) + "target.bed"}
         if self.create_access:
-            input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+            if not self.plain_access:
+                input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+        else:
+            input_files["access"]
         return input_files
 
     def _get_args_antitarget(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+        args = {
             "avg-size": self.cfg.antitarget.avg_size,
             "min-size": self.cfg.antitarget.min_size,
         }
@@ -767,40 +842,43 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "intervals": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.{region}.bed".format(
                 **wildcards
             ),
+            "reference": self.w_config.static_data_config.reference.path,
             "bam": bam,
             "bai": bam + ".bai",
         }
 
     def _get_args_coverage(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        return dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
+        return {
             "min-mapq": self.cfg.coverage.min_mapq,
             "count": self.cfg.coverage.count,
         }
 
     def _get_input_files_create_panel(self, wildcards: Wildcards) -> dict[str, str]:
-        tpl = self.base_out_lib + "target.cnn"
+        tpl = self.base_out_lib + "targetcoverage.cnn"
         targets = [
             tpl.format(mapper=wildcards["mapper"], library_name=x)
             for x in self.normal_libraries.keys()
         ]
         if self.libraryType == LibraryType.WES:
-            tpl = self.base_out_lib + "antitarget.cnn"
+            tpl = self.base_out_lib + "antitargetcoverage.cnn"
             antitargets = [
                 tpl.format(mapper=wildcards["mapper"], library_name=x)
                 for x in self.normal_libraries.keys()
             ]
         else:
             antitargets = []
-        return {"normals": targets + antitargets}
+        return {
+            "reference": self.w_config.static_data_config.reference.path,
+            "normals": targets + antitargets,
+        }
 
     def _get_args_create_panel(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
+        edge = self.cfg.edge if self.cfg.edge is not None else self.is_wes
+        args = {
             "cluster": self.cfg.cluster,
             "no-gc": not self.cfg.gc,
             "no-rmask": not self.cfg.rmask,
-            "no-edge": not self.cfg.get("edge", self.is_wes),
+            "no-edge": not edge,
             "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
         if self.cfg.cluster:
@@ -812,13 +890,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return args
 
     def _get_input_files_sex(self, wildcards: Wildcards) -> dict[str, str]:
-        tpl = self.base_out_lib + "target.cnn"
+        tpl = self.base_out_lib + "targetcoverage.cnn"
         coverages = [
             tpl.format(mapper=wildcards["mapper"], library_name=x)
             for x in self.normal_libraries.keys()
         ]
         if self.is_wes:
-            tpl = self.base_out_lib + "antitarget.cnn"
+            tpl = self.base_out_lib + "antitargetcoverage.cnn"
             coverages += [
                 tpl.format(mapper=wildcards["mapper"], library_name=x)
                 for x in self.normal_libraries.keys()
@@ -826,7 +904,25 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return {"coverages": coverages}
 
     def _get_args_sex(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        return dict(input) | {"diploid-parx-genome": self.cfg.diploid_parx_genome}
+        return {"diploid-parx-genome": self.cfg.diploid_parx_genome}
+
+    def _get_input_files_metrics(self, wildcards: Wildcards) -> dict[str, str]:
+        """Input for metrics report. Using coverage rather than ratios, and no segments"""
+        tpl = self.base_out_lib + "targetcoverage.cnn"
+        coverages = [
+            tpl.format(mapper=wildcards["mapper"], library_name=x)
+            for x in self.normal_libraries.keys()
+        ]
+        if self.is_wes:
+            tpl = self.base_out_lib + "antitargetcoverage.cnn"
+            coverages += [
+                tpl.format(mapper=wildcards["mapper"], library_name=x)
+                for x in self.normal_libraries.keys()
+            ]
+        return {"ratios": coverages}
+
+    def _get_args_metrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        return {"drop-low-coverage": self.cfg.drop_low_coverage}
 
     def _read_autobin_output(self, filename: str) -> int:
         nb = r"([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)"

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py scatter"""
 
+import csv
 import os
-import re
 import sys
 
 # The following is required for being able to import snappy_wrappers modules
@@ -15,9 +15,33 @@ from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
 args = snakemake.params.get("args", {})
 
-if "variants" in args:
+# Fix chromosome name prefix
+if args.get("chromosome", None) is not None:
+    chromosome = args["chromosome"]
+    if chromosome.startswith("chr"):
+        ucsc = chromosome
+        ensembl = chromosome[3:]
+        if ensembl == "M":
+            ensembl = "MT"
+    else:
+        ucsc = f"chr{chromosome}"
+        ensembl = chromosome
+        if ucsc == "chrMT":
+            ucsc = "chrM"
+
+    with open(snakemake.input.segments, "rt") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        for record in reader:
+            if ucsc == record["chromosome"]:
+                args["chromosome"] = ucsc
+                break
+            if ensembl == record["chromosome"]:
+                args["chromosome"] = ensembl
+                break
+
+if snakemake.input.get("variants", None) is not None:
     variants = r"""
-        ---vcf {args[variants]} \
+        ---vcf {snakemake.input.variants} \
         --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
         --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
     """.format(
@@ -31,21 +55,21 @@ else:
 cmd = r"""
 cnvkit.py scatter \
     -o {snakemake.output.plot} \
-    --segment {args[segments]} \
+    --segment {snakemake.input.segments} \
     {chromosome} {gene} {range_list} \
     --width {args[width]} \
     --antitarget-marker {args[antitarget-marker]} --segment-color {args[segment-color]} \
     {by_bin} {trend} --title "{args[title]}" \
     {y_min} {y_max} {fig_size} \
     {variants} \
-    {args[ratios]}
+    {snakemake.input.ratios}
 """.format(
     snakemake=snakemake,
     args=args,
     variants=variants,
     chromosome=f"--chromosome {args['chromosome']}" if args.get("chromosome", None) is not None else "",
     gene=f"--gene {args['gene']}" if args.get("gene", None) is not None else "",
-    range_list=f"--range-list {args['range-list']}" if args.get("range-list", None) is not None else "",
+    range_list=f"--range-list {snakemake.input.range_list}" if snakemake.input.get("range_list", None) is not None else "",
     by_bin="--by-bin" if args.get("by-bin", False) else "",
     trend="--trend" if args.get("trend", False) else "",
     y_min=f"--y-min {args['y-min']}" if args.get("y-min", None) is not None else "",

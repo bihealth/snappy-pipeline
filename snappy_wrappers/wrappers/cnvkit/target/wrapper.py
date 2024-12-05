@@ -22,13 +22,13 @@ cmd = r"""
 cnvkit.py target \
     -o {snakemake.output.target} \
     {avg_size} {split} {annotate} {short_names} \
-    {args[interval]}
+    {snakemake.input.interval}
 """.format(
     snakemake=snakemake,
     args=args,
     avg_size=f"--avg-size {args['avg-size']}" if args.get("avg-size", None) is not None else "",
     split=f"--split" if args.get("split", False) else "",
-    annotate=f"--annotate {args['annotate']}" if args.get("annotate", None) is not None else "",
+    annotate=f"--annotate {snakemake.input.annotate}" if snakemake.input.get("annotate", None) is not None else "",
     short_names="--short-names" if args.get("short-names", False) else "",
 )
 

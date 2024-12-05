@@ -182,8 +182,12 @@ class Call(SnappyModel):
 
     When this parameter is set, the centering method should be left empty.
     """
-    filter: FilterMethod | None = None
-    """Merge segments flagged by the specified filter(s) with the adjacent segment(s)."""
+    filter: list[FilterMethod] | None = None
+    """
+    Merge segments flagged by the specified filter(s) with the adjacent segment(s).
+
+    When ``None``, ``segmetrics`` enabled & ``smooth_bootstrap`` is None, the behaviour is identical to ``batch``: filtering is done using ``ci``.
+    """
 
     @model_validator(mode="after")
     def ensure_center_without_center_at(self) -> Self:
@@ -234,8 +238,8 @@ class PlotScatter(Plot):
     """y-axis upper limit."""
     y_min: float | None = None
     """y-axis lower limit."""
-    fig_size: tuple[float, float] = (6.4, 4.8)
-    """Width and height of the plot in inches."""
+    fig_size: tuple[float, float] = (12.256, 16.192)
+    """Width and height of the plot in centimeters (might depend on the locale)."""
 
     @model_validator(mode="after")
     def ensure_range_list_with_gene(self) -> Self:
@@ -268,8 +272,12 @@ class ReportSegmetrics(Report):
     """Level to estimate confidence and prediction intervals; use with --ci and --pi."""
     bootstrap: int = 100
     """Number of bootstrap iterations to estimate confidence interval; use with --ci."""
-    smooth_bootstrap: bool = False
-    """Apply Gaussian noise to bootstrap samples, a.k.a. smoothed bootstrap, to estimate confidence interval"""
+    smooth_bootstrap: bool = True
+    """
+    Apply Gaussian noise to bootstrap samples, a.k.a. smoothed bootstrap, to estimate confidence interval
+
+    This is _NOT_ the ``cnvkit`` default, but it is automatically set in ``batch`` mode.
+    """
     stats: list[ReportStats] = [
         ReportStats.MEAN,
         ReportStats.MEDIAN,

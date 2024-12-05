@@ -22,15 +22,15 @@ cnvkit.py autobin --method {args[method]} \
     {out_target} {out_antitarget} \
     {access} {target} \
     --bp-per-bin {args[bp-per-bin]} \
-    {args[bams]} \
+    {snakemake.input.bams} \
     > {snakemake.output.result}
 """.format(
     snakemake=snakemake,
     args=args,
     out_target=f"--target-output-bed {snakemake.output.target}" if snakemake.output.get("target", "") != "" else "",
     out_antitarget=f"--antitarget-output-bed {snakemake.output.antitarget}" if snakemake.output.get("antitarget", "") != "" else "",
-    access=f"--access {args['access']}" if args.get("access", None) is not None else "",
-    target=f"--targets {args['target']}" if args.get("target", None) is not None else "",
+    access=f"--access {snakemake.input.access}" if snakemake.input.get("access", None) is not None else "",
+    target=f"--targets {snakemake.input.target}" if snakemake.input.get("target", None) is not None else "",
 )
 
 CnvkitWrapper(snakemake, cmd).run()

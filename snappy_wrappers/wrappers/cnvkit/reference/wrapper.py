@@ -17,13 +17,10 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = snakemake.params.get("args", {})
 
-target = f"--target {args['target']}" if "target" in args else ""
-antitarget = f"--antitarget {args['antitarget']}" if "antitarget" in args else ""
-
 cmd = r"""
 cnvkit.py reference \
     -o {snakemake.output.reference} \
-    --fasta {args[reference]} \
+    --fasta {snakemake.input.reference} \
     {cluster} {min_cluster_size} \
     {sample_sex} {male_reference} {diploid_parx_genome} \
     {no_gc} {no_edge} {no_rmask} \
@@ -31,9 +28,9 @@ cnvkit.py reference \
 """.format(
     snakemake=snakemake,
     args=args,
-    target=target,
-    antitarget=antitarget,
-    normals=" ".join(args["normals"]) if len(args.get("normals", [])) > 0 else "",
+    target=f"--target {snakemake.input.target}" if snakemake.input.get("target", None) is not None else "",
+    antitarget=f"--antitarget {snakemake.input.antitarget}" if snakemake.input.get("antitarget", None) is not None else "",
+    normals=" ".join(snakemake.input.normals) if len(snakemake.input.normals) > 0 else "",
     cluster="--cluster" if args.get("cluster", False) else "",
     male_reference="--male-reference" if args.get("male-reference", False) else "",
     no_gc="--no-gc" if args.get("no-gc", False) else "",

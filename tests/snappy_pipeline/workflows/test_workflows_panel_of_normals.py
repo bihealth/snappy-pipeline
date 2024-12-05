@@ -345,21 +345,43 @@ def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
 # Tests for CnvkitStepPart ------------------------------------------------------------------------
 
 
-def test_cnvkit_step_part_get_args_access(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_args_access()"""
+def test_cnvkit_step_part_get_input_files_ignore(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_ignore()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    actual = panel_of_normals_workflow.get_args("cnvkit", "access")(
-        wildcards,
-        panel_of_normals_workflow.get_input_files("cnvkit", "access")(wildcards),
-    )
-    if actual.get("ignore_chroms", None) is not None:
-        actual["ignore_chroms"].sort()
-    expected = {"reference": "/path/to/ref.fa", "min-gap-size": None, "exclude": [], "ignore_chroms": ["GL*", "MT"]}
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "ignore")(wildcards)
+    expected = {"reference": "/path/to/ref.fa"}
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_autobin(panel_of_normals_workflow):
+def test_cnvkit_step_part_get_args_ignore(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_ignore()"""
+    actual = panel_of_normals_workflow.get_args("cnvkit", "ignore")(None, None)
+    actual["ignore_chroms"].sort()
+    expected = {"ignore_chroms": ["GL*", "MT"]}
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_access(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_access()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "access")(wildcards)
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "exclude": [],
+        "ignore_chroms": "work/bwa.cnvkit/out/bwa.cnvkit.ignored.bed",
+    }
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_access(panel_of_normals_workflow):
     """Tests CnvkitStepPart._get_args_access()"""
+    actual = panel_of_normals_workflow.get_args("cnvkit", "access")(None, None)
+    expected = {"min-gap-size": None}
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_autobin(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_access()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "bams": [
@@ -367,36 +389,43 @@ def test_cnvkit_step_part_get_args_autobin(panel_of_normals_workflow):
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
         ],
         "access": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
-        "method": "wgs",
-        "bp-per-bin": 50000,
     }
-    actual = panel_of_normals_workflow.get_args("cnvkit", "autobin")(
-        wildcards,
-        panel_of_normals_workflow.get_input_files("cnvkit", "autobin")(wildcards),
-    )
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "autobin")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_autobin(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_access()"""
+    expected = {"method": "wgs", "bp-per-bin": 50000}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "autobin")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_target()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
+    expected = {
+        "interval": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
+        "avg_size": "work/bwa.cnvkit/out/bwa.cnvkit.autobin.txt",
+        "annotate": "/path/to/annotations.gtf",
+    }
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
     assert actual == expected
 
 
 def test_cnvkit_step_part_get_args_target(panel_of_normals_workflow):
     """Tests CnvkitStepPart._get_args_target()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
-    expected = {
-        "interval": "work/bwa.cnvkit/out/bwa.cnvkit.access.bed",
-        "avg-size": 2000,
-        "split": True,
-        "annotate": "/path/to/annotations.gtf",
-        "short-names": True,
-
-    }
+    expected = {"avg-size": 2000, "split": True, "short-names": True}
     actual = panel_of_normals_workflow.get_args("cnvkit", "target")(
         wildcards,
-        panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards),
+        panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
     )
     assert actual == expected
 
 
-def test_cnvkit_step_part_get_args_coverage(panel_of_normals_workflow):
-    """Tests CnvkitStepPart._get_args_coverage()"""
+def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_coverage()"""
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -409,25 +438,35 @@ def test_cnvkit_step_part_get_args_coverage(panel_of_normals_workflow):
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "reference": "/path/to/ref.fa",
-        "min-mapq": 0,
-        "count": False,
     }
-    actual = panel_of_normals_workflow.get_args("cnvkit", "coverage")(
-        wildcards,
-        panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards),
-    )
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_coverage(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_coverage()"""
+    expected = {"min-mapq": 0, "count": False}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "coverage")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_reference(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_create_panel()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
+    expected = {
+        "normals": [
+            "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+            "work/bwa.cnvkit.P002-N1-DNA1-WGS1/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
+        ],
+        "reference": "/path/to/ref.fa",
+    }
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
     assert actual == expected
 
 
 def test_cnvkit_step_part_get_args_reference(panel_of_normals_workflow):
     """Tests CnvkitStepPart._get_args_create_panel()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
-        "normals": [
-            "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.target.cnn",
-            "work/bwa.cnvkit.P002-N1-DNA1-WGS1/out/bwa.cnvkit.P002-N1-DNA1-WGS1.target.cnn",
-        ],
-        "reference": "/path/to/ref.fa",
         "cluster": False,
         "no-gc": False,
         "no-edge": True,
@@ -435,23 +474,42 @@ def test_cnvkit_step_part_get_args_reference(panel_of_normals_workflow):
         "male-reference": False,
         "diploid-parx-genome": "GRCh38",
     }
-    actual = panel_of_normals_workflow.get_args("cnvkit", "create_panel")(
-        wildcards,
-        panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards),
-    )
+    actual = panel_of_normals_workflow.get_args("cnvkit", "create_panel")(None, None)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_input_files_sex(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_input_files_sex()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa"})
+    expected = {
+        "coverages": [
+            "work/bwa.cnvkit.P001-N1-DNA1-WGS1/out/bwa.cnvkit.P001-N1-DNA1-WGS1.targetcoverage.cnn",
+            "work/bwa.cnvkit.P002-N1-DNA1-WGS1/out/bwa.cnvkit.P002-N1-DNA1-WGS1.targetcoverage.cnn",
+        ],
+    }
+    actual = panel_of_normals_workflow.get_input_files("cnvkit", "sex")(wildcards)
+    assert actual == expected
+
+
+def test_cnvkit_step_part_get_args_sex(panel_of_normals_workflow):
+    """Tests CnvkitStepPart._get_args_sex()"""
+    expected = {"diploid-parx-genome": "GRCh38"}
+    actual = panel_of_normals_workflow.get_args("cnvkit", "sex")(None, None)
     assert actual == expected
 
 
 def test_cnvkit_step_parts_get_output_files(panel_of_normals_workflow):
     """Tests CnvkitStepPart.get_output_files() for all actions"""
     actions = {
+        "ignore": {"ignore_chroms": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.ignored.bed"},
         "access": {"access": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.access.bed"},
         "autobin": {"result": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.autobin.txt"},
         "target": {"target": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed"},
         "antitarget": {"antitarget": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed"},
-        "coverage": {"coverage": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{region,(target|antitarget)}.cnn"},
+        "coverage": {"coverage": "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{region,(target|antitarget)}coverage.cnn"},
         "create_panel": {"reference": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.panel_of_normals.cnn"},
-        "sex": {"sex": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.sex.tsv"},
+        "sex": {"sex": "work/{mapper}.cnvkit/report/{mapper}.cnvkit.sex.tsv"},
+        "metrics": {"metrics": "work/{mapper}.cnvkit/report/{mapper}.cnvkit.metrics.tsv"},
     }
     for action, result in actions.items():
         expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
@@ -462,23 +520,13 @@ def test_cnvkit_step_parts_get_output_files(panel_of_normals_workflow):
 def test_cnvkit_step_parts_get_log_file(panel_of_normals_workflow):
     """Tests CnvkitStepPart.get_log_file() for all actions"""
     exts = (("conda_info", "conda_info.txt"), ("conda_list", "conda_list.txt"), ("log", "log"), ("sh", "sh"))
-    actions = ("autobin", "target", "create_panel", "sex")
+    actions = ("ignore", "access", "autobin", "target", "create_panel", "sex", "metrics")
     base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit"
     for action in actions:
         result = {k: base_log + f".{action}.{v}" for k, v in exts} 
         expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
         actual = panel_of_normals_workflow.get_log_file("cnvkit", action)
         assert actual == expected
-
-
-def test_cnvkit_step_parts_get_log_file_access(panel_of_normals_workflow):
-    """Tests CnvkitStepPart.get_log_file() for access"""
-    exts = (("conda_info", "conda_info.txt"), ("conda_list", "conda_list.txt"), ("log", "log"), ("sh", "sh"))
-    base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit.access"
-    result = {k: base_log + f".{v}" for k, v in exts} 
-    expected = result | {k + "_md5": v + ".md5" for k, v in result.items()}
-    actual = panel_of_normals_workflow.get_log_file("cnvkit", "access")
-    assert actual == expected
 
 
 def test_cnvkit_step_parts_get_log_file_coverage(panel_of_normals_workflow):
@@ -525,12 +573,20 @@ def test_panel_of_normals_workflow(panel_of_normals_workflow):
     expected += [
         tpl.format(mapper=mapper, substep=substep, ext=ext, chksum=chksum)
         for chksum in ("", ".md5")
-        for (substep, ext) in (("panel_of_normals", "cnn"), ("sex", "tsv"), ("target", "bed"))
+        for (substep, ext) in (("panel_of_normals", "cnn"), ("target", "bed"))
+        for mapper in ("bwa",)
+    ]
+    # Add report files
+    tpl = "output/{mapper}.cnvkit/report/{mapper}.cnvkit.{substep}.{ext}{chksum}"
+    expected += [
+        tpl.format(mapper=mapper, substep=substep, ext=ext, chksum=chksum)
+        for chksum in ("", ".md5")
+        for (substep, ext) in (("metrics", "tsv"), ("sex", "tsv"))
         for mapper in ("bwa",)
     ]
     # add log files
     tpl = "output/{mapper}.cnvkit/log/{mapper}.cnvkit.{substep}"
-    for substep in ("create_panel", "sex", "target"):
+    for substep in ("create_panel", "metrics", "sex", "target"):
         for mapper in ("bwa",):
             base_out = tpl.format(mapper=mapper, substep=substep)
             expected += get_expected_log_files_dict(base_out=base_out).values()
