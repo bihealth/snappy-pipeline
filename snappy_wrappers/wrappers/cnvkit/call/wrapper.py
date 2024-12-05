@@ -2,7 +2,6 @@
 """Wrapper vor cnvkit.py call"""
 
 import os
-import re
 import sys
 
 # The following is required for being able to import snappy_wrappers modules
@@ -15,12 +14,9 @@ from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
 args = snakemake.params.get("args", {})
 
-PATTERN = re.compile("^(Purity|Ploidy): +([+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([EeDd][+-]?[0-9]+)?) *$")
-
-
-if "variants" in args:
+if snakemake.input.get("variants", None) is not None:
     variants = r"""
-        ---vcf {args[variants]} \
+        ---vcf {snakemake.input.variants} \
         --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
         --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
     """.format(
@@ -39,7 +35,7 @@ cnvkit.py call \
     {center} {center_at} {drop_low_coverage} {sample_sex} {male_reference} {diploid_parx_genome} \
     {purity} {ploidy} \
     {variants} \
-    {args[segments]}
+    {snakemake.input.segments}
 """.format(
     snakemake=snakemake,
     args=args,
@@ -47,7 +43,7 @@ cnvkit.py call \
     purity=f"--purity {args['purity']}" if args.get("purity", None) is not None else "",
     ploidy=f"--ploidy {args['ploidy']}" if args.get("ploidy", None) is not None else "",
     thresholds="--thresholds={}".format(",".join(map(str, args["thresholds"]))) if len(args.get("thresholds", [])) > 0 else "",
-    filter=f"--filter {args['filter']}" if args.get("filter", None) is not None else "",
+    filter="--filter {}".format(" ".join(args["filter"])) if len(args.get("filter", [])) > 0 else "",
     center=f"--center {args['center']}" if args.get("center", None) is not None else "",
     center_at=f"--center-at {args['center-at']}" if args.get("center-at", None)  is not None else "",
     drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",

@@ -17,11 +17,11 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py genemetrics \
     -o {snakemake.output.report} \
-    --segment {args[segments]} \
+    --segment {snakemake.input.segments} \
     --threshold {args[threshold]} --min-probes {args[min-probes]} \
     {drop_low_coverage} {male_reference} {sample_sex} {diploid_parx_genome} \
     {stats} \
-    {args[ratios]}
+    {snakemake.input.ratios}
 """.format(
     snakemake=snakemake,
     args=args,

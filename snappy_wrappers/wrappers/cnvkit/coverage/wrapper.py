@@ -20,9 +20,9 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py coverage --processes {snakemake.resources._cores} \
     -o {snakemake.output.coverage} \
-    --fasta {args[reference]} \
+    --fasta {snakemake.input.reference} \
     --min-mapq {args[min-mapq]} {count} \
-    {args[bam]} {args[intervals]}
+    {snakemake.input.bam} {snakemake.input.intervals}
 """.format(
     snakemake=snakemake,
     args=args,

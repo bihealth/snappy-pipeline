@@ -40,8 +40,19 @@ class CnvKit(CnvkitGeneric):
     path_access: str | None = None
     """Overrides access when not None"""
 
-    ignore_chroms: list[str] = []
-    """Additional contigs to ignore"""
+    ignore_chroms: Annotated[
+        list[str],
+        Field(
+            examples=[
+                "chrM",
+                "MT",
+                "*_random",
+                "chrUn_*",
+                "GL*",
+            ]
+        ),
+    ] = []
+    """Additional contigs to ignore, specific to the tool"""
 
 
 class GenomeName(enum.StrEnum):
@@ -101,7 +112,6 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
                 "NC_007605",
                 "hs37d5",
                 "chrEBV",
-                "*_decoy",
                 "HLA-*",
                 "GL000220.*",
                 "chrEBV",

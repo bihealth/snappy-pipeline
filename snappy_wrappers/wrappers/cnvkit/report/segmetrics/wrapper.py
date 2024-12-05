@@ -17,11 +17,11 @@ args = snakemake.params.get("args", {})
 cmd = r"""
 cnvkit.py segmetrics \
     -o {snakemake.output.report} \
-    --segment {args[segments]} \
+    --segment {snakemake.input.segments} \
     --alpha {args[alpha]} --bootstrap {args[bootstrap]} {smooth_bootstrap} \
     {drop_low_coverage} \
     {stats} \
-    {args[ratios]}
+    {snakemake.input.ratios}
 """.format(
     snakemake=snakemake,
     args=args,

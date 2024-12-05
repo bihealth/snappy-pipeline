@@ -64,7 +64,7 @@ There are 4 main outputs:
 - The ratios (extension ``.cnr``) contains the ratio of expected coverage between tumor and the reference
   in each bin, or logarithmic scale.
   This can be used to examine the data or experiment with different segmentation algorithms.
-- The segments (extension ``.segments.cns``) contains the output of the segmentation. A single log2 ratio value is
+- The segments (extension ``.cns``) contains the output of the segmentation. A single log2 ratio value is
   attributed to each segment.
   The segmentation covers most of the part of the genome accessible to mapping.
 - The calls (extension ``calls.cns``) contains only the non-diploid segments, called after thresholding.
@@ -95,16 +95,24 @@ Description of the step for ``cnvkit`` tool
 Overview
 --------
 
-``cnvkit`` was designed to call CNV on whole exome data. It has the concept of _targets_ (the regions enriched by the exome kit),
+``cnvkit`` is a set of tools originally designed to call somatic copy number alterations from exome data.
+Its design is modular, which enables its use for whole genome and amplicon data.
+
+Because it was designed primarily for whole exome data. It has the concept of _targets_ (the regions enriched by the exome kit),
 and the _antitargets_ (those regions accessible for CNV calling, but outside of enrichment).
 The coverage of _targets_ and _antitargets_ are expected to be very different,
 but there is still information to be gained in the _antitarget_ regions,
 albeit at a much lower resolution than for _target_ regions.
 
-``cnvkit`` was later used with some success on whole genome data.
-WGS data was defined as _target_ regions covering the whole genome, with empty _antitarget_ regions.
+For WGS data, the _target_ regions generally cover the whole accessible genome, with empty _antitarget_ regions.
 
 .. tip:: For Agilent kits, the ``cnvkit`` authors recommend to use baits as targets. Baits are in the ``*_Covered.bed`` file.
+
+.. note::
+
+    ``cnvkit`` provides a tool to encapsulate common practice workflows (``batch``), depending on the type of data, and on the availability of optional inputs.
+    The actual workflow to generate this reference is slightly different between exome and whole genome data.
+    The current implementation recapitulates the common practice, while still dispaching computations on multiple cluster nodes.
 
 ---------------------------------
 Regions accessible to CNV calling
@@ -121,6 +129,16 @@ There are multiple ways to get this information:
    In this case, the pipeline will create an accessible regions file from the whole genome and the excluded parts.
 3. Otherwise, the pipeline creates the accessible regions file from the reference genome sequence, by removing
    only parts masked with ``N``.
+
+.. note::
+   Some short contigs (the mitochondrion, unplaced & unlocalized contigs, decoys, viral sequences, ...) are too short
+   for a reliable estimation of copy number changes.
+   ``snappy`` provides a generic way to ignore those contigs during processing (post-mapping), through the ``ignore_chroms`` configuration option.
+   This parameter is generally set at the _step_ level, typically ignoring decoys, HLA variants and viral sequences.
+   This is suitable for small variant calling (calling variants for genes on unplaced/unlocalized contigs is fine),
+   but not for CNA calling.
+   Therefore, ``ignore_chroms`` can also be set at the _tool_ level in the configuration. In that case, contigs from both levels will be ignored.
+   External panels (``cohort`` or ``file``) may alreay have been generated on a restricted set of contigs.
 
 -----------------------
 The reference coverage
@@ -143,6 +161,11 @@ The pipeline offers 4 different ways to built this reference:
    (for example experimental designs with treated cell lines).
 4. ``flat``: a _flat_ reference is computed, which discards locus-specific effects.
    It should only be used when there are no normals nor suitable panel, or for benchmarking purposes.
+
+.. warning::
+
+   When selecting ``cohort`` or ``file`` panels, remember that those might have been generated on a subset of contigs,
+   if ``ignore_chroms`` was used during the panel creation
 
 ------------------
 WGS-specific notes
@@ -234,6 +257,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     #: Class available actions
     actions = (
+        "ignore",
         "access",
         "autobin",
         "target",
@@ -401,6 +425,8 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
         output_files = {}
         match action:
+            case "ignore":
+                output_files = {"ignore_chroms": self.base_out + "ignored.bed"}
             case "access":
                 output_files = {"access": self.base_out + "access.bed"}
             case "autobin":
@@ -413,7 +439,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             case "antitarget":
                 output_files = {"antitarget": self.base_out + "antitarget.bed"}
             case "coverage":
-                output_files = {"coverage": self.base_out_lib + "{region,(target|antitarget)}.cnn"}
+                output_files = {
+                    "coverage": self.base_out_lib + "{region,(target|antitarget)}coverage.cnn"
+                }
             case "reference":
                 if self.paired:
                     output_files = {"reference": self.base_out_lib + "reference.cnn"}
@@ -423,17 +451,17 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 output_files = {"ratios": self.base_out_lib + "cnr"}
             case "segment":
                 output_files = {
-                    "segments": self.base_out_lib + "segments.cns",
+                    "segments": self.base_out_lib + "cns",
                     "dataframe": self.base_out_lib + "rds",
                 }
             case "call":
-                output_files = {"calls": self.base_out_lib + "calls.cns"}
+                output_files = {"calls": self.base_out_lib + "call.cns"}
             case "bintest":
                 output_files = {"tests": self.base_out_lib + "bintest.cns"}
             case "metrics":
                 output_files = {"report": base_report_lib + "metrics.tsv"}
             case "segmetrics":
-                output_files = {"report": base_report_lib + "segmetrics.tsv"}
+                output_files = {"report": base_report_lib + "segmetrics.cns"}
             case "genemetrics":
                 output_files = {"report": base_report_lib + "genemetrics.tsv"}
             case "scatter":
@@ -454,7 +482,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         base_log = "work/{mapper}.cnvkit/log/{mapper}.cnvkit."
         base_log_lib = "work/{mapper}.cnvkit.{library_name}/log/{mapper}.cnvkit.{library_name}."
 
-        if action in ("access", "antitarget"):
+        if action in ("ignore", "access", "antitarget"):
             tpl = base_log + action
         elif action in (
             "autobin",
@@ -512,7 +540,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
         result_files = []
 
-        for suffix in ("cnr", "segments.cns", "calls.cns", "bintest.cns"):
+        for suffix in ("cnr", "cns", "call.cns", "bintest.cns"):
             result_files.append(base_out_lib + suffix)
 
         actions_to_log = ("fix", "segment", "call", "bintest")
@@ -525,9 +553,9 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             ]
 
         # Logs of metrics not linked
-        for report in ("metrics", "segmetrics", "genemetrics"):
+        for report, ext in (("metrics", "tsv"), ("segmetrics", "cns"), ("genemetrics", "tsv")):
             if self.cfg.get(report).get("enabled"):
-                result_files.append(base_report_lib + report + ".tsv")
+                result_files.append(base_report_lib + report + "." + ext)
 
         # Logs of plots not links
         # TODO: Mouse date: only chromosomes 1 to 19
@@ -546,11 +574,27 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         result_files += [x + ".md5" for x in result_files]
         return result_files
 
+    # ----- Ignore (generates the bed file of ignored contigs to exclude in access) ---------------
+
+    def _get_input_files_ignore(self, wildcards: Wildcards) -> dict[str, str]:
+        assert self.create_access, "No need for ignored chroms, access already exists"
+        return {"reference": self.w_config.static_data_config.reference.path}
+
+    def _get_args_ignore(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        assert self.create_access, "No need for ignored chroms, access already exists"
+        return {"ignore_chroms": list(self.ignored)}
+
     # ----- Access --------------------------------------------------------------------------------
 
     def _get_input_files_access(self, wildcards: Wildcards) -> dict[str, str]:
-        assert self.create_access, "Should not build access, already available"
-        return {}
+        assert self.create_access, "Access shouldn't be created, already available"
+        input_files = {
+            "reference": self.w_config.static_data_config.reference.path,
+            "exclude": self.cfg.access.exclude,
+        }
+        if self.ignored:
+            input_files["ignore_chroms"] = self.base_out.format(**wildcards) + "ignored.bed"
+        return input_files
 
     def _get_args_access(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         """
@@ -563,13 +607,8 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         This happens when the average target size is set in the config in WGS,
         or for WES.
         """
-        assert self.create_access, "Should not build access, already available"
-        return dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
-            "min-gap-size": self.cfg.access.min_gap_size,
-            "exclude": self.cfg.access.exclude,
-            "ignore_chroms": list(self.ignored),
-        }
+        assert self.create_access, "Access shouldn't be created, already available"
+        return {"min-gap-size": self.cfg.access.min_gap_size}
 
     # ----- Autobin (never used directly, only to compute target size in WGS settings) ------------
 
@@ -589,19 +628,19 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
             else:
                 input_files["target"] = self.base_out.format(**wildcards) + "access.bed"
+        else:
+            input_files["target"] = self.cfg.path_access
         return input_files
 
     def _get_args_autobin(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         assert (
             self.compute_avg_target_size
         ), "Trying to estimate average target size for non-WGS samples"
-        args = dict(input) | {"bp-per-bin": 50000}
+        args = {"bp-per-bin": 50000}
         if self.plain_access:
             args["method"] = "wgs"
         else:
             args["method"] = "amplicon"
-            if "target" not in args:
-                args["target"] = self.cfg.path_access
         return args
 
     # ----- Target --------------------------------------------------------------------------------
@@ -623,7 +662,11 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             if self.create_access:
                 input_files["interval"] = self.base_out.format(**wildcards) + "access.bed"
             if self.compute_avg_target_size:
-                input_files["avg-size"] = self.base_out_lib.format(**wildcards) + "autobin.txt"
+                input_files["avg_size"] = self.base_out_lib.format(**wildcards) + "autobin.txt"
+        else:
+            input_files["interval"] = self.path_baits
+        if self.w_config.static_data_config.get("features", None):
+            input_files["annotate"] = self.w_config.static_data_config.features.path
         return input_files
 
     def _get_args_target(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
@@ -632,19 +675,17 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
             args = {
                 "avg-size": self.cfg.target.avg_size,
                 "split": self.cfg.target.split,
-                "interval": self.path_baits,
             }
         else:
             assert self.is_wgs, "Panel not implemented yet"
-            args = dict(input) | {"split": self.cfg.target.split}
-            if args.get("avg-size", None) is not None:
-                args["avg-size"] = self._read_autobin_output(args["avg-size"])
+            args = {"split": self.cfg.target.split}
+            if input.get("avg_size", None) is not None:
+                args["avg-size"] = self._read_autobin_output(input.get("avg_size"))
             elif self.cfg.target.avg_size is not None:
                 args["avg-size"] = self.cfg.target.avg_size
             else:
                 args["avg-size"] = 5000
         if self.w_config.static_data_config.get("features", None):
-            args["annotate"] = self.w_config.static_data_config.features.path
             args["short-names"] = self.cfg.target.short_names
         return args
 
@@ -653,16 +694,17 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def _get_input_files_antitarget(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {"target": self.base_out.format(**wildcards) + "target.bed"}
         if self.create_access:
-            input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+            if not self.plain_access:
+                input_files["access"] = self.base_out.format(**wildcards) + "access.bed"
+        else:
+            input_files["access"] = self.cfg.path_access
         return input_files
 
     def _get_args_antitarget(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+        args = {
             "avg-size": self.cfg.antitarget.avg_size,
             "min-size": self.cfg.antitarget.min_size,
         }
-        if "access" not in args:
-            args["access"] = self.cfg.path_access
         return args
 
     # ----- Coverage ------------------------------------------------------------------------------
@@ -682,6 +724,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
         input_files = {
+            "reference": self.w_config.static_data_config.reference.path,
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
         }
@@ -706,32 +749,30 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 **wildcards
             )
             input_files["intervals"] = panel_of_normals(base_path)
+        else:
+            intervals = self.cfg.panel_of_normals.get("path_{region}".format(**wildcards), "")
+            assert intervals != "", "Missing path to {region}".format(**wildcards)
+            input_files["intervals"] = intervals
 
         return input_files
 
     def _get_args_coverage(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
+        return {
             "min-mapq": self.cfg.coverage.min_mapq,
             "count": self.cfg.coverage.count,
         }
-        if "intervals" not in args:
-            intervals = self.cfg.panel_of_normals.get("path_{region}".format(**wildcards), "")
-            assert intervals != "", "Missing path to {region}".format(**wildcards)
-            args["intervals"] = intervals
-        return args
 
     # ----- Reference (flat or pairwise) ----------------------------------------------------------
 
     def _get_input_files_reference(self, wildcards: Wildcards) -> dict[str, str]:
         """Builds reference from the paired normal, or flat prior in absence of normal"""
         assert self.build_ref, "Should not build reference"
-        input_files = {}
+        input_files = {"reference": self.w_config.static_data_config.reference.path}
         if self.paired:
-            input_files["normals"] = [self.base_out_lib.format(**wildcards) + "target.cnn"]
+            input_files["normals"] = [self.base_out_lib.format(**wildcards) + "targetcoverage.cnn"]
             if self.is_wes:
                 input_files["normals"].append(
-                    self.base_out_lib.format(**wildcards) + "antitarget.cnn"
+                    self.base_out_lib.format(**wildcards) + "antitargetcoverage.cnn"
                 )
         elif self.pon_source == PanelOfNormalsOrigin.FLAT:
             input_files["target"] = self.base_out.format(**wildcards) + "target.bed"
@@ -741,12 +782,12 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     def _get_args_reference(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         assert self.build_ref, "Should not build reference"
-        args = dict(input) | {
-            "reference": self.w_config.static_data_config.reference.path,
+        edge = self.cfg.edge if self.cfg.edge is not None else self.is_wes
+        args = {
             "cluster": self.cfg.cluster,
             "no-gc": not self.cfg.gc,
             "no-rmask": not self.cfg.rmask,
-            "no-edge": not self.cfg.get("edge", self.is_wes),
+            "no-edge": not edge,
             "diploid-parx-genome": self.cfg.diploid_parx_genome,
         }
         if self.cfg.cluster:
@@ -766,9 +807,11 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     def _get_input_files_fix(self, wildcards: Wildcards) -> dict[str, str]:
         # Coverage on targets & optionally on antitargets
-        input_files = {"target": self.base_out_lib.format(**wildcards) + "target.cnn"}
+        input_files = {"target": self.base_out_lib.format(**wildcards) + "targetcoverage.cnn"}
         if self.is_wes:
-            input_files["antitarget"] = self.base_out_lib.format(**wildcards) + "antitarget.cnn"
+            input_files["antitarget"] = (
+                self.base_out_lib.format(**wildcards) + "antitargetcoverage.cnn"
+            )
         if self.paired:
             tpl = "{mapper}.cnvkit.{normal_library}".format(
                 mapper=wildcards["mapper"],
@@ -783,31 +826,31 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 **wildcards
             )
             input_files["reference"] = panel_of_normals(base_path)
+        else:
+            input_files["reference"] = self.cfg.panel_of_normals.path_panel_of_normals
         return input_files
 
     def _get_args_fix(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+        edge = self.cfg.edge if self.cfg.edge is not None else self.is_wes
+        return {
             "cluster": self.cfg.cluster,
             "no-gc": not self.cfg.gc,
             "no-rmask": not self.cfg.rmask,
-            "no-edge": not self.cfg.get("edge", self.is_wes),
+            "no-edge": not edge,
             "diploid-parx-genome": self.cfg.diploid_parx_genome,
+            "sample-id": wildcards.library_name,
         }
-        args["sample-id"] = wildcards.library_name
-        if "reference" not in args:
-            args["reference"] = self.cfg.panel_of_normals.path_panel_of_normals
-        return args
 
     # ----- Variant-related convenience functions -------------------------------------------------
 
-    def _variants_from_cohort_input(self) -> str:
+    def _variants_from_cohort_input(self, wildcards: Wildcards) -> str:
         variants = self.parent.sub_workflows["somatic_variant_calling_cnvkit"]
         tpl = f"{{mapper}}.{self.cfg.somatic_variant_calling.tool}.{{library_name}}"
         base_path = os.path.join("output", tpl, "out", tpl + ".vcf.gz")
-        return variants(base_path)
+        return variants(base_path).format(**wildcards)
 
-    def _variants_args(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+    def _variants_args(self, wildcards: Wildcards) -> dict[str, str]:
+        args = {
             "min-variant-depth": self.cfg.somatic_variant_calling.min_variant_depth,
             "sample-id": wildcards.library_name,
             "normal-id": self.parent.matched_normal[wildcards.library_name],
@@ -822,13 +865,18 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         # Coverage
         input_files = {"ratios": self.base_out_lib.format(**wildcards) + "cnr"}
         # Segmentation using SNVs from cohort
-        if self.variants_from_cohort:
-            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
+        if self.cfg.somatic_variant_calling.enabled:
+            if self.variants_from_cohort:
+                input_files["variants"] = self._variants_from_cohort_input(wildcards)
+            else:
+                input_files["variants"] = (
+                    self.cfg.somatic_variant_calling.path_somatic_variant_calling
+                )
         return input_files
 
     def _get_args_segment(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         # Segmentation parameters
-        args = dict(input) | {
+        args = {
             "method": self.cfg.segment.method,
             "threshold": self.cfg.segment.threshold,
             "drop-outliers": self.cfg.segment.drop_outliers,
@@ -837,19 +885,26 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         if self.cfg.segment.method == CnvkitSegmentationMethod.CBS:
             args["smooth-cbs"] = self.cfg.segment.smooth_cbs
         if self.cfg.somatic_variant_calling.enabled:
-            args |= self._variants_args(wildcards, input)
-            if "variants" not in args:
-                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
+            args |= self._variants_args(wildcards)
         return args
 
     # ----- Call ----------------------------------------------------------------------------------
 
     def _get_input_files_call(self, wildcards: Wildcards) -> dict[str, str]:
         # Segmentation
-        input_files = {"segments": self.base_out_lib.format(**wildcards) + "segments.cns"}
+        if self.cfg.segmetrics.enabled:
+            tpl = "{mapper}.cnvkit.{library_name}".format(**wildcards)
+            input_files = {"segments": os.path.join("work", tpl, "report", tpl) + ".segmetrics.cns"}
+        else:
+            input_files = {"segments": self.base_out_lib.format(**wildcards) + "cns"}
         # Segmentation using SNVs from cohort
-        if self.variants_from_cohort:
-            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
+        if self.cfg.somatic_variant_calling.enabled:
+            if self.variants_from_cohort:
+                input_files["variants"] = self._variants_from_cohort_input(wildcards)
+            else:
+                input_files["variants"] = (
+                    self.cfg.somatic_variant_calling.path_somatic_variant_calling
+                )
         # Purity from the tool
         if (
             self.cfg.somatic_purity_ploidy_estimate.enabled
@@ -863,7 +918,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     def _get_args_call(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         # Call parameters
-        args = dict(input) | {
+        args = {
             "method": self.cfg.call.method,
             "thresholds": self.cfg.call.thresholds,
             "drop-low-coverage": self.cfg.drop_low_coverage,
@@ -875,10 +930,10 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         else:
             if self.cfg.call.center is not None:
                 args["center"] = self.cfg.call.center
+        if self.cfg.call.filter is None:
+            args["filter"] = ["ci"]
         if self.cfg.somatic_variant_calling.enabled:
-            args |= self._variants_args(wildcards, input)
-            if "variants" not in args:
-                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
+            args |= self._variants_args(wildcards)
         # Sample sex if known, otherwise guessed by the tool
         sample_sex = self._get_sample_sex(wildcards.library_name)
         if sample_sex is not None:
@@ -887,8 +942,8 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
                 args["male-reference"] = True
         # If requested, purity from samplesheet or from default
         if self.cfg.somatic_purity_ploidy_estimate.enabled:
-            if args.get("purity_file", None) is not None:
-                (purity, ploidy) = self._read_purity_ploidy_output(args["purity_file"])
+            if input.get("purity_file", None) is not None:
+                (purity, ploidy) = self._read_purity_ploidy_output(input.get("purity_file"))
             elif self.cfg.somatic_purity_ploidy_estimate.source == PurityOrigin.SAMPLESHEET:
                 purity = self.tumors[wildcards.library_name].purity
                 ploidy = self.tumors[wildcards.library_name].ploidy
@@ -904,11 +959,11 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def _get_input_files_bintest(self, wildcards: Wildcards) -> dict[str, str]:
         return {
             "ratios": self.base_out_lib.format(**wildcards) + "cnr",
-            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+            "segments": self.base_out_lib.format(**wildcards) + "cns",
         }
 
     def _get_args_bintest(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        return dict(input) | {
+        return {
             "alpha": self.cfg.bintest.alpha,
             "target": self.cfg.bintest.target,
         }
@@ -918,14 +973,19 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def _get_input_files_scatter(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {
             "ratios": self.base_out_lib.format(**wildcards) + "cnr",
-            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+            "segments": self.base_out_lib.format(**wildcards) + "cns",
         }
-        if self.variants_from_cohort:
-            input_files["variants"] = self._variants_from_cohort_input().format(**wildcards)
+        if self.cfg.somatic_variant_calling.enabled:
+            if self.variants_from_cohort:
+                input_files["variants"] = self._variants_from_cohort_input(wildcards)
+            else:
+                input_files["variants"] = (
+                    self.cfg.somatic_variant_calling.path_somatic_variant_calling
+                )
         return input_files
 
     def _get_args_scatter(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+        args = {
             "antitarget-marker": self.cfg.scatter.antitarget_marker,
             "by-bin": self.cfg.scatter.by_bin,
             "segment-color": self.cfg.scatter.segment_color,
@@ -940,9 +1000,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         if wildcards["contig_name"] != "all":
             args["chromosome"] = wildcards["contig_name"]
         if self.cfg.somatic_variant_calling.enabled:
-            args |= self._variants_args(wildcards, input)
-            if "variants" not in args:
-                args["variants"] = self.cfg.somatic_variant_calling.path_somatic_variant_calling
+            args |= self._variants_args(wildcards)
         args["title"] = f"{wildcards['library_name']} - {wildcards['contig_name']}"
         return args
 
@@ -950,21 +1008,21 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
 
     def _get_input_files_metrics(self, wildcards: Wildcards) -> dict[str, str]:
         return {
-            "ratios": self.base_out_lib.format(**wildcards) + "cnr",
-            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+            "ratios": [self.base_out_lib.format(**wildcards) + "cnr"],
+            "segments": [self.base_out_lib.format(**wildcards) + "cns"],
         }
 
     def _get_args_metrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        return dict(input) | {"drop-low-coverage": self.cfg.drop_low_coverage}
+        return {"drop-low-coverage": self.cfg.drop_low_coverage}
 
     def _get_input_files_segmetrics(self, wildcards: Wildcards) -> dict[str, str]:
         return {
             "ratios": self.base_out_lib.format(**wildcards) + "cnr",
-            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+            "segments": self.base_out_lib.format(**wildcards) + "cns",
         }
 
     def _get_args_segmetrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        return dict(input) | {
+        return {
             "drop-low-coverage": self.cfg.drop_low_coverage,
             "alpha": self.cfg.segmetrics.alpha,
             "bootstrap": self.cfg.segmetrics.bootstrap,
@@ -975,11 +1033,11 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def _get_input_files_genemetrics(self, wildcards: Wildcards) -> dict[str, str]:
         return {
             "ratios": self.base_out_lib.format(**wildcards) + "cnr",
-            "segments": self.base_out_lib.format(**wildcards) + "segments.cns",
+            "segments": self.base_out_lib.format(**wildcards) + "cns",
         }
 
     def _get_args_genemetrics(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
-        args = dict(input) | {
+        args = {
             "drop-low-coverage": self.cfg.drop_low_coverage,
             "male-reference": self.cfg.male_reference,
             "threshold": self.cfg.genemetrics.threshold,
@@ -1001,7 +1059,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
     def _read_autobin_output(self, filename: str) -> int:
         nb = r"([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)"
         pattern = re.compile("^Target:[ \t]+" + nb + "[ \t]+" + nb + "$")
-        with open(filename) as f:
+        with open(filename, "rt") as f:
             for line in f:
                 m = pattern.match(line)
                 if m:
@@ -1012,7 +1070,7 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         # TODO: Tool-dependent parsing of purity/ploidy file
         nb = r"([+-]?(\d+(\.\d*)?|\.\d+)([EeDd][+-]?[0-9]+)?)"
         pattern = re.compile("^Purity/ploidy:[ \t]+" + nb + "[ \t]+" + nb + "$")
-        with open(filename) as f:
+        with open(filename, "rt") as f:
             for line in f:
                 m = pattern.match(line)
                 if m:

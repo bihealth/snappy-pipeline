@@ -104,7 +104,27 @@ rule panel_of_normals_mutect2_create_panel:
 # Write out the normals-only results for the normals --------------------------
 
 
+rule panel_of_normals_cnvkit_ignore:
+    input:
+	    unpack(wf.get_input_files("cnvkit", "ignore")),
+    output:
+        **wf.get_output_files("cnvkit", "ignore"),
+    threads: wf.get_resource("cnvkit", "ignore", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "ignore", "time"),
+        memory=wf.get_resource("cnvkit", "ignore", "memory"),
+        partition=wf.get_resource("cnvkit", "ignore", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "ignore"),
+    params:
+        **{"args": wf.get_args("cnvkit", "ignore")},
+    wrapper:
+        wf.wrapper_path("cnvkit/ignore")
+
+
 rule panel_of_normals_cnvkit_access:
+    input:
+	    unpack(wf.get_input_files("cnvkit", "access")),
     output:
         **wf.get_output_files("cnvkit", "access"),
     threads: wf.get_resource("cnvkit", "access", "threads")
@@ -229,6 +249,24 @@ rule panel_of_normals_cnvkit_sex:
         **{"args": wf.get_args("cnvkit", "sex")},
     wrapper:
         wf.wrapper_path("cnvkit/sex")
+
+
+rule panel_of_normals_cnvkit_metrics:
+    input:
+        unpack(wf.get_input_files("cnvkit", "metrics")),
+    output:
+        **wf.get_output_files("cnvkit", "metrics"),
+    threads: wf.get_resource("cnvkit", "metrics", "threads")
+    resources:
+        time=wf.get_resource("cnvkit", "metrics", "time"),
+        memory=wf.get_resource("cnvkit", "metrics", "memory"),
+        partition=wf.get_resource("cnvkit", "metrics", "partition"),
+    log:
+        **wf.get_log_file("cnvkit", "metrics"),
+    params:
+        **{"args": wf.get_args("cnvkit", "metrics")},
+    wrapper:
+        wf.wrapper_path("cnvkit/report/metrics")
 
 
 # Panel of normals (PureCN) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

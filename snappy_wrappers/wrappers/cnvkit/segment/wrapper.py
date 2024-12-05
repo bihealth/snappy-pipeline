@@ -14,11 +14,11 @@ from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
 args = snakemake.params.get("args", {})
 
-if "variants" in args:
+if snakemake.input.get("variants", None) is not None:
     variants = r"""
-        ---vcf {args[variants]} \
+        ---vcf {snakemake.input.variants} \
         --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
-        {args[min-variant-depth]} {zygocity_freq}
+        --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
     """.format(
         snakemake=snakemake,
         args=args,
@@ -33,7 +33,7 @@ cnvkit.py segment --processes {snakemake.resources._cores} \
     --method {args[method]} --threshold {args[threshold]} {smooth_cbs} \
     {drop_low_coverage} --drop-outliers {args[drop-outliers]} \
     {variants} \
-    {args[ratios]}
+    {snakemake.input.ratios}
 """.format(
     snakemake=snakemake,
     args=args,

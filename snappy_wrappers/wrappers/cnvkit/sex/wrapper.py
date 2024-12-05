@@ -27,7 +27,7 @@ cnvkit.py sex \
     snakemake=snakemake,
     args=args,
     diploid_parx_genome=f"--diploid-parx-genome {args['diploid-parx-genome']}" if args.get('diploid-parx-genome', None) is not None else "",
-    coverages=" ".join(args["coverages"]),
+    coverages=" ".join(snakemake.input.coverages),
 )
 
 CnvkitWrapper(snakemake, cmd).run()

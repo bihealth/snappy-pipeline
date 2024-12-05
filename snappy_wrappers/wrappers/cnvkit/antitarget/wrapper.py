@@ -21,11 +21,12 @@ cmd = r"""
 cnvkit.py antitarget \
     -o {snakemake.output.antitarget} \
     --avg-size {args[avg-size]} {min_size} \
-    --access {args[access]} \
-    {args[target]}
+    {access} \
+    {snakemake.input.target}
 """.format(
     snakemake=snakemake,
     args=args,
+    access=f"--access {snakemake.input.access}" if snakemake.input.get("access", None) is not None else "",
     min_size=f"--min-size {args['min-size']}" if args.get("min-size") is not None else "",
 )
 

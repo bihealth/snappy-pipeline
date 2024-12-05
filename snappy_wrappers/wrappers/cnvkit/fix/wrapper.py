@@ -18,20 +18,23 @@ __email__ = "eric.blanc@bih-charite.de"
 args = snakemake.params.get("args", {})
 
 # Fix requires empty antitarget file in WGS & Panel modes
-create_dummy_antitarget = ""
-if args.get("antitarget", "") == "":
-    args["antitarget"] = "$TMPDIR/antitarget.bed"
-    create_dummy_antitarget = f"touch {args['antitarget']} ; "
+if snakemake.input.get("antitarget", None) is None:
+    antitarget = "$TMPDIR/antitarget.bed"
+    create_dummy_antitarget = f"touch {antitarget} ; "
+else:
+    antitarget = snakemake.input.antitarget
+    create_dummy_antitarget = ""
 
 cmd = r"""
 cnvkit.py fix \
     -o {snakemake.output.ratios} \
     {cluster} --sample-id {args[sample-id]} \
     {no_gc} {no_edge} {no_rmask} \
-    {args[target]} {args[antitarget]} {args[reference]}
+    {snakemake.input.target} {antitarget} {snakemake.input.reference}
 """.format(
     snakemake=snakemake,
     args=args,
+    antitarget=antitarget,
     cluster="--cluster" if args.get("cluster", False) else "",
     no_gc="--no-gc" if args.get("no-gc", False) else "",
     no_edge="--no-edge" if args.get("no-edge", False) else "",
