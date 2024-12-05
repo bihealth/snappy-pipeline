@@ -21,6 +21,7 @@ trap "rm -rf $TMPDIR" ERR EXIT
 export MKL_NUM_THREADS=16
 export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 gatk GermlineCNVCaller \
     --run-mode COHORT \
