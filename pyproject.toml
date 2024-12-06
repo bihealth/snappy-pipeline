@@ -36,7 +36,7 @@ dependencies = [
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake ~=7.32.0",
     # Required for plotting
-    "matplotlib ~=3.8.4",
+    "matplotlib ~=3.9.3",
     # Library for working with VCF files.
     "vcfpy ~=0.13.8",
     # Support for vcfpy
