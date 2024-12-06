@@ -68,13 +68,13 @@ Project Info
     step/igv_session_generation
     step/ngs_data_qc
     step/ngs_mapping
+    step/panel_of_normals
     step/somatic_gene_fusion_calling
     step/somatic_purity_ploidy_estimate
-    step/somatic_targeted_seq_cnv_calling
+    step/somatic_cnv_calling
     step/somatic_variant_annotation
     step/somatic_variant_calling
     step/somatic_variant_filtration
-    step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
     step/sv_calling_targeted
     step/targeted_seq_mei_calling
