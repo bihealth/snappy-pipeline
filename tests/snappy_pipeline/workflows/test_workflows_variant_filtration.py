@@ -42,7 +42,7 @@ def minimal_config():
             gatk3_hc: {}
 
           variant_filtration:
-            path_variant_annotation: VAR_ANNOTATION
+            path_variant_annotation: ../variant_annotation
             tools_ngs_mapping: ['bwa']
             tools_variant_calling: ['gatk3_hc']
             # Testing 1 out 40+ possible combinations:
@@ -104,7 +104,7 @@ def test_filter_quality_step_part_get_input_files(variant_filtration_workflow, p
     )
     # Define expected
     var_base_name = (
-        "VAR_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     pedigree_dict = {
