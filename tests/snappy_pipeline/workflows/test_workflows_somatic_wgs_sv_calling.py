@@ -34,7 +34,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           somatic_wgs_sv_calling:
-              path_ngs_mapping: NGS_MAPPING
+              path_ngs_mapping: ../ngs_mapping
               tools: ['manta']
               manta: {}
 

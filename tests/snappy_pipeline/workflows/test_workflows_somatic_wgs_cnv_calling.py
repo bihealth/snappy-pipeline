@@ -43,7 +43,7 @@ def minimal_config():
           somatic_wgs_cnv_calling:
             path_somatic_variant_calling: ../somatic_variant_calling
             somatic_variant_calling_tool: mutect
-            path_ngs_mapping: NGS_MAPPING
+            path_ngs_mapping: ../ngs_mapping
             tools:
             - canvas
             - cnvetti
