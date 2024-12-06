@@ -4,11 +4,9 @@ from typing import Annotated, Any, Literal
 from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.models.cnvkit import Cnvkit
 
 
 class Tool(enum.StrEnum):
-    cnvkit = "cnvkit"
     sequenza = "sequenza"
     copywriter = "copywriter"
     cnvetti_on_target = "cnvetti_on_target"
@@ -230,10 +228,9 @@ class CnvettiOffTarget(SnappyModel):
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.purecn], min_length=1)]
     path_ngs_mapping: str = "../ngs_mapping"
 
-    cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None
     copywriter: CopyWriter | None = None
     purecn: PureCn | None = None

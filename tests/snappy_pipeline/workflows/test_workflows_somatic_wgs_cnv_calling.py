@@ -47,17 +47,17 @@ def minimal_config():
             - canvas
             - cnvetti
             - control_freec
-            - cnvkit
+            # - cnvkit
             tools_ngs_mapping:
                 - bwa
             canvas:
               path_reference: /path/to/reference.fasta
               path_filter_bed: /path/to/filter.bed
               path_genome_folder: /path/to/genome/folder
-            cnvkit:
-              path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
-              path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
-              path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+            # cnvkit:
+            #   path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
+            #   path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
+            #   path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
             cnvetti: {}
             control_freec:
               path_chrlenfile: /path/to/chrlenfile
@@ -806,45 +806,45 @@ def test_somatic_cnv_calling_workflow(somatic_wgs_cnv_calling_workflow):
         for mapper in ("bwa",)
         for cnv_caller in ("control_freec",)
     ]
-    # -- add files from cnvkit
-    tpl = "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{ext}{md5}"
-    expected += [
-        tpl.format(i=i, t=t, ext=ext, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("cnr", "cns", "bed", "seg", "vcf.gz", "vcf.gz.tbi")
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.{ext}{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.chr{chrom}.{ext}{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
-        for chrom in chain(range(1, 23), ("X", "Y"))
-        for md5 in ("", ".md5")
-    ]
-    tpl = (
-        "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
-        "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{report}.txt{md5}"
-    )
-    expected += [
-        tpl.format(i=i, t=t, report=report, md5=md5)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
-        for md5 in ("", ".md5")
-    ]
+    # # -- add files from cnvkit
+    # tpl = "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/out/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{ext}{md5}"
+    # expected += [
+    #     tpl.format(i=i, t=t, ext=ext, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for ext in ("cnr", "cns", "bed", "seg", "vcf.gz", "vcf.gz.tbi")
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+    #     "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.{ext}{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+    #     "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{plot}.chr{chrom}.{ext}{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
+    #     for chrom in chain(range(1, 23), ("X", "Y"))
+    #     for md5 in ("", ".md5")
+    # ]
+    # tpl = (
+    #     "output/bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1/report/"
+    #     "bwa.cnvkit.P00{i}-T{t}-DNA1-WGS1.{report}.txt{md5}"
+    # )
+    # expected += [
+    #     tpl.format(i=i, t=t, report=report, md5=md5)
+    #     for i, t in ((1, 1), (2, 1), (2, 2))
+    #     for report in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+    #     for md5 in ("", ".md5")
+    # ]
     # Perform the comparison
     expected = list(sorted(expected))
     actual = list(sorted(somatic_wgs_cnv_calling_workflow.get_result_files()))

@@ -12,7 +12,7 @@ from snappy_pipeline.workflows.somatic_cnv_checking import SomaticCnvCheckingWor
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -35,17 +35,28 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
 
-          somatic_targeted_seq_cnv_calling:
-            tools: ["cnvkit"]
+          somatic_cnv_calling:
+            tools: 
+              wgs: ["cnvkit"]
             cnvkit:
-              path_target: DUMMY
-              path_antitarget: DUMMY
-              path_panel_of_normals: DUMMY
+              diploid_parx_genome: GRCh38
+              panel_of_normals:
+                source: paired
+              somatic_variant_calling:
+                enabled: False
+                source: cohort
+                tool: mutect2
+                path_somatic_variant_calling: ../somatic_variant_calling
+              somatic_purity_ploidy_estimate:
+                enabled: False
+                source: cohort
+                tool: ascat
+              segment:
+                threshold: 0.0001
 
           somatic_cnv_checking:
             path_ngs_mapping: ../ngs_mapping
-            path_cnv_calling: ../somatic_targeted_seq_cnv_calling
-            cnv_assay_type: WES
+            path_cnv_calling: ../somatic_cnv_calling
 
         data_sets:
           first_batch:
@@ -71,7 +82,7 @@ def somatic_cnv_checking_workflow(
     aligner_indices_fake_fs,
     mocker,
 ):
-    """Return SomaticTargetedSeqCnvCallingWorkflow object pre-configured with germline sheet"""
+    """Return SomaticCnvCallingWorkflow object pre-configured with germline sheet"""
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)

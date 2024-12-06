@@ -63,7 +63,6 @@ import sys
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -72,10 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
-    SomaticTargetedSeqCnvCallingWorkflow,
-)
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
+from snappy_pipeline.workflows.somatic_cnv_calling import SomaticCnvCallingWorkflow
 
 from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
@@ -294,23 +290,14 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             workdir,
             config_model_class=SomaticCnvCheckingConfigModel,
             previous_steps=(
-                SomaticTargetedSeqCnvCallingWorkflow,
-                SomaticWgsCnvCallingWorkflow,
+                SomaticCnvCallingWorkflow,
                 NgsMappingWorkflow,
             ),
         )
-        if self.config.path_cnv_calling and self.config.cnv_assay_type:
-            if self.config.cnv_assay_type == "WES":
-                cnv_calling = "somatic_targeted_seq_cnv_calling"
-            elif self.config.cnv_assay_type == "WES":
-                cnv_calling = "somatic_wgs_cnv_calling"
-            else:
-                raise InvalidConfiguration(
-                    "Illegal cnv_assay_type {}, must be either WES or WGS".format(
-                        self.config.cnv_assay_type
-                    )
-                )
-            self.register_sub_workflow(cnv_calling, self.config.path_cnv_calling, "cnv_calling")
+        if self.config.path_cnv_calling:
+            self.register_sub_workflow(
+                "somatic_cnv_calling", self.config.path_cnv_calling, "cnv_calling"
+            )
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -367,8 +354,9 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         ext = {"out": [".vcf.gz", ".vcf.gz.tbi"]}
         if self.config.path_cnv_calling:
             # CNV avaliable
+            # TODO: make the tool library-dependent (supporting both wes & wgs)
             name_pattern = "{mapper}.{caller}.{library_name}"
-            callers = self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools
+            callers = self.w_config.step_config["somatic_cnv_calling"].tools.wgs
             ext["out"] += [".tsv"]
             ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
             ext["log"] = [
