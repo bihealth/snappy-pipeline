@@ -104,10 +104,7 @@ def somatic_purity_ploidy_estimate_workflow_w_copywriter(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_targeted_seq_cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticPurityPloidyEstimateWorkflow(
         dummy_workflow,

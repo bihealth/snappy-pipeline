@@ -302,7 +302,7 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_input_files()"""
     # TODO: fix use of `tumor_library` in get_input_files()
-    wildcards = Wildcards(
+    _wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
@@ -319,7 +319,7 @@ def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_wo
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
     }
-    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
+    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(_wildcards)
     _ = expected
     assert True
 
@@ -495,10 +495,7 @@ def somatic_variant_filtration_workflow_list(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,

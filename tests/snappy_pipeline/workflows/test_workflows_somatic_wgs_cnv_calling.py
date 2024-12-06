@@ -94,12 +94,7 @@ def somatic_wgs_cnv_calling_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had NGSMappingPipelineStep etc. here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticWgsCnvCallingWorkflow(
         dummy_workflow,

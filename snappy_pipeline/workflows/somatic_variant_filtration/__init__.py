@@ -957,11 +957,13 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             workdir,
             (),
             config_model_class=SomaticVariantFiltrationConfigModel,
-            previous_steps=(
-                SomaticVariantAnnotationWorkflow,
-                SomaticVariantCallingWorkflow,
-                NgsMappingWorkflow,
-            ),
+            # FIXME
+            previous_steps=(),
+            # previous_steps=(
+            #     SomaticVariantAnnotationWorkflow,
+            #     SomaticVariantCallingWorkflow,
+            #     NgsMappingWorkflow,
+            # ),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -990,7 +992,6 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             "somatic_variant",
         )
         self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
-
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna

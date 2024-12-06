@@ -984,7 +984,9 @@ class SomaticVariantCallingWorkflow(BaseStep):
             workdir,
             (),
             config_model_class=SomaticVariantCallingConfigModel,
-            previous_steps=(NgsMappingWorkflow,),
+            # FIXME
+            previous_steps=(),
+            # previous_steps=(NgsMappingWorkflow,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -1004,6 +1006,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
         self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # if "mutect2" in self.config.tools:
         #     if self.config.mutect2.common_variants:
+        # FIXME tuple extend
         #         self.sub_steps["mutect2"].actions.extend(
         #             ["contamination", "pileup_normal", "pileup_tumor"]
         #         )

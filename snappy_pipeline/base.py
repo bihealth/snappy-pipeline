@@ -7,6 +7,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, AnyStr, Dict
 
 import pydantic

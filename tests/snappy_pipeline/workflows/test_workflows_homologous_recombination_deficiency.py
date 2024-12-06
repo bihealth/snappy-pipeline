@@ -71,6 +71,7 @@ def homologous_recombination_deficiency_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
+
     # Construct the workflow object
     return HomologousRecombinationDeficiencyWorkflow(
         dummy_workflow,

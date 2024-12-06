@@ -726,8 +726,6 @@ class BaseStep:
             )
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
-        #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows: dict[str, snakemake.Workflow] = {}
 
         # Even though we already validated via pydantic, we still call check_config here, as
         # some of the checks done in substep check_config are not covered by the pydantic models yet

@@ -298,7 +298,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             workdir,
             (),
             config_model_class=SomaticVariantAnnotationConfigModel,
-            previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            # FIXME
+            previous_steps=(),
+            # previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

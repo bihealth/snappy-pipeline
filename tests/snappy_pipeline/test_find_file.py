@@ -10,7 +10,6 @@ from pyfakefs import fake_filesystem
 
 from snappy_pipeline.find_file import FileSystemCrawler, FileSystemCrawlerResult, PatternSet
 
-
 # TODO: test the invalidation_paths parameter/feature
 
 
@@ -56,11 +55,13 @@ def test_file_system_crawler_result_with_names():
     assert obj.to_dict() == {"first": "foo_R1.fastq.gz", "second": "foo_R2.fastq.gz"}
     # OrderedDict str representation changes depending on python implementation
     assert str(obj) == (
-        "FileSystemCrawlerResult('/base', "
-        "('foo_R1.fastq.gz', 'foo_R2.fastq.gz'), "
-        "('first', 'second'), "
-        "OrderedDict({'first': 'foo_R1.fastq.gz', 'second': 'foo_R2.fastq.gz'})"
-        ")"
+        "FileSystemCrawlerResult('/base', ('foo_R1.fastq.gz', 'foo_R2.fastq.gz'), "
+        "('first', 'second'), OrderedDict([('first', 'foo_R1.fastq.gz'), "
+        "('second', 'foo_R2.fastq.gz')]))"
+    ) or str(obj) == (
+        "FileSystemCrawlerResult('/base', ('foo_R1.fastq.gz', 'foo_R2.fastq.gz'), "
+        "('first', 'second'), OrderedDict({'first': 'foo_R1.fastq.gz', "
+        "'second': 'foo_R2.fastq.gz'}))"
     )
 
 
