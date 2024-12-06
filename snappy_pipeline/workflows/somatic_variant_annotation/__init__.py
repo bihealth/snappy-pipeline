@@ -296,7 +296,6 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
             config_model_class=SomaticVariantAnnotationConfigModel,
             # FIXME
             previous_steps=(),

@@ -955,7 +955,6 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
             config_model_class=SomaticVariantFiltrationConfigModel,
             # FIXME
             previous_steps=(),

@@ -982,7 +982,6 @@ class SomaticVariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            (),
             config_model_class=SomaticVariantCallingConfigModel,
             # FIXME
             previous_steps=(),
