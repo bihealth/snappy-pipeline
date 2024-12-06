@@ -68,8 +68,6 @@ def minimal_config():
                   enabled: True
                   source: cohort
                   tool: ascat
-                segment:
-                  threshold: 0.0001
                 scatter:
                   enabled: true
 
@@ -354,7 +352,7 @@ def test_cnvkit_step_part_get_args_segment(somatic_cnv_calling_workflow):
     )
     expected = {
         "method": "cbs",
-        "threshold": 0.0001,
+        "threshold": 1e-6,
         "smooth-cbs": False,
         "drop-low-coverage": False,
         "drop-outliers": 10,

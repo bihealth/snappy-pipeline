@@ -152,11 +152,12 @@ class Fix(SnappyModel):
 class Segment(SnappyModel):
     method: SegmentationMethod = SegmentationMethod.CBS
     """Segmentation method, or 'none' for chromosome arm-level averages as segments"""
-    threshold: float
+    threshold: float | None = None
     """
     Significance threshold (p-value or FDR, depending on method) to accept breakpoints during segmentation.
 
     For HMM methods, this is the smoothing window size.
+    Automatically set to 1e-6 when missing, and in WGS mode.
     """
     drop_outliers: int = 10
     """Drop outlier bins more than this many multiples of the 95th quantile away from the average within a rolling window. Set to 0 for no outlier filtering."""
@@ -355,7 +356,7 @@ class CnvkitToReference(SnappyModel):
 
 class Cnvkit(CnvkitToReference):
     fix: Fix = Fix()
-    segment: Segment
+    segment: Segment = Segment()
     call: Call = Call()
     bintest: Bintest = Bintest()
 
