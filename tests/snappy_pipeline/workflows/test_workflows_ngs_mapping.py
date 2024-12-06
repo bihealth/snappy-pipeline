@@ -740,7 +740,9 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     ]
     for infix in ("bam_collect_doc", "mapping", "target_cov_report", "ngs_chew_fingerprint"):
         expected += [
-            "output/mbcs.P00{i}-N1-DNA1-WGS1/log/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
+            "output/mbcs.P00{i}-N1-DNA1-WGS1/log/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(
+                i=i, ext=ext
+            )
             for i in range(1, 7)
             for ext in (
                 f"{infix}.log",
