@@ -32,7 +32,7 @@ dependencies = [
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8",
     # Helpful for CLIs
-    "termcolor ~=1.1.0",
+    "termcolor ~=2.5.0",
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake ~=7.32.0",
     # Required for plotting
