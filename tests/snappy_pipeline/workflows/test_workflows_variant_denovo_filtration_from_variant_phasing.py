@@ -41,7 +41,7 @@ def minimal_config():
             gatk3_hc: {}
           variant_denovo_filtration:
             path_variant_phasing: VARIANT_PHASING
-            path_variant_calling: VARIANT_CALLING
+            path_variant_calling: ../variant_calling
             path_variant_annotation: ../variant_annotation
             path_ngs_mapping: ../ngs_mapping
 

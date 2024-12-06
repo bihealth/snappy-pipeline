@@ -41,7 +41,7 @@ def minimal_config():
             gatk3_hc: {}
           variant_denovo_filtration:
             path_ngs_mapping: ../ngs_mapping
-            path_variant_calling: VARIANT_CALLING
+            path_variant_calling: ../variant_calling
 
         data_sets:
           first_batch:
@@ -108,9 +108,7 @@ def test_filter_de_novo_from_variant_calling_step_part_get_input_files(
         "bam": ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam",
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
-    variant_calling_base_out = (
-        "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
-    )
+    variant_calling_base_out = "../variant_calling/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     vcf_dict = get_expected_output_vcf_files_dict(base_out=variant_calling_base_out)
     expected = {**bam_ped_dict, **vcf_dict}
     # Get actual

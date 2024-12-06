@@ -49,8 +49,7 @@ def minimal_config():
             vep: {}
           variant_phasing:
             path_ngs_mapping: ../ngs_mapping
-            path_variant_calling: VARIANT_CALLING
-            path_variant_annotation: VARIANT_ANNOTATION
+            path_variant_annotation: ../variant_annotation
 
         data_sets:
           first_batch:

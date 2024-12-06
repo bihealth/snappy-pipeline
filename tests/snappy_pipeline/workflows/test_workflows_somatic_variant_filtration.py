@@ -35,7 +35,7 @@ def minimal_config():
             tools_ngs_mapping: ['bwa']
             path_ngs_mapping: ../ngs_mapping
             tools_somatic_variant_calling: ['mutect2']
-            path_somatic_variant_calling: SOMATIC_VARIANT_CALLING
+            path_somatic_variant_calling: ../somatic_variant_calling
             tools_somatic_variant_annotation: ['jannovar']
             filtration_schema: sets
             filter_sets: {}
@@ -521,7 +521,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         }
     )
     expected = {
-        "vcf": "SOMATIC_VARIANT_ANNOTATION/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
+        "vcf": "somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
         "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
         "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
     }

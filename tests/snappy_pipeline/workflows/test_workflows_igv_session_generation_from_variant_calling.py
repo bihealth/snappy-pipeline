@@ -39,7 +39,7 @@ def minimal_config():
 
           igv_session_generation:
             path_ngs_mapping: ../ngs_mapping
-            path_variant_calling: VARIANT_CALLING
+            path_variant_calling: ../variant_calling
             tools_variant_calling: ['gatk3_hc']
 
         data_sets:
@@ -94,9 +94,7 @@ def test_igv_session_generation_from_variant_calling_step_part_get_input_files(
     """Tests WriteIgvSessionFileStepPart.get_input_files()"""
     # Define expected
     ngs_mapping_base_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
-    variant_calling_base_out = (
-        "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
-    )
+    variant_calling_base_out = "../variant_calling/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     expected = {
         # TODO: underline method is probably wrong, hence the weirdness of this test (`[n] * 3`)
         "bam": [ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam"] * 3,
