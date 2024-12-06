@@ -878,10 +878,13 @@ class CnvKitStepPart(SomaticCnvCallingStepPart):
         # Segmentation parameters
         args = {
             "method": self.cfg.segment.method,
-            "threshold": self.cfg.segment.threshold,
             "drop-outliers": self.cfg.segment.drop_outliers,
             "drop-low-coverage": self.cfg.drop_low_coverage,
         }
+        if self.cfg.segment.threshold is not None:
+            args["threshold"] = self.cfg.segment.threshold
+        elif self.is_wgs:
+            args["threshold"] = 1e-6
         if self.cfg.segment.method == CnvkitSegmentationMethod.CBS:
             args["smooth-cbs"] = self.cfg.segment.smooth_cbs
         if self.cfg.somatic_variant_calling.enabled:

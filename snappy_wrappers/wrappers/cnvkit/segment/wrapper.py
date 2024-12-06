@@ -22,7 +22,7 @@ if snakemake.input.get("variants", None) is not None:
     """.format(
         snakemake=snakemake,
         args=args,
-        zygocity_freq=f"--zygocity_freq {args['zygocity-freq']}" if "zygocity-freq" in args else ""
+        zygocity_freq=f"--zygocity_freq {args['zygocity-freq']}" if args.get("zygocity-freq", None) is not None else ""
     )
 else:
     variants = ""
@@ -30,7 +30,7 @@ else:
 cmd = r"""
 cnvkit.py segment --processes {snakemake.resources._cores} \
     -o {snakemake.output.segments} --dataframe {snakemake.output.dataframe} \
-    --method {args[method]} --threshold {args[threshold]} {smooth_cbs} \
+    --method {args[method]} {threshold} {smooth_cbs} \
     {drop_low_coverage} --drop-outliers {args[drop-outliers]} \
     {variants} \
     {snakemake.input.ratios}
@@ -38,6 +38,7 @@ cnvkit.py segment --processes {snakemake.resources._cores} \
     snakemake=snakemake,
     args=args,
     variants=variants,
+    threshold=f"--threshold {args['threshold']}" if args.get("thresold", None) is not None else "",
     smooth_cbs="--smooth-cbs" if args.get("smooth-cbs", False) else "",
     drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
 )
