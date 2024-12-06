@@ -58,4 +58,3 @@ rule somatic_cnv_calling_link_out_run:
 
 # cnvkit requires a large number of rules, thus externalized
 include: "cnvkit.rules"
-
