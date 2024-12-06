@@ -36,6 +36,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           sv_calling_targeted:
+            path_ngs_mapping: ../ngs_mapping
             tools:
               - delly2
               - manta
@@ -122,9 +123,7 @@ def sv_calling_targeted_workflow(
         "snappy_pipeline.workflows.common.gcnv.gcnv_run.glob",
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -153,9 +152,7 @@ def sv_calling_targeted_workflow_large_cohort(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -182,9 +179,7 @@ def sv_calling_targeted_workflow_large_cohort_background(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs2, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SvCallingTargetedWorkflow(
         dummy_workflow,
@@ -225,9 +220,6 @@ def test_validate_request(
         return_value=["/data/model_01", "/data/model_02", "/data/model_03"],
     )
 
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Empty precomputed models, should fail
     with pytest.raises(InvalidConfiguration):
         SvCallingTargetedWorkflow(
@@ -565,7 +557,7 @@ def test_gcnv_coverage_step_part_get_input_files(sv_calling_targeted_workflow):
         "work/gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6/out/"
         "gcnv_preprocess_intervals.Agilent_SureSelect_Human_All_Exon_V6.interval_list"
     )
-    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
         "interval_list": interval_list_out,
         "bam": bam_out + ".bam",

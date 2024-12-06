@@ -59,7 +59,7 @@ class CoverageCommonMixin:
         name_pattern = f"gcnv_preprocess_intervals.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
         # Yield input BAM and BAI files
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))

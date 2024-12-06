@@ -180,7 +180,7 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
         def input_function(wildcards):
             """Helper wrapper function"""
             # Get shortcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = (
@@ -378,7 +378,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_input_files_coverage(self):
         @dictify
         def input_function(wildcards):
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             normal_base_path = (
                 "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
@@ -510,12 +510,12 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             **wildcards,
         )
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
-        variant_calling = self.parent.sub_workflows["somatic_variants"]
+        variant_calling = self.parent.modules["somatic_variants"]
         yield "vcf", variant_calling(base_path)
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         name_pattern = "{mapper}.{library_name}".format(**wildcards)
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
         yield "bam", ngs_mapping(base_path + ".bam")
@@ -612,7 +612,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
         input_files = {
             "bam": ngs_mapping(base_path + ".bam"),
@@ -859,7 +859,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
         def input_function_run(wildcards):
             """Helper wrapper function"""
             # Get shortcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = (
@@ -980,9 +980,9 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         if "purecn" in self.config.tools:
-            self.register_sub_workflow(
+            self.register_module(
                 "somatic_variant_calling",
                 self.config.purecn.path_somatic_variants,
                 "somatic_variants",

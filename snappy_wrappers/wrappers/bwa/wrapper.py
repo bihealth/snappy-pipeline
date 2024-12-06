@@ -268,7 +268,7 @@ md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstat
 
 for path in {snakemake.output.output_links}; do
   dst=$path
-  src=work/${{dst#output/}}
+  src=$( echo ${{dst}} | sed '0,/output\//{{s/output\//work\//}}' )
   ln -sr $src $dst
 done
 """

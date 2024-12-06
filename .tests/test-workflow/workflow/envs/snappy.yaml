@@ -1,74 +1,73 @@
 channels:
   - conda-forge
   - bioconda
+  - defaults
+
+name: snappy_env
+
 dependencies:
 
   # Fundamentals
-  - python >=3.12.0
-  - pip =24
-  - git-lfs =3.5
-  - gcc_linux-64 =13.2
-  - gxx_linux-64 =13.2
+  - python=3.12
+  - pip
+  - git-lfs ~=3.5.1
+
+  # for compiling packages from pip
+  - gcc_linux-64 ~=13.2.0
+  - gxx_linux-64 ~=13.2.0
 
   # basics some snappy wrappers rely on
-  - coreutils =9.5
-  - gawk =5.3
-  - bash =5.2
-  - gzip =1.13
+  - coreutils ~=9.5
+  - gawk ~=5.3.0
+  - bash ~=5.2.21
+  - gzip ~=1.13
+
+  # pydantic is used to validate configuration files
+  - pydantic =2.7
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=7,<8
+  - snakemake >=8.14.0
 
   # Additional libraries used by snappy
-  - ruamel.yaml =0.18               # Nice, round-trip enabled YAML parsing
-  - fasteners =0.17                 # File-based locks
-  - termcolor =2.4                  # Helpful for CLIs
-  - matplotlib =3.8                 # Required for plotting
-  - jinja2 =3.1                     # Jinja 2 template rendering
+  - ruamel.yaml ==0.18.6    # Nice, round-trip enabled YAML parsing
+  - fasteners ==0.17.3      # File-based locks
+  - termcolor ==1.1.0       # Helpful for CLIs
+  - matplotlib ==3.8.4      # Required for plotting
+  - jinja2 ==3.1.4          # Jinja 2 template rendering
 
   # Bioinformatics-related libraries used by snappy
-  - htslib >=1.19
-  - bcftools >=1.19
-  - samtools >=1.19
-  # both vcfpy and pysam are only used in wrappers -- and tools, which should probably be wrappers in their own regard?
-  # current versions compatible with py>=3.11 aren't yet available from bioconda, so install via pip instead
-  # - vcfpy >=0.13.8                   # Library for working with VCF files
-  # - pysam                            # Support for vcfpy
-  # pytabix seems not to be used anywhere (and hasn't been updated in 9 years)
-  # nvm, it does see use in wrappers/vcfpy/add_bed/wrapper.py and wrappers/vcf_sv_filter/vcf_sv_filter.py
-  # - pytabix =0.1
+  - htslib ==1.20
+  - bcftools ==1.20
+  - samtools ==1.20
 
-  # Parsing of ISA-tab
-  - altamisa =0.2.9
+  # packages for testing
+  - pytest ~=8.2.2
+  - coverage ~=7.5.3
+  - pytest-cov ~=5.0.0
+  - pytest-mock ~=3.14.0
+  - pytest-subprocess ~=1.5.0
+  - pyfakefs ~=5.5.0
+  - pytest-sugar ~=0.9.6
+  - coveralls ~=4.0.1
+  # formatting, linting, dev
+  - ruff ~=0.4.8
+  - snakefmt ~=0.8.5
+  - pre-commit ~=3.7.1
+  # docs
+  - sphinx ~=7.3.7
+  - sphinx_rtd_theme ~=2.0.0
+  - sphinx-mdinclude ~=0.6.0
 
-  # miscellaneous
-  - attrs =23.2
 
-  # Dependencies for testing
-  - pytest-sugar =1
-  - pytest =8.1
-  - pytest-cov =5.0
-  - coverage =7.4
-  - pytest-mock =3.14
-  - pytest-subprocess = 1.5
-  - pyfakefs =5.4
-  - snakefmt =0.10
-  - ruff =0.3
-  - coveralls =1.8
 
-  # Dependencies for documentation
-  - sphinx =7
-  - sphinx_rtd_theme =2
-  - sphinx-mdinclude =0.5
-
-  # CUBI libraries required by snappy (installed through pip)
   - pip:
-    - varfish-cli >=0.6.3
-    # We're trying to keep the PyPi package up to date, you might have to install
-    # from source, though.
-    # - biomedsheets >=0.11.7
-    # … which is what we do here:
-    - git+https://github.com/bihealth/biomedsheets.git@a355c396b6e6b2f52f96f73d58cd26c3f1f5e18c
-    - pysam >=0.22
-    - vcfpy >=0.13.8
-    - pytabix
+    # build varfish-cli from pypi
+    - varfish-cli ~=0.6.3
+    # specific compatible biomedsheets revision
+    - git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8
+    # specific compatible altamisa revision
+    - git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c
+
+    # build pysam and vcfpy via pip (to avoid python version + conda packaging issues)
+    - pysam ~=0.22
+    - vcfpy ~=0.13.8

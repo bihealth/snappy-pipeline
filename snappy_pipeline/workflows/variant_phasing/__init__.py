@@ -215,7 +215,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             # Get name of real index
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
             # Annotated variant file from variant_annotation step.
-            variant_annotation = self.parent.sub_workflows["variant_annotation"]
+            variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 input_path = (
                     "output/{mapper}.{caller}.jannovar_annotate_vcf.{real_index}/out/"
@@ -257,7 +257,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         """Helper function used in subclass input_function"""
         donor = self.ngs_library_to_donor[wildcards.index_library]
         tpl = "output/{mapper}.{index_library}/out/{mapper}.{index_library}{ext}"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             vals = {"mapper": wildcards.mapper, "ext": ext}
             # Note that we only perform phasing for pedigree members we have both parents, so
@@ -319,7 +319,7 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
             # BAM files from ngs_mapping step.
             yield from self._yield_bams(wildcards)
             # Annotated variant file from variant_annotation step.
-            variant_annotation = self.parent.sub_workflows["variant_annotation"]
+            variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
                     "output/{mapper}.{caller}.jannovar_annotate_vcf.{real_index}/out/"
@@ -391,8 +391,8 @@ class VariantPhasingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("variant_annotation", self.config.path_variant_annotation)
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("variant_annotation", self.config.path_variant_annotation)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
