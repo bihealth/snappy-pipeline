@@ -27,7 +27,7 @@ dependencies = [
     # Nice, round-trip enabled YAML parsing
     "ruamel.yaml ~=0.18.6",
     # File-based locks
-    "fasteners ~=0.17.3",
+    "fasteners ~=0.19",
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8",
