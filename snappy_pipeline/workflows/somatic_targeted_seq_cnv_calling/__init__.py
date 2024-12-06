@@ -68,7 +68,6 @@ import os
 import os.path
 import sys
 from collections import OrderedDict
-from itertools import chain
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

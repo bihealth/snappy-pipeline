@@ -237,7 +237,6 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.models.common import SexOrigin, SexValue
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
-from .model import PureCn as PureCnConfig
 from .model import CnvKit as CnvkitConfig
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
