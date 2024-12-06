@@ -51,8 +51,8 @@ def minimal_config():
           helper_gcnv_model_wgs:
             path_ngs_mapping: ../ngs_mapping
             gcnv:
-              path_ngs_mapping: ../ngs_mapping
-            path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIREDpath_par_intervals: /path/to/par.intervals
+              path_uniquely_mapable_bed: /path/to/map_track.bed  # REQUIRED
+              path_par_intervals: /path/to/par.intervals
 
         data_sets:
           first_batch:
