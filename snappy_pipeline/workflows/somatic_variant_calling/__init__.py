@@ -101,6 +101,7 @@ Currently, no reports are generated.
 import os
 import sys
 from collections import OrderedDict
+from itertools import chain
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -1003,12 +1004,12 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
         )
         self.register_module("ngs_mapping", self.config.path_ngs_mapping)
-        # if "mutect2" in self.config.tools:
-        #     if self.config.mutect2.common_variants:
-        # FIXME tuple extend
-        #         self.sub_steps["mutect2"].actions.extend(
-        #             ["contamination", "pileup_normal", "pileup_tumor"]
-        #         )
+        if "mutect2" in self.config.tools:
+            if self.config.mutect2.common_variants:
+                actions = self.sub_steps["mutect2"].actions
+                self.sub_steps["mutect2"].actions = tuple(
+                    chain(actions, ["contamination", "pileup_normal", "pileup_tumor"])
+                )
 
     @listify
     def get_result_files(self):
