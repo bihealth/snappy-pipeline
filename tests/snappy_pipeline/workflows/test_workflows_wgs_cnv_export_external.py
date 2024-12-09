@@ -214,7 +214,7 @@ def test_workflow_check_config_invalid_search_pattern(
     assert len(errors) == 2
 
     import pydantic
-    pydantic_version = pydantic.version_short()
+    pydantic_version = pydantic.version.version_short()
     expected_errors = [
         {
             "input": input_str,
