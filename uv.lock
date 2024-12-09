@@ -1315,7 +1315,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/f4/94/884160dab89886cef
 
 [[package]]
 name = "snappy-pipeline"
-version = "0.2.2"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "altamisa" },
@@ -1377,30 +1377,30 @@ requires-dist = [
     { name = "biomedsheets", git = "https://github.com/bihealth/biomedsheets.git?rev=4e0a8484850c39d1511036c3fe29ec0b4f9271f8#4e0a8484850c39d1511036c3fe29ec0b4f9271f8" },
     { name = "coverage", marker = "extra == 'test'", specifier = ">=7.5.3,<8" },
     { name = "coveralls", marker = "extra == 'test'", specifier = ">=4.0.1,<5" },
-    { name = "fasteners", specifier = ">=0.17.3" },
-    { name = "jinja2", specifier = ">=3.1.4" },
+    { name = "fasteners", specifier = ">=0.17.3,<1" },
+    { name = "jinja2", specifier = ">=3.1.4,<4" },
     { name = "matplotlib", specifier = ">=3.8.4" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1,<5" },
     { name = "pydantic", specifier = ">=2.9.0,<3" },
     { name = "pyfakefs", marker = "extra == 'test'", specifier = ">=5.5.0,<6" },
-    { name = "pysam", specifier = ">=0.22.1" },
-    { name = "pytabix", specifier = ">=0.1" },
+    { name = "pysam", specifier = ">=0.22.1,<1" },
+    { name = "pytabix", specifier = ">=0.1,<1" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2,<9" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=5.0.0,<6" },
     { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.14.0,<4" },
     { name = "pytest-subprocess", marker = "extra == 'test'", specifier = ">=1.5.0,<2" },
     { name = "pytest-sugar", marker = "extra == 'test'", specifier = ">=1.0.0,<2" },
-    { name = "ruamel-yaml", specifier = ">=0.18.6" },
+    { name = "ruamel-yaml", specifier = ">=0.18.6,<1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.2,<1" },
     { name = "snakefmt", marker = "extra == 'dev'", specifier = ">=0.10.2,<1" },
-    { name = "snakemake", specifier = ">=7.32.0" },
+    { name = "snakemake", specifier = ">=7.32.0,<8" },
     { name = "snappy-pipeline", extras = ["dev", "docs", "test"], marker = "extra == 'all'" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.3.7,<8" },
     { name = "sphinx-mdinclude", marker = "extra == 'docs'", specifier = ">=0.6.0,<1" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=2.0.0,<3" },
-    { name = "termcolor", specifier = ">=1.1.0" },
+    { name = "termcolor", specifier = ">=1.1.0,<3" },
     { name = "varfish-cli", specifier = ">=0.6.3" },
-    { name = "vcfpy", specifier = ">=0.13.8" },
+    { name = "vcfpy", specifier = ">=0.13.8,<1" },
 ]
 
 [[package]]
