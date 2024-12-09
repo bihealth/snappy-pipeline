@@ -7,6 +7,7 @@ from typing import Annotated
 from pydantic import Field, field_validator, model_validator
 
 from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
+from snappy_pipeline.models.common import LibraryKit
 
 
 class DnaMapper(Enum):
@@ -35,6 +36,7 @@ CombinedDnaTool = Enum(
         )
     },
 )
+"""DNA mappers or (mbcs) meta-tool"""
 
 
 class Tools(SnappyModel):
@@ -46,30 +48,6 @@ class Tools(SnappyModel):
 
     dna_long: Annotated[list[LongDnaMapper], EnumField(LongDnaMapper, [])]
     """Required if long-read mapper used; otherwise, leave empty."""
-
-
-class TargetCoverageReportEntry(SnappyModel):
-    """
-    Mapping from enrichment kit to target region BED file, for either computing per--target
-    region coverage or selecting targeted exons.
-
-    The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
-    mapped to the name "default".
-      - name: IDT_xGen_V1_0
-        pattern: "xGen Exome Research Panel V1\\.0*"
-        path: "path/to/targets.bed"
-    """
-
-    name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
-
-    pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
-
-    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
-
-
-class TargetCoverageReport(SnappyModel):
-    path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 
 class BamCollectDoc(SnappyModel):
@@ -147,17 +125,6 @@ class BwaMem2(BwaMapper):
 
 class BarcodeTool(Enum):
     AGENT = "agent"
-
-
-class Somatic(SnappyModel):
-    mapping_tool: DnaMapper
-    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
-
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
-    """Only agent currently implemented"""
-
-    use_barcodes: bool = False
-    recalibrate: bool = True
 
 
 class Bqsr(SnappyModel):
@@ -277,9 +244,13 @@ class Minimap2(SnappyModel):
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
-    barcode_tool: BarcodeTool
-    use_barcodes: bool
-    recalibrate: bool
+    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
+
+    barcode_tool: BarcodeTool = BarcodeTool.AGENT
+    """Only agent currently implemented"""
+
+    use_barcodes: bool = False
+    recalibrate: bool = True
 
 
 class NgsMapping(SnappyStepModel):
@@ -289,7 +260,7 @@ class NgsMapping(SnappyStepModel):
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    target_coverage_report: TargetCoverageReport | None = None
+    target_coverage_report: LibraryKit | None = None
     """Thresholds for targeted sequencing coverage QC."""
 
     bam_collect_doc: BamCollectDoc = BamCollectDoc()
@@ -320,8 +291,6 @@ class NgsMapping(SnappyStepModel):
     strandedness: Strandedness | None = None
 
     minimap2: Minimap2 | None = None
-
-    mbcs: Mbcs | None = None
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):

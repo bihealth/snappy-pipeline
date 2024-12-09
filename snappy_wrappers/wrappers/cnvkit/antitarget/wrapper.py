@@ -1,68 +1,33 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py antitarget"""
 
-from snakemake.shell import shell
+import os
+import sys
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-target = snakemake.input.get("target", "")
+__author__ = "Eric Blanc"
+__email__ = "eric.blanc@bih-charite.de"
 
-shell(
-    r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
+args = snakemake.params.get("args", {})
 
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-set -x
-
-# -----------------------------------------------------------------------------
-
-if [[ -n "{config[path_target_regions]}" ]]
-then
-    cnvkit.py antitarget \
-        --output {snakemake.output.antitarget} \
-        $(if [[ -n "{config[access]}" ]]; then \
-            echo --access {config[access]}
-        fi) \
-        $(if [[ {config[antitarget_avg_size]} -gt 0 ]]; then \
-            echo --avg-size {config[antitarget_avg_size]}
-        fi) \
-        $(if [[ {config[min_size]} -gt 0 ]]; then \
-            echo --min-size {config[min_size]}
-        fi) \
-        {target}
-else
-    touch {snakemake.output.antitarget}
-fi
-
-fn=$(basename "{snakemake.output.antitarget}")
-d=$(dirname "{snakemake.output.antitarget}")
-pushd $d
-md5sum $fn > $fn.md5
-popd
-"""
+cmd = r"""
+cnvkit.py antitarget \
+    -o {snakemake.output.antitarget} \
+    --avg-size {args[avg-size]} {min_size} \
+    {access} \
+    {snakemake.input.target}
+""".format(
+    snakemake=snakemake,
+    args=args,
+    access=f"--access {snakemake.input.access}" if snakemake.input.get("access", None) is not None else "",
+    min_size=f"--min-size {args['min-size']}" if args.get("min-size") is not None else "",
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+CnvkitWrapper(snakemake, cmd).run()
