@@ -41,4 +41,4 @@ runs:
         use-only-tar-bz2: true
         miniforge-version: latest
         condarc-file: ${{ inputs.conda-rc }}
-        activate-environment: ${{ environment-name }}
+        activate-environment: ${{ inputs.environment-name }}
