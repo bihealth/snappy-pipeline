@@ -60,6 +60,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
+        environment-name: snappy_env
         conda-rc: .ci.condarc
 
     - name: Test workflow (local FASTQs)
@@ -90,6 +91,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
+        environment-name: snappy_env
         conda-rc: .ci.condarc
 
     - name: Test workflow (local FASTQs)
