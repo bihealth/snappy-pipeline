@@ -25,13 +25,18 @@ jobs:
 
   linting:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
-      - name: Install Python
-        uses: actions/setup-python@v2
+      - name: Setup conda
+        uses: ./.github/actions/conda-cache
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          environment-file: environment.yml
 
       - name: Install dependencies
         run: |
@@ -54,26 +59,6 @@ jobs:
             You can trigger all lints locally by running `make lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#  sphinx-docs:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Install Python
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: "3.12"
-#
-#      - name: Install dependencies
-#        run: |
-#            pip install -e ".[docs]"
-#            pip freeze
-#
-#      - name: Build documentation
-#        run: |
-#          cd docs
-#          make html
-
   testing:
     runs-on: ubuntu-latest
     strategy:
@@ -87,15 +72,13 @@ jobs:
         with:
           lfs: true
           fetch-depth: 2
+
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: ./.github/actions/conda-cache
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
-          channels: conda-forge,bioconda,nodefaults
-          channel-priority: strict
-          activate-environment: test
+
       - run: which pip
       - name: Install some more dependencies via pip
         run: pip install '.[test]'  # 'pyproject.toml[test]'
