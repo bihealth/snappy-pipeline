@@ -20,13 +20,11 @@ runs:
   using: "composite"
   steps:
     - name: Setup conda
-      shell: bash -el {0}
       uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: ci_test_conda
 
     - name: Cache conda
-      shell: bash -el {0}
       uses: actions/cache@v3
       with:
         path: ~/conda_pkgs_dir
