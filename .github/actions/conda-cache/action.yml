@@ -39,6 +39,5 @@ runs:
         channels: conda-forge,bioconda,nodefaults
         channel-priority: strict
         use-only-tar-bz2: true
-        miniforge-version: latest
         condarc-file: ${{ inputs.conda-rc }}
         activate-environment: ${{ inputs.environment-name }}
