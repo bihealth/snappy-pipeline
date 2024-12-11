@@ -78,7 +78,7 @@ import sys
 from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -118,6 +118,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg = self.config[self.name]
         self.base_path_out = (
             "work/{{mapper}}.{var_caller}.{{cancer_library}}/out/"
             "{{mapper}}.{var_caller}.{{cancer_library}}{ext}"
@@ -187,23 +188,94 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
     name = "manta"
 
     #: Class available actions
-    actions = ("run",)
+    actions = ("ignore_chroms", "run")
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
+    resource_usage = {
+        "ignore_chroms": ResourceUsage(threads=1, time="1:00:00", memory="4096M"),
+        "run": ResourceUsage(threads=16, time="1-16:00:00", memory="64000M"),
+    }
 
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
+    def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{int(3.75 * 1024 * 16)}M",
+        match action:
+            case "ignore_chroms":
+                return self._get_input_files_ignore_chroms
+            case "run":
+                return self._get_input_files_run
+
+    def get_args(self, action: str) -> dict[str, str]:
+        # Validate action
+        self._validate_action(action)
+
+        match action:
+            case "run":
+                args = {"extra_config": dict(self.cfg.extra_config)}
+                args["extra_config"]["reference"] = self.w_config.static_data_config.reference.path
+                args["extended_options"] = dict(self.cfg.extended_options)
+                return args
+            case "ignore_chroms":
+                return {"ignore_chroms": self.cfg.ignore_chroms}
+
+    def get_output_files(self, action: str) -> dict[str, str]:
+        # Validate action
+        self._validate_action(action)
+
+        match action:
+            case "run":
+                tpl = "work/{mapper}.manta.{cancer_library}/out/{mapper}.manta.{cancer_library}."
+                return {
+                    "vcf": tpl + "vcf.gz",
+                    "vcf_tbi": tpl + "vcf.gz.tbi",
+                    "candidate": tpl + "candidate.vcf.gz",
+                    "candidate_tbi": tpl + "candidate.vcf.gz.tbi",
+                    "vcf_md5": tpl + "vcf.gz.md5",
+                    "vcf_tbi_md5": tpl + "vcf.gz.tbi.md5",
+                    "candidate_md5": tpl + "candidate.vcf.gz.md5",
+                    "candidate_tbi_md5": tpl + "candidate.vcf.gz.tbi.md5",
+                }
+            case "ignore_chroms":
+                return {"callRegions": "work/{mapper}.manta/out/callRegions.bed.gz"}
+
+    @dictify
+    def get_log_file(self, action):
+        # Validate action
+        self._validate_action(action)
+        match action:
+            case "ignore_chroms":
+                tpl = "work/{mapper}.manta/log/callRegions."
+            case "run":
+                tpl = "work/{mapper}.manta.{cancer_library}/log/{mapper}.manta.{cancer_library}."
+        for ext in ("conda_info.txt", "conda_list.txt", "log", "sh"):
+            yield ext.replace(".txt", ""), tpl + ext
+            yield ext.replace(".txt", "") + "_md5", tpl + ext + ".md5"
+
+    def _get_input_files_ignore_chroms(self, wildcards: Wildcards) -> dict[str, str]:
+        return {"reference": self.w_config.static_data_config.reference.path}
+
+    def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, str]:
+        input_files = {"reference": self.w_config.static_data_config.reference.path}
+        if len(self.cfg.ignore_chroms) > 0:
+            input_files["callRegions"] = "work/{mapper}.manta/out/callRegions.bed.gz".format(
+                **wildcards
+            )
+
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        cancer_library = wildcards["cancer_library"]
+        tpl = "output/{mapper}.{library}/out/{mapper}.{library}"
+        input_files["tumor_bam"] = ngs_mapping(
+            tpl.format(mapper=wildcards["mapper"], library=cancer_library) + ".bam"
         )
+        input_files["tumor_bai"] = input_files["tumor_bam"] + ".bai"
+
+        if self.cancer_ngs_library_to_sample_pair.get(cancer_library, None) is not None:
+            normal_library = self.get_normal_lib_name(wildcards)
+            input_files["normal_bam"] = ngs_mapping(
+                tpl.format(mapper=wildcards["mapper"], library=normal_library) + ".bam"
+            )
+            input_files["normal_bai"] = input_files["normal_bam"] + ".bai"
+
+        return input_files
 
 
 class Delly2StepPart(BaseStepPart):
