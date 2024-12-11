@@ -60,8 +60,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
-        environment-name: snappy_env
-        conda-rc: .ci.condarc
 
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
@@ -91,8 +89,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
-        environment-name: snappy_env
-        conda-rc: .ci.condarc
 
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
