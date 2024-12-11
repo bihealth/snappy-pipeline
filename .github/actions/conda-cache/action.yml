@@ -10,7 +10,7 @@ inputs:
   cache-number:
     required: false
     type: number
-    default: 0
+    default: 1
 
 defaults:
   run:
@@ -28,7 +28,7 @@ runs:
     - name: Cache conda
       uses: actions/cache@v3
       with:
-        path: ~/conda_pkgs_dir
+        path: ${{ env.CONDA }}/envs
         key: ${{ runner.os }}-conda-${{ inputs.cache-number }}-${{ hashFiles(inputs.environment-file) }}
       id: cache
 
