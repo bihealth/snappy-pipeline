@@ -12,6 +12,10 @@ inputs:
     type: number
     default: 0
 
+defaults:
+  run:
+    shell: bash -el {0}
+
 runs:
   using: "composite"
   steps:
