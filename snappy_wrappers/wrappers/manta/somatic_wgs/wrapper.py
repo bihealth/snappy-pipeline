@@ -1,49 +1,58 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Manta in somatic variant calling mode on WGS data"""
 
-from snakemake.shell import shell
+import os
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+from snappy_wrappers.simple_wrapper import SimpleWrapper
 
-shell(
-    r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log}")
-set -x
-# -----------------------------------------------------------------------------
+__author__ = "Eric Blanc"
+__email__ = "eric.blanc@bih-charite.de"
 
-basedir=$(dirname $(dirname {snakemake.output.vcf}))
-workdir=$basedir/work
-outdir=$basedir/out
+args = snakemake.params.get("args", {})
 
-# Ensure the working directory is removed, configManta.py will bail out if it already exists
-trap "rm -rf \"$workdir\"" EXIT
+outdir = os.path.dirname(snakemake.output.vcf)
+workdir = os.path.join(os.path.dirname(outdir), "work")
 
+if args.get("extra_config", None) is not None:
+    with open(os.path.join(outdir, "config.ini"), "wt") as f:
+        print("[manta]", file=f)
+        for k, v in args["extra_config"].items():
+            print(f"{k} = {v}", file=f)
+    config = f"--config {outdir}/config.ini"
+else:
+    config = ""
+
+cmd=r"""
 configManta.py \
-    --referenceFasta {snakemake.config[static_data_config][reference][path]} \
-    --runDir $workdir \
-    --normalBam {snakemake.input.normal_bam} \
-    --tumorBam {snakemake.input.tumor_bam}
+    --referenceFasta {snakemake.input.reference} \
+    --runDir {workdir} \
+    {normal_bam} \
+    --tumorBam {snakemake.input.tumor_bam} \
+    {exome} {rna} {unstranded} \
+    {callRegions} \
+    {config}
 
-python $workdir/runWorkflow.py \
+# Fix issue https://github.com/Illumina/manta/issues/293
+sed -ie "s/smtplib.SMTP('localhost')/smtplib.SMTP('localhost', timeout=5)/" \
+    {workdir}/runWorkflow.py
+
+python {workdir}/runWorkflow.py \
     -m local \
     -j 16
 
-cp -ra $workdir/results $outdir
-rm -rf $workdir
-
-pushd $outdir
-ln -sr results/variants/somaticSV.vcf.gz $(basename {snakemake.output.vcf})
-ln -sr results/variants/somaticSV.vcf.gz.tbi $(basename {snakemake.output.vcf_tbi})
-ln -sr results/variants/candidateSV.vcf.gz \
-    $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz
-ln -sr results/variants/candidateSV.vcf.gz.tbi \
-    $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz.tbi
-
-for f in results.tar.gz *.vcf.gz *.tbi; do
-    md5sum $f >$f.md5
-done
-"""
+ln -sr {workdir}/results/variants/somaticSV.vcf.gz {snakemake.output.vcf}
+ln -sr {workdir}/results/variants/somaticSV.vcf.gz.tbi {snakemake.output.vcf_tbi}
+ln -sr {workdir}/results/variants/candidateSV.vcf.gz {snakemake.output.candidate}
+ln -sr {workdir}/results/variants/candidateSV.vcf.gz.tbi {snakemake.output.candidate_tbi}
+""".format(
+    snakemake=snakemake,
+    workdir=workdir,
+    normal_bam=f"--normalBam {snakemake.input.normal_bam}" if snakemake.input.get("normal_bam", None) is not None else "",
+    exome="--exome" if args.get("exome", False) else "",
+    rna="--rna" if args.get("rna", False) else "",
+    unstranded="--unstrandedRNA" if args.get("unstranded", False) else "",
+    callRegions=f"--callRegions {snakemake.input.callRegions}" if snakemake.input.get("callRegions", None) is not None else "",
+    config=config,
 )
+
+SimpleWrapper(snakemake, cmd).run_bash()
