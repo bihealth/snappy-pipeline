@@ -42,6 +42,9 @@ on:
       - 'snappy_wrappers/wrappers/somatic_variant_filtration/**'
       - 'snappy_wrappers/wrappers/vep/**'
 
+defaults:
+  run:
+    shell: bash -el {0}
 
 jobs:
 
@@ -51,30 +54,48 @@ jobs:
     - uses: actions/checkout@v4
       with:
         lfs: 'true'
+
+    - name: Setup conda
+      uses: ./.github/actions/conda-cache
+      with:
+        python-version: ${{ matrix.python-version }}
+        environment-file: environment.yml
+
     - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@v1
+      uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
       with:
         directory: .tests/test-workflow
         snakefile: .tests/test-workflow/workflow/Snakefile
         args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
         show-disk-usage-on-error: true
+        snakemake-version: 7.32.4
 
 
   Tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
     needs:
       - Dryrun_Tests
     steps:
-    - name: update apt
-      run: sudo apt-get update
     - uses: actions/checkout@v4
       with:
         lfs: 'true'
+
+    - name: Setup conda
+      uses: ./.github/actions/conda-cache
+      with:
+        python-version: ${{ matrix.python-version }}
+        environment-file: environment.yml
+
     - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@v1
+      uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
       with:
         directory: .tests/test-workflow
         snakefile: .tests/test-workflow/workflow/Snakefile
         args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
         show-disk-usage-on-error: true
+        snakemake-version: 7.32.4
 
