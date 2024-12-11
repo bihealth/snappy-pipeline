@@ -68,6 +68,7 @@ test = [
     "pytest-sugar >=1.0.0,<2",
     # coveralls.io tooling
     "coveralls >=4.0.1,<5",
+    "pytabix >=0.1.0,<1"
 ]
 dev = [
     # ruff code linter + formatter

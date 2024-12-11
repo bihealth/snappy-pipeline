@@ -49,6 +49,7 @@ dependencies:
   - pyfakefs ~=5.5.0
   - pytest-sugar ~=0.9.6
   - coveralls ~=4.0.1
+  - pytabix >=0.1.0,<1
   # formatting, linting, dev
   - ruff ~=0.4.8
   - snakefmt ~=0.8.5
