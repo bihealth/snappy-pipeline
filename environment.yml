@@ -49,6 +49,7 @@ dependencies:
   - pyfakefs ~=5.5.0
   - pytest-sugar ~=0.9.6
   - coveralls ~=4.0.1
+  - pytabix >=0.1.0,<1
   # formatting, linting, dev
   - ruff ~=0.4.8
   - snakefmt ~=0.8.5
@@ -57,9 +58,6 @@ dependencies:
   - sphinx ~=7.3.7
   - sphinx_rtd_theme ~=2.0.0
   - sphinx-mdinclude ~=0.6.0
-
-  # pytabix requires zlib to be installed, but doesn't list that as a dependency
-  - zlib ~=1.3.1
 
   - pip:
     # build varfish-cli from pypi
