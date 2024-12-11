@@ -54,14 +54,13 @@ jobs:
     - uses: actions/checkout@v4
       with:
         lfs: 'true'
+
     - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: ./.github/actions/conda-cache
       with:
-        auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
-        channels: conda-forge,bioconda,nodefaults
-        channel-priority: strict
+
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@v1
       with:
@@ -83,15 +82,13 @@ jobs:
     - uses: actions/checkout@v4
       with:
         lfs: 'true'
+
     - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: ./.github/actions/conda-cache
       with:
-        auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
-        channels: conda-forge,bioconda,nodefaults
-        channel-priority: strict
-        activate-environment: test
+
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@v1
       with:

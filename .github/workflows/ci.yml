@@ -33,14 +33,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: ./.github/actions/conda-cache
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
-          channels: conda-forge,bioconda,nodefaults
-          channel-priority: strict
-          activate-environment: test
 
       - name: Install dependencies
         run: |
@@ -76,15 +72,13 @@ jobs:
         with:
           lfs: true
           fetch-depth: 2
+
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: ./.github/actions/conda-cache
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
-          channels: conda-forge,bioconda,nodefaults
-          channel-priority: strict
-          activate-environment: test
+
       - run: which pip
       - name: Install some more dependencies via pip
         run: pip install '.[test]'  # 'pyproject.toml[test]'

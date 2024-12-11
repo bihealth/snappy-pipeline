@@ -1,0 +1,31 @@
+name: 'Install/Cache conda'
+description: 'Install or retrieve a conda environment from cache'
+inputs:
+  python-version:
+    required: true
+    type: string
+  environment-file:
+    required: true
+    type: string
+  cache-number:
+    required: false
+    type: number
+    default: 0
+
+runs:
+  using: "composite"
+    steps:
+      - name: Cache conda
+        uses: actions/cache@v3
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ inputs.cache-number }}-${{ hashFiles(inputs.environment-file) }}
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: ${{ inputs.python-version }}
+          environment-file: ${{ inputs.environment-file }}
+          channels: conda-forge,bioconda,nodefaults
+          channel-priority: strict
+          use-only-tar-bz2: true
