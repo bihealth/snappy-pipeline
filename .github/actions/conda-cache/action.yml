@@ -7,6 +7,9 @@ inputs:
   environment-file:
     required: true
     type: string
+  conda-rc:
+    required: false
+    type: string
   cache-number:
     required: false
     type: number
@@ -34,3 +37,4 @@ runs:
         channel-priority: strict
         use-only-tar-bz2: true
         miniforge-version: latest
+        condarc-file: ${{ inputs.conda-rc }}

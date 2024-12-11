@@ -37,6 +37,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
+          conda-rc: .ci.condarc
 
       - name: Install dependencies
         run: |
@@ -78,6 +79,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
+          conda-rc: .ci.condarc
 
       - run: which pip
       - name: Install some more dependencies via pip
