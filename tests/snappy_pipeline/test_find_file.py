@@ -108,9 +108,11 @@ def test_file_system_crawler_invalidate_cache(sample_cache_dict):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         # Get the original modification time
         original_cache_file_time = fake_os.path.getmtime(CACHE_PATH)
 
@@ -144,9 +146,11 @@ def test_file_system_crawler_construct_existing_cache(sample_cache_dict):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         crawler.save_cache()
     assert crawler.cache_path == CACHE_PATH
@@ -162,9 +166,11 @@ def test_file_system_crawler_construct_no_existing_cache():
     fake_fs.create_dir(fake_os.path.dirname(CACHE_PATH))
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         crawler.save_cache()
     assert crawler.cache_path == CACHE_PATH
@@ -187,9 +193,11 @@ def test_file_system_crawler_crawl_existing_cache(sample_cache_dict):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         res = list(crawler.run("/path", "P001", (pattern_set,), False))
     assert len(res) == 1
@@ -221,9 +229,11 @@ def test_file_system_crawler_crawl_mismatching_file_count(sample_cache_dict):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as e:
             list(crawler.run("/path", "P001", (pattern_set,), False))
@@ -244,9 +254,11 @@ def test_file_system_crawler_crawl_few_matches(sample_cache_dict, capsys):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         res = list(crawler.run("/path", "P001", (pattern_set,), False))
     assert not res
@@ -265,9 +277,11 @@ def test_file_system_crawler_crawl_no_existing_cache():
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         res = list(crawler.run("/path", "P001", (pattern_set,), False))
     assert len(res) == 1
@@ -337,9 +351,11 @@ def test_file_system_crawler_se_data_pe_pattern_good(sample_cache_dict_se_only):
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         res = list(crawler.run("/path", "P001", (pattern_set,), True))
     assert len(res) == 2
@@ -363,9 +379,11 @@ def test_file_system_crawler_se_data_pe_pattern_bad_se_pe(sample_cache_dict_se_p
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
             list(crawler.run("/path", "P001", (pattern_set,), True))
@@ -382,9 +400,11 @@ def test_file_system_crawler_se_data_pe_pattern_bad_pe_se(sample_cache_dict_pe_s
     fake_os = fake_filesystem.FakeOsModule(fake_fs)
     fake_open = fake_filesystem.FakeFileOpen(fake_fs)
     mock_lock = MagicMock()
-    with patch("snappy_pipeline.find_file.os", fake_os), patch(
-        "snappy_pipeline.find_file.InterProcessLock", mock_lock
-    ), patch("snappy_pipeline.find_file.open", fake_open, create=True):
+    with (
+        patch("snappy_pipeline.find_file.os", fake_os),
+        patch("snappy_pipeline.find_file.InterProcessLock", mock_lock),
+        patch("snappy_pipeline.find_file.open", fake_open, create=True),
+    ):
         crawler = FileSystemCrawler(CACHE_PATH, [])
         with pytest.raises(ValueError) as excinfo:
             list(crawler.run("/path", "P001", (pattern_set,), True))
