@@ -40,7 +40,6 @@ dependencies = [
     "vcfpy >=0.13.8,<1",
     # Support for vcfpy
     "pysam >=0.22.1,<1",
-    "pytabix >=0.1,<1",
     # Jinja 2 template rendering
     "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
