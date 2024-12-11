@@ -24,8 +24,9 @@ runs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        python-version: ${{ inputs.python-version }}
+#        python-version: ${{ inputs.python-version }}  # ignore python version for now
         environment-file: ${{ inputs.environment-file }}
         channels: conda-forge,bioconda,nodefaults
         channel-priority: strict
         use-only-tar-bz2: true
+        miniforge-version: latest
