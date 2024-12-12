@@ -33,6 +33,7 @@ def minimal_config():
 
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
+            path_ngs_mapping: ../ngs_mapping
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
             filtration_schema: sets
@@ -67,10 +68,7 @@ def somatic_variant_filtration_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,
@@ -87,15 +85,15 @@ def somatic_variant_filtration_workflow(
 def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_input_files()"""
     somatic_base_out = (
-        "SOMATIC_VARIANT_ANNOTATION/output/"
+        "../somatic_variant_annotation/output/"
         "{mapper}.{var_caller}.{annotator}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{annotator}.{tumor_library}"
     )
     expected = {
         "vcf": somatic_base_out + ".vcf.gz",
         "vcf_tbi": somatic_base_out + ".vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
-        "bai": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
+        "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
+        "bai": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
     }
     actual = somatic_variant_filtration_workflow.get_input_files("dkfz_bias_filter", "run")
     assert actual == expected
@@ -157,8 +155,8 @@ def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_work
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
     }
 
@@ -171,12 +169,12 @@ def test_eb_filter_step_part_get_input_files_write_panel(somatic_variant_filtrat
     wildcards = Wildcards(fromdict={"mapper": "bwa"})
     expected = {
         "bam": [
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         ],
         "bai": [
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         ],
     }
     actual = somatic_variant_filtration_workflow.get_input_files("eb_filter", "write_panel")(
@@ -303,7 +301,7 @@ def test_apply_filters_step_part_get_resource_usage(somatic_variant_filtration_w
 def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests FilterToExonsStepPart.get_input_files()"""
     # TODO: fix use of `tumor_library` in get_input_files()
-    wildcards = Wildcards(
+    _wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
@@ -320,7 +318,7 @@ def test_filter_to_exons_step_part_get_input_files(somatic_variant_filtration_wo
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
     }
-    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(wildcards)
+    # _ = somatic_variant_filtration_workflow.get_input_files("filter_to_exons", "run")(_wildcards)
     _ = expected
     assert True
 
@@ -451,6 +449,7 @@ def minimal_config_list():
 
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
+            path_ngs_mapping: ../ngs_mapping
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['jannovar']
             path_somatic_variant: "../somatic_variant_annotation"
@@ -495,10 +494,7 @@ def somatic_variant_filtration_workflow_list(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,

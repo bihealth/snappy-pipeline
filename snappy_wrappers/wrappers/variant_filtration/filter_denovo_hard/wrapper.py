@@ -12,9 +12,6 @@ isort:skip_file
 """
 
 from snakemake.shell import shell
-import os
-import sys
-
 
 region_filter = ""
 if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:

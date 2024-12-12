@@ -74,12 +74,7 @@ def igv_session_generation(
     patch_module_fs(
         "snappy_pipeline.workflows.igv_session_generation", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return IgvSessionGenerationWorkflow(
         dummy_workflow,
@@ -98,10 +93,8 @@ def test_igv_session_generation_from_variant_calling_step_part_get_input_files(
 ):
     """Tests WriteIgvSessionFileStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_base_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
-    variant_calling_base_out = (
-        "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
-    )
+    ngs_mapping_base_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
+    variant_calling_base_out = "../variant_calling/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     expected = {
         # TODO: underline method is probably wrong, hence the weirdness of this test (`[n] * 3`)
         "bam": [ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam"] * 3,

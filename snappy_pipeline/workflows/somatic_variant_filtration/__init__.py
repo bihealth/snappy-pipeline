@@ -126,14 +126,11 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_annotation import (
     ANNOTATION_TOOLS,
-    SomaticVariantAnnotationWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
-    SomaticVariantCallingWorkflow,
 )
 
 from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
@@ -220,7 +217,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, is_unpack=True):
             filter_nb = int(wildcards["filter_nb"])
             if filter_nb > 1:
                 prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
@@ -298,7 +295,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             return {"filter_name": "{}_{}".format(self.filter_name, wildcards["filter_nb"])}
 
         return input_function
@@ -311,9 +308,9 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
+            yield from parent(wildcards, **_kwargs).items()
 
             yield (
                 "bam",
@@ -357,9 +354,9 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
+            yield from parent(wildcards, **_kwargs).items()
 
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
@@ -381,9 +378,9 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterEbfilterStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             ebfilter_config = self.config.filter_list[filter_nb - 1][self.filter_name]
             parameters.update(ebfilter_config)
@@ -401,9 +398,9 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -421,9 +418,9 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterRegionsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -441,9 +438,9 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             parent = super(OneFilterProtectedStepPart, self).get_params(action)
-            parameters = parent(wildcards)
+            parameters = parent(wildcards, **_kwargs)
             filter_nb = int(wildcards["filter_nb"])
             filter = self.config.filter_list[filter_nb - 1][self.filter_name]
             keywords = filter.keywords()
@@ -548,13 +545,15 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         # VCF file and index
         tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        somatic_variant = self.parent.sub_workflows["somatic_variant"]
+
+        somatic_variant = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, somatic_variant(tpl + ext)
         # BAM file and index
         tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
 
@@ -661,7 +660,8 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         # BAM file and index
         tpl = r"output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
         key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
@@ -765,8 +765,9 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         random.seed(self.config.eb_filter.shuffle_seed)
         lib_count = self.config.eb_filter.panel_of_normals_size
         random.shuffle(libraries)
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
@@ -899,7 +900,7 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
 
         @dictify
-        def input_function(wildcards):
+        def input_function(wildcards, **_kwargs):
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield (
                     key,
@@ -955,11 +956,13 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticVariantFiltrationConfigModel,
-            previous_steps=(
-                SomaticVariantAnnotationWorkflow,
-                SomaticVariantCallingWorkflow,
-                NgsMappingWorkflow,
-            ),
+            # FIXME
+            previous_steps=(),
+            # previous_steps=(
+            #     SomaticVariantAnnotationWorkflow,
+            #     SomaticVariantCallingWorkflow,
+            #     NgsMappingWorkflow,
+            # ),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -978,16 +981,16 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow(
+        self.register_module(
             (
                 "somatic_variant_annotation"
-                if self.config.has_annotation
+                if self.config["has_annotation"]
                 else "somatic_variant_calling"
             ),
-            self.config.path_somatic_variant,
+            self.config["path_somatic_variant"],
             "somatic_variant",
         )
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
