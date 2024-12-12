@@ -97,5 +97,5 @@ jobs:
         snakefile: .tests/test-workflow/workflow/Snakefile
         args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
         show-disk-usage-on-error: true
-        snakemake-version: 7.32.4
+        snakemake-version: 8.25.5
 

@@ -33,7 +33,7 @@ dependencies = [
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake >=8.14.0,<9",
+    "snakemake >=8.25.5,<9",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
