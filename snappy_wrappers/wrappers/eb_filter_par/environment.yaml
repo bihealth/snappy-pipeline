@@ -12,6 +12,6 @@ dependencies:
   - bcftools==1.19
   - htslib==1.19.1
   - samtools==1.19.2
-  - snakemake-minimal==7.32.4
+  - snakemake-minimal =8.25
   - cffi==1.16.0
   - pandas==2.2.1

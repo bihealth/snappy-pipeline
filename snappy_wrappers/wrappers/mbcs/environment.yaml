@@ -6,7 +6,7 @@ dependencies:
   - cffi==1.16.0
   - pandas==2.2.1
   - numpy==1.26.4
-  - snakemake-minimal==7.32.4
+  - snakemake-minimal =8.25
   - openjdk==17.0.10
   - seqtk==1.4
   - samtools==1.19

@@ -10,7 +10,7 @@ dependencies:
   - datrie==0.8.2
   - gawk==5.1.0
   # snakemake needed by the parallel wrapper
-  - snakemake-minimal =8.10
+  - snakemake-minimal =8.25
   # needed by snakemake
   - cffi==1.16.0
   - numpy==1.26.4
