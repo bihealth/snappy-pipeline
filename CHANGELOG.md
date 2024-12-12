@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.3.1) (2024-12-12)
+
+
+### Bug Fixes
+
+* change type of parameters to adhere to specification of EBFilter ([#580](https://github.com/bihealth/snappy-pipeline/issues/580)) ([42d2c01](https://github.com/bihealth/snappy-pipeline/commit/42d2c0109fb35eff45b1baa696fa07dd333d110c))
+
 ## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
 
 
