@@ -1,4 +1,4 @@
-"""Abstract wrapper for cnvkit.py"""
+"""Abstract wrapper classes as utilities for snappy specific wrappers."""
 
 import os
 import shutil
