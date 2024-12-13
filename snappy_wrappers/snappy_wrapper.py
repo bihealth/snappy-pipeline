@@ -5,6 +5,7 @@ import shutil
 import stat
 import tempfile
 import textwrap
+from abc import abstractmethod, ABCMeta
 
 from snakemake.shell import shell
 
@@ -12,7 +13,7 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 
-class SimpleWrapper:
+class SnappyWrapper(metaclass=ABCMeta):
     header = r"""
         # Pipe everything to log file
         if [[ -n "{snakemake.log.log}" ]]; then
@@ -71,18 +72,21 @@ class SimpleWrapper:
         popd 1> /dev/null 2>&1
     """
 
-    def __init__(self, snakemake) -> None:
-        self.snakemake = snakemake
+    output_links = r"""
+        for path in {snakemake.output.output_links}; do
+          dst=$path
+          src=work/${{dst#output/}}
+          ln -sr $src $dst
+        done
+    """
 
-    def run_bash(self, cmd: str) -> None:
-        self._run(cmd, self.snakemake.log.sh)
-        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.sh))
+    def __init__(self, snakemake, with_output_links: bool = True) -> None:
+        self._snakemake = snakemake
+        self._with_output_links = with_output_links
 
-    def run_R(self, cmd: str) -> None:
-        with open(self.snakemake.log.R, "wt") as f:
-            print(cmd, file=f)
-        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.R))
-        self._run(f"R --vanilla < {self.snakemake.log.R}", None)
+    @abstractmethod
+    def run(self, cmd: str) -> None:
+        pass
 
     def _run(self, cmd: str, filename: str | None) -> None:
         """
@@ -103,9 +107,9 @@ class SimpleWrapper:
                 textwrap.dedent(
                     "\n".join(
                         (
-                            SimpleWrapper.header.format(snakemake=self.snakemake),
+                            SnappyWrapper.header.format(snakemake=self._snakemake),
                             cmd,
-                            SimpleWrapper.footer.format(snakemake=self.snakemake),
+                            SnappyWrapper.footer.format(snakemake=self._snakemake),
                         )
                     )
                 ),
@@ -114,7 +118,7 @@ class SimpleWrapper:
 
             f.flush()
             f.close()
-            
+
             current_permissions = stat.S_IMODE(os.lstat(tempfilename).st_mode)
             os.chmod(tempfilename, current_permissions | stat.S_IXUSR)
 
@@ -123,4 +127,30 @@ class SimpleWrapper:
 
             shell(tempfilename)
 
-        shell(SimpleWrapper.md5_log.format(log=str(self.snakemake.log.log)))
+        shell(SnappyWrapper.md5_log.format(log=str(self._snakemake.log.log)))
+
+        if (
+            self._with_output_links
+            and getattr(self._snakemake.output, "output_links", None) is not None
+        ):
+            shell(SnappyWrapper.output_links.format(snakemake=self._snakemake))
+
+
+class ShellWrapper(SnappyWrapper):
+    def _run_bash(self, cmd: str) -> None:
+        self._run(cmd, self._snakemake.log.sh)
+        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.sh))
+
+    def run(self, cmd: str) -> None:
+        self._run_bash(cmd)
+
+
+class RWrapper(SnappyWrapper):
+    def _run_R(self, cmd: str) -> None:
+        with open(self._snakemake.log.R, "wt") as f:
+            print(cmd, file=f)
+        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.R))
+        self._run(f"R --vanilla < {self._snakemake.log.R}", None)
+
+    def run(self, cmd: str) -> None:
+        self._run_R(cmd)
