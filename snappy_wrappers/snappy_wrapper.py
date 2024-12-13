@@ -83,6 +83,19 @@ class SnappyWrapper(metaclass=ABCMeta):
     def __init__(self, snakemake, with_output_links: bool = True) -> None:
         self._snakemake = snakemake
         self._with_output_links = with_output_links
+        self._check_snakemake_attributes()
+
+    def _check_snakemake_attributes(self):
+        if not getattr(self._snakemake, "log", None):
+            raise AttributeError("snakemake.log is not defined")
+        if not getattr(self._snakemake.log, "log", None):
+            raise AttributeError("snakemake.log.log is not defined")
+        if not getattr(self._snakemake.log, "conda_list", None):
+            raise AttributeError("snakemake.log.conda_list is not defined")
+        if not getattr(self._snakemake.log, "conda_info", None):
+            raise AttributeError("snakemake.log.conda_info is not defined")
+        if not getattr(self._snakemake.log, "script", None):
+            raise AttributeError("snakemake.log.script is not defined")
 
     @abstractmethod
     def run(self, cmd: str) -> None:
@@ -138,8 +151,8 @@ class SnappyWrapper(metaclass=ABCMeta):
 
 class ShellWrapper(SnappyWrapper):
     def _run_bash(self, cmd: str) -> None:
-        self._run(cmd, self._snakemake.log.sh)
-        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.sh))
+        self._run(cmd, self._snakemake.log.script)
+        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
 
     def run(self, cmd: str) -> None:
         self._run_bash(cmd)
@@ -147,10 +160,10 @@ class ShellWrapper(SnappyWrapper):
 
 class RWrapper(SnappyWrapper):
     def _run_R(self, cmd: str) -> None:
-        with open(self._snakemake.log.R, "wt") as f:
+        with open(self._snakemake.log.script, "wt") as f:
             print(cmd, file=f)
-        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.R))
-        self._run(f"R --vanilla < {self._snakemake.log.R}", None)
+        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
+        self._run(f"R --vanilla < {self._snakemake.log.script}", None)
 
     def run(self, cmd: str) -> None:
         self._run_R(cmd)
