@@ -1,89 +1,32 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py coverage"""
 
-from snakemake.shell import shell
+import os
+import sys
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-# During panel_of_normals step, the target regions are created by the target substep.
-# During somatic CNV calling (both exome & wgs), the target regions are obtained from the configuration
-if "target" in snakemake.input.keys():
-    target = snakemake.input.target
-elif "path_target" in config.keys():
-    target = config["path_target"]
-else:
-    raise Exception("Unsupported naming")
+__author__ = "Eric Blanc"
+__email__ = "eric.blanc@bih-charite.de"
 
-# Same for antitarget regions
-if "antitarget" in snakemake.input.keys():
-    antitarget = snakemake.input.antitarget
-elif "path_antitarget" in config.keys():
-    antitarget = config["path_antitarget"]
-else:
-    raise Exception("Unsupported naming")
+args = snakemake.params.get("args", {})
 
-shell(
-    r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-set -x
-
-# Function definitions ---------------------------------------------------------
-
-coverage()
-{{
-    cnvkit.py coverage \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
-        --min-mapq {config[min_mapq]} \
-        --processes {snakemake.threads} \
-        {snakemake.input.bam} \
-        --output $2 $1
-}}
-
-md5()
-{{
-    set -x
-
-    fn=$1
-    f=$(basename $fn)
-    d=$(dirname $fn)
-    pushd $d
-    md5sum $f > $f.md5
-    popd
-}}
-
-# -----------------------------------------------------------------------------
-
-coverage {target} {snakemake.output.target}
-md5 {snakemake.output.target}
-
-coverage {antitarget} {snakemake.output.antitarget}
-md5 {snakemake.output.antitarget}
-"""
+cmd = r"""
+cnvkit.py coverage --processes {snakemake.resources._cores} \
+    -o {snakemake.output.coverage} \
+    --fasta {snakemake.input.reference} \
+    --min-mapq {args[min-mapq]} {count} \
+    {snakemake.input.bam} {snakemake.input.intervals}
+""".format(
+    snakemake=snakemake,
+    args=args,
+    count="--count" if args.get("count", False) else "",
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+CnvkitWrapper(snakemake, cmd).run()

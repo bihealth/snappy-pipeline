@@ -1,67 +1,46 @@
 # -*- coding: utf-8 -*-
 """Wrapper vor cnvkit.py segment"""
 
-from snakemake.shell import shell
+import os
+import sys
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-method = config["segmentation_method"]
-if method == "cbs" and config["smooth_cbs"]:
-    method += " --smooth-cbs"
+args = snakemake.params.get("args", {})
 
-if float(config["segmentation_threshold"]) > 0:
-    threshold = " --threshold " + str(config["segmentation_threshold"])
+if snakemake.input.get("variants", None) is not None:
+    variants = r"""
+        ---vcf {snakemake.input.variants} \
+        --sample-id {args[sample-id]} --normal-id {args[normal-id]} \
+        --min-variant-depth {args[min-variant-depth]} {zygocity_freq}
+    """.format(
+        snakemake=snakemake,
+        args=args,
+        zygocity_freq=f"--zygocity_freq {args['zygocity-freq']}" if args.get("zygocity-freq", None) is not None else ""
+    )
 else:
-    threshold = ""
+    variants = ""
 
-shell(
-    r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-set -x
-
-# -----------------------------------------------------------------------------
-
-cnvkit.py segment \
-    --output {snakemake.output.segments} \
-    --method {method} \
-    $(if [[ "{config[drop_low_coverage]}" = "True" ]]; then \
-        echo --drop-low-coverage
-    fi) \
-    {threshold} \
-    --drop-outliers {config[drop_outliers]} \
-    {snakemake.input}
-
-d=$(dirname "{snakemake.output.segments}")
-pushd $d
-fn=$(basename "{snakemake.output.segments}")
-md5sum $fn > $fn.md5
-popd
-"""
+cmd = r"""
+cnvkit.py segment --processes {snakemake.resources._cores} \
+    -o {snakemake.output.segments} --dataframe {snakemake.output.dataframe} \
+    --method {args[method]} {threshold} {smooth_cbs} \
+    {drop_low_coverage} --drop-outliers {args[drop-outliers]} \
+    {variants} \
+    {snakemake.input.ratios}
+""".format(
+    snakemake=snakemake,
+    args=args,
+    variants=variants,
+    threshold=f"--threshold {args['threshold']}" if args.get("thresold", None) is not None else "",
+    smooth_cbs="--smooth-cbs" if args.get("smooth-cbs", False) else "",
+    drop_low_coverage="--drop-low-coverage" if args.get("drop-low-coverage", False) else "",
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+CnvkitWrapper(snakemake, cmd).run()

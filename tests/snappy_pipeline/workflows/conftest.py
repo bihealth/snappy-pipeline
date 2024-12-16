@@ -907,6 +907,52 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 
 
 @pytest.fixture
+def autobin_result_calling_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file autobin.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.autobin.txt"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "N":
+            library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            fake_fs.fs.create_file(
+                tpl.format(mapper="bwa", library_name=library_name), create_missing_dirs=True
+            )
+    return fake_fs
+
+
+@pytest.fixture
+def autobin_result_pon_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file autobin.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{mapper}.cnvkit/out/{mapper}.cnvkit.autobin.txt"
+    fake_fs.fs.create_file(tpl.format(mapper="bwa"), create_missing_dirs=True)
+    return fake_fs
+
+
+@pytest.fixture
+def purity_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file purity.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/SOMATIC_PURITY_PLOIDY_ESTIMATE/output", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{mapper}.{purity_tool}.{library_name}/out/{mapper}.{purity_tool}.{library_name}.txt"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "Y":
+            library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            fake_fs.fs.create_file(
+                tpl.format(mapper="bwa", purity_tool="ascat", library_name=library_name),
+                create_missing_dirs=True,
+            )
+    return fake_fs
+
+
+@pytest.fixture
 def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {

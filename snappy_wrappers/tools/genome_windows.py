@@ -12,7 +12,11 @@ import argparse
 import csv
 import fnmatch
 import os
+import re
 import sys
+
+from pathlib import Path
+from typing import Iterator
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
@@ -31,6 +35,12 @@ DEFAULT_FORMAT = "regions"
 
 #: Allowed values for ``--format``
 CHOICES_FORMAT = ("regions", "bed")
+
+#: Regular expression patterns to parse *.fai, *.genome, *.dict & fastq files
+PATTERN_FAI = re.compile(r"^([^\s]+)\t([0-9]+)\t([0-9]+)\t([0-9]+)\t([0-9]+)\s*$")
+PATTERN_GENOME = re.compile(r"^([^\s]+)\t([0-9]+)\s*$")
+PATTERN_DICT = re.compile(r"^@SQ\tSN:([^\s]+)\tLN:([0-9]+).*$")
+PATTERN_FASTA = re.compile(r"^\s*>\s*([^\s]+).*$")
 
 
 def matches_any(query, patterns):
@@ -76,6 +86,99 @@ def yield_regions(fai_file, window_size, subtract_end=0, ignore_chroms=None, pad
             if begin < end - subtract_end:
                 yield region
             begin = end
+
+
+def yield_contigs_and_lengths(
+    filename: Path, pattern: re.Pattern, allow_mismatch: bool = False
+) -> Iterator[tuple[str, int]]:
+    """Yields contig names & lengths from regex pattern matching of sequence dictionary records
+
+    :param filename: path to the sequence dictionary file (``*.fai``, ``*.genome`` or ``*.dict``)
+    :param pattern: regular expression pattern (compiled) to extract contig name & length from sequence dictionary record
+    :param allow_mismatch: when true, records that don't match the pattern are allowed, otherwise they raise an exception
+
+    :returns: An iterator giving sequence of names and lengths for all contigs
+    """
+    with open(filename, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            m = pattern.match(line)
+            if m:
+                groups = m.groups()
+                yield groups[0], int(groups[1])
+            else:
+                if not allow_mismatch:
+                    raise ValueError(f"Unexpected record '{line}' in reference file '{filename}'")
+
+
+def yield_contigs_and_lengths_from_sequence(filename: Path) -> Iterator[tuple[str, int]]:
+    """Yields contig names & lengths from parsing the reference sequence
+
+    :param filename: path to the reference sequence in ``fasta`` format
+
+    :returns: An iterator giving sequence of names and lengths for all contigs
+    """
+    contig_name = None
+    contig_length = None
+    with open(filename, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            m = PATTERN_FASTA.match(line)
+            if m:
+                if contig_name:
+                    yield contig_name, contig_length
+                groups = m.groups()
+                contig_name = groups[0]
+                contig_length = 0
+            else:
+                contig_length += len(line)
+    assert contig_name is not None, f"No contig found in reference file {filename}"
+    yield contig_name, contig_length
+
+
+def yield_contigs_and_lengths_from_ref(path_ref: str) -> Iterator[tuple[str, int]]:
+    """Yields all contig names & lengths in the reference sequence
+
+    :param filename: path to the reference sequence
+
+    :returns: An iterator giving sequence of names and lengths for all contigs
+
+    The contig names & lengths are obtained from the sequence dictionary files when possible.
+    The order is ``*.fai``, ``*.genome``, ``*.dict`` (replacing the ``.fasta`` or ``.fa`` extension).
+    When none of these files in available, then the sequence itself is used.
+
+    TODO: Add compressed files ``.gz`` & ``.bgz``.
+    """
+    path_ref = Path(path_ref).resolve()
+    if Path(str(path_ref) + ".fai").exists():
+        return yield_contigs_and_lengths(Path(str(path_ref) + ".fai"), PATTERN_FAI)
+    elif Path(str(path_ref) + ".genome").exists():
+        return yield_contigs_and_lengths(Path(str(path_ref) + ".genome"), PATTERN_GENOME)
+    elif path_ref.with_suffix("dict").exists():
+        return yield_contigs_and_lengths(path_ref.with_suffix("dict"), PATTERN_DICT, True)
+    else:
+        return yield_contigs_and_lengths_from_sequence(path_ref)
+
+
+def ignore_chroms(
+    path_ref: str, ignored: set[str] = [], return_ignored: bool = False
+) -> Iterator[tuple[str, int]]:
+    """Yields contig names & lengths belonging or excluding a set of patterns.
+
+    :param filename: path to the reference sequence
+    :param ignored: set of patterns to identify contigs to be ignored
+    :param return_ignored: select which set of contigs to return, those which names don't match any pattern, or those which names match one pattern at least.
+
+    :returns: An iterator giving sequence of names and lengths for all contigs to use or to ignore (depending on ``return_ignored``)
+    """
+    for contig_name, contig_length in yield_contigs_and_lengths_from_ref(path_ref):
+        m = matches_any(contig_name, ignored)
+        if (m and return_ignored) or (not m and not return_ignored):
+            yield contig_name, contig_length
 
 
 def run(args):

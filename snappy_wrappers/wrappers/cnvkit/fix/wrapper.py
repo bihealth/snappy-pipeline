@@ -1,68 +1,44 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py fix"""
 
-from snakemake.shell import shell
+import os
+import sys
 
-__author__ = "Manuel Holtgrewe"
-__email__ = "manuel.holtgrewe@bih-charite.de"
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers.  These run in an "inner" snakemake process which uses its
+# own conda environment which cannot see the snappy_pipeline installation.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+from snappy_wrappers.wrappers.cnvkit.cnvkit_wrapper import CnvkitWrapper
 
-if "ref" in snakemake.input.keys():
-    ref = snakemake.input.target
-elif "path_panel_of_normals" in config.keys():
-    ref = config["path_panel_of_normals"]
+__author__ = "Eric Blanc"
+__email__ = "eric.blanc@bih-charite.de"
+
+args = snakemake.params.get("args", {})
+
+# Fix requires empty antitarget file in WGS & Panel modes
+if snakemake.input.get("antitarget", None) is None:
+    antitarget = "$TMPDIR/antitarget.bed"
+    create_dummy_antitarget = f"touch {antitarget} ; "
 else:
-    raise Exception("Unsupported naming")
+    antitarget = snakemake.input.antitarget
+    create_dummy_antitarget = ""
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
-no_gc = " --no-gc" if not config["gc_correction"] else ""
-no_edge = " --no-edge" if not config["edge_correction"] else ""
-no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
-
-shell(
-    r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-set -x
-
-# -----------------------------------------------------------------------------
-
+cmd = r"""
 cnvkit.py fix \
-    --output {snakemake.output.ratios} \
-    {gender} {male} {no_gc} {no_edge} {no_rmask} \
-    {snakemake.input.target} \
-    {snakemake.input.antitarget} \
-    {ref}
-
-d=$(dirname "{snakemake.output.ratios}")
-pushd $d
-fn=$(basename "{snakemake.output.ratios}")
-md5sum $fn > $fn.md5
-popd
-"""
+    -o {snakemake.output.ratios} \
+    {cluster} --sample-id {args[sample-id]} \
+    {no_gc} {no_edge} {no_rmask} \
+    {snakemake.input.target} {antitarget} {snakemake.input.reference}
+""".format(
+    snakemake=snakemake,
+    args=args,
+    antitarget=antitarget,
+    cluster="--cluster" if args.get("cluster", False) else "",
+    no_gc="--no-gc" if args.get("no-gc", False) else "",
+    no_edge="--no-edge" if args.get("no-edge", False) else "",
+    no_rmask="--no-rmask" if args.get("no-rmask", False) else "",
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+CnvkitWrapper(snakemake, create_dummy_antitarget + cmd).run()
