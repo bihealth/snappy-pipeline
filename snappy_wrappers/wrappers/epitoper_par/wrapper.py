@@ -1,9 +1,9 @@
 import json
-from math import ceil
 import os
 import sys
 import tempfile
 import textwrap
+from math import ceil
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
@@ -24,8 +24,8 @@ from snappy_wrappers.wrapper_parallel import (  # noqa: E402
 # Naming clash limbo...
 snake_job = snakemake
 del snakemake
-from snakemake import shell  # noqa: C0411
-from snakemake import snakemake as run_snakemake  # noqa: C0411
+from snakemake import shell  # noqa: C0411, E402
+from snakemake import snakemake as run_snakemake  # noqa: C0411, E402
 
 snakemake = snake_job
 

@@ -22,6 +22,22 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = SomaticWgsSvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -30,9 +46,10 @@ localrules:
     somatic_wgs_sv_calling_link_out_run,
 
 
-rule all:
+rule somatic_wgs_sv_calling_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

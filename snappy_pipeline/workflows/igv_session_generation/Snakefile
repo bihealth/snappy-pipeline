@@ -24,6 +24,61 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = IgvSessionGenerationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
+if wf.config["path_variant_phasing"]:
+
+    module variant_phasing:
+        snakefile:
+            "../variant_phasing/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get("path_variant_phasing", "../variant_phasing")
+
+    use rule * from variant_phasing
+
+
+if wf.config["path_variant_annotation"]:
+
+    module variant_annotation:
+        snakefile:
+            "../variant_annotation/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get("path_variant_annotation", "../variant_annotation")
+
+    use rule * from variant_annotation
+
+
+if wf.config["path_variant_calling"]:
+
+    module variant_calling:
+        snakefile:
+            "../variant_calling/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get("path_variant_calling", "../variant_calling")
+
+    use rule * from variant_calling
+
+
 # Rules =======================================================================
 
 
@@ -33,9 +88,10 @@ localrules:
     igv_session_generation_link_out_run,
 
 
-rule all:
+rule igv_session_generation_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
