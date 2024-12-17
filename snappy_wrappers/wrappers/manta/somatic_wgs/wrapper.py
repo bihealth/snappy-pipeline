@@ -8,11 +8,12 @@ from snappy_wrappers.simple_wrapper import SimpleWrapper
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
-args = snakemake.params.get("args", {})
+args = getattr(snakemake.params, "args", {})
 
 outdir = os.path.dirname(snakemake.output.vcf)
 workdir = os.path.join(os.path.dirname(outdir), "work")
 
+# Create manta config file if extra_config dict in arguments.
 if args.get("extra_config", None) is not None:
     with open(os.path.join(outdir, "config.ini"), "wt") as f:
         print("[manta]", file=f)
@@ -23,6 +24,9 @@ else:
     config = ""
 
 cmd=r"""
+# configManta.py doesn't like when its output script is already present
+rm {workdir}/runWorkflow.py
+
 configManta.py \
     --referenceFasta {snakemake.input.reference} \
     --runDir {workdir} \
@@ -47,12 +51,12 @@ ln -sr {workdir}/results/variants/candidateSV.vcf.gz.tbi {snakemake.output.candi
 """.format(
     snakemake=snakemake,
     workdir=workdir,
-    normal_bam=f"--normalBam {snakemake.input.normal_bam}" if snakemake.input.get("normal_bam", None) is not None else "",
+    normal_bam=f"--normalBam {snakemake.input.normal_bam}" if getattr(snakemake.input, "normal_bam", None) is not None else "",
     exome="--exome" if args.get("exome", False) else "",
     rna="--rna" if args.get("rna", False) else "",
     unstranded="--unstrandedRNA" if args.get("unstranded", False) else "",
-    callRegions=f"--callRegions {snakemake.input.callRegions}" if snakemake.input.get("callRegions", None) is not None else "",
+    callRegions=f"--callRegions {snakemake.input.callRegions}" if getattr(snakemake.input, "callRegions", None) is not None else "",
     config=config,
 )
 
-SimpleWrapper(snakemake, cmd).run_bash()
+SimpleWrapper(snakemake).run_bash(cmd)
