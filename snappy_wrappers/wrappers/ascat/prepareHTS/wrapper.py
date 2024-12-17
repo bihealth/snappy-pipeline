@@ -17,7 +17,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 import re
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 args = getattr(snakemake.params, "args", {})
 
@@ -92,4 +92,4 @@ ascat.synchroniseFiles(
     tumor_only="FALSE" if has_normal else "TRUE,"
 )
 
-SimpleWrapper(snakemake).run_R(cmd)
+RWrapper(snakemake).run(cmd)

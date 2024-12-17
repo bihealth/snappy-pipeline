@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for building BAF files for ASCAT"""
-
-from snakemake import shell
+"""Wrapper for guessing sex from coverage of autosomes, X & Y"""
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-args = snakemake.params.get("args", {})
+args = getattr(snakemake.params, "args", {})
 
 cmd=r"""
 stat=$TMPDIR/idx_stats.txt
@@ -52,4 +50,4 @@ echo $decision > {snakemake.output.decision}
     args=args,
 )
 
-SimpleWrapper(snakemake).run_bash(cmd)
+ShellWrapper(snakemake).run(cmd)

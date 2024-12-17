@@ -16,7 +16,7 @@ Optional snakemake.output:
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 args = getattr(snakemake.params, "args", {})
 
@@ -95,4 +95,4 @@ write.table(ascat.output$purity, "{snakemake.output.purity}", sep="\t", col.name
     germline_genotypes=germline_genotypes,
 )
 
-SimpleWrapper(snakemake).run_R(cmd)
+RWrapper(snakemake).run(cmd)

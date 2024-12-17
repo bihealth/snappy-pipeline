@@ -17,7 +17,7 @@ Optional snakemake.output:
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 args = getattr(snakemake.params, "args", {})
 
@@ -104,4 +104,4 @@ BEGIN {{
 > {snakemake.output.txt}
 """.format(snakemake=snakemake, args=args, baits=baits)
 
-SimpleWrapper(snakemake).run_bash(prefix + cmd)
+ShellWrapper(snakemake).run(prefix + cmd)
