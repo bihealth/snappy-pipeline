@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_purity_ploidy_estimate workflow module code"""
 
-import copy
 import textwrap
 
 import pytest
@@ -13,6 +12,7 @@ from snappy_pipeline.workflows.somatic_purity_ploidy_estimate import (
 )
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -35,10 +35,15 @@ def minimal_config():
 
           somatic_purity_ploidy_estimate:
             tools: ['ascat']
-            tool_cnv_calling: cnvetti
-            path_somatic_targeted_seq_cnv_calling: ../somatic_targeted_seq_cnv_calling
             ascat:
-              b_af_loci: DUMMY
+              genomeVersion: hg38
+              sex:
+                source: auto
+              allele_counter:
+                loci_prefix: /path/to/locii_chr
+                allele_prefix: /path/to/alleles_chr
+              path_gc_content: /path/to/gc_content.txt
+              path_reptiming: /path/to/reptiming.txt
 
         data_sets:
           first_batch:
@@ -54,16 +59,6 @@ def minimal_config():
 
 
 @pytest.fixture
-def minimal_config_copywritter(minimal_config):
-    """Returns minimum configuration file with copywritter as the CNV caller."""
-    minimal_config_adjusted = copy.deepcopy(minimal_config)
-    minimal_config_adjusted["step_config"]["somatic_purity_ploidy_estimate"]["tool_cnv_calling"] = (
-        "copywriter"
-    )
-    return minimal_config_adjusted
-
-
-@pytest.fixture
 def somatic_purity_ploidy_estimate_workflow(
     dummy_workflow,
     minimal_config,
@@ -72,12 +67,19 @@ def somatic_purity_ploidy_estimate_workflow(
     config_paths,
     cancer_sheet_fake_fs,
     aligner_indices_fake_fs,
+    guess_sex_result_fake_fs,
     mocker,
 ):
     """Return SomaticPurityPloidyEstimateWorkflow object pre-configured with cancer sheet"""
+    guess_sex_result_fake_fs.fs.create_file(
+        file_path="work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.sex.txt",
+        contents="female\n",
+        create_missing_dirs=True,
+    )
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.somatic_purity_ploidy_estimate", guess_sex_result_fake_fs, mocker)
     dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return SomaticPurityPloidyEstimateWorkflow(
@@ -89,216 +91,226 @@ def somatic_purity_ploidy_estimate_workflow(
     )
 
 
-@pytest.fixture
-def somatic_purity_ploidy_estimate_workflow_w_copywriter(
-    dummy_workflow,
-    minimal_config_copywritter,
-    config_lookup_paths,
-    work_dir,
-    config_paths,
-    cancer_sheet_fake_fs,
-    aligner_indices_fake_fs,
-    mocker,
-):
-    """Return SomaticPurityPloidyEstimateWorkflow object pre-configured with cancer sheet"""
-    # Patch out file-system related things in abstract (the crawling link in step is defined there)
-    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
-    patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_targeted_seq_cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x,
-    }
-    # Construct the workflow object
-    return SomaticPurityPloidyEstimateWorkflow(
-        dummy_workflow,
-        minimal_config_copywritter,
-        config_lookup_paths,
-        config_paths,
-        work_dir,
-    )
-
-
 # Tests for AscatStepPart --------------------------------------------------------------------------
 
 
-def test_ascat_step_part_get_input_files_baf_tumor(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_input_files_baf_tumor()"""
-    wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+def test_ascat_step_part_get_input_files_build_baf(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_input_files_build_baf()"""
+    wildcards = Wildcards(
+        fromdict={
+            "library_name": "P001-T1-DNA1-WGS1",
+            "mapper": "bwa",
+            "chrom_name": "1"
+        }
+    )
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "reference": "/path/to/ref.fa",
+        "locii": "/path/to/locii_chr1.txt"
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "build_baf")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_ascat_step_part_get_input_files_prepare_hts(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_input_files_prepare_hts()"""
+    chromosome_names = list(map(str, range(1, 23))) + ["X"]
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    expected = {
+        "tumorAlleleCounts": [
+            f"work/bwa.ascat.P001-T1-DNA1-WGS1/out/AlleleCounts/P001-T1-DNA1-WGS1_alleleFrequencies_chr{chr}.txt"
+            for chr in chromosome_names
+        ],
+        "normalAlleleCounts": [
+            f"work/bwa.ascat.P001-N1-DNA1-WGS1/out/AlleleCounts/P001-N1-DNA1-WGS1_alleleFrequencies_chr{chr}.txt"
+            for chr in chromosome_names
+        ],
+        "alleles": [f"/path/to/alleles_chr{chr}.txt" for chr in chromosome_names],
+        "sex": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.sex.txt",
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "prepare_hts")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_ascat_step_part_get_input_files_run(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_input_files_run()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    expected = {
+        "tumor_logr": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Tumor_LogR.txt",
+        "tumor_baf": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Tumor_BAF.txt",
+        "normal_logr": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Germline_LogR.txt",
+        "normal_baf": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Germline_BAF.txt",
+        "sex": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.sex.txt",
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "run")(
+        wildcards
+    )
+    assert actual == expected
+
+
+def test_ascat_step_part_get_input_files_guess_sex(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_input_files_guess_sex()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
-    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "baf_tumor")(
+    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "guess_sex")(
         wildcards
     )
     assert actual == expected
 
 
-def test_ascat_step_part_get_input_files_baf_normal(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_input_files_baf_normal()"""
-    wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
+def test_ascat_step_part_get_output_files_build_baf(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_output_files_build_baf()"""
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "vcf": "work/{mapper}.ascat.{library_name}/out/AlleleCounts/{library_name}_alleleFrequencies_chr{chrom_name}.vcf.gz",
+        "txt": "work/{mapper}.ascat.{library_name}/out/AlleleCounts/{library_name}_alleleFrequencies_chr{chrom_name}.txt",
+        "vcf_md5": "work/{mapper}.ascat.{library_name}/out/AlleleCounts/{library_name}_alleleFrequencies_chr{chrom_name}.vcf.gz.md5",
+        "txt_md5": "work/{mapper}.ascat.{library_name}/out/AlleleCounts/{library_name}_alleleFrequencies_chr{chrom_name}.txt.md5",
     }
-    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "baf_normal")(
-        wildcards
-    )
+    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "build_baf")
     assert actual == expected
 
 
-def test_ascat_step_part_get_input_files_cnv_tumor(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_input_files_cnv_tumor()"""
-    wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+def test_ascat_step_part_get_output_files_prepare_hts(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_output_files_prepare_hts()"""
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_logr": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Tumor_LogR.txt",
+        "tumor_baf": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Tumor_BAF.txt",
+        "normal_logr": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Germline_LogR.txt",
+        "normal_baf": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Germline_BAF.txt",
+        "tumor_logr_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Tumor_LogR.txt.md5",
+        "tumor_baf_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Tumor_BAF.txt.md5",
+        "normal_logr_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Germline_LogR.txt.md5",
+        "normal_baf_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.Germline_BAF.txt.md5",
     }
-    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "cnv_tumor")(
-        wildcards
-    )
+    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "prepare_hts")
     assert actual == expected
 
 
-def test_ascat_step_part_get_input_files_cnv_normal(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_input_files_cnv_normal()"""
-    wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
+def test_ascat_step_part_get_output_files_run(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_output_files_run()"""
+    tpl = "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}."
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "RData": tpl + "RData",
+        "circos": tpl + "circos.txt",
+        "goodness_of_fit": tpl + "goodness_of_fit.txt",
+        "na": tpl + "na.txt",
+        "nb": tpl + "nb.txt",
+        "ploidy": tpl + "ploidy.txt",
+        "purity": tpl + "purity.txt",
+        "segments": tpl + "segments.txt",
+        "segments_raw": tpl + "segments_raw.txt",
+        "RData_md5": tpl + "RData.md5",
+        "circos_md5": tpl + "circos.txt.md5",
+        "goodness_of_fit_md5": tpl + "goodness_of_fit.txt.md5",
+        "na_md5": tpl + "na.txt.md5",
+        "nb_md5": tpl + "nb.txt.md5",
+        "ploidy_md5": tpl + "ploidy.txt.md5",
+        "purity_md5": tpl + "purity.txt.md5",
+        "segments_md5": tpl + "segments.txt.md5",
+        "segments_raw_md5": tpl + "segments_raw.txt.md5",
     }
-    actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "cnv_normal")(
-        wildcards
-    )
+    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "run")
     assert actual == expected
 
 
-def test_ascat_step_part_get_input_files_cnv_tumor_wes(
-    somatic_purity_ploidy_estimate_workflow_w_copywriter,
-):
-    """Tests AscatStepPart._get_input_files_cnv_tumor_wes()"""
-    wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+def test_ascat_step_part_get_output_files_guess_sex(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_output_files_guess_sex()"""
     expected = {
-        "bins": (
-            "SOMATIC_CNV_CALLING/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
-            "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
-        )
+        "table": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.tsv",
+        "decision": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt",
+        "table_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.tsv.md5",
+        "decision_md5": "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt.md5",
     }
-    actual = somatic_purity_ploidy_estimate_workflow_w_copywriter.get_input_files(
-        "ascat", "cnv_tumor_wes"
-    )(wildcards)
-    assert actual == expected
-
-
-def test_ascat_step_part_get_input_files_cnv_normal_wes(
-    somatic_purity_ploidy_estimate_workflow_w_copywriter,
-):
-    """Tests AscatStepPart._get_input_files_cnv_normal_wes()"""
-    wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
-    expected = {
-        "bins": (
-            "SOMATIC_CNV_CALLING/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
-            "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
-        )
-    }
-    actual = somatic_purity_ploidy_estimate_workflow_w_copywriter.get_input_files(
-        "ascat", "cnv_normal_wes"
-    )(wildcards)
-    assert actual == expected
-
-
-def test_ascat_step_part_get_output_files_baf_tumor(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_output_files_baf_tumor()"""
-    expected = {
-        "txt": (
-            "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/out/"
-            "{mapper}.ascat_baf_tumor.{tumor_library_name}.txt"
-        )
-    }
-    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "baf_tumor")
-    assert actual == expected
-
-
-def test_ascat_step_part_get_output_files_baf_normal(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_output_files_baf_normal()"""
-    expected = {
-        "txt": (
-            "work/{mapper}.ascat_baf_normal.{normal_library_name}/out/"
-            "{mapper}.ascat_baf_normal.{normal_library_name}.txt"
-        )
-    }
-    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "baf_normal")
-    assert actual == expected
-
-
-def test_ascat_step_part_get_output_files_cnv_tumor(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_output_files_cnv_tumor()"""
-    expected = {
-        "txt": (
-            "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/out/"
-            "{mapper}.ascat_cnv_tumor.{tumor_library_name}.txt"
-        )
-    }
-    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "cnv_tumor")
-    assert actual == expected
-
-
-def test_ascat_step_part_get_output_files_cnv_normal(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart._get_output_files_cnv_normal()"""
-    expected = {
-        "txt": (
-            "work/{mapper}.ascat_cnv_normal.{normal_library_name}/out/"
-            "{mapper}.ascat_cnv_normal.{normal_library_name}.txt"
-        )
-    }
-    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "cnv_normal")
+    actual = somatic_purity_ploidy_estimate_workflow.get_output_files("ascat", "guess_sex")
     assert actual == expected
 
 
 def test_ascat_step_part_get_log_file(somatic_purity_ploidy_estimate_workflow):
     """Tests AscatStepPart.get_log_file()"""
     # Set test cases
-    base_out = (
-        "work/{{mapper}}.ascat{action}.{library_type}/log/"
-        "{{mapper}}.ascat{action}.{library_type}.log"
-    )
-    actions_and_type_dict = {
-        "baf_tumor": ("_baf_tumor", "{tumor_library_name}"),
-        "baf_normal": ("_baf_normal", "{normal_library_name}"),
-        "cnv_tumor": ("_cnv_tumor", "{tumor_library_name}"),
-        "cnv_normal": ("_cnv_normal", "{normal_library_name}"),
-        "run_ascat": ("", "{tumor_library_name}"),
-    }
+    base_out = "work/{mapper}.ascat.{library_name}/log/{mapper}.ascat.{library_name}."
+    actions = ("prepare_hts", "run", "guess_sex")
     # Evaluate all actions
-    for action, input_ in actions_and_type_dict.items():
+    for action in actions:
         err_msg = f"Assert error for action '{action}'."
-        expected = {"log": base_out.format(action=input_[0], library_type=input_[1])}
+        expected = get_expected_log_files_dict(base_out=base_out + action)
+        expected["wrapper"] = base_out + action + ".wrapper"
+        expected["wrapper_md5"] = expected["wrapper"] + ".md5"
         actual = somatic_purity_ploidy_estimate_workflow.get_log_file("ascat", action)
         assert actual == expected, err_msg
+    expected = get_expected_log_files_dict(base_out=base_out + "chr{chrom_name}.build_baf")
+    expected["wrapper"] = base_out + "chr{chrom_name}.build_baf.wrapper"
+    expected["wrapper_md5"] = expected["wrapper"] + ".md5"
+    actual = somatic_purity_ploidy_estimate_workflow.get_log_file("ascat", "build_baf")
+    assert actual == expected
 
 
-def test_ascat_step_part_get_resource_usage(somatic_purity_ploidy_estimate_workflow):
-    """Tests AscatStepPart.get_resource()"""
-    # All available actions
-    actions = (
-        "baf_tumor",
-        "baf_normal",
-        "cnv_tumor",
-        "cnv_normal",
-        "cnv_tumor_wes",
-        "cnv_normal_wes",
-        "run_ascat",
-    )
-    # Define expected
-    expected_dict = {"threads": 8, "time": "2-00:00:00", "memory": "81920M", "partition": "medium"}
-    # Evaluate
-    for action in actions:
-        for resource, expected in expected_dict.items():
-            msg_error = f"Assertion error for resource '{resource}' for action '{action}'."
-            actual = somatic_purity_ploidy_estimate_workflow.get_resource(
-                "ascat", action, resource
-            )()
-            assert actual == expected, msg_error
+def test_ascat_step_part_get_args_build_baf(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_args_build_baf()"""
+    expected = {
+        "minCounts": 10,
+        "min_base_qual": 20,
+        "min_map_qual": 35,
+        "max_coverage": 8000,
+        "exclude_flags": 3852,
+        "include_flags": 3,
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_args("ascat", "build_baf")({}, [])
+    assert actual == expected
+
+
+def test_ascat_step_part_get_args_prepare_hts(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_args_prepare_hts()"""
+    chromosome_names = list(map(str, range(1, 23))) + ["X"]
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    expected = {
+        "tumorname": "P001-T1-DNA1-WGS1",
+        "normalname": "P001-N1-DNA1-WGS1",
+        "genomeVersion": "hg38",
+        "minCounts": 10,
+        "min_base_qual": 20,
+        "min_map_qual": 35,
+        "seed": 1234567,
+        "chrom_names": chromosome_names,
+        "gender": "XX",
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_args("ascat", "prepare_hts")(wildcards, [])
+    assert actual == expected
+
+
+def test_ascat_step_part_get_args_run(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_args_run()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    expected = {
+        "gamma": 1.0,
+        "penalty": 70.0,
+        "genomeVersion": "hg38",
+        "min_ploidy": 1.5,
+        "max_ploidy": 5.5,
+        "min_purity": 0.1,
+        "max_purity": 1.05,
+        "seed": 1234567,
+        "rho_manual": "NA",
+        "psi_manual": "NA",
+        "gender": "XX",
+    }
+    actual = somatic_purity_ploidy_estimate_workflow.get_args("ascat", "run")(wildcards, [])
+    assert actual == expected
+
+
+def test_ascat_step_part_get_args_guess_sex(somatic_purity_ploidy_estimate_workflow):
+    """Tests AscatStepPart._get_args_guess_sex()"""
+    expected = {}
+    actual = somatic_purity_ploidy_estimate_workflow.get_args("ascat", "guess_sex")({}, [])
+    assert actual == expected
 
 
 # Tests for SomaticPurityPloidyEstimateWorkflow ----------------------------------------------------
@@ -311,12 +323,27 @@ def test_somatic_purity_ploidy_estimate_workflow(somatic_purity_ploidy_estimate_
     actual = list(sorted(somatic_purity_ploidy_estimate_workflow.sub_steps.keys()))
     assert actual == expected
 
-    # Check result file construction
-    expected = [
-        "output/bwa.ascat.P002-T2-DNA1-WGS1/out/.done",
-        "output/bwa.ascat.P002-T1-DNA1-WGS1/out/.done",
-        "output/bwa.ascat.P001-T1-DNA1-WGS1/out/.done",
-    ]
+    # Check result file construction for ascat
+    chromosome_names = list(map(str, range(1, 23))) + ["X"]
+    out_exts = ("goodness_of_fit", "na", "nb", "purity", "ploidy", "segments")
+    actions = ("guess_sex", "prepare_hts", "run")
+    log_exts = ("conda_info.txt", "conda_list.txt", "log", "wrapper")
+    mapper = "bwa"
+    expected = []
+    for lib in ((1, 1), (2, 1), (2,2)):
+        tpl = f"{mapper}.ascat.P00{lib[0]}-T{lib[1]}-DNA1-WGS1"
+        for out_ext in out_exts:
+            expected.append(f"output/{tpl}/out/{tpl}.{out_ext}.txt")
+            expected.append(f"output/{tpl}/out/{tpl}.{out_ext}.txt.md5")
+        for action in actions:
+            for log_ext in log_exts:
+                expected.append(f"output/{tpl}/log/{tpl}.{action}.{log_ext}")
+                expected.append(f"output/{tpl}/log/{tpl}.{action}.{log_ext}.md5")
+        for chrom_name in chromosome_names:
+            for log_ext in log_exts:
+                expected.append(f"output/{tpl}/log/{tpl}.chr{chrom_name}.build_baf.{log_ext}")
+                expected.append(f"output/{tpl}/log/{tpl}.chr{chrom_name}.build_baf.{log_ext}.md5")
+
     expected = set(expected)
     actual = set(somatic_purity_ploidy_estimate_workflow.get_result_files())
     assert actual == expected

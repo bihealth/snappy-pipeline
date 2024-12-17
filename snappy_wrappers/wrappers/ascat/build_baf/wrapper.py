@@ -1,105 +1,107 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for building BAF files for ASCAT"""
-
-from snakemake import shell
-
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-shell.executable("/bin/bash")
-
-library_name = getattr(
-    snakemake.wildcards,
-    "tumor_library_name",
-    getattr(snakemake.wildcards, "normal_library_name", None),
-)
-assert library_name is not None
-
-shell(
-    r"""
-set -x
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
-# -------------------------------------------------------------------------------------------------
-# Perform pileups at the spot positions.
-#
-samtools mpileup \
-    -l {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
-    -I \
-    -u \
-    -v \
-    -t AD \
-    -f {snakemake.config[static_data_config][reference][path]} \
-    {snakemake.input.bam} \
-| bcftools call \
-    -c \
-    -O u \
-| bcftools query -f "%CHROM\t%POS0\t%END[\t%AD]\n" \
-| bgzip -c \
-> $TMPDIR/calls.bed.gz
-tabix -f $TMPDIR/calls.bed.gz
-
-# -------------------------------------------------------------------------------------------------
-# Create VCF file from spots
-#
-echo "##fileformat=VCFv4.2" \
-> $TMPDIR/spots.vcf
-echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
->> $TMPDIR/spots.vcf
-
-zcat -f {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
-| awk \
-    -F $'\t' \
-    'BEGIN {{ OFS=FS; }}
-    ($2 > 0) {{
-        print $1, $2 + 1, "SPOT" NR, "N", ".", ".", ".", "."
-    }}' \
->> $TMPDIR/spots.vcf
-bgzip $TMPDIR/spots.vcf
-tabix -f $TMPDIR/spots.vcf.gz
-
-# -------------------------------------------------------------------------------------------------
-# Annotate spots VCF and build resulting file from this.
-#
-cat <<"EOF" >$TMPDIR/ad_header.txt
-##INFO=<ID=XAD,Number=1,Type=String,Description="Allelic depth">
-EOF
-
-echo -e "\tchrs\tpos\tSAMPLE" \
-> {snakemake.output.txt}
-bcftools annotate \
-    --header-lines $TMPDIR/ad_header.txt \
-    --annotations $TMPDIR/calls.bed.gz \
-    --columns -CHROM,-FROM,-TO,XAD \
-    $TMPDIR/spots.vcf.gz \
-| bcftools query \
-    -f "%ID\t%CHROM\t%POS\t%XAD\n" \
-| sed -e 's/,/\t/g' \
-| awk -F $'\t' \
-    '
-    BEGIN {{ OFS=FS; }}
-    (NF == 4) {{ print $1, $2, $3, 0; }}
-    (NF == 5 && ($4 + $5 == 0)) {{ print $1, $2, $3, "Inf"; }}
-    (NF == 5 && ($4 + $5 > 0)) {{ print $1, $2, $3, $5 / ($4 + $5); }}
-    ' \
->> {snakemake.output.txt}
-
-# -------------------------------------------------------------------------------------------------
-# Build MD5 sum
-#
-pushd $(dirname {snakemake.output.txt}) &&
-    md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
 """
-)
+Wrapper for building BAF files for ASCAT.
+
+It is a replacement for ``alleleCounter`` (which is not part of the bioconda package)
+
+Mandatory snakemake.input: bam, locii, reference
+Optional snakemake.input: baits
+
+Mandatory snakemake.params.args: chrom_names, exclude_flags, gender, genomeVersion, include_flags,
+    max_coverage, min_base_qual, minCounts, min_map_qual
+Optional snakemake.params.args:
+
+Mandatory snakemake.output: txt, vcf
+Optional snakemake.output:
+"""
+
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+
+from snappy_wrappers.simple_wrapper import SimpleWrapper
+
+args = getattr(snakemake.params, "args", {})
+
+if getattr(snakemake.input, "baits", None) is not None:
+    prefix=r"""
+        if [[ {snakemake.input.baits} =~ \.gz$ ]]
+        then
+            zcat {snakemake.input.baits} | bgzip > $TMPDIR/baits.bed.gz
+        else
+            bgzip {snakemake.input.baits} > $TMPDIR/baits.bed.gz
+        fi
+        tabix $TMPDIR/baits.bed.gz
+
+    """
+    baits = "-R $TMPDIR/baits.bed.gz"
+else:
+    prefix = ""
+    baits = ""
+
+cmd=r"""
+# Perform pileups at the spot positions.
+# ASCAT default values:
+# min_mapq: 35, min_baq: 20, exclude_flags: 3582, include_flags: 3, min_depth: 10
+#
+bcftools mpileup \
+    -B \
+    -d {args[max_coverage]} \
+    -I \
+    -q {args[min_map_qual]} \
+    -Q {args[min_base_qual]} \
+    --ns {args[exclude_flags]} --nu {args[include_flags]} \
+    -f {snakemake.input.reference} \
+    -R {snakemake.input.locii} \
+    {snakemake.input.bam} \
+| bcftools annotate \
+    -x 'INFO,^FORMAT/AD' \
+| bcftools view \
+    -A \
+    -i 'FORMAT/AD[0:0] + FORMAT/AD[0:1] > {args[minCounts]}' \
+    {baits} \
+    -O z -o {snakemake.output.vcf} -W
+
+# -------------------------------------------------------------------------------------------------
+# Reformat vcf file to mimic files produced by `alleleCounter`
+#
+zgrep -v '^#' {snakemake.output.vcf} \
+| cut -f 1-2,4-5,10 \
+| awk -F '\t' '
+BEGIN {{
+    print "#CHR\tPOS\tCount_A\tCount_C\tCount_G\tCount_T\tGood_depth"
+}}
+{{
+    if ($3!~/^[ACGT]$/ || $4!~/^([ACGT](,[ACGT])*|<\*>)$/ || $3==$4) {{
+        printf "Error in %s\n", $0
+        exit 1
+    }}
+
+    a=0; c=0; g=0; t=0;
+
+    patsplit($4, alts, /([ACGT]|<\*>)/);
+    patsplit($5, counts, /[0-9]+/)
+
+    if (length(alts)+1 != length(counts)) {{
+        printf "Error in %s\n", $0
+        exit 1
+    }}
+
+    if ($3=="A") {{ a += counts[1] }};
+    if ($3=="C") {{ c += counts[1] }};
+    if ($3=="G") {{ g += counts[1] }};
+    if ($3=="T") {{ t += counts[1] }};
+    
+    s = counts[1];
+    for (i=1; i<=length(alts); ++i) {{
+        if (alts[i]=="A") {{ a += counts[i+1] }};
+        if (alts[i]=="C") {{ c += counts[i+1] }};
+        if (alts[i]=="G") {{ g += counts[i+1] }};
+        if (alts[i]=="T") {{ t += counts[i+1] }};
+        s += counts[i+1];
+    }}
+    
+    printf("%s\t%d\t%d\t%d\t%d\t%d\t%d\n", $1, $2, a, c, g, t, s)
+}}' \
+> {snakemake.output.txt}
+""".format(snakemake=snakemake, args=args, baits=baits)
+
+SimpleWrapper(snakemake).run_bash(prefix + cmd)

@@ -53,144 +53,82 @@ rule somatic_purity_ploidy_estimate_link_out_run:
 
 # Somatic Purity and Ploidy Estimation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Decide if WGS or WES rules should be used:
-
-if wf.w_config.step_config["somatic_purity_ploidy_estimate"].tool_cnv_calling == "cnvetti":
-
-    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor > somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes
-    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal > somatic_purity_ploidy_estimate_ascat_cnv_normal_wes
-
-else:
-
-    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes > somatic_purity_ploidy_estimate_ascat_cnv_tumor
-    ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_normal_wes > somatic_purity_ploidy_estimate_ascat_cnv_normal
-
-
 # ASCAT and Supporting Steps --------------------------------------------------
+
+
+rule somatic_purity_ploidy_estimate_ascat_guess_sex:
+    input:
+        unpack(wf.get_input_files("ascat", "guess_sex")),
+    output:
+        **wf.get_output_files("ascat", "guess_sex"),
+    params:
+        **{"args": wf.get_args("ascat", "guess_sex")},
+    threads: wf.get_resource("ascat", "guess_sex", "threads")
+    resources:
+        time=wf.get_resource("ascat", "guess_sex", "time"),
+        memory=wf.get_resource("ascat", "guess_sex", "memory"),
+        partition=wf.get_resource("ascat", "guess_sex", "partition"),
+        tmpdir=wf.get_resource("ascat", "guess_sex", "tmpdir"),
+    log:
+        **wf.get_log_file("ascat", "guess_sex"),
+    wrapper:
+        wf.wrapper_path("samtools/guess_sex")
+
+
 # Get B-allele frequencies from bam - steps are the same for WES and WGS ------
-rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
+rule somatic_purity_ploidy_estimate_ascat_build_baf:
     input:
-        unpack(wf.get_input_files("ascat", "baf_tumor")),
+        unpack(wf.get_input_files("ascat", "build_baf")),
     output:
-        **wf.get_output_files("ascat", "baf_tumor"),
-    threads: wf.get_resource("ascat", "baf_tumor", "threads")
+        **wf.get_output_files("ascat", "build_baf"),
+    params:
+        **{"args": wf.get_args("ascat", "build_baf")},
+    threads: wf.get_resource("ascat", "build_baf", "threads")
     resources:
-        time=wf.get_resource("ascat", "baf_tumor", "time"),
-        memory=wf.get_resource("ascat", "baf_tumor", "memory"),
-        partition=wf.get_resource("ascat", "baf_tumor", "partition"),
-        tmpdir=wf.get_resource("ascat", "baf_tumor", "tmpdir"),
+        time=wf.get_resource("ascat", "build_baf", "time"),
+        memory=wf.get_resource("ascat", "build_baf", "memory"),
+        partition=wf.get_resource("ascat", "build_baf", "partition"),
+        tmpdir=wf.get_resource("ascat", "build_baf", "tmpdir"),
     log:
-        **wf.get_log_file("ascat", "baf_tumor"),
+        **wf.get_log_file("ascat", "build_baf"),
     wrapper:
         wf.wrapper_path("ascat/build_baf")
 
 
-rule somatic_purity_ploidy_estimate_ascat_baf_normal:
+rule somatic_purity_ploidy_estimate_ascat_prepare_hts:
     input:
-        unpack(wf.get_input_files("ascat", "baf_normal")),
+        unpack(wf.get_input_files("ascat", "prepare_hts")),
     output:
-        **wf.get_output_files("ascat", "baf_normal"),
-    threads: wf.get_resource("ascat", "baf_normal", "threads")
+        **wf.get_output_files("ascat", "prepare_hts"),
+    params:
+        **{"args": wf.get_args("ascat", "prepare_hts")},
+    threads: wf.get_resource("ascat", "prepare_hts", "threads")
     resources:
-        time=wf.get_resource("ascat", "baf_normal", "time"),
-        memory=wf.get_resource("ascat", "baf_normal", "memory"),
-        partition=wf.get_resource("ascat", "baf_normal", "partition"),
-        tmpdir=wf.get_resource("ascat", "baf_normal", "tmpdir"),
+        time=wf.get_resource("ascat", "prepare_hts", "time"),
+        memory=wf.get_resource("ascat", "prepare_hts", "memory"),
+        partition=wf.get_resource("ascat", "prepare_hts", "partition"),
+        tmpdir=wf.get_resource("ascat", "prepare_hts", "tmpdir"),
     log:
-        **wf.get_log_file("ascat", "baf_normal"),
+        **wf.get_log_file("ascat", "prepare_hts"),
     wrapper:
-        wf.wrapper_path("ascat/build_baf")
-
-
-# Get logR for tumor and normal in WGS ----------------------------------------
-
-
-rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
-    input:
-        unpack(wf.get_input_files("ascat", "cnv_tumor")),
-    output:
-        **wf.get_output_files("ascat", "cnv_tumor"),
-    threads: wf.get_resource("ascat", "cnv_tumor", "threads")
-    resources:
-        time=wf.get_resource("ascat", "cnv_tumor", "time"),
-        memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
-        partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
-    log:
-        **wf.get_log_file("ascat", "cnv_tumor"),
-    wrapper:
-        wf.wrapper_path("ascat/build_cnv")
-
-
-rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
-    input:
-        unpack(wf.get_input_files("ascat", "cnv_normal")),
-    output:
-        **wf.get_output_files("ascat", "cnv_normal"),
-    threads: wf.get_resource("ascat", "cnv_normal", "threads")
-    resources:
-        time=wf.get_resource("ascat", "cnv_normal", "time"),
-        memory=wf.get_resource("ascat", "cnv_normal", "memory"),
-        partition=wf.get_resource("ascat", "cnv_normal", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
-    log:
-        **wf.get_log_file("ascat", "cnv_normal"),
-    wrapper:
-        wf.wrapper_path("ascat/build_cnv")
-
-
-# get logR for tumor and normal from WES --------------------------------------
-
-
-rule somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes:
-    input:
-        unpack(wf.get_input_files("ascat", "cnv_tumor_wes")),
-    output:
-        **wf.get_output_files("ascat", "cnv_tumor"),
-    threads: wf.get_resource("ascat", "cnv_tumor", "threads")
-    resources:
-        time=wf.get_resource("ascat", "cnv_tumor", "time"),
-        memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
-        partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
-    log:
-        **wf.get_log_file("ascat", "cnv_tumor"),
-    wrapper:
-        wf.wrapper_path("ascat/build_cnv_from_copywriter")
-
-
-rule somatic_purity_ploidy_estimate_ascat_cnv_normal_wes:
-    input:
-        unpack(wf.get_input_files("ascat", "cnv_normal_wes")),
-    output:
-        **wf.get_output_files("ascat", "cnv_normal"),
-    threads: wf.get_resource("ascat", "cnv_normal", "threads")
-    resources:
-        time=wf.get_resource("ascat", "cnv_normal", "time"),
-        memory=wf.get_resource("ascat", "cnv_normal", "memory"),
-        partition=wf.get_resource("ascat", "cnv_normal", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
-    log:
-        **wf.get_log_file("ascat", "cnv_normal"),
-    wrapper:
-        wf.wrapper_path("ascat/build_cnv_from_copywriter")
+        wf.wrapper_path("ascat/prepareHTS")
 
 
 # run ASCAT R package with prepared input files -------------------------------
 
 
-rule somatic_purity_ploidy_estimate_ascat_run_ascat:
+rule somatic_purity_ploidy_estimate_ascat_run:
     input:
-        unpack(wf.get_input_files("ascat", "run_ascat")),
+        unpack(wf.get_input_files("ascat", "run")),
     output:
-        **wf.get_output_files("ascat", "run_ascat"),
-    threads: wf.get_resource("ascat", "run_ascat", "threads")
+        **wf.get_output_files("ascat", "run"),
+    threads: wf.get_resource("ascat", "run", "threads")
     resources:
-        time=wf.get_resource("ascat", "run_ascat", "time"),
-        memory=wf.get_resource("ascat", "run_ascat", "memory"),
-        partition=wf.get_resource("ascat", "run_ascat", "partition"),
-        tmpdir=wf.get_resource("ascat", "run_ascat", "tmpdir"),
+        time=wf.get_resource("ascat", "run", "time"),
+        memory=wf.get_resource("ascat", "run", "memory"),
+        partition=wf.get_resource("ascat", "run", "partition"),
+        tmpdir=wf.get_resource("ascat", "run", "tmpdir"),
     log:
-        **wf.get_log_file("ascat", "run_ascat"),
+        **wf.get_log_file("ascat", "run"),
     wrapper:
         wf.wrapper_path("ascat/run_ascat")

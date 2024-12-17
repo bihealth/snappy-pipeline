@@ -3,6 +3,6 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - bcftools ==1.5
-  - samtools ==1.5
-  - htslib ==1.5
+  - bcftools ==1.21
+  - samtools ==1.21
+  - htslib ==1.21
