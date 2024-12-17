@@ -3,7 +3,7 @@
 
 import os
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -59,4 +59,4 @@ ln -sr {workdir}/results/variants/candidateSV.vcf.gz.tbi {snakemake.output.candi
     config=config,
 )
 
-SimpleWrapper(snakemake).run_bash(cmd)
+ShellWrapper(snakemake).run(cmd)

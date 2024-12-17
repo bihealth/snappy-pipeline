@@ -3,7 +3,7 @@
 
 import os
 
-from snappy_wrappers.simple_wrapper import SimpleWrapper
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 from snappy_wrappers.tools.genome_windows import ignore_chroms
 
 __author__ = "Eric Blanc"
@@ -19,4 +19,4 @@ with open(bed, "wt") as f:
 
 cmd=f"bgzip {bed} ; tabix {snakemake.output.callRegions}"
 
-SimpleWrapper(snakemake, cmd).run_bash()
+ShellWrapper(snakemake).run(cmd)
