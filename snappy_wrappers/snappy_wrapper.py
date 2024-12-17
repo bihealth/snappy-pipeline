@@ -26,7 +26,7 @@ class SnappyWrapper(metaclass=ABCMeta):
             fi
         fi
 
-        # Compute md5 except when filename ends with .md5
+        # Compute md5
         compute_md5() {{
             fn=$1
             f=$(basename $fn)
