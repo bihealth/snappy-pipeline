@@ -25,7 +25,7 @@ class SimpleWrapper:
             fi
         fi
 
-        # Compute md5 except when filename ends with .md5
+        # Compute md5
         compute_md5() {{
             fn=$1
             f=$(basename $fn)
@@ -75,14 +75,14 @@ class SimpleWrapper:
         self.snakemake = snakemake
 
     def run_bash(self, cmd: str) -> None:
-        self._run(cmd, self.snakemake.log.sh)
-        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.sh))
+        self._run(cmd, self.snakemake.log.wrapper)
+        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.wrapper))
 
     def run_R(self, cmd: str) -> None:
         with open(self.snakemake.log.R, "wt") as f:
             print(cmd, file=f)
-        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.R))
-        self._run(f"R --vanilla < {self.snakemake.log.R}", None)
+        shell(SimpleWrapper.md5_log.format(log=self.snakemake.log.wrapper))
+        self._run(f"R --vanilla < {self.snakemake.log.wrapper}", None)
 
     def _run(self, cmd: str, filename: str | None) -> None:
         """
@@ -114,7 +114,7 @@ class SimpleWrapper:
 
             f.flush()
             f.close()
-            
+
             current_permissions = stat.S_IMODE(os.lstat(tempfilename).st_mode)
             os.chmod(tempfilename, current_permissions | stat.S_IXUSR)
 
