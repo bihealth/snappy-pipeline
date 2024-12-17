@@ -242,13 +242,16 @@ def test_ascat_step_part_get_log_file(somatic_purity_ploidy_estimate_workflow):
     for action in actions:
         err_msg = f"Assert error for action '{action}'."
         expected = get_expected_log_files_dict(base_out=base_out + action)
-        expected["wrapper"] = base_out + action + ".wrapper"
-        expected["wrapper_md5"] = expected["wrapper"] + ".md5"
+        if action == "guess_sex":
+            expected["script"] = base_out + action + ".sh"
+        else:
+            expected["script"] = base_out + action + ".R"
+        expected["script_md5"] = expected["script"] + ".md5"
         actual = somatic_purity_ploidy_estimate_workflow.get_log_file("ascat", action)
         assert actual == expected, err_msg
     expected = get_expected_log_files_dict(base_out=base_out + "chr{chrom_name}.build_baf")
-    expected["wrapper"] = base_out + "chr{chrom_name}.build_baf.wrapper"
-    expected["wrapper_md5"] = expected["wrapper"] + ".md5"
+    expected["script"] = base_out + "chr{chrom_name}.build_baf.sh"
+    expected["script_md5"] = expected["script"] + ".md5"
     actual = somatic_purity_ploidy_estimate_workflow.get_log_file("ascat", "build_baf")
     assert actual == expected
 
@@ -324,10 +327,9 @@ def test_somatic_purity_ploidy_estimate_workflow(somatic_purity_ploidy_estimate_
     assert actual == expected
 
     # Check result file construction for ascat
-    chromosome_names = list(map(str, range(1, 23))) + ["X"]
     out_exts = ("goodness_of_fit", "na", "nb", "purity", "ploidy", "segments")
-    actions = ("guess_sex", "prepare_hts", "run")
-    log_exts = ("conda_info.txt", "conda_list.txt", "log", "wrapper")
+    actions = ("prepare_hts", "run")
+    log_exts = ("conda_info.txt", "conda_list.txt", "log", "R")
     mapper = "bwa"
     expected = []
     for lib in ((1, 1), (2, 1), (2,2)):
@@ -339,10 +341,6 @@ def test_somatic_purity_ploidy_estimate_workflow(somatic_purity_ploidy_estimate_
             for log_ext in log_exts:
                 expected.append(f"output/{tpl}/log/{tpl}.{action}.{log_ext}")
                 expected.append(f"output/{tpl}/log/{tpl}.{action}.{log_ext}.md5")
-        for chrom_name in chromosome_names:
-            for log_ext in log_exts:
-                expected.append(f"output/{tpl}/log/{tpl}.chr{chrom_name}.build_baf.{log_ext}")
-                expected.append(f"output/{tpl}/log/{tpl}.chr{chrom_name}.build_baf.{log_ext}.md5")
 
     expected = set(expected)
     actual = set(somatic_purity_ploidy_estimate_workflow.get_result_files())

@@ -170,14 +170,10 @@ class AscatStepPart(BaseStepPart):
             tpl + "purity.txt",
             tpl + "segments.txt",
         ]
-        for action in ("prepare_hts", "run", "guess_sex"):
+        for action in ("prepare_hts", "run"):
             tpl = "work/{mapper}.ascat.{library_name}/log/{mapper}.ascat.{library_name}."
-            for ext in ("conda_info.txt", "conda_list.txt", "log", "wrapper"):
+            for ext in ("conda_info.txt", "conda_list.txt", "log", "R"):
                 results.append(tpl + f"{action}.{ext}")
-        tpl = "work/{mapper}.ascat.{library_name}/log/{mapper}.ascat.{library_name}.chr"
-        for chrom_name in AscatStepPart.chromosome_names:
-            for ext in ("conda_info.txt", "conda_list.txt", "log", "wrapper"):
-                results.append(tpl + f"{chrom_name}.build_baf.{ext}")
         return results
 
     @dictify
@@ -188,11 +184,19 @@ class AscatStepPart(BaseStepPart):
             tpl = "work/{mapper}.ascat.{library_name}/log/{mapper}.ascat.{library_name}.chr{chrom_name}."
         else:
             tpl = "work/{mapper}.ascat.{library_name}/log/{mapper}.ascat.{library_name}."
-        for ext in ("conda_info.txt", "conda_list.txt", "log", "wrapper"):
+        for ext in ("conda_info.txt", "conda_list.txt", "log"):
             k = ext.replace(".txt", "")
             v = tpl + action + "." + ext
             yield k, v
             yield k + "_md5", v + ".md5"
+        if action in ("guess_sex", "build_baf"):
+            ext = "sh"
+        else:
+            ext = "R"
+        k = "script"
+        v = tpl + action + "." + ext
+        yield k, v
+        yield k + "_md5", v + ".md5"
 
     def get_args(self, action: str):
         # Validate action
