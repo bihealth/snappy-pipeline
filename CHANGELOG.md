@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.4.0) (2024-12-17)
+
+
+### Features
+
+* Add snakemake parameter --ignore-incomplete to snappy-pipeline ([#586](https://github.com/bihealth/snappy-pipeline/issues/586)) ([dbeb3ed](https://github.com/bihealth/snappy-pipeline/commit/dbeb3eda12cde54ca5ac5b5782eafbb107482cbd))
+
+
+### Bug Fixes
+
+* change type of parameters to adhere to specification of EBFilter ([#580](https://github.com/bihealth/snappy-pipeline/issues/580)) ([42d2c01](https://github.com/bihealth/snappy-pipeline/commit/42d2c0109fb35eff45b1baa696fa07dd333d110c))
+
 ## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
 
 
