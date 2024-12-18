@@ -10,6 +10,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
 from snappy_pipeline.workflows.gene_expression_report.model import GeneExpressionReport
+from snappy_pipeline.workflows.guess_sex.model import GuessSex
 from snappy_pipeline.workflows.helper_gcnv_model_targeted.model import HelperGcnvModelTargeted
 from snappy_pipeline.workflows.helper_gcnv_model_wgs.model import HelperGcnvModelWgs
 from snappy_pipeline.workflows.hla_typing.model import HlaTyping
@@ -100,6 +101,7 @@ class StepConfig(TypedDict, total=False):
     cbioportal_export: CbioportalExport
     gene_expression_quantification: GeneExpressionQuantification
     gene_expression_report: GeneExpressionReport
+    guess_sex: GuessSex
     helper_gcnv_model_targeted: HelperGcnvModelTargeted
     helper_gcnv_model_wgs: HelperGcnvModelWgs
     hla_typing: HlaTyping

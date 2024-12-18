@@ -22,6 +22,7 @@ from ..workflows import (
     cbioportal_export,
     gene_expression_quantification,
     gene_expression_report,
+    guess_sex,
     helper_gcnv_model_targeted,
     helper_gcnv_model_wgs,
     hla_typing,
@@ -70,9 +71,10 @@ SHELL = "/bin/bash"
 #: Mapping from step name to module
 STEP_TO_MODULE = {
     "adapter_trimming": adapter_trimming,
+    "cbioportal_export": cbioportal_export,
     "gene_expression_quantification": gene_expression_quantification,
     "gene_expression_report": gene_expression_report,
-    "cbioportal_export": cbioportal_export,
+    "guess_sex": guess_sex,
     "helper_gcnv_model_targeted": helper_gcnv_model_targeted,
     "helper_gcnv_model_wgs": helper_gcnv_model_wgs,
     "hla_typing": hla_typing,
