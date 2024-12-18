@@ -56,25 +56,6 @@ rule somatic_purity_ploidy_estimate_link_out_run:
 # ASCAT and Supporting Steps --------------------------------------------------
 
 
-rule somatic_purity_ploidy_estimate_ascat_guess_sex:
-    input:
-        unpack(wf.get_input_files("ascat", "guess_sex")),
-    output:
-        **wf.get_output_files("ascat", "guess_sex"),
-    params:
-        **{"args": wf.get_args("ascat", "guess_sex")},
-    threads: wf.get_resource("ascat", "guess_sex", "threads")
-    resources:
-        time=wf.get_resource("ascat", "guess_sex", "time"),
-        memory=wf.get_resource("ascat", "guess_sex", "memory"),
-        partition=wf.get_resource("ascat", "guess_sex", "partition"),
-        tmpdir=wf.get_resource("ascat", "guess_sex", "tmpdir"),
-    log:
-        **wf.get_log_file("ascat", "guess_sex"),
-    wrapper:
-        wf.wrapper_path("samtools/guess_sex")
-
-
 # Get B-allele frequencies from bam - steps are the same for WES and WGS ------
 rule somatic_purity_ploidy_estimate_ascat_build_baf:
     input:

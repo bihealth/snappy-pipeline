@@ -14,21 +14,20 @@ The default configuration is as follows.
 from collections import OrderedDict
 from typing import Any
 
-import pandas as pd
-
-from biomedsheets.models import NGSLibrary
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, KEY_IS_TUMOR
 from snakemake.io import InputFiles, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.models.common import SexValue, SexOrigin
+from snappy_pipeline.workflows.common.samplesheet import sample_sheets
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.guess_sex import GuessSexWorkflow
 
 from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
 from .model import Ascat as AscatConfigModel
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Tools for estimating purity and ploidy.
 PURITY_PLOIDY_TOOLS = "ascat"
@@ -53,14 +52,12 @@ class AscatStepPart(BaseStepPart):
     # The actions for generating BAF/CNV files for the tumor and/nor normal
     # sample, and finally to run the ASCAT pipeline.
     actions = (
-        "guess_sex",
         "build_baf",
         "prepare_hts",
         "run",
     )
 
     resource_usage = {
-        "guess_sex": ResourceUsage(threads=1, time="1:00:00", memory=f"{4 * 1024}M"),
         "build_baf": ResourceUsage(threads=2, time="4:00:00", memory=f"{4 * 1024}M"),
         "prepare_hts": ResourceUsage(threads=2, time="4:00:00", memory=f"{4 * 1024}M"),
         "run": ResourceUsage(threads=8, time="2-00:00:00", memory=f"{10 * 1024 * 8}M"),
@@ -100,14 +97,21 @@ class AscatStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair[wildcards.library_name]
         return pair.normal_sample.dna_ngs_library.name
 
+    def _get_guess_sex_file(self, wildcards: Wildcards) -> str:
+        guess_sex = self.parent.sub_workflows["guess_sex"]
+        base_path = (
+            "output/{mapper}.{tool}.{library_name}/out/{mapper}.{tool}.{library_name}".format(
+                mapper=wildcards["mapper"],
+                tool=self.cfg.sex.guess_sex_tool,
+                library_name=wildcards["library_name"],
+            )
+        )
+        return guess_sex(base_path + ".txt")
+
     def _get_gender(self, library_name: str, wildcards: Wildcards | None = None) -> str:
         match self.cfg.sex.source:
             case SexOrigin.AUTOMATIC:
-                sex = self._read_sex(
-                    "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt".format(
-                        mapper=wildcards["mapper"], library_name=library_name
-                    )
-                )
+                sex = self._read_sex(self._get_guess_sex_file(wildcards))
             case SexOrigin.SAMPLESHEET:
                 sex = self.parent.table[library_name][self.cfg.sex.column_name]
             case SexOrigin.CONFIG:
@@ -132,8 +136,6 @@ class AscatStepPart(BaseStepPart):
         self._validate_action(action)
         tpl = "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}."
         match action:
-            case "guess_sex":
-                output_files = {"table": tpl + "sex.tsv", "decision": tpl + "sex.txt"}
             case "build_baf":
                 tpl = "work/{mapper}.ascat.{library_name}/out/AlleleCounts/{library_name}_alleleFrequencies_chr{chrom_name}."
                 output_files = {"vcf": tpl + "vcf.gz", "txt": tpl + "txt"}
@@ -189,7 +191,7 @@ class AscatStepPart(BaseStepPart):
             v = tpl + action + "." + ext
             yield k, v
             yield k + "_md5", v + ".md5"
-        if action in ("guess_sex", "build_baf"):
+        if action in ("build_baf",):
             ext = "sh"
         else:
             ext = "R"
@@ -202,18 +204,6 @@ class AscatStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         return getattr(self, "_get_args_{}".format(action))
-
-    def _get_input_files_guess_sex(self, wildcards: Wildcards) -> dict[str, str]:
-        """Guess sex from coverage"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
-        return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
-        }
-
-    def _get_args_guess_sex(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
-        return {}
 
     def _get_input_files_build_baf(self, wildcards: Wildcards) -> dict[str, str]:
         """Return input files for generating BAF file for either tumor or normal."""
@@ -269,11 +259,7 @@ class AscatStepPart(BaseStepPart):
         ]
 
         if self.cfg.sex.source == SexOrigin.AUTOMATIC:
-            input_files["sex"] = (
-                "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt".format(
-                    **wildcards
-                )
-            )
+            input_files["sex"] = self._get_guess_sex_file(wildcards)
 
         if self.cfg.allele_counter.path_probloci_file:
             input_files["probloci_file"] = self.cfg.allele_counter.path_probloci_file
@@ -309,11 +295,7 @@ class AscatStepPart(BaseStepPart):
             input_files["normal_baf"] = tpl + "Germline_BAF.txt"
 
         if self.cfg.sex.source == SexOrigin.AUTOMATIC:
-            input_files["sex"] = (
-                "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt".format(
-                    **wildcards
-                )
-            )
+            input_files["sex"] = self._get_guess_sex_file(wildcards)
 
         return input_files
 
@@ -374,75 +356,32 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticPurityPloidyEstimateConfigModel,
-            previous_steps=(NgsMappingWorkflow,),
+            previous_steps=(NgsMappingWorkflow, GuessSexWorkflow),
         )
-        self.table = SomaticPurityPloidyEstimateWorkflow.sample_sheets(self.shortcut_sheets)
+
+        self.table = sample_sheets(self.sheets)
         assert (
             KEY_IS_TUMOR in self.table.columns
         ), f"Mandatory column '{KEY_IS_TUMOR}' is missing from samplesheet"
-        self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
+        if "extractionType" in self.table.columns:
+            self.table = self.table[self.table["extractionType"] == "DNA"]
+
         # Initialize sub-workflows
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
-    @staticmethod
-    def sample_sheets(sheets) -> pd.DataFrame:
-        table = None
-        for sheet in sheets:
-            for bio_entity in sheet.donors:
-                if bio_entity.disabled:
-                    continue
-                for bio_sample in bio_entity.bio_samples.values():
-                    if bio_sample.disabled:
-                        continue
-                    for test_sample in bio_sample.test_samples.values():
-                        if test_sample.disabled:
-                            continue
-                        for ngs_library in test_sample.ngs_libraries.values():
-                            if ngs_library.disabled:
-                                continue
-                            d = SomaticPurityPloidyEstimateWorkflow._ngs_library_to_dict(
-                                ngs_library
-                            )
-                            table = SomaticPurityPloidyEstimateWorkflow._add_row(table, d)
-
-        assert not any(table.duplicated()), "Duplicated entries in sample sheets"
-        assert not any(table["ngs_library"].duplicated()), "Duplicated NGS libraries"
-        table.set_index("ngs_library", drop=False, inplace=True)
-        return table
-
-    @staticmethod
-    def _ngs_library_to_dict(ngs_library: NGSLibrary) -> dict[str, Any]:
-        test_sample = ngs_library.test_sample
-        bio_sample = test_sample.bio_sample
-        bio_entity = bio_sample.bio_entity
-        d = {
-            "bio_entity": bio_entity.name,
-            "bio_sample": bio_sample.name,
-            "test_sample": test_sample.name,
-            "ngs_library": ngs_library.name,
-        }
-        for o in (bio_entity, bio_sample, test_sample, ngs_library):
-            extra_infos = getattr(o, "extra_infos")
-            for k, v in extra_infos.items():
+        path_guess_sex = None
+        for tool in self.config.tools:
+            tool_config = getattr(self.config, tool)  # config should be present, already validated
+            if getattr(tool_config, "sex", None) and tool_config.sex.source == SexOrigin.AUTOMATIC:
+                if path_guess_sex is None:
+                    path_guess_sex = tool_config.sex.path_guess_sex
                 assert (
-                    k not in d
-                ), f"Extra info '{k}' already present elsewhere in {ngs_library.name}"
-                d[k] = v
-        return d
+                    path_guess_sex == tool_config.sex.path_guess_sex
+                ), "Multiple paths to the output of 'guess_sex' step"
+        if path_guess_sex is not None:
+            self.register_sub_workflow("guess_sex", path_guess_sex)
 
-    @staticmethod
-    def _add_row(df: pd.DataFrame | None, row: dict[str, Any]) -> pd.DataFrame:
-        if df is None:
-            return pd.DataFrame({k: [v] for k, v in row.items()})
-        for col_name in df.columns:
-            if col_name not in row:
-                row[col_name] = None
-        for col_name in row.keys():
-            if col_name not in df.columns:
-                df[col_name] = [None] * df.shape[0]
-        new_row = [row[col_name] for col_name in df.columns]
-        df.loc[df.shape[0]] = new_row
-        return df
+        self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
 
     @listify
     def get_result_files(self):

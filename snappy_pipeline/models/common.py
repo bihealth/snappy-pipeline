@@ -46,6 +46,12 @@ class Sex(SnappyModel):
     source: SexOrigin = SexOrigin.AUTOMATIC
     """Where is the sex information taken from? auto (guessed from data), samplesheet or config (single value for the cohort)"""
 
+    path_guess_sex: str | None = None
+    """Path to the ``guess_sex`` step, where the decision files can be found"""
+
+    guess_sex_tool: str | None = None
+    """Tool used to guess the sex"""
+
     cohort: SexValue | None = None
     """Sex of the cohort"""
 
@@ -58,4 +64,8 @@ class Sex(SnappyModel):
             raise ValueError("Undefined cohort sex value in configuration file")
         if self.source == SexOrigin.SAMPLESHEET and not self.column_name:
             raise ValueError("Undefined column name for sex information")
+        if self.source == SexOrigin.AUTOMATIC and (
+            not self.path_guess_sex or not self.guess_sex_tool
+        ):
+            raise ValueError("Path to or tool used by the 'guess_sex' step are missing")
         return self
