@@ -9,13 +9,13 @@ class Tool(enum.StrEnum):
 
 
 class Samtools(SnappyModel):
-    min_X_female: float = 1.5
+    min_X_female: float = 1.75
     """Minimum X ploidy for females"""
 
-    max_Y_female: float = 0.33
+    max_Y_female: float = 0.1
     """Maximum Y ploidy for females"""
 
-    min_Y_male: float = 0.5
+    min_Y_male: float = 0.25
     """Minimum Y ploidy for males"""
 
     max_X_male: float = 1.5

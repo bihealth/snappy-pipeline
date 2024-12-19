@@ -102,10 +102,10 @@ def test_samtools_step_part_get_output_files_run(guess_sex_workflow):
 def test_samtools_step_part_get_args_run(guess_sex_workflow):
     """Tests SamtoolsStepPart._get_args_run()"""
     expected = {
-        "min_X_female": 1.5,
-        "max_Y_female": 0.33,
+        "min_X_female": 1.75,
+        "max_Y_female": 0.1,
         "max_X_male": 1.5,
-        "min_Y_male": 0.5,
+        "min_Y_male": 0.25,
     }
     actual = guess_sex_workflow.get_args("samtools", "run")
     assert actual == expected

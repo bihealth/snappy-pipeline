@@ -3,6 +3,15 @@
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+import os
+import sys
+
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers. When the wrappers have their own python environment, messing
+# with the path is necessary.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 args = getattr(snakemake.params, "args", {})
@@ -24,15 +33,15 @@ Y_len=$(awk -F '\t' '$1 ~ /^(chr)?Y$/ {{print $2}}' $stat)
 Y_count=$(awk -F '\t' '$1 ~ /^(chr)?Y$/ {{print $3}}' $stat)
 Y_rate=$(echo "$Y_count / $Y_len" | bc -l)
 
-cat << __EOF | tr ':' '\t' > {snakemake.output.table}
-Name:Length:Count:Rate
-Autosomes:$aut_len:$aut_count:$aut_rate
-chrX:$X_len:$X_count:$X_rate
-chrY:$Y_len:$Y_count:$Y_rate
-__EOF
-
 X_ratio=$(echo "2 * $X_rate / $aut_rate" | bc -l)
 Y_ratio=$(echo "2 * $Y_rate / $aut_rate" | bc -l)
+
+cat << __EOF | tr ':' '\t' > {snakemake.output.table}
+Name:Length:Count:Rate:Ratio
+Autosomes:$aut_len:$aut_count:$aut_rate:2
+chrX:$X_len:$X_count:$X_rate:$X_ratio
+chrY:$Y_len:$Y_count:$Y_rate:$Y_ratio
+__EOF
 
 # Bash doesn't understand floats
 gt() {{
