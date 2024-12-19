@@ -707,7 +707,7 @@ def germline_sheet_fake_fs(fake_fs, germline_sheet_tsv):
     for line in germline_sheet_tsv.splitlines()[1:]:
         donor = line.split("\t")[0]
         # Create fastq files
-        fake_fs.fs.create_file(tpl.format(donor=donor, i=1))
+        fake_fs.fs.create_file(tpl.format(donor=donor, i=1, create_missing_dirs=True))
         fake_fs.fs.create_file(tpl.format(donor=donor, i=2))
         # Create md5 files
         md5_r1 = tpl.format(donor=donor, i=1) + ".md5"
@@ -903,6 +903,23 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
     fake_fs.fs.create_file(
         "/work/config/sheet.tsv", contents=cancer_sheet_tsv, create_missing_dirs=True
     )
+    return fake_fs
+
+
+@pytest.fixture
+def guess_sex_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file autobin.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.sex.txt"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "Y":
+            library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            fake_fs.fs.create_file(
+                tpl.format(mapper="bwa", library_name=library_name), create_missing_dirs=True
+            )
     return fake_fs
 
 
