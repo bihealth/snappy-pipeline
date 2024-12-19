@@ -152,6 +152,8 @@ def test_ascat_step_part_get_input_files_run(somatic_purity_ploidy_estimate_work
         "tumor_baf": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Tumor_BAF.txt",
         "normal_logr": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Germline_LogR.txt",
         "normal_baf": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.Germline_BAF.txt",
+        "GCcontent": "/path/to/gc_content.txt",
+        "reptiming": "/path/to/reptiming.txt",
         # "sex": "work/bwa.ascat.P001-T1-DNA1-WGS1/out/bwa.ascat.P001-T1-DNA1-WGS1.sex.txt",
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "run")(
@@ -193,7 +195,6 @@ def test_ascat_step_part_get_output_files_run(somatic_purity_ploidy_estimate_wor
     tpl = "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}."
     expected = {
         "RData": tpl + "RData",
-        "circos": tpl + "circos.txt",
         "goodness_of_fit": tpl + "goodness_of_fit.txt",
         "na": tpl + "na.txt",
         "nb": tpl + "nb.txt",
@@ -202,7 +203,6 @@ def test_ascat_step_part_get_output_files_run(somatic_purity_ploidy_estimate_wor
         "segments": tpl + "segments.txt",
         "segments_raw": tpl + "segments_raw.txt",
         "RData_md5": tpl + "RData.md5",
-        "circos_md5": tpl + "circos.txt.md5",
         "goodness_of_fit_md5": tpl + "goodness_of_fit.txt.md5",
         "na_md5": tpl + "na.txt.md5",
         "nb_md5": tpl + "nb.txt.md5",
@@ -270,6 +270,7 @@ def test_ascat_step_part_get_args_prepare_hts(somatic_purity_ploidy_estimate_wor
 
 def test_ascat_step_part_get_args_run(somatic_purity_ploidy_estimate_workflow):
     """Tests AscatStepPart._get_args_run()"""
+    chromosome_names = list(map(str, range(1, 23))) + ["X"]
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "gamma": 1.0,
@@ -283,6 +284,8 @@ def test_ascat_step_part_get_args_run(somatic_purity_ploidy_estimate_workflow):
         "rho_manual": "NA",
         "psi_manual": "NA",
         "gender": "XX",
+        "chrom_names": chromosome_names,
+        "y_limit": 5,
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_args("ascat", "run")(wildcards, [])
     assert actual == expected

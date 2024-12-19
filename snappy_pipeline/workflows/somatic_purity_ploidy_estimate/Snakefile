@@ -55,7 +55,6 @@ rule somatic_purity_ploidy_estimate_link_out_run:
 
 # ASCAT and Supporting Steps --------------------------------------------------
 
-
 # Get B-allele frequencies from bam - steps are the same for WES and WGS ------
 rule somatic_purity_ploidy_estimate_ascat_build_baf:
     input:
@@ -103,6 +102,8 @@ rule somatic_purity_ploidy_estimate_ascat_run:
         unpack(wf.get_input_files("ascat", "run")),
     output:
         **wf.get_output_files("ascat", "run"),
+    params:
+        **{"args": wf.get_args("ascat", "run")},
     threads: wf.get_resource("ascat", "run", "threads")
     resources:
         time=wf.get_resource("ascat", "run", "time"),

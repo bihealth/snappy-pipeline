@@ -113,7 +113,7 @@ class AscatStepPart(BaseStepPart):
             case SexOrigin.AUTOMATIC:
                 sex = self._read_sex(self._get_guess_sex_file(wildcards))
             case SexOrigin.SAMPLESHEET:
-                sex = self.parent.table[library_name][self.cfg.sex.column_name]
+                sex = self.parent.table.loc[library_name][self.cfg.sex.column_name]
             case SexOrigin.CONFIG:
                 sex = self.cfg.sex.cohort
         if sex == SexValue.MALE:
@@ -149,7 +149,6 @@ class AscatStepPart(BaseStepPart):
             case "run":
                 output_files = {
                     "RData": tpl + "RData",
-                    "circos": tpl + "circos.txt",
                     "goodness_of_fit": tpl + "goodness_of_fit.txt",
                     "na": tpl + "na.txt",
                     "nb": tpl + "nb.txt",
@@ -285,11 +284,14 @@ class AscatStepPart(BaseStepPart):
 
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, str]:
         """Return input files for actually running ASCAT."""
+        input_files = {"GCcontent": self.cfg.path_gc_content, "reptiming": self.cfg.path_reptiming}
+
         tpl = "work/{mapper}.ascat.{library_name}/out/{mapper}.ascat.{library_name}.".format(
             **wildcards
         )
 
-        input_files = {"tumor_logr": tpl + "Tumor_LogR.txt", "tumor_baf": tpl + "Tumor_BAF.txt"}
+        input_files["tumor_logr"] = tpl + "Tumor_LogR.txt"
+        input_files["tumor_baf"] = tpl + "Tumor_BAF.txt"
         if self.tumor_ngs_library_to_sample_pair.get(wildcards["library_name"], None) is not None:
             input_files["normal_logr"] = tpl + "Germline_LogR.txt"
             input_files["normal_baf"] = tpl + "Germline_BAF.txt"
@@ -300,10 +302,11 @@ class AscatStepPart(BaseStepPart):
         return input_files
 
     def _get_args_run(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
-        return {
+        args = {
             "genomeVersion": self.cfg.genomeVersion,
             "seed": self.cfg.seed,
             "gender": self._get_gender(wildcards["library_name"], wildcards),
+            "y_limit": self.cfg.y_limit,
             "penalty": self.cfg.advanced.penalty,
             "gamma": self.cfg.advanced.gamma,
             "min_purity": self.cfg.advanced.min_purity,
@@ -312,7 +315,11 @@ class AscatStepPart(BaseStepPart):
             "max_ploidy": self.cfg.advanced.max_ploidy,
             "rho_manual": self.cfg.advanced.rho_manual,
             "psi_manual": self.cfg.advanced.psi_manual,
+            "chrom_names": AscatStepPart.chromosome_names,
         }
+        if self.tumor_ngs_library_to_sample_pair.get(wildcards["library_name"], None) is None:
+            args["platform"] = self.cfg.platform
+        return args
 
     def _read_sex(self, filename: str) -> SexValue:
         sex: SexValue | None = None

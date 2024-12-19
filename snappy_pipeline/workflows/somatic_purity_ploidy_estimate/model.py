@@ -140,23 +140,23 @@ class Ascat(SnappyModel):
     seed: int = 1234567
 
     path_gc_content: Annotated[
-        str | None,
+        str,
         Field(
             examples=[
                 "/data/cephfs-1/work/groups/cubi/projects/biotools/ASCAT/GC_G1000_WGS_hg38/GC_G1000_hg38.txt",
             ]
         ),
-    ] = None
+    ]
     """Path to the GC correction file"""
 
     path_reptiming: Annotated[
-        str | None,
+        str,
         Field(
             examples=[
                 "/data/cephfs-1/work/groups/cubi/projects/biotools/ASCAT/RT_G1000_WGS_hg38/RT_G1000_hg38.txt",
             ]
         ),
-    ] = None
+    ]
     """Path to the correction file for DNA replication timing"""
 
     platform: AscatPlatform = AscatPlatform.WGS_hg_50X

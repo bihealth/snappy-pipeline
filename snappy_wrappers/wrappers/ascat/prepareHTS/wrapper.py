@@ -15,7 +15,15 @@ Optional snakemake.output: normal_baf, normal_logr
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+import os
 import re
+import sys
+
+# The following is required for being able to import snappy_wrappers modules
+# inside wrappers. When the wrappers have their own python environment, messing
+# with the path is necessary.
+base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.insert(0, base_dir)
 
 from snappy_wrappers.snappy_wrapper import RWrapper
 
@@ -35,48 +43,45 @@ def find_prefix(snakemake_input):
     assert prefix is not None, f"Can't find allele counts from {snakemake_input}"
     return prefix
 
-allele_prefix = find_prefix(snakemake.input.allele_counts)
-tumorAlleleCounts_prefix = find_prefix(snakemake.tumorAlleleCounts)
+allele_prefix = find_prefix(snakemake.input.alleles)
+tumorAlleleCounts_prefix = find_prefix(snakemake.input.tumorAlleleCounts)
 if has_normal:
-    normalAlleleCounts_prefix = find_prefix(snakemake.normalAlleleCounts)
+    normalAlleleCounts_prefix = '"' + find_prefix(snakemake.input.normalAlleleCounts) + '"'
 else:
     normalAlleleCounts_prefix = "NA"
 
 cmd=r"""
 library(ASCAT)
 
-# Move to directory where alleles were counted
-setwd(dirname("{snakemake.input.allele_counts[0]}"))
-
 # Takes the part of ``ascat.prepareHTS`` which doesn't invoke ``allelecounter``.
 # That is: ``ascat.getBAFsAndLogRs`` & ``ascat.synchroniseFiles``
 
-ascat.getBafAndLogRs(
+ascat.getBAFsAndLogRs(
     samplename="{args[tumorname]}",
     tumourAlleleCountsFile.prefix="{tumorAlleleCounts_prefix}",
     normalAlleleCountsFile.prefix={normalAlleleCounts_prefix},
     tumourLogR_file="{snakemake.output.tumor_logr}",
-    tumourBAF_file="{snkemake.output.tumor_baf}",
+    tumourBAF_file="{snakemake.output.tumor_baf}",
     normalLogR_file={normal_logr},
     normalBAF_file={normal_baf},
     alleles.prefix="{allele_prefix}",
-    gender="args[gender]",
-    genomeVersion="args[genomeVersion]",
+    gender="{args[gender]}",
+    genomeVersion="{args[genomeVersion]}",
     chrom_names={chrom_names},
-    minCounts=args[minCounts],
+    minCounts={args[minCounts]},
     BED_file={bed_file},
     probloci_file={probloci_file},
     tumour_only_mode={tumor_only},
     loci_binsize=1,
-    seed=args[seed]
+    seed={args[seed]}
 )
 
 ascat.synchroniseFiles(
     samplename="{args[tumorname]}",
     tumourLogR_file="{snakemake.output.tumor_logr}",
-    tumourBAF_file="{snkemake.output.tumor_baf}",
+    tumourBAF_file="{snakemake.output.tumor_baf}",
     normalLogR_file={normal_logr},
-    normalBAF_file={normal_baf},
+    normalBAF_file={normal_baf}
 )
 """.format(
     snakemake=snakemake,
@@ -89,7 +94,7 @@ ascat.synchroniseFiles(
     bed_file=f'"{snakemake.input.bed_file}"' if getattr(snakemake.input, "bed_file", None) is not None else "NA",
     probloci_file=f'"{snakemake.input.probloci_file}"' if getattr(snakemake.input, "probloci_file", None) is not None else "NA",
     chrom_names='c("{}")'.format('", "'.join(args["chrom_names"])),
-    tumor_only="FALSE" if has_normal else "TRUE,"
+    tumor_only="FALSE" if has_normal else "TRUE",
 )
 
 RWrapper(snakemake).run(cmd)
