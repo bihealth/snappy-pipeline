@@ -154,6 +154,8 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--unlock")
     if wrapper_args.rerun_incomplete:
         snakemake_argv.append("--rerun-incomplete")
+    if wrapper_args.ignore_incomplete:
+        snakemake_argv.append("--ignore-incomplete")
     if wrapper_args.touch:
         snakemake_argv.append("--touch")
     if wrapper_args.detailed_summary:
@@ -253,6 +255,9 @@ def main(argv=None):
     )
     group.add_argument(
         "--rerun-incomplete", action="store_true", default=False, help="Rerun incomplete jobs"
+    )
+    group.add_argument(
+        "--ignore-incomplete", action="store_true", default=False, help="Ignore incomplete jobs"
     )
     group.add_argument(
         "--cleanup-metadata",

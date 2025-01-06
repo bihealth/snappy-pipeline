@@ -53,7 +53,7 @@ def pair_fastq_files(input_left, input_right):
 input_left = snakemake.params.args["input"]["reads_left"]
 input_right = snakemake.params.args["input"].get("reads_right", "")
 
-config = snakemake.config["step_config"]["ngs_mapping"]["somatic"]
+config = snakemake.config["step_config"]["ngs_mapping"]["mbcs"]
 mapper = config["mapping_tool"]
 mapper_config = snakemake.config["step_config"]["ngs_mapping"][mapper]
 if mapper == "bwa_mem2":

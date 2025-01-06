@@ -28,6 +28,6 @@ class HlaTyping(SnappyStepModel, validators.ToolsMixin, validators.NgsMappingMix
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.optitype], min_length=1)]
 
-    optitype: Optitype | None = None
+    optitype: Optitype = Optitype()
 
-    arcashla: ArcasHla | None = None
+    arcashla: ArcasHla = ArcasHla()

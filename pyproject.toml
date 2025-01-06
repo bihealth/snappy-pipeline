@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools >= 75.0"]
 build-backend = "setuptools.build_meta"
 
 
@@ -23,33 +23,31 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "setuptools ~=68.1.2",
     # Nice, round-trip enabled YAML parsing
-    "ruamel.yaml ~=0.18.6",
+    "ruamel.yaml >=0.18.6,<1",
     # File-based locks
-    "fasteners ~=0.17.3",
+    "fasteners >=0.17.3,<1",
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8",
     # Helpful for CLIs
-    "termcolor ~=1.1.0",
+    "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake ~=7.32.0",
+    "snakemake >=7.32.0,<8",
     # Required for plotting
-    "matplotlib ~=3.8.4",
+    "matplotlib >=3.8.4",
     # Library for working with VCF files.
-    "vcfpy ~=0.13.8",
+    "vcfpy >=0.13.8,<1",
     # Support for vcfpy
-    "pysam ~=0.22.1",
-    "pytabix ~=0.1",
+    "pysam >=0.22.1,<1",
     # Jinja 2 template rendering
-    "jinja2 ~=3.1.4",
+    "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c",
     # REST API client for VarFish Server
-    "varfish-cli ~=0.6.3",
+    "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
-    "pydantic ~=2.7.0"
+    "pydantic >=2.9.0,<3"
 ]
 
 [project.urls]
@@ -60,28 +58,29 @@ Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
-    "pytest ~=8.2.2",
-    "coverage ~=7.5.3",
-    "pytest-cov ~=5.0.0",
-    "pytest-mock ~=3.14.0",
-    "pytest-subprocess ~=1.5.0",
+    "pytest >=8.2.2,<9",
+    "coverage >=7.5.3,<8",
+    "pytest-cov >=5.0.0,<6",
+    "pytest-mock >=3.14.0,<4",
+    "pytest-subprocess >=1.5.0,<2",
     # Fake file system for testing
-    "pyfakefs ~=5.5.0",
-    "pytest-sugar ~=0.9.6",
+    "pyfakefs >=5.5.0,<6",
+    "pytest-sugar >=1.0.0,<2",
     # coveralls.io tooling
-    "coveralls ~=4.0.1",
+    "coveralls >=4.0.1,<5",
+    "pytabix >=0.1.0,<1"
 ]
 dev = [
     # ruff code linter + formatter
-    "ruff ~=0.4.8",
+    "ruff >=0.8.2,<1",
     # "snakefmt" code formatter and checker.
-    "snakefmt ~=0.8.5",
-    "pre-commit ~=3.7.1"
+    "snakefmt >=0.10.2,<1",
+    "pre-commit >=4.0.1,<5"
 ]
 docs = [
-    "sphinx ~=7.3.7",
-    "sphinx_rtd_theme ~=2.0.0",
-    "sphinx-mdinclude ~=0.6.0",
+    "sphinx >=7.3.7,<8",
+    "sphinx_rtd_theme >=2.0.0,<3",
+    "sphinx-mdinclude >=0.6.0,<1",
 ]
 all = [
     "snappy-pipeline[test,docs,dev]"

@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
+
+
+### Features
+
+* enabled mbcs meta-tool in the ngs_mapping step model ([#545](https://github.com/bihealth/snappy-pipeline/issues/545)) ([625187b](https://github.com/bihealth/snappy-pipeline/commit/625187bd8c3088ece4c8228523dabb1d3f30893a))
+* Update GCNV environment to 0.9 kernel and GATK4.6.1 ([#557](https://github.com/bihealth/snappy-pipeline/issues/557)) ([7239fd0](https://github.com/bihealth/snappy-pipeline/commit/7239fd0b2f636f4cd0fa6bf1f420c38995ec4d07))
+
+
+### Bug Fixes
+
+* extra args check ([#551](https://github.com/bihealth/snappy-pipeline/issues/551)) ([7d6d649](https://github.com/bihealth/snappy-pipeline/commit/7d6d64925be88abc987662ce80793934ec9cea7f))
+* replace vep/run wrapper environment.yaml with symlink to vep environment.yaml ([#555](https://github.com/bihealth/snappy-pipeline/issues/555)) ([6873ffa](https://github.com/bihealth/snappy-pipeline/commit/6873ffaf68b3c95dc5ce2915cca6c3aae3fd0584))
+
+## [0.2.2](https://github.com/bihealth/snappy-pipeline/compare/v0.2.1...v0.2.2) (2024-11-13)
+
+
+### Bug Fixes
+
+* chr format detection in gcnv wrappers needs to always use egrep ([#529](https://github.com/bihealth/snappy-pipeline/issues/529)) ([ac52a6f](https://github.com/bihealth/snappy-pipeline/commit/ac52a6f7aeab79fa9b676a281bf526af82714831))
+* mehari wrapper fix_manta_invs.py requires python &gt;=3.11, update conda env ([#542](https://github.com/bihealth/snappy-pipeline/issues/542)) ([c44aaea](https://github.com/bihealth/snappy-pipeline/commit/c44aaead5583acf19fa23e89fe91c2a53013960e))
+* unconditionally add optitype and arcashla sub_steps ([#547](https://github.com/bihealth/snappy-pipeline/issues/547)) ([73bbf66](https://github.com/bihealth/snappy-pipeline/commit/73bbf66c29dfdb02f7648e7f065c9826b6da05a9))
+
 ## [0.2.1](https://github.com/bihealth/snappy-pipeline/compare/v0.2.0...v0.2.1) (2024-07-01)
 
 
