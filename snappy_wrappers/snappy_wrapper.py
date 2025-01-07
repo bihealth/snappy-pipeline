@@ -80,8 +80,9 @@ class SnappyWrapper(metaclass=ABCMeta):
         done
     """
 
-    def __init__(self, snakemake, with_output_links: bool = True) -> None:
+    def __init__(self, snakemake, do_md5: bool = True, with_output_links: bool = True) -> None:
         self._snakemake = snakemake
+        self._do_md5 = do_md5
         self._with_output_links = with_output_links
         self._check_snakemake_attributes()
 
@@ -122,7 +123,9 @@ class SnappyWrapper(metaclass=ABCMeta):
                         (
                             SnappyWrapper.header.format(snakemake=self._snakemake),
                             cmd,
-                            SnappyWrapper.footer.format(snakemake=self._snakemake),
+                            SnappyWrapper.footer.format(snakemake=self._snakemake)
+                            if self._do_md5
+                            else "",
                         )
                     )
                 ),
@@ -163,7 +166,7 @@ class RWrapper(SnappyWrapper):
         with open(self._snakemake.log.script, "wt") as f:
             print(cmd, file=f)
         shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
-        self._run(f"Rscript --vanilla {self._snakemake.log.script}", None)
+        self._run(f"R --vanilla < {self._snakemake.log.script}", None)
 
     def run(self, cmd: str) -> None:
         self._run_R(cmd)
