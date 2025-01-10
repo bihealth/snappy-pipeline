@@ -10,6 +10,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
 from snappy_pipeline.workflows.gene_expression_report.model import GeneExpressionReport
+from snappy_pipeline.workflows.germline_snvs.model import GermlineSnvs
 from snappy_pipeline.workflows.guess_sex.model import GuessSex
 from snappy_pipeline.workflows.helper_gcnv_model_targeted.model import HelperGcnvModelTargeted
 from snappy_pipeline.workflows.helper_gcnv_model_wgs.model import HelperGcnvModelWgs
@@ -36,6 +37,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation.model import SomaticVa
 from snappy_pipeline.workflows.somatic_variant_calling.model import SomaticVariantCalling
 from snappy_pipeline.workflows.somatic_variant_filtration.model import SomaticVariantFiltration
 from snappy_pipeline.workflows.somatic_variant_signatures.model import SomaticVariantSignatures
+from snappy_pipeline.workflows.somatic_variants_for_cnv.model import SomaticVariantsForCnv
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import SomaticWgsCnvCalling
 from snappy_pipeline.workflows.somatic_wgs_sv_calling.model import SomaticWgsSvCalling
 from snappy_pipeline.workflows.sv_calling_targeted.model import SvCallingTargeted
@@ -101,6 +103,7 @@ class StepConfig(TypedDict, total=False):
     cbioportal_export: CbioportalExport
     gene_expression_quantification: GeneExpressionQuantification
     gene_expression_report: GeneExpressionReport
+    germline_snvs: GermlineSnvs
     guess_sex: GuessSex
     helper_gcnv_model_targeted: HelperGcnvModelTargeted
     helper_gcnv_model_wgs: HelperGcnvModelWgs
@@ -121,6 +124,7 @@ class StepConfig(TypedDict, total=False):
     somatic_variant_calling: SomaticVariantCalling
     somatic_variant_filtration: SomaticVariantFiltration
     somatic_variant_signatures: SomaticVariantSignatures
+    somatic_variants_for_cnv: SomaticVariantsForCnv
     somatic_wgs_cnv_calling: SomaticWgsCnvCalling
     somatic_wgs_sv_calling: SomaticWgsSvCalling
     sv_calling_targeted: SvCallingTargeted
