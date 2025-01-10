@@ -1,0 +1,172 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline germline_snvs step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.germline_snvs import GermlineSnvsWorkflow
+
+__author__ = "Eric Blanc <eric.blanc@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = GermlineSnvsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    germline_snvs_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule germline_snvs_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Actual actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Bcftools --------------------------------------------------------------------
+
+
+rule germline_snvs_bcftools_ignore_chroms:
+    input:
+        reference=config["static_data_config"]["reference"]["path"],
+    output:
+        regions="work/bcftools/out/regions.bed.gz",
+    params:
+        **{
+            "args": {
+                "ignore_chroms": set(
+                    config["step_config"]["germline_snvs"]["ignore_chroms"]
+                    + config["step_config"]["germline_snvs"]["bcftools"]["ignore_chroms"]
+                )
+            }
+        },
+    threads: 1
+    resources:
+        time="1:00:00",
+        memory="2GB",
+        partition="short",
+    wrapper:
+        wf.wrapper_path("ignore_chroms")
+
+
+rule germline_snvs_bcftools_pileup:
+    input:
+        unpack(wf.get_input_files("bcftools", "pileup")),
+    output:
+        **wf.get_output_files("bcftools", "pileup"),
+    params:
+        **{"args": wf.get_args("bcftools", "pileup")},
+    threads: wf.get_resource("bcftools", "pileup", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "pileup", "time"),
+        memory=wf.get_resource("bcftools", "pileup", "memory"),
+        partition=wf.get_resource("bcftools", "pileup", "partition"),
+        tmpdir=wf.get_resource("bcftools", "pileup", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "pileup"),
+    wrapper:
+        wf.wrapper_path("bcftools/germline_snvs/mpileup")
+
+
+rule germline_snvs_bcftools_call:
+    input:
+        unpack(wf.get_input_files("bcftools", "call")),
+    output:
+        **wf.get_output_files("bcftools", "call"),
+    params:
+        **{"args": wf.get_args("bcftools", "call")},
+    threads: wf.get_resource("bcftools", "call", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "call", "time"),
+        memory=wf.get_resource("bcftools", "call", "memory"),
+        partition=wf.get_resource("bcftools", "call", "partition"),
+        tmpdir=wf.get_resource("bcftools", "call", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "call"),
+    wrapper:
+        wf.wrapper_path("bcftools/germline_snvs/call")
+
+
+rule germline_snvs_bcftools_filter:
+    input:
+        unpack(wf.get_input_files("bcftools", "filter")),
+    output:
+        **wf.get_output_files("bcftools", "filter"),
+    params:
+        **{"args": wf.get_args("bcftools", "filter")},
+    threads: wf.get_resource("bcftools", "filter", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "filter", "time"),
+        memory=wf.get_resource("bcftools", "filter", "memory"),
+        partition=wf.get_resource("bcftools", "filter", "partition"),
+        tmpdir=wf.get_resource("bcftools", "filter", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "filter"),
+    wrapper:
+        wf.wrapper_path("bcftools/germline_snvs/filter")
+
+
+rule germline_snvs_bcftools_annotate:
+    input:
+        unpack(wf.get_input_files("bcftools", "annotate")),
+    output:
+        **wf.get_output_files("bcftools", "annotate"),
+    params:
+        **{"args": wf.get_args("bcftools", "annotate")},
+    threads: wf.get_resource("bcftools", "annotate", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "annotate", "time"),
+        memory=wf.get_resource("bcftools", "annotate", "memory"),
+        partition=wf.get_resource("bcftools", "annotate", "partition"),
+        tmpdir=wf.get_resource("bcftools", "annotate", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "annotate"),
+    wrapper:
+        wf.wrapper_path("bcftools/germline_snvs/annotate")
+
+
+rule germline_snvs_bcftools_last:
+    input:
+        unpack(wf.get_input_files("bcftools", "last")),
+    output:
+        **wf.get_output_files("bcftools", "last"),
+    params:
+        **{"args": wf.get_args("bcftools", "last")},
+    threads: wf.get_resource("bcftools", "last", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "last", "time"),
+        memory=wf.get_resource("bcftools", "last", "memory"),
+        partition=wf.get_resource("bcftools", "last", "partition"),
+        tmpdir=wf.get_resource("bcftools", "last", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "last"),
+    wrapper:
+        wf.wrapper_path("bcftools/germline_snvs/view")
