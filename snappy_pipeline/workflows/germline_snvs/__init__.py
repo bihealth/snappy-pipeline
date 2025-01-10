@@ -176,6 +176,8 @@ class BcftoolsStepPart(BaseStepPart):
 
     @staticmethod
     def _collapsed_arg_value(k: str, v: Any):
+        if v is None:
+            return None
         k = k.replace("_", "-")
         if isinstance(v, bool):
             if v:
@@ -230,7 +232,7 @@ class BcftoolsStepPart(BaseStepPart):
             "fasta_ref": self.w_config.static_data_config.reference.path,
         }
         if len(self.config.ignore_chroms) + len(self.cfg.ignore_chroms) > 0:
-            input_files["regions"] = "work/bcftools/out/regions.bed.gz".format(**wildcards)
+            input_files["regions_file"] = "work/bcftools/out/regions.bed.gz".format(**wildcards)
         return input_files
 
     def _get_args_pileup(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:

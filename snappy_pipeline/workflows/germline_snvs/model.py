@@ -127,11 +127,6 @@ class Pileup(BcftoolsModel):
     min_BQ: int = 20
     """Skip bases with baseQ/BAQ smaller than INT [1]"""
 
-    full_BAQ: bool = True
-    """Apply BAQ everywhere, not just in problematic regions"""
-    redo_BAQ: bool = True
-    """Recalculate BAQ on the fly, ignore existing BQs"""
-
     # skip_all_set: list[BcftoolsBamFlag | int] | int = []
     # """Skip reads with all of the bits set"""
     # skip_any_set: list[BcftoolsBamFlag | int] | int = [
@@ -158,12 +153,13 @@ class Pileup(BcftoolsModel):
         BcftoolsBamFlag.SECONDARY,
         BcftoolsBamFlag.QCFAIL,
         BcftoolsBamFlag.DUP,
+        BcftoolsBamFlag.SUPPLEMENTARY,
     ]
-    """Skip reads with any of the bits set [UNMAP,SECONDARY,QCFAIL,DUP]"""
+    """Skip reads with any of the bits set [UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY]"""
     skip_all_unset: list[BcftoolsBamFlag] = []
     """Skip reads with all of the bits unset"""
-    skip_any_unset: list[BcftoolsBamFlag] = []
-    """Skip reads with any of the bits unset"""
+    skip_any_unset: list[BcftoolsBamFlag] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
+    """Skip reads with any of the bits unset [PAIRED,PROPER_PAIR]"""
 
 
 class BcftoolsCaller(enum.StrEnum):
@@ -171,11 +167,23 @@ class BcftoolsCaller(enum.StrEnum):
     MULTIALLELIC = "multiallelic"
 
 
+class BcftoolsPloidy(enum.StrEnum):
+    GRCh37 = "GRCh37"
+    GRCh38 = "GRCh38"
+    X = "X"
+    Y = "Y"
+    HAPLOID = "1"
+    DIPLOID = "2"
+
+
 class Call(BcftoolsModel):
     caller: BcftoolsCaller = BcftoolsCaller.CONSENSUS
     """The calling method"""
     variants_only: bool = True
     """Output variant sites only"""
+
+    ploidy: BcftoolsPloidy = BcftoolsPloidy.DIPLOID
+    """Predefined ploidy [2]"""
 
     # @field_serializer("caller")
     # def update_caller_value(x: str) -> str:
@@ -210,6 +218,9 @@ class Annotation(BcftoolsModel):
 
     mark_sites: str | None = None
     """Annotate sites which are present ("+") or absent ("-") in the annotation file with a new INFO/TAG flag"""
+
+    header_line: str | None = None
+    """Header line which should be appended to the VCF header"""
 
     @model_validator(mode="after")
     def ensure_valid_mark_sites_tag(self):

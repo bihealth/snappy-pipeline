@@ -39,7 +39,7 @@ def minimal_config():
               pileup:
                 min_BQ: 20
                 min_MQ: 35
-                skip_any_unset: [PAIRED, PROPER_PAIR]
+                skip_any_unset: [PROPER_PAIR, PAIRED]
                 extra_args:
                   "illumina1.3+": True
                   "full_BAQ": False
@@ -47,6 +47,7 @@ def minimal_config():
                   "redo_BAQ": False
                   seed: 1234567
               call:
+                caller: multiallelic
                 extra_args:
                   "prior-freqs": ["AN", "AC"]
               annotate:
@@ -110,7 +111,7 @@ def test_bcftools_step_part_get_input_files_pileup(germline_snvs_workflow):
         "bams": ["NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam"],
         "bais": ["NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai"],
         "fasta_ref": "/path/to/ref.fa",
-        "regions": "work/bcftools/out/regions.bed.gz",
+        "regions_file": "work/bcftools/out/regions.bed.gz",
     }
     actual = germline_snvs_workflow.get_input_files("bcftools", "pileup")(wildcards)
     assert actual == expected
@@ -190,8 +191,8 @@ def test_bcftools_step_part_get_args_pileup(germline_snvs_workflow):
             "--min-MQ 35",
             "--no-BAQ",
             "--seed 1234567",
-            "--skip-any-set 'UNMAP,SECONDARY,QCFAIL,DUP'",
-            "--skip-any-unset 'PAIRED,PROPER_PAIR'",
+            "--skip-any-set 'UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY'",
+            "--skip-any-unset 'PROPER_PAIR,PAIRED'",
         ]
     }
     actual = germline_snvs_workflow.get_args("bcftools", "pileup")(wildcards, [])
@@ -203,7 +204,8 @@ def test_bcftools_step_part_get_args_call(germline_snvs_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "extra_args": [
-            "--consensus-caller",
+            "--multiallelic-caller",
+            "--ploidy '2'",
             "--prior-freqs 'AN,AC'",
             "--variants-only",
         ]

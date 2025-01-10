@@ -93,7 +93,7 @@ rule germline_snvs_bcftools_pileup:
     log:
         **wf.get_log_file("bcftools", "pileup"),
     wrapper:
-        wf.wrapper_path("bcftools/germline_snvs/mpileup")
+        wf.wrapper_path("bcftools/commands/mpileup")
 
 
 rule germline_snvs_bcftools_call:
@@ -112,7 +112,7 @@ rule germline_snvs_bcftools_call:
     log:
         **wf.get_log_file("bcftools", "call"),
     wrapper:
-        wf.wrapper_path("bcftools/germline_snvs/call")
+        wf.wrapper_path("bcftools/commands/call")
 
 
 rule germline_snvs_bcftools_filter:
@@ -131,7 +131,7 @@ rule germline_snvs_bcftools_filter:
     log:
         **wf.get_log_file("bcftools", "filter"),
     wrapper:
-        wf.wrapper_path("bcftools/germline_snvs/filter")
+        wf.wrapper_path("bcftools/commands/filter")
 
 
 rule germline_snvs_bcftools_annotate:
@@ -150,7 +150,7 @@ rule germline_snvs_bcftools_annotate:
     log:
         **wf.get_log_file("bcftools", "annotate"),
     wrapper:
-        wf.wrapper_path("bcftools/germline_snvs/annotate")
+        wf.wrapper_path("bcftools/commands/annotate")
 
 
 rule germline_snvs_bcftools_last:
@@ -169,4 +169,4 @@ rule germline_snvs_bcftools_last:
     log:
         **wf.get_log_file("bcftools", "last"),
     wrapper:
-        wf.wrapper_path("bcftools/germline_snvs/view")
+        wf.wrapper_path("bcftools/commands/view")
