@@ -236,9 +236,9 @@ class BcftoolsWrapper(ShellWrapper):
     def get_command(self, tool: BcftoolsCommand = BcftoolsCommand.VIEW):
         args = getattr(self._snakemake, "params", {}).get("args", {})
         extra_args = args.get("extra_args", [])
-        extra_files = self._extra_input_files()
+        extra_files = self._extra_input_files(tool)
         cmd = BcftoolsWrapper.bcftool_command.format(
-            tool=self._tool,
+            tool=tool,
             snakemake=self._snakemake,
             extra_args=" \\\n    ".join(extra_args) if extra_args else "",
             extra_files=" \\\n    ".join(extra_files) if extra_files else "",
@@ -247,9 +247,9 @@ class BcftoolsWrapper(ShellWrapper):
             cmd += "\n" + BcftoolsWrapper.index_command.format(snakemake=self._snakemake)
         return cmd
 
-    def _extra_input_files(self) -> list[str]:
+    def _extra_input_files(self, tool: BcftoolsCommand) -> list[str]:
         extra_files = []
-        for additional_input in BcftoolsWrapper.additional_input_files[self._tool]:
+        for additional_input in BcftoolsWrapper.additional_input_files[tool]:
             filename = getattr(self._snakemake.input, additional_input, None)
             if filename is not None:
                 extra_files.append(f"--{additional_input.replace('_', '-')} {filename}")
