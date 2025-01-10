@@ -1,5 +1,6 @@
 """Abstract wrapper classes as utilities for snappy specific wrappers."""
 
+import enum
 import os
 import shutil
 import stat
@@ -57,7 +58,7 @@ class SnappyWrapper(metaclass=ABCMeta):
 
         for fn in {snakemake.output}
         do
-            if ! [[ $fn =~ \.md5$ ]]
+            if ! [[ $fn =~ \.md5$ || -p $fn ]]
             then
                 compute_md5 $fn
             fi
@@ -76,14 +77,15 @@ class SnappyWrapper(metaclass=ABCMeta):
         for path in {snakemake.output.output_links}; do
           dst=$path
           src=work/${{dst#output/}}
-          ln -sr $src $dst
+          if [[ ! -p $src ]]
+          then
+            ln -sr $src $dst
+          fi
         done
     """
 
-    def __init__(self, snakemake, do_md5: bool = True, with_output_links: bool = True) -> None:
+    def __init__(self, snakemake) -> None:
         self._snakemake = snakemake
-        self._do_md5 = do_md5
-        self._with_output_links = with_output_links
         self._check_snakemake_attributes()
 
     def _check_snakemake_attributes(self):
@@ -99,10 +101,12 @@ class SnappyWrapper(metaclass=ABCMeta):
             raise AttributeError("snakemake.log.script is not defined")
 
     @abstractmethod
-    def run(self, cmd: str) -> None:
+    def run(self, cmd: str, do_md5: bool = True, with_output_links: bool = True) -> None:
         pass
 
-    def _run(self, cmd: str, filename: str | None) -> None:
+    def _run(
+        self, cmd: str, filename: str | None, do_md5: bool = True, with_output_links: bool = True
+    ) -> None:
         """
         Creates a temp file for the script, executes it & computes the md5 sum of the log
 
@@ -124,7 +128,7 @@ class SnappyWrapper(metaclass=ABCMeta):
                             SnappyWrapper.header.format(snakemake=self._snakemake),
                             cmd,
                             SnappyWrapper.footer.format(snakemake=self._snakemake)
-                            if self._do_md5
+                            if do_md5
                             else "",
                         )
                     )
@@ -145,28 +149,108 @@ class SnappyWrapper(metaclass=ABCMeta):
 
         shell(SnappyWrapper.md5_log.format(log=str(self._snakemake.log.log)))
 
-        if (
-            self._with_output_links
-            and getattr(self._snakemake.output, "output_links", None) is not None
-        ):
+        if with_output_links and getattr(self._snakemake.output, "output_links", None) is not None:
             shell(SnappyWrapper.output_links.format(snakemake=self._snakemake))
 
 
 class ShellWrapper(SnappyWrapper):
-    def _run_bash(self, cmd: str) -> None:
-        self._run(cmd, self._snakemake.log.script)
+    def _run_bash(self, cmd: str, do_md5: bool = True, with_output_links: bool = True) -> None:
+        self._run(
+            cmd, self._snakemake.log.script, do_md5=do_md5, with_output_links=with_output_links
+        )
         shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
 
-    def run(self, cmd: str) -> None:
-        self._run_bash(cmd)
+    def run(self, cmd: str, do_md5: bool = True, with_output_links: bool = True) -> None:
+        self._run_bash(cmd, do_md5=do_md5, with_output_links=with_output_links)
 
 
 class RWrapper(SnappyWrapper):
-    def _run_R(self, cmd: str) -> None:
+    def _run_R(self, cmd: str, do_md5: bool = True, with_output_links: bool = True) -> None:
         with open(self._snakemake.log.script, "wt") as f:
             print(cmd, file=f)
         shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
-        self._run(f"R --vanilla < {self._snakemake.log.script}", None)
+        self._run(
+            f"R --vanilla < {self._snakemake.log.script}",
+            filename=None,
+            do_md5=do_md5,
+            with_output_links=with_output_links,
+        )
 
-    def run(self, cmd: str) -> None:
-        self._run_R(cmd)
+    def run(self, cmd: str, do_md5: bool = True, with_output_links: bool = True) -> None:
+        self._run_R(cmd, do_md5=do_md5, with_output_links=with_output_links)
+
+
+# TODO: Put the BcftoolsWrapper (& BcftoolsCommand) in separate file
+
+
+class BcftoolsCommand(enum.StrEnum):
+    ANNOTATE = "annotate"
+    CALL = "call"
+    FILTER = "filter"
+    MPILEUP = "mpileup"
+    VIEW = "view"
+
+
+class BcftoolsWrapper(ShellWrapper):
+    additional_input_files = {
+        BcftoolsCommand.ANNOTATE: (
+            "annotations",
+            "columns_file",
+            "header_lines",
+            "regions_file",
+            "samples_file",
+        ),
+        BcftoolsCommand.CALL: (
+            "ploidy_file",
+            "regions_file",
+            "samples_file",
+            "targets_file",
+            "group_samples",
+        ),
+        BcftoolsCommand.FILTER: ("mask_file", "regions_file", "targets_file"),
+        BcftoolsCommand.MPILEUP: (
+            "fasta_ref",
+            "read_groups",
+            "regions_file",
+            "samples_file",
+            "targets_file",
+        ),
+        BcftoolsCommand.VIEW: ("regions_file", "samples_file", "targets_file"),
+    }
+
+    bcftool_command = r"""
+        bcftools {tool} \
+            {extra_args} \
+            {extra_files} \
+            --output {snakemake.output.vcf} \
+            {snakemake.input.vcf}
+    """
+
+    index_command = r"""
+        if [[ ! -p {snakemake.output.vcf} ]]
+        then
+            tabix {snakemake.output.vcf}
+        fi
+    """
+
+    def get_command(self, tool: BcftoolsCommand = BcftoolsCommand.VIEW):
+        args = getattr(self._snakemake, "params", {}).get("args", {})
+        extra_args = args.get("extra_args", [])
+        extra_files = self._extra_input_files()
+        cmd = BcftoolsWrapper.bcftool_command.format(
+            tool=self._tool,
+            snakemake=self._snakemake,
+            extra_args=" \\\n    ".join(extra_args) if extra_args else "",
+            extra_files=" \\\n    ".join(extra_files) if extra_files else "",
+        )
+        if args.get("index", False):
+            cmd += "\n" + BcftoolsWrapper.index_command.format(snakemake=self._snakemake)
+        return cmd
+
+    def _extra_input_files(self) -> list[str]:
+        extra_files = []
+        for additional_input in BcftoolsWrapper.additional_input_files[self._tool]:
+            filename = getattr(self._snakemake.input, additional_input, None)
+            if filename is not None:
+                extra_files.append(f"--{additional_input.replace('_', '-')} {filename}")
+        return extra_files

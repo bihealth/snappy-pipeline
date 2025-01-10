@@ -37,7 +37,7 @@ def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
     assert not any(table.duplicated()), "Duplicated entries in sample sheets"
     assert not any(table["ngs_library"].duplicated()), "Duplicated NGS libraries"
 
-    table.set_index("ngs_library", drop=False, inplace=True)
+    # table.set_index("ngs_library", drop=False, inplace=True)
     return table
 
 
@@ -60,3 +60,18 @@ def _ngs_library_to_df(ngs_library: NGSLibrary) -> pd.DataFrame:
             d[k] = v
 
     return pd.DataFrame.from_dict({k: [v] for k, v in d.items()})
+
+
+def tumor_to_normal_mapping(table: pd.DataFrame) -> dict[str, str]:
+    assert "isTumor" in table.columns, "Missing mandatory column 'isTumor'"
+    normals = table[~table["isTumor"].astype(bool)]
+    assert all(
+        [n == 1 for n in normals.groupby(by="bio_entity").size()]
+    ), "Multiple normals for at least one donor"
+    tumors = table[table["isTumor"]]
+    tumor_normal_map = tumors[["ngs_library", "bio_entity"]].merge(
+        normals[["ngs_library", "bio_entity"]], on="bio_entity"
+    )
+    return pd.Series(
+        tumor_normal_map.ngs_library_y.values, index=tumor_normal_map.ngs_library_x.values
+    ).to_dict()
