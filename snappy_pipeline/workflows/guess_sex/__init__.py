@@ -144,7 +144,7 @@ class GuessSexWorkflow(BaseStep):
                 files_in_work = sub_step.get_result_files()
                 for file_in_work in files_in_work:
                     file_in_output = file_in_work.format(
-                        mapper=self.config.tool_ngs_mapping, library_name=row.Index
+                        mapper=self.config.tool_ngs_mapping, library_name=row.ngs_library
                     ).replace("work/", "output/", 1)
                     yield file_in_output
                     yield file_in_output + ".md5"
