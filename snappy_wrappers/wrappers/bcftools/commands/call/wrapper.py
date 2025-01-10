@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Wrapper for annotating germline variants using dbSNP, gnomAD, ... or with another vcf
+Wrapper for calling genotype of germline variants
 
-It is meant to be used in conjunction with other bcftools commands, such as call & filter
+It is meant to be used in conjunction with other bcftools commands, such as mpileup & filter
 
 Mandatory snakemake.input: vcf
-Optional snakemake.input:
+Optional snakemake.input: ploidy_file, regions_file, samples_file, targets_file, group_samples
 
 Mandatory snakemake.params.args: extra_args
 Optional snakemake.params.args: index
@@ -28,5 +28,5 @@ sys.path.insert(0, base_dir)
 from snappy_wrappers.snappy_wrapper import BcftoolsWrapper
 
 wrapper = BcftoolsWrapper(snakemake)
-cmd = wrapper.get_command(tool="annotate")
+cmd = wrapper.get_command(tool="call")
 wrapper.run(cmd)

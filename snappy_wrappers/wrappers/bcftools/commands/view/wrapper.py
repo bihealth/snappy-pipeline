@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Wrapper for calling genotype of germline variants
+Wrapper for indexing germline variants
 
-It is meant to be used in conjunction with other bcftools commands, such as mpileup & filter
+It is meant to be used in conjunction with other bcftools commands, such as mpileup & call
 
 Mandatory snakemake.input: vcf
-Optional snakemake.input:
+Optional snakemake.input: regions_file, samples_file, targets_file
 
 Mandatory snakemake.params.args: extra_args
 Optional snakemake.params.args: index
@@ -28,5 +28,5 @@ sys.path.insert(0, base_dir)
 from snappy_wrappers.snappy_wrapper import BcftoolsWrapper
 
 wrapper = BcftoolsWrapper(snakemake)
-cmd = wrapper.get_command(tool="call")
+cmd = wrapper.get_command(tool="view")
 wrapper.run(cmd)

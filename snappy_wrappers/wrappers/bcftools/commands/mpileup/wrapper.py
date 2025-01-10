@@ -5,7 +5,7 @@ Wrapper for finding variants using bcftools mpileup
 It is meant to be used in conjunction with other bcftools commands, such as call & filter
 
 Mandatory snakemake.input: bams
-Optional snakemake.input:
+Optional snakemake.input: fasta_ref, read_groups, regions_file, samples_file, targets_file
 
 Mandatory snakemake.params.args: extra_args
 Optional snakemake.params.args: index

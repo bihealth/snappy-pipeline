@@ -5,7 +5,7 @@ Wrapper for filtering germline variants
 It is meant to be used in conjunction with other bcftools commands, such as mpileup & call
 
 Mandatory snakemake.input: vcf
-Optional snakemake.input:
+Optional snakemake.input: mask_file, regions_file, targets_file
 
 Mandatory snakemake.params.args: extra_args
 Optional snakemake.params.args: index
