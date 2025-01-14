@@ -65,9 +65,9 @@ def _ngs_library_to_df(ngs_library: NGSLibrary) -> pd.DataFrame:
 def tumor_to_normal_mapping(table: pd.DataFrame) -> dict[str, str]:
     assert "isTumor" in table.columns, "Missing mandatory column 'isTumor'"
     normals = table[~table["isTumor"].astype(bool)]
-    assert all(
-        [n == 1 for n in normals.groupby(by="bio_entity").size()]
-    ), "Multiple normals for at least one donor"
+    assert all([n == 1 for n in normals.groupby(by="bio_entity").size()]), (
+        "Multiple normals for at least one donor"
+    )
     tumors = table[table["isTumor"]]
     tumor_normal_map = tumors[["ngs_library", "bio_entity"]].merge(
         normals[["ngs_library", "bio_entity"]], on="bio_entity"
