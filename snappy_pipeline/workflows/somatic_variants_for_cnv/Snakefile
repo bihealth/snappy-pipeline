@@ -65,7 +65,7 @@ rule somatic_variants_for_cnv_bcftools_ignore_chroms:
                 "ignore_chroms": set(
                     config["step_config"]["somatic_variants_for_cnv"]["ignore_chroms"]
                     + config["step_config"]["somatic_variants_for_cnv"]["bcftools"][
-            "ignore_chroms"
+                        "ignore_chroms"
                     ]
                 )
             }
