@@ -188,7 +188,7 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+            tumor_base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
                 **wildcards
             )
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
