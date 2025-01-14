@@ -864,7 +864,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+            tumor_base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
                 **wildcards
             )
             return {
