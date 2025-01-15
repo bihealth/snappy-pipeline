@@ -3,12 +3,20 @@
 import subprocess
 import textwrap
 
+import pytest
 
-def test_add_ped_header():
+
+@pytest.fixture
+def project_root_path(request):
+    return request.config.rootpath
+
+
+def test_add_ped_header(project_root_path):
+    add_ped_header_path = project_root_path / "snappy_wrappers/tools/add_ped_header.sh"
     ret = subprocess.check_output(
         textwrap.dedent(
-            r"""
-        source snappy_wrappers/tools/add_ped_header.sh
+            rf"""
+        source {str(add_ped_header_path)}
 
         set -euxo pipefail
         in_vcf=$(mktemp --suffix=.vcf)

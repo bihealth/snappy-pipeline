@@ -22,6 +22,33 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = VariantPhasingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
+module variant_annotation:
+    snakefile:
+        "../variant_annotation/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_variant_annotation", "../variant_annotation")
+
+
+use rule * from variant_annotation
+
+
 # Rules =======================================================================
 
 
@@ -32,9 +59,10 @@ localrules:
     variant_checking_write_trio_pedigree_run,
 
 
-rule all:
+rule variant_phasing_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

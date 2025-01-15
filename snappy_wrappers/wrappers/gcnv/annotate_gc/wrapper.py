@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # isort:skip_file
 from snappy_pipeline.utils import DictQuery
-import os
 
 from snakemake.shell import shell
 
