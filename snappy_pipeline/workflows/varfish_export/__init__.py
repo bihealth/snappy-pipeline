@@ -340,20 +340,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             )
         yield "vcf", vcfs
 
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        library_names = [
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        ]
-        path_vcf_cov = (
-            "output/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
-        )
-        cov_vcfs = [
-            ngs_mapping(path_vcf_cov.format(mapper=wildcards.mapper, library_name=library_name))
-            for library_name in library_names
-        ]
-        yield "vcf_cov", cov_vcfs
-
     @dictify
     def _get_output_files_annotate_strucvars(self):
         prefix = (
