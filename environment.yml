@@ -51,7 +51,7 @@ dependencies:
   - coveralls ~=4.0.1
   - pytabix >=0.1.0,<1
   # formatting, linting, dev
-  - ruff ~=0.4.8
+  - ruff >=0.9.0,<1
   - snakefmt ~=0.8.5
   - pre-commit ~=3.7.1
   # docs
