@@ -145,7 +145,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
                 )
             )
             cancer_base_path = (
-                "output/{mapper}.{cancer_library}/out/" "{mapper}.{cancer_library}"
+                "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
             ).format(**wildcards)
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),

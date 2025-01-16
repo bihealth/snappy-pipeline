@@ -214,7 +214,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
+                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
             ).format(**wildcards)
             input_files = {
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
@@ -410,9 +410,9 @@ class Mutect2StepPart(MutectBaseStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        tumor_base_path = (
-            "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
-        ).format(**wildcards)
+        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
+            **wildcards
+        )
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
@@ -737,7 +737,7 @@ class JointCallingStepPart(BaseStepPart):
         if self.__class__.name is None:
             raise RuntimeError("Step name not given, override in sub class")
         self.base_path_out = (
-            "work/{{mapper}}.{name}.{{donor_name}}/out/" "{{mapper}}.{name}.{{donor_name}}{ext}"
+            "work/{{mapper}}.{name}.{{donor_name}}/out/{{mapper}}.{name}.{{donor_name}}{ext}"
         )
         # Build shortcut from donor name to donor.
         self.donor_by_name = OrderedDict()
@@ -783,8 +783,7 @@ class JointCallingStepPart(BaseStepPart):
         """Return dict of log files."""
         _ = action
         prefix = (
-            "work/{{mapper}}.{var_caller}.{{donor_name}}/log/"
-            "{{mapper}}.{var_caller}.{{donor_name}}"
+            "work/{{mapper}}.{var_caller}.{{donor_name}}/log/{{mapper}}.{var_caller}.{{donor_name}}"
         ).format(var_caller=self.__class__.name)
         key_ext = (
             ("log", ".log"),
