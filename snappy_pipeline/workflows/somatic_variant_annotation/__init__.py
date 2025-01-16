@@ -137,8 +137,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         tpl = (
-            "output/{mapper}.{var_caller}.{tumor_library}/out/"
-            "{mapper}.{var_caller}.{tumor_library}"
+            "output/{mapper}.{var_caller}.{tumor_library}/out/{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]

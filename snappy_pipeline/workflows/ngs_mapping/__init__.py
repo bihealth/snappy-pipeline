@@ -653,7 +653,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
         for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
             path = (
-                "work/{mapper}.{{library_name}}/report/bam_qc/" "{mapper}.{{library_name}}.bam{ext}"
+                "work/{mapper}.{{library_name}}/report/bam_qc/{mapper}.{{library_name}}.bam{ext}"
             ).format(mapper=self.name, ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
         for ext in (
@@ -662,7 +662,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             ".idxstats.txt.md5",
         ):
             path = (
-                "work/{mapper}.{{library_name}}/report/bam_qc/" "{mapper}.{{library_name}}.bam{ext}"
+                "work/{mapper}.{{library_name}}/report/bam_qc/{mapper}.{{library_name}}.bam{ext}"
             ).format(mapper=self.name, ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 

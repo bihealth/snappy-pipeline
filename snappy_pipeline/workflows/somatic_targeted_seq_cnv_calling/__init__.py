@@ -188,9 +188,9 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
+            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+                **wildcards
+            )
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
             yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
@@ -780,10 +780,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ("vcf_tbi", "vcf.gz.tbi"),
         )
         output_files = {}
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
-            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
-        )
+        tpl = "work/{{mapper}}.cnvkit.{{library_name}}/out/{{mapper}}.cnvkit.{{library_name}}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"
@@ -867,9 +864,9 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
+            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+                **wildcards
+            )
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),

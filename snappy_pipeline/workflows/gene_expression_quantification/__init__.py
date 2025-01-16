@@ -228,7 +228,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{tool}.{{library_name}}/out/" "{{mapper}}.{tool}.{{library_name}}{ext}"
+            "work/{{mapper}}.{tool}.{{library_name}}/out/{{mapper}}.{tool}.{{library_name}}{ext}"
         )
 
     def get_input_files(self, action):
@@ -238,7 +238,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            base_path = "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}".format(
+            base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
                 **wildcards
             )
             return {
