@@ -19,7 +19,7 @@ The ``somatic_cnv_calling`` implementation of ``cnvkit`` doesn't need this heade
 The documentation also mentions ``BQ`` flag (for base quality), but ``bcftools mpileup`` doesn't emit
 this flag (anymore?).
 
-``THetA2`` also requires a file with SNP locii. It is unclear whether it needs only germline, or
+``THetA2`` also requires a file with SNP loci. It is unclear whether it needs only germline, or
 germline & somatic locations.
 In any case, the format is NOT ``vcf``, and requires a separate re-formatting step
 (included in the ``cnvkit`` implementation)
