@@ -1014,6 +1014,9 @@ class StrandednessStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return self.config.strandedness.model_dump(by_alias=True)
 
 class Minimap2StepPart(ReadMappingStepPart):
     """Support for performing long-read alignment using minimap2"""
