@@ -101,6 +101,7 @@ Currently, no reports are generated.
 import os
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -667,7 +668,13 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{5 * 1024 * 16}M",
         )
-
+    
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_target_regions": self.config.scalpel.path_target_regions,
+        }
 
 class Strelka2StepPart(SomaticVariantCallingStepPart):
     """Somatic variant calling with strelka2/manta"""

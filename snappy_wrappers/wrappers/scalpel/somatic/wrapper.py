@@ -8,6 +8,8 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 this_file = __file__
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 # Also pipe everything to log file
@@ -56,10 +58,10 @@ scalpel-discovery \
     --pathlimit 10000 \
     --outratio 0.1 \
     --mincov 3 \
-    --ref {snakemake.config[static_data_config][reference][path]} \
+    --ref {args[reference]} \
     --dir $TMPDIR/scalpel.tmp \
     --bed \
-        {snakemake.config[step_config][somatic_variant_calling][scalpel][path_target_regions]} \
+        {args[path_target_regions]} \
     --somatic \
     --normal {snakemake.input.normal_bam} \
     --tumor {snakemake.input.tumor_bam}
@@ -73,7 +75,7 @@ fi
 
 # Obtain fixed contig header lines
 awk '{{ printf("##contig=<ID=%s,length=%d>\n", $1, $2); }}' \
-    {snakemake.config[static_data_config][reference][path]}.fai \
+    {args[reference]}.fai \
 > $TMPDIR/contig_headers.txt
 
 # join and transform output file for tumor/normal pairs
