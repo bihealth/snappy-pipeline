@@ -252,6 +252,7 @@ import typing
 import warnings
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snakemake.io import Wildcards, expand
@@ -532,6 +533,16 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_hc"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "num_threads": self.config.gatk3_hc.num_threads,
+            "window_length": self.config.gatk3_hc.window_length,
+            "allow_seq_dict_incompatibility": self.config.gatk3_hc.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
 
 class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK v3 UnifiedGenotyper"""
@@ -539,11 +550,34 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_ug"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "num_threads": self.config.gatk3_uc.num_threads,
+            "window_length": self.config.gatk4_hc_joint.window_length,
+            "allow_seq_dict_incompatibility": self.config.gatk3_uc.allow_seq_dict_incompatibility,
+            "downsample_to_coverage": self.config.gatk3_uc.downsample_to_coverage,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
+
 
 class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree"""
 
     name = "gatk4_hc_joint"
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "window_length": self.config.gatk4_hc_joint.window_length,
+            "num_threads": self.config.gatk4_hc_joint.num_threads,
+            "allow_seq_dict_incompatibility": self.config.gatk4_hc_joint.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
 
 
 class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
@@ -630,6 +664,18 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             ],
         )
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "step_key": "variant_calling",
+            "caller_key": "gatk4_hc_gvcf",
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "window_length": self.config.gatk4_hc_gvcf.window_length,
+            "num_threads": self.config.gatk4_hc_gvcf.num_threads,
+            "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
 
 class ReportGetLogFileMixin:
     """Log file generation for reports"""

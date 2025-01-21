@@ -62,6 +62,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
@@ -226,6 +227,14 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior,
+        }
+    
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
