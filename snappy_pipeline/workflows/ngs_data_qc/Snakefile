@@ -95,6 +95,8 @@ rule data_qc_fastqc_run:
 rule data_qc_picard_prepare:
     output:
         **wf.get_output_files("picard", "prepare"),
+    params:
+        args=wf.get_params("picard", "prepare"),
     threads: wf.get_resource("picard", "prepare", "threads")
     resources:
         time=wf.get_resource("picard", "prepare", "time"),
@@ -113,7 +115,7 @@ rule data_qc_picard_metrics:
     output:
         **wf.get_output_files("picard", "metrics"),
     params:
-        wf.get_params("picard", "metrics"),
+        args=wf.get_params("picard", "metrics"),
     threads: wf.get_resource("picard", "metrics", "threads")
     resources:
         time=wf.get_resource("picard", "metrics", "time"),
