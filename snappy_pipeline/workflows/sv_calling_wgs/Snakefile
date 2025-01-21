@@ -322,6 +322,7 @@ rule sv_calling_wgs_melt_preprocess:
         **wf.get_log_file("melt", "preprocess"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "preprocess"),
     wrapper:
         wf.wrapper_path("melt/preprocess")
 
@@ -344,6 +345,7 @@ rule sv_calling_wgs_melt_indiv_analysis:
         **wf.get_log_file("melt", "indiv_analysis"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "indiv_analysis"),
     wrapper:
         wf.wrapper_path("melt/indiv_analysis")
 
@@ -366,6 +368,7 @@ rule sv_calling_wgs_melt_group_analysis:
         **wf.get_log_file("melt", "group_analysis"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "group_analysis"),
     wrapper:
         wf.wrapper_path("melt/group_analysis")
 
@@ -388,6 +391,7 @@ rule sv_calling_wgs_melt_genotype:
         **wf.get_log_file("melt", "genotype"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "genotype"),
     wrapper:
         wf.wrapper_path("melt/genotype")
 
@@ -409,6 +413,7 @@ rule sv_calling_wgs_melt_make_vcf:
         **wf.get_log_file("melt", "make_vcf"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "make_vcf"),
     wrapper:
         wf.wrapper_path("melt/make_vcf")
 

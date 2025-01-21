@@ -2,7 +2,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+melt_config = getattr(snakemake.params, "args", {})
 melt_arg_exome = {"sv_calling_targeted": "-exome"}.get(snakemake.params.step_key, "")
 
 shell(
@@ -21,7 +21,7 @@ java -Xmx13G -jar $JAR \
     IndivAnalysis \
     -b hs37d5/NC_007605 \
     {melt_arg_exome} \
-    -h {snakemake.config[static_data_config][reference][path]} \
+    -h {melt_config[reference]} \
     -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \

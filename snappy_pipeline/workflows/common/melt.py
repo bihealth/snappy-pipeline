@@ -1,6 +1,7 @@
 import re
 import typing
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
@@ -228,3 +229,9 @@ class MeltStepPart(
     @dictify
     def _get_log_file_merge_vcf(self):
         yield from self._get_log_file_with_infix("{mapper}.melt.{library_name}").items()
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return self.config.melt.model_dump(by_alias=True) | {
+            "reference": self.parent.w_config.static_data_config.reference.path
+        }
