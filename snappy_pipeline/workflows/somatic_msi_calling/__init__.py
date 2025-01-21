@@ -51,6 +51,7 @@ Available Somatic Targeted CNV Caller
 import os
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -149,6 +150,14 @@ class Mantis2StepPart(BaseStepPart):
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, msi_caller=[self.name], ext=EXT_VALUES))
         )
+    
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "loci_bed": self.config.loci_bed,
+        }
 
     @dictify
     def _get_log_file(self, action):

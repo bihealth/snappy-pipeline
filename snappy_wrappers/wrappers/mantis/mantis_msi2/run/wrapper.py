@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Clemens Messerschmidt"
 
+args = getattr(snakemake.params, "args", {})
+
 shell.executable("/bin/bash")
 
 
@@ -42,8 +44,8 @@ mkdir -p $TMPDIR/out
 mantis-msi2 \
     -t {snakemake.input.tumor_bam}  \
     -n {snakemake.input.normal_bam} \
-    --genome {snakemake.config[static_data_config][reference][path]} \
-    --bedfile {snakemake.config[step_config][somatic_msi_calling][loci_bed]} \
+    --genome {args[reference]} \
+    --bedfile {args[loci_bed]} \
     --min-read-length 35 \
     --min-read-quality 20.0 \
     --min-locus-quality 25.0 \
