@@ -48,6 +48,7 @@ Additionally, one can provide a gtf for the mapping between transcripts and gene
 """
 
 import os
+from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
@@ -286,6 +287,12 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        return {
+            "strand": self.config.strand,
+            "path_annotation_gtf": self.config.featurecounts.path_annotation_gtf,
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
