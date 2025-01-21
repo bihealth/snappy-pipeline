@@ -20,6 +20,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
 
 # Helper functions ------------------------------------------------------------
 def pair_fastq_files(input_left, input_right):
@@ -50,19 +51,19 @@ def pair_fastq_files(input_left, input_right):
 
 
 # Read snakemake input --------------------------------------------------------
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = snakemake.params.args["input"].get("reads_right", "")
+input_left = args["input"]["reads_left"]
+input_right = args["input"].get("reads_right", "")
 
-config = snakemake.config["step_config"]["ngs_mapping"]["somatic"]
+config = args["config"]
 mapper = config["mapping_tool"]
-mapper_config = snakemake.config["step_config"]["ngs_mapping"][mapper]
+mapper_config = args["mapper_config"]
 if mapper == "bwa_mem2":
     mapper = "bwa-mem2"
 if config["use_barcodes"]:
     barcoder = config["barcode_tool"]
-    config_barcodes = snakemake.config["step_config"]["ngs_mapping"][barcoder]
+    config_barcodes = args["barcode_config"]
 if config["recalibrate"]:
-    config_bqsr = snakemake.config["step_config"]["ngs_mapping"]["bqsr"]
+    config_bqsr = args["bqsr_config"]
 
 # Group fastq files by lane ---------------------------------------------------
 pairs = pair_fastq_files(input_left, input_right)
@@ -162,7 +163,7 @@ cmd += (
 ).format(
     mapper=mapper,
     indices=mapper_config["path_index"],
-    sample_name=snakemake.params.args["sample_name"],
+    sample_name=args["sample_name"],
     extra_args=" ".join(mapper_config.get("extra_args", [])),
     threads=mapper_config["num_threads_align"],
 )
@@ -276,7 +277,7 @@ if config["recalibrate"]:
         "                -R {reference} --known-sites {common_sites} \\\n"
         "                -O {{output.tbl}}"
     ).format(
-        reference=snakemake.config["static_data_config"]["reference"]["path"],
+        reference=args["reference"],
         common_sites=config_bqsr["common_variants"],
     )
 
@@ -297,7 +298,7 @@ if config["recalibrate"]:
         "                -R {reference} \\\n"
         "                -O {{output.bam}} \n"
         "            samtools index {{output.bam}}"
-    ).format(reference=snakemake.config["static_data_config"]["reference"]["path"])
+    ).format(reference=args["reference"])
 
     kwargs = {
         "rule": "apply",

@@ -434,7 +434,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -798,6 +798,24 @@ class MBCsStepPart(ReadMappingStepPart):
             memory="4G",
             partition="medium",
         )
+    
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            args = super().get_args(action)(wildcards)
+            args |= {
+                "reference": self.parent.w_config.static_data_config.reference.path,
+                "config": self.config.mbcs.model_dump(by_alias=True),
+                "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(by_alias=True)
+            }
+            if self.config.mbcs.use_barcodes:
+                args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(by_alias=True)
+            if self.config.mbcs.recalibrate:
+                args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
+            return args
+        
+        return args_fn
 
 
 class StarStepPart(ReadMappingStepPart):
