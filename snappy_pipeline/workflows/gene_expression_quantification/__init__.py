@@ -189,6 +189,8 @@ class SalmonStepPart(BaseStepPart):
             )
             if reads_right:
                 result["input"]["reads_right"] = reads_right
+            result |= self.config.salmon.model_dump(by_alias=True)
+            result["strand"] = self.config.strand
             return result
 
         assert action == "run", "Unsupported actions"
