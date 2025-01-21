@@ -165,6 +165,8 @@ class OptiTypeStepPart(BaseStepPart):
             )
             if reads_right:
                 result["input"]["reads_right"] = reads_right
+            result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
+            result["max_reads"] = self.confing.optitype.max_reads
             return result
 
         assert action == "run", "Unsupported actions"
