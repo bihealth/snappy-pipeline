@@ -1418,6 +1418,10 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+    
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
