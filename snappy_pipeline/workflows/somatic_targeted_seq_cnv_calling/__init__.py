@@ -73,7 +73,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -456,10 +456,41 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return self._get_params_report
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_params_report(self, wildcards):
-        return wildcards["library_name"]
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "length": self.config.sequenza.length,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_arguments": self.config.sequenza.extra_args,
+        }
+
+    def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "length": self.config.sequenza.length,
+        }
+
+    def _get_params_report(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "assembly": self.config.sequenza.assembly,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "library_name": wildcards.library_name
+        }
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "assembly": self.config.sequenza.assembly,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "library_name": wildcards.library_name
+        }
 
     def get_log_file(self, action):
         """Return dict of log files."""

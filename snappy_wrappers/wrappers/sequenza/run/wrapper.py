@@ -15,6 +15,7 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+config = getattr(snakemake.params, "args", {})
 
 def config_to_r(x):
     if x is None:
@@ -33,9 +34,7 @@ def config_to_r(x):
     return str(x)
 
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["sequenza"]
-genome = snakemake.config["static_data_config"]["reference"]["path"]
+genome = config["reference"]
 length = config["length"]
 
 f = open(genome + ".fai", "rt")
@@ -83,16 +82,16 @@ args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
 args <- c(args, {args_fit})
 CP <- do.call(sequenza.fit, args=args)
 
-sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{snakemake.wildcards[library_name]}", out.dir=dirname("{snakemake.output.done}"))
+sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{config[library_name]}", out.dir=dirname("{snakemake.output.done}"))
 
 warnings()
 
 # Convert *_segment.txt to *_dnacopy.seg to follow pipeline output format
-segments <- file.path(dirname("{snakemake.output.done}"), sprintf("%s_segments.txt", "{snakemake.wildcards[library_name]}"))
+segments <- file.path(dirname("{snakemake.output.done}"), sprintf("%s_segments.txt", "{config[library_name]}"))
 stopifnot(file.exists(segments))
 dnacopy <- read.table(segments, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
 
-dnacopy[,"ID"] <- "{snakemake.wildcards[library_name]}"
+dnacopy[,"ID"] <- "{config[library_name]}"
 dnacopy[,"depth.ratio"] <- log2(dnacopy[,"depth.ratio"])
 
 col_names <- c(
