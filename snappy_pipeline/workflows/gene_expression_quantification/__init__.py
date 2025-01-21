@@ -260,6 +260,10 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             )
         )
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {"strand": self.config.strand}
+    
     @dictify
     def get_log_file(self, action):
         """Return mapping of log files."""
@@ -289,8 +293,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     actions = ("run",)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        return {
-            "strand": self.config.strand,
+        return super().get_args(action) | {
             "path_annotation_gtf": self.config.featurecounts.path_annotation_gtf,
         }
 
@@ -355,7 +358,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
-
+    
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -380,6 +383,12 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        return super().get_args(action) | {
+            "dupradar_path_annotation_gtf": self.config.dupradar.dupradar_path_annotation_gtf,
+            "num_threads": self.config.dupradar.num_threads,
+        }
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -403,6 +412,12 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        return super().get_args(action) | {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "rnaseqc_path_annotation_gtf": self.config.rnaseqc.rnaseqc_path_annotation_gtf,
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

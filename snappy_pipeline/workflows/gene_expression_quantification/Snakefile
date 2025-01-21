@@ -95,6 +95,8 @@ rule gene_expression_quantification_duplication_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("duplication", "run"),
+    params:
+        **{"args": wf.get_args("duplication", "run")},
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
         time=wf.get_resource("duplication", "run", "time"),
@@ -113,6 +115,8 @@ rule gene_expression_quantification_dupradar_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("dupradar", "run"),
+    params:
+        **{"args": wf.get_args("dupradar", "run")},
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
         time=wf.get_resource("dupradar", "run", "time"),
@@ -131,6 +135,8 @@ rule gene_expression_quantification_rnaseqc_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("rnaseqc", "run"),
+    params:
+        **{"args": wf.get_args("rnaseqc", "run")},
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
         time=wf.get_resource("rnaseqc", "run", "time"),
@@ -143,12 +149,14 @@ rule gene_expression_quantification_rnaseqc_run:
         wf.wrapper_path("rnaqc/rnaseqc")
 
 
-rule gene_expression_quantification_star_run:
+rule gene_expression_quantification_stats_run:
     input:
         unpack(wf.get_input_files("stats", "run")),
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("stats", "run"),
+    params:
+        **{"args": wf.get_args("stats", "run")},
     threads: wf.get_resource("stats", "run", "threads")
     resources:
         time=wf.get_resource("stats", "run", "time"),
