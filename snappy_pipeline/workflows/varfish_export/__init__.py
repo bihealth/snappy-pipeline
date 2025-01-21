@@ -261,15 +261,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
     def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if (
-                donor.dna_ngs_library
-                and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
-            ):
-                return {"step_name": "varfish_export"}
-        return {"step_name": "varfish_export"}
-
+        return {
+            "path_exon_bed": self.config.path_exon_bed,
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_mehari_db": self.config.path_mehari_db,
+        }
+    
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
