@@ -431,6 +431,7 @@ import os
 import re
 import sys
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
@@ -1260,7 +1261,14 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 for work_path in chain(paths_work.values(), self.get_log_file(action).values())
             ],
         )
-
+    
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._check_action(action)
+        return {
+            "reference": self.parent.w_config.static_config_data.reference.path,
+            "window_length": self.config.bam_collect_doc.window_length,
+        }
+    
     @dictify
     def _get_output_files_run_work(self):
         yield "vcf", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
