@@ -5,6 +5,10 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.param, "args", {})
+
+window_length = args.get("window_length", "")
+
 shell(
     r"""
 set -x
@@ -15,8 +19,8 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
 # Define some global shortcuts
-REF={snakemake.config[static_data_config][reference][path]}
-REGIONS={snakemake.config[step_config][somatic_targeted_seq_cnv_calling][cnvetti_on_target][path_target_regions]}
+REF={args[reference]}
+REGIONS={args[path_target_regions]}
 
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then
@@ -43,10 +47,10 @@ cnvetti-coverage()
     cnvetti cmd coverage \
         -vvv \
         --reference "$REF" \
-        $(if [[ {snakemake.params.method_name} == cnvetti_off_target ]]; then
+        $(if [[ {args[method_name]} == cnvetti_off_target ]]; then
             echo --considered-regions GenomeWide
             echo --mask-piles
-            echo --window-length {snakemake.config[step_config][somatic_targeted_seq_cnv_calling][cnvetti_off_target][window_length]}
+            echo --window-length {window_length}
           else
             echo --considered-regions TargetRegions
             echo --targets-bed "$REGIONS"

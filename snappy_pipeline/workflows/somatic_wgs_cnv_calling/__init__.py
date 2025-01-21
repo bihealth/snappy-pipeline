@@ -77,9 +77,10 @@ import os
 import sys
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards, InputFiles
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -251,6 +252,12 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "bcf_csi_md5": ".bcf.csi.md5",
     }
 
+    #: Parameters to pass to the wrapper
+    params_for_action = {
+        "coverage": ("window_length", "count_kind", "normalization"),
+        "segment": ("segmentation",)
+    }
+
     def get_input_files(self, action):
         """Return input function for CNVetti rule"""
         # Validate action
@@ -335,6 +342,29 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     name_pattern=name_pattern, ext=ext
                 ),
             )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        """Return args (params) that CNVetti creates for the given action"""
+        # Validate action
+        self._validate_action(action)
+
+        params = {}
+        if action in self.params_for_action:
+            cfg = getattr(self.config, self.name)
+            assert cfg.preset in cfg.presets, f"Undefined preset '{cfg.preset}'"
+            for k in self.params_for_action[action]:
+                v = getattr(cfg, k, None)
+                if v is None:
+                    assert (
+                        k in cfg.presets[cfg.preset]
+                    ), f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    v = cfg.presets[cfg.preset].get(k)
+                params[k] = v
+
+        if action == "coverage":
+            params["reference"] = self.parent.w_config.static_data_config.reference.path
+
+        return getattr(self, "_get_args_{}".format(action))
 
     @dictify
     def get_log_file(self, action):
@@ -698,6 +728,26 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        cfg = self.config.control_freec
+        if action == "run":
+            return {
+                "path_chrlenfile": cfg.path_chrlenfile,
+                "path_mappability": cfg.path_mappability,
+                "path_mappability_enabled": cfg.path_mappability_enabled,
+                "window_size": cfg.window_size,
+            }
+        elif action == "transform":
+            return {
+                "org_obj": cfg.convert.org_obj,
+                "tx_obj": cfg.convert.tx_obj,
+                "bs_obj": cfg.convert.bs_obj,
+            }
+        elif action == "plot":
+            return{}
+        
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

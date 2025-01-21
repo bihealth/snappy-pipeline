@@ -70,6 +70,7 @@ import os.path
 import sys
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -270,6 +271,16 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
                     os.path.join("work", name_pattern, "out", name_pattern + "_" + infix + ext),
                 )
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        """Return wrapper parameters for the given action"""
+        # Validate action
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_target_region": getattr(self.config, "path_target_regions"),
+            "method": self.name,
+        }
+
     def _get_log_file(self, action):
         """Return path to log file for the given action"""
         # Validate action
@@ -301,7 +312,12 @@ class CnvettiOffTargetStepPart(CnvettiStepPartBase):
     #: Step name
     name = "cnvetti_off_target"
 
-
+    def get_args(self, action: str) -> dict[str, Any]:
+        params = super().get_args(action)
+        params["window_length"] = self.config.cnvetti_off_target.window_length
+        return params
+    
+    
 class CnvettiOnTargetStepPart(CnvettiStepPartBase):
     """Perform somatic targeted CNV calling using CNVetti with on-target reads."""
 
