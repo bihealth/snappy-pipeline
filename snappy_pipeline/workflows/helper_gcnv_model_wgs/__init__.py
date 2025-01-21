@@ -84,6 +84,7 @@ The default configuration is as follows.
 """
 
 import os
+from typing import Any
 
 import attr
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background

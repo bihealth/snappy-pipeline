@@ -527,6 +527,15 @@ class RunGcnvStepPart(
         # Return requested function
         return getattr(self, f"_get_params_{action}")
 
+    def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
     @listify
     def get_result_files(self):
         """Return list of **concrete** paths to result files for the given configuration and sample sheets.

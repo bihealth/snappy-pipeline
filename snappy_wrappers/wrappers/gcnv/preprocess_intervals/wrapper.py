@@ -5,7 +5,7 @@ import os
 
 from snakemake.shell import shell
 
-args = getattr(snakemake.param, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 # Pick the target BED file to use.
 for item in args["path_target_interval_list_mapping"]:
