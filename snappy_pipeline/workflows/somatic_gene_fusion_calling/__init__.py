@@ -231,9 +231,14 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
 
         def args_function(wildcards):
             # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": list(sorted(self._collect_reads(wildcards, wildcards.library_name, ""))),
+                "right": list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))),
+                "kallisto_index": self.config.pizzly.kallisto_index,
+                "kmer_size": self.config.pizzly.kmer_size,
+                "transcripts_fasta": self.config.pizzly.transcripts_fasta,
+                "annotation_gtf": self.config.pizzly.annotation_gtf,
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
