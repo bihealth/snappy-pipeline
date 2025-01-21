@@ -3,6 +3,8 @@
 These are used in both ``sv_calling_targeted`` and ``sv_calling_wgs``.
 """
 
+from typing import Any
+
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
@@ -80,3 +82,7 @@ class MantaStepPart(
         yield from augment_work_dir_with_output_links(
             work_files, self.get_log_file().values()
         ).items()
+    
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
