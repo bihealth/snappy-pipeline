@@ -47,6 +47,8 @@ rule build_gcnv_model_preprocess_intervals:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
         **wf.get_output_files("gcnv", "preprocess_intervals"),
+    params:
+        **{"args": wf.get_args("gcnv", "preprocess_intervals")}
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
@@ -66,6 +68,8 @@ rule build_gcnv_model_annotate_gc:
         unpack(wf.get_input_files("gcnv", "annotate_gc")),
     output:
         **wf.get_output_files("gcnv", "annotate_gc"),
+    params:
+        **{"args": wf.get_args("gcnv", "preprocess_intervals")}
     threads: wf.get_resource("gcnv", "annotate_gc", "threads")
     resources:
         time=wf.get_resource("gcnv", "annotate_gc", "time"),
@@ -117,6 +121,8 @@ rule build_gcnv_model_contig_ploidy:
         unpack(wf.get_input_files("gcnv", "contig_ploidy")),
     output:
         **wf.get_output_files("gcnv", "contig_ploidy"),
+    params:
+        **{"args": wf.get_args("gcnv", "preprocess_intervals")}
     threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
     resources:
         time=wf.get_resource("gcnv", "contig_ploidy", "time"),

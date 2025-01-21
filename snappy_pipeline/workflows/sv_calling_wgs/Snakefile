@@ -540,6 +540,8 @@ rule sv_calling_wgs_gcnv_joint_germline_cnv_segmentation:
         tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
+    params:
+        args=wf.get_params("gcnv", "joint_germline_cnv_segmentation"),
     wrapper:
         wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")
 
