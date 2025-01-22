@@ -3,4 +3,4 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - htslib
+  - htslib ==1.20   # Should match the snappy environment value?
