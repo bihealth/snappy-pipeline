@@ -1,62 +1,22 @@
 import enum
-import re
 
-from typing import Annotated, Any
+from typing import Annotated
 
-from pydantic import Field, model_validator  # , field_validator, AliasGenerator
+from pydantic import Field, AfterValidator, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
-VCF_TAG_PATTERN = re.compile(r"^((INFO|FORMAT|FMT)/)?([A-Za-z_][0-9A-Za-z_.]*|1000G)$")
-ANNOTATION_VCF_TAG_PATTERN = re.compile(
-    (
-        r"^([\^=~\+\.-]|\.\+)?"
-        r"(((INFO|FORMAT|FMT)/)?([A-Za-z_][0-9A-Za-z_.]*|1000G))"
-        r"(:=(((INFO|FORMAT|FMT)/)?([A-Za-z_][0-9A-Za-z_.]*|1000G)))?"
-    )
+from snappy_pipeline.models.bcftools import (
+    BcftoolsModel,
+    BcftoolsBamFlag,
+    ensure_valid_bit_sets,
+    ensure_valid_tags,
+    ensure_valid_mark_sites_tag,
 )
 
 
 class Tool(enum.StrEnum):
     bcftools = "bcftools"
-
-
-class BcftoolsModel(SnappyModel):
-    extra_args: Annotated[
-        dict[str, Any],
-        Field(
-            examples=[
-                {"max-depth": 5000},
-                {"annotate": "FORMAT/DP,-INFO/SCBZ"},
-                {"illumina1.3+": True},
-            ],
-            alias="extra_args",
-        ),
-    ] = {}
-    """
-    Placeholder for arguments available to the tool, but not present in the model.
-    The arguments must be input as 'option: value'. Values should not contain the apostrophe (') character.
-
-    The user is responsible to check that the arguments make sense
-    (for example that the maximum allowed value is greater that the minimum allowed value).
-
-    To turn off a flag set in the model, the user should add the flag to the extra arguments and set it to False.
-    """
-
-
-class BcftoolsBamFlag(enum.StrEnum):
-    PAIRED = "PAIRED"
-    PROPER_PAIR = "PROPER_PAIR"
-    UNMAP = "UNMAP"
-    MUNMAP = "MUNMAP"
-    REVERSE = "REVERSE"
-    MREVERSE = "MREVERSE"
-    READ1 = "READ1"
-    READ2 = "READ2"
-    SECONDARY = "SECONDARY"
-    QCFAIL = "QCFAIL"
-    DUP = "DUP"
-    SUPPLEMENTARY = "SUPPLEMENTARY"
 
 
 class Pileup(BcftoolsModel):
@@ -88,10 +48,9 @@ class Pileup(BcftoolsModel):
     skip_any_unset: list[BcftoolsBamFlag] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
     """Skip reads with any of the bits unset [PAIRED,PROPER_PAIR]"""
 
-    # validate_skip_all_set = field_validator("skip_all_set", mode="before")(convert_enum_names)
-    # validate_skip_any_set = field_validator("skip_any_set", mode="before")(convert_enum_names)
-    # validate_skip_all_unset = field_validator("skip_all_unset", mode="before")(convert_enum_names)
-    # validate_skip_any_unset = field_validator("skip_any_unset", mode="before")(convert_enum_names)
+    @model_validator(mode="after")
+    def ensure_valid_skip_flags(self):
+        return ensure_valid_bit_sets(self)
 
 
 class Annotation(BcftoolsModel):
@@ -109,40 +68,17 @@ class Annotation(BcftoolsModel):
     Path to the annotation file. This must be a vcf/bcf file, tab-delimited ones are not supported.
     """
 
-    columns: list[str] = []
+    columns: Annotated[list[str], AfterValidator(ensure_valid_tags)] = []
+    """INFO & FORMAT tags to collect from annotation file"""
 
-    mark_sites: str | None = None
+    mark_sites: Annotated[str | None, AfterValidator(ensure_valid_mark_sites_tag)] = None
     """Annotate sites which are present ("+") or absent ("-") in the annotation file with a new INFO/TAG flag"""
 
-    regions_overlap: int = 2
+    regions_overlap: Annotated[int, Field(ge=0, le=2)] = 2
     """Include if POS in the region (0), record overlaps (1), variant overlaps (2) [2]"""
 
     header_line: str | None = None
     """Header line which should be appended to the VCF header"""
-
-    @model_validator(mode="after")
-    def ensure_valid_mark_sites_tag(self):
-        if self.mark_sites:
-            if not (self.mark_sites.startswith("+") or self.mark_sites.startswith("-")):
-                raise ValueError(
-                    f"Mark sites tag '{self.mark_sites} must be prefixed with '+' (mark present sites) or '-' (mark absent sites)"
-                )
-            if not VCF_TAG_PATTERN.match(self.mark_sites[1:]):
-                raise ValueError(f"Illegal Mark sites tag '{self.mark_sites[1:]}'")
-        return self
-
-    @model_validator(mode="after")
-    def ensure_valid_tags(self):
-        for x in self.columns:
-            m = ANNOTATION_VCF_TAG_PATTERN.match(x)
-            if not m:
-                raise ValueError(f"Illegal annotation tag pattern '{x}'")
-            g = m.groups()
-            if not VCF_TAG_PATTERN.match(g[1]):
-                raise ValueError(f"Illegal annotation tag pattern '{x}'")
-            if g[5] is not None and not VCF_TAG_PATTERN.match(g[6]):
-                raise ValueError(f"Illegal annotation tag pattern '{x}'")
-        return self
 
 
 class BcfTools(SnappyModel):
