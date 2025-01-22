@@ -26,7 +26,7 @@ When the aim is to compute BAF for CNV, annotations are not required at this poi
 Implementation details
 ----------------------
 
-Exception for the annotations, the pileup, call & filter are linked through named pipes.
+Except for the annotations, the pileup, call & filter rules are linked through named pipes.
 (This is because ``bcftools annotate`` doesn't accept input from ``stdin``)
 It has an impact on the resources, as they should all share the same time resources.
 The number of threads is also affected, the total requirement must count all sub-steps.
@@ -75,7 +75,7 @@ class BcftoolsStepPart(BaseStepPart):
     # Name of the step.
     name = "bcftools"
 
-    actions = ("pileup", "call", "filter", "annotate", "last")
+    actions = ("pileup", "call", "filter", "annotate", "remove_unseen")
 
     resource_usage = {
         "pileup": ResourceUsage(threads=2, time="24:00:00", memory=f"{4 * 1024 * 1}M"),
@@ -98,7 +98,7 @@ class BcftoolsStepPart(BaseStepPart):
         (produced by the former sub-step).
         Unfortunately, ``bcftools annotate`` cannot use piped input, so it must be
         taken out of the generic input.
-        The last step is just the remove unseen alleles from the final result.
+        The last step is to remove unseen alleles from the final result.
         """
         # Validate action
         self._validate_action(action)
@@ -107,8 +107,8 @@ class BcftoolsStepPart(BaseStepPart):
             return self._get_input_files_pileup
         if action == "annotate":
             return self._get_input_files_annotate
-        if action == "last":
-            return self._get_input_files_last
+        if action == "remove_unseen":
+            return self._get_input_files_remove_unseen
 
         i = self.actions.index(action)
 
@@ -142,7 +142,7 @@ class BcftoolsStepPart(BaseStepPart):
                     tpl = "{mapper}.filter.{library_name}."
                 case "annotate":
                     tpl = "{mapper}.annotate_{n}.{library_name}."
-                case "last":
+                case "remove_unseen":
                     tpl = "{mapper}.bcftools.{library_name}."
             tpl = os.path.join("work", "{mapper}.bcftools.{library_name}", "out", tpl)
             output_files = {"vcf": tpl + "vcf.gz", "vcf_tbi": tpl + "vcf.gz.tbi"}
@@ -161,7 +161,7 @@ class BcftoolsStepPart(BaseStepPart):
         self._validate_action(action)
         if action == "annotate":
             action = "annotate_{n}"
-        if action == "last":
+        if action == "remove_unseen":
             action = "bcftools"
         tpl = f"work/{{mapper}}.bcftools.{{library_name}}/log/{{mapper}}.{action}.{{library_name}}."
         for ext in ("conda_info.txt", "conda_list.txt", "log"):
@@ -296,7 +296,7 @@ class BcftoolsStepPart(BaseStepPart):
         del params["path_annotation"]
         return {"extra_args": BcftoolsStepPart.collapse_args(params), "index": True}
 
-    def _get_input_files_last(self, wildcards: Wildcards) -> dict[str, str]:
+    def _get_input_files_remove_unseen(self, wildcards: Wildcards) -> dict[str, str]:
         tpl = "work/{mapper}.bcftools.{library_name}/out/{mapper}.{substep}.{library_name}.vcf.gz"
         last = len(self.cfg.annotate)
         if last == 0:
@@ -305,7 +305,7 @@ class BcftoolsStepPart(BaseStepPart):
             vcf = tpl.format(substep=f"annotate_{last - 1}", **wildcards)
         return {"vcf": vcf}
 
-    def _get_args_last(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
+    def _get_args_remove_unseen(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
         return {"index": True, "extra_args": ["--trim-alt-alleles", "--trim-unseen-allele"]}
 
 
@@ -346,16 +346,19 @@ class GermlineSnvsWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        for sub_step in self.sub_steps.values():
-            tool = sub_step.name
-            tool_config = getattr(self.config, tool, None)
-            if tool_config is None:
-                continue
-            for row in self.table.itertuples():
-                files_in_work = sub_step.get_result_files()
-                for file_in_work in files_in_work:
-                    file_in_output = file_in_work.format(
-                        mapper=self.config.tool_ngs_mapping, library_name=row.ngs_library
-                    ).replace("work/", "output/", 1)
-                    yield file_in_output
-                    yield file_in_output + ".md5"
+        if self.table.shape[0] == 0:
+            self.logger.warning("No sample to process")
+        else:
+            for sub_step in self.sub_steps.values():
+                tool = sub_step.name
+                tool_config = getattr(self.config, tool, None)
+                if tool_config is None:
+                    continue
+                for ngs_library in self.table.index.to_list():
+                    files_in_work = sub_step.get_result_files()
+                    for file_in_work in files_in_work:
+                        file_in_output = file_in_work.format(
+                            mapper=self.config.tool_ngs_mapping, library_name=ngs_library
+                        ).replace("work/", "output/", 1)
+                        yield file_in_output
+                        yield file_in_output + ".md5"

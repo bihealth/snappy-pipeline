@@ -79,14 +79,14 @@ class BcftoolsStepPart(BaseStepPart):
     # Name of the step.
     name = "bcftools"
 
-    actions = ("merge", "pileup", "annotate", "flag", "last")
+    actions = ("merge", "pileup", "annotate", "flag", "remove_unseen")
 
     resource_usage = {
         "merge": ResourceUsage(threads=1, time="2:00:00", memory=f"{4 * 1024 * 1}M"),
         "pileup": ResourceUsage(threads=2, time="24:00:00", memory=f"{4 * 1024 * 1}M"),
         "annotate": ResourceUsage(threads=1, time="2:00:00", memory=f"{4 * 1024 * 1}M"),
         "flag": ResourceUsage(threads=1, time="2:00:00", memory=f"{4 * 1024 * 1}M"),
-        "last": ResourceUsage(threads=1, time="2:00:00", memory=f"{4 * 1024 * 1}M"),
+        "remove_unseen": ResourceUsage(threads=1, time="2:00:00", memory=f"{4 * 1024 * 1}M"),
     }
 
     def __init__(self, parent):
@@ -116,7 +116,7 @@ class BcftoolsStepPart(BaseStepPart):
             elif action == "annotate":
                 tpl = os.path.join(base_out, "{mapper}.annotate_{n}.{library_name}.vcf.gz")
                 output_files = {"vcf": tpl, "vcf_tbi": tpl + ".tbi"}
-            elif action == "last":
+            elif action == "remove_unseen":
                 tpl = os.path.join(base_out, "{mapper}.bcftools.{library_name}.vcf.gz")
                 output_files = {"vcf": tpl, "vcf_tbi": tpl + ".tbi"}
             else:
@@ -139,7 +139,7 @@ class BcftoolsStepPart(BaseStepPart):
             tpl = action
         elif action == "annotate":
             tpl = "annotate_{n}"
-        elif action == "last":
+        elif action == "remove_unseen":
             tpl = "bcftools"
         else:
             actions_str = ", ".join(self.actions)
@@ -298,14 +298,14 @@ class BcftoolsStepPart(BaseStepPart):
     def _get_args_flag(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
         return {"extra_args": ["--mark-sites '+SOMATIC'", "--regions-overlap 2"]}
 
-    def _get_input_files_last(self, wildcards: Wildcards) -> dict[str, str]:
+    def _get_input_files_remove_unseen(self, wildcards: Wildcards) -> dict[str, str]:
         return {
             "vcf": "work/{mapper}.bcftools.{library_name}/out/{mapper}.flag.{library_name}.vcf".format(
                 **wildcards
             )
         }
 
-    def _get_args_last(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
+    def _get_args_remove_unseen(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
         return {"extra_args": ["--trim-alt-alleles", "--trim-unseen-allele"], "index": True}
 
 
@@ -356,16 +356,18 @@ class SomaticVariantsForCnvWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
+        if self.table.shape[0] == 0:
+            self.logger.warning("No sample to process")
         for sub_step in self.sub_steps.values():
             tool = sub_step.name
             tool_config = getattr(self.config, tool, None)
             if tool_config is None:
                 continue
-            for row in self.table[self.table["isTumor"]].itertuples():
+            for ngs_library in self.table[self.table["isTumor"]].index.to_list():
                 files_in_work = sub_step.get_result_files()
                 for file_in_work in files_in_work:
                     file_in_output = file_in_work.format(
-                        mapper=self.config.tool_ngs_mapping, library_name=row.ngs_library
+                        mapper=self.config.tool_ngs_mapping, library_name=ngs_library
                     ).replace("work/", "output/", 1)
                     yield file_in_output
                     yield file_in_output + ".md5"

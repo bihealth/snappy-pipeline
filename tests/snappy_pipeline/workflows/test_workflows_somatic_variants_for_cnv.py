@@ -140,13 +140,13 @@ def test_bcftools_step_part_get_input_files_flag(somatic_variants_for_cnv_workfl
     assert actual == expected
 
 
-def test_bcftools_step_part_get_input_files_last(somatic_variants_for_cnv_workflow):
-    """Tests SamtoolsStepPart._get_input_files_last()"""
+def test_bcftools_step_part_get_input_files_remove_unseen(somatic_variants_for_cnv_workflow):
+    """Tests SamtoolsStepPart._get_input_files_remove_unseen()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "vcf": "work/bwa.bcftools.P001-T1-DNA1-WGS1/out/bwa.flag.P001-T1-DNA1-WGS1.vcf",
     }
-    actual = somatic_variants_for_cnv_workflow.get_input_files("bcftools", "last")(wildcards)
+    actual = somatic_variants_for_cnv_workflow.get_input_files("bcftools", "remove_unseen")(wildcards)
     assert actual == expected
 
 
@@ -157,7 +157,7 @@ def test_bcftools_step_part_get_output_files(somatic_variants_for_cnv_workflow):
         "pileup": "pileup.{library_name}",
         "annotate": "annotate_{n}.{library_name}",
         "flag": "flag.{library_name}.vcf",
-        "last": "bcftools.{library_name}",
+        "remove_unseen": "bcftools.{library_name}",
     }
     for action, ext in actions.items():
         if ext.endswith(".vcf"):
@@ -170,10 +170,10 @@ def test_bcftools_step_part_get_output_files(somatic_variants_for_cnv_workflow):
 
 def test_bcftools_step_part_get_log_file(somatic_variants_for_cnv_workflow):
     """Tests SamtoolsStepPart.get_log_file()"""
-    for action in ("pileup", "annotate", "flag", "last"):
+    for action in ("pileup", "annotate", "flag", "remove_unseen"):
         if action == "annotate":
             label = "annotate_{n}"
-        elif action == "last":
+        elif action == "remove_unseen":
             label = "bcftools"
         else:
             label = action
@@ -227,11 +227,11 @@ def test_bcftools_step_part_get_args_flag(somatic_variants_for_cnv_workflow):
     assert actual == expected
 
 
-def test_bcftools_steep_part_get_args_last(somatic_variants_for_cnv_workflow):
-    """Test BcfToolsStepPart._get_args_last()"""
+def test_bcftools_steep_part_get_args_remove_unseen(somatic_variants_for_cnv_workflow):
+    """Test BcfToolsStepPart._get_args_remove_unseen()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {"extra_args": ["--trim-alt-alleles", "--trim-unseen-allele"], "index": True}
-    actual = somatic_variants_for_cnv_workflow.get_args("bcftools", "last")(wildcards, [])
+    actual = somatic_variants_for_cnv_workflow.get_args("bcftools", "remove_unseen")(wildcards, [])
     assert actual == expected
 
 

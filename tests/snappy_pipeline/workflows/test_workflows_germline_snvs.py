@@ -128,18 +128,18 @@ def test_bcftools_step_part_get_input_files_annotate(germline_snvs_workflow):
     assert actual == expected
 
 
-def test_bcftools_step_part_get_input_files_last(germline_snvs_workflow):
-    """Tests SamtoolsStepPart._get_input_files_last()"""
+def test_bcftools_step_part_get_input_files_remove_unseen(germline_snvs_workflow):
+    """Tests SamtoolsStepPart._get_input_files_remove_unseen()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "vcf": "work/bwa.bcftools.P001-T1-DNA1-WGS1/out/bwa.annotate_1.P001-T1-DNA1-WGS1.vcf.gz",
     }
-    actual = germline_snvs_workflow.get_input_files("bcftools", "last")(wildcards)
+    actual = germline_snvs_workflow.get_input_files("bcftools", "remove_unseen")(wildcards)
     assert actual == expected
 
 
 def test_bcftools_step_part_get_input_files(germline_snvs_workflow):
-    """Test BcfToolsStepPart._get_input_files (not pileup, annotate or last)"""
+    """Test BcfToolsStepPart._get_input_files (not pileup, annotate or remove_unseen)"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     actions = ("pileup", "call", "filter")
     tpl = "work/bwa.bcftools.P001-T1-DNA1-WGS1/out/bwa.{action}.P001-T1-DNA1-WGS1.vcf"
@@ -156,7 +156,7 @@ def test_bcftools_step_part_get_output_files(germline_snvs_workflow):
         expected = {"vcf": tpl}
         actual = germline_snvs_workflow.get_output_files("bcftools", action)
         assert actual == expected
-    for action, label in (("filter", "filter"), ("annotate", "annotate_{n}"), ("last", "bcftools")):
+    for action, label in (("filter", "filter"), ("annotate", "annotate_{n}"), ("remove_unseen", "bcftools")):
         base_out = "work/{mapper}.bcftools.{library_name}/out/{mapper}." + label + ".{library_name}"
         expected = get_expected_output_vcf_files_dict(base_out)
         actual = germline_snvs_workflow.get_output_files("bcftools", action)
@@ -165,10 +165,10 @@ def test_bcftools_step_part_get_output_files(germline_snvs_workflow):
 
 def test_bcftools_step_part_get_log_file(germline_snvs_workflow):
     """Tests SamtoolsStepPart.get_log_file()"""
-    for action in ("pileup", "call", "filter", "annotate", "last"):
+    for action in ("pileup", "call", "filter", "annotate", "remove_unseen"):
         if action == "annotate":
             label = "annotate_{n}"
-        elif action == "last":
+        elif action == "remove_unseen":
             label = "bcftools"
         else:
             label = action
@@ -249,11 +249,11 @@ def test_bcftools_step_part_get_args_annotate(germline_snvs_workflow):
     assert actual == expected
 
 
-def test_bcftools_step_part_get_args_last(germline_snvs_workflow):
-    """Test BcfToolsStepPart._get_args_last()"""
+def test_bcftools_step_part_get_args_remove_unseen(germline_snvs_workflow):
+    """Test BcfToolsStepPart._get_args_remove_unseen()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {"index": True,"extra_args": ["--trim-alt-alleles", "--trim-unseen-allele"]}
-    actual = germline_snvs_workflow.get_args("bcftools", "last")(wildcards, [])
+    actual = germline_snvs_workflow.get_args("bcftools", "remove_unseen")(wildcards, [])
     assert actual == expected
 
 
