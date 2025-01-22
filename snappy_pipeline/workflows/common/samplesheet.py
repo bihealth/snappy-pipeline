@@ -14,7 +14,7 @@ def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
        The data frame is guaranteed to have at least 4 columns with their entry names
        (``bio_entity``, ``bio_sample``, ``test_sample`` & ``ngs_library``).
        The data frame is indexed by the ngs library name.
-       No duplicated rows nor duplicated ngs library names are allowed.
+       Neither duplicated rows nor duplicated ngs library names are allowed.
        Duplicate labels for extra info are also forbidden.
     """
     table: pd.DataFrame = None
