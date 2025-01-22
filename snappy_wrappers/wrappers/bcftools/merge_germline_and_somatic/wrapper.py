@@ -12,6 +12,23 @@ Optional snakemake.params.args:
 
 Mandatory snakemake.output: bed
 Optional snakemake.output:
+
+The wrapper finds the loci of germline & somatic variants for one donor
+and outputs them as a bed file, to use for CNV B-allele fraction computations.
+
+Any germline variant overlapping with a somatic variant should be rejected,
+but all somatic variants should be retained.
+The user may want to select somatic variants after filtration.
+
+``bcftools isec`` produces 4 files the temp directory. 3 of them are vcf files
+containing somatic variants not in germline, germline variants not in somatic,
+and common variants.
+The fourth files is a tab-delimited file with 5 columns: the chromosome & position in
+columns 1 & 2, the reference & alternate alleles in columns 3 & 4, and a flag in 
+column 5, with value 10 when the locus in is germline only, 01 if the locus is somatic
+only & 11 if the locus is in both.
+The ``awk`` command transforms this text file into a bed file, rejecting overlapping loci
+and indels (only SNVs are kept).
 """
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -22,15 +39,17 @@ import sys
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers. When the wrappers have their own python environment, messing
 # with the path is necessary.
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
+base_dir = os.path.normpath(os.path.dirname(__file__))
+while os.path.basename(base_dir) != "snappy_wrappers":
+    base_dir = os.path.dirname(base_dir)
+sys.path.insert(0, os.path.dirname(base_dir))
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 args = getattr(snakemake.params, "args", {})
 
 cmd = r"""
-bcftools iseq \
+bcftools isec \
     --collapse all --regions-overlap 2 \
     {regions} \
     --prefix $TMPDIR/ \
