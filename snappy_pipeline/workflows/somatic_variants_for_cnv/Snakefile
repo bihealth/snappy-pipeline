@@ -56,25 +56,17 @@ rule somatic_variants_for_cnv_link_out_run:
 
 rule somatic_variants_for_cnv_bcftools_ignore_chroms:
     input:
-        reference=config["static_data_config"]["reference"]["path"],
+        reference=wf.config.static_data_config.reference.path,
     output:
         regions="work/bcftools/out/regions.bed.gz",
     params:
-        **{
-            "args": {
-                "ignore_chroms": set(
-                    config["step_config"]["somatic_variants_for_cnv"]["ignore_chroms"]
-                    + config["step_config"]["somatic_variants_for_cnv"]["bcftools"][
-                        "ignore_chroms"
-                    ]
-                )
-            }
+        args={
+            "ignore_chroms": set(
+                wf.config.step_config.somatic_variants_for_cnv.ignore_chroms
+                + config.step_config.somatic_variants_for_cnv.bcftools.ignore_chroms
+            )
         },
     threads: 1
-    resources:
-        time="1:00:00",
-        memory="2GB",
-        partition="short",
     wrapper:
         wf.wrapper_path("ignore_chroms")
 
@@ -85,7 +77,7 @@ rule somatic_variants_for_cnv_bcftools_merge:
     output:
         **wf.get_output_files("bcftools", "merge"),
     params:
-        **{"args": wf.get_args("bcftools", "merge")},
+        args=wf.get_args("bcftools", "merge"),
     threads: wf.get_resource("bcftools", "merge", "threads")
     resources:
         time=wf.get_resource("bcftools", "merge", "time"),
@@ -104,7 +96,7 @@ rule somatic_variants_for_cnv_bcftools_pileup:
     output:
         **wf.get_output_files("bcftools", "pileup"),
     params:
-        **{"args": wf.get_args("bcftools", "pileup")},
+        args=wf.get_args("bcftools", "merge"),
     threads: wf.get_resource("bcftools", "pileup", "threads")
     resources:
         time=wf.get_resource("bcftools", "pileup", "time"),
@@ -123,7 +115,7 @@ rule somatic_variants_for_cnv_bcftools_annotate:
     output:
         **wf.get_output_files("bcftools", "annotate"),
     params:
-        **{"args": wf.get_args("bcftools", "annotate")},
+        args=wf.get_args("bcftools", "merge"),
     threads: wf.get_resource("bcftools", "annotate", "threads")
     resources:
         time=wf.get_resource("bcftools", "annotate", "time"),
@@ -142,7 +134,7 @@ rule somatic_variants_for_cnv_bcftools_flag:
     output:
         **wf.get_output_files("bcftools", "flag"),
     params:
-        **{"args": wf.get_args("bcftools", "flag")},
+        args=wf.get_args("bcftools", "merge"),
     threads: wf.get_resource("bcftools", "flag", "threads")
     resources:
         time=wf.get_resource("bcftools", "flag", "time"),
@@ -155,20 +147,20 @@ rule somatic_variants_for_cnv_bcftools_flag:
         wf.wrapper_path("bcftools/commands/annotate")
 
 
-rule somatic_variants_for_cnv_bcftools_last:
+rule somatic_variants_for_cnv_bcftools_remove_unseen:
     input:
-        unpack(wf.get_input_files("bcftools", "last")),
+        unpack(wf.get_input_files("bcftools", "remove_unseen")),
     output:
-        **wf.get_output_files("bcftools", "last"),
+        **wf.get_output_files("bcftools", "remove_unseen"),
     params:
-        **{"args": wf.get_args("bcftools", "last")},
-    threads: wf.get_resource("bcftools", "last", "threads")
+        args=wf.get_args("bcftools", "merge"),
+    threads: wf.get_resource("bcftools", "remove_unseen", "threads")
     resources:
-        time=wf.get_resource("bcftools", "last", "time"),
-        memory=wf.get_resource("bcftools", "last", "memory"),
-        partition=wf.get_resource("bcftools", "last", "partition"),
-        tmpdir=wf.get_resource("bcftools", "last", "tmpdir"),
+        time=wf.get_resource("bcftools", "remove_unseen", "time"),
+        memory=wf.get_resource("bcftools", "remove_unseen", "memory"),
+        partition=wf.get_resource("bcftools", "remove_unseen", "partition"),
+        tmpdir=wf.get_resource("bcftools", "remove_unseen", "tmpdir"),
     log:
-        **wf.get_log_file("bcftools", "last"),
+        **wf.get_log_file("bcftools", "remove_unseen"),
     wrapper:
         wf.wrapper_path("bcftools/commands/view")
