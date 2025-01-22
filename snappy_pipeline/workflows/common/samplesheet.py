@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from biomedsheets.models import NGSLibrary, Sheet
 
@@ -13,8 +14,8 @@ def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
        The data frame is guaranteed to have at least 4 columns with their entry names
        (``bio_entity``, ``bio_sample``, ``test_sample`` & ``ngs_library``).
        The data frame is indexed by the ngs library name.
-       No duplicated rows not duplicated ngs librari names are allowed.
-       Duplicate lables for extra info are also forbidden.
+       No duplicated rows nor duplicated ngs library names are allowed.
+       Duplicate labels for extra info are also forbidden.
     """
     table: pd.DataFrame = None
 
@@ -37,7 +38,7 @@ def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
     assert not any(table.duplicated()), "Duplicated entries in sample sheets"
     assert not any(table["ngs_library"].duplicated()), "Duplicated NGS libraries"
 
-    # table.set_index("ngs_library", drop=False, inplace=True)
+    table.set_index("ngs_library", drop=False, inplace=True)
     return table
 
 
@@ -63,15 +64,29 @@ def _ngs_library_to_df(ngs_library: NGSLibrary) -> pd.DataFrame:
 
 
 def tumor_to_normal_mapping(table: pd.DataFrame) -> dict[str, str]:
+    """
+    Maps tumor library to corresponding normal library.
+
+    :param sheets: sample sheet in pandas format, as returned by ``sample_sheets``
+    :returns: a dict with the tumor library names as keys and normal library names as values
+        Tumors without normals are allowed, with "normal" value equals to None.
+        Normals without tumors are discarded.
+    """
+    if table.shape[0] == 0:
+        return {}
     assert "isTumor" in table.columns, "Missing mandatory column 'isTumor'"
-    normals = table[~table["isTumor"].astype(bool)]
+    normals = table[~table["isTumor"]]
     assert all([n == 1 for n in normals.groupby(by="bio_entity").size()]), (
         "Multiple normals for at least one donor"
     )
     tumors = table[table["isTumor"]]
     tumor_normal_map = tumors[["ngs_library", "bio_entity"]].merge(
-        normals[["ngs_library", "bio_entity"]], on="bio_entity"
+        normals[["ngs_library", "bio_entity"]], on="bio_entity", how="left"
     )
-    return pd.Series(
-        tumor_normal_map.ngs_library_y.values, index=tumor_normal_map.ngs_library_x.values
-    ).to_dict()
+    return (
+        pd.Series(
+            tumor_normal_map.ngs_library_y.values, index=tumor_normal_map.ngs_library_x.values
+        )
+        .replace({np.nan: None})
+        .to_dict()
+    )
