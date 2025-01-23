@@ -7,9 +7,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 # Optionally get path to coverage VCF file.
 coverage_vcf = " ".join(getattr(snakemake.input, "vcf_cov", []))
 
-# Get shortcut to configuration of varfish_export step
-step_name = snakemake.params.args["step_name"]
-export_config = snakemake.config["step_config"][step_name]
+args = getattr(snakemake.params, "args", {})
+export_config = args["config"]
+
 # Get shortcut to "fix_manta_invs.py" postprocessing script
 fix_manta_invs = os.path.join(
     os.path.dirname(__file__),

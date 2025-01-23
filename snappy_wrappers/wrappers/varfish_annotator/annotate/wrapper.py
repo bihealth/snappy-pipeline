@@ -4,9 +4,8 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get shortcut to configuration of varfish_export step
-step_name = snakemake.params.args["step_name"]
-export_config = snakemake.config["step_config"][step_name]
+args = getattr(snakemake.params, "args", {})
+export_config = args["config"]
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()

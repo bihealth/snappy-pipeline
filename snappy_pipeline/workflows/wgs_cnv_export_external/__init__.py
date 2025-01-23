@@ -261,6 +261,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return {
             "step_name": "wgs_cnv_export_external",
             "varfish_server_compatibility": varfish_server_compatibility_flag,
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "config": self.config.model_dump(by_alias=True),
         }
 
     def _collect_vcfs(self, wildcards):
