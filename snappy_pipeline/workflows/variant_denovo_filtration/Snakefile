@@ -73,6 +73,8 @@ rule variant_denovo_filtration_filter_denovo_run:
         unpack(wf.get_input_files("filter_denovo", "run")),
     output:
         **wf.get_output_files("filter_denovo", "run"),
+    params:
+        args=wg.get_args("filter_denovo", "run"),
     threads: wf.get_resource("filter_denovo", "run", "threads")
     resources:
         time=wf.get_resource("filter_denovo", "run", "time"),

@@ -16,8 +16,10 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Short-circuit in case of performing no filtration
-if snakemake.wildcards.thresholds == "no_filter":
+if args["filter_mode"] == "no_filter":
     shell(
         r"""
     # Thresholds set to "no_filter", just link out the data.
@@ -33,9 +35,7 @@ if snakemake.wildcards.thresholds == "no_filter":
 # Actual Filtration -------------------------------------------------------------------------------
 
 # Get shortcut to threshold set.
-thresholds = snakemake.config["step_config"]["variant_filtration"]["thresholds"][
-    snakemake.wildcards.thresholds
-]
+thresholds = args["filter_config"][args["filter_mode"]]
 
 # Get more filter expressions.
 if not thresholds.get("include_expressions"):
@@ -55,13 +55,13 @@ set -x
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
 # Get name and number of index, father, and mother.
-index={snakemake.wildcards.index_library}
+index={args[index_library]}
 
 index_no=$(get_index {snakemake.input.vcf} "$index")
 
 # Perform the filtration.
 
-if [[ "{snakemake.wildcards.thresholds}" == conservative ]]; then
+if [[ "{args[filter_mode]}" == conservative ]]; then
     include="(GQ[$index_no] >= {thresholds[min_gq]})"
     include+=" && ("
     include+="    ((GT[$index_no] == \"het\") && (DP[$index_no] >= {thresholds[min_dp_het]})) "

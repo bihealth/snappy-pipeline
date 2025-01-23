@@ -95,9 +95,10 @@ Currently, no reports are generated.
 import os
 import os.path
 import sys
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -136,6 +137,12 @@ class FiltersVariantsStepPartBase(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    #: Wildcard pattern name (must be set by derived class)
+    filter_mode = None
+
+    #: Model attribute name (must be set by derived class)
+    filter_config = None
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -176,6 +183,24 @@ class FiltersVariantsStepPartBase(BaseStepPart):
         self._validate_action(action)
         return self.path_log
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            assert (
+                self.filter_mode is not None
+            ), f"'filter_mode' must be defined for sub-step '{self.name}"
+            params = {
+                "index_library": wildcards.index_library,
+                "filter_mode": getattr(wildcards, self.filter_mode),
+            }
+            if self.filter_config:
+                params["filter_config"] = getattr(self.config, self.filter_config).model_dump(by_alias=True)
+            return params
+
+        return args_fn
+
 
 class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
@@ -197,6 +222,12 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: Output file extensions
     ext_values = EXT_VALUES
+
+    #: Wildcards name for filter_quality
+    filter_mode = "thresholds"
+
+    #: Model name for filter_quality
+    filter_config = "thresholds"
 
     def get_input_files(self, action):
         # Validate action
@@ -245,6 +276,9 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPart
     #: Output file extensions
     ext_values = EXT_VALUES
 
+    #: Wildcards name for filter_inheritance
+    filter_mode = "inheritance"
+
 
 class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
@@ -270,6 +304,12 @@ class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBa
     #: Output file extensions
     ext_values = EXT_VALUES
 
+    #: Wildcards name for filter_frequency
+    filter_mode = "frequency"
+
+    #: Model name for filter_frequency
+    filter_config = "frequencies"
+
 
 class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
@@ -294,6 +334,12 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: Output file extensions
     ext_values = EXT_VALUES
+
+    #: Wildcards name for filter_regions
+    filter_mode = "regions"
+
+    #: Model name for filter_regions
+    filter_config = "region_beds"
 
 
 class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
@@ -321,6 +367,12 @@ class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase)
     #: Output file extensions
     ext_values = EXT_VALUES
 
+    #: Wildcards name for filter_scores
+    filter_mode = "scores"
+
+    #: Model name for filter_scores
+    filter_config = "score_thresholds"
+
 
 class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
     """Apply the configured filters."""
@@ -346,6 +398,12 @@ class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: Output file extensions
     ext_values = EXT_VALUES
+
+    #: Wildcards name for filter_het_comp
+    filter_mode = "het_comp"
+
+    #: Model name for filter_scores
+    filter_config = "region_beds"
 
 
 class VariantFiltrationWorkflow(BaseStep):

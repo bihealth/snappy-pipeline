@@ -289,6 +289,7 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
             return {
                 "father": donor.father.dna_ngs_library.name,
                 "mother": donor.mother.dna_ngs_library.name,
+                "bad_regions_expression": self.config.bad_regions_expression,
             }
 
         return args_function
