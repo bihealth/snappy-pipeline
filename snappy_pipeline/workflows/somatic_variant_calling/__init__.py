@@ -728,6 +728,13 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             time="1-00:00:00",  # 1 day
             memory="4G",
         )
+    
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_target_regions": self.config.strelka2.path_target_regions,
+        }
 
 
 class JointCallingStepPart(BaseStepPart):

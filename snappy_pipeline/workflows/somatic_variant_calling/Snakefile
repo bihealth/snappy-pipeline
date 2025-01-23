@@ -197,6 +197,8 @@ rule somatic_variant_calling_strelka2_run:
         unpack(wf.get_input_files("strelka2", "run")),
     output:
         **wf.get_output_files("strelka2", "run"),
+    params:
+        args=wf.get_args("strelka2", "run"),
     threads: wf.get_resource("strelka2", "run", "threads")
     resources:
         time=wf.get_resource("strelka2", "run", "time"),

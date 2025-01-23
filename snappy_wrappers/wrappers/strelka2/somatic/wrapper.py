@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 this_file = __file__
 
+args = getattr(snakemake.params, "args", {})
+
 shell.executable("/bin/bash")
 
 shell(
@@ -42,18 +44,18 @@ out_base=$(basename "{snakemake.output.vcf}" .vcf.gz)
 configManta.py \
     --normalBam "{snakemake.input.normal_bam}" \
     --tumorBam  "{snakemake.input.tumor_bam}"  \
-    --referenceFasta "{snakemake.config[static_data_config][reference][path]}" \
+    --referenceFasta "{args[reference]}" \
     --runDir $TMPDIR/manta
 
 $TMPDIR/manta/runWorkflow.py -m local -j 8
 
 # Use target bed file if present
 cmd=""
-if [[ "X{snakemake.config[step_config][somatic_variant_calling][strelka2][path_target_regions]}" != "X" ]]
+if [[ "X{args[path_target_regions]}" != "X" ]]
 then
-    if [[ -r "{snakemake.config[step_config][somatic_variant_calling][strelka2][path_target_regions]}" ]]
+    if [[ -r "{args[path_target_regions]}" ]]
     then
-        cmd=' --exome --callRegions "{snakemake.config[step_config][somatic_variant_calling][strelka2][path_target_regions]}" '
+        cmd=' --exome --callRegions "{args[path_target_regions]}" '
     fi
 fi
 
@@ -61,7 +63,7 @@ fi
 configureStrelkaSomaticWorkflow.py \
     --normalBam "{snakemake.input.normal_bam}" \
     --tumorBam  "{snakemake.input.tumor_bam}"  \
-    --referenceFasta "{snakemake.config[static_data_config][reference][path]}" \
+    --referenceFasta "{args[reference]}" \
     --indelCandidates "$TMPDIR/manta/results/variants/candidateSmallIndels.vcf.gz" \
     $cmd --outputCallableRegions \
     --runDir $TMPDIR/strelka
