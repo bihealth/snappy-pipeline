@@ -788,6 +788,7 @@ class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
             result = {
                 "normal_sample": self.get_normal_lib_name(wildcards),
                 "tumor_sample": wildcards.tumor_library,
+                "config": self.config.filter_sets.model_dump(by_alias=True),
             }
             return result
 
@@ -884,6 +885,11 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{ext}", ext)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return {"exon_lists": self.config.exon_list.model_dump(by_alias=True)}
 
     def get_log_file(self, action):
         # Validate action

@@ -8,8 +8,8 @@ import textwrap
 
 from snakemake import shell
 
-config = snakemake.config["step_config"]["somatic_variant_filtration"]["filter_sets"]
-params = snakemake.params.args
+params = getattr(snakemake.params, "args", {})
+config = params.get("config", {})
 print("DEBUG- params = {}".format(params), file=sys.stderr)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
