@@ -7,9 +7,7 @@ from snakemake.shell import shell
 if TYPE_CHECKING:
     from snakemake.script import snakemake
 
-step = snakemake.config["pipeline_step"]["name"]
-
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args")
 
 reference_path = args["reference_path"]
 

@@ -59,6 +59,7 @@ Currently, no reports are generated.
 
 import os
 import sys
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -231,6 +232,11 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             yield (key, base_path_out + ext)
             yield (key + "_md5", base_path_out + ext + ".md5")
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return self.config.model_dump(by_alias=True)
+    
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
@@ -268,6 +274,11 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment": base_path_out + ".segment.pdf",
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     def get_log_file(self, action):
         # Validate action

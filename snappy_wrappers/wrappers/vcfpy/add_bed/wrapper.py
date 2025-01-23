@@ -8,8 +8,7 @@ from snakemake.shell import shell
 import tabix
 import vcfpy
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
+config = getattr(snakemake.params, "args", {})
 
 tempdir = tempfile.mkdtemp()
 
