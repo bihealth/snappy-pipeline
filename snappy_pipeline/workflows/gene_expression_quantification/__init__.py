@@ -265,7 +265,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"strand": self.config.strand}
-    
+
     @dictify
     def get_log_file(self, action):
         """Return mapping of log files."""
@@ -360,7 +360,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
-    
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

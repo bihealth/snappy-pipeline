@@ -236,7 +236,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         # Validate action
         self._validate_action(action)
         return self.config.model_dump(by_alias=True)
-    
+
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)

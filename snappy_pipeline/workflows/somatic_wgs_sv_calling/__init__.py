@@ -205,7 +205,7 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
             time="1-16:00:00",  # 1 day and 16 hours
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"reference": self.parent.w_config.static_data_config.reference.path}

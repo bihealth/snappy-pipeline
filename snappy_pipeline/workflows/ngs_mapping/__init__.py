@@ -798,7 +798,7 @@ class MBCsStepPart(ReadMappingStepPart):
             memory="4G",
             partition="medium",
         )
-    
+
     def get_args(self, action: str):
         self._validate_action(action)
 
@@ -814,7 +814,7 @@ class MBCsStepPart(ReadMappingStepPart):
             if self.config.mbcs.recalibrate:
                 args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
             return args
-        
+
         return args_fn
 
 
@@ -1291,14 +1291,14 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 for work_path in chain(paths_work.values(), self.get_log_file(action).values())
             ],
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._check_action(action)
         return {
             "reference": self.parent.w_config.static_config_data.reference.path,
             "window_length": self.config.bam_collect_doc.window_length,
         }
-    
+
     @dictify
     def _get_output_files_run_work(self):
         yield "vcf", "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}.cov.vcf.gz"
@@ -1433,7 +1433,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"reference": self.parent.w_config.static_data_config.reference.path}
-    
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

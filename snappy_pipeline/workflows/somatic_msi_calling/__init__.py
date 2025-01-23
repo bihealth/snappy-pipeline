@@ -150,7 +150,7 @@ class Mantis2StepPart(BaseStepPart):
         return dict(
             zip(EXT_NAMES, expand(self.base_path_out, msi_caller=[self.name], ext=EXT_VALUES))
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         # Validate action
         self._validate_action(action)

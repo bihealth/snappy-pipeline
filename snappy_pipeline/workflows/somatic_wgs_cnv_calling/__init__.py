@@ -80,7 +80,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand, Wildcards, InputFiles
+from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -747,7 +747,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             }
         elif action == "plot":
             return{}
-        
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

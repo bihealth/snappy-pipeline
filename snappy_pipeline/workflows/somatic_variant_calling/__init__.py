@@ -668,7 +668,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{5 * 1024 * 16}M",
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
@@ -728,7 +728,7 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             time="1-00:00:00",  # 1 day
             memory="4G",
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {

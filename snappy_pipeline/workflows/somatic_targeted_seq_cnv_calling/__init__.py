@@ -316,8 +316,8 @@ class CnvettiOffTargetStepPart(CnvettiStepPartBase):
         params = super().get_args(action)
         params["window_length"] = self.config.cnvetti_off_target.window_length
         return params
-    
-    
+
+
 class CnvettiOnTargetStepPart(CnvettiStepPartBase):
     """Perform somatic targeted CNV calling using CNVetti with on-target reads."""
 

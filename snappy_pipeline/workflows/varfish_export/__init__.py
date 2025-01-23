@@ -266,7 +266,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_mehari_db": self.config.path_mehari_db,
         }
-    
+
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"

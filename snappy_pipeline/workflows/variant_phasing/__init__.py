@@ -234,7 +234,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             "reference": self.parent.w_config.static_data_config.reference.path,
             "de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior,
         }
-    
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

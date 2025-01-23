@@ -82,7 +82,7 @@ class MantaStepPart(
         yield from augment_work_dir_with_output_links(
             work_files, self.get_log_file().values()
         ).items()
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"reference": self.parent.w_config.static_data_config.reference.path}

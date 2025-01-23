@@ -211,7 +211,7 @@ class PopDelStepPart(
         return " ".join(
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         )
-    
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         if action == "profile":
