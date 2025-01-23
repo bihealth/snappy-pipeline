@@ -886,6 +886,15 @@ class StarStepPart(ReadMappingStepPart):
                 ),
             )
 
+    def get_args(self, action: str):
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(self.config.star.model_dump(by_alias=True))
+            parent_args["features"] = self.parent.w_config.static_data_config.features.path
+            return parent_args
+
+        return args_fn
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
