@@ -6,9 +6,10 @@ from snakemake.shell import shell
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+vep_config = args["config"]
+
 # Get shortcuts to step configuration
-current_step = snakemake.config["pipeline_step"]["name"]
-vep_config = snakemake.config["step_config"][current_step]["vep"]
 pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
@@ -44,7 +45,7 @@ then
         fi) \
         {script_output_options} \
         --{vep_config[tx_flag]} \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
+        --fasta {args[reference]} \
         --input_file {snakemake.input.vcf} --format vcf \
         --output_file {full} --vcf --compress_output bgzip
     tabix {full}
@@ -65,7 +66,7 @@ vep --verbose --force_overwrite --offline --cache \
     {script_output_options} \
     --pick --pick_order {pick_order} \
     --{vep_config[tx_flag]} \
-    --fasta {snakemake.config[static_data_config][reference][path]} \
+    --fasta {args[reference]} \
     --input_file {snakemake.input.vcf} --format vcf \
     --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
 tabix {snakemake.output.vcf}

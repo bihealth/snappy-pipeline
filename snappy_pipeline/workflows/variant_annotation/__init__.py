@@ -55,6 +55,7 @@ N/A
 
 import re
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet
 
@@ -121,6 +122,13 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
                 for work_path in chain(work_files.values(), self.get_log_file("run").values())
             ],
         )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "config": self.config.model_dump(by_alias=True),
+        }
 
     def get_extra_kv_pairs(self):
         return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}

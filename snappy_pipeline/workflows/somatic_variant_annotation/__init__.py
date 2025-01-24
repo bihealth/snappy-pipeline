@@ -189,6 +189,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
                 return {
                     "tumor_library": wildcards.tumor_library,
                     "normal_library": self.get_normal_lib_name(wildcards),
+                    "config": getattr(self.config, self.name).model_dump(by_alias=True),
+                    "reference": self.parent.w_config.static_data_config.reference.path,
                 }
             else:
                 return {}
