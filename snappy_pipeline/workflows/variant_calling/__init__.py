@@ -544,6 +544,7 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
             "ignore_chroms": self.config.ignore_chroms,
         }
 
+
 class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK v3 UnifiedGenotyper"""
 
@@ -676,6 +677,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
             "ignore_chroms": self.config.ignore_chroms,
         }
+
 
 class ReportGetLogFileMixin:
     """Log file generation for reports"""

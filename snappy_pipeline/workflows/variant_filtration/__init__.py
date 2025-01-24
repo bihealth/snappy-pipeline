@@ -188,15 +188,17 @@ class FiltersVariantsStepPartBase(BaseStepPart):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            assert (
-                self.filter_mode is not None
-            ), f"'filter_mode' must be defined for sub-step '{self.name}"
+            assert self.filter_mode is not None, (
+                f"'filter_mode' must be defined for sub-step '{self.name}"
+            )
             params = {
                 "index_library": wildcards.index_library,
                 "filter_mode": getattr(wildcards, self.filter_mode),
             }
             if self.filter_config:
-                params["filter_config"] = getattr(self.config, self.filter_config).model_dump(by_alias=True)
+                params["filter_config"] = getattr(self.config, self.filter_config).model_dump(
+                    by_alias=True
+                )
             return params
 
         return args_fn

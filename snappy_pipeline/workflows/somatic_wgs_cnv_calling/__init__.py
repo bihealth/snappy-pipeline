@@ -255,7 +255,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Parameters to pass to the wrapper
     params_for_action = {
         "coverage": ("window_length", "count_kind", "normalization"),
-        "segment": ("segmentation",)
+        "segment": ("segmentation",),
     }
 
     def get_input_files(self, action):
@@ -746,7 +746,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 "bs_obj": cfg.convert.bs_obj,
             }
         elif action == "plot":
-            return{}
+            return {}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

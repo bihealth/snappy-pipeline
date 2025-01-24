@@ -430,6 +430,7 @@ class JointGermlineCnvSegmentationMixin:
     def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"reference": self.parent.w_config.static_data_config.reference.path}
 
+
 class MergeMultikitFamiliesMixin:
     """Methods for merging families with multiple kits.
 

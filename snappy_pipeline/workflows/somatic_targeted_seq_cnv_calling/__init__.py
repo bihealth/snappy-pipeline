@@ -479,7 +479,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
             "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
-            "library_name": wildcards.library_name
+            "library_name": wildcards.library_name,
         }
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -489,7 +489,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
             "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
-            "library_name": wildcards.library_name
+            "library_name": wildcards.library_name,
         }
 
     def get_log_file(self, action):

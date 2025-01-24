@@ -233,7 +233,9 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             return {
                 "left": list(sorted(self._collect_reads(wildcards, wildcards.library_name, ""))),
-                "right": list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))),
+                "right": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
+                ),
                 "kallisto_index": self.config.pizzly.kallisto_index,
                 "kmer_size": self.config.pizzly.kmer_size,
                 "transcripts_fasta": self.config.pizzly.transcripts_fasta,
@@ -279,7 +281,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
             return {
                 "left": left,
                 "right": right,
-                "path_ctat_resource_lib": self.config.star_fusion.path_ctat_resource_lib
+                "path_ctat_resource_lib": self.config.star_fusion.path_ctat_resource_lib,
             }
 
         assert action == "run", "Unsupported actions"

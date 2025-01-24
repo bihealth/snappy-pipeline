@@ -219,6 +219,7 @@ class PopDelStepPart(
         else:
             return {}
 
+
 class Sniffles2StepPart(BaseStepPart):
     """WGS SV identification using Sniffles 2"""
 

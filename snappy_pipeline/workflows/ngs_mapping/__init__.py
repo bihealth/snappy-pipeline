@@ -807,10 +807,14 @@ class MBCsStepPart(ReadMappingStepPart):
             args |= {
                 "reference": self.parent.w_config.static_data_config.reference.path,
                 "config": self.config.mbcs.model_dump(by_alias=True),
-                "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(by_alias=True)
+                "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
+                    by_alias=True
+                ),
             }
             if self.config.mbcs.use_barcodes:
-                args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(by_alias=True)
+                args["barcode_config"] = getattr(
+                    self.config, self.config.mbcs.barcode_tool
+                ).model_dump(by_alias=True)
             if self.config.mbcs.recalibrate:
                 args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
             return args
@@ -1026,6 +1030,7 @@ class StrandednessStepPart(BaseStepPart):
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return self.config.strandedness.model_dump(by_alias=True)
+
 
 class Minimap2StepPart(ReadMappingStepPart):
     """Support for performing long-read alignment using minimap2"""

@@ -676,6 +676,7 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             "path_target_regions": self.config.scalpel.path_target_regions,
         }
 
+
 class Strelka2StepPart(SomaticVariantCallingStepPart):
     """Somatic variant calling with strelka2/manta"""
 
