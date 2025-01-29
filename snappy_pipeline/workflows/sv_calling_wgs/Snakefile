@@ -227,7 +227,7 @@ rule sv_calling_wgs_popdel_profile:
         mapper=RE_BETWEEN_DOTS,
         index_ngs_library=RE_BETWEEN_DOTS,
     params:
-        **{"args": wf.get_args("popdel", "profile")},
+        args=wf.get_args("popdel", "profile"),
     threads: wf.get_resource("popdel", "profile", "threads")
     resources:
         time=wf.get_resource("popdel", "profile", "time"),
@@ -245,6 +245,8 @@ rule sv_calling_wgs_popdel_call:
         unpack(wf.get_input_files("popdel", "call")),
     output:
         **wf.get_output_files("popdel", "call"),
+    params:
+        args=wf.get_args("popdel", "call"),
     wildcard_constraints:
         mapper=RE_BETWEEN_DOTS,
         chrom=RE_BETWEEN_DOTS,

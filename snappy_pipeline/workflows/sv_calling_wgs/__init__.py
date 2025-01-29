@@ -4,6 +4,8 @@ import re
 from itertools import chain
 from typing import Any
 
+from snakemake.io import Wildcards
+
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
@@ -212,12 +214,19 @@ class PopDelStepPart(
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         self._validate_action(action)
-        if action == "profile":
-            return {"reference": self.parent.w_config.static_data_config.reference.path}
-        else:
-            return {}
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_profile(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_args_call(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "chrom": wildcards.chrom,
+            "begin": wildcards.begin,
+            "end": wildcards.end,
+        }
 
 
 class Sniffles2StepPart(BaseStepPart):
