@@ -51,7 +51,7 @@ import os
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -352,6 +352,17 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     def get_strandedness_file(self, action):
         _ = action
         return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
+
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            config = self.config.strandedness.model_dump(by_alias=True) | {
+                "strand": self.config.strand
+            }
+            return {"config": config, "library_name": wildcards.library_name}
+
+        return args_fn
 
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):

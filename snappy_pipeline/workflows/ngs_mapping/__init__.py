@@ -1027,9 +1027,16 @@ class StrandednessStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         self._validate_action(action)
-        return self.config.strandedness.model_dump(by_alias=True)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "config": self.config.strandedness.model_dump(by_alias=True),
+                "library_name": wildcards.library_name,
+            }
+
+        return args_fn
 
 
 class Minimap2StepPart(ReadMappingStepPart):

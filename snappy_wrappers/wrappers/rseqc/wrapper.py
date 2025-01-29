@@ -9,7 +9,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-config = getattr(snakemake.params, "args", {})
+args = getattr(snakemake.params, "args", {})
+config = args["config"]
 
 out_link_dir = (
     os.path.dirname(snakemake.output.output) if "output" in snakemake.output.keys() else ""
@@ -93,7 +94,7 @@ fi
 md5=$(cat {config[path_exon_bed]} | md5sum | sed -e "s/ .*//")
 cat << __EOF > {snakemake.output.decision}
 {{
-    "library_name": "{snakemake.wildcards[library_name]}",
+    "library_name": "{args[library_name]}",
     "bed_path": "{config[path_exon_bed]}",
     "bed_file_md5": "$md5",
     "bam_path": "{snakemake.input.bam}",

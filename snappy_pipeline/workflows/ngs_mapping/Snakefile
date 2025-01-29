@@ -261,7 +261,7 @@ rule ngs_mapping_infer_strandedness:
     output:
         **wf.get_output_files("strandedness", "infer"),
     params:
-        **{"args": wf.get_args("strandedness", "infer")},
+        args=wf.get_args("strandedness", "infer"),
     threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
         time=wf.get_resource("strandedness", "infer", "time"),
