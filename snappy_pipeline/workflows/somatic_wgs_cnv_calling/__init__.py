@@ -229,8 +229,10 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def get_params(self, action):
         self._validate_action(action)
 
-        def args_fn(_wildcards):
-            return dict(self.config.canvas.path_reference)
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return self.config.canvas.model_dump(by_alias=True) | {
+                "cancer_library": wildcards.cancer_library
+            }
 
         return args_fn
 
