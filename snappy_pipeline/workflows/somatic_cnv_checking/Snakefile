@@ -123,6 +123,8 @@ if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
             unpack(wf.get_input_files("report", "run")),
         output:
             **wf.get_output_files("report", "run"),
+        params:
+            args=wf.get_args("report", "run"),
         threads: wf.get_resource("report", "run", "threads")
         resources:
             time=wf.get_resource("report", "run", "time"),

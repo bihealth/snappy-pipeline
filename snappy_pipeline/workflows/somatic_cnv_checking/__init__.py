@@ -62,7 +62,7 @@ import sys
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
@@ -275,10 +275,17 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         # Validate action
         self._validate_action(action)
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "reference": self.parent.w_config.static_data_config.reference.path,
+                "library_name": wildcards.library_name,
+            }
+
+        return args_fn
 
     def get_log_file(self, action):
         # Validate action
