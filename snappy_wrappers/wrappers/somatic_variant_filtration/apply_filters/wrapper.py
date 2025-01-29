@@ -41,19 +41,19 @@ if iTumor < 0:
 
 cmd = ["zcat " + snakemake.input.vcf]
 
-if "dkfz" in snakemake.wildcards.filter_set:
+if "dkfz" in params["filter_set"]:
     cmd.append("bcftools view -f .,PASS")
-if "ebfilter" in snakemake.wildcards.filter_set:
+if "ebfilter" in params["filter_set"]:
     cmd.append(
         "bcftools view -e 'EB < {threshold}'".format(
             threshold=config["dkfz_and_ebfilter"].get("ebfilter_threshold", 3)
         )
     )
-if "oxog" in snakemake.wildcards.filter_set:
-    if snakemake.wildcards.var_caller != "scalpel":
+if "oxog" in params["filter_set"]:
+    if params["var_caller"] != "scalpel":
         min_vaf = config["dkfz_and_ebfilter_and_oxog"].get("vaf_threshold", 0.08)
         min_cov = config["dkfz_and_ebfilter_and_oxog"].get("coverage_threshold", 5)
-        if snakemake.wildcards.var_caller == "mutect2":
+        if params["var_caller"] == "mutect2":
             allele_freq_str = "AF"
         else:
             allele_freq_str = "FA"

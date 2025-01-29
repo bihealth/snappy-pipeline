@@ -11,7 +11,7 @@ shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
-if snakemake.wildcards.exon_list == "genome_wide":
+if args["exon_list"] == "genome_wide":
     shell(
         textwrap.dedent(
             r"""
@@ -23,7 +23,7 @@ if snakemake.wildcards.exon_list == "genome_wide":
         )
     )
 else:
-    bed_path = args["exon_lists"][snakemake.wildcards.exon_list]
+    bed_path = args["exon_lists"][args["exon_list"]]
     shell(
         textwrap.dedent(
             r"""
