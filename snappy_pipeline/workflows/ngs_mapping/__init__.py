@@ -1066,8 +1066,11 @@ class Minimap2StepPart(ReadMappingStepPart):
         assert action == "run", "Parameters only available for action 'run'."
         return getattr(self, "_get_params_run")
 
-    def _get_params_run(self, wildcards):
-        return {"extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]}
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self.config.minimap2.model_dump(by_alias=True) | {
+            "extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name],
+            "library_name": wildcards.library_name,
+        }
 
 
 class ExternalStepPart(ReadMappingStepPart):

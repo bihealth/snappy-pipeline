@@ -247,6 +247,8 @@ class Strandedness(SnappyModel):
 class Minimap2(SnappyModel):
     mapping_threads: int = 16
 
+    path_index: str
+
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper

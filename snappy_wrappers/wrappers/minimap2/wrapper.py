@@ -62,14 +62,14 @@ for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast
         zcat $fname; \
     fi \
     | minimap2 \
-        -t 16 \
+        -t {args[mapping_threads]} \
         -x $preset \
-        -a {snakemake.config[step_config][ngs_mapping][minimap2][path_index]} \
+        -a {args[path_index]} \
         -Y \
         --MD \
         /dev/stdin \
     | samtools addreplacerg \
-        -r "@RG\tID:{snakemake.wildcards.library_name}.$i\tSM:{snakemake.wildcards.library_name}\tPL:PACBIO" - \
+        -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:PACBIO" - \
     >$TMPDIR/out/$i.bam
 
     samtools sort -m 4G -@ 3 \
