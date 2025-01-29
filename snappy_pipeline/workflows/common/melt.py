@@ -4,7 +4,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
-from snakemake.io import touch
+from snakemake.io import touch, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
@@ -230,8 +230,18 @@ class MeltStepPart(
     def _get_log_file_merge_vcf(self):
         yield from self._get_log_file_with_infix("{mapper}.melt.{library_name}").items()
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         self._validate_action(action)
-        return self.config.melt.model_dump(by_alias=True) | {
-            "reference": self.parent.w_config.static_data_config.reference.path
-        }
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            params = {
+                "config": self.config.melt.model_dump(by_alias=True),
+                "reference": self.parent.w_config.static_data_config.reference.path,
+            }
+            if self.parent.name == "sv_calling_targeted":
+                params["exome"] = True
+            if getattr(wildcards, "me_type", None):
+                params["me_type"] = getattr(wildcards, "me_type")
+            return params
+
+        return args_fn

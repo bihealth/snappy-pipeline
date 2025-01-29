@@ -306,7 +306,6 @@ rule sv_calling_targeted_melt_preprocess:
     log:
         **wf.get_log_file("melt", "preprocess"),
     params:
-        step_key="sv_calling_targeted",
         args=wf.get_args("melt", "preprocess"),
     wrapper:
         wf.wrapper_path("melt/preprocess")
@@ -329,7 +328,6 @@ rule sv_calling_targeted_melt_indiv_analysis:
     log:
         **wf.get_log_file("melt", "indiv_analysis"),
     params:
-        step_key="sv_calling_targeted",
         args=wf.get_args("melt", "indiv_analysis"),
     wrapper:
         wf.wrapper_path("melt/indiv_analysis")
@@ -352,7 +350,6 @@ rule sv_calling_targeted_melt_group_analysis:
     log:
         **wf.get_log_file("melt", "group_analysis"),
     params:
-        step_key="sv_calling_targeted",
         args=wf.get_args("melt", "group_analysis"),
     wrapper:
         wf.wrapper_path("melt/group_analysis")
@@ -375,7 +372,6 @@ rule sv_calling_targeted_melt_genotype:
     log:
         **wf.get_log_file("melt", "genotype"),
     params:
-        step_key="sv_calling_targeted",
         args=wf.get_args("melt", "genotype"),
     wrapper:
         wf.wrapper_path("melt/genotype")
@@ -397,7 +393,6 @@ rule sv_calling_targeted_melt_make_vcf:
     log:
         **wf.get_log_file("melt", "make_vcf"),
     params:
-        step_key="sv_calling_targeted",
         args=wf.get_args("melt", "make_vcf"),
     wrapper:
         wf.wrapper_path("melt/make_vcf")
@@ -418,7 +413,5 @@ rule sv_calling_targeted_melt_merge_vcf:
         partition=wf.get_resource("melt", "merge_vcf", "partition"),
     log:
         **wf.get_log_file("melt", "merge_vcf"),
-    params:
-        step_key="sv_calling_targeted",
     wrapper:
         wf.wrapper_path("melt/merge_vcf")
