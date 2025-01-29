@@ -24,14 +24,14 @@ if args["bad_region_expressions"]:
             lambda x: "({})".format(x),
             args["bad_region_expressions"],
         )
-    ).replace("$sample_index", snakemake.wildcards.index_library)
+    ).replace("$sample_index", args["index_library"])
 
 shell(
     r"""
 set -x
 set -euo pipefail
 
-samples="{snakemake.wildcards.index_library}"
+samples="{args[index_library]}"
 samples+=",{args[father]}"
 samples+=",{args[mother]}"
 
@@ -39,7 +39,7 @@ samples+=",{args[mother]}"
 
 bcftools view \
     -s "$samples" \
-    -i 'INFO/DeNovo[*] == "{snakemake.wildcards.index_library}"' \
+    -i 'INFO/DeNovo[*] == "{args[index_library]}"' \
     -O u \
     {snakemake.input.vcf} \
 | bcftools view \

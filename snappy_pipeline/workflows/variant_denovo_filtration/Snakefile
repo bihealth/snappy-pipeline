@@ -102,7 +102,7 @@ rule variant_denovo_filtration_filter_denovo_hard_run:
         partition=wf.get_resource("filter_denovo_hard", "run", "partition"),
         tmpdir=wf.get_resource("filter_denovo_hard", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("filter_denovo_hard", "get_args", "run"),
+        args=wf.get_args("filter_denovo_hard", "run"),
     log:
         wf.get_log_file("filter_denovo_hard", "run"),
     wrapper:

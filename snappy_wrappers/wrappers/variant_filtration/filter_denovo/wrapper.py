@@ -13,16 +13,16 @@ import sys
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-a = getattr(snakemake.params, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 # Build arguments ==================================================================================
 
-besenbacher = a["params_besenbacher"]
+besenbacher = args["params_besenbacher"]
 
 # Define arguments in a dictionary, will convert to namedtuple below.
-args = {
+args_all = {
     "verbose": True,
-    "index_name": snakemake.wildcards.index_library,
+    "index_name": args["index_library"],
     "input_vcf": snakemake.input.vcf,
     "input_ped": snakemake.input.ped,
     "output_vcf": snakemake.output.vcf,
@@ -36,9 +36,9 @@ args = {
     "phase_paternal_first": True,
 }
 # Bulk-add besenbacher parameters
-args.update(a["params_besenbacher"])
+args_all.update(args["params_besenbacher"])
 
-args_t = collections.namedtuple("Arguments", args.keys())(**args)
+args_t = collections.namedtuple("Arguments", args_all.keys())(**args_all)
 
 # Execute filtration ===============================================================================
 
