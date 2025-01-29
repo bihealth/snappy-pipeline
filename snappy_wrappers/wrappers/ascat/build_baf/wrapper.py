@@ -12,15 +12,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-library_name = getattr(
-    snakemake.wildcards,
-    "tumor_library_name",
-    getattr(snakemake.wildcards, "normal_library_name", None),
-)
-assert library_name is not None
-
-path_b_af_loci = snakemake.params["args"]["b_af_loci"]
-reference_path = snakemake.params["args"]["reference_path"]
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -44,12 +36,12 @@ fi
 # Perform pileups at the spot positions.
 #
 samtools mpileup \
-    -l {path_b_af_loci} \
+    -l {args[path_b_af_loci]} \
     -I \
     -u \
     -v \
     -t AD \
-    -f {reference_path} \
+    -f {args[reference]} \
     {snakemake.input.bam} \
 | bcftools call \
     -c \

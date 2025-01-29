@@ -12,20 +12,13 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-library_name = getattr(
-    snakemake.wildcards,
-    "tumor_library_name",
-    getattr(snakemake.wildcards, "normal_library_name", None),
-)
-assert library_name is not None
+args = getattr(snakemake.params, "args", {})
 
 # tumor log2 read counts are in columns 5 and 6 in the log2_read_counts.igv file
-if snakemake.wildcards.get("tumor_library_name", False):
+if args.get("tumor_library_name", False):
     log2_column = 5
 else:
     log2_column = 6
-
-path_b_af_loci = snakemake.params["args"]["b_af_loci"]
 
 shell(
     r"""
@@ -53,7 +46,7 @@ echo "##fileformat=VCFv4.2" \
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
 >> $TMPDIR/spots.vcf
 
-zcat -f {path_b_af_loci} \
+zcat -f {args[path_b_af_loci]} \
 | awk \
     -F $'\t' '
     BEGIN {{ OFS=FS; }}
