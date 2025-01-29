@@ -80,7 +80,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -728,25 +728,31 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
-        if action == "run":
-            return {
-                "path_chrlenfile": cfg.path_chrlenfile,
-                "path_mappability": cfg.path_mappability,
-                "path_mappability_enabled": cfg.path_mappability_enabled,
-                "window_size": cfg.window_size,
-            }
-        elif action == "transform":
-            return {
-                "org_obj": cfg.convert.org_obj,
-                "tx_obj": cfg.convert.tx_obj,
-                "bs_obj": cfg.convert.bs_obj,
-            }
-        elif action == "plot":
-            return {}
+        return {
+            "path_chrlenfile": cfg.path_chrlenfile,
+            "path_mappability": cfg.path_mappability,
+            "path_mappability_enabled": cfg.path_mappability_enabled,
+            "window_size": cfg.window_size,
+        }
+
+    def _get_args_transform(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = self.config.control_freec
+        return {
+            "org_obj": cfg.convert.org_obj,
+            "tx_obj": cfg.convert.tx_obj,
+            "bs_obj": cfg.convert.bs_obj,
+            "cancer_library": wildcards.cancer_library,
+        }
+
+    def _get_args_plot(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
