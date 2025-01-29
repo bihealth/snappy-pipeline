@@ -104,7 +104,7 @@ from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -669,12 +669,18 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             memory=f"{5 * 1024 * 16}M",
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         self._validate_action(action)
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "path_target_regions": self.config.scalpel.path_target_regions,
-        }
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "reference": self.parent.w_config.static_data_config.reference.path,
+                "path_target_regions": self.config.scalpel.path_target_regions,
+                "tumor_library": wildcards.tumor_library,
+                "normal_lib_name": self.get_normal_lib_name(wildcards),
+            }
+
+        return args_fn
 
 
 class Strelka2StepPart(SomaticVariantCallingStepPart):

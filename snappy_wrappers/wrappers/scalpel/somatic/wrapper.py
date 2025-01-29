@@ -98,7 +98,7 @@ bcftools concat \
             }}
         }}
         !/^##contig/ {{ print $0; }}' \
-| sed 's/sample_name/{snakemake.wildcards.tumor_library}\t{snakemake.params.normal_lib_name}/' \
+| sed 's/sample_name/{args[tumor_library]}\t{args[normal_lib_name]}/' \
 | awk 'BEGIN {{ OFS="\t" }}
         /^#/  {{ print $0 }}
         !/^#/ {{
