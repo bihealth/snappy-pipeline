@@ -758,6 +758,14 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
             ],
         )
 
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {"donor_library_name": wildcards.donor_library_name}
+
+        return args_fn
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

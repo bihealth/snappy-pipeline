@@ -210,6 +210,8 @@ rule variant_calling_bcftools_stats_report:
         **wf.get_input_files("bcftools_stats", "run"),
     output:
         **wf.get_output_files("bcftools_stats", "run"),
+    params:
+        args=wf.get_args("bcftools_stats", "run"),
     threads: wf.get_resource("bcftools_stats", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_stats", "run", "time"),
