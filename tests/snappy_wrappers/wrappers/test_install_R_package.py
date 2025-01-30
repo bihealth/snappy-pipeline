@@ -27,7 +27,7 @@ def test_install_R_package(mocker, fp):
             "check": "find.package('package', lib.loc='/path/to/lib', quiet=FALSE, verbose=TRUE)",
         },
         {
-            "name": "username/package/subdir@ref",
+            "name": "username/package@ref",
             "repo": "bitbucket",
             "install": "remotes::install_bitbucket('{}', lib='/path/to/lib', upgrade='never')",
             "check": "find.package('package', lib.loc='/path/to/lib', quiet=FALSE, verbose=TRUE)",
@@ -42,6 +42,7 @@ def test_install_R_package(mocker, fp):
     for package in packages:
         script = "; ".join(
             [
+                ".libPaths(c(.libPaths(), '/path/to/lib'))",
                 package["install"].format(package["name"]),
                 "status <- try({})".format(package["check"]),
                 "status <- ifelse(is(status, 'try-error'), 1, 0)",
