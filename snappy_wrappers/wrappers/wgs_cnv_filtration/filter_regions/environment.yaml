@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bcftools==1.8
-  - htslib==1.8
-  - bedtools==2.27.0
