@@ -119,11 +119,11 @@ def test_tabulate_vcf_step_part_get_log_file(somatic_variant_signatures_workflow
     assert actual == expected
 
 
-def test_tabulate_vcf_step_part_get_params(somatic_variant_signatures_workflow):
-    """Tests TabulateVariantsStepPart.get_params()"""
+def test_tabulate_vcf_step_part_get_args(somatic_variant_signatures_workflow):
+    """Tests TabulateVariantsStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_signatures_workflow.get_params("tabulate_vcf", "run")(wildcards)
+    actual = somatic_variant_signatures_workflow.get_args("tabulate_vcf", "run")(wildcards)
     assert actual == expected
 
 

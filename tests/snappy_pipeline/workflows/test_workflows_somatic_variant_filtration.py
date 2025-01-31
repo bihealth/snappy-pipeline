@@ -126,9 +126,9 @@ def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_work
 
 
 def test_dkfz_bias_filter_step_part_get_args(somatic_variant_filtration_workflow):
-    """Tests DkfzBiasFilterStepPart.get_log_file()"""
+    """Tests DkfzBiasFilterStepPart.get_args()"""
     expected = {"reference": "/path/to/ref.fa"}
-    actual = somatic_variant_filtration_workflow.get_params("dkfz_bias_filter", "run")
+    actual = somatic_variant_filtration_workflow.get_args("dkfz_bias_filter", "run")
     assert actual == expected
 
 
@@ -235,8 +235,8 @@ def test_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration
     assert actual == expected
 
 
-def test_eb_filter_step_part_get_params_run(somatic_variant_filtration_workflow):
-    """Tests EbFilterStepPart.get_params()"""
+def test_eb_filter_step_part_get_args_run(somatic_variant_filtration_workflow):
+    """Tests EbFilterStepPart.get_args()"""
     expected = {
         "reference": "/path/to/ref.fa",
         "ebfilter_threshold": 2.4,
@@ -248,7 +248,7 @@ def test_eb_filter_step_part_get_params_run(somatic_variant_filtration_workflow)
         "min_mapq": 20,
         "min_baseq": 15,
     }
-    actual = somatic_variant_filtration_workflow.get_params("eb_filter", "run")
+    actual = somatic_variant_filtration_workflow.get_args("eb_filter", "run")
     assert actual == expected
 
 
@@ -591,7 +591,7 @@ def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_l
 
 
 def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list):
-    """Tests OneFilterStepPart.get_params()"""
+    """Tests OneFilterStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"filter_nb": 1})
     expected = {
         "reference": "/path/to/ref.fa",

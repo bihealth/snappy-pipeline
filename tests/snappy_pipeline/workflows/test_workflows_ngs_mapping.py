@@ -29,6 +29,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
@@ -45,6 +47,7 @@ def minimal_config():
               path_index: /path/to/bwa_mem2/index.fasta.amb
             minimap2:
               mapping_threads: 16
+              path_index: /path/to/minimap2/index
             star:
               path_index: /path/to/star/index
               transcriptome: false
@@ -285,6 +288,16 @@ def test_bwa_step_part_get_args(ngs_mapping_workflow):
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
+        "path_index": "/path/to/bwa/index.fasta",
+        "num_threads_align": 16,
+        "num_threads_trimming": 8,
+        "num_threads_bam_view": 4,
+        "num_threads_bam_sort": 4,
+        "memory_bam_sort": "4G",
+        "trim_adapters": False,
+        "mask_duplicates": True,
+        "split_as_secondary": False,
+        "extra_args": [],
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("bwa", "run")(wildcards)
@@ -360,14 +373,38 @@ def test_bwa_step_part_check_config(ngs_mapping_workflow):
 def test_star_step_part_get_args(ngs_mapping_workflow):
     """Tests StarStepPart.get_args()"""
     # Define expected
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
     expected = {
         "input": {
-            "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz"],
-            "reads_right": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz"],
+            "reads_left": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_R1.fastq.gz"],
+            "reads_right": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_R2.fastq.gz"],
         },
         "platform": "ILLUMINA",
-        "sample_name": "P001-N1-DNA1-WGS1",
+        "sample_name": "P001-T1-RNA1-mRNA_seq1",
+        "path_index": "/path/to/star/index",
+        "features": "/path/to/features.gtf",
+        "num_threads_align": 16,
+        "num_threads_trimming": 8,
+        "num_threads_bam_view": 4,
+        "num_threads_bam_sort": 4,
+        "memory_bam_sort": "4G",
+        "genome_load": "NoSharedMemory",
+        "raw_star_options": "",
+        "align_intron_max": 1000000,
+        "align_intron_min": 20 ,
+        "align_mates_gap_max": 1000000,
+        "align_sjdb_overhang_min": 1,
+        "align_sj_overhang_min": 8,
+        "out_filter_mismatch_n_max": 999,
+        "out_filter_mismatch_n_over_l_max": 0.04,
+        "out_filter_multimap_n_max": 20,
+        "out_filter_type": "BySJout",
+        "out_filter_intron_motifs": "",
+        "out_sam_strand_field": "",
+        "transcriptome": False,
+        "trim_adapters": False,
+        "mask_duplicates": False,
+        "include_unmapped": True,
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("star", "run")(wildcards)
@@ -446,6 +483,16 @@ def test_minimap2_step_part_get_args(ngs_mapping_workflow):
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
+        "mapping_threads": 16,
+        "path_index": "/path/to/minimap2/index",
+        "extra_infos": {
+            "libraryType": "WGS",
+            "libraryKit": "Agilent SureSelect Human All Exon V6",
+            "folderName": "P001",
+            "extractionType": "DNA",
+            "seqPlatform": "Illumina",
+        },
+        "library_name": "P001-N1-DNA1-WGS1",
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("minimap2", "run")(wildcards)
@@ -601,13 +648,15 @@ def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow)
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
 
-def test_target_coverage_report_step_part_run_get_params(ngs_mapping_workflow):
-    """Tests TargetCoverageReportStepPart.get_params() - action 'run'"""
+def test_target_coverage_report_step_part_run_get_args(ngs_mapping_workflow):
+    """Tests TargetCoverageReportStepPart.get_args() - action 'run'"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
+        "path_reference": "/path/to/ref.fa",
+        "path_reference_genome": "/path/to/ref.fa.genome",
         "path_targets_bed": "path/to/SureSelect_Human_All_Exon_V6_r2.bed",
     }
-    actual = ngs_mapping_workflow.get_params("target_coverage_report", "run")(wildcards)
+    actual = ngs_mapping_workflow.get_args("target_coverage_report", "run")(wildcards)
     assert actual == expected
 
 

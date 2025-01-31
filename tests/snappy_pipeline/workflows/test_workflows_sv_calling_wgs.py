@@ -301,8 +301,8 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #             assert actual == expected, msg_error
 
 
-# def test_gcnv_get_params(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart.get_params for all actions"""
+# def test_gcnv_get_args(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart.get_args for all actions"""
 #     all_actions = (
 #         "preprocess_intervals",
 #         "annotate_gc",
@@ -317,10 +317,10 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
 #     for action in all_actions:
 #         if action in actions_w_params:
-#             sv_calling_wgs_workflow.get_params("gcnv", action)
+#             sv_calling_wgs_workflow.get_args("gcnv", action)
 #         else:
 #             with pytest.raises(UnsupportedActionException):
-#                 sv_calling_wgs_workflow.get_params("gcnv", action)
+#                 sv_calling_wgs_workflow.get_args("gcnv", action)
 
 
 # def test_gcnv_validate_precomputed_model_paths_config(sv_calling_wgs_workflow):
@@ -546,18 +546,18 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_ploidy_model(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_ploidy_model()"""
+# def test_gcnv_get_args_ploidy_model(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_ploidy_model()"""
 #     # Initialise wildcard
 #     wildcards = Wildcards(fromdict={"library_kit": "default"})
 #     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
 #     # Test large cohort - model defined in config
 #     expected = {"model": "/path/to/ploidy-model"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "contig_ploidy")(wildcards)
 #     assert actual == expected
 #     # Test large cohort - model not defined in config
 #     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "contig_ploidy")(wildcards_fake)
 #     assert actual == expected
 
 
@@ -600,23 +600,23 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_model(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_model()"""
+# def test_gcnv_get_args_model(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_model()"""
 #     # Initialise wildcard
 #     wildcards_01 = Wildcards(fromdict={"library_kit": "default", "shard": "01"})
 #     wildcards_02 = Wildcards(fromdict={"library_kit": "default", "shard": "02"})
 #     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
 #     # Test large cohort - model defined in config - shard 01
 #     expected = {"model": "/data/model_01"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_01)
 #     assert actual == expected
 #     # Test large cohort - model defined in config - shard 02
 #     expected = {"model": "/data/model_02"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_02)
 #     assert actual == expected
 #     # Test large cohort - model not defined in config
 #     expected = {"model": "__no_model_for_library_in_config__"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_fake)
 #     assert actual == expected
 
 
@@ -651,11 +651,11 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_post_germline_calls(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_post_germline_calls()"""
+# def test_gcnv_get_args_post_germline_calls(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_post_germline_calls()"""
 #     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
 #     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "post_germline_calls")(wildcards)
 #     assert actual == expected
 
 

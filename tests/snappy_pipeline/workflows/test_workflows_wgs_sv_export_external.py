@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_sv_export_external workflow module code"""
 
+import pathlib
 import textwrap
 from copy import deepcopy
 
@@ -219,7 +220,7 @@ def test_workflow_check_config_invalid_search_pattern(
             "loc": ("step_config", "wgs_sv_export_external", "search_patterns", i),
             "msg": "Input should be a valid dictionary",
             "type": "dict_type",
-            "url": "https://errors.pydantic.dev/2.7/v/dict_type",
+            "url": "https://errors.pydantic.dev/2.10/v/dict_type",
         }
         for i, input_str in enumerate(["vcf", "*/*.vcf.gz"])
     ]
@@ -265,8 +266,8 @@ def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(wgs_sv_export_e
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_merge_vcf(wgs_sv_export_external_workflow):
-    """Tests VarfishAnnotatorExternalStepPart._get_params_merge_vcf()"""
+def test_varfish_annotator_step_part_get_args_merge_vcf(wgs_sv_export_external_workflow):
+    """Tests VarfishAnnotatorExternalStepPart._get_args_merge_vcf()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": [],
@@ -274,7 +275,7 @@ def test_varfish_annotator_step_part_get_params_merge_vcf(wgs_sv_export_external
         "merge_option": "id",
         "gvcf_option": False,
     }
-    actual = wgs_sv_export_external_workflow.get_params("varfish_annotator_external", "merge_vcf")(
+    actual = wgs_sv_export_external_workflow.get_args("varfish_annotator_external", "merge_vcf")(
         wildcards
     )
     assert actual == expected
@@ -345,14 +346,28 @@ def test_varfish_annotator_step_part_call_get_log_file_annotate(
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_annotate(wgs_sv_export_external_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart_.get_params_annotate()"""
+def test_varfish_annotator_step_part_get_args_annotate(wgs_sv_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart_.get_args_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "step_name": "wgs_sv_export_external",
         "varfish_server_compatibility": False,
+        "reference": "/path/to/ref.fa",
+        "config": {
+            "merge_vcf_flag": True,
+            "merge_option": "id",
+            "search_paths": [pathlib.PosixPath("/search_path")],
+            "search_patterns": [{"vcf": "*/*.vcf.gz"}],
+            "release": "GRCh37",
+            "tool_ngs_mapping": None,
+            "tool_sv_calling_wgs": "dragen",
+            "path_refseq_ser": pathlib.PosixPath("/data/refseq_ser"),
+            "path_ensembl_ser": pathlib.PosixPath("/data/ensembl_ser"),
+            "path_db": pathlib.PosixPath("/data/db"),
+            "varfish_server_compatibility": False,
+        },
     }
-    actual = wgs_sv_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
+    actual = wgs_sv_export_external_workflow.get_args("varfish_annotator_external", "annotate")(
         wildcards
     )
     assert actual == expected

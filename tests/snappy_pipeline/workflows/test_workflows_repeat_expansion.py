@@ -157,17 +157,17 @@ def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
     assert actual == expected
 
 
-def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow.get_params()"""
+def test_expansionhunter_run_step_part_get_args(repeat_expansion_workflow):
+    """Tests RepeatExpansionWorkflow.get_args()"""
     # P001
     expected = "female"
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    actual = repeat_expansion_workflow.get_args("expansionhunter", "run")(wildcards)
     assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a female patient."
     # P002
     expected = "male"
     wildcards = Wildcards(fromdict={"library_name": "P002-N1-DNA1-WGS1"})
-    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    actual = repeat_expansion_workflow.get_args("expansionhunter", "run")(wildcards)
     assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a male patient."
 
 

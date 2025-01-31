@@ -50,10 +50,10 @@ def minimal_config():
             # Description of dataset in cBioPortal
             study:
               type_of_cancer: mixed
-              cancer_study_id: mixed_pedion_a02p
-              study_description: "PeDiOn project A02P"
-              study_name: PeDiOn_A02P
-              study_name_short: A02P
+              cancer_study_id: mixed_test
+              study_description: "Test of arguments"
+              study_name: test_study
+              study_name_short: test
               reference_genome: grch37
 
         data_sets:
@@ -129,6 +129,20 @@ def test_cbioportal_meta_files_step_part_get_output_files(cbioportal_export_work
     assert actual == expected
 
 
+def test_cbioportal_meta_files_step_part_get_args(cbioportal_export_workflow):
+    """Tests cbioportalMetaFilesStepPart.get_args()"""
+    expected = {
+        "type_of_cancer": "mixed",
+        "cancer_study_id": "mixed_test",
+        "study_description": "Test of arguments",
+        "study_name": "test_study",
+        "study_name_short": "test",
+        "reference_genome": "hg19",
+    }
+    actual = cbioportal_export_workflow.get_args("cbioportal_meta_files", "run")
+    assert actual == expected
+
+
 def test_cbioportal_meta_files_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalMetaFilesStepPart.get_log_file()"""
     # Method not implemented
@@ -200,6 +214,32 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
         "P002": {
             "P002-T1": {"DNA": "P002-T1-DNA1-WGS1"},
             "P002-T2": {"DNA": "P002-T2-DNA1-WGS1", "RNA": "P002-T2-RNA1-mRNA_seq1"},
+        },
+        "__config": {
+            "path_ngs_mapping": "/NGS_MAPPING",
+            "path_gene_id_mappings": "DUMMY",
+            "expression_tool": "star",
+            "path_somatic_variant": "/SOM_VAR_FILTRATION",
+            "somatic_variant_calling_tool": "mutect2",
+            "somatic_variant_annotation_tool": "vep",
+            "filter_set": "dkfz_only",
+            "path_copy_number": "/COPY_NUMBER",
+            "copy_number_tool": "cnvkit",
+            "exclude_variant_with_flag": "LowFisherScore",
+            "vcf2maf": {"ncbi_build": "GRCh37", "Center": "DUMMY"},
+            "study": {
+                "type_of_cancer": "mixed",
+                "cancer_study_id": "mixed_test",
+                "study_description": "Test of arguments",
+                "study_name": "test_study",
+                "study_name_short": "test",
+                "reference_genome": "hg19",
+            },
+            "mapping_tool": "bwa",
+            "exon_list": "genome_wide",
+            "filter_list": [],
+            "patient_info": None,
+            "sample_info": {},
         },
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_clinical_data", "run")

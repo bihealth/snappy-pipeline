@@ -138,11 +138,34 @@ def test_jannovar_step_part_get_log_file(somatic_variant_annotation_workflow):
     assert actual == expected
 
 
-def test_jannovar_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_params()"""
+def test_jannovar_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests JannovarAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("jannovar", "annotate_somatic_vcf")(
+    expected = {
+        "tumor_library": "P001-T1-DNA1-WGS1",
+        "normal_library": "P001-N1-DNA1-WGS1",
+        "reference": "/path/to/ref.fa",
+        "config": {
+            "dbnsfp": {
+                "col_contig": 1,
+                "col_pos": 2,
+                "columns": [],
+            },
+            "flag_off_target": True,
+            "path_jannovar_ser": "/path/to/jannover.ser",
+            "annotation_tracks_bed": [],
+            "annotation_tracks_tsv": [],
+            "annotation_tracks_vcf": [],
+            "window_length": 50000000,
+            "num_jobs": 100,
+            "use_profile": True,
+            "restart_times": 5,
+            "max_jobs_per_second": 10,
+            "max_status_checks_per_second": 10,
+            "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "GL*", "*_decoy", "HLA-*"],
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("jannovar", "annotate_somatic_vcf")(
         wildcards
     )
     assert actual == expected
@@ -202,11 +225,35 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
     assert actual == expected
 
 
-def test_vep_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests VepAnnotateSomaticVcfStepPart.get_params()"""
+def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("vep", "run")(wildcards)
+    expected = {
+        "tumor_library": "P001-T1-DNA1-WGS1",
+        "normal_library": "P001-N1-DNA1-WGS1",
+        "reference": "/path/to/ref.fa",
+        "config": {
+            "cache_dir": "/path/to/dir/cache",
+            "species": "homo_sapiens",
+            "assembly": "GRCh38",
+            "cache_version": "102",
+            "tx_flag": "gencode_basic",
+            "pick_order": [
+                "biotype",
+                "mane",
+                "appris",
+                "tsl",
+                "ccds",
+                "canonical",
+                "rank",
+                "length",
+            ],
+            "num_threads": 8,
+            "buffer_size": 1000,
+            "output_options": ["everything"],
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
     assert actual == expected
 
 
