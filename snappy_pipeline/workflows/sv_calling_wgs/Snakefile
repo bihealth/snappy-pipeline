@@ -66,7 +66,7 @@ rule sv_calling_wgs_manta_run:
     output:
         **wf.get_output_files("manta", "run"),
     params:
-        **{"args": wf.get_args("manta", "run")},
+        args=wf.get_args("manta", "run"),
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
@@ -94,7 +94,7 @@ rule sv_calling_wgs_delly2_call:
         partition=wf.get_resource("delly2", "call", "partition"),
         tmpdir=wf.get_resource("delly2", "call", "tmpdir"),
     params:
-        **wf.get_args("delly2", "call"),
+        args=wf.get_args("delly2", "call"),
     log:
         **wf.get_log_file("delly2", "call"),
     wrapper:
@@ -112,8 +112,6 @@ rule sv_calling_wgs_delly2_merge_calls:
         memory=wf.get_resource("delly2", "merge_calls", "memory"),
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_calls", "tmpdir"),
-    params:
-        **wf.get_args("delly2", "merge_calls"),
     log:
         **wf.get_log_file("delly2", "merge_calls"),
     wrapper:
@@ -132,7 +130,7 @@ rule sv_calling_wgs_delly2_genotype:
         partition=wf.get_resource("delly2", "genotype", "partition"),
         tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
     params:
-        **wf.get_args("delly2", "genotype"),
+        args=wf.get_args("delly2", "genotype"),
     log:
         **wf.get_log_file("delly2", "genotype"),
     wrapper:
@@ -150,8 +148,6 @@ rule sv_calling_wgs_delly2_merge_genotypes:
         memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_genotypes", "tmpdir"),
-    params:
-        **wf.get_args("delly2", "merge_genotypes"),
     log:
         **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
@@ -298,7 +294,7 @@ rule sv_calling_wgs_popdel_reorder_vcf:
         partition=wf.get_resource("popdel", "reorder_vcf", "partition"),
         tmpdir=wf.get_resource("popdel", "reorder_vcf", "tmpdir"),
     params:
-        ped_members=wf.substep_getattr("popdel", "get_ped_members"),
+        args=wf.get_args("popdel", "reorder_vcf"),
     log:
         **wf.get_log_file("popdel", "reorder_vcf"),
     wrapper:
@@ -445,7 +441,7 @@ rule sv_calling_wgs_gcnv_preprocess_intervals:
     output:
         **wf.get_output_files("gcnv", "preprocess_intervals"),
     params:
-        args=wf.get_params("gcnv", "preprocess_intervals")
+        args=wf.get_args("gcnv", "preprocess_intervals"),
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
@@ -489,7 +485,7 @@ rule sv_calling_wgs_gcnv_contig_ploidy:
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
-        args=wf.get_params("gcnv", "contig_ploidy"),
+        args=wf.get_args("gcnv", "contig_ploidy"),
         step_key="sv_calling_wgs",
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy_case_mode")
@@ -509,7 +505,7 @@ rule sv_calling_wgs_gcnv_call_cnvs:
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
     params:
-        args=wf.get_params("gcnv", "call_cnvs"),
+        args=wf.get_args("gcnv", "call_cnvs"),
     wrapper:
         wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
@@ -528,7 +524,7 @@ rule sv_calling_wgs_gcnv_post_germline_calls:
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
     params:
-        args=wf.get_params("gcnv", "post_germline_calls"),
+        args=wf.get_args("gcnv", "post_germline_calls"),
     wrapper:
         wf.wrapper_path("gcnv/post_germline_calls_case_mode")
 
@@ -547,7 +543,7 @@ rule sv_calling_wgs_gcnv_joint_germline_cnv_segmentation:
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
     params:
-        args=wf.get_params("gcnv", "joint_germline_cnv_segmentation"),
+        args=wf.get_args("gcnv", "joint_germline_cnv_segmentation"),
     wrapper:
         wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")
 

@@ -98,7 +98,7 @@ rule gene_expression_quantification_duplication_run:
     output:
         **wf.get_output_files("duplication", "run"),
     params:
-        **{"args": wf.get_args("duplication", "run")},
+        args=wf.get_args("duplication", "run"),
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
         time=wf.get_resource("duplication", "run", "time"),
@@ -118,7 +118,7 @@ rule gene_expression_quantification_dupradar_run:
     output:
         **wf.get_output_files("dupradar", "run"),
     params:
-        **{"args": wf.get_args("dupradar", "run")},
+        args=wf.get_args("dupradar", "run"),
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
         time=wf.get_resource("dupradar", "run", "time"),
@@ -138,7 +138,7 @@ rule gene_expression_quantification_rnaseqc_run:
     output:
         **wf.get_output_files("rnaseqc", "run"),
     params:
-        **{"args": wf.get_args("rnaseqc", "run")},
+        args=wf.get_args("rnaseqc", "run"),
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
         time=wf.get_resource("rnaseqc", "run", "time"),
@@ -158,7 +158,7 @@ rule gene_expression_quantification_stats_run:
     output:
         **wf.get_output_files("stats", "run"),
     params:
-        **{"args": wf.get_args("stats", "run")},
+        args=wf.get_args("stats", "run"),
     threads: wf.get_resource("stats", "run", "threads")
     resources:
         time=wf.get_resource("stats", "run", "time"),
@@ -213,6 +213,6 @@ rule gene_expression_quantification_salmon_run:
     log:
         **wf.get_log_file("salmon", "run"),
     params:
-        args=wf.substep_dispatch("salmon", "get_args", "run"),
+        args=wf.get_args("salmon", "run"),
     wrapper:
         wf.wrapper_path("salmon")

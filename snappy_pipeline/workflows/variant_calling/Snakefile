@@ -60,7 +60,7 @@ rule variant_calling_bcftools_call_run:
     output:
         **wf.get_output_files("bcftools_call", "run"),
     params:
-        args=wf.get_params("bcftools_call", "run"),
+        args=wf.get_args("bcftools_call", "run"),
     threads: wf.get_resource("bcftools_call", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_call", "run", "time"),
@@ -82,7 +82,7 @@ rule variant_calling_gatk3_hc_run:
     output:
         **wf.get_output_files("gatk3_hc", "run"),
     params:
-        **{"args": wf.get_args("gatk3_hc", "run")},
+        args=wf.get_args("gatk3_hc", "run"),
     threads: wf.get_resource("gatk3_hc", "run", "threads")
     resources:
         time=wf.get_resource("gatk3_hc", "run", "time"),
@@ -104,7 +104,7 @@ rule variant_calling_gatk3_ug_run:
     output:
         **wf.get_output_files("gatk3_ug", "run"),
     params:
-        **{"args": wf.get_args("gatk3_hc", "run")},
+        args=wf.get_args("gatk3_hc", "run"),
     threads: wf.get_resource("gatk3_ug", "run", "threads")
     resources:
         time=wf.get_resource("gatk3_ug", "run", "time"),
@@ -153,7 +153,7 @@ rule variant_calling_gatk4_hc_gvcf_discover:
         partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
         tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
     params:
-        **{"args": wf.get_args("gatk4_hc_gvcf", "combine_gvcfs")},
+        args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
     log:
         **wf.get_log_file("gatk4_hc_gvcf", "discover"),
     wrapper:
@@ -173,7 +173,7 @@ rule variant_calling_gatk4_hc_gvcf_combine_gvcfs:
         partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
         tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
     params:
-        **{"args": wf.get_args("gatk4_hc_gvcf", "combine_gvcfs")},
+        args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
     log:
         **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
     wrapper:
@@ -193,7 +193,7 @@ rule variant_calling_gatk4_hc_gvcf_genotype:
         partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
         tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
     params:
-        **{"args": wf.get_args("gatk4_hc_gvcf", "combine_gvcfs")},
+        args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
     log:
         **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
     wrapper:
@@ -253,7 +253,7 @@ rule variant_calling_baf_file_generation:
     output:
         **wf.get_output_files("baf_file_generation", "run"),
     params:
-        args=wf.get_params("baf_file_generation", "run"),
+        args=wf.get_args("baf_file_generation", "run"),
     threads: wf.get_resource("baf_file_generation", "run", "threads")
     resources:
         time=wf.get_resource("baf_file_generation", "run", "time"),
@@ -275,7 +275,7 @@ rule variant_calling_bcftools_roh:
     output:
         **wf.get_output_files("bcftools_roh", "run"),
     params:
-        args=wf.get_params("bcftools_roh", "run"),
+        args=wf.get_args("bcftools_roh", "run"),
     threads: wf.get_resource("bcftools_roh", "run", "threads")
     resources:
         time=wf.get_resource("bcftools_roh", "run", "time"),

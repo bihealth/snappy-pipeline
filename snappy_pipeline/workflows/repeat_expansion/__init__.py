@@ -262,7 +262,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         name_pattern = "{mapper}.expansionhunter.{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Get parameters.
 
         :param action: Action, i.e., step being performed.

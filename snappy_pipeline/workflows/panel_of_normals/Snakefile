@@ -133,7 +133,7 @@ rule panel_of_normals_cnvkit_target:
     log:
         **wf.get_log_file("cnvkit", "target"),
     params:
-        args=wf.substep_dispatch("cnvkit", "get_args", "target"),
+        args=wf.get_args("cnvkit", "target"),
     wrapper:
         wf.wrapper_path("cnvkit/target")
 
@@ -151,7 +151,7 @@ rule panel_of_normals_cnvkit_antitarget:
     log:
         **wf.get_log_file("cnvkit", "antitarget"),
     params:
-        args=wf.substep_dispatch("cnvkit", "get_args", "antitarget"),
+        args=wf.get_args("cnvkit", "antitarget"),
     wrapper:
         wf.wrapper_path("cnvkit/antitarget")
 
@@ -169,7 +169,7 @@ rule panel_of_normals_cnvkit_coverage:
     log:
         **wf.get_log_file("cnvkit", "coverage"),
     params:
-        args=wf.substep_dispatch("cnvkit", "get_args", "coverage"),
+        args=wf.get_args("cnvkit", "coverage"),
     wrapper:
         wf.wrapper_path("cnvkit/coverage")
 
@@ -190,7 +190,7 @@ rule panel_of_normals_cnvkit_create_panel:
     log:
         **wf.get_log_file("cnvkit", "create_panel"),
     params:
-        args=wf.substep_dispatch("cnvkit", "get_args", "create_panel"),
+        args=wf.get_args("cnvkit", "create_panel"),
     wrapper:
         wf.wrapper_path("cnvkit/reference")
 
@@ -208,7 +208,7 @@ rule panel_of_normals_cnvkit_report:
     log:
         **wf.get_log_file("cnvkit", "report"),
     params:
-        args=wf.substep_dispatch("cnvkit", "get_args", "report"),
+        args=wf.get_args("cnvkit", "report"),
     wrapper:
         wf.wrapper_path("cnvkit/report")
 

@@ -59,7 +59,7 @@ rule somatic_cnv_checking_pileup_normal:
     output:
         **wf.get_output_files("pileup", "normal"),
     params:
-        args=wf.get_params("pileup", "normal"),
+        args=wf.get_args("pileup", "normal"),
     threads: wf.get_resource("pileup", "normal", "threads")
     resources:
         time=wf.get_resource("pileup", "normal", "time"),
@@ -81,7 +81,7 @@ rule somatic_cnv_checking_pileup_tumor:
     output:
         **wf.get_output_files("pileup", "tumor"),
     params:
-        args=wf.get_params("pileup", "tumor"),
+        args=wf.get_args("pileup", "tumor"),
     threads: wf.get_resource("pileup", "tumor", "threads")
     resources:
         time=wf.get_resource("pileup", "tumor", "time"),

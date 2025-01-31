@@ -187,7 +187,7 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
         return pair.normal_sample.dna_ngs_library.name if pair else None
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Return arguments to pass down."""
         _ = action
 
@@ -563,7 +563,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
         return {"reference": self.w_config.static_data_config.reference.path}
 
@@ -636,7 +636,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         return getattr(self, "_get_output_files_{}".format(action))()
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Return EBFilter parameters from the config"""
         # Validate action
         self._validate_action(action)

@@ -121,12 +121,12 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         self._validate_action(action)
         yield "tsv", os.path.join("work", self.name_pattern, "out", self.name_pattern + ".tsv")
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Return arguments to pass down."""
         # Validate action
         self._validate_action(action)
 
-        def params_function(wildcards):
+        def args_fn(wildcards):
             if wildcards.tumor_library not in self.donors:
                 return {
                     "tumor_library": wildcards.tumor_library,
@@ -135,7 +135,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
             else:
                 return {}
 
-        return params_function
+        return args_fn
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""

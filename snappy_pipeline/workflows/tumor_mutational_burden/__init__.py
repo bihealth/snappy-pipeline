@@ -138,11 +138,11 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             memory=f"{mem_mb}M",
         )
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_params_run")
+        return getattr(self, "_get_args_run")
 
-    def _get_params_run(self, _wildcards):
+    def _get_args_run(self, _wildcards):
         return {
             "missense_re": self.config.missense_regex,
             "target_regions": self.config.target_regions,

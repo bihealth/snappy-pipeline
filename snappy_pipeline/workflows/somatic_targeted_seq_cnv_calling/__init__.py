@@ -454,11 +454,11 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 )
             )
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
+        return getattr(self, f"_get_args_{action}")
 
-    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "length": self.config.sequenza.length,
@@ -466,13 +466,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "extra_arguments": self.config.sequenza.extra_args,
         }
 
-    def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_args_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "length": self.config.sequenza.length,
         }
 
-    def _get_params_report(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_args_report(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "assembly": self.config.sequenza.assembly,
@@ -482,7 +482,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "library_name": wildcards.library_name,
         }
 
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "assembly": self.config.sequenza.assembly,

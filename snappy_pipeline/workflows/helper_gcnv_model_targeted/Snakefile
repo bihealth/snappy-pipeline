@@ -58,7 +58,7 @@ rule build_gcnv_model_preprocess_intervals:
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     params:
-        **{"args": wf.get_args("gcnv", "preprocess_intervals")},
+        args=wf.get_args("gcnv", "preprocess_intervals"),
     wrapper:
         wf.wrapper_path("gcnv/preprocess_intervals")
 
@@ -69,7 +69,7 @@ rule build_gcnv_model_annotate_gc:
     output:
         **wf.get_output_files("gcnv", "annotate_gc"),
     params:
-        **{"args": wf.get_args("gcnv", "annotate_gc")},
+        args=wf.get_args("gcnv", "annotate_gc"),
     threads: wf.get_resource("gcnv", "annotate_gc", "threads")
     resources:
         time=wf.get_resource("gcnv", "annotate_gc", "time"),
@@ -88,7 +88,7 @@ rule build_gcnv_model_coverage:
     output:
         **wf.get_output_files("gcnv", "coverage"),
     params:
-        **{"args": wf.get_args("gcnv", "coverage")},
+        args=wf.get_args("gcnv", "coverage"),
     threads: wf.get_resource("gcnv", "coverage", "threads")
     resources:
         time=wf.get_resource("gcnv", "coverage", "time"),
@@ -132,7 +132,7 @@ rule build_gcnv_model_contig_ploidy:
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
     params:
-        **{"args": wf.get_args("gcnv", "contig_ploidy")},
+        args=wf.get_args("gcnv", "contig_ploidy"),
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy")
 

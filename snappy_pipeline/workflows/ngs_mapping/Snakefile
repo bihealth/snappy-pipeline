@@ -67,7 +67,7 @@ rule ngs_mapping_external_run:
         partition=wf.get_resource("external", "run", "partition"),
         tmpdir=wf.get_resource("external", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("external", "get_args", "run"),
+        args=wf.get_args("external", "run"),
     log:
         **wf.get_log_file("external", "run"),
     wrapper:
@@ -89,7 +89,7 @@ rule ngs_mapping_bwa_run:
         partition=wf.get_resource("bwa", "run", "partition"),
         tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("bwa", "get_args", "run"),
+        args=wf.get_args("bwa", "run"),
     log:
         **wf.get_log_file("bwa", "run"),
     wrapper:
@@ -111,7 +111,7 @@ rule ngs_mapping_bwa_mem2_run:
         partition=wf.get_resource("bwa_mem2", "run", "partition"),
         tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("bwa_mem2", "get_args", "run"),
+        args=wf.get_args("bwa_mem2", "run"),
     log:
         **wf.get_log_file("bwa_mem2", "run"),
     wrapper:
@@ -133,7 +133,7 @@ rule ngs_mapping_mbcs_run:
         partition=wf.get_resource("mbcs", "run", "partition"),
         tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("mbcs", "get_args", "run"),
+        args=wf.get_args("mbcs", "run"),
     log:
         **wf.get_log_file("mbcs", "run"),
     wrapper:
@@ -155,7 +155,7 @@ rule ngs_mapping_star_run:
         partition=wf.get_resource("star", "run", "partition"),
         tmpdir=wf.get_resource("star", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("star", "get_args", "run"),
+        args=wf.get_args("star", "run"),
     log:
         **wf.get_log_file("star", "run"),
     wrapper:
@@ -201,7 +201,7 @@ rule ngs_mapping_target_coverage_report_run:
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
         tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
     params:
-        **{"args": wf.get_params("target_coverage_report", "run")},
+        args=wf.get_args("target_coverage_report", "run"),
     log:
         **wf.get_log_file("target_coverage_report", "run"),
     wrapper:
@@ -217,7 +217,7 @@ rule ngs_mapping_bam_collect_doc_run:
     output:
         **wf.get_output_files("bam_collect_doc", "run"),
     params:
-        **{"args": wf.get_args("bam_collect_doc", "run")},
+        args=wf.get_args("bam_collect_doc", "run"),
     threads: wf.get_resource("bam_collect_doc", "run", "threads")
     resources:
         time=wf.get_resource("bam_collect_doc", "run", "time"),
@@ -239,7 +239,7 @@ rule ngs_mapping_ngs_chew_fingerprint:
     output:
         **wf.get_output_files("ngs_chew", "fingerprint"),
     params:
-        **{"args": wf.get_args("ngs_chew", "fingerprint")},
+        args=wf.get_args("ngs_chew", "fingerprint"),
     threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
     resources:
         time=wf.get_resource("ngs_chew", "fingerprint", "time"),

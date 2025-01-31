@@ -809,7 +809,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
-    def get_params(self, action: str):
+    def get_args(self, action: str):
         self._validate_action(action)
 
         def args_fn(_wildcards):

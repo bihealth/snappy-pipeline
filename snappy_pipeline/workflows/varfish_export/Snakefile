@@ -62,7 +62,7 @@ rule varfish_export_mehari_annotate_seqvars:
     log:
         **wf.get_log_file("mehari", "annotate_seqvars"),
     params:
-        **{"args": wf.get_params("mehari", "annotate_seqvars")},
+        args=wf.get_args("mehari", "annotate_seqvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_seqvars")
 
@@ -84,7 +84,7 @@ rule varfish_export_mehari_annotate_strucvars:
     log:
         **wf.get_log_file("mehari", "annotate_strucvars"),
     params:
-        **{"args": wf.get_params("mehari", "annotate_strucvars")},
+        args=wf.get_args("mehari", "annotate_strucvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_strucvars")
 
@@ -106,6 +106,6 @@ rule varfish_export_mehari_bam_qc:
     log:
         **wf.get_log_file("mehari", "bam_qc"),
     params:
-        **{"args": wf.get_params("mehari", "bam_qc")},
+        args=wf.get_args("mehari", "bam_qc"),
     wrapper:
         wf.wrapper_path("mehari/bam_qc")

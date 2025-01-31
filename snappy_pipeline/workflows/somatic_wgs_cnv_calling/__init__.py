@@ -226,7 +226,7 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:

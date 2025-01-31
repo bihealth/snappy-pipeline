@@ -180,7 +180,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Return arguments to pass down."""
         _ = action
 
