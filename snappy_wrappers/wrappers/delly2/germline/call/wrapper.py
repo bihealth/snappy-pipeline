@@ -2,7 +2,8 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-delly2_config = snakemake.params.args["config"]
+args = getattr(snakemake.params, "args", {})
+delly2_config = args["config"]
 
 if delly2_config["path_exclude_tsv"]:
     exclude_str = "--exclude %s" % delly2_config["path_exclude_tsv"]
@@ -65,7 +66,7 @@ delly call \
     --qual-tra {delly2_config[qual_tra]} \
     --geno-qual {delly2_config[geno_qual]} \
     --mad-cutoff {delly2_config[mad_cutoff]} \
-    --genome {snakemake.params.args[genome]} \
+    --genome {args[genome]} \
     --outfile {snakemake.output.bcf} \
     {exclude_str} \
     {snakemake.input.bam}

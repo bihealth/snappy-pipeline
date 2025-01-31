@@ -8,8 +8,9 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 this_file = __file__
 
-seq_platform = snakemake.params.args["extra_infos"]["seqPlatform"]
-library_kit = snakemake.params.args["extra_infos"]["libraryKit"]
+args = getattr(snakemake.params, "args", {})
+seq_platform = args["extra_infos"]["seqPlatform"]
+library_kit = args["extra_infos"]["libraryKit"]
 
 shell(
     r"""

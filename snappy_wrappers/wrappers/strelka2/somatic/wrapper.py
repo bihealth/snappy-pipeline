@@ -76,8 +76,8 @@ $TMPDIR/strelka/runWorkflow.py -m local -j 8
 # 3. Filter only PASS variants
 
 cat <<"EOF" >$TMPDIR/samples.txt
-{snakemake.params.tumor_lib_name}
-{snakemake.params.normal_lib_name}
+{args[tumor_lib_name]}
+{args[normal_lib_name]}
 EOF
 
 bcftools concat \
