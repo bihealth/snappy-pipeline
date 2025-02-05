@@ -293,7 +293,7 @@ def main(argv=None):
     )
     group = parser.add_argument_group(
         "Snakemake Verbosity / Debugging",
-        "Arguments from Snakemake that are useful for debugging, such as " "increasing verbosity",
+        "Arguments from Snakemake that are useful for debugging, such as increasing verbosity",
     )
     group.add_argument(
         "-p", "--printshellcmds", action="store_true", default=False, help="Print shell commands"

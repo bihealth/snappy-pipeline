@@ -50,6 +50,10 @@ jobs:
 
   Dryrun_Tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
     steps:
     - uses: actions/checkout@v4
       with:

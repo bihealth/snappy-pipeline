@@ -992,7 +992,7 @@ class VcfFilterApp:
                     ("Type", "String"),
                     (
                         "Description",
-                        ("SV size class, one of SMALL (<= {}), MEDIUM (<= {}), " "LARGE").format(
+                        ("SV size class, one of SMALL (<= {}), MEDIUM (<= {}), LARGE").format(
                             self.args.small_sv_max_size, self.args.medium_sv_max_size
                         ),
                     ),
@@ -1180,49 +1180,49 @@ def main(argv=None):
         "--unaffected-max-pe-count",
         type=int,
         default=4,
-        help=("Maximal support for unaffected samples; " "default is 4"),
+        help=("Maximal support for unaffected samples; default is 4"),
     )
     group.add_argument(
         "--unaffected-max-pe-aaf",
         type=float,
         default=0.2,
-        help=("Maximal support for unaffected samples; " "default is 0.2"),
+        help=("Maximal support for unaffected samples; default is 0.2"),
     )
     group.add_argument(
         "--unaffected-max-sr-count",
         type=int,
         default=4,
-        help=("Maximal support for unaffected samples; " "default is 4"),
+        help=("Maximal support for unaffected samples; default is 4"),
     )
     group.add_argument(
         "--unaffected-max-sr-aaf",
         type=float,
         default=0.2,
-        help=("Maximal support for unaffected samples; " "default is 0.2"),
+        help=("Maximal support for unaffected samples; default is 0.2"),
     )
     group.add_argument(
         "--affected-min-pe-count",
         type=int,
         default=4,
-        help=("Minimal support for affected samples; " "default is 4"),
+        help=("Minimal support for affected samples; default is 4"),
     )
     group.add_argument(
         "--affected-min-pe-aaf",
         type=float,
         default=0.2,
-        help=("Minimal support for affected samples; " "default is 0.2"),
+        help=("Minimal support for affected samples; default is 0.2"),
     )
     group.add_argument(
         "--affected-min-sr-count",
         type=int,
         default=4,
-        help=("Minimal support for affected samples; " "default is 4"),
+        help=("Minimal support for affected samples; default is 4"),
     )
     group.add_argument(
         "--affected-min-sr-aaf",
         type=float,
         default=0.2,
-        help=("Minimal support for affected samples; " "default is 0.2"),
+        help=("Minimal support for affected samples; default is 0.2"),
     )
 
     group = parser.add_argument_group("Multipliers for PE/SR counts")
@@ -1263,14 +1263,14 @@ def main(argv=None):
         "--alu-jaccard-threshold",
         type=float,
         default=0.7,
-        help=("Jaccard index threshold for flagging as ALU overlap; " "default: 0.7"),
+        help=("Jaccard index threshold for flagging as ALU overlap; default: 0.7"),
     )
     group.add_argument("--alu-bed", type=str, help="Path to ALU BED file")
     group.add_argument(
         "--db-jaccard-threshold",
         type=float,
         default=0.7,
-        help=("Jaccard index threshold for flagging as DB overlap; " "default: 0.7"),
+        help=("Jaccard index threshold for flagging as DB overlap; default: 0.7"),
     )
     group.add_argument(
         "--db-bed",
