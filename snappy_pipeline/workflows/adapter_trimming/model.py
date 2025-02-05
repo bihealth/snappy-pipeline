@@ -96,7 +96,7 @@ class UmiLoc(Enum):
 
 
 class Fastp(SnappyModel):
-    num_threads: int = 0
+    num_threads: int = 4
     trim_front1: int = 0
     """
     trimming how many bases in front for read1, default is 0 (int [=0])
@@ -361,9 +361,9 @@ class Bbduk(SnappyModel):
         Field(
             examples=[
                 [
-                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "/data/cephfs-1/work/groups/cubi/projects/biotools/static_data/app_support/"
                     "bbtools/39.01/resources/adapters.fa",
-                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "/data/cephfs-1/work/groups/cubi/projects/biotools/static_data/app_support/"
                     "bbtools/39.01/resources/phix174_ill.ref.fa.gz",
                 ]
             ]

@@ -5,14 +5,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get preset and individual settings from configuration.
-cnvetti_config = snakemake.config["step_config"]["wgs_cnv_calling"]["cnvetti"]
-preset_name = cnvetti_config["preset"]
-preset = cnvetti_config["presets"][preset_name]
-
-window_length = cnvetti_config.get("window_length") or preset["window_length"]
-count_kind = cnvetti_config.get("count_kind") or preset["count_kind"]
-normalization = cnvetti_config.get("normalization") or preset["normalization"]
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -42,20 +35,20 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Compute coverage and normalize ------------------------------------------------------------------
 
-REF={snakemake.config[static_data_config][reference][path]}
+REF={args[reference]}
 
 cnvetti cmd coverage \
     -vvv \
     --considered-regions GenomeWide \
-    --count-kind {count_kind} \
-    --window-length {window_length} \
+    --count-kind {args[count_kind]} \
+    --window-length {args[window_length]} \
     --reference $REF \
     --output $TMPDIR/cov.bcf \
     --input {snakemake.input.bam}
 
 cnvetti cmd normalize \
     -vvv \
-    --normalization {normalization} \
+    --normalization {args[normalization]} \
     --input $TMPDIR/cov.bcf \
     --output {snakemake.output.bcf}
 

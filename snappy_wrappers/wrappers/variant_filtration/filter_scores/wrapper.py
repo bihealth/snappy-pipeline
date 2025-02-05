@@ -16,8 +16,10 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Short-circuit in case of performing no filtration
-if snakemake.wildcards.scores == "score_all":
+if args["filter_mode"] == "score_all":
     shell(
         r"""
     # Scores set to "score_all", just link out the data.
@@ -33,12 +35,10 @@ if snakemake.wildcards.scores == "score_all":
 # Actual Filtration -------------------------------------------------------------------------------
 
 # Get shortcut to scores set.
-if snakemake.wildcards.scores == "all_scores":
+if args["filter_mode"] == "all_scores":
     scores = {"require_coding": False, "require_gerpp_gt2": False, "min_cadd": None}
 else:
-    scores = snakemake.config["step_config"]["variant_filtration"]["score_thresholds"][
-        snakemake.wildcards.scores
-    ]
+    scores = args["filter_config"][args["filter_mode"]]
 
 shell(
     r"""
@@ -48,7 +48,7 @@ set -x
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
 # Get name and number of index, father, and mother.
-index={snakemake.wildcards.index_library}
+index={args[index_library]}
 father=$(awk '($2 == "'$index'") {{ print $3; }}' {snakemake.input.ped})
 mother=$(awk '($2 == "'$index'") {{ print $4; }}' {snakemake.input.ped})
 
@@ -77,7 +77,7 @@ fi
 
 # Perform filtration (or copy file if all are passing).
 
-if [[ "$filter" == "" ]] || [[ "{snakemake.wildcards.scores}" == all_scores ]]; then
+if [[ "$filter" == "" ]] || [[ "{args[filter_mode]}" == all_scores ]]; then
     cp -L {snakemake.input.vcf} {snakemake.output.vcf}
 else
     bcftools view \

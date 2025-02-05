@@ -6,6 +6,10 @@ input. Takes a dict from biomedsheets/snappy_pipeline, writes out tsv meta_clini
 import csv
 import json
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 
 def write_clinical_patient_tsv(donors):
@@ -95,7 +99,7 @@ def write_clinical_samples_tsv(donors):
     """
 
     sample_info_getters = []
-    config = snakemake.config["step_config"]["cbioportal_export"]
+    config = snakemake.params["__config"]
     for step, extra_info in config["sample_info"].items():
         if step == "tumor_mutational_burden":
             sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))

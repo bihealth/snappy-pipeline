@@ -13,9 +13,11 @@ import sys
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+a = getattr(snakemake.params, "args", {})
+
 # Build arguments ==================================================================================
 
-besenbacher = snakemake.config["step_config"]["variant_denovo_filtration"]["params_besenbacher"]
+besenbacher = a["params_besenbacher"]
 
 # Define arguments in a dictionary, will convert to namedtuple below.
 args = {
@@ -34,7 +36,7 @@ args = {
     "phase_paternal_first": True,
 }
 # Bulk-add besenbacher parameters
-args.update(snakemake.config["step_config"]["variant_denovo_filtration"]["params_besenbacher"])
+args.update(a["params_besenbacher"])
 
 args_t = collections.namedtuple("Arguments", args.keys())(**args)
 

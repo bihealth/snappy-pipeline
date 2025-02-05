@@ -11,7 +11,8 @@ shell.executable("/bin/bash")
 
 rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cnv-check-plot.R")
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+args = getattr(snakemake.params, "args", {})
+reference = args["reference"]
 
 shell(
     r"""

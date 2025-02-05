@@ -27,7 +27,7 @@ mkdir -p $TMPDIR
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-export REF={snakemake.config[static_data_config][reference][path]}
+export REF={snakemake.params.args[reference]}
 
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then

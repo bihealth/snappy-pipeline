@@ -7,6 +7,7 @@ import re
 import warnings
 from glob import glob
 from itertools import chain
+from typing import Any
 
 from snakemake.io import Wildcards, expand, touch
 
@@ -426,6 +427,9 @@ class JointGermlineCnvSegmentationMixin:
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
 
+    def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
 
 class MergeMultikitFamiliesMixin:
     """Methods for merging families with multiple kits.
@@ -523,6 +527,15 @@ class RunGcnvStepPart(
 
         # Return requested function
         return getattr(self, f"_get_params_{action}")
+
+    def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     @listify
     def get_result_files(self):

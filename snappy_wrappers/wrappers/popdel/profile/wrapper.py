@@ -6,6 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -42,7 +44,7 @@ chr21:21000000-22000000
 chr22:25000000-26000000
 EOF
 
-if [[ "{snakemake.config[static_data_config][reference][path]}" =~ .*hs?37.* ]]; then
+if [[ "{args[reference]}" =~ .*hs?37.* ]]; then
     perl -p -i -e 's/chr//g' $TMPDIR/intervals.txt
 fi
 
