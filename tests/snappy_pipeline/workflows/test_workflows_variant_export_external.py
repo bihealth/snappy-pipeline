@@ -214,13 +214,15 @@ def test_workflow_check_config_invalid_search_pattern(
     # so pydantic tries to parse *2* dicts from the list and fails
     assert len(errors) == 2
 
+    import pydantic
+    pydantic_version = pydantic.version.version_short()
     expected_errors = [
         {
             "input": input_str,
             "loc": ("step_config", "variant_export_external", "search_patterns", i),
             "msg": "Input should be a valid dictionary",
             "type": "dict_type",
-            "url": "https://errors.pydantic.dev/2.7/v/dict_type",
+            "url": f"https://errors.pydantic.dev/{pydantic_version}/v/dict_type",
         }
         for i, input_str in enumerate(["vcf", "*/*.vcf.gz"])
     ]

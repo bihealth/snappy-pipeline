@@ -49,8 +49,9 @@ dependencies:
   - pyfakefs ~=5.5.0
   - pytest-sugar ~=0.9.6
   - coveralls ~=4.0.1
+  - pytabix >=0.1.0,<1
   # formatting, linting, dev
-  - ruff ~=0.4.8
+  - ruff >=0.9.0,<1
   - snakefmt ~=0.8.5
   - pre-commit ~=3.7.1
   # docs
@@ -58,7 +59,7 @@ dependencies:
   - sphinx_rtd_theme ~=2.0.0
   - sphinx-mdinclude ~=0.6.0
 
-
+  - zlib ~=1.3.0
 
   - pip:
     # build varfish-cli from pypi

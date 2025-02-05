@@ -24,25 +24,24 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     # Nice, round-trip enabled YAML parsing
-    "ruamel.yaml >=0.18.6",
+    "ruamel.yaml >=0.18.6,<1",
     # File-based locks
-    "fasteners >=0.17.3",
+    "fasteners >=0.17.3,<1",
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8",
     # Helpful for CLIs
-    "termcolor >=1.1.0",
+    "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake >=7.32.0",
+    "snakemake >=7.32.0,<8",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
-    "vcfpy >=0.13.8",
+    "vcfpy >=0.13.8,<1",
     # Support for vcfpy
-    "pysam >=0.22.1",
-    "pytabix >=0.1",
+    "pysam >=0.22.1,<1",
     # Jinja 2 template rendering
-    "jinja2 >=3.1.4",
+    "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c",
     # REST API client for VarFish Server
@@ -69,10 +68,11 @@ test = [
     "pytest-sugar >=1.0.0,<2",
     # coveralls.io tooling
     "coveralls >=4.0.1,<5",
+    "pytabix >=0.1.0,<1"
 ]
 dev = [
     # ruff code linter + formatter
-    "ruff >=0.8.2,<1",
+    "ruff >=0.9.0,<1",
     # "snakefmt" code formatter and checker.
     "snakefmt >=0.10.2,<1",
     "pre-commit >=4.0.1,<5"

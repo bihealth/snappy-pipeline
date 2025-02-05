@@ -64,7 +64,7 @@ def run(args):
         file=args.out_file,
     )
     for i, genome in enumerate(genomes):
-        tpl = "{}\t{}\t{}\t{:0.2f}\t{}\t{:0.2f}\t{}\t{:0.2f}\t" "{}\t{:0.2f}\t{}\t{:0.2f}"
+        tpl = "{}\t{}\t{}\t{:0.2f}\t{}\t{:0.2f}\t{}\t{:0.2f}\t{}\t{:0.2f}\t{}\t{:0.2f}"
         print(
             tpl.format(
                 genome,
