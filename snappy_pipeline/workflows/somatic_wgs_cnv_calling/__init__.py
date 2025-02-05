@@ -355,9 +355,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             for k in self.params_for_action[action]:
                 v = getattr(cfg, k, None)
                 if v is None:
-                    assert (
-                        k in cfg.presets[cfg.preset]
-                    ), f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    assert k in cfg.presets[cfg.preset], (
+                        f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    )
                     v = cfg.presets[cfg.preset].get(k)
                 params[k] = v
 

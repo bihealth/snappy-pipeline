@@ -274,6 +274,7 @@ class Mbcs(SnappyModel):
     use_barcodes: bool = False
     recalibrate: bool = True
 
+
 class NgsMapping(SnappyStepModel):
     tools: Tools
     """Aligners to use for the different NGS library types"""

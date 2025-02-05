@@ -130,7 +130,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_coverage:
         partition=wf.get_resource("cnvetti_on_target", "coverage", "partition"),
         tmpdir=wf.get_resource("cnvetti_on_target", "coverage", "tmpdir"),
     params:
-        **{"args": wf.get_args("cnvetti_on_target", "coverage")}
+        **{"args": wf.get_args("cnvetti_on_target", "coverage")},
     log:
         **wf.get_log_file("cnvetti_on_target", "coverage"),
     wrapper:
@@ -190,7 +190,7 @@ rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_coverage:
         partition=wf.get_resource("cnvetti_off_target", "coverage", "partition"),
         tmpdir=wf.get_resource("cnvetti_off_target", "coverage", "tmpdir"),
     params:
-        **{"args": wf.get_args("cnvetti_off_target", "coverage")}
+        **{"args": wf.get_args("cnvetti_off_target", "coverage")},
     log:
         **wf.get_log_file("cnvetti_off_target", "coverage"),
     wrapper:
