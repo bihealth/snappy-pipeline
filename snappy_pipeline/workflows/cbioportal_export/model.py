@@ -12,6 +12,8 @@ class MappingTool(enum.StrEnum):
     BWA = "bwa"
     BWA_MEM2 = "bwa_mem2"
     MBCS = "mbcs"
+    MINIMAP2 = "minimap2"
+    STAR = "star"
 
 
 class ExpressionTool(enum.StrEnum):
