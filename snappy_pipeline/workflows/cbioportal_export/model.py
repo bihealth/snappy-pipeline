@@ -10,6 +10,8 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 class MappingTool(enum.StrEnum):
     BWA = "bwa"
+    BWA_MEM2 = "bwa_mem2"
+    MBCS = "mbcs"
 
 
 class ExpressionTool(enum.StrEnum):
