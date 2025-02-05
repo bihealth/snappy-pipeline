@@ -1,4 +1,1 @@
-channels:
-  - bioconda
-dependencies:
-  - ensembl-vep==102.0
+../environment.yaml

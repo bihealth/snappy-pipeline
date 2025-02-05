@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - bbmap==39.06
   - openjdk==20.0.2

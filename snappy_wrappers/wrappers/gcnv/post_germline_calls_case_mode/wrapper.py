@@ -13,6 +13,7 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" ERR EXIT
 
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 itv_vcf={snakemake.output.itv_vcf}
 seg_vcf={snakemake.output.seg_vcf}
@@ -30,7 +31,7 @@ if [[ $sample_index == -1 ]]; then
 fi
 
 # Get contig name style; SAMPLE_0  is guaranteed to exist
-tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | grep "^chr[0-9XY]{{1,2}}\s[0-9]\s[0-9.]+$" > /dev/null && true
+tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | grep -E "^chr[0-9XY]{{1,2}}\s[0-9]\s[0-9.]+$" > /dev/null && true
 exit_status=$?
 if [[ $exit_status == 0 ]]; then
     STYLE="chr"

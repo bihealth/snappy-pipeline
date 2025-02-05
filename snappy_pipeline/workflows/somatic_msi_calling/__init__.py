@@ -128,7 +128,7 @@ class Mantis2StepPart(BaseStepPart):
                 )
             )
             tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
+                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
             ).format(**wildcards)
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),

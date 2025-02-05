@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - svtk==0.0.20190615
   - bcftools==1.19

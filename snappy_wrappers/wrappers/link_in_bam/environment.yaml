@@ -1,6 +1,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - samtools ==1.19.2
   - gnuplot ==5.4.8

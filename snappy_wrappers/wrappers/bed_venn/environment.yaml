@@ -1,5 +1,6 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- bedtools ==2.26.0
+  - bedtools ==2.26.0

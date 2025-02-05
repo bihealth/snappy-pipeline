@@ -87,10 +87,8 @@ def argument(args: list[str]) -> list[str]:
     def _is_valid_argument(arg: str) -> bool:
         return arg.startswith("--")
 
-    if any(_is_valid_argument(arg) for arg in args):
-        raise ValueError(
-            f"invalid arguments: {list(filter(lambda x: not _is_valid_argument(x), args))}"
-        )
+    if invalid_args := list(filter(lambda x: not _is_valid_argument(x), args)):
+        raise ValueError(f"invalid arguments: {invalid_args}")
     return args
 
 

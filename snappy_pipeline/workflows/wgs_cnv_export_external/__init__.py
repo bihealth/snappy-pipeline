@@ -207,8 +207,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @dictify
     def _get_log_file_annotate(self):
         prefix = (
-            "work/varfish_annotated.{index_ngs_library}/log/"
-            "varfish_annotated.{index_ngs_library}"
+            "work/varfish_annotated.{index_ngs_library}/log/varfish_annotated.{index_ngs_library}"
         )
         key_ext = (
             ("log", ".log"),

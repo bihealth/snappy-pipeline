@@ -1,6 +1,7 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
 - htslib =1.17
 - dkfz-bias-filter ==1.2.3a

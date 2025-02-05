@@ -379,7 +379,6 @@ class RepeatExpansionWorkflow(BaseStep):
         self.ensure_w_config(
             config_keys=("static_data_config", "reference", "path"),
             msg=(
-                "Path to reference FASTA not configured but required "
-                "for repeat expansion analysis."
+                "Path to reference FASTA not configured but required for repeat expansion analysis."
             ),
         )
