@@ -54,11 +54,32 @@ rule somatic_wgs_sv_calling_link_out_run:
 # Run Manta -------------------------------------------------------------------
 
 
+rule somatic_wgs_sv_calling_manta_ignore_chroms:
+    input:
+        unpack(wf.get_input_files("manta", "ignore_chroms")),
+    output:
+        **wf.get_output_files("manta", "ignore_chroms"),
+    params:
+        **{"args": wf.get_args("manta", "ignore_chroms")},
+    threads: wf.get_resource("manta", "ignore_chroms", "threads")
+    resources:
+        time=wf.get_resource("manta", "ignore_chroms", "time"),
+        memory=wf.get_resource("manta", "ignore_chroms", "memory"),
+        partition=wf.get_resource("manta", "ignore_chroms", "partition"),
+        tmpdir=wf.get_resource("manta", "ignore_chroms", "tmpdir"),
+    log:
+        **wf.get_log_file("manta", "ignore_chroms"),
+    wrapper:
+        wf.wrapper_path("manta/ignore_chroms")
+
+
 rule somatic_wgs_sv_calling_manta_run:
     input:
         unpack(wf.get_input_files("manta", "run")),
     output:
         **wf.get_output_files("manta", "run"),
+    params:
+        **{"args": wf.get_args("manta", "run")},
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
@@ -66,6 +87,6 @@ rule somatic_wgs_sv_calling_manta_run:
         partition=wf.get_resource("manta", "run", "partition"),
         tmpdir=wf.get_resource("manta", "run", "tmpdir"),
     log:
-        wf.get_log_file("manta", "run"),
+        **wf.get_log_file("manta", "run"),
     wrapper:
         wf.wrapper_path("manta/somatic_wgs")
