@@ -102,7 +102,7 @@ def run(args):
 def main(argv=None):
     """Program entry point for parsing the command line."""
     parser = argparse.ArgumentParser(
-        description=("Parse PED file and transform pedigree information into VCF header format")
+        description="Parse PED file and transform pedigree information into VCF header format"
     )
     parser.add_argument(
         "--ped-file",
