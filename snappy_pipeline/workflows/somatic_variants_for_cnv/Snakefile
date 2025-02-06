@@ -96,7 +96,7 @@ rule somatic_variants_for_cnv_bcftools_pileup:
     output:
         **wf.get_output_files("bcftools", "pileup"),
     params:
-        args=wf.get_args("bcftools", "merge"),
+        args=wf.get_args("bcftools", "pileup"),
     threads: wf.get_resource("bcftools", "pileup", "threads")
     resources:
         time=wf.get_resource("bcftools", "pileup", "time"),
@@ -115,7 +115,7 @@ rule somatic_variants_for_cnv_bcftools_annotate:
     output:
         **wf.get_output_files("bcftools", "annotate"),
     params:
-        args=wf.get_args("bcftools", "merge"),
+        args=wf.get_args("bcftools", "annotate"),
     threads: wf.get_resource("bcftools", "annotate", "threads")
     resources:
         time=wf.get_resource("bcftools", "annotate", "time"),
@@ -134,7 +134,7 @@ rule somatic_variants_for_cnv_bcftools_flag:
     output:
         **wf.get_output_files("bcftools", "flag"),
     params:
-        args=wf.get_args("bcftools", "merge"),
+        args=wf.get_args("bcftools", "flag"),
     threads: wf.get_resource("bcftools", "flag", "threads")
     resources:
         time=wf.get_resource("bcftools", "flag", "time"),
@@ -153,7 +153,7 @@ rule somatic_variants_for_cnv_bcftools_remove_unseen:
     output:
         **wf.get_output_files("bcftools", "remove_unseen"),
     params:
-        args=wf.get_args("bcftools", "merge"),
+        args=wf.get_args("bcftools", "remove_unseen"),
     threads: wf.get_resource("bcftools", "remove_unseen", "threads")
     resources:
         time=wf.get_resource("bcftools", "remove_unseen", "time"),
