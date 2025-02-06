@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - gatk4==4.3.0.0
+  - htslib==1.19.1
+  - bcftools==1.19
+  - gawk==5.1.0
+  - binutils==2.43

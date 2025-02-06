@@ -202,7 +202,7 @@ rule somatic_variant_calling_mutect2_gather:
     output:
         **wf.get_output_files("mutect2", "run"),
     conda:
-        "envs/mutect2_gather.yaml"
+        "envs/mutect2.yaml"
     log:
         log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/gather.raw.vcf.gz.log",
     shell:
