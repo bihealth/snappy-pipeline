@@ -141,6 +141,7 @@ rule somatic_variant_calling_mutect2_split:
             )
         ),
     params:
+        padding=5000,
         ignore_chroms=wf.w_config.get("ignore_chroms", wf.config.get("ignore_chroms", [])),
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
     log:
