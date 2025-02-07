@@ -206,7 +206,7 @@ rule somatic_variant_calling_mutect2_gather:
     log:
         log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/gather.raw.vcf.gz.log",
     shell:
-        """
+        """(
         # Concatenate raw calls vcfs & index result ----------------------
         bcftools concat \
             --allow-overlaps \
@@ -240,7 +240,7 @@ rule somatic_variant_calling_mutect2_gather:
             fi;
         done
         popd
-        """
+        ) >{log} 2>&1"""
 
 
 rule somatic_variant_calling_mutect2_filter:
