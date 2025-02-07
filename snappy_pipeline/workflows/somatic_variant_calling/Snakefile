@@ -131,51 +131,31 @@ scattergather:
     mutect2=8,
 
 
-rule somatic_variant_calling_mutect2_split:
-    input:
-        unpack(wf.get_input_files("mutect", "run")),
+rule somatic_variant_calling_mutect2_scatter:
     output:
-        regions=temp(
-            scatter.mutect2(
-                "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/in/{scatteritem}.txt"
-            )
-        ),
+        **wf.get_output_files("mutect2", "scatter"),
     params:
         padding=5000,
         ignore_chroms=wf.w_config.get("ignore_chroms", wf.config.get("ignore_chroms", [])),
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
     log:
-        log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/in/split.log",
+        **wf.get_log_file("mutect2", "scatter"),
     script:
         "scripts/split_region.py"
 
 
-rule somatic_variant_calling_mutect2_process:
+rule somatic_variant_calling_mutect2_run:
     input:
         unpack(wf.get_input_files("mutect2", "run")),
-        region="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/in/{scatteritem}.txt",
     output:
-        raw=temp(
-            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.gz"
-        ),
-        stats=temp(
-            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.vcf.stats"
-        ),
-        f1r2=temp(
-            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.raw.f1r2_tar.tar.gz"
-        ),
+        **wf.get_output_files("mutect2", "run"),
     resources:
         time=wf.get_resource("mutect2", "run", "time"),
         memory=wf.get_resource("mutect2", "run", "memory"),
         partition=wf.get_resource("mutect2", "run", "partition"),
         tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
     log:
-        log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.log",
-        log_md5="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.log.md5",
-        conda_list="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.conda_list",
-        conda_info="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.conda_info",
-        conda_list_md5="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.conda_list.md5",
-        conda_info_md5="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/out/{scatteritem}.conda_info.md5",
+        **wf.get_log_file("mutect2", "run"),
     params:
         args=lambda wildcards, input: {
             "intervals": list(map(str.strip, open(input.region, "rt").readlines()))
@@ -190,21 +170,13 @@ rule somatic_variant_calling_mutect2_process:
 
 rule somatic_variant_calling_mutect2_gather:
     input:
-        raw=gather.mutect2(
-            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.vcf.gz"
-        ),
-        stats=gather.mutect2(
-            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.vcf.stats"
-        ),
-        f1r2=gather.mutect2(
-            "work/{{mapper}}.mutect2.{{tumor_library}}/out/{{mapper}}.mutect2.{{tumor_library}}/mutect2par/out/{scatteritem}.raw.f1r2_tar.tar.gz"
-        ),
+        unpack(wf.get_input_files("mutect2", "gather")),
     output:
-        **wf.get_output_files("mutect2", "run"),
+        **wf.get_output_files("mutect2", "gather"),
     conda:
         "envs/mutect2.yaml"
     log:
-        log="work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/gather.raw.vcf.gz.log",
+        **wf.get_log_file("mutect2", "gather"),
     shell:
         """(
         # Concatenate raw calls vcfs & index result ----------------------
@@ -240,7 +212,7 @@ rule somatic_variant_calling_mutect2_gather:
             fi;
         done
         popd
-        ) >{log} 2>&1"""
+        ) >{log.log} 2>&1"""
 
 
 rule somatic_variant_calling_mutect2_filter:
