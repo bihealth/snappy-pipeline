@@ -128,7 +128,7 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.common_variants:
 
 
 scattergather:
-    mutect2=8,
+    mutect2=wf.config.get("mutect2", {}).get("num_jobs", 24),
 
 
 rule somatic_variant_calling_mutect2_scatter:
@@ -138,6 +138,12 @@ rule somatic_variant_calling_mutect2_scatter:
         padding=5000,
         ignore_chroms=wf.w_config.get("ignore_chroms", wf.config.get("ignore_chroms", [])),
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
+    resources:
+        time=wf.get_resource("mutect2", "scatter", "time"),
+        memory=wf.get_resource("mutect2", "scatter", "memory"),
+        partition=wf.get_resource("mutect2", "scatter", "partition"),
+        tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
+    threads: 1
     log:
         **wf.get_log_file("mutect2", "scatter"),
     script:
@@ -154,6 +160,7 @@ rule somatic_variant_calling_mutect2_run:
         memory=wf.get_resource("mutect2", "run", "memory"),
         partition=wf.get_resource("mutect2", "run", "partition"),
         tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
+    threads: wf.get_resource("mutect2", "run", "threads")
     log:
         **wf.get_log_file("mutect2", "run"),
     params:
@@ -173,6 +180,12 @@ rule somatic_variant_calling_mutect2_gather:
         unpack(wf.get_input_files("mutect2", "gather")),
     output:
         **wf.get_output_files("mutect2", "gather"),
+    resources:
+        time=wf.get_resource("mutect2", "gather", "time"),
+        memory=wf.get_resource("mutect2", "gather", "memory"),
+        partition=wf.get_resource("mutect2", "gather", "partition"),
+        tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
+    threads: 1
     conda:
         "envs/mutect2.yaml"
     log:
