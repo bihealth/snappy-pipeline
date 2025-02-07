@@ -102,6 +102,7 @@ import os
 import sys
 from collections import OrderedDict
 
+import snakemake.io
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
 
@@ -340,7 +341,12 @@ class Mutect2StepPart(MutectBaseStepPart):
     name = "mutect2"
 
     #: Class available actions
-    actions = ["run", "filter"]  # "contamination", "pileup_normal", "pileup_tumor")
+    actions = [
+        "scatter",
+        "run",
+        "gather",
+        "filter",
+    ]  # "contamination", "pileup_normal", "pileup_tumor")
 
     #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
@@ -397,6 +403,9 @@ class Mutect2StepPart(MutectBaseStepPart):
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
+    def _get_input_files_scatter(self, wildcards):
+        return {}
+
     def _get_input_files_run(self, wildcards):
         """Get input files for rule ``run``.
 
@@ -413,9 +422,15 @@ class Mutect2StepPart(MutectBaseStepPart):
         tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
             **wildcards
         )
+
+        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
+            **wildcards
+        )
+
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            "region": scatteritem_base_path + ".region.txt",
         }
 
         normal_library = self.get_normal_lib_name(wildcards)
@@ -433,6 +448,20 @@ class Mutect2StepPart(MutectBaseStepPart):
             )
 
         return input_files
+
+    def _get_input_files_gather(self, wildcards):
+        gather = self.parent.workflow.globals.get("gather")
+        gather = getattr(gather, self.name)
+        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
+            **wildcards
+        )
+        input_files = {
+            "raw": scatteritem_base_path + ".raw.vcf.gz",
+            "stats": scatteritem_base_path + ".raw.vcf.stats",
+            "f1r2": scatteritem_base_path + ".raw.f1r2_tar.tar.gz",
+        }
+
+        return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
 
     def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
@@ -527,8 +556,30 @@ class Mutect2StepPart(MutectBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        # Set expected extensions based on action
+        # Set expected extensions and basepath based on action
+        base_path_out = self.base_path_out
+
+        if action == "scatter":
+            scatter = self.parent.workflow.globals.get("scatter")
+            scatter = getattr(scatter, self.name)
+            template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.txt".format(
+                var_caller=self.name
+            )
+            return {"regions": snakemake.io.temp(scatter(template))}
+
         if action == "run":
+            base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
+            exts = {
+                "raw": ".raw.vcf.gz",
+                "raw_md5": ".raw.vcf.gz.md5",
+                "raw_tbi": ".raw.vcf.gz.tbi",
+                "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "stats": ".raw.vcf.stats",
+                "stats_md5": ".raw.vcf.stats.md5",
+                "f1r2": ".raw.f1r2_tar.tar.gz",
+                "f1r2_md5": ".raw.f1r2_tar.tar.gz.md5",
+            }
+        if action == "gather":
             exts = {
                 "raw": ".raw.vcf.gz",
                 "raw_md5": ".raw.vcf.gz.md5",
@@ -564,7 +615,7 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         # Define output dictionary
         for k, v in exts.items():
-            output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
+            output_files[k] = base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
     def get_log_file(self, action):
@@ -589,8 +640,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         self._validate_action(action)
 
         # Set expected format based on action
-        if action != "run":
-            postfix = "." + action
+        if action != "gather":
+            if action == "run":
+                postfix = ".{{scatteritem}}"
+            else:
+                postfix = "." + action
+
         prefix = (
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
             "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
