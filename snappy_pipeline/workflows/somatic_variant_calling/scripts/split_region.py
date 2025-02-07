@@ -117,6 +117,6 @@ if __name__ == "__main__":
             with open(path, "wt") as f:
                 for contig, start, end in region:
                     contig_length = contigs[contig]
-                    padded_start = max(start - padding, 0)
-                    padded_end = min(end + padding, contig_length)
+                    padded_start = max(start - padding, 0) + 1
+                    padded_end = min(end + padding + 1, contig_length)
                     print(f"{contig}:{padded_start}-{padded_end}", file=f)
