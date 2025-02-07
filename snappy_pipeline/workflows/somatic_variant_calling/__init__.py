@@ -351,10 +351,20 @@ class Mutect2StepPart(MutectBaseStepPart):
 
     #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
+        "scatter": ResourceUsage(
+            threads=1,
+            time="00:02:00",
+            memory="1000M",
+        ),
         "run": ResourceUsage(
             threads=2,
             time="5-00:00:00",
             memory="3584M",
+        ),
+        "gather": ResourceUsage(
+            threads=1,
+            time="02:00:00",
+            memory="4096M",
         ),
         "filter": ResourceUsage(
             threads=2,
