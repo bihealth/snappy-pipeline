@@ -1,0 +1,16 @@
+[
+    {
+        "name": "RcppArmadillo",
+        "repository": "cran"
+    },
+    {
+        "name": "Runuran",
+        "repository": "cran"
+    },
+    {
+        "name": "sequenza",
+        "repository": "bitbucket",
+        "url": "sequenzatools/sequenza@07116cc"
+    }
+]
+

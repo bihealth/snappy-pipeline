@@ -4,6 +4,7 @@
 import os
 import re
 import subprocess
+import json
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -57,62 +58,30 @@ def dictify(gen):
     return patched
 
 
-def install_R_package(dest: str, name: str, repo: str):
-    """Installs R package <name> in directory <dest>
-
-    <repo> can be on of "cran", "bioconductor", "github", "bitbucket" or "local".
-
-    Github & bitbucket packages can be further defined in the <name>,
-    choosing a commit, a tag or a pull request (see the remotes package reference).
-    For local packages, the <name> must be the path to the package source.
-
-    In these cases, the routine tries to be clever and guess the package name from
-    the <name>. It implements the following recipes:
-
-    - basename of the path without (tar/zip) extension for local packages
-    - remove username, subdirectory and reference/release/pull request for github & bitbucket
-
-    When installation isn't successful, a subprocess.CalledProcessError is raised
-    """
-
-    assert repo in (
-        "cran",
-        "bioconductor",
-        "github",
-        "bitbucket",
-        "local",
-    ), f"Unknown/unimplemented repository {repo}"
-
+def install_R_package(
+    dest: str, name: str, repository: str = "cran", url: str | None = None) -> subprocess.CompletedProcess:
+    assert dest, "Missing R package destination folder"
     os.makedirs(os.path.dirname(dest), mode=0o750, exist_ok=True)
 
-    if repo == "cran":
-        install_cmd = f"install.packages('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
-    elif repo == "bioconductor":
-        install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
-    elif repo == "github":
-        path = name
-        pattern = re.compile(r"^([^/]+)/([^/@#]+)(/[^@#]+)?((@\*?|#)(.+))?$")
-        m = pattern.match(path)
-        assert m, f"Cannot extract package name from github path {path}"
-        name = m.groups()[1]
-        install_cmd = f"remotes::install_github('{path}', lib='{dest}', upgrade='never')"
-    elif repo == "bitbucket":
-        path = name
-        pattern = re.compile(r"^([^/]+)/([^@]+)(/[^@#]+)?(@(.+))?$")
-        m = pattern.match(path)
-        assert m, f"Cannot extract package name from bitbucket path {path}"
-        name = m.groups()[1]
-        install_cmd = f"remotes::install_bitbucket('{path}', lib='{dest}', upgrade='never')"
-    elif repo == "local":
-        path = name
-        pattern = re.compile(r"^(.+?)(\.(zip|tar(\.(gz|bz2))?|tgz2?|tbz))?$")
-        m = pattern.match(os.path.basename(path))
-        assert m, f"Cannot extract package name from local filesystem path {path}"
-        name = m.groups()[0]
-        install_cmd = f"remotes::install_local('{path}', lib='{dest}', upgrade='never')"
-    else:
-        install_cmd = None
-
+    match repository:
+        case "cran":
+            install_cmd = f"install.packages('{name}', lib='{dest}', repos='https://cloud.r-project.org', update=FALSE, ask=FALSE)"
+        case "bioconductor":
+            install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
+        case "github":
+            assert url, f"Can't install R package '{name}' from github, URL is missing"
+            install_cmd = f"remotes::install_github('{url}', lib='{dest}', upgrade='never')"
+        case "bitbucket":
+            
+            print("#############################################################################################################################DEBUGGING#############################################################")
+            assert url, f"Can't install R package '{name}' from bitbucket, URL is missing"
+            install_cmd = f"remotes::install_bitbucket('{url}', lib='{dest}', upgrade='never')"
+        case "local":
+            assert url, f"Can't install local R package '{name}', missing path"
+            assert os.path.exists(url), f"Can't find local R package '{name}' at location '{url}'"
+            install_cmd = f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+        case _:
+            raise ValueError("Unknown repository '{repository}'")
     R_script = [
         f".libPaths(c(.libPaths(), '{dest}'))",
         install_cmd,
@@ -122,3 +91,11 @@ def install_R_package(dest: str, name: str, repo: str):
     ]
     cmd = ["R", "--vanilla", "-e", "; ".join(R_script)]
     return subprocess.run(cmd, text=True, check=True)
+
+
+def install_R_packages(dest: str, filename: str):
+    with open(filename, "rt") as f:
+        packages = json.load(f)
+    for package in packages:
+        status = install_R_package(dest, name=package["name"], repository=package["repository"], url=package.get("url", None))
+        status.check_returncode()
