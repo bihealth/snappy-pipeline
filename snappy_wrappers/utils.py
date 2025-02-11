@@ -2,7 +2,6 @@
 """Utility code for snappy_wrappers"""
 
 import os
-import re
 import subprocess
 import json
 
@@ -59,7 +58,8 @@ def dictify(gen):
 
 
 def install_R_package(
-    dest: str, name: str, repository: str = "cran", url: str | None = None) -> subprocess.CompletedProcess:
+    dest: str, name: str, repository: str = "cran", url: str | None = None
+) -> subprocess.CompletedProcess:
     assert dest, "Missing R package destination folder"
     os.makedirs(os.path.dirname(dest), mode=0o750, exist_ok=True)
 
@@ -72,14 +72,14 @@ def install_R_package(
             assert url, f"Can't install R package '{name}' from github, URL is missing"
             install_cmd = f"remotes::install_github('{url}', lib='{dest}', upgrade='never')"
         case "bitbucket":
-            
-            print("#############################################################################################################################DEBUGGING#############################################################")
             assert url, f"Can't install R package '{name}' from bitbucket, URL is missing"
             install_cmd = f"remotes::install_bitbucket('{url}', lib='{dest}', upgrade='never')"
         case "local":
             assert url, f"Can't install local R package '{name}', missing path"
             assert os.path.exists(url), f"Can't find local R package '{name}' at location '{url}'"
-            install_cmd = f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+            install_cmd = (
+                f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+            )
         case _:
             raise ValueError("Unknown repository '{repository}'")
     R_script = [
@@ -97,5 +97,10 @@ def install_R_packages(dest: str, filename: str):
     with open(filename, "rt") as f:
         packages = json.load(f)
     for package in packages:
-        status = install_R_package(dest, name=package["name"], repository=package["repository"], url=package.get("url", None))
+        status = install_R_package(
+            dest,
+            name=package["name"],
+            repository=package["repository"],
+            url=package.get("url", None),
+        )
         status.check_returncode()
