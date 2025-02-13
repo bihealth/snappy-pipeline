@@ -7,6 +7,12 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
+args = snakemake.params.get("args", {})
+
+intervals = args.get("intervals", [])
+if isinstance(intervals, str):
+    intervals = [intervals]
+interval_params = " ".join([f"--intervals {itv}" for itv in intervals])
 
 extra_arguments = " ".join(config["extra_arguments"])
 
@@ -49,14 +55,6 @@ trap "rm -rf $tmpdir" EXIT
 out_base=$tmpdir/$(basename {snakemake.output.raw} .vcf.gz)
 
 # Add intervals if required
-intervals=""
-if [[ -n "{snakemake.params.args[intervals]}" ]]
-then
-    for itv in "{snakemake.params.args[intervals]}"
-    do
-        intervals="$intervals --intervals $itv"
-    done
-fi
 
 gatk Mutect2 \
     --tmp-dir $tmpdir \
@@ -70,7 +68,7 @@ gatk Mutect2 \
     $(if [[ -n "{config[panel_of_normals]}" ]]; then \
         echo --panel-of-normals {config[panel_of_normals]}
     fi) \
-    $intervals \
+    {interval_params} \
     {extra_arguments}
 
 rm -f $out_base.vcf.idx
