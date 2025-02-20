@@ -2,7 +2,7 @@ import enum
 
 from typing import Annotated
 
-from pydantic import Field, AfterValidator, model_validator
+from pydantic import Field, AfterValidator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
