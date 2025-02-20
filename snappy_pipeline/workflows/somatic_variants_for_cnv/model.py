@@ -9,7 +9,7 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, vali
 from snappy_pipeline.models.bcftools import (
     BcftoolsModel,
     BcftoolsBamFlag,
-    ensure_valid_bit_sets,
+    transform_to_flag,
     ensure_valid_tags,
     ensure_valid_mark_sites_tag,
 )
@@ -33,24 +33,33 @@ class Pileup(BcftoolsModel):
     redo_BAQ: bool = True
     """Recalculate BAQ on the fly, ignore existing BQs"""
 
-    skip_all_set: list[BcftoolsBamFlag] = []
+    skip_all_set: Annotated[
+        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        AfterValidator(transform_to_flag),
+    ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits set"""
-    skip_any_set: list[BcftoolsBamFlag] = [
-        BcftoolsBamFlag.UNMAP,
-        BcftoolsBamFlag.SECONDARY,
-        BcftoolsBamFlag.QCFAIL,
-        BcftoolsBamFlag.DUP,
-        BcftoolsBamFlag.SUPPLEMENTARY,
-    ]
-    """Skip reads with any of the bits set [UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY]"""
-    skip_all_unset: list[BcftoolsBamFlag] = []
+    skip_any_set: Annotated[
+        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        AfterValidator(transform_to_flag),
+    ] = (
+        BcftoolsBamFlag.UNMAP
+        | BcftoolsBamFlag.MUNMAP
+        | BcftoolsBamFlag.SECONDARY
+        | BcftoolsBamFlag.QCFAIL
+        | BcftoolsBamFlag.DUP
+        | BcftoolsBamFlag.SUPPLEMENTARY
+    )
+    """Skip reads with any of the bits set [UNMAP,MUNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY]"""
+    skip_all_unset: Annotated[
+        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        AfterValidator(transform_to_flag),
+    ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits unset"""
-    skip_any_unset: list[BcftoolsBamFlag] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
+    skip_any_unset: Annotated[
+        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        AfterValidator(transform_to_flag),
+    ] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
     """Skip reads with any of the bits unset [PAIRED,PROPER_PAIR]"""
-
-    @model_validator(mode="after")
-    def ensure_valid_skip_flags(self):
-        return ensure_valid_bit_sets(self)
 
 
 class Annotation(BcftoolsModel):

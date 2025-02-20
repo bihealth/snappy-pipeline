@@ -191,8 +191,8 @@ def test_bcftools_step_part_get_args_pileup(germline_snvs_workflow):
             "--min-MQ 35",
             "--no-BAQ",
             "--seed 1234567",
-            "--skip-any-set 'UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY'",
-            "--skip-any-unset 'PROPER_PAIR,PAIRED'",
+            "--skip-any-set 3852",
+            "--skip-any-unset 3",
         ]
     }
     actual = germline_snvs_workflow.get_args("bcftools", "pileup")(wildcards, [])

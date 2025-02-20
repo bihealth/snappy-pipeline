@@ -195,8 +195,8 @@ def test_bcftools_step_part_get_args_pileup(somatic_variants_for_cnv_workflow):
             "--min-BQ 20",
             "--min-MQ 35",
             "--redo-BAQ",
-            "--skip-any-set 'UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY'",
-            "--skip-any-unset 'PAIRED,PROPER_PAIR'"
+            "--skip-any-set 3852",
+            "--skip-any-unset 3"
         ],
         "index": True,
     }

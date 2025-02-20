@@ -59,6 +59,7 @@ from snakemake.io import Wildcards, InputFiles, pipe
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.common.samplesheet import sample_sheets, tumor_to_normal_mapping
+from snappy_pipeline.models.bcftools import BcftoolsBamFlag
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.germline_snvs import GermlineSnvsWorkflow
@@ -255,8 +256,10 @@ class BcftoolsStepPart(BaseStepPart):
     def _get_args_pileup(self, wildcards: Wildcards, input: InputFiles) -> dict[str, Any]:
         params = self.cfg.pileup.model_dump(by_alias=True)
         for k in ("skip_all_set", "skip_any_set", "skip_all_unset", "skip_any_unset"):
-            if len(params[k]) == 0:
+            if params[k] == BcftoolsBamFlag.NONE:
                 del params[k]
+            else:
+                params[k] = params[k].value
         return {"index": True, "extra_args": BcftoolsStepPart.collapse_args(params)}
 
     def _get_input_files_annotate(self, wildcards: Wildcards) -> dict[str, str]:
