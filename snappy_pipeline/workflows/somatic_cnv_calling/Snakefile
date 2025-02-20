@@ -1,0 +1,116 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_cnv_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_cnv_calling import (
+    SomaticCnvCallingWorkflow,
+)
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_cnv_calling_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_cnv_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Somatic Purity and Ploidy Estimation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ASCAT and Supporting Steps --------------------------------------------------
+
+
+rule somatic_cnv_calling_ascat_alleleCounter:
+    input:
+        unpack(wf.get_input_files("ascat", "alleleCounter")),
+    output:
+        **wf.get_output_files("ascat", "alleleCounter"),
+    params:
+        **{"args": wf.get_args("ascat", "alleleCounter")},
+    threads: wf.get_resource("ascat", "alleleCounter", "threads")
+    resources:
+        time=wf.get_resource("ascat", "alleleCounter", "time"),
+        memory=wf.get_resource("ascat", "alleleCounter", "memory"),
+        partition=wf.get_resource("ascat", "alleleCounter", "partition"),
+        tmpdir=wf.get_resource("ascat", "alleleCounter", "tmpdir"),
+    log:
+        **wf.get_log_file("ascat", "alleleCounter"),
+    wrapper:
+        wf.wrapper_path("ascat/alleleCounter")
+
+
+rule somatic_cnv_calling_ascat_prepareHTS:
+    input:
+        unpack(wf.get_input_files("ascat", "prepareHTS")),
+    output:
+        **wf.get_output_files("ascat", "prepareHTS"),
+    params:
+        **{"args": wf.get_args("ascat", "prepareHTS")},
+    threads: wf.get_resource("ascat", "prepareHTS", "threads")
+    resources:
+        time=wf.get_resource("ascat", "prepareHTS", "time"),
+        memory=wf.get_resource("ascat", "prepareHTS", "memory"),
+        partition=wf.get_resource("ascat", "prepareHTS", "partition"),
+        tmpdir=wf.get_resource("ascat", "prepareHTS", "tmpdir"),
+    log:
+        **wf.get_log_file("ascat", "prepareHTS"),
+    wrapper:
+        wf.wrapper_path("ascat/prepareHTS")
+
+
+# run ASCAT R package with prepared input files -------------------------------
+
+
+rule somatic_cnv_calling_ascat_run:
+    input:
+        unpack(wf.get_input_files("ascat", "run")),
+    output:
+        **wf.get_output_files("ascat", "run"),
+    params:
+        **{"args": wf.get_args("ascat", "run")},
+    threads: wf.get_resource("ascat", "run", "threads")
+    resources:
+        time=wf.get_resource("ascat", "run", "time"),
+        memory=wf.get_resource("ascat", "run", "memory"),
+        partition=wf.get_resource("ascat", "run", "partition"),
+        tmpdir=wf.get_resource("ascat", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("ascat", "run"),
+    wrapper:
+        wf.wrapper_path("ascat/run")
