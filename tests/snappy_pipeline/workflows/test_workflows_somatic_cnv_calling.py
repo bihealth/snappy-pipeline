@@ -51,6 +51,8 @@ def minimal_config():
               allele_counter:
                 loci_prefix: /path/to/loci_chr
                 allele_prefix: /path/to/alleles_chr
+                skip_any_set: [UNMAP, SECONDARY, DUP, QCFAIL, 2048]
+                skip_any_unset: []
               path_gc_content: /path/to/gc_content.txt
               path_reptiming: /path/to/reptiming.txt
 
@@ -137,13 +139,12 @@ def test_ascat_step_part_get_args_alleleCounter(somatic_cnv_calling_workflow):
     )
     skip_any_set = (
         BcftoolsBamFlag.UNMAP
-        | BcftoolsBamFlag.MUNMAP 
         | BcftoolsBamFlag.SECONDARY
         | BcftoolsBamFlag.DUP
         | BcftoolsBamFlag.QCFAIL
         | BcftoolsBamFlag.SUPPLEMENTARY
     )
-    skip_any_unset = BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
+    skip_any_unset = BcftoolsBamFlag.NONE
     expected = {
             "seed": 1234567,
             "max-depth": 8000,

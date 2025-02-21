@@ -158,9 +158,7 @@ class BcftoolsBamFlag(enum.Flag):
     SUPPLEMENTARY = 2048
 
 
-BcftoolsBamFlagMultipleTypes = Union[
-    str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag]
-]
+BcftoolsBamFlagMultipleTypes = Union[str | int | list[str | int] | BcftoolsBamFlag]
 
 
 def transform_to_flag(
@@ -174,7 +172,11 @@ def transform_to_flag(
         if isinstance(value, BcftoolsBamFlag):
             flag = value
         elif isinstance(value, str):
-            flag = BcftoolsBamFlag(getattr(BcftoolsBamFlag, value))
+            try:
+                value = int(value)
+                flag = BcftoolsBamFlag(value)
+            except ValueError:
+                flag = BcftoolsBamFlag(getattr(BcftoolsBamFlag, value))
         elif isinstance(value, int):
             flag = BcftoolsBamFlag(value)
         else:
