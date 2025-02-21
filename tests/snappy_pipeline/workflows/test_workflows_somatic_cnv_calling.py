@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the somatic_purity_ploidy_estimate workflow module code"""
 
-import copy
 import textwrap
 
 import pytest
@@ -11,6 +10,7 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.somatic_cnv_calling import (
     SomaticCnvCallingWorkflow,
 )
+from snappy_pipeline.models.bcftools import BcftoolsBamFlag
 
 from .conftest import patch_module_fs
 
@@ -135,13 +135,22 @@ def test_ascat_step_part_get_args_alleleCounter(somatic_cnv_calling_workflow):
             "chrom_name": "21",
         }
     )
+    skip_any_set = (
+        BcftoolsBamFlag.UNMAP
+        | BcftoolsBamFlag.MUNMAP 
+        | BcftoolsBamFlag.SECONDARY
+        | BcftoolsBamFlag.DUP
+        | BcftoolsBamFlag.QCFAIL
+        | BcftoolsBamFlag.SUPPLEMENTARY
+    )
+    skip_any_unset = BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
     expected = {
             "seed": 1234567,
             "max-depth": 8000,
             "min-MQ": 35,
             "min-BQ": 20,
-            "skip-any-set": 3852,
-            "skip-any-unset": 3,
+            "skip-any-set": skip_any_set.value,
+            "skip-any-unset": skip_any_unset.value,
     }
     actual = somatic_cnv_calling_workflow.get_args("ascat", "alleleCounter")(
         wildcards, []

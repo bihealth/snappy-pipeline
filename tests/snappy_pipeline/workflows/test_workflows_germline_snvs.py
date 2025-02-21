@@ -8,6 +8,7 @@ import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.germline_snvs import GermlineSnvsWorkflow
+from snappy_pipeline.models.bcftools import BcftoolsBamFlag
 
 from .conftest import patch_module_fs
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
@@ -183,6 +184,15 @@ def test_bcftools_step_part_get_log_file(germline_snvs_workflow):
 def test_bcftools_step_part_get_args_pileup(germline_snvs_workflow):
     """Test BcfToolsStepPart._get_args_pileup()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    skip_any_set = (
+        BcftoolsBamFlag.UNMAP
+        | BcftoolsBamFlag.MUNMAP 
+        | BcftoolsBamFlag.SECONDARY
+        | BcftoolsBamFlag.DUP
+        | BcftoolsBamFlag.QCFAIL
+        | BcftoolsBamFlag.SUPPLEMENTARY
+    )
+    skip_any_unset = BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
     expected = {
         "extra_args": [
             "--illumina1.3+",
@@ -191,8 +201,8 @@ def test_bcftools_step_part_get_args_pileup(germline_snvs_workflow):
             "--min-MQ 35",
             "--no-BAQ",
             "--seed 1234567",
-            "--skip-any-set 3852",
-            "--skip-any-unset 3",
+            f"--skip-any-set {skip_any_set.value}",
+            f"--skip-any-unset {skip_any_unset.value}"
         ]
     }
     actual = germline_snvs_workflow.get_args("bcftools", "pileup")(wildcards, [])

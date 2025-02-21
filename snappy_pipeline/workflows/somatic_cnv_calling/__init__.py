@@ -141,19 +141,12 @@ class SomaticCnvCallingStepPart(BaseStepPart):
 
 
 class AscatStepPart(SomaticCnvCallingStepPart):
-    """Estimation of purity and ploidy using ASCAT.
-
-    Notes
-    -----
-
-    - Although we name the virtual probes "SNP${num}", they are not guaranteed
-      to
-    """
+    """Somatic cnv calling using ASCAT."""
 
     # Name of the step.
     name = "ascat"
 
-    # The actions for generating BAF/CNV files for the tumor and/nor normal
+    # The actions for generating BAF/CNV files for the tumor and/or normal
     # sample, and finally to run the ASCAT pipeline.
     actions = (
         "alleleCounter",
@@ -180,6 +173,19 @@ class AscatStepPart(SomaticCnvCallingStepPart):
     def _get_chromosome_names(
         all_chromosomes: list[str] = list(map(str, range(1, 23))) + ["X"], ignored: set[str] = {}
     ):
+        """
+        Internally, ASCAT requires chromosome names as 1, ..., 22 & X (CNV on Y are not called).
+        These names (without prefix) are used when calling ASCAT R functions, and in
+        filenames read and/or produced by ASCAT.
+        Note that the ASCAT files are ..._chr<1,2,...,X>.txt, regardless whether the actual
+        chromosome name has a chr prefix or not.
+
+        This imposes some restrictions to the set of ignored chromosomes:
+        if the user wants  to exclude some chromosome, she must use the un-prefixed name in
+        the ``ignore_chroms`` configuration, even if the data is mapped against a prefixed
+        genome. We suggest that in this case, the user prefers the tool's ``ignore_chroms`` option,
+        rather than the step's.
+        """
         for contig_name in all_chromosomes:
             keep = True
             for pattern in ignored:
@@ -189,15 +195,15 @@ class AscatStepPart(SomaticCnvCallingStepPart):
             if keep:
                 yield contig_name
 
+    def _get_gender(self, wildcards: Wildcards) -> str:
+        return "XX" if self._get_sex(wildcards) == SexValue.FEMALE else "XY"
+
     def get_input_files(self, action: str):
-        """Return input files"""
-        # Validate action
         self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
     def get_output_files(self, action: str):
-        # Validate action
         self._validate_action(action)
         if action == "alleleCounter":
             tpl = "work/{mapper}.ascat.{tumor_name}/tmp/{library_name}_alleleFrequencies_chr{chrom_name}."
@@ -245,7 +251,6 @@ class AscatStepPart(SomaticCnvCallingStepPart):
 
     @dictify
     def get_log_file(self, action: str):
-        # Validate action
         self._validate_action(action)
         if action == "alleleCounter":
             tpl = (
@@ -266,7 +271,6 @@ class AscatStepPart(SomaticCnvCallingStepPart):
             yield k + "_md5", v + ".md5"
 
     def get_args(self, action: str):
-        # Validate action
         self._validate_action(action)
         return getattr(self, "_get_args_{}".format(action))
 
@@ -327,8 +331,8 @@ class AscatStepPart(SomaticCnvCallingStepPart):
         if self.config.sex.source == SexOrigin.AUTOMATIC:
             input_files["sex"] = self._get_guess_sex_file(wildcards)
 
-        if self.cfg.allele_counter.path_probloci_file:
-            input_files["probloci_file"] = self.cfg.allele_counter.path_probloci_file
+        if f := self.cfg.allele_counter.path_probloci_file:
+            input_files["probloci_file"] = f
 
         return input_files
 
@@ -338,7 +342,7 @@ class AscatStepPart(SomaticCnvCallingStepPart):
             "minCounts": self.cfg.allele_counter.minCounts,
             "seed": self.cfg.seed,
             "chrom_names": self.chromosome_names,
-            "gender": "XX" if self._get_sex(wildcards) == SexValue.FEMALE else "XY",
+            "gender": self._get_gender(wildcards),
             "tumorname": wildcards.library_name,
             "normalname": self.parent.normals[wildcards.library_name],
         }
@@ -365,7 +369,7 @@ class AscatStepPart(SomaticCnvCallingStepPart):
         return {
             "genomeVersion": self.cfg.genomeVersion,
             "seed": self.cfg.seed,
-            "gender": "XX" if self._get_sex(wildcards) == SexValue.FEMALE else "XY",
+            "gender": self._get_gender(wildcards),
             "y_limit": self.cfg.y_limit,
             "penalty": self.cfg.advanced.penalty,
             "gamma": self.cfg.advanced.gamma,
@@ -470,11 +474,12 @@ class SomaticCnvCallingWorkflow(BaseStep):
                 is_wes = 1
             else:
                 is_other = 1
-        assert is_wes + is_wgs + is_other == 1, (
-            "The current implementation doesn't support multiple library types in the same cohort"
-        )
-        assert is_other == 0, f"Unimplemented library type '{libraryType}'"
-
+        if is_wes + is_wgs + is_other > 1:
+            raise ValueError(
+                "The current implementation doesn't support multiple library types in the same cohort"
+            )
+        if is_other == 1:
+            raise ValueError(f"Unimplemented library type '{libraryType}'")
         return "WES" if is_wes else "WGS"
 
     def _get_defined_library_kits(

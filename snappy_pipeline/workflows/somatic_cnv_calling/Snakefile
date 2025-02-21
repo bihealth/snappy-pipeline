@@ -8,7 +8,9 @@ from snappy_pipeline.workflows.somatic_cnv_calling import (
     SomaticCnvCallingWorkflow,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = (
+    "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>, Eric Blanc <eric.blanc@bih-charite.de>"
+)
 
 
 # Configuration ===============================================================

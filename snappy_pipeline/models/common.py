@@ -11,12 +11,17 @@ class LibraryKitEntry(SnappyModel):
     Mapping from enrichment kit to target region BED file, for either computing per--target
     region coverage or selecting targeted exons.
 
-    The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
-    mapped to the name "default".
-      - name: IDT_xGen_V1_0
-        pattern: "xGen Exome Research Panel V1\\.0*"
-        path: "path/to/targets.bed"
+    In ``ngs_mapping``, ``helper_gcnv_model_targeted``, ``sv_calling_targeted`` & ``varfish_export``,
+    the ``name`` is used only internally to link samples to the paths of the targets.
+    ``pattern`` is a regular expression matching the values of the ``libraryKit`` information
+    in the sample sheet (at ``ngs_library`` level).
+    When the ``libraryKit`` value is ``_default__`` in the sample sheet, there is no mapping
+    between library and target paths. It is unclear how it affects the execution of the step.
+
+    In ``somatic_cnv_calling``, the ``name`` connects the sample sheet entry to the path,
+    and ``pattern`` is ignored.
+
+    TODO: clarify the aims and implementation of the library kit support.
     """
 
     name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
@@ -59,7 +64,7 @@ class Sex(SnappyModel):
     """
 
     cohort: SexValue | None = None
-    """Sex of the cohort, used when the source is ``config``"""
+    """Sex of the cohort, used when the source is ``config``, used for example for single-sex cohorts, such as ovarian cancer"""
 
     column_name: str | None = None
     """Column name of the sex information in the sample sheet, used when the source is ``samplesheet``"""

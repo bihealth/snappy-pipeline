@@ -177,15 +177,15 @@ class Ascat(SnappyModel):
         list[str],
         Field(
             examples=[
-                ["MT", "chrM"],
-                ["MT", "GL000*"],
-                ["chrM", "chrUn_*", "*_random"],
+                ["MT", "X", "Y"],
             ]
         ),
     ] = []
     """
     Contigs to be ignored during processing. Joined with ``ignored_chroms`` from upper level.
-    Note that ``ascat`` only considers chromosomes 1 to 22 & X anyway.
+    The chromosome names here must be without ``chr`` prefix, regardless of how the data has been processed.
+    This is a requirement specific to ``ASCAT``, and please also not that this tool only considers chromosomes 1 to 22 & X.
+    Mouse & other organisms are not supported.
     """
 
 
