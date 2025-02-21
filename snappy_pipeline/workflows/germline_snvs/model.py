@@ -8,6 +8,7 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, vali
 
 from snappy_pipeline.models.bcftools import (
     BcftoolsModel,
+    BcftoolsBamFlagMultipleTypes,
     BcftoolsBamFlag,
     BcftoolsCaller,
     BcftoolsPloidy,
@@ -31,12 +32,12 @@ class Pileup(BcftoolsModel):
     """Skip bases with baseQ/BAQ smaller than INT [1]"""
 
     skip_all_set: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits set"""
     skip_any_set: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = (
         BcftoolsBamFlag.UNMAP
@@ -48,12 +49,12 @@ class Pileup(BcftoolsModel):
     )
     """Skip reads with any of the bits set [UNMAP,MUNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY]"""
     skip_all_unset: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits unset"""
     skip_any_unset: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
 

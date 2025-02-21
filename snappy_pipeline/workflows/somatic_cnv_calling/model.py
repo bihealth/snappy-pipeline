@@ -5,7 +5,11 @@ from pydantic import Field, AfterValidator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.common import Sex, LibraryKitEntry
-from snappy_pipeline.models.bcftools import BcftoolsBamFlag, transform_to_flag
+from snappy_pipeline.models.bcftools import (
+    BcftoolsBamFlag,
+    BcftoolsBamFlagMultipleTypes,
+    transform_to_flag,
+)
 
 
 class Tool(enum.StrEnum):
@@ -45,10 +49,7 @@ class AlleleCounter(SnappyModel):
     min_MQ: int = 35
     """Minimum mapping quality required for a read to be counted"""
 
-    skip_any_set: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
-        AfterValidator(transform_to_flag),
-    ] = (
+    skip_any_set: Annotated[BcftoolsBamFlagMultipleTypes, AfterValidator(transform_to_flag)] = (
         BcftoolsBamFlag.UNMAP
         | BcftoolsBamFlag.MUNMAP
         | BcftoolsBamFlag.SECONDARY
@@ -66,10 +67,9 @@ class AlleleCounter(SnappyModel):
     -    8 0x008 MUNMAP        next segment in the template unmapped
     -    4 0x004 UNMAP         segment unmapped
     """
-    skip_any_unset: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
-        AfterValidator(transform_to_flag),
-    ] = BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
+    skip_any_unset: Annotated[BcftoolsBamFlagMultipleTypes, AfterValidator(transform_to_flag)] = (
+        BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
+    )
     """
     Exclude reads without any on these flags:
 

@@ -9,6 +9,7 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, vali
 from snappy_pipeline.models.bcftools import (
     BcftoolsModel,
     BcftoolsBamFlag,
+    BcftoolsBamFlagMultipleTypes,
     transform_to_flag,
     ensure_valid_tags,
     ensure_valid_mark_sites_tag,
@@ -34,12 +35,12 @@ class Pileup(BcftoolsModel):
     """Recalculate BAQ on the fly, ignore existing BQs"""
 
     skip_all_set: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits set"""
     skip_any_set: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = (
         BcftoolsBamFlag.UNMAP
@@ -51,12 +52,12 @@ class Pileup(BcftoolsModel):
     )
     """Skip reads with any of the bits set [UNMAP,MUNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY]"""
     skip_all_unset: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = BcftoolsBamFlag.NONE
     """Skip reads with all of the bits unset"""
     skip_any_unset: Annotated[
-        str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag],
+        BcftoolsBamFlagMultipleTypes,
         AfterValidator(transform_to_flag),
     ] = [BcftoolsBamFlag.PAIRED, BcftoolsBamFlag.PROPER_PAIR]
     """Skip reads with any of the bits unset [PAIRED,PROPER_PAIR]"""

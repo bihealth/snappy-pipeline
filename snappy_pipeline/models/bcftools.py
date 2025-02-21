@@ -1,7 +1,7 @@
 import enum
 import re
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Union
 
 from pydantic import Field, AliasGenerator
 
@@ -158,13 +158,13 @@ class BcftoolsBamFlag(enum.Flag):
     SUPPLEMENTARY = 2048
 
 
+BcftoolsBamFlagMultipleTypes = Union[
+    str | int | BcftoolsBamFlag | list[str] | list[int] | list[BcftoolsBamFlag]
+]
+
+
 def transform_to_flag(
-    value: str
-    | int
-    | BcftoolsBamFlag
-    | list[str]
-    | list[int]
-    | list[BcftoolsBamFlag] = BcftoolsBamFlag.NONE,
+    value: BcftoolsBamFlagMultipleTypes = BcftoolsBamFlag.NONE,
 ) -> BcftoolsBamFlag:
     flags = BcftoolsBamFlag.NONE
     if isinstance(value, list):
