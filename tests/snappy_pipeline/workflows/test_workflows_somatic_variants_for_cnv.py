@@ -8,6 +8,7 @@ import ruamel.yaml as ruamel_yaml
 from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variants_for_cnv import SomaticVariantsForCnvWorkflow
+from snappy_pipeline.models.bcftools import BcftoolsBamFlag
 
 from .conftest import patch_module_fs
 from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
@@ -188,6 +189,15 @@ def test_bcftools_step_part_get_log_file(somatic_variants_for_cnv_workflow):
 def test_bcftools_step_part_get_args_pileup(somatic_variants_for_cnv_workflow):
     """Test BcfToolsStepPart._get_args_pileup()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
+    skip_any_set = (
+        BcftoolsBamFlag.UNMAP
+        | BcftoolsBamFlag.MUNMAP 
+        | BcftoolsBamFlag.SECONDARY
+        | BcftoolsBamFlag.DUP
+        | BcftoolsBamFlag.QCFAIL
+        | BcftoolsBamFlag.SUPPLEMENTARY
+    )
+    skip_any_unset = BcftoolsBamFlag.PAIRED | BcftoolsBamFlag.PROPER_PAIR
     expected = {
         "extra_args": [
             "--full-BAQ",
@@ -195,8 +205,8 @@ def test_bcftools_step_part_get_args_pileup(somatic_variants_for_cnv_workflow):
             "--min-BQ 20",
             "--min-MQ 35",
             "--redo-BAQ",
-            "--skip-any-set 'UNMAP,SECONDARY,QCFAIL,DUP,SUPPLEMENTARY'",
-            "--skip-any-unset 'PAIRED,PROPER_PAIR'"
+            f"--skip-any-set {skip_any_set.value}",
+            f"--skip-any-unset {skip_any_unset.value}"
         ],
         "index": True,
     }
