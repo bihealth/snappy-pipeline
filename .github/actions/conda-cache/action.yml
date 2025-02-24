@@ -1,0 +1,38 @@
+name: 'Install/Cache conda'
+description: 'Install or retrieve a conda environment from cache'
+inputs:
+  python-version:
+    required: true
+    type: string
+  environment-file:
+    required: true
+    type: string
+  cache-number:
+    required: false
+    type: number
+    default: 1
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: ci_test_conda
+        python-version: ${{ inputs.python-version }}
+
+    - name: Cache conda
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: ${{ runner.os }}-conda-${{ inputs.cache-number }}-${{ hashFiles(inputs.environment-file) }}
+      id: cache
+
+    - name: Update conda environment
+      shell: bash -el {0}
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: conda env update -n ci_test_conda -f ${{ inputs.environment-file }}

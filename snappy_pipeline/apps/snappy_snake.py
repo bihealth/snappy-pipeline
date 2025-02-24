@@ -156,6 +156,8 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--unlock")
     if wrapper_args.rerun_incomplete:
         snakemake_argv.append("--rerun-incomplete")
+    if wrapper_args.ignore_incomplete:
+        snakemake_argv.append("--ignore-incomplete")
     if wrapper_args.touch:
         snakemake_argv.append("--touch")
     if wrapper_args.detailed_summary:
@@ -257,6 +259,9 @@ def main(argv=None):
         "--rerun-incomplete", action="store_true", default=False, help="Rerun incomplete jobs"
     )
     group.add_argument(
+        "--ignore-incomplete", action="store_true", default=False, help="Ignore incomplete jobs"
+    )
+    group.add_argument(
         "--cleanup-metadata",
         action="store_true",
         default=False,
@@ -290,7 +295,7 @@ def main(argv=None):
     )
     group = parser.add_argument_group(
         "Snakemake Verbosity / Debugging",
-        "Arguments from Snakemake that are useful for debugging, such as " "increasing verbosity",
+        "Arguments from Snakemake that are useful for debugging, such as increasing verbosity",
     )
     group.add_argument(
         "-p", "--printshellcmds", action="store_true", default=False, help="Print shell commands"

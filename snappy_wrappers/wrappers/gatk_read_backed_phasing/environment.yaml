@@ -2,6 +2,7 @@ channels:
   - conda-forge
   - bioconda
   - http://conda.cubi.bihealth.org/cubiconda
+  - nodefaults
 dependencies:
   - gatk_nonfree==3.7
   - bcftools==1.9

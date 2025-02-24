@@ -546,7 +546,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
             name_pattern += ".{annotator}"
 
         # VCF file and index
-        tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
+        tpl = f"output/{name_pattern}.{{tumor_library}}/out/{name_pattern}.{{tumor_library}}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         somatic_variant = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():

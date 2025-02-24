@@ -168,6 +168,8 @@ class PicardStepPart(BaseStepPart):
 
     @dictify
     def get_output_files(self, action):
+        if self.name not in self.config.tools:
+            return {}
         if action == "prepare":
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
