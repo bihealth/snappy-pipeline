@@ -132,10 +132,11 @@ scattergather:
 
 
 rule somatic_variant_calling_mutect2_scatter:
+    localrule: True
     output:
         **wf.get_output_files("mutect2", "scatter"),
     params:
-        padding=5000,
+        padding=wf.config.mutect2.padding,
         ignore_chroms=wf.w_config.get("ignore_chroms", wf.config.get("ignore_chroms", [])),
         fai=config["static_data_config"]["reference"]["path"] + ".fai",
     resources:
@@ -186,46 +187,10 @@ rule somatic_variant_calling_mutect2_gather:
         partition=wf.get_resource("mutect2", "gather", "partition"),
         tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
     threads: 1
-    conda:
-        "envs/mutect2.yaml"
     log:
         **wf.get_log_file("mutect2", "gather"),
-    shell:
-        """(
-        # Concatenate raw calls vcfs & index result ----------------------
-        bcftools concat \
-            --allow-overlaps \
-            -d none \
-            -o {output.raw} \
-            -O z \
-            {input.raw}
-        tabix -f {output.raw}
-
-        # Concatenate stats with GATK tool -------------------------------
-        stats=$(echo "{input.stats}" | sed -e "s/ / -stats /g")
-        gatk MergeMutectStats -stats $stats -O {output.stats}
-
-        # Contatenate orientation tar files ------------------------------
-        tmpdir=$(mktemp -d)
-        for tar_file in {input.f1r2}
-        do
-            abs_path=$(realpath $tar_file)
-            pushd $tmpdir
-            tar -zxvf $abs_path
-            popd
-        done
-        tar -zcvf {output.f1r2} -C $tmpdir .
-        rm -rf $tmpdir
-
-        # Compute md5 sums -----------------------------------------------
-        pushd $(dirname {output.raw})
-        for f in *; do
-            if [[ -f "$f" ]] && [[ $f != *.md5 ]]; then
-                md5sum $f > $f.md5;
-            fi;
-        done
-        popd
-        ) >{log.log} 2>&1"""
+    wrapper:
+        wf.wrapper_path("mutect2/gather")
 
 
 rule somatic_variant_calling_mutect2_filter:
