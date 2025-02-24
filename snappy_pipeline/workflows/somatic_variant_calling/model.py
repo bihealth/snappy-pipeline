@@ -113,6 +113,9 @@ class Mutect2(Parallel):
     common_variants: str | None = ""
     """Common germline variants for contamination estimation"""
 
+    padding: int | None = 5000
+    """Padding around scatter-intervals, in bp."""
+
     extra_arguments: Annotated[
         list[str],
         AfterValidator(argument),
