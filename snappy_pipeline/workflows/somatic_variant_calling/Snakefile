@@ -138,7 +138,7 @@ rule somatic_variant_calling_mutect2_scatter:
     output:
         **wf.get_output_files("mutect2", "scatter"),
     params:
-        **wf.get_params("mutect2","scatter")(),
+        **wf.get_params("mutect2", "scatter")(),
     resources:
         time=wf.get_resource("mutect2", "scatter", "time"),
         memory=wf.get_resource("mutect2", "scatter", "memory"),
