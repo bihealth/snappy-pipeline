@@ -421,7 +421,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         return getattr(self, "_get_input_files_{}".format(action))
 
     def _get_input_files_scatter(self, wildcards):
-        return {}
+        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
     def _get_input_files_run(self, wildcards):
         """Get input files for rule ``run``.

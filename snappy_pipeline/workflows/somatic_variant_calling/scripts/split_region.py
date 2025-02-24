@@ -77,7 +77,7 @@ def partition_lengths_with_splits(
 if __name__ == "__main__":
     if snakemake := locals()["snakemake"]:
         log = lambda: open(snakemake.log.log, "wt")  # noqa: E731
-        fai_path = snakemake.params.fai
+        fai_path = snakemake.input.fai
         ignore_chroms = snakemake.params.ignore_chroms
         padding = snakemake.params.padding
         output_regions = snakemake.output.regions
