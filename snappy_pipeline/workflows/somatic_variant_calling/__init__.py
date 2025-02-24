@@ -420,6 +420,23 @@ class Mutect2StepPart(MutectBaseStepPart):
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
+    def get_params(self, action):
+        self._validate_action(action)
+        return getattr(self, "_get_params_{}".format(action), {})
+
+    def _get_params_scatter(self):
+        ignore_chroms = list(
+            set(
+                self.w_config.get("ignore_chroms", [])
+                + self.config.get("ignore_chroms", [])
+                + self.config.get(self.name).get("ignore_chroms", [])
+            )
+        )
+        return {
+            "ignore_chroms": ignore_chroms,
+            "padding": self.config.mutect2.padding,
+        }
+
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
