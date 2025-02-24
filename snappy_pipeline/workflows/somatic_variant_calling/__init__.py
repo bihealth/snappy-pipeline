@@ -393,7 +393,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         self.resource_usage_dict["run"] = ResourceUsage(
             threads=self.config.mutect2.num_cores or run_resource_usage.threads,
             time=run_resource_usage.time,
-            memory=run_resource_usage.memory
+            memory=run_resource_usage.memory,
         )
 
     def check_config(self):
