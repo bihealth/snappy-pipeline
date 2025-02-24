@@ -1,7 +1,7 @@
 import enum
 import re
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Union
 
 from pydantic import Field, AliasGenerator
 
@@ -142,19 +142,47 @@ class BcftoolsModel(SnappyModel):
 #     validate_skip_any_unset = field_validator("skip_any_unset", mode="before")(convert_enum_names)
 
 
-class BcftoolsBamFlag(enum.StrEnum):
-    PAIRED = "PAIRED"
-    PROPER_PAIR = "PROPER_PAIR"
-    UNMAP = "UNMAP"
-    MUNMAP = "MUNMAP"
-    REVERSE = "REVERSE"
-    MREVERSE = "MREVERSE"
-    READ1 = "READ1"
-    READ2 = "READ2"
-    SECONDARY = "SECONDARY"
-    QCFAIL = "QCFAIL"
-    DUP = "DUP"
-    SUPPLEMENTARY = "SUPPLEMENTARY"
+class BcftoolsBamFlag(enum.Flag):
+    NONE = 0
+    PAIRED = 1
+    PROPER_PAIR = 2
+    UNMAP = 4
+    MUNMAP = 8
+    REVERSE = 16
+    MREVERSE = 32
+    READ1 = 64
+    READ2 = 128
+    SECONDARY = 256
+    QCFAIL = 512
+    DUP = 1024
+    SUPPLEMENTARY = 2048
+
+
+BcftoolsBamFlagMultipleTypes = Union[str | int | list[str | int] | BcftoolsBamFlag]
+
+
+def transform_to_flag(
+    value: BcftoolsBamFlagMultipleTypes = BcftoolsBamFlag.NONE,
+) -> BcftoolsBamFlag:
+    flags = BcftoolsBamFlag.NONE
+    if isinstance(value, list):
+        for v in value:
+            flags |= transform_to_flag(v)
+    else:
+        if isinstance(value, BcftoolsBamFlag):
+            flag = value
+        elif isinstance(value, str):
+            try:
+                value = int(value)
+                flag = BcftoolsBamFlag(value)
+            except ValueError:
+                flag = BcftoolsBamFlag(getattr(BcftoolsBamFlag, value))
+        elif isinstance(value, int):
+            flag = BcftoolsBamFlag(value)
+        else:
+            raise ValueError(f"Illegal flag '{value}'")
+        flags |= flag
+    return flags
 
 
 def ensure_unique(x: list[BcftoolsBamFlag], set_type: str = "?"):
