@@ -6,6 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -22,7 +24,7 @@ outdir=$basedir/out
 trap "rm -rf \"$workdir\"" EXIT
 
 configManta.py \
-    --referenceFasta {snakemake.config[static_data_config][reference][path]} \
+    --referenceFasta {args[reference]} \
     --runDir $workdir \
     --normalBam {snakemake.input.normal_bam} \
     --tumorBam {snakemake.input.tumor_bam}

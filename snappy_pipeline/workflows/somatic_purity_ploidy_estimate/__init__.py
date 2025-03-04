@@ -233,6 +233,18 @@ class AscatStepPart(BaseStepPart):
             ) % infix
             yield infix, path
 
+    def get_args(self, action):
+        def args_function(_wildcards):
+            if action in {"cnv_tumor", "cnv_normal", "baf_tumor", "baf_normal"}:
+                return {
+                    "b_af_loci": self.config.ascat.b_af_loci,
+                    "reference_path": self.w_config.static_data_config.reference.path,
+                }
+            else:
+                pass
+
+        return args_function
+
     def get_log_file(self, action):
         """Return path to log file"""
         # TODO: implement log option for actions `cnv_tumor_wes` and `cnv_normal_wes`.

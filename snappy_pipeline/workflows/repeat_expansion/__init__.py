@@ -193,7 +193,6 @@ class ExpansionHunterStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
         return getattr(self, "_get_log_files_{}".format(action))()
 
-    @listify
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
 
@@ -201,8 +200,14 @@ class ExpansionHunterStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-        yield ngs_mapping(bam_tpl.format(**wildcards))
+        bam_tpl = ngs_mapping("output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam")
+        bam = bam_tpl.format(**wildcards)
+        return {
+            "bam": bam,
+            "bai": bam + ".bai",
+            "reference": self.w_config.static_data_config.reference.path,
+            "repeat_catalog": self.config.repeat_catalog,
+        }
 
     @staticmethod
     @listify

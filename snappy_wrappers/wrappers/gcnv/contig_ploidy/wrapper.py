@@ -8,6 +8,8 @@ from snakemake.shell import shell
 #
 # cf. https://github.com/broadinstitute/gatk/issues/8164
 
+args = getattr(snakemake.params, "args", {})
+
 out_path = pathlib.Path(snakemake.output.done).parent
 
 MALE = "male"
@@ -26,9 +28,7 @@ ploidy_y = {MALE: 1, FEMALE: 0}
 paths_tsv = " ".join(snakemake.input.tsv)
 
 # Add interval block list for PAR regions if configured.
-par_intervals = snakemake.config["step_config"][snakemake.params.step_key]["gcnv"].get(
-    "path_par_intervals"
-)
+par_intervals = args["path_par_intervals"]
 if par_intervals:
     par_args = f"-XL {par_intervals}"
 else:

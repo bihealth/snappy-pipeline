@@ -2,7 +2,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+melt_config = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -25,7 +25,7 @@ ls $genotype_dir/*.{snakemake.wildcards.me_type}.tsv \
 java -Xmx13G -jar $JAR \
     MakeVCF \
     -genotypingdir $genotype_dir \
-    -h {snakemake.config[static_data_config][reference][path]} \
+    -h {melt_config[reference]} \
     -j 100 \
     -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
     -p $(dirname {snakemake.input.group_analysis}) \

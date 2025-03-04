@@ -3,7 +3,6 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - htslib ==1.3.1
-  - dkfz-bias-filter ==1.2.3a
-  # bcftools incompatible with dkfz-bias-filter in bioconda (2023-10-13)
-  # - bcftools
+- htslib =1.17
+- dkfz-bias-filter ==1.2.3a
+- bcftools =1.17

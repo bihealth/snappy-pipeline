@@ -16,8 +16,10 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Short-circuit in case of performing no filtration
-if snakemake.wildcards.frequency == "freq_all":
+if args["filter_mode"] == "freq_all":
     shell(
         r"""
     # Frequency set to "freq_all", just copy out the data.
@@ -35,14 +37,14 @@ if snakemake.wildcards.frequency == "freq_all":
 # Actual Filtration -------------------------------------------------------------------------------
 
 # Get shortcut to frequencies set.
-frequencies = snakemake.config["step_config"]["variant_filtration"]["frequencies"]
+frequencies = args["filter_config"]
 
 shell(
     r"""
 set -x
 
 ## do we have to separate de novo and dom freq? I don't think so.
-if [[ "{snakemake.wildcards.frequency}" == dominant_freq ]]; then
+if [[ "{args[filter_mode]}" == dominant_freq ]]; then
     # Perform filtration for de novo variants
     include='((GNOMAD_GENOMES_AC_ALL <= {frequencies[ac_dominant]}) | (GNOMAD_GENOMES_AC_ALL = "."))'
     include+=' && ((GNOMAD_GENOMES_AF_POPMAX < {frequencies[af_dominant]}) | (GNOMAD_GENOMES_AF_POPMAX = "."))'
@@ -53,7 +55,7 @@ if [[ "{snakemake.wildcards.frequency}" == dominant_freq ]]; then
         -O z \
         -o {snakemake.output.vcf} \
         {snakemake.input.vcf}
-elif [[ "{snakemake.wildcards.frequency}" == recessive_freq ]]; then
+elif [[ "{args[filter_mode]}" == recessive_freq ]]; then
     # Perform filtration for homozygous variants, heterozygous in both father and mother
     include='((GNOMAD_GENOMES_AF_ALL < {frequencies[af_recessive]}) | (GNOMAD_GENOMES_AF_ALL = "."))'
     include+=' && ((GNOMAD_GENOMES_AF_POPMAX < {frequencies[af_recessive]}) | (GNOMAD_GENOMES_AF_POPMAX = "."))'

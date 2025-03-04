@@ -15,6 +15,8 @@ compute-md5()
 }
 """
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -54,13 +56,13 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-    --reference {snakemake.config[static_data_config][reference][path]} \
-    --bin-length {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][window_length]} \
+    --reference {args[reference]} \
+    --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_chrom in {snakemake.config[step_config][variant_calling][ignore_chroms]}; do \
+    $(for ignore_chrom in {args[ignore_chroms]}; do \
         awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {snakemake.config[static_data_config][reference][path]}.fai; \
+            {args[reference]}.fai; \
     done)
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
@@ -97,15 +99,15 @@ run-shard()
         --java-options "-Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR" \
         --tmp-dir $TMPDIR \
         --output $TMPDIR/shards-output/$(printf %06d $job_no).g.vcf.gz \
-        --reference {snakemake.config[static_data_config][reference][path]} \
-        --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
+        --reference {args[reference]} \
+        --dbsnp {args[dbsnp]} \
         --intervals $interval \
         --input {snakemake.input.bam} \
         -G StandardAnnotation \
         -G AS_StandardAnnotation \
         -G StandardHCAnnotation \
         -G AlleleSpecificAnnotation \
-        $(if [[ {snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][allow_seq_dict_incompatibility]} == "True" ]]; then \
+        $(if [[ {args][allow_seq_dict_incompatibility]} == "True" ]]; then \
             echo --disable-sequence-dictionary-validation true; \
         fi) \
         -ERC GVCF
@@ -114,7 +116,7 @@ export -f run-shard
 
 # Perform parallel execution
 (set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
-num_threads={snakemake.config[step_config][variant_calling][gatk4_hc_gvcf][num_threads]}
+num_threads={args[num_threads]}
 cat $TMPDIR/final_intervals.txt \
 | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
 
@@ -130,7 +132,7 @@ bcftools concat \
     /dev/stdin \
 | bcftools norm \
     -d exact \
-    -f {snakemake.config[static_data_config][reference][path]} \
+    -f {args[reference]} \
     -O z \
     -o {snakemake.output.gvcf}
 tabix {snakemake.output.gvcf}

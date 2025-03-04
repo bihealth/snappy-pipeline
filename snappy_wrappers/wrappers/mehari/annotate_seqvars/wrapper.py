@@ -4,9 +4,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get shortcut to configuration of varfish_export step
-step_name = snakemake.params.args["step_name"]
-export_config = snakemake.config["step_config"][step_name]
+export_config = getattr(snakemake.params, "args", {})
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -67,7 +65,7 @@ if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed
     | bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+        --fasta-ref {export_config[reference]} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
@@ -77,7 +75,7 @@ else
     bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+        --fasta-ref {export_config[reference]} \
         {snakemake.input.vcf} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \

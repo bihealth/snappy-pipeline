@@ -14,10 +14,6 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
-# Define some global shortcuts
-REF={snakemake.config[static_data_config][reference][path]}
-REGIONS={snakemake.config[step_config][somatic_targeted_seq_cnv_calling][cnvetti_on_target][path_target_regions]}
-
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
