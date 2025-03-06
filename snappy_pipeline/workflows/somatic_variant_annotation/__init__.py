@@ -90,6 +90,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
+from .model import FiltrationSchema
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -136,11 +137,21 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return path to somatic vcf input file"""
         # Validate action
         self._validate_action(action)
-        tpl = (
-            "output/{mapper}.{var_caller}.{tumor_library}/out/{mapper}.{var_caller}.{tumor_library}"
-        )
+        tpl = "{mapper}.{var_caller}"
+        if self.config.filtration_schema == FiltrationSchema.list:
+            tpl += ".filtered.{tumor_library}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            tpl += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{tumor_library}",
+                self.config.filter_sets,
+                self.config.exon_lists,
+            )
+        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
+            tpl += ".{tumor_library}"
+        tpl = os.path.join("output", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
+        variant_calling = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -149,10 +160,19 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/out/"
-            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
-        ).format(annotator=self.annotator)
+        tpl = f"{{mapper}}.{{var_caller}}.{self.annotator}"
+        if self.config.filtration_schema == FiltrationSchema.list:
+            tpl += ".filtered.{tumor_library}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            tpl += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{tumor_library}",
+                self.config.filter_sets,
+                self.config.exon_lists,
+            )
+        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
+            tpl += ".{tumor_library}"
+        prefix = os.path.join("work", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         if self.has_full:
             key_ext["full"] = ".full.vcf.gz"
@@ -166,10 +186,19 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/log/"
-            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
-        ).format(annotator=self.annotator)
+        tpl = f"{{mapper}}.{{var_caller}}.{self.annotator}"
+        if self.config.filtration_schema == FiltrationSchema.list:
+            tpl += ".filtered.{tumor_library}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            tpl += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{tumor_library}",
+                self.config.filter_sets,
+                self.config.exon_lists,
+            )
+        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
+            tpl += ".{tumor_library}"
+        prefix = os.path.join("work", tpl, "log", tpl)
 
         key_ext = (
             ("log", ".log"),
@@ -289,6 +318,26 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        # Ugly hack to allow exchanging the order of somatic_variant_annotation &
+        # somatic_variant_filtration steps.
+        # The import of the other workflow must be dependent on the config:
+        # if in the somatic_variant_annotation config, the filtration_schema is not unfiltered,
+        # then the annotation step will include the filtration workflow as a
+        # previous step.
+        # THIS IMPLIES THAT NO ANNOTATION OCCURED BEFORE FILTRATION
+        # This protects against circular import of workflows.
+        #
+        # This must be done before initialisation of the workflow.
+        default = str(SomaticVariantAnnotationConfigModel.model_fields["filtration_schema"].default)
+        previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
+        if config["step_config"]["somatic_variant_annotation"].get(
+            "filtration_schema", default
+        ) != str(FiltrationSchema.unfiltered):
+            from snappy_pipeline.workflows.somatic_variant_filtration import (
+                SomaticVariantFiltrationWorkflow,
+            )
+
+            previous_steps.insert(0, SomaticVariantFiltrationWorkflow)
         super().__init__(
             workflow,
             config,
@@ -296,16 +345,21 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticVariantAnnotationConfigModel,
-            previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
         )
         # Register sub workflows
-        self.register_sub_workflow(
-            "somatic_variant_calling", self.config.path_somatic_variant_calling
-        )
+        if self.config.filtration_schema == FiltrationSchema.unfiltered:
+            self.register_sub_workflow(
+                "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
+            )
+        else:
+            self.register_sub_workflow(
+                "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
+            )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
@@ -322,7 +376,18 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
         callers = set(self.config.tools_somatic_variant_calling)
-        name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
+        name_pattern = "{mapper}.{caller}.{annotator}"
+        if self.config.filtration_schema == FiltrationSchema.list:
+            name_pattern += ".filtered.{tumor_library.name}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            name_pattern += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{tumor_library.name}",
+                self.config.filter_sets,
+                self.config.exon_lists,
+            )
+        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
+            name_pattern += ".{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
@@ -359,7 +424,18 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             ext=EXT_VALUES,
         )
         # joint calling
-        name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
+        name_pattern = "{mapper}.{caller}.{annotator}"
+        if self.config.filtration_schema == FiltrationSchema.list:
+            name_pattern += ".filtered.{donor.name}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            name_pattern += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{donor.name}",
+                self.config.filter_sets,
+                self.config.exon_lists,
+            )
+        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
+            name_pattern += ".{donor.name}"
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
