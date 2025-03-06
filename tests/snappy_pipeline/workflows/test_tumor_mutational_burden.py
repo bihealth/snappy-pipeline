@@ -46,7 +46,7 @@ def minimal_config():
               path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_annotation:
-            path_somatic_variant_calling: ../somatic_variant_calling
+            path_somatic_variant: ../somatic_variant_calling
             tools: ["vep", "jannovar"]
             jannovar:
               path_jannovar_ser: /path/to/jannover.ser
@@ -66,10 +66,8 @@ def minimal_config():
 
           tumor_mutational_burden:
             path_somatic_variant: ../somatic_variant_filtration
-            tools_ngs_mapping: []
             has_annotation: True # REQUIRED
-            is_filtered: True
-            tools_somatic_variant_calling: []
+            filtration_schema: sets
             target_regions: /path/to/regions.bed
 
         data_sets:
