@@ -27,6 +27,12 @@ class SomaticVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
 
 
+class FiltrationSchema(enum.StrEnum):
+    unfiltered = "unfiltered"
+    list = "list"
+    sets = "sets"
+
+
 class FilterSet(enum.StrEnum):
     NO_FILTER = "no_filter"
     DKFZ_ONLY = "dkfz_only"
@@ -132,6 +138,12 @@ class CbioportalExport(SnappyStepModel):
 
     somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
 
+    filtration_schema: FiltrationSchema = FiltrationSchema.list
+    """Method of variant filtration (if any)"""
+
+    filter_before_annotation: bool = False
+    """Flag if filtration has been done before annotation"""
+
     filter_set: Annotated[FilterSet | None, Field(None, deprecated="use `filter_list` instead")]
     """
     DEPRECATED: use `filter_list instead`.
@@ -149,8 +161,6 @@ class CbioportalExport(SnappyStepModel):
     DEPRECATED.
     Works together with filter_set, ignored when "filter_list" is selected
     """
-
-    filter_list: list[Filter] = []
 
     exclude_variant_with_flag: str | None = None
     """Required for Copy Number Alterations"""
