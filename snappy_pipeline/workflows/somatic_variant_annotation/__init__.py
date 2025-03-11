@@ -11,16 +11,10 @@ Step Input
 ==========
 
 The somatic variant annotation step uses Snakemake sub workflows for using the result of the
-``somatic_variant_calling`` step.
+``somatic_variant_calling`` step. It can now also use the output from the ``somatic_variant_filtration``
+step.
 
 The main assumption is that each VCF file contains the two matched normal and tumor samples.
-
-==========
-Step Input
-==========
-
-The variant annotation step uses Snakemake sub workflows for using the result of the
-``variant_calling`` step.
 
 ===========
 Step Output
@@ -132,23 +126,32 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             for donor in sheet.donors:
                 self.donors[donor.name] = donor
 
+    @staticmethod
+    def _name_template(
+        config: SomaticVariantAnnotationConfigModel, annotator: str | None = None
+    ) -> str:
+        tpl = "{mapper}.{var_caller}"
+        if annotator:
+            tpl += f".{annotator}"
+        if config.filtration_schema == FiltrationSchema.list:
+            tpl += ".filtered.{tumor_library}"
+        elif config.filtration_schema == FiltrationSchema.sets:
+            tpl += ".".join(
+                "dkfz_bias_filter.eb_filter",
+                "{tumor_library}",
+                config.filter_sets,
+                config.exon_lists,
+            )
+        elif config.filtration_schema == FiltrationSchema.unfiltered:
+            tpl += ".{tumor_library}"
+        return tpl
+
     @dictify
     def get_input_files(self, action):
         """Return path to somatic vcf input file"""
         # Validate action
         self._validate_action(action)
-        tpl = "{mapper}.{var_caller}"
-        if self.config.filtration_schema == FiltrationSchema.list:
-            tpl += ".filtered.{tumor_library}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            tpl += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{tumor_library}",
-                self.config.filter_sets,
-                self.config.exon_lists,
-            )
-        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
-            tpl += ".{tumor_library}"
+        tpl = self._name_template(self.config)
         tpl = os.path.join("output", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant"]
@@ -160,18 +163,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        tpl = f"{{mapper}}.{{var_caller}}.{self.annotator}"
-        if self.config.filtration_schema == FiltrationSchema.list:
-            tpl += ".filtered.{tumor_library}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            tpl += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{tumor_library}",
-                self.config.filter_sets,
-                self.config.exon_lists,
-            )
-        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
-            tpl += ".{tumor_library}"
+        tpl = self._name_template(self.config, annotator=self.annotator)
         prefix = os.path.join("work", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         if self.has_full:
@@ -186,18 +178,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
-        tpl = f"{{mapper}}.{{var_caller}}.{self.annotator}"
-        if self.config.filtration_schema == FiltrationSchema.list:
-            tpl += ".filtered.{tumor_library}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            tpl += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{tumor_library}",
-                self.config.filter_sets,
-                self.config.exon_lists,
-            )
-        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
-            tpl += ".{tumor_library}"
+        tpl = self._name_template(self.config, annotator=self.annotator)
         prefix = os.path.join("work", tpl, "log", tpl)
 
         key_ext = (
@@ -376,29 +357,20 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
         callers = set(self.config.tools_somatic_variant_calling)
-        name_pattern = "{mapper}.{caller}.{annotator}"
-        if self.config.filtration_schema == FiltrationSchema.list:
-            name_pattern += ".filtered.{tumor_library.name}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            name_pattern += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{tumor_library.name}",
-                self.config.filter_sets,
-                self.config.exon_lists,
-            )
-        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
-            name_pattern += ".{tumor_library.name}"
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(
+            self.config, annotator="{annotator}"
+        )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=annotators,
             ext=(
                 ".log",
@@ -419,27 +391,18 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
             annotator=full,
             ext=EXT_VALUES,
         )
         # joint calling
-        name_pattern = "{mapper}.{caller}.{annotator}"
-        if self.config.filtration_schema == FiltrationSchema.list:
-            name_pattern += ".filtered.{donor.name}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            name_pattern += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{donor.name}",
-                self.config.filter_sets,
-                self.config.exon_lists,
-            )
-        elif self.config.filtration_schema == FiltrationSchema.unfiltered:
-            name_pattern += ".{donor.name}"
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(
+            self.config, annotator="{annotator}"
+        )
         yield from self._yield_result_files_joint(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
             annotator=annotators,
             ext=EXT_VALUES,
         )
@@ -463,7 +426,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
                                 print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
-                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
+                            yield from expand(tpl, tumor_library=[ngs_library.name], **kwargs)
 
     def _yield_result_files_joint(self, tpl, **kwargs):
         """Build output paths from path template and extension list.
@@ -473,4 +436,4 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
-                yield from expand(tpl, donor=[donor], **kwargs)
+                yield from expand(tpl, tumor_library=[donor], **kwargs)

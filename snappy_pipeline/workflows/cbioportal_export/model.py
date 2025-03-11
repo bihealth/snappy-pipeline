@@ -144,10 +144,15 @@ class CbioportalExport(SnappyStepModel):
     filter_before_annotation: bool = False
     """Flag if filtration has been done before annotation"""
 
+    # TODO: remove filtration by sets
+    # When this is done, the deprecated options can be deleted, and the
+    # signature computations will be done just on the output of whatever step
+    # is used on input (somatic_variant_calling, somatic_variant_annotation or somatic_variant_filtration)
+
     filter_set: Annotated[FilterSet | None, Field(None, deprecated="use `filter_list` instead")]
     """
-    DEPRECATED: use `filter_list instead`.
-    Set it to an empty value when using annotated variants without filtration.
+    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
+    Must be set when the ``filtration_schema`` is ``sets``.
     """
 
     exon_list: Annotated[
@@ -158,8 +163,8 @@ class CbioportalExport(SnappyStepModel):
         ),
     ]
     """
-    DEPRECATED.
-    Works together with filter_set, ignored when "filter_list" is selected
+    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
+    Must be set when the ``filtration_schema`` is ``sets``.
     """
 
     exclude_variant_with_flag: str | None = None
@@ -206,4 +211,9 @@ class CbioportalExport(SnappyStepModel):
             raise ValueError("Copy number tool must be set when path_copy_number is set")
         if self.path_ngs_mapping and not self.expression_tool:
             raise ValueError("Expression tool must be set when path_ngs_mapping is set")
+        if self.filtration_schema == FiltrationSchema.sets:
+            if self.filter_set is None or self.exon_list is None:
+                raise ValueError(
+                    "'filter_set' & 'exon_list' must be set when the filtration schema is on sets"
+                )
         return self

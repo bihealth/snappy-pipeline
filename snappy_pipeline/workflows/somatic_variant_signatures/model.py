@@ -41,12 +41,17 @@ class SomaticVariantSignatures(SnappyStepModel):
     filter_before_annotation: bool = False
     """Flag if filtration has been done before annotation"""
 
+    # TODO: remove filtration by sets
+    # When this is done, the deprecated options can be deleted, and the
+    # signature computations will be done just on the output of whatever step
+    # is used on input (somatic_variant_calling, somatic_variant_annotation or somatic_variant_filtration)
     filter_sets: Annotated[
         list[FilterSet], Field(None, deprecated="use `filter_list` instead")
     ] = []
     """
-    DEPRECATED: use `filter_list instead`.
-    Set it to an empty value when using annotated variants without filtration.
+    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
+    The signatures are computed for all sets decribed here (in conjunction with `exon_lists`).
+    When empty, the set of filters is taken from those configured in `somatic_variant_filtration` step.
     """
 
     exon_lists: Annotated[
@@ -57,6 +62,7 @@ class SomaticVariantSignatures(SnappyStepModel):
         ),
     ] = []
     """
-    DEPRECATED.
-    Works together with filter_set, ignored when "filter_list" is selected
+    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
+    The signatures are computed for all regions decribed here (in conjunction with `filter_sets`).
+    When empty, the regions is taken from those configured in `somatic_variant_filtration` step.
     """

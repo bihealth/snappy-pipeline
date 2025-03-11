@@ -246,12 +246,12 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                 config.filter_sets = tools
             config.filter_sets = set(config.filter_sets) & tools
             assert len(config.filter_sets) > 0, "No valid filtration sets has been configured"
-            tools = set(
+            regions = set(
                 self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
             ) | set(["genome_wide"])
             if not config.exon_lists:
-                config.exon_lists = tools
-            config.exon_lists = set(config.exon_lists) & tools
+                config.exon_lists = regions
+            config.exon_lists = set(config.exon_lists) & regions
             assert len(config.exon_lists) > 0, "No valid regions for filtration has been configured"
 
         self.config = config
