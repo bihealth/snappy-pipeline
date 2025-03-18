@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.4.0) (2025-03-18)
+
+
+### Features
+
+* Add snakemake parameter --ignore-incomplete to snappy-pipeline ([#586](https://github.com/bihealth/snappy-pipeline/issues/586)) ([dbeb3ed](https://github.com/bihealth/snappy-pipeline/commit/dbeb3eda12cde54ca5ac5b5782eafbb107482cbd))
+
+
+### Bug Fixes
+
+* allow bwa_mem2 and mbcs in cbioportal_export model ([#603](https://github.com/bihealth/snappy-pipeline/issues/603)) ([882e869](https://github.com/bihealth/snappy-pipeline/commit/882e869b545e2b8ce08061397b8e15c320f0274f))
+* change type of parameters to adhere to specification of EBFilter ([#580](https://github.com/bihealth/snappy-pipeline/issues/580)) ([42d2c01](https://github.com/bihealth/snappy-pipeline/commit/42d2c0109fb35eff45b1baa696fa07dd333d110c))
+* remove unnecessary inputs for annotate_strucvars ([#592](https://github.com/bihealth/snappy-pipeline/issues/592) ) ([#593](https://github.com/bihealth/snappy-pipeline/issues/593)) ([f49fafb](https://github.com/bihealth/snappy-pipeline/commit/f49fafb91359d5445a0f8430ca34c10519f1eb6a))
+* update expectations for file names in GCNV models with kernel=0.9 and gatk4.6 ([#611](https://github.com/bihealth/snappy-pipeline/issues/611)) ([49f3568](https://github.com/bihealth/snappy-pipeline/commit/49f356809862dc087aca060c473ad0d35fd2e609))
+
 ## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
 
 
