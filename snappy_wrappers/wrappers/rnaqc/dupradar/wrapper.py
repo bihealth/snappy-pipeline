@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 shell.executable("/bin/bash")
 
 shell(
@@ -39,7 +41,7 @@ else
 fi
 
 # Find out strand
-strand={snakemake.config[step_config][gene_expression_quantification][strand]}
+strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
@@ -84,10 +86,10 @@ pushd ${{TMPDIR}}/dupradar
 Rscript --vanilla run_dupradar.R \
     "{snakemake.input.bam}" \
     results.tsv \
-    {snakemake.config[step_config][gene_expression_quantification][dupradar][dupradar_path_annotation_gtf]} \
+    {args[dupradar_path_annotation_gtf]} \
     ${{strand}} \
     ${{paired_cmd}} \
-    {snakemake.config[step_config][gene_expression_quantification][dupradar][num_threads]} \
+    {args[num_threads]} \
     "."
 popd
 

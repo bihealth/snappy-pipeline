@@ -7,6 +7,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, args, {})
+
 shell(
     r"""
 set -euo pipefail
@@ -27,7 +29,7 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
-strand={snakemake.config[step_config][gene_expression_quantification][strand]}
+strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
@@ -45,7 +47,7 @@ samtools view -h -F 260 -q 255 $bam \
     -T 2 \
     -g gene_id \
     -t exon \
-    -a {snakemake.config[step_config][gene_expression_quantification][featurecounts][path_annotation_gtf]} \
+    -a {args[path_annotation_gtf]} \
     -s ${{strand}} \
     -p \
     --verbose \

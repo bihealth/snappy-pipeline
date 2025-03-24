@@ -41,7 +41,7 @@ fi
 pushd $workdir
 
 defuse_run.pl \
-    -d {snakemake.config[step_config][somatic_gene_fusion_calling][defuse][path_dataset_directory]} \
+    -d {snakemake.params.args[path_dataset_directory]} \
     -1 input/reads_1.fastq.gz \
     -2 input/reads_2.fastq.gz \
     -o output \

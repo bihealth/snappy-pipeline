@@ -142,8 +142,12 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         self._validate_action(action)
         return getattr(self, "_get_params_run")
 
-    def _get_params_run(self, wildcards):
-        return {"missense_re": self.w_config.step_config["tumor_mutational_burden"].missense_regex}
+    def _get_params_run(self, _wildcards):
+        return {
+            "missense_re": self.config.missense_regex,
+            "target_regions": self.config.target_regions,
+            "has_annotation": self.config.has_annotation,
+        }
 
 
 class TumorMutationalBurdenCalculationWorkflow(BaseStep):

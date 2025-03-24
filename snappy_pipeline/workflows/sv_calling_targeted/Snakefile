@@ -54,6 +54,8 @@ rule sv_calling_targeted_gcnv_preprocess_intervals:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
         **wf.get_output_files("gcnv", "preprocess_intervals"),
+    params:
+        args=wf.get_params("gcnv", "preprocess_intervals"),
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
@@ -73,6 +75,8 @@ rule sv_calling_targeted_gcnv_coverage:
         unpack(wf.get_input_files("gcnv", "coverage")),
     output:
         **wf.get_output_files("gcnv", "coverage"),
+    params:
+        args=wf.get_params("gcnv", "coverage"),
     threads: wf.get_resource("gcnv", "coverage", "threads")
     resources:
         time=wf.get_resource("gcnv", "coverage", "time"),
@@ -148,6 +152,8 @@ rule sv_calling_targeted_gcnv_joint_germline_cnv_segmentation:
         unpack(wf.get_input_files("gcnv", "joint_germline_cnv_segmentation")),
     output:
         **wf.get_output_files("gcnv", "joint_germline_cnv_segmentation"),
+    params:
+        args=wf.get_params("gcnv", "coverage"),
     threads: wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "threads")
     resources:
         time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
@@ -185,6 +191,8 @@ rule sv_calling_targeted_manta_run:
         unpack(wf.get_input_files("manta", "run")),
     output:
         **wf.get_output_files("manta", "run"),
+    params:
+        **{"args": wf.get_args("manta", "run")},
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
@@ -301,6 +309,7 @@ rule sv_calling_targeted_melt_preprocess:
         **wf.get_log_file("melt", "preprocess"),
     params:
         step_key="sv_calling_targeted",
+        args=wf.get_args("melt", "preprocess"),
     wrapper:
         wf.wrapper_path("melt/preprocess")
 
@@ -323,6 +332,7 @@ rule sv_calling_targeted_melt_indiv_analysis:
         **wf.get_log_file("melt", "indiv_analysis"),
     params:
         step_key="sv_calling_targeted",
+        args=wf.get_args("melt", "indiv_analysis"),
     wrapper:
         wf.wrapper_path("melt/indiv_analysis")
 
@@ -345,6 +355,7 @@ rule sv_calling_targeted_melt_group_analysis:
         **wf.get_log_file("melt", "group_analysis"),
     params:
         step_key="sv_calling_targeted",
+        args=wf.get_args("melt", "group_analysis"),
     wrapper:
         wf.wrapper_path("melt/group_analysis")
 
@@ -367,6 +378,7 @@ rule sv_calling_targeted_melt_genotype:
         **wf.get_log_file("melt", "genotype"),
     params:
         step_key="sv_calling_targeted",
+        args=wf.get_args("melt", "genotype"),
     wrapper:
         wf.wrapper_path("melt/genotype")
 
@@ -388,6 +400,7 @@ rule sv_calling_targeted_melt_make_vcf:
         **wf.get_log_file("melt", "make_vcf"),
     params:
         step_key="sv_calling_targeted",
+        args=wf.get_args("melt", "make_vcf"),
     wrapper:
         wf.wrapper_path("melt/make_vcf")
 

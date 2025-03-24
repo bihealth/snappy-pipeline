@@ -7,7 +7,8 @@ from snakemake import shell
 
 shell.executable("/bin/bash")
 
-config = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]["convert"]
+args = getattr(snakemake.params, "args", {})
+
 rscript = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "snappy-convert-control_freec.R"
 )
@@ -47,9 +48,9 @@ R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     segments_fn = \"{snakemake.output.segments}\", \
     cns_fn = \"{snakemake.output.cns}\", \
     cnr_fn = \"{snakemake.output.cnr}\", \
-    org_obj={config[org_obj]}, \
-    tx_obj={config[tx_obj]}, \
-    bs_obj={config[bs_obj]})"
+    org_obj={args[org_obj]}, \
+    tx_obj={args[tx_obj]}, \
+    bs_obj={args[bs_obj]})"
 
 for f in {snakemake.output.log2} {snakemake.output.call} {snakemake.output.segments} \
     {snakemake.output.cns} {snakemake.output.cnr}; do

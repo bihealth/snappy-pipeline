@@ -2,7 +2,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+melt_config = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -20,6 +20,6 @@ JAR={melt_config[jar_file]}
 java -Xmx13G -jar $JAR \
     Preprocess \
     -bamfile {snakemake.output.orig_bam} \
-    -h {snakemake.config[static_data_config][reference][path]}
+    -h {melt_config[reference]}
 """
 )

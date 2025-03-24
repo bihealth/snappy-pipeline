@@ -433,6 +433,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         result = {
             "input": list(sorted(self._collect_gvcf(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
+            "reference_path": self.w_config.static_data_config.reference.path,
         }
         return result
 
@@ -441,18 +442,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config.merge_option,
+            "reference_path": self.w_config.static_data_config.reference.path,
         }
         return result
 
     def _get_params_annotate(self, wildcards):
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if (
-                donor.dna_ngs_library
-                and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
-            ):
-                return {"step_name": "variant_export_external"}
-        return {"step_name": "variant_export_external"}
+        return {"config": self.config.model_dump(by_alias=True)}
 
     def _get_params_bam_qc(self, wildcards):
         """Get parameters for wrapper ``variant_annotator/bam_qc``

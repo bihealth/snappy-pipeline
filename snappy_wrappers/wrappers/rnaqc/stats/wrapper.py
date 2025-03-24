@@ -7,6 +7,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -euo pipefail
@@ -39,7 +41,7 @@ else
 fi
 
 # Find out strand
-strand={snakemake.config[step_config][gene_expression_quantification][strand]}
+strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then

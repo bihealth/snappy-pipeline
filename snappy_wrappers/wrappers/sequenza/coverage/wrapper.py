@@ -15,10 +15,9 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+config = getattr(snakemake.params, "args", {})
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["sequenza"]
-genome = snakemake.config["static_data_config"]["reference"]["path"]
+genome = config["reference"]
 length = config["length"]
 
 f = open(genome + ".fai", "rt")

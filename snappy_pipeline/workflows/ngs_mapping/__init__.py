@@ -431,9 +431,10 @@ import os
 import re
 import sys
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -732,6 +733,14 @@ class BwaStepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def get_args(self, action):
+        def args_fn(wildcards):
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(dict(self.config.bwa))
+            return parent_args
+
+        return args_fn
+
 
 class BwaMem2StepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using BWA-MEM 2"""
@@ -757,6 +766,14 @@ class BwaMem2StepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def get_args(self, action):
+        def args_fn(wildcards):
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(dict(self.config.bwa_mem2))
+            return parent_args
+
+        return args_fn
+
 
 class MBCsStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment on MBC data"""
@@ -781,6 +798,28 @@ class MBCsStepPart(ReadMappingStepPart):
             memory="4G",
             partition="medium",
         )
+
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            args = super().get_args(action)(wildcards)
+            args |= {
+                "reference": self.parent.w_config.static_data_config.reference.path,
+                "config": self.config.mbcs.model_dump(by_alias=True),
+                "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
+                    by_alias=True
+                ),
+            }
+            if self.config.mbcs.use_barcodes:
+                args["barcode_config"] = getattr(
+                    self.config, self.config.mbcs.barcode_tool
+                ).model_dump(by_alias=True)
+            if self.config.mbcs.recalibrate:
+                args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
+            return args
+
+        return args_fn
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -850,6 +889,15 @@ class StarStepPart(ReadMappingStepPart):
                     )
                 ),
             )
+
+    def get_args(self, action: str):
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            parent_args = super().get_args(action)(wildcards)
+            parent_args.update(self.config.star.model_dump(by_alias=True))
+            parent_args["features"] = self.parent.w_config.static_data_config.features.path
+            return parent_args
+
+        return args_fn
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -978,6 +1026,10 @@ class StrandednessStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return self.config.strandedness.model_dump(by_alias=True)
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -1166,7 +1218,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 path_targets_bed = item.path
                 break
 
+        path_reference = self.w_config.static_data_config.reference.path
+        path_reference_genome = path_reference + ".genome"
+
         return {
+            "path_reference": path_reference,
+            "path_reference_genome": path_reference_genome,
             "path_targets_bed": path_targets_bed,
         }
 
@@ -1239,6 +1296,13 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 for work_path in chain(paths_work.values(), self.get_log_file(action).values())
             ],
         )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._check_action(action)
+        return {
+            "reference": self.parent.w_config.static_config_data.reference.path,
+            "window_length": self.config.bam_collect_doc.window_length,
+        }
 
     @dictify
     def _get_output_files_run_work(self):
@@ -1370,6 +1434,10 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

@@ -12,12 +12,13 @@ class DkfzAndEbfilter(SnappyModel):
 
 class DkfzAndEbfilterAndOxog(SnappyModel):
     vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
+    coverage_threshold: int = 5
+    ebfilter_threshold: float = 2.4
 
 
 class DkfzAndOxog(SnappyModel):
     vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
+    coverage_threshold: int = 5
 
 
 class FilterSets(SnappyModel):
