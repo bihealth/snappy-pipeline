@@ -60,6 +60,8 @@ rule sv_calling_targeted_gcnv_preprocess_intervals:
         memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
+    params:
+        step_key="sv_calling_targeted",
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
     wrapper:
