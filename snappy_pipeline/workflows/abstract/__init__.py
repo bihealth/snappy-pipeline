@@ -174,7 +174,9 @@ class BaseStepPart:
             # '_get_resource' is the primary input function, if resource_usage.<resource_name>
             # is a callable we need to call it
             if callable(getattr(resource_usage, resource_name)):
-                return getattr(resource_usage, resource_name)(wildcards=wildcards, input=input, **kwargs)
+                return getattr(resource_usage, resource_name)(
+                    wildcards=wildcards, input=input, **kwargs
+                )
             else:
                 return getattr(resource_usage, resource_name)
 
