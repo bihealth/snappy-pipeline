@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.prefix("set -euo pipefail; ")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -49,11 +51,11 @@ gatk_nonfree \
     -nct 1 \
     --pedigreeValidationType SILENT \
     --FatherAlleleFirst \
-    --DeNovoPrior {snakemake.config[step_config][variant_phasing][gatk_phase_by_transmission][de_novo_prior]} \
+    --DeNovoPrior {args[de_novo_prior]} \
     --pedigree {snakemake.input.ped} \
     --variant $TMPDIR/trio_only.vcf.gz \
     --out {snakemake.output.vcf} \
-    --reference_sequence {snakemake.config[static_data_config][reference][path]}
+    --reference_sequence {args[reference]}
 
 tabix -f {snakemake.output.vcf}
 

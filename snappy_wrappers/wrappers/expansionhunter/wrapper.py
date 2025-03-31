@@ -45,9 +45,9 @@ fi
 mkdir -p $(dirname {snakemake.output.json})
 
 # Call tool
-ExpansionHunter --reads {snakemake.input} \
-        --reference {snakemake.config[static_data_config][reference][path]} \
-        --variant-catalog {snakemake.config[step_config][repeat_expansion][repeat_catalog]} \
+ExpansionHunter --reads {snakemake.input.bam} \
+        --reference {snakemake.input.reference} \
+        --variant-catalog {snakemake.input.repeat_catalog} \
         --output-prefix {prefix} {sex_argument}
 """
 )

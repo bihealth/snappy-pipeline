@@ -2,6 +2,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -64,7 +66,7 @@ rm -rf $outdir/* $workdir/*
 configManta.py \
     --retainTempFiles \
     --exome \
-    --referenceFasta {snakemake.config[static_data_config][reference][path]} \
+    --referenceFasta {args[reference]} \
     --runDir $workdir \
     $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
 

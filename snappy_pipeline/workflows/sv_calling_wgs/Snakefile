@@ -65,6 +65,8 @@ rule sv_calling_wgs_manta_run:
         unpack(wf.get_input_files("manta", "run")),
     output:
         **wf.get_output_files("manta", "run"),
+    params:
+        **{"args": wf.get_args("manta", "run")},
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         time=wf.get_resource("manta", "run", "time"),
@@ -92,7 +94,7 @@ rule sv_calling_wgs_delly2_call:
         partition=wf.get_resource("delly2", "call", "partition"),
         tmpdir=wf.get_resource("delly2", "call", "tmpdir"),
     params:
-        step_key="sv_calling_wgs",
+        **wf.get_args("delly2", "call"),
     log:
         **wf.get_log_file("delly2", "call"),
     wrapper:
@@ -111,7 +113,7 @@ rule sv_calling_wgs_delly2_merge_calls:
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_calls", "tmpdir"),
     params:
-        step_key="sv_calling_wgs",
+        **wf.get_args("delly2", "merge_calls"),
     log:
         **wf.get_log_file("delly2", "merge_calls"),
     wrapper:
@@ -130,7 +132,7 @@ rule sv_calling_wgs_delly2_genotype:
         partition=wf.get_resource("delly2", "genotype", "partition"),
         tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
     params:
-        step_key="sv_calling_wgs",
+        **wf.get_args("delly2", "genotype"),
     log:
         **wf.get_log_file("delly2", "genotype"),
     wrapper:
@@ -149,7 +151,7 @@ rule sv_calling_wgs_delly2_merge_genotypes:
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_genotypes", "tmpdir"),
     params:
-        step_key="sv_calling_wgs",
+        **wf.get_args("delly2", "merge_genotypes"),
     log:
         **wf.get_log_file("delly2", "merge_genotypes"),
     wrapper:
@@ -224,6 +226,8 @@ rule sv_calling_wgs_popdel_profile:
     wildcard_constraints:
         mapper=RE_BETWEEN_DOTS,
         index_ngs_library=RE_BETWEEN_DOTS,
+    params:
+        **{"args": wf.get_args("popdel", "profile")},
     threads: wf.get_resource("popdel", "profile", "threads")
     resources:
         time=wf.get_resource("popdel", "profile", "time"),
@@ -320,6 +324,7 @@ rule sv_calling_wgs_melt_preprocess:
         **wf.get_log_file("melt", "preprocess"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "preprocess"),
     wrapper:
         wf.wrapper_path("melt/preprocess")
 
@@ -342,6 +347,7 @@ rule sv_calling_wgs_melt_indiv_analysis:
         **wf.get_log_file("melt", "indiv_analysis"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "indiv_analysis"),
     wrapper:
         wf.wrapper_path("melt/indiv_analysis")
 
@@ -364,6 +370,7 @@ rule sv_calling_wgs_melt_group_analysis:
         **wf.get_log_file("melt", "group_analysis"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "group_analysis"),
     wrapper:
         wf.wrapper_path("melt/group_analysis")
 
@@ -386,6 +393,7 @@ rule sv_calling_wgs_melt_genotype:
         **wf.get_log_file("melt", "genotype"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "genotype"),
     wrapper:
         wf.wrapper_path("melt/genotype")
 
@@ -407,6 +415,7 @@ rule sv_calling_wgs_melt_make_vcf:
         **wf.get_log_file("melt", "make_vcf"),
     params:
         step_key="sv_calling_wgs",
+        args=wf.get_args("melt", "make_vcf"),
     wrapper:
         wf.wrapper_path("melt/make_vcf")
 
@@ -440,6 +449,8 @@ rule sv_calling_wgs_gcnv_preprocess_intervals:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
         **wf.get_output_files("gcnv", "preprocess_intervals"),
+    params:
+        args=wf.get_params("gcnv", "preprocess_intervals"),
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
         time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
@@ -540,6 +551,8 @@ rule sv_calling_wgs_gcnv_joint_germline_cnv_segmentation:
         tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
     log:
         **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
+    params:
+        args=wf.get_params("gcnv", "joint_germline_cnv_segmentation"),
     wrapper:
         wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")
 

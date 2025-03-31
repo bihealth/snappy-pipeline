@@ -252,6 +252,7 @@ import typing
 import warnings
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from snakemake.io import Wildcards, expand
@@ -477,6 +478,31 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            reference_path = self.w_config.static_data_config.reference.path
+            if "GRCh37" in reference_path or "hg19" in reference_path:
+                assembly = "GRCh37"
+            elif "GRCh38" in reference_path or "hg38" in reference_path:
+                assembly = "GRCh38"
+            else:
+                assembly = "unknown"
+
+            return {
+                "reference_path": reference_path,
+                "reference_index_path": reference_path + ".fai",
+                "assembly": assembly,
+                "ignore_chroms": self.config.ignore_chroms,
+                "gatk4_hc_joint_window_length": self.config.gatk4_hc_joint.window_length,
+                "gatk4_hc_joint_num_threads": self.config.gatk4_hc_joint.num_threads,
+                "max_depth": self.config.bcftools_call.max_depth,
+                "max_indel_depth": self.config.bcftools_call.max_indel_depth,
+            }
+
+        return args_fn
+
 
 class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
@@ -507,6 +533,17 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_hc"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "num_threads": self.config.gatk3_hc.num_threads,
+            "window_length": self.config.gatk3_hc.window_length,
+            "allow_seq_dict_incompatibility": self.config.gatk3_hc.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
+
 
 class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK v3 UnifiedGenotyper"""
@@ -514,11 +551,34 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_ug"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "num_threads": self.config.gatk3_uc.num_threads,
+            "window_length": self.config.gatk4_hc_joint.window_length,
+            "allow_seq_dict_incompatibility": self.config.gatk3_uc.allow_seq_dict_incompatibility,
+            "downsample_to_coverage": self.config.gatk3_uc.downsample_to_coverage,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
+
 
 class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree"""
 
     name = "gatk4_hc_joint"
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "window_length": self.config.gatk4_hc_joint.window_length,
+            "num_threads": self.config.gatk4_hc_joint.num_threads,
+            "allow_seq_dict_incompatibility": self.config.gatk4_hc_joint.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
 
 
 class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
@@ -604,6 +664,19 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
                 for work_path in chain(result.values(), self.get_log_file("genotype").values())
             ],
         )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "step_key": "variant_calling",
+            "caller_key": "gatk4_hc_gvcf",
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
+            "window_length": self.config.gatk4_hc_gvcf.window_length,
+            "num_threads": self.config.gatk4_hc_gvcf.num_threads,
+            "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
 
 
 class ReportGetLogFileMixin:
@@ -727,6 +800,23 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         """Return step part output files"""
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
+
+    def get_params(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(_wildcards):
+            return {
+                name: self.config.bcftools_roh.get(name)
+                for name in [
+                    "path_targets",
+                    "path_af_file",
+                    "ignore_homref",
+                    "skip_indels",
+                    "rec_rate",
+                ]
+            }
+
+        return args_fn
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
@@ -869,6 +959,15 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
                 for work_path in chain(work_files.values(), self.get_log_file("run").values())
             ],
         )
+
+    def get_args(self, action: str):
+        def args_function(_wildcards):
+            return {
+                "min_dp": self.config.baf_file_generation.min_dp,
+                "reference_index_path": self.w_config.static_data_config.reference.path + ".fai",
+            }
+
+        return args_function
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)

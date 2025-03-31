@@ -39,8 +39,7 @@ else:
 
 this_file = __file__
 
-this_step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][this_step]["fastp"]
+config = snakemake.params.args["config"]
 
 shell(
     r"""
