@@ -129,6 +129,10 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
         for resource in expected_low.keys():
             if action == "filter_intervals" and resource == "memory":
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
+                    None, attempt=None
+                )
+                assert actual == "16384M"
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=1
                 )
                 assert actual == "20480M"
