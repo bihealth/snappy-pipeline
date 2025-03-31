@@ -171,12 +171,11 @@ class BaseStepPart:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
                 return self.get_default_partition()
-            # '_get_resource' is the primary input function, if resource_usage.<resource_name>
-            # is a callable we need to call it
-            if callable(getattr(resource_usage, resource_name)):
-                return getattr(resource_usage, resource_name)(
-                    wildcards=wildcards, input=input, **kwargs
-                )
+            # '_get_resource' is the primary input function,
+            # if resource is callable we need to call it
+            resource = getattr(resource_usage, resource_name)
+            if callable(resource):
+                return resource(wildcards=wildcards, input=input, **kwargs)
             else:
                 return getattr(resource_usage, resource_name)
 
