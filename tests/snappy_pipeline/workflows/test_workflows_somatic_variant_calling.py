@@ -196,9 +196,11 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.txt",
     }
+    mutect2_wildcards_with_scatteritem = Wildcards(fromdict=dict(mutect2_wildcards) | {"scatteritem": "1-of-1"})
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards_with_scatteritem)
     assert actual == expected
 
 
@@ -269,10 +271,10 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_output_files_run(
+def test_mutect2_step_part_get_output_files_gather(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_output_files() - run"""
+    """Tests Mutect2StepPart.get_output_files() - gather"""
     # Define expected
     expected = {
         "raw": mutect2_output_base_name + ".raw.vcf.gz",
@@ -285,7 +287,7 @@ def test_mutect2_step_part_get_output_files_run(
         "f1r2_md5": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz.md5",
     }
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "gather")
     assert actual == expected
 
 
@@ -353,14 +355,14 @@ def test_mutect2_step_part_get_output_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_log_file_run(
+def test_mutect2_step_part_get_log_file_gather(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_log_files() - run"""
+    """Tests Mutect2StepPart.get_log_files() - gather"""
     # Define expected
     expected = get_expected_log_files_dict(base_out=mutect2_log_base_name)
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "gather")
     assert actual == expected
 
 
