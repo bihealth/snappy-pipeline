@@ -165,12 +165,16 @@ class BaseStepPart:
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
-        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None) -> Any:
+        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None, **kwargs) -> Any:
             resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
                 return self.get_default_partition()
+            # '_get_resource' is the primary input function, if resource_usage.<resource_name>
+            # is a callable we need to call it
+            if callable(getattr(resource_usage, resource_name)):
+                return getattr(resource_usage, resource_name)(wildcards=wildcards, input=input, **kwargs)
             else:
                 return getattr(resource_usage, resource_name)
 
