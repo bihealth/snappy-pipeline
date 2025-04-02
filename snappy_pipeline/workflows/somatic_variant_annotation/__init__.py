@@ -78,7 +78,7 @@ import sys
 from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
@@ -179,22 +179,14 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_params(self, action):
-        """Return arguments to pass down."""
-        _ = action
-
-        def params_function(wildcards):
-            if wildcards.tumor_library not in self.donors:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
-                    "config": getattr(self.config, self.name).model_dump(by_alias=True),
-                    "reference": self.parent.w_config.static_data_config.reference.path,
-                }
-            else:
-                return {}
-
-        return params_function
+    def _get_args_top(self, wildcards: Wildcards):
+        if wildcards.tumor_library not in self.donors:
+            return {
+                "tumor_library": wildcards.tumor_library,
+                "normal_library": self.get_normal_lib_name(wildcards),
+            }
+        else:
+            return {}
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -213,6 +205,11 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
 
     #: Class available actions
     actions = ("annotate_somatic_vcf",)
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        _ = action
+        return self._get_args_top
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -258,6 +255,23 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         "rank",
         "length",
     )
+
+    @dictify
+    def get_input_files(self, action: str):
+        input_files = super().get_input_files(action)
+        for k, v in input_files.items():
+            yield k, v
+        yield "reference", self.w_config.static_data_config.reference.path
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        _ = action
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards):
+        return self._get_args_top(wildcards) | {
+            "config": self.config.get(self.name).model_dump(by_alias=True)
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

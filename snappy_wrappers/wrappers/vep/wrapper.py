@@ -56,7 +56,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 vep --verbose \
-    --fasta {args[reference]} \
+    --fasta {snakemake.input.reference} \
     --input_file {snakemake.input.vcf} \
     --output_file {snakemake.output.vcf} \
     --compress_output bgzip \

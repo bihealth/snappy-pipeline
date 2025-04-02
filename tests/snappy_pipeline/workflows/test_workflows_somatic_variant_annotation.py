@@ -138,11 +138,11 @@ def test_jannovar_step_part_get_log_file(somatic_variant_annotation_workflow):
     assert actual == expected
 
 
-def test_jannovar_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_params()"""
+def test_jannovar_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests JannovarAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("jannovar", "annotate_somatic_vcf")(
+    actual = somatic_variant_annotation_workflow.get_args("jannovar", "annotate_somatic_vcf")(
         wildcards
     )
     assert actual == expected
@@ -173,6 +173,7 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -202,11 +203,35 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
     assert actual == expected
 
 
-def test_vep_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests VepAnnotateSomaticVcfStepPart.get_params()"""
+def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("vep", "run")(wildcards)
+    expected = {
+        "tumor_library": "P001-T1-DNA1-WGS1",
+        "normal_library": "P001-N1-DNA1-WGS1",
+        "config": {
+            "cache_dir": "/path/to/dir/cache",
+            "species": "homo_sapiens",
+            "assembly": "GRCh38",
+            "cache_version": "102",
+            "tx_flag": "gencode_basic",
+            "output_options": ["everything"],
+            "buffer_size": 1000,
+            "num_threads": 8,
+            "pick_order": [
+                "biotype",
+                "mane_select",
+                "mane_plus_clinical",
+                "appris",
+                "tsl",
+                "ccds",
+                "canonical",
+                "rank",
+                "length",
+            ]
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
     assert actual == expected
 
 
