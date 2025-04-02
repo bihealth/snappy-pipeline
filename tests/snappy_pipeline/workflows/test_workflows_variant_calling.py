@@ -54,6 +54,7 @@ def minimal_config():
             bcftools_call: {}
             gatk3_hc: {}
             gatk3_ug: {}
+            gatk4_hc_joint: {}
 
         data_sets:
           first_batch:
@@ -115,6 +116,8 @@ def test_bcftools_step_part_get_input_files(variant_calling_workflow):
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
             "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
         ],
+        "reference": "/path/to/ref.fa",
+        "reference_index": "/path/to/ref.fa.fai",
     }
     assert actual == expected
 
@@ -132,6 +135,21 @@ def test_bcftools_step_part_get_output_files(variant_calling_workflow):
             expected["output_links"].append(f"{base}.{full_ext}")
     # Get actual
     actual = variant_calling_workflow.get_output_files("bcftools_call", "run")
+    assert actual == expected
+
+
+def test_bcftools_step_part_get_args(variant_calling_workflow):
+    # Define expected
+    expected = {
+        "assembly": "unknown",
+        "ignore_chroms": ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"],
+        "gatk4_hc_joint_window_length": 10000000,
+        "gatk4_hc_joint_num_threads": 16,
+        "max_depth": 250,
+        "max_indel_depth": 250,
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_args("bcftools_call", "run")
     assert actual == expected
 
 

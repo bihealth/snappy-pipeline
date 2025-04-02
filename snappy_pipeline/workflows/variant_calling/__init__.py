@@ -478,30 +478,33 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        parent = super()._get_input_files_run(wildcards)
+        for k, v in parent.items():
+            yield k, v
+        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "reference_index", self.parent.w_config.static_data_config.reference.path + ".fai"
+
     def get_args(self, action: str):
         self._validate_action(action)
 
-        def args_fn(_wildcards):
-            reference_path = self.w_config.static_data_config.reference.path
-            if "GRCh37" in reference_path or "hg19" in reference_path:
-                assembly = "GRCh37"
-            elif "GRCh38" in reference_path or "hg38" in reference_path:
-                assembly = "GRCh38"
-            else:
-                assembly = "unknown"
+        reference_path = self.parent.w_config.static_data_config.reference.path
+        if "GRCh37" in reference_path or "hg19" in reference_path:
+            assembly = "GRCh37"
+        elif "GRCh38" in reference_path or "hg38" in reference_path:
+            assembly = "GRCh38"
+        else:
+            assembly = "unknown"
 
-            return {
-                "reference_path": reference_path,
-                "reference_index_path": reference_path + ".fai",
-                "assembly": assembly,
-                "ignore_chroms": self.config.ignore_chroms,
-                "gatk4_hc_joint_window_length": self.config.gatk4_hc_joint.window_length,
-                "gatk4_hc_joint_num_threads": self.config.gatk4_hc_joint.num_threads,
-                "max_depth": self.config.bcftools_call.max_depth,
-                "max_indel_depth": self.config.bcftools_call.max_indel_depth,
-            }
-
-        return args_fn
+        return {
+            "assembly": assembly,
+            "ignore_chroms": self.config.ignore_chroms,
+            "gatk4_hc_joint_window_length": self.config.gatk4_hc_joint.window_length,
+            "gatk4_hc_joint_num_threads": self.config.gatk4_hc_joint.num_threads,
+            "max_depth": self.config.bcftools_call.max_depth,
+            "max_indel_depth": self.config.bcftools_call.max_indel_depth,
+        }
 
 
 class GatkCallerStepPartBase(VariantCallingStepPart):
