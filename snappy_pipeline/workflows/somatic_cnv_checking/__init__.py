@@ -257,7 +257,11 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
         def input_function(wildcards):
             name_pattern = "{mapper}.{caller}.{library_name}".format(**wildcards)
             base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-            return {"vcf": base_path_out + ".vcf.gz", "tsv": base_path_out + ".tsv"}
+            return {
+                "vcf": base_path_out + ".vcf.gz", 
+                "tsv": base_path_out + ".tsv",
+                "reference": self.parent.w_config.static_data_config.reference.path,
+            }
 
         return input_function
 
@@ -274,11 +278,6 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment": base_path_out + ".segment.pdf",
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
-
-    def get_args(self, action: str) -> dict[str, Any]:
-        # Validate action
-        self._validate_action(action)
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     def get_log_file(self, action):
         # Validate action
