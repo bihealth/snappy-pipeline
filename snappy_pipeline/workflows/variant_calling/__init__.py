@@ -551,15 +551,21 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_ug"
 
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        parent = super()._get_input_files_run(wildcards)
+        for k, v in parent.items():
+            yield k, v
+        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "dbsnp", self.parent.w_config.static_data_config.dbsnp.path
+
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
-            "num_threads": self.config.gatk3_uc.num_threads,
-            "window_length": self.config.gatk4_hc_joint.window_length,
-            "allow_seq_dict_incompatibility": self.config.gatk3_uc.allow_seq_dict_incompatibility,
-            "downsample_to_coverage": self.config.gatk3_uc.downsample_to_coverage,
+            "num_threads": self.config.gatk3_ug.num_threads,
+            "window_length": self.config.gatk3_ug.window_length,
+            "allow_seq_dict_incompatibility": self.config.gatk3_ug.allow_seq_dict_incompatibility,
+            "downsample_to_coverage": self.config.gatk3_ug.downsample_to_coverage,
             "ignore_chroms": self.config.ignore_chroms,
         }
 

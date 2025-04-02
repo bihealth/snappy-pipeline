@@ -232,6 +232,8 @@ def test_gatk3_ug_step_part_get_input_files(variant_calling_workflow):
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
             "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     assert actual == expected
 
@@ -258,6 +260,20 @@ def test_gatk3_ug_step_part_get_output_files(variant_calling_workflow):
     ]
     # Get actual
     actual = variant_calling_workflow.get_output_files("gatk3_ug", "run")
+    assert actual == expected
+
+
+def test_gatk3_ug_step_part_get_args(variant_calling_workflow):
+    # Define expected
+    expected = {
+        "num_threads": 16,
+        "window_length": 10000000,
+        "allow_seq_dict_incompatibility": False,
+        "downsample_to_coverage": 250,
+        "ignore_chroms": ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"],
+    }
+    # Get actual
+    actual = variant_calling_workflow.get_args("gatk3_ug", "run")
     assert actual == expected
 
 

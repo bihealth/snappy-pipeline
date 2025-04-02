@@ -56,13 +56,13 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-    --reference {args[reference]} \
-    --bin-length {snakemake.config[step_config][variant_calling][gatk4_hc_joint][window_length]} \
+    --reference {snakemake.input.reference} \
+    --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
     $(for ignore_chrom in {args[ignore_chroms]}; do \
         awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {args[reference]}.fai; \
+            {snakemake.input.reference}.fai; \
     done)
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
@@ -96,9 +96,9 @@ run-shard()
     gatk3 -Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR \
         --analysis_type UnifiedGenotyper \
         --out $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz \
-        --reference_sequence {args[reference]} \
+        --reference_sequence {snakemake.input.reference} \
         --sample_ploidy 2 \
-        --dbsnp {args[dbsnp]} \
+        --dbsnp {snakemake.input.dbsnp} \
         --downsample_to_coverage {args[downsample_to_coverage]} \
         --intervals $interval \
         $(for path in {snakemake.input.bam}; do \
@@ -112,7 +112,7 @@ export -f run-shard
 
 # Perform parallel execution
 (set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
-num_threads={args[gatk3_ug][num_threads]}
+num_threads={args[num_threads]}
 cat $TMPDIR/final_intervals.txt \
 | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
 
@@ -128,7 +128,7 @@ bcftools concat \
     /dev/stdin \
 | bcftools norm \
     -d exact \
-    -f {args[reference]} \
+    -f {snakemake.input.reference} \
     -O z \
     -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
