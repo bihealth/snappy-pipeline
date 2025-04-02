@@ -40,7 +40,7 @@ dkfzbiasfilter.py \
     --writeQC \
     {snakemake.input.vcf} \
     {snakemake.input.bam} \
-    {snakemake.params.args[reference]} \
+    {snakemake.input.reference} \
     ${{out%.gz}}
 
 if [[ ! -s ${{out%.gz}} ]]; then

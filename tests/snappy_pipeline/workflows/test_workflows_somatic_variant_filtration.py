@@ -97,6 +97,7 @@ def test_dkfz_bias_filter_step_part_get_input_files(somatic_variant_filtration_w
         "vcf_tbi": somatic_base_out + ".vcf.gz.tbi",
         "bam": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
         "bai": "NGS_MAPPING/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam.bai",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_filtration_workflow.get_input_files("dkfz_bias_filter", "run")
     assert actual == expected
@@ -122,13 +123,6 @@ def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_work
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow.get_log_file("dkfz_bias_filter", "run")
-    assert actual == expected
-
-
-def test_dkfz_bias_filter_step_part_get_args(somatic_variant_filtration_workflow):
-    """Tests DkfzBiasFilterStepPart.get_log_file()"""
-    expected = {"reference": "/path/to/ref.fa"}
-    actual = somatic_variant_filtration_workflow.get_params("dkfz_bias_filter", "run")
     assert actual == expected
 
 
@@ -552,6 +546,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
         "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
         "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
     assert actual == expected
@@ -593,10 +588,7 @@ def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_l
 def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list):
     """Tests OneFilterStepPart.get_params()"""
     wildcards = Wildcards(fromdict={"filter_nb": 1})
-    expected = {
-        "reference": "/path/to/ref.fa",
-        "filter_name": "dkfz_1",
-    }
+    expected = {"filter_name": "dkfz_1"}
     actual = somatic_variant_filtration_workflow_list.get_args("one_dkfz", "run")(wildcards)
     assert actual == expected
 

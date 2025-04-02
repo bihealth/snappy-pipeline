@@ -91,8 +91,6 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "s
             memory=wf.get_resource("dkfz_bias_filter", "run", "memory"),
             partition=wf.get_resource("dkfz_bias_filter", "run", "partition"),
             tmpdir=wf.get_resource("dkfz_bias_filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("dkfz_bias_filter", "run"),
         log:
             **wf.get_log_file("dkfz_bias_filter", "run"),
         wrapper:
@@ -169,8 +167,6 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
             unpack(wf.get_input_files("one_dkfz", "run")),
         output:
             **wf.get_output_files("one_dkfz", "run"),
-        params:
-            args=wf.get_args("one_dkfz", "run"),
         threads: wf.get_resource("one_dkfz", "run", "threads")
         resources:
             time=wf.get_resource("one_dkfz", "run", "time"),
