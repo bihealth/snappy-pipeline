@@ -168,6 +168,7 @@ def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_work
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
+        "reference": "/path/to/ref.fa",
     }
 
     actual = somatic_variant_filtration_workflow.get_input_files("eb_filter", "run")(wildcards)
@@ -238,7 +239,6 @@ def test_eb_filter_step_part_get_log_file_write_panel(somatic_variant_filtration
 def test_eb_filter_step_part_get_params_run(somatic_variant_filtration_workflow):
     """Tests EbFilterStepPart.get_params()"""
     expected = {
-        "reference": "/path/to/ref.fa",
         "ebfilter_threshold": 2.4,
         "vaf_threshold": 0.08,
         "coverage_threshold": 5,
@@ -602,7 +602,6 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
 
     wildcards = Wildcards(fromdict={"filter_nb": 2})
     expected = {
-        "reference": "/path/to/ref.fa",
         "filter_name": "ebfilter_2",
         "ebfilter_threshold": 2.3,
         "has_annotation": True,

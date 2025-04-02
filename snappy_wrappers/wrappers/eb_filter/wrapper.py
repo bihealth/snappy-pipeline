@@ -5,13 +5,13 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-params = dict(snakemake.params)["args"]
+params = getattr(snakemake.params, "args", {})
 filter_name = params["filter_name"] if "filter_name" in params else ""
 has_annotation = str(params["has_annotation"] if "has_annotation" in params else False)
 
 if "interval" in params:
     cmd_fetch = "tabix --print-header {} {}".format(
-        snakemake.input.vcf, snakemake.params["args"]["interval"]
+        snakemake.input.vcf, params["interval"]
     )
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
@@ -27,7 +27,7 @@ mkdir -p $TMPDIR
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-export REF={snakemake.params.args[reference]}
+export REF={snakemake.input.reference}
 
 # Also pipe stderr to log file
 if [[ -n "{snakemake.log.log}" ]]; then

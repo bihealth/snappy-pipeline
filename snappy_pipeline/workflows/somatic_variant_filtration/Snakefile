@@ -92,7 +92,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "s
             partition=wf.get_resource("dkfz_bias_filter", "run", "partition"),
             tmpdir=wf.get_resource("dkfz_bias_filter", "run", "tmpdir"),
         params:
-            **{"args": wf.get_params("dkfz_bias_filter", "run")},
+            args=wf.get_params("dkfz_bias_filter", "run"),
         log:
             **wf.get_log_file("dkfz_bias_filter", "run"),
         wrapper:
@@ -112,7 +112,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "s
             partition=wf.get_resource("eb_filter", "run", "partition"),
             tmpdir=wf.get_resource("eb_filter", "run", "tmpdir"),
         params:
-            **{"args": wf.get_params("eb_filter", "run")},
+            args=wf.get_params("eb_filter", "run"),
         log:
             **wf.get_log_file("eb_filter", "run"),
         wrapper:
@@ -134,7 +134,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "s
         log:
             wf.get_log_file("apply_filters", "run"),
         params:
-            args=wf.substep_dispatch("apply_filters", "get_args", "run"),
+            args=wf.get_args("apply_filters", "run"),
         wrapper:
             wf.wrapper_path("somatic_variant_filtration/apply_filters")
 
@@ -170,7 +170,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
         output:
             **wf.get_output_files("one_dkfz", "run"),
         params:
-            **{"args": wf.get_args("one_dkfz", "run")},
+            args=wf.get_args("one_dkfz", "run"),
         threads: wf.get_resource("one_dkfz", "run", "threads")
         resources:
             time=wf.get_resource("one_dkfz", "run", "time"),
@@ -188,7 +188,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
         output:
             **wf.get_output_files("one_ebfilter", "run"),
         params:
-            **{"args": wf.get_args("one_ebfilter", "run")},
+            args=wf.get_args("one_ebfilter", "run"),
         threads: wf.get_resource("one_ebfilter", "run", "threads")
         resources:
             time=wf.get_resource("one_ebfilter", "run", "time"),
@@ -206,7 +206,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
         output:
             **wf.get_output_files("one_bcftools", "run"),
         params:
-            **{"args": wf.get_args("one_bcftools", "run")},
+            args=wf.get_args("one_bcftools", "run"),
         threads: wf.get_resource("one_bcftools", "run", "threads")
         resources:
             time=wf.get_resource("one_bcftools", "run", "time"),
@@ -224,7 +224,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
         output:
             **wf.get_output_files("one_regions", "run"),
         params:
-            **{"args": wf.get_args("one_regions", "run")},
+            args=wf.get_args("one_regions", "run"),
         threads: wf.get_resource("one_regions", "run", "threads")
         resources:
             time=wf.get_resource("one_regions", "run", "time"),
@@ -242,7 +242,7 @@ if wf.w_config.step_config["somatic_variant_filtration"].filtration_schema == "l
         output:
             **wf.get_output_files("one_protected", "run"),
         params:
-            **{"args": wf.get_args("one_protected", "run")},
+            args=wf.get_args("one_protected", "run"),
         threads: wf.get_resource("one_protected", "run", "threads")
         resources:
             time=wf.get_resource("one_protected", "run", "time"),

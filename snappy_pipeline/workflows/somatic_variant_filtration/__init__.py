@@ -370,7 +370,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         def input_function(wildcards):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
             yield from parent(wildcards).items()
-
+            yield "reference", self.w_config.static_data_config.reference.path
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
         return input_function
@@ -388,7 +388,6 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
         """Return dkfz parameters to parameters"""
         return super(OneFilterEbfilterStepPart, self)._get_args(wildcards) | {
-            "reference": self.w_config.static_data_config.reference.path,
             "has_annotation": self.config.has_annotation,
         }
 
@@ -625,6 +624,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
         yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+        yield "reference", self.w_config.static_data_config.reference.path
 
     def _get_input_files_write_panel(self, wildcards):
         bam_paths = self._get_panel_of_normal_bams(wildcards)
@@ -645,7 +645,6 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             if cfg is not None:
                 parameters.update(dict(cfg))
         parameters["has_annotation"] = self.config.has_annotation
-        parameters["reference"] = self.w_config.static_data_config.reference.path
         return parameters
 
     @dictify
