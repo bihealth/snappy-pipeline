@@ -948,6 +948,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
                 "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
             ),
         )
+        yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
 
     @dictify
     def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
@@ -970,13 +971,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         )
 
     def get_args(self, action: str):
-        def args_function(_wildcards):
-            return {
-                "min_dp": self.config.baf_file_generation.min_dp,
-                "reference_index_path": self.w_config.static_data_config.reference.path + ".fai",
-            }
-
-        return args_function
+        return {"min_dp": self.config.baf_file_generation.min_dp}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)

@@ -456,7 +456,10 @@ def test_baf_file_generation_step_part_get_input_files(variant_calling_workflow)
         "work/{mapper}.{var_caller}.{index_library_name}/out/"
         "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
     )
-    expected = {"vcf": vcf_file}
+    expected = {
+        "vcf": vcf_file,
+        "reference_index": "/path/to/ref.fa.fai",
+    }
     # Get actual
     actual = variant_calling_workflow.get_input_files("baf_file_generation", "run")
     assert actual == expected
@@ -480,6 +483,14 @@ def test_baf_file_generation_step_part_get_output_files(variant_calling_workflow
         expected["output_links"].append(f"{line}.md5")
     # Get actual
     actual = variant_calling_workflow.get_output_files("baf_file_generation", "run")
+    assert actual == expected
+
+
+def test_baf_file_generation_step_part_get_args(variant_calling_workflow):
+    # Define expected
+    expected = {"min_dp": 10}
+    # Get actual
+    actual = variant_calling_workflow.get_args("baf_file_generation", "run")
     assert actual == expected
 
 
