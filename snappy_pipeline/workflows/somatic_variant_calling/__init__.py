@@ -736,12 +736,16 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             memory="4G",
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_args(self, action: str):
         self._validate_action(action)
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "path_target_regions": self.config.strelka2.path_target_regions,
-        }
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "reference": self.parent.w_config.static_data_config.reference.path,
+                "path_target_regions": self.config.strelka2.path_target_regions,
+                "tumor_lib_name": wildcards.wildcards.tumor_library,
+                "normal_lib_name": self.get_normal_lib_name(wildcards),
+            }
 
 
 class JointCallingStepPart(BaseStepPart):
@@ -816,26 +820,24 @@ class JointCallingStepPart(BaseStepPart):
             yield key, prefix + ext
 
     def get_args(self, action):
-        # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        def arg_function(wildcards):
-            reference_path = self.w_config.static_data_config.reference.path
-            donor = self.donor_by_name[wildcards.donor_name]
-            result = {
-                "sample_list": [
-                    ngs_library.name
-                    for bio_sample in donor.bio_samples.values()
-                    for test_sample in bio_sample.test_samples.values()
-                    for ngs_library in test_sample.ngs_libraries.values()
-                ],
-                "reference_path": reference_path,
-            }
-            if ignore_chroms := self.parent.config.ignore_chroms:
-                result["ignore_chroms"] = ignore_chroms
-            return result
-
-        return arg_function
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        reference_path = self.w_config.static_data_config.reference.path
+        donor = self.donor_by_name[wildcards.donor_name]
+        result = {
+            "sample_list": [
+                ngs_library.name
+                for bio_sample in donor.bio_samples.values()
+                for test_sample in bio_sample.test_samples.values()
+                for ngs_library in test_sample.ngs_libraries.values()
+            ],
+            "reference_path": reference_path,
+        }
+        if ignore_chroms := self.parent.config.ignore_chroms:
+            result["ignore_chroms"] = ignore_chroms
+        return result
 
 
 class BcftoolsJointStepPart(JointCallingStepPart):
@@ -866,16 +868,17 @@ class BcftoolsJointStepPart(JointCallingStepPart):
         )
 
     def get_args(self, action):
-        def args_fn(_wildcards):
-            parent_args = super().get_args(action)(_wildcards)
-            args = {
-                name: getattr(self.config, name)
-                for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
-            }
-            args.update(parent_args)
-            return args
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config.bcftools_joint, name)
+            for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class VarscanJointStepPart(JointCallingStepPart):
@@ -932,15 +935,17 @@ class PlatypusJointStepPart(JointCallingStepPart):
         )
 
     def get_args(self, action):
-        def args_fn(_wildcards):
-            parent_args = super().get_args(action)(_wildcards)
-            args = {
-                name: getattr(self.config, name) for name in ["num_threads", "split_complex_mnvs"]
-            }
-            args.update(parent_args)
-            return args
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config.platypus_joint, name)
+            for name in ["num_threads", "split_complex_mnvs"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class GatkHcJointStepPart(JointCallingStepPart):

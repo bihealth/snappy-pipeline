@@ -602,26 +602,23 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            result = {
-                "input": {
-                    "reads_left": list(
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                    )
-                },
-                "sample_name": wildcards.library_name,
-                "platform": "ILLUMINA",
-            }
-            reads_right = list(
-                sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
-            )
-            if reads_right:
-                result["input"]["reads_right"] = reads_right
-            return result
-
         assert action == "run", "Unsupported actions"
-        return args_function
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        result = {
+            "input": {
+                "reads_left": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
+                )
+            },
+            "sample_name": wildcards.library_name,
+            "platform": "ILLUMINA",
+        }
+        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
+        if reads_right:
+            result["input"]["reads_right"] = reads_right
+        return result
 
     def get_input_files(self, action):
         def input_function(wildcards):
@@ -733,13 +730,10 @@ class BwaStepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
-    def get_args(self, action):
-        def args_fn(wildcards):
-            parent_args = super().get_args(action)(wildcards)
-            parent_args.update(dict(self.config.bwa))
-            return parent_args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(self.config.bwa.model_dump(by_alias=True))
+        return parent_args
 
 
 class BwaMem2StepPart(ReadMappingStepPart):
@@ -766,13 +760,10 @@ class BwaMem2StepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
-    def get_args(self, action):
-        def args_fn(wildcards):
-            parent_args = super().get_args(action)(wildcards)
-            parent_args.update(dict(self.config.bwa_mem2))
-            return parent_args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
+        return parent_args
 
 
 class MBCsStepPart(ReadMappingStepPart):
@@ -890,14 +881,11 @@ class StarStepPart(ReadMappingStepPart):
                 ),
             )
 
-    def get_args(self, action: str):
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            parent_args = super().get_args(action)(wildcards)
-            parent_args.update(self.config.star.model_dump(by_alias=True))
-            parent_args["features"] = self.parent.w_config.static_data_config.features.path
-            return parent_args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(self.config.star.model_dump(by_alias=True))
+        parent_args["features"] = self.parent.w_config.static_data_config.features.path
+        return parent_args
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -1069,15 +1057,12 @@ class Minimap2StepPart(ReadMappingStepPart):
             memory=f"{mem_gb}G",
         )
 
-    def get_params(self, action):
-        assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self.config.minimap2.model_dump(by_alias=True) | {
-            "extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name],
-            "library_name": wildcards.library_name,
-        }
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = super()._get_args_run(wildcards)
+        params |= self.config.minimap2.model_dump(by_alias=True)
+        params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
+        params["library_name"] = wildcards.library_name
+        return params
 
 
 class ExternalStepPart(ReadMappingStepPart):
@@ -1214,11 +1199,11 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def get_params(self, action):
+    def get_args(self, action):
         assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
+        return getattr(self, "_get_args_run")
 
-    def _get_params_run(self, wildcards):
+    def _get_args_run(self, wildcards):
         # Find bed file associated with library kit
         library_name = wildcards.library_name
         path_targets_bed = ""
