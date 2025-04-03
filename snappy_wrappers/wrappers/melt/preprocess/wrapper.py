@@ -20,6 +20,6 @@ JAR={melt_config[jar_file]}
 java -Xmx13G -jar $JAR \
     Preprocess \
     -bamfile {snakemake.output.orig_bam} \
-    -h {melt_config[reference]}
+    -h {snakemake.input.reference}
 """
 )
