@@ -510,13 +510,17 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
 class GatkCallerStepPartBase(VariantCallingStepPart):
     """Base class for GATK v3/v4 variant callers"""
 
-    def check_config(self):
-        if self.__class__.name not in self.config.tools:
-            return  # caller not enabled, skip  # pragma: no cover
-        self.parent.ensure_w_config(
-            ("static_data_config", "dbsnp", "path"),
-            "dbSNP not configured but required for {}".format(self.__class__.name),
-        )
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        """
+        Adds the reference & dbsnp input files to the bams & pedigree.
+        Note that dpsnp is not needed by combine & genotype sub-steps of GATK4 hc,
+        but the previous code was checking for the presence of dbsnp, so
+        when was failing when dbsnp is not present anyway.
+        """
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "dbsnp", self.parent.w_config.static_data_config.dbsnp.path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -539,8 +543,6 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
             "num_threads": self.config.gatk3_hc.num_threads,
             "window_length": self.config.gatk3_hc.window_length,
             "allow_seq_dict_incompatibility": self.config.gatk3_hc.allow_seq_dict_incompatibility,
@@ -553,14 +555,6 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
 
     #: Step name
     name = "gatk3_ug"
-
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        parent = super()._get_input_files_run(wildcards)
-        for k, v in parent.items():
-            yield k, v
-        yield "reference", self.parent.w_config.static_data_config.reference.path
-        yield "dbsnp", self.parent.w_config.static_data_config.dbsnp.path
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
@@ -581,8 +575,6 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
             "window_length": self.config.gatk4_hc_joint.window_length,
             "num_threads": self.config.gatk4_hc_joint.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_joint.allow_seq_dict_incompatibility,
@@ -679,8 +671,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         return {
             "step_key": "variant_calling",
             "caller_key": "gatk4_hc_gvcf",
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
             "window_length": self.config.gatk4_hc_gvcf.window_length,
             "num_threads": self.config.gatk4_hc_gvcf.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
