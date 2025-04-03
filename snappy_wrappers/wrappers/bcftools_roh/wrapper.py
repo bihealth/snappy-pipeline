@@ -9,8 +9,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = snakemake.params["args"]
 
-path_targets = args["path_targets"]
-path_af_file = args["path_af_file"]
+path_targets = snakemake.input.path_targets
+path_af_file = snakemake.input.path_af_file
 ignore_homref = args["ignore_homref"]
 skip_indels = args["skip_indels"]
 rec_rate = args["rec_rate"]

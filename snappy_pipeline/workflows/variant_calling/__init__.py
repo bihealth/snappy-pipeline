@@ -794,6 +794,8 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
                 "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
             ),
         )
+        yield "path_targets", self.config.get(self.name).get("path_targets")
+        yield "path_af_file", self.config.get(self.name).get("path_af_file")
 
     def get_output_files(self, action: str) -> SnakemakeDict:
         """Return step part output files"""
@@ -807,8 +809,6 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
             return {
                 name: self.config.bcftools_roh.get(name)
                 for name in [
-                    "path_targets",
-                    "path_af_file",
                     "ignore_homref",
                     "skip_indels",
                     "rec_rate",
