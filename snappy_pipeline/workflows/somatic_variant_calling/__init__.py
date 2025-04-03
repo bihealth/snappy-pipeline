@@ -437,6 +437,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
             "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
+            "reference": self.w_config.static_data_config.reference.path,
         }
         if self.get_normal_lib_name(wildcards):
             if "contamination" in self.actions:
@@ -460,7 +461,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.common_variants,
+        }
 
     def _get_input_files_pileup_tumor(self, wildcards):
         """Get input files for rule ``pileup_tumor``.
@@ -476,10 +482,14 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.common_variants,
+        }
 
-    @staticmethod
-    def _get_input_files_contamination(wildcards):
+    def _get_input_files_contamination(self, wildcards: Wildcards):
         """Get input files for rule ``contamination``.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
@@ -494,7 +504,11 @@ class Mutect2StepPart(MutectBaseStepPart):
                 **wildcards
             )
         )
-        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
+        return {
+            "normal": base_path + ".normal.pileup",
+            "tumor": base_path + ".tumor.pileup",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
 
     def get_output_files(self, action):
         """Get output files for Mutect2 rules.
@@ -795,24 +809,23 @@ class JointCallingStepPart(BaseStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        def arg_function(wildcards):
-            reference_path = self.w_config.static_data_config.reference.path
-            donor = self.donor_by_name[wildcards.donor_name]
-            result = {
-                "sample_list": [
-                    ngs_library.name
-                    for bio_sample in donor.bio_samples.values()
-                    for test_sample in bio_sample.test_samples.values()
-                    for ngs_library in test_sample.ngs_libraries.values()
-                ],
-                "reference_path": reference_path,
-            }
-            if ignore_chroms := self.parent.config.ignore_chroms:
-                result["ignore_chroms"] = ignore_chroms
-            return result
-
-        return arg_function
+    def _get_args_run(self, wildcards: Wildcards):
+        reference_path = self.w_config.static_data_config.reference.path
+        donor = self.donor_by_name[wildcards.donor_name]
+        result = {
+            "sample_list": [
+                ngs_library.name
+                for bio_sample in donor.bio_samples.values()
+                for test_sample in bio_sample.test_samples.values()
+                for ngs_library in test_sample.ngs_libraries.values()
+            ],
+            "reference_path": reference_path,
+        }
+        if ignore_chroms := self.parent.config.ignore_chroms:
+            result["ignore_chroms"] = ignore_chroms
+        return result
 
 
 class BcftoolsJointStepPart(JointCallingStepPart):
@@ -842,17 +855,14 @@ class BcftoolsJointStepPart(JointCallingStepPart):
             memory=f"{mem_mb}M",
         )
 
-    def get_args(self, action):
-        def args_fn(_wildcards):
-            parent_args = super().get_args(action)(_wildcards)
-            args = {
-                name: getattr(self.config, name)
-                for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
-            }
-            args.update(parent_args)
-            return args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config[self.name], name)
+            for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class VarscanJointStepPart(JointCallingStepPart):
@@ -908,16 +918,13 @@ class PlatypusJointStepPart(JointCallingStepPart):
             memory=f"{mem_mb}M",
         )
 
-    def get_args(self, action):
-        def args_fn(_wildcards):
-            parent_args = super().get_args(action)(_wildcards)
-            args = {
-                name: getattr(self.config, name) for name in ["num_threads", "split_complex_mnvs"]
-            }
-            args.update(parent_args)
-            return args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config[self.name], name) for name in ["num_threads", "split_complex_mnvs"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class GatkHcJointStepPart(JointCallingStepPart):
