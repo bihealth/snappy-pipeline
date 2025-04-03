@@ -394,7 +394,8 @@ def test_jannovar_stats_step_part_get_input_files(variant_calling_workflow):
         "work/{mapper}.{var_caller}.{index_library_name}/out/"
         "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
     )
-    expected = {"vcf": vcf_file}
+    ser = "/path/to/jannovar.ser"
+    expected = {"vcf": vcf_file, "path_ser": ser}
     # Get actual
     actual = variant_calling_workflow.get_input_files("jannovar_stats", "run")
     assert actual == expected

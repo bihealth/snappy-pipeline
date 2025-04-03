@@ -871,6 +871,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
                 "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
             ),
         )
+        yield "path_ser", self.config.jannovar_stats.path_ser
 
     def get_output_files(self, action) -> SnakemakeDict:
         """Return step part output files"""
