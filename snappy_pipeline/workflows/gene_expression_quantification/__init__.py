@@ -295,10 +295,10 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_args(self, action: str) -> dict[str, Any]:
-        return super().get_args(action) | {
-            "path_annotation_gtf": self.config.featurecounts.path_annotation_gtf,
-        }
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "features", self.w_config.static_data_config.features.path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
