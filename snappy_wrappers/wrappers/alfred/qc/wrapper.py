@@ -20,9 +20,9 @@ compute-md5()
 }
 """
 
-reference_path = snakemake.params["args"]["path_reference"]
-genome_path = snakemake.params["args"]["path_reference_genome"]
-targets_bed = snakemake.params["args"]["path_targets_bed"]
+reference_path = snakemake.input.reference
+genome_path = snakemake.input.reference_genome
+targets_bed = snakemake.input.targets_bed
 
 shell(
     r"""
