@@ -625,13 +625,11 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def check_config(self):
-        if "scalpel" not in self.config.tools:
-            return  # scalpel not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for Scalpel",
-        )
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "path_target_regions", self.config.scalpel.path_target_regions
 
     def get_output_files(self, action):
         result = super().get_output_files(action)
@@ -666,13 +664,6 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{5 * 1024 * 16}M",
         )
-
-    def get_args(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "path_target_regions": self.config.scalpel.path_target_regions,
-        }
 
 
 class Strelka2StepPart(SomaticVariantCallingStepPart):

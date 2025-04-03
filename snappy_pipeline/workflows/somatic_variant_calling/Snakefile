@@ -184,7 +184,6 @@ rule somatic_variant_calling_scalpel_run:
         **wf.get_log_file("scalpel", "run"),
     params:
         normal_lib_name=wf.substep_getattr("scalpel", "get_normal_lib_name"),
-        args=wf.get_args("scalpel", "run"),
     wrapper:
         wf.wrapper_path("scalpel/somatic")
 

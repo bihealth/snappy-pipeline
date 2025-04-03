@@ -515,6 +515,8 @@ def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "path_target_regions": "/path/to/target/regions.bed",
     }
     assert actual == expected
 
