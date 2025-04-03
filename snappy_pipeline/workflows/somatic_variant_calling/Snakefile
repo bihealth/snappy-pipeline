@@ -229,7 +229,7 @@ rule somatic_variant_calling_bcftools_joint_run:
         partition=wf.get_resource("bcftools_joint", "run", "partition"),
         tmpdir=wf.get_resource("bcftools_joint", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("bcftools_joint", "get_args", "run"),
+        args=wf.get_args("bcftools_joint", "run"),
     log:
         **wf.get_log_file("bcftools_joint", "run"),
     wrapper:
@@ -251,7 +251,7 @@ rule somatic_variant_calling_platypus_joint_run:
         partition=wf.get_resource("platypus_joint", "run", "partition"),
         tmpdir=wf.get_resource("platypus_joint", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("platypus_joint", "get_args", "run"),
+        args=wf.get_args("platypus_joint", "run"),
     log:
         **wf.get_log_file("platypus_joint", "run"),
     wrapper:
@@ -275,7 +275,7 @@ rule somatic_variant_calling_gatk_ug_joint_run:
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_ug_joint",
-        args=wf.substep_dispatch("gatk_ug_joint", "get_args", "run"),
+        args=wf.get_args("gatk_ug_joint", "run"),
     log:
         **wf.get_log_file("gatk_ug_joint", "run"),
     wrapper:
@@ -299,7 +299,7 @@ rule somatic_variant_calling_gatk_hc_joint_run:
     params:
         step_key="somatic_variant_calling",
         caller_key="gatk_hc_joint",
-        args=wf.substep_dispatch("gatk_hc_joint", "get_args", "run"),
+        args=wf.get_args("gatk_hc_joint", "run"),
     log:
         **wf.get_log_file("gatk_hc_joint", "run"),
     wrapper:
@@ -321,7 +321,7 @@ rule somatic_variant_calling_varscan_joint_run:
         partition=wf.get_resource("varscan_joint", "run", "partition"),
         tmpdir=wf.get_resource("varscan_joint", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("varscan_joint", "get_args", "call_pedigree"),
+        args=wf.get_args("varscan_joint", "call_pedigree"),
         step_key="somatic_variant_calling",
         caller_key="varscan_joint",
     log:
