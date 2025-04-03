@@ -326,13 +326,6 @@ class MutectStepPart(MutectBaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "reference", self.w_config.static_data_config.reference.path
-        yield "dbsnp", self.w_config.static_data_config.dbsnp.path
-        yield "cosmic", self.w_config.static_data_config.cosmic.path
-
 
 class Mutect2StepPart(MutectBaseStepPart):
     """Somatic variant calling with Mutect2"""
