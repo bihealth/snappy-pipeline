@@ -149,6 +149,8 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         # Pedigree
         tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         yield "ped", tpl.format(**wildcards)
+        # Reference
+        yield "reference", self.w_config.static_data_config.reference.path
         # VCF
         tpl = (
             f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
@@ -242,11 +244,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
                 memory=f"{7 * 1024 * 2}M",
             )
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
+        return getattr(self, f"_get_args_{action}")
 
-    def _get_params_merge_vcf(self, wildcards):
+    def _get_args_merge_vcf(self, wildcards):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
@@ -255,12 +257,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         }
         return result
 
-    def _get_params_annotate(self, wildcards):
+    def _get_args_annotate(self, wildcards):
         varfish_server_compatibility_flag = self.config.varfish_server_compatibility
         return {
             "step_name": "wgs_cnv_export_external",
             "varfish_server_compatibility": varfish_server_compatibility_flag,
-            "reference": self.parent.w_config.static_data_config.reference.path,
             "config": self.config.model_dump(by_alias=True),
         }
 

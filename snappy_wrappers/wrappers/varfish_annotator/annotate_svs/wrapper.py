@@ -75,7 +75,7 @@ for vcf in {snakemake.input.vcf}; do
     num=$(printf %03d $i)
 
     python3 {fix_manta_invs} \
-        --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+        --reference-fasta {snakemake.input.reference} \
         --input-vcf $vcf \
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
