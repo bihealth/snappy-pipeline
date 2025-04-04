@@ -3,7 +3,7 @@
 from snakemake.shell import shell
 
 # Although optional for the tool, GATK recommend a providing a mappability track
-map_bed = snakemake.config['step_config']['helper_gcnv_model_targeted']['gcnv']['path_uniquely_mapable_bed']
+map_bed = snakemake.config['step_config'][snakemake.params.step_key]['gcnv']['path_uniquely_mapable_bed']
 # Note: this wrapper is only used in ther model building workflow, not in calling from a built model
 
 shell(
