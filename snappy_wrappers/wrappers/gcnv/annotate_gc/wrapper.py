@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 # isort:skip_file
-from snappy_pipeline.utils import DictQuery
-import os
-
 from snakemake.shell import shell
 
 # Pick the target BED file to use.
 # FIXME: why is 'target_interval_bed' not used?
-config = DictQuery(snakemake.config).get("step_config/helper_gcnv_model_targeted/gcnv")
+config = snakemake.config['step_config']['helper_gcnv_model_targeted']['gcnv']
+# Note: this wrapper is only used in ther model building workflow, not in calling from a built model
 for item in config["path_target_interval_list_mapping"]:
     if item["name"] == snakemake.wildcards.library_kit:
         target_interval_bed = item["path"]
@@ -15,9 +13,7 @@ for item in config["path_target_interval_list_mapping"]:
 else:  # of for, did not break out
     raise Exception("Found no target intervals for %s" % item["name"])
 
-map_bed = DictQuery(snakemake.config).get(
-    "step_config/helper_gcnv_model_targeted/gcnv/path_uniquely_mapable_bed"
-)
+map_bed = config['path_uniquely_mapable_bed']
 
 shell(
     r"""
