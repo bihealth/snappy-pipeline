@@ -30,16 +30,29 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_calling:
+            tools: ['mutect']
+            mutect:
+              keep_tmpdir: onerror
+
+          somatic_variant_annotation:
+            tools: [vep]
+            tools_somatic_variant_calling: ['mutect']
+            path_somatic_variant: ../SOMATIC_VARIANT_CALLING
+            vep:
+              cache_dir: /path/to/vep/cache
+
           somatic_variant_filtration:
             tools_somatic_variant_calling: ['mutect']
+            filtration_schema: list
             filter_list:
               - dkfz: {}
 
           somatic_variant_signatures:
             path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
-            tools_somatic_variant_annotation: ['vep']
             tools_somatic_variant_calling: ['mutect']
-            is_filtered: True
+            has_annotation: True
+            filtration_schema: list
 
         data_sets:
           first_batch:
@@ -114,7 +127,10 @@ def test_tabulate_vcf_step_part_get_output_files(somatic_variant_signatures_work
 
 def test_tabulate_vcf_step_part_get_log_file(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_log_file()"""
-    expected = "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/log/snakemake.tabulate_vcf.log"
+    expected = (
+        "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/log/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}.log"
+    )
     actual = somatic_variant_signatures_workflow.get_log_file("tabulate_vcf", "run")
     assert actual == expected
 
@@ -171,7 +187,7 @@ def test_deconstruct_sigs_step_part_get_log_file(somatic_variant_signatures_work
     """Tests DeconstructSigsStepPart.get_log_file()"""
     expected = (
         "work/{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}/log/"
-        "snakemake.deconstruct_sigs.log"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}.log"
     )
     actual = somatic_variant_signatures_workflow.get_log_file("deconstruct_sigs", "run")
     assert actual == expected
