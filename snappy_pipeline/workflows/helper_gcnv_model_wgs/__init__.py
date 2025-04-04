@@ -194,7 +194,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         """
         result = super().get_resource_usage(action)
 
-        def get_memory(wildcards, input=None, threads=None, attempt=None):
+        def get_memory(wildcards, input=None, threads=None, attempt=1):
             _, _, _ = wildcards, input, threads  # unused but cannot be renamed
             return f"{attempt * 4 * 1024 + 16 * 1024}M"
 
