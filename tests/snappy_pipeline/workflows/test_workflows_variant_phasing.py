@@ -179,7 +179,10 @@ def test_gatk_phase_by_transmission_step_part_get_input_files(variant_phasing_wo
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
+    ped_dict = {
+        "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
+        "reference": "/path/to/ref.fa",
+    }
     expected = {**vcf_dict, **ped_dict}
     # Get actual
     wildcards = Wildcards(
@@ -201,6 +204,15 @@ def test_gatk_phase_by_transmission_step_part_get_output_files(variant_phasing_w
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     # Get actual
     actual = variant_phasing_workflow.get_output_files("gatk_phase_by_transmission", "run")
+    assert actual == expected
+
+
+def test_gatk_phase_by_transmission_step_part_get_args(variant_phasing_workflow):
+    """Tests PhaseByTransmissionStepPart.get_args()"""
+    # Define expected
+    expected = {"de_novo_prior": 1e-8}
+    # Get actual
+    actual = variant_phasing_workflow.get_args("gatk_phase_by_transmission", "run")
     assert actual == expected
 
 

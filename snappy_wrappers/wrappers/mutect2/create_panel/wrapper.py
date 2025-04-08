@@ -70,7 +70,7 @@ sort ${{tmpdir}}/contigs_all.list | uniq > ${{tmpdir}}/contigs.list
 rm -rf ${{tmpdir}}/pon_db
 gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
     --tmp-dir ${{tmpdir}} \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {snakemake.input.reference} \
     --genomicsdb-workspace-path ${{tmpdir}}/pon_db \
     --intervals ${{tmpdir}}/contigs.list \
     $cmd
@@ -78,8 +78,8 @@ gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
 # Create the panel of normals vcf
 gatk CreateSomaticPanelOfNormals \
     --tmp-dir ${{tmpdir}} \
-    --reference {snakemake.config[static_data_config][reference][path]} \
-    --germline-resource "{snakemake.config[step_config][panel_of_normals][mutect2][germline_resource]}" \
+    --reference {snakemake.input.reference} \
+    --germline-resource "{snakemake.input.germline_resource}" \
     --variant gendb://${{tmpdir}}/pon_db \
     --output ${{out_base}}.vcf
 

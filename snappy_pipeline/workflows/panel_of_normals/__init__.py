@@ -356,14 +356,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ),
     }
 
-    def check_config(self):
-        if self.name not in self.config.tools:
-            return  # Mutect not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
     def get_input_files(self, action):
         """Return input files for mutect2 variant calling"""
         # Validate action
@@ -388,7 +380,11 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         tpl = "work/{mapper}.{tool}/out/{mapper}.{tool}.{normal_library}.prepare.vcf.gz"
         for normal in self.normal_libraries:
             paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
-        return {"normals": paths}
+        return {
+            "normals": paths,
+            "reference": self.w_config.static_data_config.reference.path,
+            "germline_resource": self.config.mutect2.germline_resource,
+        }
 
     @dictify
     def get_output_files(self, action):

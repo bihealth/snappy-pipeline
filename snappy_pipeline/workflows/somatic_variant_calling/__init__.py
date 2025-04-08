@@ -101,9 +101,10 @@ Currently, no reports are generated.
 import os
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -203,41 +204,50 @@ class SomaticVariantCallingStepPart(BaseStepPart):
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
 
-    def get_input_files(self, action):
+    def get_input_files(self, action: str):
+        """Return generic input function.
+
+        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
+        'contamination'.
+        :type action: str
+
+        :return: Returns input function based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-            ).format(**wildcards)
-            input_files = {
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        """Helper wrapper function"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        tumor_base_path = (
+            "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
+        ).format(**wildcards)
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
 
-            normal_library = self.get_normal_lib_name(wildcards)
-            if normal_library:
-                normal_base_path = (
-                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                        normal_library=normal_library, **wildcards
-                    )
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=normal_library, **wildcards
                 )
-                input_files.update(
-                    {
-                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                    }
-                )
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
 
-            return input_files
-
-        return input_function
+        return input_files
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -281,22 +291,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
 class MutectBaseStepPart(SomaticVariantCallingStepPart):
     """Base class for Mutect 1 and 2 step parts"""
-
-    def check_config(self):
-        if self.name not in self.config.tools:
-            return  # Mutect not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "cosmic", "path"),
-            "COSMIC not configured but required for %s" % (self.name,),
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "dbsnp", "path"),
-            "Path to dbSNP not configured but required for %s" % (self.name,),
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
 
     def get_output_files(self, action):
         output_files = {}
@@ -383,15 +377,6 @@ class Mutect2StepPart(MutectBaseStepPart):
         )
 
     def get_input_files(self, action):
-        """Return input function for Mutect2 rules.
-
-        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
-        'contamination'.
-        :type action: str
-
-        :return: Returns input function for Mutect2 rules based on inputted action.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
         # Validate action
         self._validate_action(action)
         # Return requested function
@@ -452,6 +437,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
             "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
+            "reference": self.w_config.static_data_config.reference.path,
         }
         if self.get_normal_lib_name(wildcards):
             if "contamination" in self.actions:
@@ -475,7 +461,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.common_variants,
+        }
 
     def _get_input_files_pileup_tumor(self, wildcards):
         """Get input files for rule ``pileup_tumor``.
@@ -491,10 +482,14 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.common_variants,
+        }
 
-    @staticmethod
-    def _get_input_files_contamination(wildcards):
+    def _get_input_files_contamination(self, wildcards: Wildcards):
         """Get input files for rule ``contamination``.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
@@ -509,7 +504,11 @@ class Mutect2StepPart(MutectBaseStepPart):
                 **wildcards
             )
         )
-        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
+        return {
+            "normal": base_path + ".normal.pileup",
+            "tumor": base_path + ".tumor.pileup",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
 
     def get_output_files(self, action):
         """Get output files for Mutect2 rules.
@@ -626,13 +625,11 @@ class ScalpelStepPart(SomaticVariantCallingStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def check_config(self):
-        if "scalpel" not in self.config.tools:
-            return  # scalpel not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for Scalpel",
-        )
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "path_target_regions", self.config.scalpel.path_target_regions
 
     def get_output_files(self, action):
         result = super().get_output_files(action)
@@ -722,6 +719,13 @@ class Strelka2StepPart(SomaticVariantCallingStepPart):
             memory="4G",
         )
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_target_regions": self.config.strelka2.path_target_regions,
+        }
+
 
 class JointCallingStepPart(BaseStepPart):
     """Base class for joint calling."""
@@ -796,22 +800,23 @@ class JointCallingStepPart(BaseStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        def arg_function(wildcards):
-            donor = self.donor_by_name[wildcards.donor_name]
-            result = {
-                "sample_list": [
-                    ngs_library.name
-                    for bio_sample in donor.bio_samples.values()
-                    for test_sample in bio_sample.test_samples.values()
-                    for ngs_library in test_sample.ngs_libraries.values()
-                ]
-            }
-            if ignore_chroms := self.parent.config.ignore_chroms:
-                result["ignore_chroms"] = ignore_chroms
-            return result
-
-        return arg_function
+    def _get_args_run(self, wildcards: Wildcards):
+        reference_path = self.w_config.static_data_config.reference.path
+        donor = self.donor_by_name[wildcards.donor_name]
+        result = {
+            "sample_list": [
+                ngs_library.name
+                for bio_sample in donor.bio_samples.values()
+                for test_sample in bio_sample.test_samples.values()
+                for ngs_library in test_sample.ngs_libraries.values()
+            ],
+            "reference_path": reference_path,
+        }
+        if ignore_chroms := self.parent.config.ignore_chroms:
+            result["ignore_chroms"] = ignore_chroms
+        return result
 
 
 class BcftoolsJointStepPart(JointCallingStepPart):
@@ -840,6 +845,15 @@ class BcftoolsJointStepPart(JointCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
+
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config[self.name], name)
+            for name in ["max_depth", "max_indel_depth", "window_length", "num_threads"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class VarscanJointStepPart(JointCallingStepPart):
@@ -894,6 +908,14 @@ class PlatypusJointStepPart(JointCallingStepPart):
             time="2-00:00:00",  # 2 days
             memory=f"{mem_mb}M",
         )
+
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        args = {
+            name: getattr(self.config[self.name], name) for name in ["num_threads", "split_complex_mnvs"]
+        }
+        args.update(parent_args)
+        return args
 
 
 class GatkHcJointStepPart(JointCallingStepPart):

@@ -51,6 +51,7 @@ Available Somatic Targeted CNV Caller
 import os
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -134,6 +135,8 @@ class Mantis2StepPart(BaseStepPart):
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+                "reference": self.w_config.static_data_config.reference.path,
+                "loci_bed": self.config.loci_bed,
             }
 
         return input_function

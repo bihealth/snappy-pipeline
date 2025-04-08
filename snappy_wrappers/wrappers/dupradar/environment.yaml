@@ -1,8 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-  - nodefaults
-dependencies:
-  - r-base==4.3
-  - bioconductor-dupradar==1.32.0
-  - samtools==1.19.2

@@ -27,6 +27,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
@@ -204,6 +206,16 @@ def test_bwa_step_part_get_args(ngs_mapping_workflow):
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
+        "path_index": "/path/to/bwa/index.fasta",
+        "num_threads_align": 16,
+        "num_threads_trimming": 8,
+        "num_threads_bam_view": 4,
+        "num_threads_bam_sort": 4,
+        "memory_bam_sort": "4G",
+        "trim_adapters": False,
+        "mask_duplicates": True,
+        "split_as_secondary": False,
+        "extra_args": [],
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("bwa", "run")(wildcards)
@@ -274,6 +286,30 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-T1-RNA1-mRNA_seq1",
+        "path_index": "/path/to/star/index",
+        "features": "/path/to/features.gtf",
+        "num_threads_align": 16,
+        "num_threads_trimming": 8,
+        "num_threads_bam_view": 4,
+        "num_threads_bam_sort": 4,
+        "memory_bam_sort": "4G",
+        "genome_load": "NoSharedMemory",
+        "raw_star_options": "",
+        "align_intron_max": 1000000,
+        "align_intron_min": 20,
+        "align_mates_gap_max": 1000000,
+        "align_sjdb_overhang_min":  1,
+        "align_sj_overhang_min": 8,
+        "out_filter_mismatch_n_max": 999,
+        "out_filter_mismatch_n_over_l_max": 0.04,
+        "out_filter_multimap_n_max": 20,
+        "out_filter_type": "BySJout",
+        "out_filter_intron_motifs": "",
+        "trim_adapters": False,
+        "mask_duplicates": False,
+        "include_unmapped": True,
+        "transcriptome": True,
+        "out_sam_strand_field": "",
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("star", "run")(wildcards)
@@ -453,6 +489,13 @@ def test_minimap2_step_part_get_args(ngs_mapping_workflow):
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
+        "extra_infos": {
+            "extractionType": "DNA",
+            "libraryType": "WGS",
+            "libraryKit": "Agilent SureSelect Human All Exon V6",
+            "folderName": "P001_N1_DNA1_WGS1",
+            "seqPlatform": "Illumina",
+        },
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("minimap2", "run")(wildcards)
@@ -561,6 +604,9 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
     expected = {
         "bam": "work/bwa.library/out/bwa.library.bam",
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
+        "reference": "/path/to/ref.fa",
+        "reference_genome": "/path/to/ref.fa.genome",
+        "target_bed": "",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})

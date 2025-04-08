@@ -274,13 +274,13 @@ def test_bam_reports_step_part_call_get_log_file_bam_qc(
     assert actual == expected
 
 
-def test_bam_reports_step_part_call_get_params_bam_qc(
+def test_bam_reports_step_part_call_get_args_bam_qc(
     variant_export_external_workflow,
 ):
-    """Tests BamReportsExternalStepPart._get_params_bam_qc()"""
+    """Tests BamReportsExternalStepPart._get_args_bam_qc()"""
     wildcards = Wildcards(fromdict={"mapper": "dragen", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {"bam": [], "bam_count": 0}
-    actual = variant_export_external_workflow.get_params("bam_reports", "bam_qc")(wildcards)
+    actual = variant_export_external_workflow.get_args("bam_reports", "bam_qc")(wildcards)
     assert actual == expected
 
 
@@ -316,17 +316,17 @@ def test_bam_reports_step_part_call_get_input_files_run(
     assert actual == expected
 
 
-def test_bam_reports_step_part_call_get_params_run(
+def test_bam_reports_step_part_call_get_args_run(
     variant_export_external_workflow,
 ):
-    """Tests BamReportsExternalStepPart._get_params_run()"""
+    """Tests BamReportsExternalStepPart._get_args_run()"""
     wildcards = Wildcards(fromdict={"mapper": "dragen", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "bam": [],
         "bam_count": 0,
         "path_targets_bed": "/path/to/targets.bed",
     }
-    actual = variant_export_external_workflow.get_params("bam_reports", "run")(wildcards)
+    actual = variant_export_external_workflow.get_args("bam_reports", "run")(wildcards)
     assert actual == expected
 
 
@@ -382,14 +382,14 @@ def test_varfish_annotator_step_part_get_resource_usage_gvcf_to_vcf(
         assert actual == expected, msg_error
 
 
-def test_varfish_annotator_step_part_get_params_gvcf_to_vcf(variant_export_external_workflow):
-    """Tests TargetCoverageReportStepPart._get_params_gvcf_to_vcf()"""
+def test_varfish_annotator_step_part_get_args_gvcf_to_vcf(variant_export_external_workflow):
+    """Tests TargetCoverageReportStepPart._get_args_gvcf_to_vcf()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": [],
         "sample_names": ["P001", "P002", "P003"],
     }
-    actual = variant_export_external_workflow.get_params(
+    actual = variant_export_external_workflow.get_args(
         "varfish_annotator_external", "gvcf_to_vcf"
     )(wildcards)
     assert actual == expected
@@ -447,15 +447,15 @@ def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(variant_export
         assert actual == expected, msg_error
 
 
-def test_varfish_annotator_step_part_get_params_merge_vcf(variant_export_external_workflow):
-    """Tests TargetCoverageReportStepPart.get_params() - action 'merge_vcf'"""
+def test_varfish_annotator_step_part_get_args_merge_vcf(variant_export_external_workflow):
+    """Tests TargetCoverageReportStepPart.get_args() - action 'merge_vcf'"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": [],
         "sample_names": ["P001", "P002", "P003"],
         "merge_option": None,
     }
-    actual = variant_export_external_workflow.get_params("varfish_annotator_external", "merge_vcf")(
+    actual = variant_export_external_workflow.get_args("varfish_annotator_external", "merge_vcf")(
         wildcards
     )
     assert actual == expected
@@ -525,11 +525,11 @@ def test_varfish_annotator_step_part_get_log_file_annotate(variant_export_extern
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_annotate(variant_export_external_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
+def test_varfish_annotator_step_part_get_args_annotate(variant_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_args_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {"step_name": "variant_export_external"}
-    actual = variant_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
+    actual = variant_export_external_workflow.get_args("varfish_annotator_external", "annotate")(
         wildcards
     )
     assert actual == expected
@@ -617,15 +617,15 @@ def test_varfish_annotator_step_part_get_log_file_bam_qc(variant_export_external
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_bam_qc(variant_export_external_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_params_bam_qc()"""
+def test_varfish_annotator_step_part_get_args_bam_qc(variant_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_args_bam_qc()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "P001-N1-DNA1-WGS1": "P001",
         "P002-N1-DNA1-WGS1": "P002",
         "P003-N1-DNA1-WGS1": "P003",
     }
-    actual = variant_export_external_workflow.get_params("varfish_annotator_external", "bam_qc")(
+    actual = variant_export_external_workflow.get_args("varfish_annotator_external", "bam_qc")(
         wildcards
     )
     assert actual == expected

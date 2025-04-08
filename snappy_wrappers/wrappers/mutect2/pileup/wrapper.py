@@ -5,10 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-common_variants = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
-    "common_variants"
-]
+reference = snakemake.input.reference
+common_variants = snakemake.input.common_variants
 
 shell.executable("/bin/bash")
 

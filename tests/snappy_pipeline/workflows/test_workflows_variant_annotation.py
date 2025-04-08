@@ -98,7 +98,8 @@ def test_vep_run_step_part_get_input_files(variant_annotation_workflow):
     )
     expected_vcf = base_name_out + ".vcf.gz"
     expected_tbi = base_name_out + ".vcf.gz.tbi"
-    expected_keys = {"vcf", "vcf_tbi"}
+    expected_reference = "/path/to/ref.fa"
+    expected_keys = {"vcf", "vcf_tbi", "reference"}
     # Get actual
     result = variant_annotation_workflow.get_input_files("vep", "run")
     # Assert if all keys present
@@ -106,6 +107,7 @@ def test_vep_run_step_part_get_input_files(variant_annotation_workflow):
     # Assert vcf and tbi
     assert result["vcf"] == expected_vcf
     assert result["vcf_tbi"] == expected_tbi
+    assert result["reference"] == expected_reference
 
 
 def test_vep_run_step_part_get_output_files(variant_annotation_workflow):
@@ -124,6 +126,39 @@ def test_vep_run_step_part_get_output_files(variant_annotation_workflow):
             expected["output_links"].append(f"{base}.{full_ext}")
     # Get actual
     actual = variant_annotation_workflow.get_output_files("vep", "run")
+    assert actual == expected
+
+
+def test_vep_run_step_part_get_args(variant_annotation_workflow):
+    """Tests VepStepPart.get_args()"""
+    # Define expected
+    expected = {
+        "config": {
+            "buffer_size": 100000,
+            "num_threads": 16,
+            "cache_dir": "/some/dir/",
+            "cache_version": "85",
+            "assembly": "GRCh37",
+            "more_flags": "--af_gnomade --af_gnomadg",
+            "pick_order": [
+                "biotype",
+                "mane_select",
+                "mane_plus_clinical",
+                "appris",
+                "tsl",
+                "ccds",
+                "canonical",
+                "rank",
+                "length",
+            ],
+            "output_options": ["everything"],
+            "species": "homo_sapiens",
+            "assembly": "GRCh37",
+            "tx_flag": "gencode_basic",
+        },
+    }
+    # Get actual
+    actual = variant_annotation_workflow.get_args("vep", "run")
     assert actual == expected
 
 

@@ -3,6 +3,8 @@
 These are used in both ``sv_calling_targeted`` and ``sv_calling_wgs``.
 """
 
+from typing import Any
+
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
@@ -67,6 +69,7 @@ class MantaStepPart(
                 token = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
                 bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
         yield "bam", bams
+        yield "reference", self.parent.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_run(self):

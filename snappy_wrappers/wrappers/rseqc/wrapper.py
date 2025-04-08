@@ -9,8 +9,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-current_step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][current_step]["strandedness"]
+config = getattr(snakemake.params, "args", {})
+
 out_link_dir = (
     os.path.dirname(snakemake.output.output) if "output" in snakemake.output.keys() else ""
 )

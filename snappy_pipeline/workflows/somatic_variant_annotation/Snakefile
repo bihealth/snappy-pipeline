@@ -68,7 +68,7 @@ rule somatic_variant_annotation_vep:
         partition=wf.get_resource("vep", "run", "partition"),
         tmpdir=wf.get_resource("vep", "run", "tmpdir"),
     params:
-        **{"args": wf.get_params("vep", "run")},
+        args=wf.get_args("vep", "run"),
     log:
         **wf.get_log_file("vep", "run"),
     wrapper:
@@ -90,7 +90,7 @@ rule somatic_variant_annotation_jannovar:
         partition=wf.get_resource("jannovar", "annotate_somatic_vcf", "partition"),
         tmpdir=wf.get_resource("jannovar", "annotate_somatic_vcf", "tmpdir"),
     params:
-        **{"args": wf.get_params("jannovar", "annotate_somatic_vcf")},
+        args=wf.get_args("jannovar", "annotate_somatic_vcf"),
     log:
         **wf.get_log_file("jannovar", "annotate_somatic_vcf"),
     wrapper:

@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Wrapper for building CNV files for ASCAT"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -13,6 +18,9 @@ library_name = getattr(
     getattr(snakemake.wildcards, "normal_library_name", None),
 )
 assert library_name is not None
+
+path_b_af_loci = snakemake.params["args"]["b_af_loci"]
+reference_path = snakemake.params["args"]["reference_path"]
 
 shell(
     r"""
@@ -40,7 +48,7 @@ echo "##fileformat=VCFv4.2" \
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
 >> $TMPDIR/spots.vcf
 
-zcat -f {snakemake.config[step_config][somatic_purity_ploidy_estimate][ascat][b_af_loci]} \
+zcat -f {path_b_af_loci} \
 | awk \
     -F $'\t' '
     BEGIN {{ OFS=FS; }}
@@ -56,7 +64,7 @@ tabix -f $TMPDIR/spots.vcf.gz
 #
 # TODO: should become a conda package!
 /fast/groups/cubi/scratch/mholtgr/cnvetti quick wgs-cov-bins \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {reference_path} \
     --input {snakemake.input.bam} \
     --output $TMPDIR/cov.bcf
 

@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -32,10 +34,10 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
-    cat {snakemake.params.args[left]} > $inputdir/reads_1.fastq.gz
+    cat {args[left]} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
-    cat {snakemake.params.args[right]} > $inputdir/reads_2.fastq.gz
+    cat {args[right]} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir
@@ -43,7 +45,7 @@ pushd $workdir
 mkdir -p output
 
 STAR-Fusion \
-    --genome_lib_dir {snakemake.config[step_config][somatic_gene_fusion_calling][star_fusion][path_ctat_resource_lib]} \
+    --genome_lib_dir {args[path_ctat_resource_lib]} \
     --left_fq input/reads_1.fastq.gz \
     --right_fq input/reads_2.fastq.gz \
     --output_dir output

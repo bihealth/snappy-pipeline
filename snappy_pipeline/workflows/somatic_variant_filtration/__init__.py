@@ -115,9 +115,10 @@ import os
 import random
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -294,14 +295,17 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 ),
             )
 
-    def get_params(self, action):
+    def get_args(self, action):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards):
-            return {"filter_name": "{}_{}".format(self.filter_name, wildcards["filter_nb"])}
+        return self._get_args
 
-        return input_function
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        filter_nb = int(wildcards["filter_nb"])
+        params = dict(self.config.filter_list[filter_nb - 1][self.filter_name])
+        params["filter_name"] = "{}_{}".format(self.filter_name, wildcards["filter_nb"])
+        return params
 
 
 class OneFilterWithBamStepPart(OneFilterStepPart):
@@ -345,6 +349,23 @@ class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     filter_name = "dkfz"
     resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
 
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterDkfzStepPart, self).get_input_files(action)
+            yield from parent(wildcards).items()
+            yield "reference", self.w_config.static_data_config.reference.path
+
+        return input_function
+
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        """Return dkfz parameters to parameters"""
+        return super(OneFilterDkfzStepPart, self)._get_args(wildcards)
+
 
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
@@ -360,7 +381,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         def input_function(wildcards):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
             yield from parent(wildcards).items()
-
+            yield "reference", self.w_config.static_data_config.reference.path
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
         return input_function
@@ -375,82 +396,26 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
             ),
         )
 
-    def get_params(self, action):
-        """Return add EBFilter parameters to parameters"""
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards):
-            parent = super(OneFilterEbfilterStepPart, self).get_params(action)
-            parameters = parent(wildcards)
-            filter_nb = int(wildcards["filter_nb"])
-            ebfilter_config = self.config.filter_list[filter_nb - 1][self.filter_name]
-            parameters.update(ebfilter_config)
-            parameters["has_annotation"] = self.config.has_annotation
-            return parameters
-
-        return input_function
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        """Return dkfz parameters to parameters"""
+        return super(OneFilterEbfilterStepPart, self)._get_args(wildcards) | {
+            "has_annotation": self.config.has_annotation,
+        }
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):
     name = "one_bcftools"
     filter_name = "bcftools"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
-
 
 class OneFilterRegionsStepPart(OneFilterStepPart):
     name = "one_regions"
     filter_name = "regions"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            parent = super(OneFilterRegionsStepPart, self).get_params(action)
-            parameters = parent(wildcards)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
-
 
 class OneFilterProtectedStepPart(OneFilterStepPart):
     name = "one_protected"
     filter_name = "protected"
-
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            parent = super(OneFilterProtectedStepPart, self).get_params(action)
-            parameters = parent(wildcards)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
 
 
 class LastFilterStepPart(SomaticVariantFiltrationStepPart):
@@ -557,6 +522,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def get_output_files(self, action):
@@ -666,6 +632,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
         yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+        yield "reference", self.w_config.static_data_config.reference.path
 
     def _get_input_files_write_panel(self, wildcards):
         bam_paths = self._get_panel_of_normal_bams(wildcards)
@@ -681,8 +648,10 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return EBFilter parameters from the config"""
         # Validate action
         self._validate_action(action)
-        parameters = self.config.eb_filter
-        parameters.update(self.config.filter_sets.dkfz_and_ebfilter)
+        parameters = dict(self.config.eb_filter)
+        for _, cfg in self.config.filter_sets:
+            if cfg is not None:
+                parameters.update(dict(cfg))
         parameters["has_annotation"] = self.config.has_annotation
         return parameters
 
@@ -826,6 +795,7 @@ class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
             result = {
                 "normal_sample": self.get_normal_lib_name(wildcards),
                 "tumor_sample": wildcards.tumor_library,
+                "config": self.config.filter_sets.model_dump(by_alias=True),
             }
             return result
 
@@ -922,6 +892,11 @@ class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
         self._validate_action(action)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
             yield key, self.base_path_out.replace("{ext}", ext)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return {"exon_lists": self.config.exon_list.model_dump(by_alias=True)}
 
     def get_log_file(self, action):
         # Validate action

@@ -11,7 +11,7 @@ shell.executable("/bin/bash")
 
 rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cnv-check-plot.R")
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -51,7 +51,7 @@ md5 {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 R --vanilla --slave << __EOF
 source("{rscript}")
 
-genome_lengths <- chromosome_lengths("{reference}") |> dplyr::mutate(n=dplyr::row_number())
+genome_lengths <- chromosome_lengths("{snakemake.input.reference}") |> dplyr::mutate(n=dplyr::row_number())
 
 x <- vcf_to_table("{snakemake.input.vcf}", sample="{snakemake.wildcards[library_name]}")
 x <- x |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(x=POS + Offset)

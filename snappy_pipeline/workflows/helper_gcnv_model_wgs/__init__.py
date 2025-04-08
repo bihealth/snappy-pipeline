@@ -84,6 +84,7 @@ The default configuration is as follows.
 """
 
 import os
+from typing import Any
 
 import attr
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -183,6 +184,14 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        gcnv_config = self.w_config.step_config["helper_gcnv_model_wgs"].gcnv
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_par_intervals": gcnv_config.path_par_intervals,
+            "path_uniquely_mapable_bed": gcnv_config.path_uniquely_mapable_bed,
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

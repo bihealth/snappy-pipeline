@@ -431,9 +431,10 @@ import os
 import re
 import sys
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -601,26 +602,25 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
 
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            result = {
-                "input": {
-                    "reads_left": list(
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                    )
-                },
-                "sample_name": wildcards.library_name,
-                "platform": "ILLUMINA",
-            }
-            reads_right = list(
-                sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
-            )
-            if reads_right:
-                result["input"]["reads_right"] = reads_right
-            return result
-
         assert action == "run", "Unsupported actions"
-        return args_function
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards):
+        result = {
+            "input": {
+                "reads_left": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
+                )
+            },
+            "sample_name": wildcards.library_name,
+            "platform": "ILLUMINA",
+        }
+        reads_right = list(
+            sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
+        )
+        if reads_right:
+            result["input"]["reads_right"] = reads_right
+        return result
 
     def get_input_files(self, action):
         def input_function(wildcards):
@@ -732,6 +732,11 @@ class BwaStepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(dict(self.config.bwa))
+        return parent_args
+
 
 class BwaMem2StepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using BWA-MEM 2"""
@@ -757,6 +762,11 @@ class BwaMem2StepPart(ReadMappingStepPart):
             memory=f"{mem_mb}M",
         )
 
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(dict(self.config.bwa_mem2))
+        return parent_args
+
 
 class MBCsStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment on MBC data"""
@@ -781,6 +791,23 @@ class MBCsStepPart(ReadMappingStepPart):
             memory="4G",
             partition="medium",
         )
+
+    def _get_args_run(self, wildcards: Wildcards):
+        args = super()._get_args_run(wildcards)
+        args |= {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "config": self.config.mbcs.model_dump(by_alias=True),
+            "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
+                by_alias=True
+            ),
+        }
+        if self.config.mbcs.use_barcodes:
+            args["barcode_config"] = getattr(
+                self.config, self.config.mbcs.barcode_tool
+            ).model_dump(by_alias=True)
+        if self.config.mbcs.recalibrate:
+            args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
+        return args
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -850,6 +877,12 @@ class StarStepPart(ReadMappingStepPart):
                     )
                 ),
             )
+
+    def _get_args_run(self, wildcards: Wildcards):
+        parent_args = super()._get_args_run(wildcards)
+        parent_args.update(self.config.star.model_dump(by_alias=True))
+        parent_args["features"] = self.w_config.static_data_config.features.path
+        return parent_args
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -979,6 +1012,10 @@ class StrandednessStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return self.config.strandedness.model_dump(by_alias=True)
+
 
 class Minimap2StepPart(ReadMappingStepPart):
     """Support for performing long-read alignment using minimap2"""
@@ -1010,12 +1047,10 @@ class Minimap2StepPart(ReadMappingStepPart):
             memory=f"{mem_gb}G",
         )
 
-    def get_params(self, action):
-        assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
-
-    def _get_params_run(self, wildcards):
-        return {"extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]}
+    def _get_args_run(self, wildcards):
+        return super()._get_args_run(wildcards) | {
+            "extra_infos": self.parent.ngs_library_to_extra_infos[wildcards.library_name]
+        }
 
 
 class ExternalStepPart(ReadMappingStepPart):
@@ -1037,18 +1072,12 @@ class ExternalStepPart(ReadMappingStepPart):
         if "external" not in self.config.tools.dna:
             return  # External not run, don't check configuration  # pragma: no cover
 
-    def get_args(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            return {
-                "input": self._collect_bams(wildcards, wildcards.library_name),
-                "sample_name": wildcards.library_name,
-                "platform": "EXTERNAL",
-            }
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    def _get_args_run(self, wildcards: Wildcards):
+        return {
+            "input": self._collect_bams(wildcards, wildcards.library_name),
+            "sample_name": wildcards.library_name,
+            "platform": "EXTERNAL",
+        }
 
     @listify
     def _collect_bams(self, wildcards, library_name):
@@ -1104,6 +1133,17 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference_genome", self.w_config.static_data_config.reference.path + ".genome"
+        # Find bed file associated with library kit
+        library_name = wildcards.library_name
+        path_targets_bed = ""
+        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
+        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
+            if item.name == kit_name:
+                path_targets_bed = item.path
+                break
+        yield "target_bed", path_targets_bed
 
     @dictify
     def get_output_files(self, action):
@@ -1151,24 +1191,6 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 yield key + "_md5", prefix + ext + ".md5"
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
-
-    def get_params(self, action):
-        assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
-
-    def _get_params_run(self, wildcards):
-        # Find bed file associated with library kit
-        library_name = wildcards.library_name
-        path_targets_bed = ""
-        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
-            if item.name == kit_name:
-                path_targets_bed = item.path
-                break
-
-        return {
-            "path_targets_bed": path_targets_bed,
-        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -1223,6 +1245,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_input_files_run(self):
         yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bai", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai"
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def get_output_files(self, action):
@@ -1239,6 +1262,12 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 for work_path in chain(paths_work.values(), self.get_log_file(action).values())
             ],
         )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._check_action(action)
+        return {
+            "window_length": self.config.bam_collect_doc.window_length,
+        }
 
     @dictify
     def _get_output_files_run_work(self):
@@ -1370,6 +1399,10 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
