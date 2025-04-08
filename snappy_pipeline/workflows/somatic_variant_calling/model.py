@@ -96,13 +96,38 @@ class Mutect2(Parallel):
     # Sadly a type of
     # `FilePath | None = None`
     # still applies `FilePath` validation on `None`, which errors
-    panel_of_normals: str | None = ""
+    panel_of_normals: Annotated[
+        str | None,
+        Field(
+            examples=[
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/b37/Mutect2-exome-panel.vcf.gz",
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/b37/Mutect2-WGS-panel-b37.vcf.gz",
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/hg38/1000g_pon.hg38.vcf.gz",
+            ]
+        ),
+    ] = None
     """Set path to panel of normals vcf if required"""
 
-    germline_resource: str | None = ""
+    germline_resource: Annotated[
+        str | None,
+        Field(
+            examples=[
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/b37/af-only-gnomad.raw.sites.vcf.gz",
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/hg38/af-only-gnomad.hg38.vcf.gz",
+            ]
+        ),
+    ] = None
     """Germline variants resource (same as panel of normals)"""
 
-    common_variants: str | None = ""
+    common_variants: Annotated[
+        str | None,
+        Field(
+            examples=[
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/b37/small_exac_common_3.vcf.gz",
+                "/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/hg38/small_exac_common_3.hg38.vcf.gz",
+            ]
+        ),
+    ] = None
     """Common germline variants for contamination estimation"""
 
     extra_arguments: Annotated[
@@ -218,7 +243,25 @@ class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
 
     ignore_chroms: Annotated[
         list[str],
-        Field(examples=["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"]),
+        Field(
+            examples=[
+                ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+                [
+                    "*_decoy",
+                    "EBV",
+                    "HPV*",
+                    "HBV",
+                    "HCV-*",
+                    "HIV-*",
+                    "HTLV-1",
+                    "CMV",
+                    "KSHV",
+                    "MCV",
+                    "SV40",
+                    "chrUn_GL000220v1",
+                ],
+            ]
+        ),
     ] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"]
     """Patterns of contig names to ignore"""
 
