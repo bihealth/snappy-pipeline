@@ -18,7 +18,7 @@ class SvCallingGetResultFilesMixin:
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
         if self.name not in self.config.tools and not (
-            hasattr(self.config.tools, "dna") and self.name not in self.config.tools.dna
+            hasattr(self.config.tools, "dna") and self.name in self.config.tools.dna
         ):
             return  # tool not enabled, no result files
 
