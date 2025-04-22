@@ -10,6 +10,7 @@ reference = export_config["reference"]
 transcript_db = export_config.get("transcript_db")
 clinvar_db = export_config.get("clinvar_db")
 frequency_db = export_config.get("frequency_db")
+hgnc_tsv = export_config["hgnc_tsv"]
 
 if not (transcript_db or clinvar_db or frequency_db):
     raise ValueError(
@@ -106,8 +107,10 @@ mehari \
     {transcript_db_param} {clinvar_db_param} {frequency_db_param} \
     --path-input-ped {snakemake.input.ped} \
     --path-input-vcf $TMPDIR/tmp.vcf.gz \
+    --hgnc {hgnc_tsv} \
     --path-output-tsv {snakemake.output.gts}
 
+# FIXME this should really not be hardcoded.
 cat <<EOF | gzip -c > {snakemake.output.db_infos}
 genomebuild	db_name	release
 GRCh37	clinvar	20210728

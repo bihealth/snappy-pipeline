@@ -266,11 +266,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
         }
-
-        prefix = Path(self.config.path_mehari_db) / self.config.release.lower()
+        path_mehari_db = Path(self.config.path_mehari_db)
+        prefix = path_mehari_db / self.config.release.lower()
         transcript_db = prefix / "seqvars" / "txs.bin.zst"
         clinvar_db = prefix / "seqvars" / "clinvar"
         frequency_db = prefix / "seqvars" / "frequencies"
+        hgnc_tsv = path_mehari_db / "hgnc.tsv"
 
         if transcript_db.exists(follow_symlinks=True):
             params["transcript_db"] = transcript_db
@@ -278,6 +279,10 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             params["clinvar_db"] = clinvar_db
         if frequency_db.exists(follow_symlinks=True):
             params["frequency_db"] = frequency_db
+        if not hgnc_tsv.exists(follow_symlinks=True):
+            raise ValueError(f"hgnc.tsv required for mehari tsv output but not found at {hgnc_tsv}")
+        else:
+            params["hgnc_tsv"] = hgnc_tsv
 
         return params
 
