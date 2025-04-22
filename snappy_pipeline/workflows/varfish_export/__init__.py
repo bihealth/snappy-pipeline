@@ -270,7 +270,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         prefix = Path(self.config.path_mehari_db) / self.config.release.lower()
         transcript_db = prefix / "seqvars" / "txs.bin.zst"
         clinvar_db = prefix / "seqvars" / "clinvar"
-        frequency_db = prefix / "seqvars" / "freqs"
+        frequency_db = prefix / "seqvars" / "frequencies"
 
         if transcript_db.exists(follow_symlinks=True):
             params["transcript_db"] = transcript_db
