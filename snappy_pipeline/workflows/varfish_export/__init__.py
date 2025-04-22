@@ -262,23 +262,20 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
     def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+        path_mehari_db = Path(self.config.path_mehari_db)
+        prefix = path_mehari_db / self.config.release.lower()
+        transcript_db = prefix / "seqvars" / "txs.bin.zst"
+        clinvar_db = prefix / "seqvars" / "clinvar" / "rocksdb"
+        frequency_db = prefix / "seqvars" / "frequencies" / "rocksdb"
+        hgnc_tsv = path_mehari_db / "hgnc.tsv"
         params = {
             "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
+            "hgnc_tsv": str(hgnc_tsv),
+            "clinvar_db": str(clinvar_db),
+            "frequency_db": str(frequency_db),
+            "transcript_db": str(transcript_db),
         }
-
-        prefix = Path(self.config.path_mehari_db) / self.config.release.lower()
-        transcript_db = prefix / "seqvars" / "txs.bin.zst"
-        clinvar_db = prefix / "seqvars" / "clinvar"
-        frequency_db = prefix / "seqvars" / "frequencies"
-
-        if transcript_db.exists(follow_symlinks=True):
-            params["transcript_db"] = transcript_db
-        if clinvar_db.exists(follow_symlinks=True):
-            params["clinvar_db"] = clinvar_db
-        if frequency_db.exists(follow_symlinks=True):
-            params["frequency_db"] = frequency_db
-
         return params
 
     def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
