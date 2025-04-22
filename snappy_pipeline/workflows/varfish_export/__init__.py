@@ -271,10 +271,10 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         params = {
             "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
-            "hgnc_tsv": hgnc_tsv,
-            "clinvar_db": clinvar_db,
-            "frequency_db": frequency_db,
-            "transcript_db": transcript_db,
+            "hgnc_tsv": str(hgnc_tsv),
+            "clinvar_db": str(clinvar_db),
+            "frequency_db": str(frequency_db),
+            "transcript_db": str(transcript_db),
         }
         return params
 
