@@ -120,7 +120,6 @@ cat $TMPDIR/feature-effects.tsv \
 mehari \
     annotate \
     strucvars \
-    --path-db {export_config[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
     $(for p in $TMPDIR/final_for_import.*.vcf.gz; do \
         echo --path-input-vcf $p; \

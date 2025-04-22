@@ -281,6 +281,14 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         return params
 
+    def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+        params = {
+            "path_exon_bed": self.config.path_exon_bed,
+            "reference": self.parent.w_config.static_data_config.reference.path,
+        }
+
+        return params
+
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
@@ -376,9 +384,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 )
             ],
         )
-
-    #: Alias the get params function.
-    _get_params_annotate_strucvars = _get_params_annotate_seqvars
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
