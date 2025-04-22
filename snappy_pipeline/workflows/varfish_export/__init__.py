@@ -265,8 +265,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         path_mehari_db = Path(self.config.path_mehari_db)
         prefix = path_mehari_db / self.config.release.lower()
         transcript_db = prefix / "seqvars" / "txs.bin.zst"
-        clinvar_db = prefix / "seqvars" / "clinvar"
-        frequency_db = prefix / "seqvars" / "frequencies"
+        clinvar_db = prefix / "seqvars" / "clinvar" / "rocksdb"
+        frequency_db = prefix / "seqvars" / "frequencies" / "rocksdb"
         hgnc_tsv = path_mehari_db / "hgnc.tsv"
         params = {
             "path_exon_bed": self.config.path_exon_bed,
