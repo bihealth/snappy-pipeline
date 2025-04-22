@@ -58,6 +58,7 @@ import re
 import typing
 import warnings
 from itertools import chain
+from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
@@ -261,12 +262,25 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
     def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
-        return {
+        params = {
             "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
-            "path_mehari_db": self.config.path_mehari_db,
         }
-    
+
+        prefix = Path(self.config.path_mehari_db) / self.config.release.lower()
+        transcript_db = prefix / "seqvars" / "txs.bin.zst"
+        clinvar_db = prefix / "seqvars" / "clinvar"
+        frequency_db = prefix / "seqvars" / "freqs"
+
+        if transcript_db.exists(follow_symlinks=True):
+            params["transcript_db"] = transcript_db
+        if clinvar_db.exists(follow_symlinks=True):
+            params["clinvar_db"] = clinvar_db
+        if frequency_db.exists(follow_symlinks=True):
+            params["frequency_db"] = frequency_db
+
+        return params
+
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"

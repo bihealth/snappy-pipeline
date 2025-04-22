@@ -5,6 +5,21 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 export_config = getattr(snakemake.params, "args", {})
+path_exon_bed = export_config["path_exon_bed"]
+reference = export_config["reference"]
+transcript_db = export_config.get("transcript_db")
+clinvar_db = export_config.get("clinvar_db")
+frequency_db = export_config.get("frequency_db")
+
+if not (transcript_db or clinvar_db or frequency_db):
+    raise ValueError(
+        "At least one of the following databases must be provided: "
+        "transcript_db, clinvar_db, frequency_db."
+    )
+
+transcript_db_param = f"--transcripts {transcript_db}" if transcript_db else ""
+clinvar_db_param = f"--clinvar {clinvar_db}" if clinvar_db else ""
+frequency_db_param = f"--frequencies {frequency_db}" if frequency_db else ""
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -57,15 +72,15 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 # Extract around BED file, if given.  Otherwise, "just" normalize.
-if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
+if [[ -n "{path_exon_bed}" ]] && [[ "{path_exon_bed}" != "None" ]]; then
     set -e
     bcftools view \
-        -R {export_config[path_exon_bed]} \
+        -R {path_exon_bed} \
         {snakemake.input.vcf} \
     | bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {export_config[reference]} \
+        --fasta-ref {reference} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
@@ -75,7 +90,7 @@ else
     bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {export_config[reference]} \
+        --fasta-ref {reference} \
         {snakemake.input.vcf} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \
@@ -87,7 +102,8 @@ fi
 mehari \
     annotate \
     seqvars \
-    --path-db {export_config[path_mehari_db]} \
+    --reference {reference} \
+    {transcript_db_param} {clinvar_db_param} {frequency_db_param} \
     --path-input-ped {snakemake.input.ped} \
     --path-input-vcf $TMPDIR/tmp.vcf.gz \
     --path-output-tsv {snakemake.output.gts}
