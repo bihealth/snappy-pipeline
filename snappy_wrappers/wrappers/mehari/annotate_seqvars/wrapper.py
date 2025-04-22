@@ -12,6 +12,15 @@ clinvar_db = export_config.get("clinvar_db")
 frequency_db = export_config.get("frequency_db")
 hgnc_tsv = export_config["hgnc_tsv"]
 
+if not transcript_db.exists(follow_symlinks=True):
+    transcript_db = None
+if not clinvar_db.exists(follow_symlinks=True):
+    clinvar_db = None
+if not frequency_db.exists(follow_symlinks=True):
+    frequency_db = None
+if not hgnc_tsv.exists(follow_symlinks=True):
+    raise ValueError(f"hgnc.tsv required for mehari tsv output but not found at {hgnc_tsv}")
+
 if not (transcript_db or clinvar_db or frequency_db):
     raise ValueError(
         "At least one of the following databases must be provided: "
