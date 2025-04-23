@@ -47,7 +47,7 @@ dependencies = [
     # REST API client for VarFish Server
     "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
-    "pydantic >=2.9.0,<3"
+    "pydantic >=2.9.0,<2.10.0"
 ]
 
 [project.urls]

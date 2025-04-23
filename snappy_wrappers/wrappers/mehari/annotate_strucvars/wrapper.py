@@ -4,9 +4,11 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get shortcut to configuration of varfish_export step
-step_name = snakemake.params.args["step_name"]
-export_config = snakemake.config["step_config"][step_name]
+# Optionally get path to coverage VCF file.
+coverage_vcf = " ".join(getattr(snakemake.input, "vcf_cov", []))
+
+export_config = getattr(snakemake.params, "args", {})
+
 # Get shortcut to "fix_manta_invs.py" postprocessing script
 fix_manta_invs = os.path.join(
     os.path.dirname(__file__),
@@ -72,7 +74,7 @@ for vcf in {snakemake.input.vcf}; do
     num=$(printf %03d $i)
 
     python3 {fix_manta_invs} \
-        --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+        --reference-fasta {export_config[reference]} \
         --input-vcf $vcf \
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
@@ -118,7 +120,6 @@ cat $TMPDIR/feature-effects.tsv \
 mehari \
     annotate \
     strucvars \
-    --path-db {export_config[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
     $(for p in $TMPDIR/final_for_import.*.vcf.gz; do \
         echo --path-input-vcf $p; \

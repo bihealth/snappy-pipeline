@@ -58,6 +58,7 @@ import re
 import typing
 import warnings
 from itertools import chain
+from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
@@ -261,14 +262,29 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
     def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if (
-                donor.dna_ngs_library
-                and donor.dna_ngs_library.extra_infos.get("libraryType") == "WGS"
-            ):
-                return {"step_name": "varfish_export"}
-        return {"step_name": "varfish_export"}
+        path_mehari_db = Path(self.config.path_mehari_db)
+        prefix = path_mehari_db / self.config.release.lower()
+        transcript_db = prefix / "seqvars" / "txs.bin.zst"
+        clinvar_db = prefix / "seqvars" / "clinvar" / "rocksdb"
+        frequency_db = prefix / "seqvars" / "frequencies" / "rocksdb"
+        hgnc_tsv = path_mehari_db / "hgnc.tsv"
+        params = {
+            "path_exon_bed": self.config.path_exon_bed,
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "hgnc_tsv": str(hgnc_tsv),
+            "clinvar_db": str(clinvar_db),
+            "frequency_db": str(frequency_db),
+            "transcript_db": str(transcript_db),
+        }
+        return params
+
+    def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+        params = {
+            "path_exon_bed": self.config.path_exon_bed,
+            "reference": self.parent.w_config.static_data_config.reference.path,
+        }
+
+        return params
 
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
@@ -365,9 +381,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 )
             ],
         )
-
-    #: Alias the get params function.
-    _get_params_annotate_strucvars = _get_params_annotate_seqvars
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):

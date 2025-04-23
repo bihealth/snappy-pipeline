@@ -44,7 +44,7 @@ def minimal_config():
             mutect: {}
 
           somatic_variant_annotation:
-            path_somatic_variant_calling: /path/to/somatic_variant_calling
+            path_somatic_variant: /path/to/somatic_variant_calling
             tools: ["jannovar", "vep"]
             jannovar:
               dbnsfp: {}
@@ -85,7 +85,7 @@ def somatic_variant_annotation_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "somatic_variant": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
     }
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
