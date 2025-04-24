@@ -6,7 +6,7 @@ from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
 
-from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel, ToggleModel
 
 
 class DnaMapper(Enum):
@@ -68,18 +68,16 @@ class TargetCoverageReportEntry(SnappyModel):
     path: Annotated[str, Field(examples=["path/to/targets.bed"])]
 
 
-class TargetCoverageReport(SnappyModel):
-    enabled: bool = True
+class TargetCoverageReport(ToggleModel):
     path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 
-class BamCollectDoc(SnappyModel):
-    enabled: bool = False
+class BamCollectDoc(ToggleModel):
     window_length: Annotated[int, Field(gt=0)] = 1000
 
 
-class NgsChewFingerprint(SnappyModel):
-    enabled: bool = True
+class NgsChewFingerprint(ToggleModel):
+    pass
 
 
 class BwaMode(Enum):
