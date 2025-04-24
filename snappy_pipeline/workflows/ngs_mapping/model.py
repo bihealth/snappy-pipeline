@@ -69,6 +69,7 @@ class TargetCoverageReportEntry(SnappyModel):
 
 
 class TargetCoverageReport(SnappyModel):
+    enabled: bool = True
     path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
 
 

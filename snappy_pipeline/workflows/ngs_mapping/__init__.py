@@ -1094,6 +1094,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        return (
+            not self.config.target_coverage_report.enabled
+            or super().skip_result_files_for_library(library_name)
+        )
+
     def get_input_files(self, action):
         """Return required input files"""
         self._validate_action(action)
