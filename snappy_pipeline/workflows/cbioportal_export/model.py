@@ -90,9 +90,9 @@ class Vcf2Maf(SnappyModel):
 
 
 class GenomeName(enum.StrEnum):
-    hg19 = "hg19" # GRCh37
-    hg38 = "hg38" # GRCh38
-    mm10 = "mm10" # GRCm38
+    hg19 = "hg19"  # GRCh37
+    hg38 = "hg38"  # GRCh38
+    mm10 = "mm10"  # GRCm38
 
 
 class Study(SnappyModel):
