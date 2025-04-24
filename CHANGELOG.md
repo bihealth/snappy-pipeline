@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.0](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.4.0) (2025-04-24)
+
+
+### Features
+
+* Add snakemake parameter --ignore-incomplete to snappy-pipeline ([#586](https://github.com/bihealth/snappy-pipeline/issues/586)) ([dbeb3ed](https://github.com/bihealth/snappy-pipeline/commit/dbeb3eda12cde54ca5ac5b5782eafbb107482cbd))
+* update mehari to v0.35.0 ([#617](https://github.com/bihealth/snappy-pipeline/issues/617)) ([2c63aeb](https://github.com/bihealth/snappy-pipeline/commit/2c63aeba4b32f784b22c1093a373187c67ed8407))
+
+
+### Bug Fixes
+
+* add libboost to manta env definition ([#613](https://github.com/bihealth/snappy-pipeline/issues/613)) ([dc9c020](https://github.com/bihealth/snappy-pipeline/commit/dc9c020eeb7a79445d7753812bb9d5bc42b7d1b9))
+* add step_key params for sv_calling_targeted gcnv_preprocess_intervals ([#612](https://github.com/bihealth/snappy-pipeline/issues/612)) ([bd31935](https://github.com/bihealth/snappy-pipeline/commit/bd3193589910fbf6a96dd2851c48f745d5914f0e))
+* allow BaseStepPart get_resource to (again) deal with input-functions being defined by `get_resource_usage` ([#614](https://github.com/bihealth/snappy-pipeline/issues/614)) ([ebfcd9d](https://github.com/bihealth/snappy-pipeline/commit/ebfcd9dc63866d654f250ca3430c9dad0b2e6bcd))
+* allow bwa_mem2 and mbcs in cbioportal_export model ([#603](https://github.com/bihealth/snappy-pipeline/issues/603)) ([882e869](https://github.com/bihealth/snappy-pipeline/commit/882e869b545e2b8ce08061397b8e15c320f0274f))
+* change type of parameters to adhere to specification of EBFilter ([#580](https://github.com/bihealth/snappy-pipeline/issues/580)) ([42d2c01](https://github.com/bihealth/snappy-pipeline/commit/42d2c0109fb35eff45b1baa696fa07dd333d110c))
+* remove unnecessary inputs for annotate_strucvars ([#592](https://github.com/bihealth/snappy-pipeline/issues/592) ) ([#593](https://github.com/bihealth/snappy-pipeline/issues/593)) ([f49fafb](https://github.com/bihealth/snappy-pipeline/commit/f49fafb91359d5445a0f8430ca34c10519f1eb6a))
+* require hgnc.tsv for mehari annotate seqvars tsv output ([#619](https://github.com/bihealth/snappy-pipeline/issues/619)) ([7c02c4b](https://github.com/bihealth/snappy-pipeline/commit/7c02c4b767868f957e2fe3d17a1d17529d7317b8))
+* restrict pydantic to 2.9.x ([#618](https://github.com/bihealth/snappy-pipeline/issues/618)) ([e62fdd3](https://github.com/bihealth/snappy-pipeline/commit/e62fdd38f86eb5b3c8f29a6aec366f4b2271ee9d))
+* update cbioportal model for study metadata ([#621](https://github.com/bihealth/snappy-pipeline/issues/621)) ([246eb95](https://github.com/bihealth/snappy-pipeline/commit/246eb9520ac18af151089a9474c758858597b987))
+* update expectations for file names in GCNV models with kernel=0.9 and gatk4.6 ([#611](https://github.com/bihealth/snappy-pipeline/issues/611)) ([49f3568](https://github.com/bihealth/snappy-pipeline/commit/49f356809862dc087aca060c473ad0d35fd2e609))
+
 ## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
 
 
