@@ -359,12 +359,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         "run": ResourceUsage(
             threads=1,
             time="5-00:00:00",
-            memory="3584M",
+            memory="8000M",
         ),
         "gather": ResourceUsage(
             threads=1,
-            time="02:00:00",
-            memory="4096M",
+            time="03:59:00",
+            memory="32768M",
         ),
         "filter": ResourceUsage(
             threads=2,
