@@ -84,7 +84,7 @@ out_base=$tmpdir/$(basename {raw_output} .vcf.gz)
 # Add intervals if required
 
 gatk {java_options} Mutect2 \
-    --tmp-dir {tmpdir} \
+    --tmp-dir $tmpdir \
     --reference {reference} \
     {input_params} \
     --output $out_base.vcf \
