@@ -9,11 +9,13 @@ reference = snakemake.config["static_data_config"]["reference"]["path"]
 
 segments = (
     " --tumor-segmentation {} ".format(snakemake.input.segments)
-    if "segments" in snakemake.input
+    if getattr(snakemake.input, "segments", None) is not None
     else ""
 )
 table = (
-    " --contamination-table {} ".format(snakemake.input.table) if "table" in snakemake.input else ""
+    " --contamination-table {} ".format(snakemake.input.table)
+    if getattr(snakemake.input, "table", None) is not None
+    else ""
 )
 
 shell.executable("/bin/bash")
