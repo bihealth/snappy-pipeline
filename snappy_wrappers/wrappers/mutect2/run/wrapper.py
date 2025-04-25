@@ -102,13 +102,6 @@ rm -f $out_base.vcf.idx
 bgzip $out_base.vcf
 tabix -f $out_base.vcf.gz
 
-$(if [[ -n "{with_f1r2_tar_gz}" ]]; then \
-    # Store the f1r2 tar file in a sub-directory (for compatibility with parallel wrapper)
-    file_base=$(basename ${{out_base}})
-    dir_base=$(dirname ${{out_base}})
-    tar -zcvf ${{out_base}}.f1r2_tar.tar.gz --directory ${{dir_base}} ${{file_base}}.f1r2.tar.gz
-fi)
-
 pushd $tmpdir
 for f in $out_base.*; do
     md5sum $f >$f.md5

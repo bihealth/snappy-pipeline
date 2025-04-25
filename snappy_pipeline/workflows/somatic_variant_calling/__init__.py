@@ -523,7 +523,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         input_files = {
             "raw": scatteritem_base_path + ".raw.vcf.gz",
             "stats": scatteritem_base_path + ".raw.vcf.stats",
-            "f1r2": scatteritem_base_path + ".raw.f1r2_tar.tar.gz",
+            "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
         }
 
         return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
@@ -545,7 +545,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
-            "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
+            "orientation": base_path + ".raw.read_orientation_model.tar.gz",
         }
         if self.get_normal_lib_name(wildcards):
             if "contamination" in self.actions:
@@ -641,8 +641,8 @@ class Mutect2StepPart(MutectBaseStepPart):
                 "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
-                "f1r2": ".raw.f1r2_tar.tar.gz",
-                "f1r2_md5": ".raw.f1r2_tar.tar.gz.md5",
+                "f1r2": ".raw.f1r2.tar.gz",
+                "f1r2_md5": ".raw.f1r2.tar.gz.md5",
             }
         if action == "gather":
             exts = {
@@ -652,8 +652,8 @@ class Mutect2StepPart(MutectBaseStepPart):
                 "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
-                "f1r2": ".raw.f1r2_tar.tar.gz",
-                "f1r2_md5": ".raw.f1r2_tar.tar.gz.md5",
+                "orientation": ".raw.read_orientation_model.tar.gz",
+                "orientation_md5": ".raw.read_orientation_model.tar.gz.md5",
             }
         if action == "filter":
             exts = {
