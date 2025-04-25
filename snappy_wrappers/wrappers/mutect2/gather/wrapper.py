@@ -24,17 +24,9 @@ tabix -f {output.raw}
 stats=$(echo "{input.stats}" | sed -e "s/ / -stats /g")
 gatk MergeMutectStats -stats $stats -O {output.stats}
 
-# Contatenate orientation tar files ------------------------------
-tmpdir=$(mktemp -d)
-for tar_file in {input.f1r2}
-    do
-abs_path=$(realpath $tar_file)
-pushd $tmpdir
-tar -zxvf $abs_path
-popd
-done
-tar -zcvf {output.f1r2} -C $tmpdir .
-rm -rf $tmpdir
+# Create orientation model from all F1R2 files -------------------
+orientation=$(echo "{input.f1r2}" | sed -e "s/ / -I /g")
+gatk LearnReadOrientationModel -I $orientation -O {output.orientation}
 
 # Compute md5 sums -----------------------------------------------
 pushd $(dirname {output.raw})
