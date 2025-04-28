@@ -69,6 +69,7 @@ Project Info
     step/ngs_data_qc
     step/ngs_mapping
     step/somatic_gene_fusion_calling
+    step/somatic_neoepitope_prediction
     step/somatic_purity_ploidy_estimate
     step/somatic_targeted_seq_cnv_calling
     step/somatic_variant_annotation
