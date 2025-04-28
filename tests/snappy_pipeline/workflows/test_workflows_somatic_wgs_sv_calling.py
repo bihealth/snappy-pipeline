@@ -9,7 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_wgs_sv_calling import SomaticWgsSvCallingWorkflow
 
-from .common import get_expected_output_vcf_files_dict
+from .common import get_expected_output_vcf_files_dict, get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 
@@ -36,7 +36,8 @@ def minimal_config():
           somatic_wgs_sv_calling:
               path_ngs_mapping: ../ngs_mapping
               tools: ['manta']
-              manta: {}
+              manta:
+                ignore_chroms: ['*_decoy']
 
         data_sets:
           first_batch:
@@ -86,6 +87,8 @@ def test_manta_somatic_step_part_get_input_files(somatic_wgs_sv_calling_workflow
     """Tests MantaStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "cancer_library": "P001-T1-DNA1-WGS1"})
     expected = {
+        "reference": "/path/to/ref.fa",
+        "callRegions": "work/bwa.manta/out/callRegions.bed.gz",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
@@ -99,13 +102,18 @@ def test_manta_somatic_step_part_get_output_files(somatic_wgs_sv_calling_workflo
     """Tests MantaStepPart.get_output_files()"""
     base_name = "work/{mapper}.manta.{cancer_library}/out/{mapper}.manta.{cancer_library}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name)
+    candidate = get_expected_output_vcf_files_dict(base_out=base_name + ".candidate")
+    for k, v in candidate.items():
+        expected[k.replace("vcf", "candidate")] = v
     actual = somatic_wgs_sv_calling_workflow.get_output_files("manta", "run")
     assert actual == expected
 
 
 def test_manta_somatic_step_part_get_log_file(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_log_file()"""
-    expected = "work/{mapper}.manta.{cancer_library}/log/snakemake.somatic_wgs_sv_calling.log"
+    expected = get_expected_log_files_dict(base_out="work/{mapper}.manta.{cancer_library}/log/{mapper}.manta.{cancer_library}")
+    expected["sh"] = "work/{mapper}.manta.{cancer_library}/log/{mapper}.manta.{cancer_library}.sh"
+    expected["sh_md5"] = expected["sh"] + ".md5"
     actual = somatic_wgs_sv_calling_workflow.get_log_file("manta", "run")
     assert actual == expected
 
@@ -113,7 +121,7 @@ def test_manta_somatic_step_part_get_log_file(somatic_wgs_sv_calling_workflow):
 def test_manta_somatic_step_part_get_resource(somatic_wgs_sv_calling_workflow):
     """Tests MantaStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "64000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
