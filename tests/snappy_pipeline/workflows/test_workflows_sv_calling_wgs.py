@@ -52,6 +52,7 @@ def minimal_config():
                   model_pattern: "/data/model_*"
             melt:
               jar_file: /path/to/melt.jar
+              me_refs_path: /path/to/melt/support/files
 
         data_sets:
           first_batch:
