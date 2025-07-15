@@ -86,31 +86,13 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --output $tmpdir/out.vcf
 
 # Re-order samples so that normal always comes before tumor
-awk -F '\t' '
-    BEGIN {{ n=""; t=""; i_n=0; i_t=0 }}
-    {{
-        if ($0 ~ /^##normal_sample=/) {{
-            n=gensub("^##normal_sample=", "", 1, $0)
-        }}
-        if ($0 ~ /^##tumor_sample=/) {{
-            t=gensub("^##tumor_sample=", "", 1, $0)
-        }}
-        if ($0 ~ /^##/) {{
-            print $0
-        }} else {{
-            if ($0 ~ /^#CHROM/) {{
-                for (i=10; i <= NF ; ++i) {{
-                    if ($i == n) {{ i_n=i }}
-                    if ($i == t) {{ i_t=i }}
-                }}
-            }}
-            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, $5, $6, $7, $8, $9, $i_n, $i_t
-        }}
-    }}' $tmpdir/out.vcf | bgzip > {snakemake.output.full_vcf}
-
-# Index & move to final dest
-tabix -f {snakemake.output.full_vcf}
-
+grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
+grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
+bcftools view \
+    --samples-file $tmpdir/samples.lst \
+    --output-type z --output {snakemake.output.full_vcf} \
+    $tmpdir/out.vcf
+tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}
 tabix -f {snakemake.output.vcf}
