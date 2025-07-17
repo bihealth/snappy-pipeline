@@ -76,6 +76,8 @@ rule build_gcnv_model_annotate_gc:
         tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "annotate_gc"),
+    params:
+        step_key="helper_gcnv_model_targeted",
     wrapper:
         wf.wrapper_path("gcnv/annotate_gc")
 

@@ -86,6 +86,8 @@ class Melt(SnappyModel):
     genes_file: str = "add_bed_files/1KGP_Hg19 / hg19.genes.bed"
     """adjust, e.g., Hg38/Hg38.genes.bed"""
 
+    me_refs_path: str = Field(examples=["me_refs"])
+
     skip_libraries: list[str] = []
     """
     Skip processing of the following libraries.
