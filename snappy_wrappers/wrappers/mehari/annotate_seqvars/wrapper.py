@@ -109,11 +109,19 @@ else
 fi
 
 # Perform Mehari sequence variant annotation.
+# Note: The TSV export does NOT select MANE transcripts on its own,
+# therefore --pick-transcript and --pick-transcript-mode are needed.
+# This will NOT work properly when a tx-db with more than one source is used
 mehari \
     annotate \
     seqvars \
     --reference {reference} \
     {transcript_db_param} {clinvar_db_param} {frequency_db_param} \
+    --pick-transcript mane-select \
+    --pick-transcript mane-plus-clinical \
+    --pick-transcript length \
+    --pick-transcript-mode first \
+    --keep-intergenic \
     --path-input-ped {snakemake.input.ped} \
     --path-input-vcf $TMPDIR/tmp.vcf.gz \
     --hgnc {hgnc_tsv} \
