@@ -10,4 +10,4 @@ dependencies:
   - jq ==1.7.1
   - vcfpy ==0.13.8
   - pysam ==0.22.1
-  - python ==3.11.9
+  - python ==3.12.11
