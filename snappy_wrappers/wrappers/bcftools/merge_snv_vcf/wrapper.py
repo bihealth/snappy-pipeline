@@ -9,7 +9,7 @@ from snakemake.shell import shell
 if TYPE_CHECKING:
     from snakemake.script import snakemake
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 reference_path = args["reference_path"]
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:

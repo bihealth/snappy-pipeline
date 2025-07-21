@@ -8,9 +8,9 @@ import textwrap
 
 from snakemake import shell
 
-params = getattr(snakemake.params, "args", {})
-config = params.get("config", {})
-print("DEBUG- params = {}".format(params), file=sys.stderr)
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
+print("DEBUG- args = {}".format(args), file=sys.stderr)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -24,16 +24,16 @@ with gzip.open(snakemake.input.vcf, mode="rt") as f:
     for line in f:
         m = title.search(line.rstrip())
         if m:
-            if (m.group(3) == params["normal_sample"]) and (m.group(4) == params["tumor_sample"]):
+            if (m.group(3) == args["normal_sample"]) and (m.group(4) == args["tumor_sample"]):
                 iTumor = 1
                 break
-            if (m.group(4) == params["normal_sample"]) and (m.group(3) == params["tumor_sample"]):
+            if (m.group(4) == args["normal_sample"]) and (m.group(3) == args["tumor_sample"]):
                 iTumor = 0
                 break
 if iTumor < 0:
     print(
         "Can't find normal sample {} or tumor sample {} in vcf header".format(
-            params["normal_sample"], params["tumor_sample"]
+            args["normal_sample"], args["tumor_sample"]
         ),
         file=sys.stderr,
     )
@@ -41,19 +41,19 @@ if iTumor < 0:
 
 cmd = ["zcat " + snakemake.input.vcf]
 
-if "dkfz" in params["filter_set"]:
+if "dkfz" in args["filter_set"]:
     cmd.append("bcftools view -f .,PASS")
-if "ebfilter" in params["filter_set"]:
+if "ebfilter" in args["filter_set"]:
     cmd.append(
         "bcftools view -e 'EB < {threshold}'".format(
             threshold=config["dkfz_and_ebfilter"].get("ebfilter_threshold", 3)
         )
     )
-if "oxog" in params["filter_set"]:
-    if params["var_caller"] != "scalpel":
+if "oxog" in args["filter_set"]:
+    if args["var_caller"] != "scalpel":
         min_vaf = config["dkfz_and_ebfilter_and_oxog"].get("vaf_threshold", 0.08)
         min_cov = config["dkfz_and_ebfilter_and_oxog"].get("coverage_threshold", 5)
-        if params["var_caller"] == "mutect2":
+        if args["var_caller"] == "mutect2":
             allele_freq_str = "AF"
         else:
             allele_freq_str = "FA"

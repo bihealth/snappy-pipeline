@@ -193,9 +193,9 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             yield "ped", real_path
             # BAM and BAI file of the offspring
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            path_bam = (
-                "output/{mapper}.{index_library}/out/{mapper}." "{index_library}.bam"
-            ).format(**wildcards)
+            path_bam = ("output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam").format(
+                **wildcards
+            )
             yield "bam", ngs_mapping(path_bam)
             yield "bai", ngs_mapping(path_bam + ".bai")
             # Input file comes from previous step.

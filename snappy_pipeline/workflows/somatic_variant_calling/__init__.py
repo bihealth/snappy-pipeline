@@ -207,38 +207,37 @@ class SomaticVariantCallingStepPart(BaseStepPart):
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
+        return self._get_input_files_run
 
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
-            ).format(**wildcards)
-            input_files = {
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+    def _get_input_files_run(self, wildcards):
+        """Helper wrapper function"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
+            **wildcards
+        )
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
 
-            normal_library = self.get_normal_lib_name(wildcards)
-            if normal_library:
-                normal_base_path = (
-                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                        normal_library=normal_library, **wildcards
-                    )
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=normal_library, **wildcards
                 )
-                input_files.update(
-                    {
-                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                    }
-                )
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
 
-            return input_files
-
-        return input_function
+        return input_files
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -333,6 +332,13 @@ class MutectStepPart(MutectBaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    def _get_input_files(self, wildcards):
+        input_files = super()._get_input_files(wildcards)
+        input_files["reference"] = self.w_config.static_data_config.reference.path
+        input_files["dbsnp"] = self.w_config.static_data_config.dbsnp.path
+        input_files["cosmic"] = self.w_config.static_data_config.cosmic.path
+        return input_files
+
 
 class Mutect2StepPart(MutectBaseStepPart):
     """Somatic variant calling with Mutect2"""
@@ -411,9 +417,9 @@ class Mutect2StepPart(MutectBaseStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        tumor_base_path = (
-            "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
-        ).format(**wildcards)
+        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
+            **wildcards
+        )
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
@@ -433,6 +439,7 @@ class Mutect2StepPart(MutectBaseStepPart):
                 }
             )
 
+        input_files["reference"] = self.w_config.static_data_config.reference.path
         return input_files
 
     def _get_input_files_filter(self, wildcards):
@@ -762,7 +769,7 @@ class JointCallingStepPart(BaseStepPart):
         if self.__class__.name is None:
             raise RuntimeError("Step name not given, override in sub class")
         self.base_path_out = (
-            "work/{{mapper}}.{name}.{{donor_name}}/out/" "{{mapper}}.{name}.{{donor_name}}{ext}"
+            "work/{{mapper}}.{name}.{{donor_name}}/out/{{mapper}}.{name}.{{donor_name}}{ext}"
         )
         # Build shortcut from donor name to donor.
         self.donor_by_name = OrderedDict()
@@ -781,7 +788,12 @@ class JointCallingStepPart(BaseStepPart):
             ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Return paths of NGS libraries.
             input_base_path = "output/{mapper}.{library.name}/out/{mapper}.{library.name}{ext}"
-            result = {"bam": [], "bai": []}
+            result = {
+                "reference": self.w_config.static_data_config.reference.path,
+                "dbsnp": self.w_config.static_data_config.dbsnp.path,
+                "bam": [],
+                "bai": [],
+            }
             for bio_sample in donor.bio_samples.values():
                 for test_sample in bio_sample.test_samples.values():
                     for ngs_library in test_sample.ngs_libraries.values():
@@ -808,8 +820,7 @@ class JointCallingStepPart(BaseStepPart):
         """Return dict of log files."""
         _ = action
         prefix = (
-            "work/{{mapper}}.{var_caller}.{{donor_name}}/log/"
-            "{{mapper}}.{var_caller}.{{donor_name}}"
+            "work/{{mapper}}.{var_caller}.{{donor_name}}/log/{{mapper}}.{var_caller}.{{donor_name}}"
         ).format(var_caller=self.__class__.name)
         key_ext = (
             ("log", ".log"),
@@ -833,6 +844,7 @@ class JointCallingStepPart(BaseStepPart):
                 for test_sample in bio_sample.test_samples.values()
                 for ngs_library in test_sample.ngs_libraries.values()
             ],
+            "config": self.config.get(self.name).dict(by_alias=True),
             "reference_path": reference_path,
         }
         if ignore_chroms := self.parent.config.ignore_chroms:

@@ -5,7 +5,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-args = getattr(snakemake.param, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 window_length = args.get("window_length", "")
 

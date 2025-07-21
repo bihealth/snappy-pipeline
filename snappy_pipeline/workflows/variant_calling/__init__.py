@@ -557,7 +557,7 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
             "reference": self.parent.w_config.static_data_config.reference.path,
             "dbsnp": self.parent.w_config.static_data_config.dbsnp.path,
             "num_threads": self.config.gatk3_uc.num_threads,
-            "window_length": self.config.gatk4_hc_joint.window_length,
+            "window_length": self.config.gatk4_hc_joint.window_length,  # WARNING- taken from gatk4_hc_joint, not gatk3_uc
             "allow_seq_dict_incompatibility": self.config.gatk3_uc.allow_seq_dict_incompatibility,
             "downsample_to_coverage": self.config.gatk3_uc.downsample_to_coverage,
             "ignore_chroms": self.config.ignore_chroms,
@@ -905,6 +905,10 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
                 for work_path in chain(work_files.values(), self.get_log_file("run").values())
             ],
         )
+
+    def get_args(self, action):
+        self._validate_action(action)
+        return {"path_ser": self.config.get(self.name).get("path_ser")}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

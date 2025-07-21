@@ -9,7 +9,7 @@ from snakemake.shell import shell
 if TYPE_CHECKING:
     from snakemake.script import snakemake
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 merge_option = args["merge_option"]
 gvcf_option = args["gvcf_option"]
 sample_names = args["sample_names"]

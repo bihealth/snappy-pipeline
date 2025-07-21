@@ -1,4 +1,5 @@
 import enum
+import itertools
 import os
 from enum import Enum
 from typing import Annotated
@@ -21,8 +22,23 @@ class RnaMapper(Enum):
     STAR = "star"
 
 
+class MetaTool(Enum):
+    MBCS = "mbcs"
+
+
+CombinedDnaTool = Enum(
+    "CombinedDnaTool",
+    {
+        (name, member.value)
+        for name, member in itertools.chain(
+            DnaMapper.__members__.items(), MetaTool.__members__.items()
+        )
+    },
+)
+
+
 class Tools(SnappyModel):
-    dna: Annotated[list[DnaMapper], EnumField(DnaMapper, [])]
+    dna: Annotated[list[CombinedDnaTool], EnumField(CombinedDnaTool, [])]
     """Required if DNA analysis; otherwise, leave empty."""
 
     rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
@@ -252,7 +268,7 @@ class Minimap2(SnappyModel):
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
-    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
+    """Either bwa or bwa_mem2. The indices & other parameters are taken from mapper config"""
 
     barcode_tool: BarcodeTool = BarcodeTool.AGENT
     """Only agent currently implemented"""

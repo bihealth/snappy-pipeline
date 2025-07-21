@@ -21,6 +21,8 @@ compute-md5()
 
 COV_THRESHOLDS = [5, 15, 20, 30, 50, 100, 200, 300, 400, 500, 1000]
 
+args = getattr(snakemake.params, "args", {})
+
 with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") as json_tmpf:
     # Write library name to identifier that should be used in output file into a JSON file.
     # Dictionary expected structure. Key: library name; Value: identifier to be used in file.
@@ -32,7 +34,7 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
     #    "P002-N1-DNA1-WGS1": "P002",
     #    "P003-N1-DNA1-WGS1": "P003",
     #  }
-    for library_name, identifier in snakemake.params.args.items():
+    for library_name, identifier in args.items():
         print(f"{library_name} {identifier}", file=json_tmpf)
         json_tmpf.flush()
 

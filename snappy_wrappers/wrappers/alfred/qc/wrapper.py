@@ -20,9 +20,10 @@ compute-md5()
 }
 """
 
-reference_path = snakemake.params["args"]["path_reference"]
-genome_path = snakemake.params["args"]["path_reference_genome"]
-targets_bed = snakemake.params["args"]["path_targets_bed"]
+args = getattr(snakemake.params, "args", {})
+reference_path = args["path_reference"]
+genome_path = args["path_reference_genome"]
+targets_bed = args["path_targets_bed"]
 
 shell(
     r"""

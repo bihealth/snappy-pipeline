@@ -20,7 +20,7 @@ compute-md5()
 }
 """
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 
 input_left = args["input"]["reads_left"]
 input_right = args["input"].get("reads_right", "")

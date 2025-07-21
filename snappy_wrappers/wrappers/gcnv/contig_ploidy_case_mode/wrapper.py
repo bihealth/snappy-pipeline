@@ -9,6 +9,8 @@ from snakemake.shell import shell
 #
 # cf. https://github.com/broadinstitute/gatk/issues/8164
 
+args = getattr(snakemake.params, "args", {})
+
 out_path = pathlib.Path(snakemake.output.done).parent
 
 MALE = "male"
@@ -36,6 +38,7 @@ paths_tsv = " ".join(snakemake.input.tsv)
 shell(
     r"""
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 set -x
 
@@ -46,7 +49,7 @@ then
 fi
 
 gatk DetermineGermlineContigPloidy \
-    --model {snakemake.params.args[model]} \
+    --model {args[model]} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --output $(dirname {snakemake.output}) \
     --output-prefix ploidy

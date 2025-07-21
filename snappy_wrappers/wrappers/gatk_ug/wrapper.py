@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 # The step key to use.
 step_key = snakemake.params.step_key
 caller_key = snakemake.params.caller_key
@@ -17,7 +19,7 @@ arg_annotations = " ".join(
     ]
 )
 arg_intervals = " ".join(
-    ["--intervals {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+    ["--intervals {}".format(interval) for interval in args["intervals"]]
 )
 arg_input_files = " ".join(
     ["--input_file {}".format(fname) for fname in snakemake.input if fname.endswith(".bam")]
@@ -73,9 +75,9 @@ gatk_nonfree -Xmx6g -Djava.io.tmpdir=$TMPDIR \
     $arg_seq_dict \
     -glm BOTH \
     --out $TMPDIR/tmp.vcf.gz \
-    --reference_sequence {snakemake.config[static_data_config][reference][path]} \
+    --reference_sequence {snakemake.input.reference} \
     --sample_ploidy 2 \
-    --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
+    --dbsnp {snakemake.input.dbsnp} \
     --downsample_to_coverage {downsample_to_coverage} \
     {arg_intervals} \
     {arg_input_files}

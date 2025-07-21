@@ -243,10 +243,10 @@ class AscatStepPart(BaseStepPart):
             "b_af_loci": self.config.ascat.b_af_loci,
             "reference_path": self.w_config.static_data_config.reference.path,
         }
-    
+
     def _get_args_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._get_args_baf_tumor(wildcards)
-    
+
     def _get_args_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
@@ -255,7 +255,7 @@ class AscatStepPart(BaseStepPart):
 
     def _get_args_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._get_args_cnv_tumor(wildcards)
-    
+
     def _get_args_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,

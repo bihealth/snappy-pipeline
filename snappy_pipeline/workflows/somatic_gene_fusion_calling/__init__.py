@@ -362,7 +362,12 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": left,
+                "right": right,
+                "path_genome": self.config.get(self.name).get("path_genome"),
+                "path_index": self.config.get(self.name).get("path_index"),
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function

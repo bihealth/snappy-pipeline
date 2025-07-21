@@ -137,8 +137,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         tpl = (
-            "output/{mapper}.{var_caller}.{tumor_library}/out/"
-            "{mapper}.{var_caller}.{tumor_library}"
+            "output/{mapper}.{var_caller}.{tumor_library}/out/{mapper}.{var_caller}.{tumor_library}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
@@ -231,6 +230,13 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
             memory=f"{8 * 1024 * 2}M",
         )
 
+    def get_args(self, action):
+        self._validate_action(action)
+        return {
+            "static_data_config": self.w_config.model_dump(by_alias=True),
+            "jannovar": self.config.get(self.name).model_dump(by_alias=True),
+        }
+
 
 class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     """Annotate VCF file from somatic calling using ENSEMBL's VEP"""
@@ -248,7 +254,17 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     has_full = True
 
     #: Allowed keywords for pick order
-    PICK_ORDER = ("biotype", "mane", "appris", "tsl", "ccds", "canonical", "rank", "length")
+    PICK_ORDER = (
+        "biotype",
+        "mane_select",
+        "mane_plus_clinical",
+        "appris",
+        "tsl",
+        "ccds",
+        "canonical",
+        "rank",
+        "length",
+    )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

@@ -10,7 +10,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-intervals = " ".join(snakemake.params.args["intervals"])
+args = getattr(snakemake.params, "args", {})
+
+intervals = " ".join(args["intervals"])
 
 shell(
     r"""
@@ -42,9 +44,9 @@ mutect_nonfree \
     --analysis_type MuTect \
     --input_file:normal {snakemake.input.normal_bam} \
     --input_file:tumor {snakemake.input.tumor_bam} \
-    --dbsnp {snakemake.config[static_data_config][dbsnp][path]} \
-    --cosmic {snakemake.config[static_data_config][cosmic][path]} \
-    --reference_sequence {snakemake.config[static_data_config][reference][path]} \
+    --dbsnp {snakemake.input.dbsnp} \
+    --cosmic {snakemake.input.cosmic} \
+    --reference_sequence {snakemake.input.reference} \
     --coverage_file $out_base.full.wig.txt \
     --out $out_base.full.out.txt \
     --vcf $out_base.full.vcf \

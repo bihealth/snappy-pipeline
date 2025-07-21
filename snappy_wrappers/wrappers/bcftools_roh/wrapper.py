@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 
 path_targets = args["path_targets"]
 path_af_file = args["path_af_file"]

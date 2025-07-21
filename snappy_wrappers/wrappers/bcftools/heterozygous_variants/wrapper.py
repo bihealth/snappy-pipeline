@@ -7,7 +7,7 @@ from snakemake.shell import shell
 if TYPE_CHECKING:
     from snakemake.script import snakemake
 
-args = getattr(snakemake.params, "args")
+args = getattr(snakemake.params, "args", {})
 
 reference_path = args["reference_path"]
 

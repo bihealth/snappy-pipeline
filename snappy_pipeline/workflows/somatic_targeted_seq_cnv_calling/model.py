@@ -42,8 +42,8 @@ class SequenzaFitExtraArgs(SnappyModel):
     N_ratio_filter: int = Field(10, alias="N.ratio.filter")
     N_BAF_filter: int = Field(1, alias="N.BAF.filter")
     segment_filter: int = Field(3000000, alias="segment.filter")
-    mufreq_treshold: float = Field(0.1, alias="mufreq.threshold")
-    ratio_priority: bool = Field(False, alias="ratio_priority")
+    mufreq_treshold: float = Field(0.1, alias="mufreq.treshold")
+    ratio_priority: bool = Field(False, alias="ratio.priority")
     ploidy: list[float] = [
         1.0,
         1.1,

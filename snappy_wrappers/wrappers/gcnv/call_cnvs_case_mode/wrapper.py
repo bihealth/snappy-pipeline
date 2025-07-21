@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 paths_tsv = " ".join(snakemake.input.tsv)
 shell(
     r"""
@@ -17,6 +19,7 @@ trap "rm -rf $TMPDIR" ERR EXIT
 export MKL_NUM_THREADS=16
 export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
+export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 # Force full replacement of previous results
 # (this also solves issues when gatk tries to shutil copy file ownership)
@@ -29,7 +32,7 @@ gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
-    --model {snakemake.params.args[model]} \
+    --model {args[model]} \
     --output $(dirname {snakemake.output.done}) \
     --output-prefix cnv_calls
 """

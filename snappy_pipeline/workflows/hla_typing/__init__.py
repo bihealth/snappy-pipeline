@@ -302,14 +302,7 @@ class HlaTypingWorkflow(BaseStep):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
-        sub_steps = [LinkInStep, LinkOutStepPart]
-        for tool in self.config.tools:
-            if self.config.get(str(tool)):
-                match tool:
-                    case "optitype":
-                        sub_steps.append(OptiTypeStepPart)
-                    case "arcashla":
-                        sub_steps.append(ArcasHlaStepPart)
+        sub_steps = [LinkInStep, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()

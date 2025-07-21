@@ -11,7 +11,7 @@ from snakemake.script import snakemake
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 args_ignore_chroms = ""
 if ignore_chroms := args.get("ignore_chroms"):
     args_ignore_chroms = " ".join(["--ignore-chroms"] + ignore_chroms)

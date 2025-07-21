@@ -35,16 +35,26 @@ def minimal_config():
         step_config:
           ngs_mapping:
             tools:
-              dna: ['bwa']
+              dna: ['mbcs']
             target_coverage_report:
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
                 path: path/to/SureSelect_Human_All_Exon_V6_r2.bed
+            ngs_chew_fingerprint:
+              enabled: true
             bwa:
               path_index: /path/to/bwa/index.fasta.amb
             bwa_mem2:
               path_index: /path/to/bwa_mem2/index.fasta.amb
+              trim_adapters: false
+              mask_duplicates: true
+              num_threads_align: 16
+              num_threads_trimming: 8
+              num_threads_bam_view: 4
+              num_threads_bam_sort: 4
+              memory_bam_sort: 4G
+              split_as_secondary: false  # -M flag
             minimap2:
               mapping_threads: 16
               path_index: /path/to/minimap2/index
@@ -54,7 +64,8 @@ def minimal_config():
               out_filter_intron_motifs: ""
               out_sam_strand_field: ""
             mbcs:
-              mapping_tool: bwa
+              mapping_tool: bwa_mem2
+              barcode_tool: agent
               use_barcodes: True
               recalibrate: True
             bqsr:
@@ -63,10 +74,16 @@ def minimal_config():
               prepare:
                 path: /path/to/trimmer
                 lib_prep_type: v2
+                extra_args:
+                - "-polyG 8"
+                - "-minFractionRead 50"
               mark_duplicates:
                 path: /path/to/creak
                 path_baits: /path/to/baits
                 consensus_mode: HYBRID
+                extra_args: []
+                input_filter_args: []
+                consensus_filter_args: []
             bam_collect_doc:
               enabled: true
 
@@ -761,18 +778,18 @@ def test_ngs_mapping_workflow_steps(ngs_mapping_workflow):
 
 def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     """Tests simple functionality of the workflow: checks if file structure is created according
-    to the expected results from the tools, namely: bwa, external, link_in, link_out,
+    to the expected results from the tools, namely: mbcs, external, link_in, link_out,
     link_out_bam, minimap2, star, target_coverage_report.
     """
     # Check result file construction
     expected = [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/out/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
+        "output/mbcs.P00{i}-N1-DNA1-WGS1/out/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
         for i in range(1, 7)
         for ext in ("bam", "bam.bai", "bam.md5", "bam.bai.md5")
     ]
     for infix in ("bam_collect_doc", "mapping", "target_cov_report", "ngs_chew_fingerprint"):
         expected += [
-            "output/bwa.P00{i}-N1-DNA1-WGS1/log/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
+            "output/mbcs.P00{i}-N1-DNA1-WGS1/log/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
             for i in range(1, 7)
             for ext in (
                 f"{infix}.log",
@@ -788,7 +805,7 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
             )
         ]
     bam_stats_text_out = (
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.bam.{stats}.{ext}"
+        "output/mbcs.P00{i}-N1-DNA1-WGS1/report/bam_qc/mbcs.P00{i}-N1-DNA1-WGS1.bam.{stats}.{ext}"
     )
     expected += [
         bam_stats_text_out.format(i=i, stats=stats, ext=ext)
@@ -797,7 +814,7 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for stats in ("bamstats", "flagstats", "idxstats")
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/cov/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
+        "output/mbcs.P00{i}-N1-DNA1-WGS1/report/cov/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(
             i=i, ext=ext
         )
         for ext in (
@@ -813,14 +830,14 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
         for i in range(1, 7)
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/fingerprint/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
+        "output/mbcs.P00{i}-N1-DNA1-WGS1/report/fingerprint/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(
             i=i, ext=ext
         )
         for ext in ("npz", "npz.md5")
         for i in range(1, 7)
     ]
     expected += [
-        "output/bwa.P00{i}-N1-DNA1-WGS1/report/alfred_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}".format(
+        "output/mbcs.P00{i}-N1-DNA1-WGS1/report/alfred_qc/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(
             i=i, ext=ext
         )
         for ext in ("alfred.json.gz", "alfred.json.gz.md5")

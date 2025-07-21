@@ -158,7 +158,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
                 )
             )
             cancer_base_path = (
-                "output/{mapper}.{cancer_library}/out/" "{mapper}.{cancer_library}"
+                "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
             ).format(**wildcards)
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
@@ -357,9 +357,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             for k in self.params_for_action[action]:
                 v = getattr(cfg, k, None)
                 if v is None:
-                    assert (
-                        k in cfg.presets[cfg.preset]
-                    ), f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    assert k in cfg.presets[cfg.preset], (
+                        f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    )
                     v = cfg.presets[cfg.preset].get(k)
                 params[k] = v
 
@@ -604,10 +604,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_export():
         exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
         output_files = {}
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
-            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
-        )
+        tpl = "work/{{mapper}}.cnvkit.{{library_name}}/out/{{mapper}}.cnvkit.{{library_name}}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"

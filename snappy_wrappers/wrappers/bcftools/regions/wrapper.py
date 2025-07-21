@@ -8,9 +8,9 @@ from snakemake.shell import shell
 if TYPE_CHECKING:
     from snakemake.script import snakemake
 
-params = snakemake.params["args"]
-filter_name = params["filter_name"]
-bed = f'^{params["include"]}' if "include" in params else params["exclude"]
+args = getattr(snakemake.params, "args", {})
+filter_name = args["filter_name"]
+bed = f'^{args["include"]}' if "include" in args else args["exclude"]
 
 # Actually run the script.
 shell(

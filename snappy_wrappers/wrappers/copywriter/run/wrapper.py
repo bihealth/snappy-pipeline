@@ -12,6 +12,8 @@ shell.executable("/bin/bash")
 rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "snappy-copywriter-run.R")
 reference_folder = os.path.abspath(os.path.dirname(snakemake.input.gc))
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -45,12 +47,12 @@ runCopywriteR(
     normal.bam = "{snakemake.input.normal_bam}",
     tumor.bam = "{snakemake.input.tumor_bam}",
     destination.folder=".",
-    binSize=as.numeric({snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][bin_size]}),
+    binSize=as.numeric({args[bin_size]}),
     donorID="{snakemake.wildcards.library_name}",
     fullID="{snakemake.wildcards.library_name}",
     copywriter.params=list(
         reference.folder="{reference_folder}",
-        capture.regions.file="{snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][path_target_regions]}",
+        capture.regions.file="{args[path_target_regions]}",
         workers=8
     )
 )

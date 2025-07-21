@@ -10,6 +10,8 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 class MappingTool(enum.StrEnum):
     BWA = "bwa"
+    BWA_MEM2 = "bwa_mem2"
+    MBCS = "mbcs"
 
 
 class ExpressionTool(enum.StrEnum):
@@ -60,6 +62,20 @@ class Protected(Filter):
     path_bed: str = ""
 
 
+# Remember to add these classes when re-factoring the step
+# class SomaticVariant(SnappyModel):
+#     path_somatic_variant: str
+#     """Path to the somatic variants (calls, annotated, filtered or annotated & filtered calls)"""
+#     somatic_variant_calling_tool: SomaticVariantCallingTool = SomaticVariantCallingTool.MUTECT2
+#     somatic_variant_annotation_tool: SomaticVariantAnnotationTool | None = None
+#     is_filtered: bool = True
+#
+#
+# class SomaticCopyNumberVariant(SnappyModel):
+#     path_somatic_cnv_calling: str
+#     somatic_cnv_calling_tool: CopyNumberTool = CopyNumberTool.CNVKIT
+
+
 class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
 
@@ -78,6 +94,7 @@ class NcbiBuild(enum.StrEnum):
 class Vcf2Maf(SnappyModel):
     Center: str
     ncbi_build: NcbiBuild
+    # Remember to move path_gene_id_mappings option here when re-factoring the step
 
 
 class GenomeName(enum.StrEnum):
@@ -98,7 +115,7 @@ class Study(SnappyModel):
     study_description: str
     study_name: str
     study_name_short: str
-    reference_genome: GenomeName
+    reference_genome: GenomeName = GenomeName.grch38
 
 
 class ExtraInfos(TypedDict):

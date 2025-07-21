@@ -283,6 +283,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def _get_input_files_annotate(self, wildcards):
         # Pedigree
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        yield "reference", self.w_config.static_data_config.reference.path
         # VCF
         tpl = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"

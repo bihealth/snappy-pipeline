@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 path_reference = args["path_reference"]
 path_genome_folder = args["path_genome_folder"]
 path_filter_bed = args["path_filter_bed"]

@@ -3,8 +3,9 @@ from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-min_dp = snakemake.params["args"]["min_dp"]
-reference_index_path = snakemake.params["args"]["reference_index_path"]
+args = getattr(snakemake.params, "args", {})
+min_dp = args["min_dp"]
+reference_index_path = args["reference_index_path"]
 
 shell(
     r"""

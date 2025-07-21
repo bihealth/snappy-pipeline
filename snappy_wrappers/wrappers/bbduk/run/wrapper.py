@@ -14,13 +14,11 @@ shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-library_name = snakemake.params.args["library_name"]
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = (
-    snakemake.params.args["input"]["reads_right"]
-    if snakemake.params.args["input"]["reads_right"]
-    else {}
-)
+args = getattr(snakemake.params, "args", {})
+
+library_name = args["library_name"]
+input_left = args["input"]["reads_left"]
+input_right = args["input"]["reads_right"] if args["input"]["reads_right"] else {}
 
 input_path_left = list(input_left.keys())
 prefix_left = [x["relative_path"] for x in input_left.values()]
@@ -44,7 +42,7 @@ else:
 
 this_file = __file__
 
-config = snakemake.params["args"]["config"]
+config = args["config"]
 
 shell(
     r"""

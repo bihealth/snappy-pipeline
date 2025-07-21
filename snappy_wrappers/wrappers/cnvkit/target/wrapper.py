@@ -6,8 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
 
 bams = " ".join(snakemake.input.get("bams", [""]))
 
@@ -38,7 +38,7 @@ access()
 {{
     cnvkit.py access \
         -o $tmpdir/access.bed \
-        {snakemake.config[static_data_config][reference][path]}
+        {snakemake.input.reference}
 }}
 
 # -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ then
     then
         access
         cnvkit.py autobin --method wgs \
-            --fasta {snakemake.config[static_data_config][reference][path]} \
+            --fasta {snakemake.input.reference} \
             --access $tmpdir/access.bed \
             --bp-per-bin {config[bp_per_bin]} \
             --target-output-bed $tmpdir/target.bed --antitarget-output-bed $tmpdir/antitarget.bed \

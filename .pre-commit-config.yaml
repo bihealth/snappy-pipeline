@@ -1,12 +1,12 @@
 repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: v0.4.8
+    rev: v0.9.1
     hooks:
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/snakemake/snakefmt
-    rev: v0.8.5 # https://github.com/snakemake/snakefmt/releases
+    rev: v0.10.2 # https://github.com/snakemake/snakefmt/releases
     hooks:
       - id: snakefmt

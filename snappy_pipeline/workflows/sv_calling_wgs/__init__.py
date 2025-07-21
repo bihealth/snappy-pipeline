@@ -207,13 +207,6 @@ class PopDelStepPart(
             ],
         )
 
-    def get_ped_members(self, wildcards):
-        """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        return " ".join(
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        )
-
     def get_args(self, action: str):
         self._validate_action(action)
         return getattr(self, f"_get_args_{action}")
@@ -226,6 +219,15 @@ class PopDelStepPart(
             "chrom": wildcards.chrom,
             "begin": wildcards.begin,
             "end": wildcards.end,
+        }
+
+    def _get_args_reorder_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
+        """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
+        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+        return {
+            "ped_members": " ".join(
+                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+            )
         }
 
 

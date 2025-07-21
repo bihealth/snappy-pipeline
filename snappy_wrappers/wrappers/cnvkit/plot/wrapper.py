@@ -6,8 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
 
 gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
 male = " --male-reference" if config["male_reference"] else ""

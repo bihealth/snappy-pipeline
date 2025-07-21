@@ -149,6 +149,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         # Pedigree
         tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         yield "ped", tpl.format(**wildcards)
+        yield "reference", self.w_config.static_data_config.reference.path
         # VCF
         tpl = (
             f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
@@ -207,8 +208,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @dictify
     def _get_log_file_annotate(self):
         prefix = (
-            "work/varfish_annotated.{index_ngs_library}/log/"
-            "varfish_annotated.{index_ngs_library}"
+            "work/varfish_annotated.{index_ngs_library}/log/varfish_annotated.{index_ngs_library}"
         )
         key_ext = (
             ("log", ".log"),

@@ -86,6 +86,8 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel
+from .model import Cnvkit as CnvkitModel
+from .model import CopyWriter as CopyWriterModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -189,9 +191,9 @@ class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
+            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+                **wildcards
+            )
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
             yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
@@ -593,6 +595,17 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return action_mapping[action]
 
+    def get_args(self, action):
+        self._validate_action(action)
+        return self._get_args_all
+
+    def _get_args_all(self, wildcards):
+        return {
+            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "mapper": wildcards.mapper,
+            "library_name": wildcards.library_name,
+        }
+
     def get_log_file(self, action):
         """Return dict of log files."""
         # Validate action
@@ -640,6 +653,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg: CnvkitModel = self.config.get(self.name)
 
     def get_input_files(self, action):
         """Return input paths input function, dependent on rule"""
@@ -664,6 +678,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         input_files = {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
+            "reference": self.w_config.static_data_config.reference.path,
         }
         return input_files
 
@@ -731,6 +746,11 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
+
+    def get_args(self, action):
+        self._validate_action(action)
+        assert hasattr(self.cfg, action), f"{action} not known by cnvkit"
+        return {"config": getattr(self.cfg, action).dict(by_alias=True)}
 
     def get_output_files(self, action):
         """Return output files for the given action"""
@@ -827,10 +847,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ("vcf_tbi", "vcf.gz.tbi"),
         )
         output_files = {}
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
-            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
-        )
+        tpl = "work/{{mapper}}.cnvkit.{{library_name}}/out/{{mapper}}.cnvkit.{{library_name}}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"
@@ -893,6 +910,7 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg: CopyWriterModel = self.config.get(self.name)
         self.base_path_out = (
             "work/{{mapper}}.copywriter.{{library_name}}/out/"
             "{{mapper}}.copywriter.{{library_name}}{ext}"
@@ -914,9 +932,9 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
+            tumor_base_path = ("output/{mapper}.{library_name}/out/{mapper}.{library_name}").format(
+                **wildcards
+            )
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
@@ -941,6 +959,15 @@ class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
             return input_function_run
         if action == "call":
             return input_function_call
+
+    def get_args(self, action):
+        return {
+            "bin_size": self.cfg.bin_size,
+            "plot_genes": self.cfg.plot_genes,
+            "genome": self.cfg.genome,
+            "features": self.cfg.features,
+            "prefix": self.cfg.prefix,
+        }
 
     @dictify
     def get_output_files(self, action):

@@ -5,7 +5,10 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+reference = snakemake.input.reference
+
+args = getattr(snakemake.params, "args", {})
+
 config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
 
 extra_arguments = " ".join(config["extra_arguments"])
@@ -49,9 +52,9 @@ out_base=$tmpdir/$(basename {snakemake.output.raw} .vcf.gz)
 
 # Add intervals if required
 intervals=""
-if [[ -n "{snakemake.params.args[intervals]}" ]]
+if [[ -n "{args[intervals]}" ]]
 then
-    for itv in "{snakemake.params.args[intervals]}"
+    for itv in "{args[intervals]}"
     do
         intervals="$intervals --intervals $itv"
     done

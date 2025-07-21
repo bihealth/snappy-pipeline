@@ -12,6 +12,8 @@ shell.executable("/bin/bash")
 rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "snappy-copywriter-call.R")
 dest = os.path.dirname(os.path.dirname(snakemake.output.bins_txt))
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -42,7 +44,7 @@ cat <<"EOF" > $TMPDIR/run_copywriter_call.R
 source("{rscript}")
 
 plot_genes <- read.table(
-    "{snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][plot_genes]}",
+    "{args[plot_genes]}",
     sep="\t", header=1, stringsAsFactors=FALSE )
 
 postProcess(
@@ -57,8 +59,8 @@ postProcess(
         main="{snakemake.wildcards.library_name}",
         ylim=c( -3, 4 )
     ),
-    genomeRelease="{snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][genome]}",
-    features={snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][features]}
+    genomeRelease="{args[genome]}",
+    features={args[features]}
 )
 
 warnings()

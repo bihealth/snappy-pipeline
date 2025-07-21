@@ -14,7 +14,7 @@ shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 reads_left = args["input"]["reads_left"]
 reads_right = (
     args["input"]["reads_right"]

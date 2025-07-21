@@ -83,7 +83,7 @@ varfish-annotator \
     --release {export_config[release]} \
     \
     --self-test-chr1-only \
-    --ref-path {snakemake.config[static_data_config][reference][path]} \
+    --ref-path {snakemake.input.reference} \
     --db-path {export_config[path_db]} \
     --refseq-ser-path {export_config[path_refseq_ser]} \
     --ensembl-ser-path {export_config[path_ensembl_ser]} \

@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -euo pipefail
@@ -40,7 +42,7 @@ dkfzbiasfilter.py \
     --writeQC \
     {snakemake.input.vcf} \
     {snakemake.input.bam} \
-    {snakemake.params.args[reference]} \
+    {args[reference]} \
     ${{out%.gz}}
 
 if [[ ! -s ${{out%.gz}} ]]; then

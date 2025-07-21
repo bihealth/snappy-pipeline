@@ -255,7 +255,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         self._validate_action(action)
         self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         if action == "prepare":
-            return {"container": "work/containers/out/purecn.simg"}
+            return {
+                "container": "work/containers/out/purecn.simg",
+                "reference": self.w_config.static_data_config.reference.path,
+            }
         if action == "coverage":
             return self._get_input_files_coverage
         if action == "create_panel":
@@ -318,6 +321,20 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "hq": "work/{mapper}.purecn/out/{mapper}.purecn.hq_sites.bed",
                 "plot": "work/{mapper}.purecn/out/{mapper}.purecn.interval_weights.png",
             }
+
+    def get_args(self, action):
+        self._validate_action(action)
+        if action == "coverage":
+            return getattr(self, f"_get_args_{action}")
+        else:
+            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+    def _get_args_coverage(self, wildcards):
+        return {
+            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "mapper": wildcards.mapper,
+            "library_name": wildcards.library_name,
+        }
 
     def get_log_file(self, action):
         tpls = {
@@ -483,7 +500,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             method = "wgs"
         else:
             method = "hybrid"
-        return {"method": method, "flat": (len(self.normal_libraries) == 0)}
+        return {
+            "method": method,
+            "flat": (len(self.normal_libraries) == 0),
+            "config": self.config.get(self.name).model_dict(by_alias=True),
+        }
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
@@ -495,9 +516,12 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "coverage": self._get_input_files_coverage,
             "create_panel": self._get_input_files_create_panel,
             "report": self._get_input_files_report,
-            "access": None,
+            "access": self._get_input_files_access,
         }
         return mapping[action]
+
+    def _get_input_files_access(self, wildcards):
+        return {"reference": self.w_config.static_data_config.reference.path}
 
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
@@ -510,7 +534,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             for x in self.normal_libraries
         ]
         bais = [x + ".bai" for x in bams]
-        input_files = {"bams": bams, "bais": bais}
+        input_files = {
+            "bams": bams,
+            "bais": bais,
+            "reference": self.w_config.static_data_config.reference.path,
+        }
         return input_files
 
     def _get_input_files_antitarget(self, wildcards):
@@ -563,6 +591,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards)
             ),
             "logs": logs if targets or antitargets else [],
+            "reference": self.w_config.static_data_config.reference.path,
         }
 
     def _get_input_files_report(self, wildcards):

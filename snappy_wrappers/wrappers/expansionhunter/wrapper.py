@@ -9,6 +9,8 @@ shell.executable("/bin/bash")
 
 this_file = __file__
 
+args = getattr(snakemake.params, "args", {})
+
 # Define prefix based on json output
 prefix = snakemake.output.json
 prefix = prefix.replace(".json", "")
@@ -17,8 +19,8 @@ prefix = os.path.join(os.getcwd(), prefix)
 # Define argument sex if any (otherwise: female [default])
 sex_argument = ""
 valid_sex_list = ["female", "male"]
-if snakemake.params.args["sex"] in valid_sex_list:
-    sex_argument = "--sex " + snakemake.params.args["sex"]
+if args["sex"] in valid_sex_list:
+    sex_argument = "--sex " + args["sex"]
 
 
 shell(

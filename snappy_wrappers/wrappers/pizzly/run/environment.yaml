@@ -1,6 +1,7 @@
 channels:
-- conda-forge
-- bioconda
+  - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
-- pizzly ==0.37.3
-- kallisto ==0.43.1
+  - pizzly ==0.37.3
+  - kallisto ==0.43.1

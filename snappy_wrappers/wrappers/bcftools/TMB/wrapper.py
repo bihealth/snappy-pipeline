@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 target_regions = args["target_regions"]
 has_annotation = args["has_annotation"]
 

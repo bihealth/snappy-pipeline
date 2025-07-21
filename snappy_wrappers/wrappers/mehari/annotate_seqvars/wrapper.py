@@ -4,7 +4,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-export_config = getattr(snakemake.params, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
@@ -57,15 +57,15 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 # Extract around BED file, if given.  Otherwise, "just" normalize.
-if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
+if [[ -n "{args[path_exon_bed]}" ]] && [[ "{args[path_exon_bed]}" != "None" ]]; then
     set -e
     bcftools view \
-        -R {export_config[path_exon_bed]} \
+        -R {args[path_exon_bed]} \
         {snakemake.input.vcf} \
     | bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {export_config[reference]} \
+        --fasta-ref {args[reference]} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \
     > $TMPDIR/tmp.vcf.gz
@@ -75,7 +75,7 @@ else
     bcftools norm \
         -m -any \
         --force \
-        --fasta-ref {export_config[reference]} \
+        --fasta-ref {args[reference]} \
         {snakemake.input.vcf} \
     | bcftools sort -T $TMPDIR \
     | bgzip -c \
@@ -87,7 +87,7 @@ fi
 mehari \
     annotate \
     seqvars \
-    --path-db {export_config[path_mehari_db]} \
+    --path-db {args[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
     --path-input-vcf $TMPDIR/tmp.vcf.gz \
     --path-output-tsv {snakemake.output.gts}

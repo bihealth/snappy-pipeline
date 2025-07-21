@@ -6,8 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
 
 # During panel_of_normals step, the target regions are created by the target substep.
 # During somatic CNV calling (both exome & wgs), the target regions are obtained from the configuration
@@ -52,7 +52,7 @@ set -x
 coverage()
 {{
     cnvkit.py coverage \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
+        --fasta {snakemake.input.reference} \
         --min-mapq {config[min_mapq]} \
         --processes {snakemake.threads} \
         {snakemake.input.bam} \

@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -43,8 +45,8 @@ gatk --java-options "-Xmx6g" Mutect2 \
     --input {snakemake.input.normal_bam} \
     --max-mnp-distance 0 \
     --output $tmpdir/$vcf \
-    $(if [[ -n "{snakemake.params.args[intervals]}" ]]; then
-        for itv in "{snakemake.params.args[intervals]}"; do \
+    $(if [[ -n "{args[intervals]}" ]]; then
+        for itv in "{args[intervals]}"; do \
             echo -n "--intervals $itv "; \
         done; \
     fi)

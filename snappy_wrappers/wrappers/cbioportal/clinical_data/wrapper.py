@@ -6,10 +6,13 @@ input. Takes a dict from biomedsheets/snappy_pipeline, writes out tsv meta_clini
 import csv
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from snakemake.script import snakemake
+    from snakemake.io import Wildcards
+
+from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
 
 
 def write_clinical_patient_tsv(donors):
@@ -51,20 +54,20 @@ class SampleInfoTMB:
     priority = "2"
     column = "TMB"
 
-    def __init__(self, config, wildcards, params):
+    def __init__(self, config: CbioportalExport, wildcards: Wildcards, params: dict[str, Any]):
         name_pattern = "{mapping_tool}.{variant_calling_tool}.{variant_annotation_tool}".format(
             mapping_tool=config["mapping_tool"],
             variant_calling_tool=config["somatic_variant_calling_tool"],
             variant_annotation_tool=config["somatic_variant_annotation_tool"],
         )
-        if config["filter_set"]:
-            if config["filter_set"] == "filter_list":
+        if config.filter_set:
+            if config.filter_set == "filter_list":
                 name_pattern += ".filtered"
             else:
                 name_pattern += ".dkfz_bias_filter.eb_filter"
         name_pattern += ".tmb.{library}"
-        if config["filter_set"] and config["filter_set"] != "filter_list":
-            name_pattern += f".{config['filter_set']}.{config['exon_list']}"
+        if config.filter_set and config.filter_set != "filter_list":
+            name_pattern += f".{config.filter_set}.{config.exon_list}"
         self.tpl = os.path.join(
             config["sample_info"]["tumor_mutational_burden"]["path"],
             "output",
@@ -98,8 +101,10 @@ def write_clinical_samples_tsv(donors):
     for specification
     """
 
+    args = getattr(snakemake.params, "args", {})
+
     sample_info_getters = []
-    config = snakemake.params["__config"]
+    config = CbioportalExport(args["__config"])
     for step, extra_info in config["sample_info"].items():
         if step == "tumor_mutational_burden":
             sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))

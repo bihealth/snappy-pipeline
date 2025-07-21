@@ -131,6 +131,8 @@ rule build_gcnv_model_contig_ploidy:
         tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
+    params:
+        args=wf.get_args("gcnv", "coverage"),
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy")
 

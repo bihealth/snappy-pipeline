@@ -15,7 +15,7 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-config = getattr(snakemake.params, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 def config_to_r(x):
     if x is None:
@@ -34,15 +34,15 @@ def config_to_r(x):
     return str(x)
 
 
-genome = config["reference"]
-length = config["length"]
+genome = args["reference"]
+length = args["length"]
 
 f = open(genome + ".fai", "rt")
-contigs = config_to_r(list(yield_contigs(f, config.get("ignore_chroms"))))
+contigs = config_to_r(list(yield_contigs(f, args.get("ignore_chroms"))))
 f.close()
 
-args_extract = config_to_r(dict(config["extra_args_extract"]))
-args_fit = config_to_r(dict(config["extra_args_fit"]))
+args_extract = config_to_r(dict(args["extra_args_extract"]))
+args_fit = config_to_r(dict(args["extra_args_fit"]))
 
 shell.executable("/bin/bash")
 
@@ -74,7 +74,7 @@ R --vanilla --slave << __EOF
 library(sequenza)
 
 # Follow sequenza documentation https://bitbucket.org/sequenzatools/sequenza/src/master/
-args <- list(file="{snakemake.input.seqz}", assembly="{config[assembly]}", chromosome.list={contigs})
+args <- list(file="{snakemake.input.seqz}", assembly="{args[assembly]}", chromosome.list={contigs})
 args <- c(args, {args_extract})
 seqz <- do.call(sequenza.extract, args=args)
 
@@ -82,16 +82,16 @@ args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
 args <- c(args, {args_fit})
 CP <- do.call(sequenza.fit, args=args)
 
-sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{config[library_name]}", out.dir=dirname("{snakemake.output.done}"))
+sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{args[library_name]}", out.dir=dirname("{snakemake.output.done}"))
 
 warnings()
 
 # Convert *_segment.txt to *_dnacopy.seg to follow pipeline output format
-segments <- file.path(dirname("{snakemake.output.done}"), sprintf("%s_segments.txt", "{config[library_name]}"))
+segments <- file.path(dirname("{snakemake.output.done}"), sprintf("%s_segments.txt", "{args[library_name]}"))
 stopifnot(file.exists(segments))
 dnacopy <- read.table(segments, sep="\t", header=1, stringsAsFactors=FALSE, check.names=FALSE)
 
-dnacopy[,"ID"] <- "{config[library_name]}"
+dnacopy[,"ID"] <- "{args[library_name]}"
 dnacopy[,"depth.ratio"] <- log2(dnacopy[,"depth.ratio"])
 
 col_names <- c(

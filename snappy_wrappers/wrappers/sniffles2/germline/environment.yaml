@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - sniffles==2.2
-  - htslib==1.16
-  - bcftools==1.16

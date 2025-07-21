@@ -254,6 +254,8 @@ rule panel_of_normals_purecn_coverage:
         unpack(wf.get_input_files("purecn", "coverage")),
     output:
         **wf.get_output_files("purecn", "coverage"),
+    params:
+        args=wf.get_args("purecn", "coverage"),
     resources:
         time=wf.get_resource("purecn", "coverage", "time"),
         memory=wf.get_resource("purecn", "coverage", "memory"),

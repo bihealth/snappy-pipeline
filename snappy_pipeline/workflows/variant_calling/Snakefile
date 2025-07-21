@@ -104,7 +104,7 @@ rule variant_calling_gatk3_ug_run:
     output:
         **wf.get_output_files("gatk3_ug", "run"),
     params:
-        args=wf.get_args("gatk3_hc", "run"),
+        args=wf.get_args("gatk3_ug", "run"),
     threads: wf.get_resource("gatk3_ug", "run", "threads")
     resources:
         time=wf.get_resource("gatk3_ug", "run", "time"),
@@ -232,6 +232,8 @@ rule variant_calling_jannovar_stats_report:
         **wf.get_input_files("jannovar_stats", "run"),
     output:
         **wf.get_output_files("jannovar_stats", "run"),
+    params:
+        args=wf.get_args("jannovar_stats", "run"),
     threads: wf.get_resource("jannovar_stats", "run", "threads")
     resources:
         time=wf.get_resource("jannovar_stats", "run", "time"),

@@ -57,7 +57,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
     --reference {args[reference]} \
-    --bin-length {snakemake.config[step_config][variant_calling][gatk4_hc_joint][window_length]} \
+    --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
     $(for ignore_chrom in {args[ignore_chroms]}; do \

@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - r-base==4.3.3
-  - r-remotes==2.5.0
-  - r-biocmanager==1.30.22

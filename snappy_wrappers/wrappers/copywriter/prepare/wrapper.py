@@ -7,6 +7,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -30,10 +32,7 @@ fi
 #
 cat <<"EOF" > $TMPDIR/run_copywriter.R
 library( CopywriteR )
-preCopywriteR( output.folder='.',
-    bin.size={snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][bin_size]},
-    ref.genome='{snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][genome]}',
-    prefix='{snakemake.config[step_config][somatic_targeted_seq_cnv_calling][copywriter][prefix]}')
+preCopywriteR( output.folder='.', bin.size={args[bin_size]}, ref.genome='{args[genome]}', prefix='{args[prefix]}')
 
 warnings()
 sessionInfo()

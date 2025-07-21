@@ -7,7 +7,7 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-args = getattr(snakemake.params, args, {})
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""

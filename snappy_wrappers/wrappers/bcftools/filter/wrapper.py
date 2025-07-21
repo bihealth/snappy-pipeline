@@ -4,7 +4,7 @@
 from snakemake.shell import shell
 from snakemake.script import snakemake
 
-args = snakemake.params["args"]
+args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
 expression = (
     '--include "{}"'.format(args["include"])
