@@ -14,7 +14,7 @@ args_ignore_chroms = ""
 if ignore_chroms := args.get("ignore_chroms"):
     args_ignore_chroms = " ".join(["--ignore-chroms"] + ignore_chroms)
 
-reference_path = args["reference_path"]
+reference_path = snakemake.input.reference
 num_threads = args["num_threads"]
 split_complex_mnvs = str(args["split_complex_mnvs"])
 

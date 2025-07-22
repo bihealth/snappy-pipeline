@@ -99,6 +99,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         token = "{mapper}.{var_caller}.{library_name}"
         variant_calling = self.parent.sub_workflows["variant_calling"]
         return {
+            "reference": self.w_config.static_data_config.reference.path,
             "vcf": variant_calling(f"output/{token}/out/{token}.vcf.gz"),
             "vcf_tbi": variant_calling(f"output/{token}/out/{token}.vcf.gz.tbi"),
         }
@@ -125,10 +126,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "config": self.config.model_dump(by_alias=True),
-        }
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_extra_kv_pairs(self):
         return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}

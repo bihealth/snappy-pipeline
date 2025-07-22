@@ -47,7 +47,7 @@ samtools view -h -F 260 -q 255 $bam \
     -T 2 \
     -g gene_id \
     -t exon \
-    -a {args[path_annotation_gtf]} \
+    -a {snakemake.input.features} \
     -s ${{strand}} \
     -p \
     --verbose \

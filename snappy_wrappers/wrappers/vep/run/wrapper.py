@@ -45,7 +45,7 @@ then
         fi) \
         {script_output_options} \
         --{vep_config[tx_flag]} \
-        --fasta {args[reference]} \
+        --fasta {snakemake.input.reference} \
         --input_file {snakemake.input.vcf} --format vcf \
         --output_file {full} --vcf --compress_output bgzip
     tabix {full}
@@ -66,7 +66,7 @@ vep --verbose --force_overwrite --offline --cache \
     {script_output_options} \
     --pick --pick_order {pick_order} \
     --{vep_config[tx_flag]} \
-    --fasta {args[reference]} \
+    --fasta {snakemake.input.reference} \
     --input_file {snakemake.input.vcf} --format vcf \
     --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
 tabix {snakemake.output.vcf}

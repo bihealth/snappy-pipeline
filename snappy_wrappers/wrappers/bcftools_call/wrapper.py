@@ -21,7 +21,9 @@ compute-md5()
 """
 args = getattr(snakemake.params, "args", {})
 
-reference_path = args["reference_path"]
+reference_path = snakemake.input.reference
+reference_index_path = snakemake.input.reference_index
+
 assembly = args["assembly"]
 
 ignore_chroms = args["ignore_chroms"]

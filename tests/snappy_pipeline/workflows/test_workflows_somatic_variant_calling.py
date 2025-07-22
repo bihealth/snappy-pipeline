@@ -213,6 +213,7 @@ def test_mutect2_step_part_get_input_files_filter(
         "f1r2": mutect2_input_base_name + ".raw.f1r2_tar.tar.gz",
         "table": mutect2_input_base_name + ".contamination.tbl",
         "segments": mutect2_input_base_name + ".segments.tbl",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "filter")(
@@ -229,6 +230,7 @@ def test_mutect2_step_part_get_input_files_contamination(
     expected = {
         "normal": mutect2_input_base_name + ".normal.pileup",
         "tumor": mutect2_input_base_name + ".tumor.pileup",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "contamination")(
@@ -245,6 +247,8 @@ def test_mutect2_step_part_get_input_files_pileup_normal(
     expected = {
         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "common_variants": "/path/to/common_variants.vcf",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_normal")(
@@ -261,6 +265,8 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     expected = {
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "common_variants": "/path/to/common_variants.vcf",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_tumor")(
@@ -509,6 +515,8 @@ def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "path_target_regions": "/path/to/target/regions.bed",
     }
     assert actual == expected
 

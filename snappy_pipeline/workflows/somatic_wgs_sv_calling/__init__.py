@@ -76,7 +76,6 @@ Currently, no reports are generated.
 import os
 import sys
 from collections import OrderedDict
-from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -133,29 +132,26 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
-            cancer_base_path = (
-                "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
-            ).format(**wildcards)
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(cancer_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(cancer_base_path + ".bam.bai"),
-            }
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        """Helper wrapper function"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        cancer_base_path = (
+            "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
+        ).format(**wildcards)
+        return {
+            "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+            "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            "tumor_bam": ngs_mapping(cancer_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(cancer_base_path + ".bam.bai"),
+        }
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -206,9 +202,10 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
+    def _get_input_files(self, wildcards):
+        return super()._get_input_files(wildcards) | {
+            "reference": self.parent.w_config.static_data_config.reference.path
+        }
 
 
 class Delly2StepPart(BaseStepPart):

@@ -142,10 +142,12 @@ def test_jannovar_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests JannovarAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {
-        "tumor_library": "P001-T1-DNA1-WGS1",
-        "normal_library": "P001-N1-DNA1-WGS1",
-        "reference": "/path/to/ref.fa",
-        "config": {
+        "static_data_config": {
+            "reference": {"path": "/path/to/ref.fa"},
+            "cosmic": {"path": "/path/to/cosmic.vcf.gz"},
+            "dbsnp": {"path": "/path/to/dbsnp.vcf.gz"},
+        },
+        "jannovar": {
             "dbnsfp": {
                 "col_contig": 1,
                 "col_pos": 2,
@@ -196,6 +198,7 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -231,26 +234,43 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     expected = {
         "tumor_library": "P001-T1-DNA1-WGS1",
         "normal_library": "P001-N1-DNA1-WGS1",
+<<<<<<< HEAD
         "reference": "/path/to/ref.fa",
+=======
+>>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
         "config": {
             "cache_dir": "/path/to/dir/cache",
             "species": "homo_sapiens",
             "assembly": "GRCh38",
             "cache_version": "102",
             "tx_flag": "gencode_basic",
+<<<<<<< HEAD
             "pick_order": [
                 "biotype",
                 "mane",
+=======
+            "output_options": ["everything"],
+            "buffer_size": 1000,
+            "num_threads": 8,
+            "pick_order": [
+                "biotype",
+                "mane_select",
+                "mane_plus_clinical",
+>>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
                 "appris",
                 "tsl",
                 "ccds",
                 "canonical",
                 "rank",
                 "length",
+<<<<<<< HEAD
             ],
             "num_threads": 8,
             "buffer_size": 1000,
             "output_options": ["everything"],
+=======
+            ]
+>>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
         },
     }
     actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)

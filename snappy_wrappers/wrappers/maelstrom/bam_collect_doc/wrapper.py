@@ -41,7 +41,7 @@ maelstrom-core \
     bam-collect-doc \
     --in {snakemake.input.bam} \
     --out {snakemake.output.vcf} \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     --window-length $WINDOW
 
 find $(dirname $(dirname {snakemake.output.vcf}))
@@ -66,7 +66,7 @@ bcftools query -f '%CHROM\t%POS[\t%CV]\n' $(basename {snakemake.output.vcf}) \
         prev=$1;
     }}' \
 > $TMPDIR/out_cov.wig
-cut -f 1-2 {args[reference]}.fai \
+cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_cov.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.cov_bw})
@@ -86,7 +86,7 @@ bcftools query -f '%CHROM\t%POS[\t%MQ]\n' $(basename {snakemake.output.vcf}) \
         prev=$1;
     }}' \
 > $TMPDIR/out_mq.wig
-cut -f 1-2 {args[reference]}.fai \
+cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_mq.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.mq_bw})

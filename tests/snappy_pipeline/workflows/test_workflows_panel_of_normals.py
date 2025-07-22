@@ -122,6 +122,8 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
             "work/bwa.mutect2/out/bwa.mutect2.P001-N1-DNA1-WGS1.prepare.vcf.gz",
             "work/bwa.mutect2/out/bwa.mutect2.P002-N1-DNA1-WGS1.prepare.vcf.gz",
         ],
+        "reference": "/path/to/ref.fa",
+        "germline_resource": "/path/to/germline_resource.vcf",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "create_panel")(wildcards)
     assert actual == expected

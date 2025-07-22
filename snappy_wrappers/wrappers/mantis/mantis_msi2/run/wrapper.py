@@ -44,8 +44,8 @@ mkdir -p $TMPDIR/out
 mantis-msi2 \
     -t {snakemake.input.tumor_bam}  \
     -n {snakemake.input.normal_bam} \
-    --genome {args[reference]} \
-    --bedfile {args[loci_bed]} \
+    --genome {snakemake.input.reference} \
+    --bedfile {snakemake.input.loci_bed} \
     --min-read-length 35 \
     --min-read-quality 20.0 \
     --min-locus-quality 25.0 \

@@ -59,8 +59,6 @@ rule somatic_msi_calling_mantis_msi2:
         unpack(wf.get_input_files("mantis_msi2", "run")),
     output:
         **wf.get_output_files("mantis_msi2", "run"),
-    params:
-        args=wf.get_args("mantis_msi2", "run"),
     threads: wf.get_resource("mantis_msi2", "run", "threads")
     resources:
         time=wf.get_resource("mantis_msi2", "run", "time"),

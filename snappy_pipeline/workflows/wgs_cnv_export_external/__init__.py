@@ -149,6 +149,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         # Pedigree
         tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         yield "ped", tpl.format(**wildcards)
+        # Reference
         yield "reference", self.w_config.static_data_config.reference.path
         # VCF
         tpl = (
@@ -261,7 +262,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return {
             "step_name": "wgs_cnv_export_external",
             "varfish_server_compatibility": varfish_server_compatibility_flag,
-            "reference": self.parent.w_config.static_data_config.reference.path,
             "config": self.config.model_dump(by_alias=True),
         }
 

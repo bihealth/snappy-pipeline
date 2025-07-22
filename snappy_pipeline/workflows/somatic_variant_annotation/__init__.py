@@ -77,8 +77,9 @@ import os
 import sys
 from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
+
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
@@ -179,28 +180,6 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_args(self, action):
-        """Return arguments to pass down."""
-        _ = action
-
-        def params_function(wildcards):
-            if wildcards.tumor_library not in self.donors:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
-                    "config": getattr(self.config, self.name).model_dump(by_alias=True),
-                    "reference": self.parent.w_config.static_data_config.reference.path,
-                }
-            else:
-                return {}
-
-        return params_function
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair.normal_sample.dna_ngs_library.name if pair else None
-
 
 class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     """Annotate VCF file from somatic calling using "Jannovar annotate-vcf" """
@@ -265,6 +244,18 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         "rank",
         "length",
     )
+
+    @dictify
+    def get_input_files(self, action: str):
+        input_files = super().get_input_files(action)
+        for k, v in input_files.items():
+            yield k, v
+        yield "reference", self.w_config.static_data_config.reference.path
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        self._validate_action(action)
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

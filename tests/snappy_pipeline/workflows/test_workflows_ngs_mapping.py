@@ -408,9 +408,9 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         "genome_load": "NoSharedMemory",
         "raw_star_options": "",
         "align_intron_max": 1000000,
-        "align_intron_min": 20 ,
+        "align_intron_min": 20,
         "align_mates_gap_max": 1000000,
-        "align_sjdb_overhang_min": 1,
+        "align_sjdb_overhang_min":  1,
         "align_sj_overhang_min": 8,
         "out_filter_mismatch_n_max": 999,
         "out_filter_mismatch_n_over_l_max": 0.04,
@@ -618,6 +618,9 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
     expected = {
         "bam": "work/bwa.library/out/bwa.library.bam",
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
+        "reference": "/path/to/ref.fa",
+        "reference_genome": "/path/to/ref.fa.genome",
+        "target_bed": "",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
@@ -665,6 +668,7 @@ def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow)
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
 
+<<<<<<< HEAD
 def test_target_coverage_report_step_part_run_get_args(ngs_mapping_workflow):
     """Tests TargetCoverageReportStepPart.get_args() - action 'run'"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
@@ -677,6 +681,8 @@ def test_target_coverage_report_step_part_run_get_args(ngs_mapping_workflow):
     assert actual == expected
 
 
+=======
+>>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
 # Tests for BamCollectDocStepPart -----------------------------------------------------------------
 
 
@@ -686,6 +692,7 @@ def test_generate_doc_files_step_part_run_get_input_files(ngs_mapping_workflow):
     expected = {
         "bam": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam",
         "bai": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual
     actual = ngs_mapping_workflow.get_input_files("bam_collect_doc", "run")()

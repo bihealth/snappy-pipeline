@@ -19,7 +19,7 @@ ME_INFIX={melt_config[me_refs_infix]}
 
 java -jar -Xmx13G -jar $JAR \
     GroupAnalysis \
-    -h {args[reference]} \
+    -h {snakemake.input.reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     $(if [[ $ME_REFS == *37* ]] || [[ $ME_REFS == *hg19* ]]; then
         echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;

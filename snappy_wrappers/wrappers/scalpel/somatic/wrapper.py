@@ -58,10 +58,10 @@ scalpel-discovery \
     --pathlimit 10000 \
     --outratio 0.1 \
     --mincov 3 \
-    --ref {args[reference]} \
+    --ref {snakemake.input.reference} \
     --dir $TMPDIR/scalpel.tmp \
     --bed \
-        {args[path_target_regions]} \
+        {snakemake.input.path_target_regions} \
     --somatic \
     --normal {snakemake.input.normal_bam} \
     --tumor {snakemake.input.tumor_bam}
@@ -75,7 +75,7 @@ fi
 
 # Obtain fixed contig header lines
 awk '{{ printf("##contig=<ID=%s,length=%d>\n", $1, $2); }}' \
-    {args[reference]}.fai \
+    {snakemake.input.reference}.fai \
 > $TMPDIR/contig_headers.txt
 
 # join and transform output file for tumor/normal pairs

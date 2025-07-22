@@ -26,7 +26,7 @@ ls $genotype_dir/*.{args[me_type]}.tsv \
 java -Xmx13G -jar $JAR \
     MakeVCF \
     -genotypingdir $genotype_dir \
-    -h {args[reference]} \
+    -h {snakemake.input.reference} \
     -j 100 \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -p $(dirname {snakemake.input.group_analysis}) \

@@ -790,27 +790,22 @@ class MBCsStepPart(ReadMappingStepPart):
             partition="medium",
         )
 
-    def get_args(self, action: str):
-        self._validate_action(action)
-
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            args = super().get_args(action)(wildcards)
-            args |= {
-                "reference": self.parent.w_config.static_data_config.reference.path,
-                "config": self.config.mbcs.model_dump(by_alias=True),
-                "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
-                    by_alias=True
-                ),
-            }
-            if self.config.mbcs.use_barcodes:
-                args["barcode_config"] = getattr(
-                    self.config, self.config.mbcs.barcode_tool
-                ).model_dump(by_alias=True)
-            if self.config.mbcs.recalibrate:
-                args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
-            return args
-
-        return args_fn
+    def _get_args_run(self, wildcards: Wildcards):
+        args = super()._get_args_run(wildcards)
+        args |= {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "config": self.config.mbcs.model_dump(by_alias=True),
+            "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
+                by_alias=True
+            ),
+        }
+        if self.config.mbcs.use_barcodes:
+            args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(
+                by_alias=True
+            )
+        if self.config.mbcs.recalibrate:
+            args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
+        return args
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -1084,18 +1079,12 @@ class ExternalStepPart(ReadMappingStepPart):
         if "external" not in self.config.tools.dna:
             return  # External not run, don't check configuration  # pragma: no cover
 
-    def get_args(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            return {
-                "input": self._collect_bams(wildcards, wildcards.library_name),
-                "sample_name": wildcards.library_name,
-                "platform": "EXTERNAL",
-            }
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    def _get_args_run(self, wildcards: Wildcards):
+        return {
+            "input": self._collect_bams(wildcards, wildcards.library_name),
+            "sample_name": wildcards.library_name,
+            "platform": "EXTERNAL",
+        }
 
     @listify
     def _collect_bams(self, wildcards, library_name):
@@ -1151,6 +1140,17 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference_genome", self.w_config.static_data_config.reference.path + ".genome"
+        # Find bed file associated with library kit
+        library_name = wildcards.library_name
+        path_targets_bed = ""
+        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
+        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
+            if item.name == kit_name:
+                path_targets_bed = item.path
+                break
+        yield "target_bed", path_targets_bed
 
     @dictify
     def get_output_files(self, action):
@@ -1275,6 +1275,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_input_files_run(self):
         yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield "bai", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai"
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def get_output_files(self, action):
@@ -1295,7 +1296,6 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_args(self, action: str) -> dict[str, Any]:
         self._check_action(action)
         return {
-            "reference": self.parent.w_config.static_config_data.reference.path,
             "window_length": self.config.bam_collect_doc.window_length,
         }
 

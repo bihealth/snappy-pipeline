@@ -86,7 +86,7 @@ pushd ${{TMPDIR}}/dupradar
 Rscript --vanilla run_dupradar.R \
     "{snakemake.input.bam}" \
     results.tsv \
-    {args[dupradar_path_annotation_gtf]} \
+    {snakemake.input.dupradar_path_annotation_gtf} \
     ${{strand}} \
     ${{paired_cmd}} \
     {args[num_threads]} \

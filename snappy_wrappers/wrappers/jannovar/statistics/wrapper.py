@@ -51,7 +51,11 @@ jannovar \
     -XX:CompressedClassSpaceSize=1024m \
     -i {snakemake.input.vcf} \
     -o {snakemake.output.report} \
+<<<<<<< HEAD
     -d {args[path_ser]}
+=======
+    -d {snakemake.input.path_ser}
+>>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
 
 md5sum {snakemake.output.report} >{snakemake.output.report_md5}
 

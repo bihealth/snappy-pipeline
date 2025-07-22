@@ -293,20 +293,20 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         "genome_load": "NoSharedMemory",
         "raw_star_options": "",
         "align_intron_max": 1000000,
-        "align_intron_min": 20 ,
+        "align_intron_min": 20,
         "align_mates_gap_max": 1000000,
-        "align_sjdb_overhang_min": 1,
+        "align_sjdb_overhang_min":  1,
         "align_sj_overhang_min": 8,
         "out_filter_mismatch_n_max": 999,
         "out_filter_mismatch_n_over_l_max": 0.04,
         "out_filter_multimap_n_max": 20,
         "out_filter_type": "BySJout",
         "out_filter_intron_motifs": "",
-        "out_sam_strand_field": "",
-        "transcriptome": True,
         "trim_adapters": False,
         "mask_duplicates": False,
         "include_unmapped": True,
+        "transcriptome": True,
+        "out_sam_strand_field": "",
     }
     # Get actual and assert
     actual = ngs_mapping_workflow.get_args("star", "run")(wildcards)
@@ -602,6 +602,9 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
     expected = {
         "bam": "work/bwa.library/out/bwa.library.bam",
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
+        "reference": "/path/to/ref.fa",
+        "reference_genome": "/path/to/ref.fa.genome",
+        "target_bed": "",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})

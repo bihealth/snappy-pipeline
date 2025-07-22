@@ -66,7 +66,7 @@ rm -rf $outdir/* $workdir/*
 configManta.py \
     --retainTempFiles \
     --exome \
-    --referenceFasta {args[reference]} \
+    --referenceFasta {snakemake.input.reference} \
     --runDir $workdir \
     $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
 

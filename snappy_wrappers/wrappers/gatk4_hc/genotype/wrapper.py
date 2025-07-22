@@ -56,13 +56,13 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
     $(for ignore_chrom in {args[ignore_chroms]}; do \
         awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {args[reference]}.fai; \
+            {snakemake.input.reference}.fai; \
     done)
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
@@ -97,7 +97,7 @@ run-shard()
         GenotypeGVCFs \
         --java-options "-Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR" \
         --tmp-dir $TMPDIR \
-        --reference {args[reference]} \
+        --reference {snakemake.input.reference} \
         --output $TMPDIR/shards-output/$(printf %06d $job_no).g.vcf.gz \
         --intervals $interval \
         -G StandardAnnotation \
@@ -125,7 +125,7 @@ bcftools concat \
     /dev/stdin \
 | bcftools norm \
     -d exact \
-    -f {args[reference]} \
+    -f {snakemake.input.reference} \
     -O z \
     -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}

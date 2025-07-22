@@ -19,7 +19,7 @@ ME_INFIX={melt_config[me_refs_infix]}
 
 java -Xmx13G -jar $JAR \
     Genotype \
-    -h {args[reference]} \
+    -h {snakemake.input.reference} \
     -bamfile {snakemake.input.bam} \
     -p $(dirname {snakemake.input.done}) \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \

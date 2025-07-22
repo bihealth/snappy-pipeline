@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_sv_export_external workflow module code"""
 
-import pathlib
 import textwrap
 from copy import deepcopy
+from pathlib import PosixPath
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -306,7 +306,8 @@ def test_varfish_annotator_step_part_call_get_input_files_annotate(
     base_name = "work/dragen.P001-N1-DNA1-WGS1/out/dragen.P001-N1-DNA1-WGS1"
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name)
     ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
-    expected = {**ped_dict, **vcf_dict}
+    ref_dict = {"reference": "/path/to/ref.fa"}
+    expected = {**ped_dict, **vcf_dict, **ref_dict}
     # Get actual
     actual = wgs_sv_export_external_workflow.get_input_files(
         "varfish_annotator_external", "annotate"
@@ -354,18 +355,17 @@ def test_varfish_annotator_step_part_get_args_annotate(wgs_sv_export_external_wo
     expected = {
         "step_name": "wgs_sv_export_external",
         "varfish_server_compatibility": False,
-        "reference": "/path/to/ref.fa",
         "config": {
             "merge_vcf_flag": True,
             "merge_option": "id",
-            "search_paths": [pathlib.PosixPath("/search_path")],
+            "search_paths": [PosixPath("/search_path")],
             "search_patterns": [{"vcf": "*/*.vcf.gz"}],
             "release": "GRCh37",
             "tool_ngs_mapping": None,
             "tool_sv_calling_wgs": "dragen",
-            "path_refseq_ser": pathlib.PosixPath("/data/refseq_ser"),
-            "path_ensembl_ser": pathlib.PosixPath("/data/ensembl_ser"),
-            "path_db": pathlib.PosixPath("/data/db"),
+            "path_refseq_ser": PosixPath("/data/refseq_ser"),
+            "path_ensembl_ser": PosixPath("/data/ensembl_ser"),
+            "path_db": PosixPath("/data/db"),
             "varfish_server_compatibility": False,
         },
     }

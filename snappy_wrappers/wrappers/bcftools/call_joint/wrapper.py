@@ -16,7 +16,7 @@ args_ignore_chroms = ""
 if ignore_chroms := args.get("ignore_chroms"):
     args_ignore_chroms = " ".join(["--ignore-chroms"] + ignore_chroms)
 
-reference_path = args["reference_path"]
+reference_path = snakemake.input.reference
 max_depth = args["max_depth"]
 max_indel_depth = args["max_indel_depth"]
 window_length = args["window_length"]

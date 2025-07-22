@@ -223,6 +223,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
                     "{mapper}.{caller}.jannovar_annotate_vcf.{real_index}"
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
                 yield key, variant_annotation(input_path) + ext
+            yield "reference", self.w_config.static_data_config.reference.path
 
         assert action == "run", "Unsupported actions"
         return input_function
@@ -230,10 +231,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     def get_args(self, action: str) -> dict[str, Any]:
         # Validate action
         self._validate_action(action)
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior,
-        }
+        return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

@@ -349,11 +349,22 @@ class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     filter_name = "dkfz"
     resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
 
+    def get_input_files(self, action):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        # Validate action
+        self._validate_action(action)
+
+        @dictify
+        def input_function(wildcards):
+            parent = super(OneFilterDkfzStepPart, self).get_input_files(action)
+            yield from parent(wildcards).items()
+            yield "reference", self.w_config.static_data_config.reference.path
+
+        return input_function
+
     def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
         """Return dkfz parameters to parameters"""
-        return super(OneFilterDkfzStepPart, self)._get_args(wildcards) | {
-            "reference": self.w_config.static_data_config.reference.path
-        }
+        return super(OneFilterDkfzStepPart, self)._get_args(wildcards)
 
 
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
@@ -370,7 +381,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         def input_function(wildcards):
             parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
             yield from parent(wildcards).items()
-
+            yield "reference", self.w_config.static_data_config.reference.path
             yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
 
         return input_function
@@ -388,7 +399,6 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
         """Return dkfz parameters to parameters"""
         return super(OneFilterEbfilterStepPart, self)._get_args(wildcards) | {
-            "reference": self.w_config.static_data_config.reference.path,
             "has_annotation": self.config.has_annotation,
         }
 
@@ -512,6 +522,7 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         for key, ext in key_ext.items():
             yield key, ngs_mapping(tpl + ext)
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def get_output_files(self, action):
@@ -562,10 +573,6 @@ class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-    def get_args(self, action):
-        self._validate_action(action)
-        return {"reference": self.w_config.static_data_config.reference.path}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -625,6 +632,7 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             yield key, ngs_mapping(tpl.format(**wildcards) + ext)
         # Panel of normals TXT file
         yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+        yield "reference", self.w_config.static_data_config.reference.path
 
     def _get_input_files_write_panel(self, wildcards):
         bam_paths = self._get_panel_of_normal_bams(wildcards)
@@ -645,7 +653,6 @@ class EbFilterStepPart(SomaticVariantFiltrationStepPart):
             if cfg is not None:
                 parameters.update(dict(cfg))
         parameters["has_annotation"] = self.config.has_annotation
-        parameters["reference"] = self.w_config.static_data_config.reference.path
         return parameters
 
     @dictify

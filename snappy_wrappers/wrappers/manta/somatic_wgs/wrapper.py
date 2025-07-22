@@ -24,7 +24,7 @@ outdir=$basedir/out
 trap "rm -rf \"$workdir\"" EXIT
 
 configManta.py \
-    --referenceFasta {args[reference]} \
+    --referenceFasta {snakemake.input.reference} \
     --runDir $workdir \
     --normalBam {snakemake.input.normal_bam} \
     --tumorBam {snakemake.input.tumor_bam}

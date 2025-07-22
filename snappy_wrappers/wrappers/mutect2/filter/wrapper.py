@@ -5,7 +5,7 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+reference = snakemake.input.reference
 
 segments = (
     " --tumor-segmentation {} ".format(snakemake.input.segments)

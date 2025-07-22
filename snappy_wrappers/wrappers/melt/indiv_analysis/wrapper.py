@@ -22,7 +22,7 @@ java -Xmx13G -jar $JAR \
     IndivAnalysis \
     -b hs37d5/NC_007605 \
     {melt_arg_exome} \
-    -h {args[reference]} \
+    -h {snakemake.input.reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \

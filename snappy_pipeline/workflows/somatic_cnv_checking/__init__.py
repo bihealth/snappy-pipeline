@@ -257,7 +257,11 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
         def input_function(wildcards):
             name_pattern = "{mapper}.{caller}.{library_name}".format(**wildcards)
             base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-            return {"vcf": base_path_out + ".vcf.gz", "tsv": base_path_out + ".tsv"}
+            return {
+                "vcf": base_path_out + ".vcf.gz",
+                "tsv": base_path_out + ".tsv",
+                "reference": self.parent.w_config.static_data_config.reference.path,
+            }
 
         return input_function
 
@@ -281,7 +285,6 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             return {
-                "reference": self.parent.w_config.static_data_config.reference.path,
                 "library_name": wildcards.library_name,
             }
 

@@ -64,7 +64,7 @@ trap "rm -rf \"$workdir\"" EXIT
 rm -rf $outdir/* $workdir/*
 
 configManta.py \
-    --referenceFasta {args[reference]} \
+    --referenceFasta {snakemake.input.reference} \
     --runDir $workdir \
     $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
 

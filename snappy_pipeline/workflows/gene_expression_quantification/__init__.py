@@ -235,22 +235,20 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         )
 
     def get_input_files(self, action):
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(
-                **wildcards
-            )
-            return {
-                "bam": ngs_mapping(base_path + ".bam"),
-                "bai": ngs_mapping(base_path + ".bam.bai"),
-            }
-
         assert action == "run", "Unsupported actions"
-        return input_function
+        return getattr(self, f"_get_input_files_{action}")
+
+    def _get_input_files_run(self, wildcards: Wildcards):
+        """Helper wrapper function"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
+        }
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
@@ -294,10 +292,10 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_args(self, action: str) -> dict[str, Any]:
-        return super().get_args(action) | {
-            "path_annotation_gtf": self.config.featurecounts.path_annotation_gtf,
-        }
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "features", self.w_config.static_data_config.features.path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -396,9 +394,12 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards)
+        yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
+
     def get_args(self, action: str) -> dict[str, Any]:
         return super().get_args(action) | {
-            "dupradar_path_annotation_gtf": self.config.dupradar.dupradar_path_annotation_gtf,
             "num_threads": self.config.dupradar.num_threads,
         }
 
@@ -426,11 +427,10 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_args(self, action: str) -> dict[str, Any]:
-        return super().get_args(action) | {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "rnaseqc_path_annotation_gtf": self.config.rnaseqc.rnaseqc_path_annotation_gtf,
-        }
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards)
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

@@ -55,7 +55,7 @@ gatk_nonfree \
     --pedigree {snakemake.input.ped} \
     --variant $TMPDIR/trio_only.vcf.gz \
     --out {snakemake.output.vcf} \
-    --reference_sequence {args[reference]}
+    --reference_sequence {snakemake.input.reference}
 
 tabix -f {snakemake.output.vcf}
 
