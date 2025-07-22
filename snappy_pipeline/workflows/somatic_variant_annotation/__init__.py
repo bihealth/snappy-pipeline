@@ -212,7 +212,7 @@ class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     def get_args(self, action):
         self._validate_action(action)
         return {
-            "static_data_config": self.w_config.model_dump(by_alias=True),
+            "static_data_config": self.w_config.static_data_config.model_dump(by_alias=True),
             "jannovar": self.config.get(self.name).model_dump(by_alias=True),
         }
 

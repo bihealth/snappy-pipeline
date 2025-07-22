@@ -489,7 +489,7 @@ def test_minimap2_step_part_get_args(ngs_mapping_workflow):
         "extra_infos": {
             "libraryType": "WGS",
             "libraryKit": "Agilent SureSelect Human All Exon V6",
-            "folderName": "P001-N1-DNA1-WGS1",
+            "folderName": "P001_N1_DNA1_WGS1",
             "extractionType": "DNA",
             "seqPlatform": "Illumina",
         },

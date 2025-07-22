@@ -200,8 +200,6 @@ rule ngs_mapping_target_coverage_report_run:
         memory=wf.get_resource("target_coverage_report", "run", "memory"),
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
         tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
-    params:
-        args=wf.get_args("target_coverage_report", "run"),
     log:
         **wf.get_log_file("target_coverage_report", "run"),
     wrapper:

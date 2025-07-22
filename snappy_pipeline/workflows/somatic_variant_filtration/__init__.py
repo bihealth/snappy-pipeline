@@ -362,10 +362,6 @@ class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
 
         return input_function
 
-    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
-        """Return dkfz parameters to parameters"""
-        return super(OneFilterDkfzStepPart, self)._get_args(wildcards)
-
 
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"

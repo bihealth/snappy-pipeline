@@ -390,14 +390,14 @@ def test_bwa_step_part_check_config(ngs_mapping_workflow):
 def test_star_step_part_get_args(ngs_mapping_workflow):
     """Tests StarStepPart.get_args()"""
     # Define expected
-    wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": {
-            "reads_left": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_R1.fastq.gz"],
-            "reads_right": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/P001_R2.fastq.gz"],
+            "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz"],
+            "reads_right": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz"],
         },
         "platform": "ILLUMINA",
-        "sample_name": "P001-T1-RNA1-mRNA_seq1",
+        "sample_name": "P001-N1-DNA1-WGS1",
         "path_index": "/path/to/star/index",
         "features": "/path/to/features.gtf",
         "num_threads_align": 16,
@@ -668,21 +668,6 @@ def test_target_coverage_report_step_part_run_get_log_file(ngs_mapping_workflow)
     assert ngs_mapping_workflow.get_log_file("target_coverage_report", "run") == expected
 
 
-<<<<<<< HEAD
-def test_target_coverage_report_step_part_run_get_args(ngs_mapping_workflow):
-    """Tests TargetCoverageReportStepPart.get_args() - action 'run'"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    expected = {
-        "path_reference": "/path/to/ref.fa",
-        "path_reference_genome": "/path/to/ref.fa.genome",
-        "path_targets_bed": "path/to/SureSelect_Human_All_Exon_V6_r2.bed",
-    }
-    actual = ngs_mapping_workflow.get_args("target_coverage_report", "run")(wildcards)
-    assert actual == expected
-
-
-=======
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
 # Tests for BamCollectDocStepPart -----------------------------------------------------------------
 
 

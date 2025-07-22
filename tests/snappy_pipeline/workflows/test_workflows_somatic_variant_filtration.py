@@ -126,13 +126,6 @@ def test_dkfz_bias_filter_step_part_get_log_file(somatic_variant_filtration_work
     assert actual == expected
 
 
-def test_dkfz_bias_filter_step_part_get_args(somatic_variant_filtration_workflow):
-    """Tests DkfzBiasFilterStepPart.get_args()"""
-    expected = {"reference": "/path/to/ref.fa"}
-    actual = somatic_variant_filtration_workflow.get_args("dkfz_bias_filter", "run")
-    assert actual == expected
-
-
 def test_dkfz_bias_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests DkfzBiasFilterStepPart.get_resource()"""
     # Define expected

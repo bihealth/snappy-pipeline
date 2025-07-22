@@ -196,6 +196,7 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
@@ -646,6 +647,8 @@ def test_bcftools_joint_step_part_get_input_files(somatic_variant_calling_workfl
             "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     actual = somatic_variant_calling_workflow.get_input_files("bcftools_joint", "run")(wildcards)
     assert actual == expected
@@ -677,7 +680,6 @@ def test_bcftools_joint_step_part_get_args(somatic_variant_calling_workflow):
     expected = {
         "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
         "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-        "reference_path": "/path/to/ref.fa",
         "max_depth": 4000,
         "max_indel_depth": 4000,
         "window_length": 10000000,
@@ -715,6 +717,8 @@ def test_varscan_joint_step_part_get_input_files(somatic_variant_calling_workflo
             "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     actual = somatic_variant_calling_workflow.get_input_files("varscan_joint", "run")(wildcards)
     assert actual == expected
@@ -746,7 +750,6 @@ def test_varscan_joint_step_part_get_args(somatic_variant_calling_workflow):
     expected = {
         "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
         "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-        "reference_path": "/path/to/ref.fa",
     }
     actual = somatic_variant_calling_workflow.get_args("varscan_joint", "run")(wildcards)
     assert actual == expected
@@ -780,6 +783,8 @@ def test_platypus_joint_step_part_get_input_files(somatic_variant_calling_workfl
             "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     actual = somatic_variant_calling_workflow.get_input_files("platypus_joint", "run")(wildcards)
     assert actual == expected
@@ -811,7 +816,6 @@ def test_platypus_joint_step_part_get_args(somatic_variant_calling_workflow):
     expected = {
         "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
         "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-        "reference_path": "/path/to/ref.fa",
         "split_complex_mnvs": True,
         "num_threads": 16,
     }
@@ -847,6 +851,8 @@ def test_gatk_hc_joint_step_part_get_input_files(somatic_variant_calling_workflo
             "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     actual = somatic_variant_calling_workflow.get_input_files("gatk_hc_joint", "run")(wildcards)
     assert actual == expected
@@ -878,7 +884,6 @@ def test_gatk_hc_joint_step_part_get_args(somatic_variant_calling_workflow):
     expected = {
         "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
         "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-        "reference_path": "/path/to/ref.fa",
     }
     actual = somatic_variant_calling_workflow.get_args("gatk_hc_joint", "run")(wildcards)
     assert actual == expected
@@ -912,6 +917,8 @@ def test_gatk_ug_joint_step_part_get_input_files(somatic_variant_calling_workflo
             "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
+        "dbsnp": "/path/to/dbsnp.vcf.gz",
     }
     actual = somatic_variant_calling_workflow.get_input_files("gatk_ug_joint", "run")(wildcards)
     assert actual == expected
@@ -943,7 +950,6 @@ def test_gatk_ug_joint_step_part_get_args(somatic_variant_calling_workflow):
     expected = {
         "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
         "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-        "reference_path": "/path/to/ref.fa",
     }
     actual = somatic_variant_calling_workflow.get_args("gatk_ug_joint", "run")(wildcards)
     assert actual == expected

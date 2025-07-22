@@ -300,6 +300,7 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
     expected = {
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "coverage")(
         wildcards

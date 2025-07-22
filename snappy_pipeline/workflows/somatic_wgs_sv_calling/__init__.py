@@ -202,9 +202,9 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
-    def _get_input_files(self, wildcards):
-        return super()._get_input_files(wildcards) | {
-            "reference": self.parent.w_config.static_data_config.reference.path
+    def _get_input_files_run(self, wildcards):
+        return super()._get_input_files_run(wildcards) | {
+            "reference": self.w_config.static_data_config.reference.path
         }
 
 

@@ -267,6 +267,7 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_list.txt",
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_info.txt",
         ],
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
     assert actual == expected
@@ -513,7 +514,10 @@ def test_purecn_step_part_get_log_file_install(panel_of_normals_workflow):
 
 def test_purecn_step_part_get_input_files_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_input_files_prepare()"""
-    expected = {"container": "work/containers/out/purecn.simg"}
+    expected = {
+        "container": "work/containers/out/purecn.simg",
+        "reference": "/path/to/ref.fa",
+    }
     actual = panel_of_normals_workflow.get_input_files("purecn", "prepare")
     assert actual == expected
 

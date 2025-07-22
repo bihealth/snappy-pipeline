@@ -1199,29 +1199,6 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def get_args(self, action):
-        assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_args_run")
-
-    def _get_args_run(self, wildcards):
-        # Find bed file associated with library kit
-        library_name = wildcards.library_name
-        path_targets_bed = ""
-        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
-            if item.name == kit_name:
-                path_targets_bed = item.path
-                break
-
-        path_reference = self.w_config.static_data_config.reference.path
-        path_reference_genome = path_reference + ".genome"
-
-        return {
-            "path_reference": path_reference,
-            "path_reference_genome": path_reference_genome,
-            "path_targets_bed": path_targets_bed,
-        }
-
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

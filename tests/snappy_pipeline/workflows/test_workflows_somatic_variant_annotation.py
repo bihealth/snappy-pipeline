@@ -146,6 +146,8 @@ def test_jannovar_step_part_get_args(somatic_variant_annotation_workflow):
             "reference": {"path": "/path/to/ref.fa"},
             "cosmic": {"path": "/path/to/cosmic.vcf.gz"},
             "dbsnp": {"path": "/path/to/dbsnp.vcf.gz"},
+            "dbnsfp": None,
+            "features": None,
         },
         "jannovar": {
             "dbnsfp": {
@@ -167,9 +169,7 @@ def test_jannovar_step_part_get_args(somatic_variant_annotation_workflow):
             "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "GL*", "*_decoy", "HLA-*"],
         },
     }
-    actual = somatic_variant_annotation_workflow.get_args("jannovar", "annotate_somatic_vcf")(
-        wildcards
-    )
+    actual = somatic_variant_annotation_workflow.get_args("jannovar", "annotate_somatic_vcf")
     assert actual == expected
 
 
@@ -232,23 +232,12 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {
-        "tumor_library": "P001-T1-DNA1-WGS1",
-        "normal_library": "P001-N1-DNA1-WGS1",
-<<<<<<< HEAD
-        "reference": "/path/to/ref.fa",
-=======
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
         "config": {
             "cache_dir": "/path/to/dir/cache",
             "species": "homo_sapiens",
             "assembly": "GRCh38",
             "cache_version": "102",
             "tx_flag": "gencode_basic",
-<<<<<<< HEAD
-            "pick_order": [
-                "biotype",
-                "mane",
-=======
             "output_options": ["everything"],
             "buffer_size": 1000,
             "num_threads": 8,
@@ -256,24 +245,16 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "biotype",
                 "mane_select",
                 "mane_plus_clinical",
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
                 "appris",
                 "tsl",
                 "ccds",
                 "canonical",
                 "rank",
                 "length",
-<<<<<<< HEAD
-            ],
-            "num_threads": 8,
-            "buffer_size": 1000,
-            "output_options": ["everything"],
-=======
             ]
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
         },
     }
-    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")
     assert actual == expected
 
 
