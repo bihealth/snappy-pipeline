@@ -8,12 +8,27 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 reference = snakemake.config["static_data_config"]["reference"]["path"]
 config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
 
-extra_arguments = " ".join(config["extra_arguments"])
-
 if "normal_bam" in snakemake.input.keys():
     normal = f'--normal "{snakemake.params.normal_lib_name}" --input {snakemake.input.normal_bam}'
 else:
     normal = ""
+
+if snakemake.params.intervals:
+    intervals = " ".join([f"--intervals {interval}" for interval in snakemake.params.intervals])
+else:
+    intervals = ""
+
+# TODO: move config parameters to snakemake params (check with parallel wrapper)
+if config["germline_resource"]:
+    germline_resource = f"--germline-resource {config['germline_resource']}"
+else:
+    germline_resource = ""
+if config["panel_of_normals"]:
+    panel_of_normals = f"--panel-of-normals {config['panel_of_normals']}"
+else:
+    panel_of_normals = ""
+
+extra_arguments = " ".join(config["extra_arguments"])
 
 shell.executable("/bin/bash")
 
@@ -47,16 +62,6 @@ trap "rm -rf $tmpdir" EXIT
 
 out_base=$tmpdir/$(basename {snakemake.output.raw} .vcf.gz)
 
-# Add intervals if required
-intervals=""
-if [[ -n "{snakemake.params.args[intervals]}" ]]
-then
-    for itv in "{snakemake.params.args[intervals]}"
-    do
-        intervals="$intervals --intervals $itv"
-    done
-fi
-
 gatk Mutect2 \
     --tmp-dir $tmpdir \
     {normal} \
@@ -64,13 +69,8 @@ gatk Mutect2 \
     --reference {reference} \
     --output $out_base.vcf \
     --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \
-    $(if [[ -n "{config[germline_resource]}" ]]; then \
-        echo --germline-resource {config[germline_resource]}
-    fi) \
-    $(if [[ -n "{config[panel_of_normals]}" ]]; then \
-        echo --panel-of-normals {config[panel_of_normals]}
-    fi) \
-    $intervals \
+    {germline_resource} {panel_of_normals} \
+    {intervals} \
     {extra_arguments}
 
 rm -f $out_base.vcf.idx
