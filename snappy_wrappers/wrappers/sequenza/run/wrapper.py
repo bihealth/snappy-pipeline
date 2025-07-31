@@ -76,11 +76,11 @@ library(sequenza)
 
 # Follow sequenza documentation https://bitbucket.org/sequenzatools/sequenza/src/master/
 args <- list(file="{snakemake.input.seqz}", assembly="{config[assembly]}", chromosome.list={contigs})
-args <- c(args, {args_extract})
+#args <- c(args, {args_extract})
 seqz <- do.call(sequenza.extract, args=args)
 
 args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
-args <- c(args, {args_fit})
+#args <- c(args, {args_fit})
 CP <- do.call(sequenza.fit, args=args)
 
 sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{snakemake.wildcards[library_name]}", out.dir=dirname("{snakemake.output.done}"))
