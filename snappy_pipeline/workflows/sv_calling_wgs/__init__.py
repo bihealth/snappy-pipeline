@@ -56,6 +56,23 @@ class GcnvWgsStepPart(RunGcnvStepPart):
             if donor.dna_ngs_library:
                 yield donor.dna_ngs_library.name, "wgs"
 
+    def get_params(self, action: str):
+        param_fn = super().get_params(action)
+
+        def _get_params(*args, **kwargs):
+            params = param_fn(*args, **kwargs)
+            if action == "contig_ploidy":
+                par_intervals = (
+                    self.config.get("helper_gcnv_model_wgs", {})
+                    .get("gcnv", {})
+                    .get("path_par_intervals", "")
+                )
+                params.update({"par_intervals": par_intervals})
+            params.update({"par_intervals": par_intervals})
+            return params
+
+        return _get_params
+
 
 def escape_dots_dashes(s: str) -> str:
     """Escape dots and dashes with double-underscore constructs."""
