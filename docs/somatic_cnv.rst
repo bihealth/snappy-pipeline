@@ -9,10 +9,38 @@ Somatic variant calling is implemented differently for exome and whole genome da
 The whole genome data "branch" is currently under review, as GRCh38 support in ``Control-FREEC`` (the main workhorse for WGS CNV calling) is not complete.
 CNV calling in WGS data can also be done using ``cnvkit``, but its pipeline implementation is also incomplete.
 
-The following documentation is restricted to the tools currently implemented to process exome data: ``cnvkit``, ``purecn`` & ``sequenza``.
+The WGS and WES branches will be merged and extended in many ways, so that, for example, somatic and germline small variants can be used
+to determine tumor sample purity, improve segmentation and identify Loss Of Heterozigocity (LOH).
+This work in on-going, and some preliminary steps are already complete. This steps are briefly outlined below, followed by some description of
+the current WES "branch". The latter will be completely amended as soon as the merged code is enabled, but until then, it is still of interest.
+
+Small variants file generation
+==============================
+
+The flexibility of ``vcf`` files is here a problem, since each implemented CNV calling tool has different requirements for it.
+This is why specific ``snappy`` pileline steps were needed to generate a ``vcf`` file which contains enough information to be used by all tools.
+
+Generally, the CNV calling needs two types of variants: germline variants to help segmentation & determine LOH, and the somatic variants
+to estimate tumor purity.
+
+The ``germline_variants`` step provide a set of will-supported SNPs (sufficient read depth from well mapped reads, and balanced support for
+the reference and alternative alleles). The current implementation very primitive, done using ``bcftools`` commands suite.
+The step is agnostic about the sample status and sample sheet type (``generic``, ``cancer_matched`` or ``germline_variants``) (unlike the
+``variant_calling`` step, which performs the same operation only for ``germline_variants`` sample sheets). When run on its own, the step
+will call variants on all samples, including the tumors. This is unnecessary, and for CNV calling purposes, running the step on normal samples only
+is quite sufficient.
+
+Most tools require that the somatic variants be flagged with ``SOMATIC``, and that the support (read depth) for each allele is provided.
+The genotype of the locus in normal & tumor samples is also needed by some tools, as flags that label known variants, typically those
+frequently encountered in human populations. The ``somatic_variants_for_cnv`` step merges the germline variants identified in the normal samples at
+the ``germline_variants`` step, and merges them with somatic variants from either the ``somatic_variant_calling`` step, or the ``somatic_variant_filtration``
+step if only filtered variants must be used. It can also flag variants if they are found in human variation databases, such as ``gnomAD`` or ``dbSNP``.
+
 
 Output & performance
 ====================
+
+The following documentation is restricted to the tools currently implemented to process exome data: ``cnvkit``, ``purecn`` & ``sequenza``.
 
 The 3 methods generally broadly agree on the log ratio of coverage between tumor & normal samples. 
 
