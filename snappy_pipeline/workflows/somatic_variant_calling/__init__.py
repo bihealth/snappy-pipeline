@@ -418,19 +418,29 @@ class Mutect2StepPart(MutectBaseStepPart):
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
         }
 
-        normal_library = self.get_normal_lib_name(wildcards)
-        if normal_library:
+        # Adjustment tumor_only mode
+
+        tumor_normal_mode = self.config.tumor_normal_mode
+        #normal_library = self.get_normal_lib_name(wildcards)
+
+        if tumor_normal_mode == "paired":
+            normal_library = self.get_normal_lib_name(wildcards)
+            if not normal_library:
+                raise ValueError("Normal sample required but not found.")
             normal_base_path = (
                 "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                     normal_library=normal_library, **wildcards
                 )
             )
-            input_files.update(
-                {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                }
-            )
+            input_files.update({
+                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            })
+        elif tumor_normal_mode == "tumor_only":
+            # No normal BAMs to include
+            pass
+        else:
+            raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
 
         return input_files
 
