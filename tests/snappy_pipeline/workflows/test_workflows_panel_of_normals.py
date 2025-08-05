@@ -130,7 +130,7 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
 #         }
 #     )
 #     tpl = "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/run/{i}-of-24.vcf.gz"
-#     expected = {"vcf": [tpl.format(i=str(i + 1)) for i in range(24)]}
+#     expected = {"raw": [tpl.format(i=str(i + 1)) for i in range(24)]}
 #     actual = panel_of_normals_workflow.get_input_files("mutect2", "gather")(wildcards)
 #     assert actual == expected
 
@@ -178,10 +178,10 @@ def test_mutect2_step_part_get_output_files_gather(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_output_files_gather()"""
     tpl = "work/{mapper}.mutect2.{normal_library}/out/{mapper}.mutect2.{normal_library}.prepare"
     expected = {
-        "vcf": tpl + ".vcf.gz",
-        "vcf_md5": tpl + ".vcf.gz.md5",
-        "vcf_tbi": tpl + ".vcf.gz.tbi",
-        "vcf_tbi_md5": tpl + ".vcf.gz.tbi.md5",
+        "raw": tpl + ".vcf.gz",
+        "raw_md5": tpl + ".vcf.gz.md5",
+        "raw_tbi": tpl + ".vcf.gz.tbi",
+        "raw_tbi_md5": tpl + ".vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "gather")
     assert actual == expected

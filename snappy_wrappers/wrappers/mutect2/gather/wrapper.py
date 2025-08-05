@@ -8,6 +8,22 @@ __author__ = "Till Hartmann <till.hartmann@bih-charite.de>"
 output = snakemake.output
 input = snakemake.input
 
+if getattr(input, "stats", []):
+    assert getattr(output, "stats"), "Missing output file for stats"
+    stats = "-stats ".join([str(stat) for stat in input.stats])
+    output_stats = output.stats
+else:
+    stats = ""
+    output_stats = ""
+
+if getattr(input, "f1r2", []):
+    assert getattr(output, "orientation"), "Missing output file for orientation"
+    orientation = "-I ".join([str(f1r2) for f1r2 in input.f1r2])
+    output_orientation = output.orientation
+else:
+    orientation = ""
+    output_orientation = ""
+
 shell(r"""
 set -x
 
@@ -21,12 +37,16 @@ bcftools concat \
 tabix -f {output.raw}
 
 # Concatenate stats with GATK tool -------------------------------
-stats=$(echo "{input.stats}" | sed -e "s/ / -stats /g")
-gatk MergeMutectStats -stats $stats -O {output.stats}
+if [[ -n "{stats}" ]]
+then
+    gatk MergeMutectStats -stats {stats} -O {output_stats}
+fi
 
 # Create orientation model from all F1R2 files -------------------
-orientation=$(echo "{input.f1r2}" | sed -e "s/ / -I /g")
-gatk LearnReadOrientationModel -I $orientation -O {output.orientation}
+if [[ -n "{orientation}" ]]
+then
+    gatk LearnReadOrientationModel -I {orientation} -O {output_orientation}
+fi
 
 # Compute md5 sums -----------------------------------------------
 pushd $(dirname {output.raw})
