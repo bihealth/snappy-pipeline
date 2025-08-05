@@ -26,7 +26,7 @@ class Mutect2(SnappyModel):
     window_length: int = 100000000
     """split input into windows of this size, each triggers a job"""
 
-    num_jobs: int = 500
+    num_jobs: int = 24
     """number of windows to process in parallel"""
 
     use_profile: bool = True
