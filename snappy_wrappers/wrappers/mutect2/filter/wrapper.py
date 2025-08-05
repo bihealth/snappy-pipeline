@@ -83,11 +83,16 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --ob-priors $tmpdir/read-orientation-model.tar.gz \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
-    --output {snakemake.output.full_vcf}
+    --output $tmpdir/out.vcf
 
-# Index & move to final dest
-tabix -f {snakemake.output.full_vcf}
-
+# Re-order samples so that normal always comes before tumor
+grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
+grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
+bcftools view \
+    --samples-file $tmpdir/samples.lst \
+    --output-type z --output {snakemake.output.full_vcf} \
+    $tmpdir/out.vcf
+tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}
 tabix -f {snakemake.output.vcf}
