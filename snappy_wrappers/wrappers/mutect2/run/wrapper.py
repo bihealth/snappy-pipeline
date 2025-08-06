@@ -10,10 +10,12 @@ config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
 args = snakemake.params.get("args", {})
 log = snakemake.log
 
-intervals = args.get("intervals", [])
-if isinstance(intervals, str):
-    intervals = [intervals]
-interval_params = " ".join([f"--intervals {itv}" for itv in intervals])
+intervals = getattr(snakemake.input, "region", [])
+if intervals:
+    with open(intervals, "rt") as f:
+        interval_params = " ".join([f"--intervals {itv}" for itv in map(str.strip, f.readlines())])
+else:
+    interval_params = ""
 
 raw_output = snakemake.output.raw
 

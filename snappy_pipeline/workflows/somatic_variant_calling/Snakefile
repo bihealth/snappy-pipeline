@@ -138,7 +138,7 @@ rule somatic_variant_calling_mutect2_scatter:
     output:
         **wf.get_output_files("mutect2", "scatter"),
     params:
-        **wf.get_params("mutect2", "scatter")(),
+        **wf.get_params("mutect2", "scatter"),
     resources:
         time=wf.get_resource("mutect2", "scatter", "time"),
         memory=wf.get_resource("mutect2", "scatter", "memory"),
@@ -165,13 +165,7 @@ rule somatic_variant_calling_mutect2_run:
     log:
         **wf.get_log_file("mutect2", "run"),
     params:
-        args=lambda wildcards, input: {
-            "intervals": list(map(str.strip, open(input.region, "rt").readlines()))
-        },
         normal_lib_name=wf.substep_getattr("mutect2", "get_normal_lib_name"),
-        intervals=lambda wildcards, input: list(
-            map(str.strip, open(input.region, "rt").readlines())
-        ),
     wrapper:
         wf.wrapper_path("mutect2/run")
 
