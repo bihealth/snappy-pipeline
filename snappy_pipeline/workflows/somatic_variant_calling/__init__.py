@@ -422,20 +422,19 @@ class Mutect2StepPart(MutectBaseStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_params_{}".format(action), {})
-
-    def _get_params_scatter(self):
-        ignore_chroms = list(
-            set(
-                self.w_config.get("ignore_chroms", [])
-                + self.config.get("ignore_chroms", [])
-                + self.config.get(self.name).get("ignore_chroms", [])
+        if action == "scatter":
+            ignore_chroms = list(
+                set(
+                    self.w_config.get("ignore_chroms", [])
+                    + self.config.get("ignore_chroms", [])
+                    + self.config.get(self.name).get("ignore_chroms", [])
+                )
             )
-        )
-        return {
-            "ignore_chroms": ignore_chroms,
-            "padding": self.config.mutect2.padding,
-        }
+            return {
+                "ignore_chroms": sorted(list(ignore_chroms)),
+                "padding": self.config.mutect2.padding,
+            }
+        return {}
 
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
@@ -630,7 +629,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.txt".format(
                 var_caller=self.name
             )
-            return {"regions": snakemake.io.temp(scatter(template))}
+            return {"regions": scatter(template)}
 
         if action == "run":
             base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
