@@ -65,11 +65,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
 
-    - name: Clean up empty conda environments
-      run: |
-        if [ -d ".tests/test-workflow/.snakemake/conda" ]; then
-          find .tests/test-workflow/.snakemake/conda -type d -empty -delete
-        fi
+    - name: Clean snakemake conda cache
+      run: rm -rf .tests/test-workflow/.snakemake/conda
 
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@v2
@@ -100,11 +97,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
 
-    - name: Clean up empty conda environments
-      run: |
-        if [ -d ".tests/test-workflow/.snakemake/conda" ]; then
-          find .tests/test-workflow/.snakemake/conda -type d -empty -delete
-        fi
+#    - name: Clean snakemake conda cache
+#      run: rm -rf .tests/test-workflow/.snakemake/conda
 
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@v2
