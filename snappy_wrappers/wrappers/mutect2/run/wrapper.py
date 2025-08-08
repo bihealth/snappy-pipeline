@@ -39,7 +39,7 @@ if "tumor_bam" in snakemake.input.keys():
 
 input_params = " ".join(input_param_list)
 
-if (max_mnp_distance := args.get("max_mnp_distance", None)) is not None:
+if (max_mnp_distance := args.get("max_mnp_distance", None)):
     max_mnp_distance = f"--max-mnp-distance {max_mnp_distance}"
 else:
     max_mnp_distance = ""
