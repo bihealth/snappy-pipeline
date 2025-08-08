@@ -19,20 +19,19 @@ defaults:
 runs:
   using: "composite"
   steps:
+    - name: Cache conda packages
+      uses: actions/cache@v3
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ inputs.cache-number }}-${{ hashFiles(inputs.environment-file) }}
+      id: cache
+
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: ci_test_conda
         python-version: ${{ inputs.python-version }}
-
-    - name: Cache conda
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.CONDA }}/envs
-        key: ${{ runner.os }}-conda-${{ inputs.cache-number }}-${{ hashFiles(inputs.environment-file) }}
-      id: cache
-
-    - name: Update conda environment
-      shell: bash -el {0}
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: conda env update -n ci_test_conda -f ${{ inputs.environment-file }}
+        pkgs-dirs: ~/conda_pkgs_dir
+        environment-file: ${{ inputs.environment-file }}
+        auto-update-conda: true
+        use-mamba: true
