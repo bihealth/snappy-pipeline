@@ -27,14 +27,14 @@ else:
 shell(r"""
 set -x
 
-# Concatenate raw calls vcfs & index result ----------------------
+# Concatenate vcfs & index result ----------------------
 bcftools concat \
          --allow-overlaps \
          -d none \
-            -o {output.raw} \
+            -o {output.vcf} \
                -O z \
-    {input.raw}
-tabix -f {output.raw}
+    {input.vcf}
+tabix -f {output.vcf}
 
 # Concatenate stats with GATK tool -------------------------------
 if [[ -n "{stats}" ]]
@@ -49,7 +49,7 @@ then
 fi
 
 # Compute md5 sums -----------------------------------------------
-pushd $(dirname {output.raw})
+pushd $(dirname {output.vcf})
 for f in *; do
 if [[ -f "$f" ]] && [[ $f != *.md5 ]]; then
 md5sum $f > $f.md5;

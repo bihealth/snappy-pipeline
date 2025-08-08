@@ -63,6 +63,14 @@ def minimal_config():
     )
 
 
+class AttrDict(dict):
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+
 @pytest.fixture
 def panel_of_normals_workflow(
     dummy_workflow,
@@ -80,7 +88,13 @@ def panel_of_normals_workflow(
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    scattergather = AttrDict()
+    scattergather.mutect2 = lambda x: [x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)]
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "gather": scattergather,
+        "scatter": scattergather,
+    }
     # Construct the workflow object
     return PanelOfNormalsWorkflow(
         dummy_workflow,
@@ -120,19 +134,18 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
     assert actual == expected
 
 
-# Can't test: scattergather globals are missing
-# def test_mutect2_step_part_get_input_files_gather(panel_of_normals_workflow):
-#     """Tests Mutect2StepPart._get_input_files_gather()"""
-#     wildcards = Wildcards(
-#         fromdict={
-#             "mapper": "bwa",
-#             "normal_library": "P001-N1-DNA1-WGS1",
-#         }
-#     )
-#     tpl = "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/run/{i}-of-24.vcf.gz"
-#     expected = {"raw": [tpl.format(i=str(i + 1)) for i in range(24)]}
-#     actual = panel_of_normals_workflow.get_input_files("mutect2", "gather")(wildcards)
-#     assert actual == expected
+def test_mutect2_step_part_get_input_files_gather(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_input_files_gather()"""
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "normal_library": "P001-N1-DNA1-WGS1",
+        }
+    )
+    tpl = "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/run/{i}-of-24.vcf.gz"
+    expected = {"vcf": [tpl.format(i=str(i + 1)) for i in range(24)]}
+    actual = panel_of_normals_workflow.get_input_files("mutect2", "gather")(wildcards)
+    assert actual == expected
 
 
 def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflow):
@@ -152,13 +165,12 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
     assert actual == expected
 
 
-# Can't test: scattergather globals are missing
-# def test_mutect2_step_part_get_output_files_scatter(panel_of_normals_workflow):
-#     """Tests Mutect2StepPart._get_output_files_scatter()"""
-#     tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{i}-of-24.region.bed"
-#     expected = {"intervals": [tpl.format(i=str(i + 1)) for i in range(24)]}
-#     actual = panel_of_normals_workflow.get_output_files("mutect2", "scatter")
-#     assert actual == expected
+def test_mutect2_step_part_get_output_files_scatter(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_output_files_scatter()"""
+    tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{i}-of-24.region.bed"
+    expected = {"regions": [tpl.format(i=str(i + 1)) for i in range(24)]}
+    actual = panel_of_normals_workflow.get_output_files("mutect2", "scatter")
+    assert actual == expected
 
 
 def test_mutect2_step_part_get_output_files_prepare_panel(panel_of_normals_workflow):
@@ -178,10 +190,10 @@ def test_mutect2_step_part_get_output_files_gather(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_output_files_gather()"""
     tpl = "work/{mapper}.mutect2.{normal_library}/out/{mapper}.mutect2.{normal_library}.prepare"
     expected = {
-        "raw": tpl + ".vcf.gz",
-        "raw_md5": tpl + ".vcf.gz.md5",
-        "raw_tbi": tpl + ".vcf.gz.tbi",
-        "raw_tbi_md5": tpl + ".vcf.gz.tbi.md5",
+        "vcf": tpl + ".vcf.gz",
+        "vcf_md5": tpl + ".vcf.gz.md5",
+        "vcf_tbi": tpl + ".vcf.gz.tbi",
+        "vcf_tbi_md5": tpl + ".vcf.gz.tbi.md5",
     }
     actual = panel_of_normals_workflow.get_output_files("mutect2", "gather")
     assert actual == expected
@@ -227,6 +239,13 @@ def test_mutect2_step_part_get_log_file_create_panel(panel_of_normals_workflow):
     base_name_out = "work/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals"
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "create_panel")
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_scatter(panel_of_normals_workflow):
+    """Tests Mutect2StepPart.get_args()"""
+    expected = {"ignore_chroms": [], "padding": 5000}
+    actual = panel_of_normals_workflow.get_args("mutect2", "scatter")
     assert actual == expected
 
 

@@ -414,7 +414,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         tpl = "work/{mapper}.mutect2.{normal_library}/par/run/{{scatteritem}}.vcf.gz".format(
             **wildcards
         )
-        return {"raw": gather(tpl)}
+        return {"vcf": gather(tpl)}
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for merging individual results & panel creation"""
@@ -441,12 +441,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "vcf_tbi_md5": "vcf.gz.tbi.md5",
         }
 
-        # Same arguments as in somatic variant calling
-        if action == "gather":
-            ks = list(ext_dict.keys())
-            for k in ks:
-                ext_dict[k.replace("vcf", "raw")] = ext_dict.pop(k)
-
         tpls = {
             "prepare_panel": "work/{mapper}.mutect2.{normal_library}/par/run/{scatteritem}",
             "gather": "work/{mapper}.mutect2.{normal_library}/out/{mapper}.mutect2.{normal_library}.prepare",
@@ -467,7 +461,10 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
         match action:
             case "scatter":
-                return {"ignore_chroms": self.config.ignore_chroms, "padding": 500}
+                return {
+                    "ignore_chroms": self.config.ignore_chroms,
+                    "padding": self.config.mutect2.padding,
+                }
             case _:
                 return {}
 

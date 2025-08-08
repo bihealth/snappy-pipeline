@@ -73,6 +73,14 @@ def minimal_config():
     )
 
 
+class AttrDict(dict):
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+
 @pytest.fixture
 def mutect2_wildcards():
     """Returns Wildcard used in Mutect2 snakemake workflow."""
@@ -114,7 +122,13 @@ def somatic_variant_calling_workflow(
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    scattergather = AttrDict()
+    scattergather.mutect2 = lambda x: [x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)]
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "gather": scattergather,
+        "scatter": scattergather,
+    }
     # Construct the workflow object
     return SomaticVariantCallingWorkflow(
         dummy_workflow,
@@ -188,6 +202,19 @@ def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
 # Tests for Mutect2StepPart ------------------------------------------------------------------------
 
 
+def test_mutect2_step_part_get_input_files_scatter(
+    mutect2_wildcards, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_scatter()"""
+    # Define expected
+    expected = {"fai": "/path/to/ref.fa.fai"}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "scatter")(
+        mutect2_wildcards
+    )
+    assert actual == expected
+
+
 def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_variant_calling_workflow):
     """Tests Mutect2StepPart._get_input_files_run()"""
     # Define expected
@@ -201,6 +228,23 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
     mutect2_wildcards_with_scatteritem = Wildcards(fromdict=dict(mutect2_wildcards) | {"scatteritem": "1-of-1"})
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards_with_scatteritem)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_input_files_gather(
+    mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_gather()"""
+    # Define expected
+    expected = {
+        "vcf": [mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.vcf.gz".format(i=i) for i in range(1, 25)],
+        "f1r2": [mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.f1r2.tar.gz".format(i=i) for i in range(1, 25)],
+        "stats": [mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.vcf.stats".format(i=i) for i in range(1, 25)],
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "gather")(
+        mutect2_wildcards
+    )
     assert actual == expected
 
 
@@ -271,16 +315,29 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     assert actual == expected
 
 
+def test_mutect2_step_part_get_output_files_scatter(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - scatter"""
+    # Define expected
+    expected = {
+        "regions": [mutect2_output_base_name + "/mutect2par/scatter/{i}-of-24.region.bed".format(i=i) for i in range(1, 25)],
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "scatter")
+    assert actual == expected
+
+
 def test_mutect2_step_part_get_output_files_gather(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
     """Tests Mutect2StepPart.get_output_files() - gather"""
     # Define expected
     expected = {
-        "raw": mutect2_output_base_name + ".raw.vcf.gz",
-        "raw_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
-        "raw_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
-        "raw_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
+        "vcf": mutect2_output_base_name + ".raw.vcf.gz",
+        "vcf_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
+        "vcf_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
+        "vcf_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
         "stats": mutect2_output_base_name + ".raw.vcf.stats",
         "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
         "orientation": mutect2_output_base_name + ".raw.read_orientation_model.tar.gz",
