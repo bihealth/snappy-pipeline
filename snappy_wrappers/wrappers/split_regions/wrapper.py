@@ -75,8 +75,8 @@ if __name__ == "__main__":
     else:
         log = lambda: sys.stderr  # noqa: E731
         fai_path = sys.argv[1]
-        ignore_chroms = sys.argv[2].split(",") if len(sys.argv) > 2 and sys.argv[2] else []
-        padding = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+        ignore_chroms = sys.argv[2].split(",")
+        padding = int(sys.argv[3])
         output_regions = sys.argv[4:]
 
     with log() as log, redirect_stderr(log), redirect_stdout(log):
