@@ -1,9 +1,9 @@
 import csv
 import fnmatch
 import sys
+import heapq
 from collections import namedtuple
 from contextlib import redirect_stderr, redirect_stdout
-
 from math import ceil
 
 
@@ -14,7 +14,6 @@ def matches_any(query, patterns):
     return False
 
 
-type Partition = list[tuple[str, int]]
 Interval = namedtuple("Interval", ["contig", "start", "end"])
 type Region = list[Interval]
 
@@ -22,54 +21,46 @@ type Region = list[Interval]
 def partition_lengths_with_splits(
     contigs: dict[str, int], num_partitions: int, slack: float = 0.1
 ) -> list[Region]:
+    if not contigs:
+        return [[] for _ in range(num_partitions)]
+
     total_length = sum(contigs.values())
     target_partition_size = ceil(total_length / num_partitions)
-    slack_threshold = slack * target_partition_size
 
     partitions: list[Region] = [[] for _ in range(num_partitions)]
-    partition_sizes = [0] * num_partitions
 
-    sorted_contigs = list(sorted(contigs.items(), key=lambda x: x[1], reverse=True))
+    min_heap = [(0, i) for i in range(num_partitions)]
+    heapq.heapify(min_heap)
 
-    def calulate_end_position(start: int, length: int, contig_length: int) -> int:
-        return min(start + length, contig_length)
+    sorted_contigs = sorted(contigs.items(), key=lambda x: x[1], reverse=True)
 
     def add_interval(
         partition_index: int, contig: str, start: int, length: int, contig_length: int
     ):
-        end_position = calulate_end_position(start, length, contig_length)
+        end_position = min(start + length, contig_length)
         partitions[partition_index].append(Interval(contig, start, end_position))
-        partition_sizes[partition_index] += length
 
     for contig, length in sorted_contigs:
-        smallest = partition_sizes.index(min(partition_sizes))
-        remaining_space = target_partition_size - partition_sizes[smallest]
-
-        # Start position within the current contig
         current_start = 0
+        remaining_length = length
 
-        if partition_sizes[smallest] + length > target_partition_size:
-            if remaining_space > slack_threshold:
-                add_interval(smallest, contig, current_start, remaining_space, length)
-                current_start += remaining_space
-                remaining_length = length - remaining_space
+        while remaining_length > 0:
+            current_size, partition_idx = heapq.heappop(min_heap)
 
-                while remaining_length > 0:
-                    smallest = partition_sizes.index(min(partition_sizes))
-                    remaining_space = target_partition_size - partition_sizes[smallest]
+            space_to_fill = target_partition_size - current_size
 
-                    if remaining_space > 0:
-                        space_to_add = min(remaining_length, remaining_space)
-                        add_interval(smallest, contig, current_start, space_to_add, length)
-                        current_start += space_to_add
-                        remaining_length -= space_to_add
-                    else:
-                        break
+            if space_to_fill <= 0 or (remaining_length - space_to_fill) < (slack * target_partition_size):
+                chunk_to_add = remaining_length
             else:
-                next_group_index = (smallest + 1) % num_partitions
-                add_interval(next_group_index, contig, current_start, length, length)
-        else:
-            add_interval(smallest, contig, current_start, length, length)
+                chunk_to_add = space_to_fill
+
+            chunk_to_add = min(remaining_length, chunk_to_add)
+            add_interval(partition_idx, contig, current_start, chunk_to_add, length)
+
+            current_start += chunk_to_add
+            remaining_length -= chunk_to_add
+
+            heapq.heappush(min_heap, (current_size + chunk_to_add, partition_idx))
 
     return partitions
 
@@ -84,8 +75,8 @@ if __name__ == "__main__":
     else:
         log = lambda: sys.stderr  # noqa: E731
         fai_path = sys.argv[1]
-        ignore_chroms = sys.argv[2].split(",")
-        padding = int(sys.argv[3])
+        ignore_chroms = sys.argv[2].split(",") if len(sys.argv) > 2 and sys.argv[2] else []
+        padding = int(sys.argv[3]) if len(sys.argv) > 3 else 0
         output_regions = sys.argv[4:]
 
     with log() as log, redirect_stderr(log), redirect_stdout(log):
@@ -117,6 +108,7 @@ if __name__ == "__main__":
             with open(path, "wt") as f:
                 for contig, start, end in region:
                     contig_length = contigs[contig]
-                    padded_start = max(start - padding, 0) + 1
+                    # BED format is 0 based, end exclusive
+                    padded_start = max(start - padding, 0)
                     padded_end = min(end + padding + 1, contig_length)
-                    print(f"{contig}:{padded_start}-{padded_end}", file=f)
+                    print(f"{contig}\t{padded_start}\t{padded_end}", file=f)
