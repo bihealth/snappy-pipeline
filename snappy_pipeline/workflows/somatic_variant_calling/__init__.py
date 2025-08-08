@@ -519,7 +519,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             **wildcards
         )
         input_files = {
-            "raw": scatteritem_base_path + ".raw.vcf.gz",
+            "vcf": scatteritem_base_path + ".raw.vcf.gz",
             "stats": scatteritem_base_path + ".raw.vcf.stats",
             "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
         }
@@ -644,10 +644,10 @@ class Mutect2StepPart(MutectBaseStepPart):
             }
         if action == "gather":
             exts = {
-                "raw": ".raw.vcf.gz",
-                "raw_md5": ".raw.vcf.gz.md5",
-                "raw_tbi": ".raw.vcf.gz.tbi",
-                "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
                 "orientation": ".raw.read_orientation_model.tar.gz",

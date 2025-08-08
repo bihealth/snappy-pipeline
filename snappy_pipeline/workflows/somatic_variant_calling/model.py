@@ -45,6 +45,9 @@ class Parallel(SnappyModel):
     window_length: int = 3500000
     """split input into windows of this size, each triggers a job"""
 
+    padding: int = 5000
+    """Padding around scatter-intervals, in bp."""
+
     num_jobs: int = 500
     """number of windows to process in parallel"""
 
@@ -112,9 +115,6 @@ class Mutect2(Parallel):
 
     common_variants: str | None = ""
     """Common germline variants for contamination estimation"""
-
-    padding: int | None = 5000
-    """Padding around scatter-intervals, in bp."""
 
     extra_arguments: Annotated[
         list[str],
