@@ -147,8 +147,8 @@ rule somatic_variant_calling_mutect2_scatter:
     threads: 1
     log:
         **wf.get_log_file("mutect2", "scatter"),
-    script:
-        "scripts/split_region.py"
+    wrapper:
+        wf.wrapper_path("split_regions")
 
 
 rule somatic_variant_calling_mutect2_run:
