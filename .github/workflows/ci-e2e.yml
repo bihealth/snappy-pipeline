@@ -48,57 +48,37 @@ defaults:
 
 jobs:
 
-  Dryrun_Tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: 'true'
-
-    - name: Setup conda
-      uses: ./.github/actions/conda-cache
-      with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: environment.yml
-
-    - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@v2
-      with:
-        directory: .tests/test-workflow
-        snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
-        show-disk-usage-on-error: true
-        snakemake-version: 7.32.4
-
-
   Tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
           - "3.12"
-    needs:
-      - Dryrun_Tests
     steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: 'true'
+      - uses: actions/checkout@v4
+        with:
+          lfs: 'true'
 
-    - name: Setup conda
-      uses: ./.github/actions/conda-cache
-      with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: environment.yml
+      - name: Setup conda
+        uses: ./.github/actions/conda-cache
+        with:
+          python-version: ${{ matrix.python-version }}
+          environment-file: environment.yml
 
-    - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@v2
-      with:
-        directory: .tests/test-workflow
-        snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
-        show-disk-usage-on-error: true
-        snakemake-version: 7.32.4
+      - name: Test workflow (dry-run)
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          directory: .tests/test-workflow
+          snakefile: .tests/test-workflow/workflow/Snakefile
+          args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --dryrun"
+          show-disk-usage-on-error: true
+          snakemake-version: 7.32.4
+
+      - name: Test workflow (local FASTQs)
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          directory: .tests/test-workflow
+          snakefile: .tests/test-workflow/workflow/Snakefile
+          args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2"
+          show-disk-usage-on-error: true
+          snakemake-version: 7.32.4
