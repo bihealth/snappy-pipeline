@@ -196,9 +196,11 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.bed",
     }
+    mutect2_wildcards_with_scatteritem = Wildcards(fromdict=dict(mutect2_wildcards) | {"scatteritem": "1-of-1"})
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards_with_scatteritem)
     assert actual == expected
 
 
@@ -210,7 +212,7 @@ def test_mutect2_step_part_get_input_files_filter(
     expected = {
         "raw": mutect2_input_base_name + ".raw.vcf.gz",
         "stats": mutect2_input_base_name + ".raw.vcf.stats",
-        "f1r2": mutect2_input_base_name + ".raw.f1r2_tar.tar.gz",
+        "orientation": mutect2_input_base_name + ".raw.read_orientation_model.tar.gz",
         "table": mutect2_input_base_name + ".contamination.tbl",
         "segments": mutect2_input_base_name + ".segments.tbl",
     }
@@ -269,10 +271,10 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_output_files_run(
+def test_mutect2_step_part_get_output_files_gather(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_output_files() - run"""
+    """Tests Mutect2StepPart.get_output_files() - gather"""
     # Define expected
     expected = {
         "raw": mutect2_output_base_name + ".raw.vcf.gz",
@@ -281,11 +283,11 @@ def test_mutect2_step_part_get_output_files_run(
         "raw_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
         "stats": mutect2_output_base_name + ".raw.vcf.stats",
         "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
-        "f1r2": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz",
-        "f1r2_md5": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz.md5",
+        "orientation": mutect2_output_base_name + ".raw.read_orientation_model.tar.gz",
+        "orientation_md5": mutect2_output_base_name + ".raw.read_orientation_model.tar.gz.md5",
     }
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "gather")
     assert actual == expected
 
 
@@ -353,14 +355,14 @@ def test_mutect2_step_part_get_output_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_log_file_run(
+def test_mutect2_step_part_get_log_file_gather(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_log_files() - run"""
+    """Tests Mutect2StepPart.get_log_files() - gather"""
     # Define expected
     expected = get_expected_log_files_dict(base_out=mutect2_log_base_name)
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "gather")
     assert actual == expected
 
 
@@ -439,7 +441,7 @@ def test_mutect2_step_part_get_log_file_pileup_tumor(
 def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - run"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "3584M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "8000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
