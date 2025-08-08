@@ -65,15 +65,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
 
-      - name: Test workflow (dry-run)
-        uses: snakemake/snakemake-github-action@v2
-        with:
-          directory: .tests/test-workflow
-          snakefile: .tests/test-workflow/workflow/Snakefile
-          args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --dryrun"
-          show-disk-usage-on-error: true
-          snakemake-version: 7.32.4
-
       - name: Test workflow (local FASTQs)
         uses: snakemake/snakemake-github-action@v2
         with:
