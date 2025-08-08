@@ -399,7 +399,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         scatteritem_base_path = (
-            "work/{mapper}.mutect2.{normal_library}/par/scatter/{scatteritem}.region.txt"
+            "work/{mapper}.mutect2.{normal_library}/par/scatter/{scatteritem}.region.bed"
         )
         return {
             "normal_bam": bam,
@@ -431,7 +431,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{scatteritem}.region.txt"
+            tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{scatteritem}.region.bed"
             return {"regions": scatter(tpl)}
 
         ext_dict = {

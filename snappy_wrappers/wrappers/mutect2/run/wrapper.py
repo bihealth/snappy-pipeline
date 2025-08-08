@@ -12,8 +12,18 @@ log = snakemake.log
 
 intervals = getattr(snakemake.input, "region", [])
 if intervals:
+
+    def parse_bed_line(line: str) -> tuple[str, int, int]:
+        chrom, start, end = line.strip().split("\t")
+        return chrom, int(start), int(end)
+
     with open(intervals, "rt") as f:
-        interval_params = " ".join([f"--intervals {itv}" for itv in map(str.strip, f.readlines())])
+        interval_params = " ".join(
+            [
+                f"--intervals {chrom}:{start + 1}-{end}"
+                for chrom, start, end in map(parse_bed_line, f.readlines())
+            ]
+        )
 else:
     interval_params = ""
 
@@ -21,14 +31,16 @@ raw_output = snakemake.output.raw
 
 input_param_list = []
 if "normal_bam" in snakemake.input.keys():
-    input_param_list.append(f'--input {snakemake.input.normal_bam} --normal "{snakemake.params.normal_lib_name}"')
+    input_param_list.append(
+        f'--input {snakemake.input.normal_bam} --normal "{snakemake.params.normal_lib_name}"'
+    )
 if "tumor_bam" in snakemake.input.keys():
-    input_param_list.append(f'--input {snakemake.input.tumor_bam}')
+    input_param_list.append(f"--input {snakemake.input.tumor_bam}")
 
 input_params = " ".join(input_param_list)
 
 if (max_mnp_distance := args.get("max_mnp_distance", None)) is not None:
-    max_mnp_distance = f'--max-mnp-distance {max_mnp_distance}'
+    max_mnp_distance = f"--max-mnp-distance {max_mnp_distance}"
 else:
     max_mnp_distance = ""
 
@@ -40,12 +52,12 @@ else:
     java_options = ""
 
 if germline_resource := config.get("germline_resource"):
-    germline_resource_param = f'--germline-resource {germline_resource}'
+    germline_resource_param = f"--germline-resource {germline_resource}"
 else:
     germline_resource_param = ""
 
 if panel_of_normals := config.get("panel_of_normals"):
-    panel_of_normals_param = f'--panel-of-normals {panel_of_normals}'
+    panel_of_normals_param = f"--panel-of-normals {panel_of_normals}"
 else:
     panel_of_normals_param = ""
 

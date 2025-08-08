@@ -461,7 +461,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            "region": scatteritem_base_path + ".region.txt",
+            "region": scatteritem_base_path + ".region.bed",
         }
 
         normal_library = self.get_normal_lib_name(wildcards)
@@ -593,7 +593,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.txt".format(
+            template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
                 var_caller=self.name
             )
             return {"regions": scatter(template)}

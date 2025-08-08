@@ -196,7 +196,7 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.txt",
+        "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.bed",
     }
     mutect2_wildcards_with_scatteritem = Wildcards(fromdict=dict(mutect2_wildcards) | {"scatteritem": "1-of-1"})
     # Get actual and assert

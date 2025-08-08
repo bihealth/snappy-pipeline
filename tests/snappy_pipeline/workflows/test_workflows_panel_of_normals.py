@@ -113,7 +113,7 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
     expected = {
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "intervals": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.txt",
+        "intervals": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
         "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
@@ -155,7 +155,7 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
 # Can't test: scattergather globals are missing
 # def test_mutect2_step_part_get_output_files_scatter(panel_of_normals_workflow):
 #     """Tests Mutect2StepPart._get_output_files_scatter()"""
-#     tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{i}-of-24.region.txt"
+#     tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{i}-of-24.region.bed"
 #     expected = {"intervals": [tpl.format(i=str(i + 1)) for i in range(24)]}
 #     actual = panel_of_normals_workflow.get_output_files("mutect2", "scatter")
 #     assert actual == expected
