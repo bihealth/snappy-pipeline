@@ -45,10 +45,12 @@ else:
     max_mnp_distance = ""
 
 if getattr(snakemake.output, "f1r2", None):
-    base_out = str(snakemake.output.raw).removesuffix(".vcf.gz")
-    assert str(snakemake.output.f1r2) == base_out + ".f1r2.tar.gz"
+    out_base = str(raw_output).removesuffix(".vcf.gz")
+    assert str(snakemake.output.f1r2) == out_base + ".f1r2.tar.gz"
     with_f1r2_tar_gz = "yes"
+    # f1r2_param = f"--f1r2-tar-gz {snakemake.output.f1r2}"
 else:
+    # f1r2_param = ""
     with_f1r2_tar_gz = ""
 
 if java_options := config.get("java_options"):
