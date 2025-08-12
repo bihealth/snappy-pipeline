@@ -9,11 +9,13 @@ reference = snakemake.config["static_data_config"]["reference"]["path"]
 
 segments = (
     " --tumor-segmentation {} ".format(snakemake.input.segments)
-    if "segments" in snakemake.input
+    if getattr(snakemake.input, "segments", None) is not None
     else ""
 )
 table = (
-    " --contamination-table {} ".format(snakemake.input.table) if "table" in snakemake.input else ""
+    " --contamination-table {} ".format(snakemake.input.table)
+    if getattr(snakemake.input, "table", None) is not None
+    else ""
 )
 
 shell.executable("/bin/bash")
@@ -47,22 +49,6 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-# Extract orientation stats for all chunks
-mkdir -p $tmpdir/f1r2
-rel_path=$(realpath --relative-to=$tmpdir/f1r2 {snakemake.input.f1r2})
-pushd $tmpdir/f1r2
-tar -zxvf ${{rel_path}}
-popd
-
-# Create command line list of all f1r2 stats
-chunks=$(ls $tmpdir/f1r2/*.tar.gz)
-cmd=$(echo "$chunks" | tr '\n' ' ' | sed -e "s/ *$//" | sed -e "s/ / -I /g")
-
-# Create orientation model
-gatk --java-options '-Xms4000m -Xmx8000m' LearnReadOrientationModel \
-    -I $cmd \
-    -O $tmpdir/read-orientation-model.tar.gz
-
 # Workaround problem with bcftools merging inserting missing values (.) in MPOS
 zcat {snakemake.input.raw} \
     | awk '{{
@@ -80,7 +66,7 @@ zcat {snakemake.input.raw} \
 gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --reference {reference} \
     {segments} {table} \
-    --ob-priors $tmpdir/read-orientation-model.tar.gz \
+    --ob-priors {snakemake.input.orientation} \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
     --output $tmpdir/out.vcf

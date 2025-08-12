@@ -7,6 +7,11 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+intervals = getattr(snakemake.input, "intervals", "")
+if intervals:
+    with open(str(snakemake.input.intervals), "rt") as f:
+        intervals = " ".join([f"--intervals {itv}" for itv in map(str.strip, f.readlines())])
+
 shell(
     r"""
 set -x
@@ -39,15 +44,11 @@ vcf=$(basename --suffix=.gz {snakemake.output.vcf})
 
 gatk --java-options "-Xmx6g" Mutect2 \
     --tmp-dir ${{tmpdir}} \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {snakemake.input.reference} \
     --input {snakemake.input.normal_bam} \
+    {intervals} \
     --max-mnp-distance 0 \
-    --output $tmpdir/$vcf \
-    $(if [[ -n "{snakemake.params.args[intervals]}" ]]; then
-        for itv in "{snakemake.params.args[intervals]}"; do \
-            echo -n "--intervals $itv "; \
-        done; \
-    fi)
+    --output $tmpdir/$vcf
 
 bgzip $tmpdir/$vcf
 tabix $tmpdir/$vcf.gz
