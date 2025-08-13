@@ -59,8 +59,9 @@ fi
 
 gatk Mutect2 \
     --tmp-dir $tmpdir \
-    {normal} \
-    --input {snakemake.input.tumor_bam} \
+    # {normal} \ ##GHANGED,COMMENTED
+    # --input {snakemake.input.tumor_bam} \ ##GHANGED, CIOMMENTED
+    --input {snakemake.input.tumor} {normal_param} \ ##CHANGED, ADDED
     --reference {reference} \
     --output $out_base.vcf \
     --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \

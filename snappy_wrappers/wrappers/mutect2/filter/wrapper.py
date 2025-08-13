@@ -85,13 +85,34 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --variant $tmpdir/in.vcf \
     --output $tmpdir/out.vcf
 
-# Re-order samples so that normal always comes before tumor
-grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
-grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
-bcftools view \
-    --samples-file $tmpdir/samples.lst \
-    --output-type z --output {snakemake.output.full_vcf} \
-    $tmpdir/out.vcf
+# # Re-order samples so that normal always comes before tumor
+# grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
+# grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
+# bcftools view \
+#     --samples-file $tmpdir/samples.lst \
+#     --output-type z --output {snakemake.output.full_vcf} \
+#     $tmpdir/out.vcf
+
+
+# Re-order samples if both tumor and normal exist
+# grep -E '^##tumor_sample=' $tmpdir/out.vcf || echo "No tumor sample header found"
+# grep -E '^##normal_sample=' $tmpdir/out.vcf || echo "No normal sample header found"
+
+grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst || true
+grep -E '^##normal_sample=' $tmpdir/out.vcf | sed -e 's/^##normal_sample=//' > $tmpdir/normal.lst || true
+
+
+if [[ -s $tmpdir/normal.lst ]]; then
+    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
+    bcftools view --samples-file $tmpdir/samples.lst --output-type z --output {snakemake.output.full_vcf} $tmpdir/out.vcf
+else
+    # Tumor-only: keep original order
+    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+fi
+
+
+
+
 tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}

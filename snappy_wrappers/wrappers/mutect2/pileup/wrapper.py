@@ -9,6 +9,12 @@ reference = snakemake.config["static_data_config"]["reference"]["path"]
 common_variants = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"][
     "common_variants"
 ]
+normal = getattr(snakemake.input, "normal", None)
+if normal:
+    normal_param = f"--matched-normal {normal}"
+else:
+    normal_param = ""
+
 
 shell.executable("/bin/bash")
 
@@ -43,7 +49,8 @@ trap "rm -rf $tmpdir" EXIT
 out_base=$tmpdir/$(basename {snakemake.output.pileup} .pileup)
 
 gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
-    --input {snakemake.input.bam} \
+    ####--input {snakemake.input.bam} \
+    --input {snakemake.input.tumor} {normal_param} \
     --reference {reference} \
     --variant {common_variants} \
     --intervals {common_variants} \
