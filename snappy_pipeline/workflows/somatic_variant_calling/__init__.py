@@ -420,7 +420,8 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         # Adjustment tumor_only mode
 
-        tumor_normal_mode = self.config.tumor_normal_mode
+        # tumor_normal_mode = self.config.tumor_normal_mode
+        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode", None)
         #normal_library = self.get_normal_lib_name(wildcards)
 
         if tumor_normal_mode == "paired":
@@ -441,6 +442,7 @@ class Mutect2StepPart(MutectBaseStepPart):
             pass
         else:
             raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
+        
 
         return input_files
 
