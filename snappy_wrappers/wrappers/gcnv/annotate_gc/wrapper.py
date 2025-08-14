@@ -14,9 +14,7 @@ for item in config["path_target_interval_list_mapping"]:
 else:  # of for, did not break out
     raise Exception("Found no target intervals for %s" % item["name"])
 
-map_bed = DictQuery(snakemake.config).get(
-    "step_config/helper_gcnv_model_targeted/gcnv/path_uniquely_mapable_bed"
-)
+map_bed =  snakemake.config["step_config"]["helper_gcnv_model_targeted"]["gcnv"]["path_uniquely_mapable_bed"]
 
 shell(
     r"""
