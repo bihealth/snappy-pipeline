@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # isort:skip_file
-from snappy_pipeline.utils import DictQuery
 import os
 
 from snakemake.shell import shell
 
 # Pick the target BED file to use.
 # FIXME: why is 'target_interval_bed' not used?
-config = DictQuery(snakemake.config).get("step_config/helper_gcnv_model_targeted/gcnv")
+config = snakemake.config["step_config"]["helper_gcnv_model_targeted"]["gcnv"]
 for item in config["path_target_interval_list_mapping"]:
     if item["name"] == snakemake.wildcards.library_kit:
         target_interval_bed = item["path"]

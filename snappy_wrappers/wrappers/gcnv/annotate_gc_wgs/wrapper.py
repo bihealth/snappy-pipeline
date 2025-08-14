@@ -5,18 +5,8 @@ import sys
 
 from snakemake.shell import shell
 
-# The following is required for being able to import snappy_wrappers modules
-# inside wrappers.  These run in an "inner" snakemake process which uses its
-# own conda environment which cannot see the snappy_pipeline installation.
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
-
-from snappy_pipeline.utils import DictQuery
-
-
 # Although optional for the tool, GATK recommend a providing a mappability track
-map_bed = DictQuery(snakemake.config).get(
-    "step_config/helper_gcnv_model_wgs/gcnv/path_uniquely_mapable_bed"
+map_bed = snakemake.config["step_config"]["helper_gcnv_model_wgs"]["gcnv"]["path_uniquely_mapable_bed"]
 )
 
 
