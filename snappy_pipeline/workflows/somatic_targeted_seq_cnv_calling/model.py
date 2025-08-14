@@ -42,56 +42,11 @@ class SequenzaFitExtraArgs(SnappyModel):
     N_ratio_filter: int = Field(10, alias="N.ratio.filter")
     N_BAF_filter: int = Field(1, alias="N.BAF.filter")
     segment_filter: int = Field(3000000, alias="segment.filter")
-    mufreq_treshold: float = Field(0.1, alias="mufreq.treshold")
+    mufreq_threshold: float = Field(0.1, alias="mufreq.threshold")
+    ploidy: list[float] = list(map(lambda x: x / 10.0, range(10, 71)))
+    cellularity: list[float] = list(map(lambda x: x / 100.0, range(10, 101)))
     ratio_priority: bool = Field(False, alias="ratio.priority")
-    ploidy: list[float] = [
-        1.0,
-        1.1,
-        1.2,
-        1.3,
-        1.4,
-        1.5,
-        1.6,
-        1.7,
-        1.8,
-        1.9,
-        2.0,
-        2.1,
-        2.2,
-        2.3,
-        2.4,
-        2.5,
-        2.6,
-        2.7,
-        2.8,
-        2.9,
-        3.0,
-        3.1,
-        3.2,
-        3.3,
-        3.4,
-        3.5,
-        3.6,
-        3.7,
-        3.8,
-        3.9,
-        4.0,
-        4.1,
-        4.2,
-        4.3,
-        4.4,
-        4.5,
-        4.6,
-        4.7,
-        4.8,
-        4.9,
-        5.0,
-        5.1,
-        5.2,
-        5.3,
-        5.4,
-        5.5,
-    ]
+    # prior_table: dict[str, list[float]] = {"CN": [2.0], "value": [2.0]}
 
 
 class Sequenza(SnappyModel):
