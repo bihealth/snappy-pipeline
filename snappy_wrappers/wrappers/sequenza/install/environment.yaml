@@ -3,17 +3,23 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python==3.9.19
-  - r-base==4.3.3
+  - python==3.12
+  - r-base==4.4.3
   - r-remotes==2.5.0
-  # sequenza requirements (+copynumber)
-  - r-pbapply==1.7_2
-  - r-squash==1.0.9
-  - r-iotools==0.3_2  # See https://groups.google.com/g/sequenza-user-group/c/UA5bBNBeN18?pli=1
+  # sequenza requirements from 4.0.0 DESCRIPTION
+  - r-rcpp==1.1.0
+  - r-rcpparmadillo=14.6
+  - r-rcppprogress==0.4.2
+  - r-stringr==1.5.1
+  - r-dplyr==1.1.4
+  - r-tibble==3.3.0
   - r-readr==2.1.5
+  - r-pbapply=1.7
+  - r-squash==1.0.9
+  - r-iotools==0.3_5
   - r-seqminer==9.4
-  - r-data.table==1.15.2
-  # copynumber requirements
-  - bioconductor-s4vectors==0.40.2
-  - bioconductor-iranges==2.36.0
-  - bioconductor-genomicranges==1.54.1
+  - r-ks==1.15.1
+  - r-digest==0.6.37
+  - pandoc==3.7
+  # Missing: Runuran (on CRAN, not on conda-forge)
+  - r-curl==6.4.0    # Not required, but avoids readr warnings

@@ -35,7 +35,6 @@ def config_to_r(x):
 
 
 genome = args["reference"]
-length = args["length"]
 
 f = open(genome + ".fai", "rt")
 contigs = config_to_r(list(yield_contigs(f, args.get("ignore_chroms"))))
