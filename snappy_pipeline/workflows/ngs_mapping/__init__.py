@@ -1150,7 +1150,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
             if item.name == kit_name:
                 path_targets_bed = item.path
                 break
-        yield "target_bed", path_targets_bed
+        yield "targets_bed", path_targets_bed
 
     @dictify
     def get_output_files(self, action):

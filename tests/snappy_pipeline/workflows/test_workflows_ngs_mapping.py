@@ -620,7 +620,7 @@ def test_target_coverage_report_step_part_run_get_input_files(ngs_mapping_workfl
         "bai": "work/bwa.library/out/bwa.library.bam.bai",
         "reference": "/path/to/ref.fa",
         "reference_genome": "/path/to/ref.fa.genome",
-        "target_bed": "",
+        "targets_bed": "",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "library"})
