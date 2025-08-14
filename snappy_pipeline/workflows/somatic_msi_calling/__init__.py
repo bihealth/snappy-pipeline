@@ -51,7 +51,6 @@ Available Somatic Targeted CNV Caller
 import os
 import sys
 from collections import OrderedDict
-from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand

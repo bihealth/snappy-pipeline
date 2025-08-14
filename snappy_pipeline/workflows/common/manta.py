@@ -3,8 +3,6 @@
 These are used in both ``sv_calling_targeted`` and ``sv_calling_wgs``.
 """
 
-from typing import Any
-
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
