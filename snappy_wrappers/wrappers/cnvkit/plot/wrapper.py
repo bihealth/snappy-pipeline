@@ -7,21 +7,20 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-config = args.get("config", {})
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
 
 heatmaps = [
-    snakemake.output.get(x)
+    getattr(snakemake.output, x)
     for x in filter(
-        lambda x: x.startswith("heatmap_chr") and not x.endswith("_md5"), snakemake.output.keys()
+        lambda x: x.startswith("heatmap_chr") and not x.endswith("_md5"), [k for k, _ in snakemake.output._get_names()]
     )
 ]
 scatters = [
-    snakemake.output.get(x)
+    getattr(snakemake.output, x)
     for x in filter(
-        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), snakemake.output.keys()
+        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), [k for k, _ in snakemake.output._get_names()]
     )
 ]
 
@@ -67,8 +66,8 @@ then
         --output {snakemake.output.diagram} \
         --segment {snakemake.input.cns} \
         {gender} {male} \
-        --threshold {config[diagram_threshold]} --min-probes {config[diagram_min_probes]} \
-        $(if [[ "{config[shift_xy]}" = "False" ]]; then \
+        --threshold {args[threshold]} --min-probes {args[min_probes]} \
+        $(if [[ "{args[shift_xy]}" = "False" ]]; then \
             echo --no-shift-xy
         fi) \
         {snakemake.input.cnr}
@@ -103,8 +102,10 @@ for heatmap in {heatmaps}
 do
     if [[ -n "$heatmap" ]]
     then
+        chrom=$(basename -s .pdf $heatmap | sed -re "s/.*\.(chr([0-9]+|[XY]))$/\1/"))
         cnvkit.py heatmap \
             --output $heatmap \
+            --chromosome $chr \
             {snakemake.input.cnr}
     else
         touch $heatmap
@@ -116,8 +117,10 @@ for scatter in {scatters}
 do
     if [[ -n "$scatter" ]]
     then
+        chrom=$(basename -s .png $scatter | sed -re "s/.*\.(chr([0-9]+|[XY]))$/\1/"))
         cnvkit.py scatter \
             --output $scatter \
+            --chromosome $chr \
             --segment {snakemake.input.cns} \
             {gender} {male} \
             {snakemake.input.cnr}

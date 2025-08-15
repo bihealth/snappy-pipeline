@@ -7,22 +7,21 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-config = args.get("config", {})
 
 # NOTE: snakemake.input.target and snakemake.input.antitarget contain
 #       the output of target & antitarget substeps when there is no bam files
 #       the bam files lists when the list of normals is not empty
 
 cluster = (
-    " --cluster --min-cluster-size {}".format(config["min_cluster_size"])
-    if config["min_cluster_size"] > 0
+    " --cluster --min-cluster-size {}".format(args["min_cluster_size"])
+    if args["min_cluster_size"] > 0
     else ""
 )
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
-no_gc = " --no-gc" if not config["gc_correction"] else ""
-no_edge = " --no-edge" if not config["edge_correction"] or not config["path_target_regions"] else ""
-no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
+no_gc = " --no-gc" if not args["gc_correction"] else ""
+no_edge = " --no-edge" if not args["edge_correction"] else ""
+no_rmask = " --no-rmask" if not args["rmask_correction"] else ""
 
 shell(
     r"""

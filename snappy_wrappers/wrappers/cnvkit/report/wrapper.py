@@ -7,36 +7,112 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-config = args.get("config", {})
 
-for param in (
-    "breaks_min_probes",
-    "genemetrics_min_probes",
-    "genemetrics_threshold",
-    "drop_low_coverage",
-    "genemetrics_alpha",
-    "genemetrics_bootstrap",
-    "segmetrics_alpha",
-    "segmetrics_bootstrap",
-    "smooth_bootstrap",
-):
-    if not param in config.keys():
-        config[param] = ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+drop_low_coverage = "--drop-low-coverage" if args.get("drop_low_coverage", False) else ""
 
-input_target = snakemake.input.get("target", "")
-input_antitarget = snakemake.input.get("antitarget", "")
-input_cnr = snakemake.input.get("cnr", "")
-input_cns = snakemake.input.get("cns", "")
+input_target = getattr(snakemake.input, "target", "")
+input_antitarget = getattr(snakemake.input, "antitarget", "")
+input_cnr = getattr(snakemake.input, "cnr", "")
+input_cns = getattr(snakemake.input, "cns", "")
 
-output_breaks = snakemake.output.get("breaks", "")
-output_genemetrics = snakemake.output.get("genemetrics", "")
+# Each report tool is treated separately, as the arguments may not be in snakemake.params for all tools
+if getattr(snakemake.output, "breaks", ""):
+    if input_cnr != "" and input_cns != "":
+        breaks = "cnvkit.py breaks --output {out} --min-probes {args[breaks][min_probes]}  {input_cnr} {input_cns}".format(
+            input_cnr=input_cnr, input_cns=input_cns, args=args, out=snakemake.output.breaks
+        )
+    else:
+        breaks = "touch {out}".format(out=snakemake.output.breaks)
+    breaks += "\n" + "md5 {out}".format(out=snakemake.output.breaks)
+else:
+    breaks = ""
 
-output_segmetrics = snakemake.output.get("segmetrics", "")
-output_sex = snakemake.output.get("sex", "")
-output_metrics = snakemake.output.get("metrics", "")
+if getattr(snakemake.output, "genemetrics", ""):
+    if input_cnr != "" and input_cns != "":
+        genemetrics = """
+cnvkit.py genemetrics \
+    --output {out} \
+    --segment {input_cns} \
+    --min-probes {args[genemetrics][min_probes]} --threshold {args[genemetrics][threshold]} \
+    {drop_low_coverage} {gender} {male} \
+    --mean --median --mode --ttest --stdev --sem --mad --mse --iqr --bivar --ci --pi \
+    --alpha {args[genemetrics][alpha]} --bootstrap {args[genemetrics][bootstrap]} \
+    {input_cnr}
+        """.format(
+            input_cnr=input_cnr, input_cns=input_cns,
+            args=args,
+            out=snakemake.output.genemetrics,
+            drop_low_coverage=drop_low_coverage, gender=gender, male=male,
+        )
+    else:
+        genemetrics = "touch {out}".format(out=snakemake.output.genemetrics)
+    genemetrics += "\n" + "md5 {out}".format(out=snakemake.output.genemetrics)
+else:
+    genemetrics = ""
+
+if getattr(snakemake.output, "segmetrics", ""):
+    if input_cnr != "" and input_cns != "":
+        segmetrics = """
+cnvkit.py segmetrics \
+    --output {out} \
+    --segment {input_cns} \
+    --mean --median --mode --t-test --stdev --sem --mad --mse --iqr --bivar --ci --pi \
+    --alpha {args[segmetrics][alpha]} --bootstrap {args[segmetrics][bootstrap]} \
+    {smooth_bootstrap} {drop_low_coverage} \
+    {input_cnr}
+        """.format(
+            input_cnr=input_cnr, input_cns=input_cns,
+            args=args,
+            out=snakemake.output.segmetrics,
+            drop_low_coverage=drop_low_coverage, 
+            smooth_bootstrap="--smooth-bootstrap" if args["segmetrics"].get("smooth_bootstrap", False) else "",
+        )
+    else:
+        segmetrics = "touch {out}".format(out=snakemake.output.segmetrics)
+    segmetrics += "\n" + "md5 {out}".format(out=snakemake.output.segmetrics)
+else:
+    segmetrics = ""
+
+if getattr(snakemake.output, "sex", ""):
+    if input_cnr != "" or input_cns != "" or input_target != "" or input_antitarget != "":
+        sex = """
+        cnvkit.py sex \
+            --output {out} {male} \
+            {input_target} {input_antitarget} {input_cnr} {input_cns}
+        """.format(
+            input_cnr=input_cnr, input_cns=input_cns, input_target=input_target, input_antitarget=input_antitarget,
+            args=args,
+            out=snakemake.output.sex,
+            male=male,
+        )
+    else:
+        sex = "touch {out}".format(out=snakemake.output.sex)
+    sex += "\n" + "md5 {out}".format(out=snakemake.output.sex)
+else:
+    sex = ""
+
+if getattr(snakemake.output, "metrics", ""):
+    if input_cnr != "" or input_cns != "" or input_target != "" or input_antitarget != "":
+        metrics = """
+cnvkit.py metrics \
+    --output {out} \
+    {drop_low_coverage} \
+    {input_target} {input_antitarget} {input_cnr} {input_cns}
+        """.format(
+            input_cnr=input_cnr, input_target=input_target, input_antitarget=input_antitarget,
+            input_cns=f"--segments {input_cns}" if input_cns else "",
+            args=args,
+            out=snakemake.output.metrics,
+            drop_low_coverage=drop_low_coverage, 
+        )
+    else:
+        metrics = "touch {out}".format(out=snakemake.output.metrics)
+    metrics += "\n" + "md5 {out}".format(out=snakemake.output.metrics)
+else:
+    metrics = ""
 
 shell(
     r"""
@@ -72,116 +148,15 @@ md5()
 
 # -----------------------------------------------------------------------------
 
-if [[ -n "{output_breaks}" ]]
-then
-    if [[ -n "{input_cnr}" ]] && [[ -n "{input_cns}" ]]
-    then
-        cnvkit.py breaks \
-            --output {output_breaks} \
-            --min-probes {config[breaks_min_probes]} \
-            {input_cnr} {input_cns}
-    else
-        touch {output_breaks}
-    fi
-    md5 {output_breaks}
-fi
+{breaks}
 
-if [[ -n "{output_genemetrics}" ]]
-then
-    if [[ -n "{input_cnr}" ]] && [[ -n "{input_cns}" ]]
-    then
-        cnvkit.py genemetrics \
-            --output {output_genemetrics} \
-            --segment {input_cns} \
-            --min-probes {config[genemetrics_min_probes]} --threshold {config[genemetrics_threshold]} \
-            $(if [[ "{config[drop_low_coverage]}" = "True" ]]; then \
-                echo --drop-low-coverage
-            fi) \
-            {gender} {male} \
-            --mean --median --mode --ttest --stdev --sem --mad --mse --iqr --bivar --ci --pi \
-            --alpha {config[genemetrics_alpha]} --bootstrap {config[genemetrics_bootstrap]} \
-            {input_cnr}
-    else
-        touch {output_genemetrics}
-    fi
-    md5 {output_genemetrics}
-fi
+{genemetrics}
 
-if [[ -n "{output_segmetrics}" ]]
-then
-    if [[ -n "{input_cnr}" ]] && [[ -n "{input_cns}" ]]
-    then
-        cnvkit.py segmetrics \
-            --output {output_segmetrics} \
-            --segment {input_cns} \
-            --mean --median --mode --t-test --stdev --sem --mad --mse --iqr --bivar --ci --pi \
-            --alpha {config[segmetrics_alpha]} --bootstrap {config[segmetrics_bootstrap]} \
-            $(if [[ "{config[smooth_bootstrap]}" = "True" ]]; then \
-                echo --smooth-bootstrap
-            fi) \
-            $(if [[ "{config[drop_low_coverage]}" = "True" ]]; then \
-                echo --drop-low-coverage
-            fi) \
-            {input_cnr}
-    else
-        touch {output_segmetrics}
-    fi
-    md5 {output_segmetrics}
-fi
+{segmetrics}
 
-if [[ -n "{output_sex}" ]]
-then
-    if [[ -n "{input_target}" || -n "{input_antitarget}" || -n "{input_cnr}" || -n "{input_cns}" ]]
-    then
-        cnvkit.py sex \
-            --output {output_sex} \
-            $(if [[ "{male}" = "True" ]]; then \
-                echo --male-reference
-            fi) \
-            $(if [[ -n "{input_target}" ]]; then \
-                echo {input_target}
-            fi) \
-            $(if [[ -n "{input_antitarget}" ]]; then \
-                echo {input_antitarget}
-            fi) \
-            $(if [[ -n "{input_cnr}" ]]; then \
-                echo {input_cnr}
-            fi) \
-            $(if [[ -n "{input_cns}" ]]; then \
-                echo {input_cns}
-            fi)
-    else
-        touch {output_sex}
-    fi
-    md5 {output_sex}
-fi
+{sex}
 
-if [[ -n "{output_metrics}" ]]
-then
-    if [[ -n "{input_target}" || -n "{input_antitarget}" || -n "{input_cnr}" || -n "{input_cns}" ]]
-    then
-        cnvkit.py metrics \
-            --output {output_metrics} \
-            $(if [[ "config[drop_low_coverage]" = "True" ]]; then \
-                echo --drop-low-coverage
-            fi) \
-            $(if [[ -n "{input_target}" ]]; then \
-                echo {input_target}
-            fi) \
-            $(if [[ -n "{input_antitarget}" ]]; then \
-                echo {input_antitarget}
-            fi) \
-            $(if [[ -n "{input_cnr}" ]]; then \
-                echo {input_cnr}
-            fi) \
-            $(if [[ -n "{input_cns}" ]]; then \
-                echo --segments {input_cns}
-            fi)
-    else
-        touch {output_metrics}
-    fi
-    md5 {output_metrics}
-fi
+{metrics}
 """
 )
 

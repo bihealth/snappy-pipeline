@@ -7,20 +7,12 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-config = args.get("config", {})
 
-if "ref" in snakemake.input.keys():
-    ref = snakemake.input.target
-elif "path_panel_of_normals" in config.keys():
-    ref = config["path_panel_of_normals"]
-else:
-    raise Exception("Unsupported naming")
-
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
-no_gc = " --no-gc" if not config["gc_correction"] else ""
-no_edge = " --no-edge" if not config["edge_correction"] else ""
-no_rmask = " --no-rmask" if not config["rmask_correction"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
+no_gc = " --no-gc" if not args["gc_correction"] else ""
+no_edge = " --no-edge" if not args["edge_correction"] else ""
+no_rmask = " --no-rmask" if not args["rmask_correction"] else ""
 
 shell(
     r"""
@@ -50,7 +42,7 @@ cnvkit.py fix \
     {gender} {male} {no_gc} {no_edge} {no_rmask} \
     {snakemake.input.target} \
     {snakemake.input.antitarget} \
-    {ref}
+    {snakemake.input.ref}
 
 d=$(dirname "{snakemake.output.ratios}")
 pushd $d

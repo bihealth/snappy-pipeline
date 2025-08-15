@@ -19,7 +19,7 @@ configfile: "config.yaml"
 
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-cfg = config["step_config"]["somatic_targeted_seq_cnv_calling"]
+tools = config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
 
 # WorkflowImpl Object Setup ===================================================
 
@@ -58,14 +58,14 @@ rule somatic_targeted_seq_cnv_calling_link_out_run:
 
 
 # cnvkit requires a large number of rules, thus externalized
-if "cnvkit" in cfg["tools"]:
+if "cnvkit" in tools:
 
     include: "cnvkit.rules"
 
 
 # Run CopywriteR --------------------------------------------------------------
 
-if "copywriter" in cfg["tools"]:
+if "copywriter" in tools:
 
     rule somatic_targeted_seq_cnv_calling_copywriter_prepare:
         output:
@@ -125,7 +125,7 @@ if "copywriter" in cfg["tools"]:
 
 # Run CNVetti (on-target) -----------------------------------------------------
 
-if "cnvetti_on_target" in cfg["tools"]:
+if "cnvetti_on_target" in tools:
 
     rule somatic_targeted_seq_cnv_calling_cnvetti_on_target_coverage:
         input:
@@ -181,7 +181,7 @@ if "cnvetti_on_target" in cfg["tools"]:
 # Run CNVetti (off-target) ----------------------------------------------------
 
 
-if "cnvetti_off_target" in cfg["tools"]:
+if "cnvetti_off_target" in tools:
 
     rule somatic_targeted_seq_cnv_calling_cnvetti_off_target_coverage:
         input:
@@ -237,7 +237,7 @@ if "cnvetti_off_target" in cfg["tools"]:
 # Run sequenza ----------------------------------------------------
 
 
-if "sequenza" in cfg["tools"]:
+if "sequenza" in tools:
 
     rule somatic_targeted_seq_cnv_calling_sequenza_install:
         output:
@@ -314,7 +314,7 @@ if "sequenza" in cfg["tools"]:
 # Run PureCN ------------------------------------------------------
 
 
-if "purecn" in cfg["tools"]:
+if "purecn" in tools:
 
     rule somatic_targeted_seq_cnv_calling_purecn_coverage:
         input:

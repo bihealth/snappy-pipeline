@@ -100,8 +100,8 @@ In both cases, the configuration might read:
 
     panel_of_normals:
         tools: [cnvkit]                                               # , access]
-        access: <absolute path to access file>                        # Even when created by the ``access`` tool.
-        path_target_regions: <absolute path to baits>                 # Keep empty for WGS data
+        path_access: <absolute path to access file>                   # Even when created by the ``access`` tool.
+        path_target: <absolute path to baits>                         # Keep empty for WGS data
         path_normals_list: <absolute path to list of normal samples>  # Keep empty to use all available normals
 
 Note that there is no provision (yet) to automatically create separate panel of normals for males & females.
@@ -159,6 +159,8 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
+from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
+from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -480,7 +482,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.is_wgs = self.config.cnvkit.path_target_regions == ""
+        self.is_wgs = self.config.cnvkit.path_target == ""
 
     def check_config(self):
         if self.name not in self.config.tools:
@@ -492,15 +494,22 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def get_args(self, action):
         self._validate_action(action)
-        if self.is_wgs:
-            method = "wgs"
-        else:
-            method = "hybrid"
-        return {
-            "method": method,
-            "flat": (len(self.normal_libraries) == 0),
-            "config": self.config.get(self.name).model_dict(by_alias=True),
-        }
+        cfg: CnvKitModel = self.config.get(self.name)
+        if action == "create_panel":
+            action = "reference"
+        if args := getattr(cfg, action, {}):
+            args = args.model_dump(by_alias=True)
+        if action == "reference":
+            if cfg.gender != CnvKitGender.guess:
+                args["gender"] = cfg.gender
+            if cfg.male_reference:
+                args["male_reference"] = True
+            args["flat"] = len(self.normal_libraries) == 0
+            if not cfg.path_target:
+                args["edge_correction"] = False
+        if action == "target":
+            args["bp_per_bin"] = cfg.bp_per_bin
+        return args
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
@@ -522,7 +531,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
         if not self.is_wgs:
-            return {}
+            input_files = {"target": self.config.cnvkit.path_target}
+            if self.config.cnvkit.path_annotation:
+                input_files["annotate"] = self.config.cnvkit.path_annotation
+            return input_files
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bams = [
@@ -535,6 +547,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "bais": bais,
             "reference": self.w_config.static_data_config.reference.path,
         }
+        if self.config.cnvkit.path_access:
+            input_files["access"] = self.config.cnvkit.path_access
+        if self.config.cnvkit.path_annotation:
+            input_files["annotate"] = self.config.cnvkit.path_annotation
         return input_files
 
     def _get_input_files_antitarget(self, wildcards):
@@ -543,6 +559,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             return {}
         return {
             "target": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards),
+            "access": self.config.cnvkit.path_access,
         }
 
     def _get_input_files_coverage(self, wildcards):
@@ -557,6 +574,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             ),
             "bam": bam,
             "bai": bam + ".bai",
+            "reference": self.w_config.static_data_config.reference.path,
         }
 
     def _get_input_files_create_panel(self, wildcards):

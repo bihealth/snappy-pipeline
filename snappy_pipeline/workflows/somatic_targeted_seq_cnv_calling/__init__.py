@@ -89,6 +89,8 @@ from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingC
 from .model import Cnvkit as CnvkitModel
 from .model import CopyWriter as CopyWriterModel
 
+from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_targeted_seq_cnv_calling step
@@ -679,35 +681,34 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
             "reference": self.w_config.static_data_config.reference.path,
+            "target": self.config.cnvkit.path_target,
+            "antitarget": self.config.cnvkit.path_antitarget,
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_fix(wildcards):
+    def _get_input_files_fix(self, wildcards):
         tpl_base = "{mapper}.cnvkit.{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
         input_files = {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
+            "ref": self.cfg.path_panel_of_normals,
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_segment(wildcards):
+    def _get_input_files_segment(self, wildcards):
         cnr_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_call(wildcards):
+    def _get_input_files_call(self, wildcards):
         segment_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
         )
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_postprocess(wildcards):
+    def _get_input_files_postprocess(self, wildcards):
         segment_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
         )
@@ -720,16 +721,14 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_export(wildcards):
+    def _get_input_files_export(self, wildcards):
         cns_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
         )
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_plot(wildcards):
+    def _get_input_files_plot(self, wildcards):
         tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
@@ -749,8 +748,21 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_args(self, action):
         self._validate_action(action)
-        assert hasattr(self.cfg, action), f"{action} not known by cnvkit"
-        return {"config": getattr(self.cfg, action).dict(by_alias=True)}
+        if action == "plot":
+            action = "diagram"
+        if args := getattr(self.cfg, action, {}):
+            args = args.model_dump(by_alias=True)
+        if action == "report":
+            args["breaks"] = self.cfg.breaks.model_dump(by_alias=True)
+            args["genemetrics"] = self.cfg.genemetrics.model_dump(by_alias=True)
+            args["segmetrics"] = self.cfg.segmetrics.model_dump(by_alias=True)
+        if action in ("segment", "call", "report"):
+            args["drop_low_coverage"] = self.cfg.drop_low_coverage
+        if action in ("call", "diagram") and self.cfg.gender != CnvkitGender.guess:
+            action["gender"] = self.cfg.gender
+        if action in ("call", "diagram") and self.cfg.male_reference:
+            action["male_reference"] = self.cfg.male_reference
+        return args
 
     def get_output_files(self, action):
         """Return output files for the given action"""
@@ -1073,7 +1085,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             "cnvetti_on_target": ("coverage", "segment", "postprocess"),
             "cnvetti_off_target": ("coverage", "segment", "postprocess"),
         }
-        if "cnvkit" in self.config.tools and self.config.cnvkit.plot:
+        if "cnvkit" in self.config.tools and self.config.cnvkit.enable_plot:
             tool_actions["cnvkit"] += ["plot"]
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:

@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 
 
 class Tool(enum.StrEnum):
@@ -58,62 +59,6 @@ class Mutect2(SnappyModel):
 
     merge_mult_time: float = 1
     """running time multiplier for merging"""
-
-
-class CnvKit(SnappyModel):
-    path_normals_list: str = ""
-    """Optional file listing libraries to include in panel"""
-
-    path_target_regions: str = ""
-    """Bed files of targetted regions (Missing when creating a panel of normals for WGS data)"""
-
-    access: str = ""
-    """Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)"""
-
-    annotate: str = ""
-    """[target] Optional targets annotations"""
-
-    target_avg_size: int = 0
-    """[target] Average size of split target bins (0: use default value)"""
-
-    bp_per_bin: int = 50000
-    """[autobin] Expected base per bin"""
-
-    split: bool = True
-    """[target] Split large intervals into smaller ones"""
-
-    antitarget_avg_size: int = 0
-    """[antitarget] Average size of antitarget bins (0: use default value)"""
-
-    min_size: int = 0
-    """[antitarget] Min size of antitarget bins (0: use default value)"""
-
-    min_mapq: int = 0
-    """[coverage] Mininum mapping quality score to count a read for coverage depth"""
-
-    count: bool = False
-    """[coverage] Alternative couting algorithm"""
-
-    min_cluster_size: int = 0
-    """[reference] Minimum cluster size to keep in reference profiles. 0 for no clustering"""
-
-    gender: str = ""
-    """[reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing"""
-
-    male_reference: bool = False
-    """[reference & sex] Create male reference"""
-
-    gc_correction: bool = True
-    """[reference] Use GC correction"""
-
-    edge_correction: bool = True
-    """[reference] Use edge correction"""
-
-    rmask_correction: bool = True
-    """[reference] Use rmask correction"""
-
-    drop_low_coverage: bool = False
-    """[metrics] Drop very-low-coverage bins before calculations"""
 
 
 class Access(SnappyModel):
