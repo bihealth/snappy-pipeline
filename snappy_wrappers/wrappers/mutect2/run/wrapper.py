@@ -11,9 +11,15 @@ config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
 extra_arguments = " ".join(config["extra_arguments"])
 
 if "normal_bam" in snakemake.input.keys():
-    normal = f'--normal "{snakemake.params.normal_lib_name}" --input {snakemake.input.normal_bam}'
+   normal_param = f'--normal "{snakemake.params.normal_lib_name}" --input {snakemake.input.normal_bam}'
 else:
-    normal = ""
+   normal_param = ""
+
+# normal = getattr(snakemake.input, "normal", None)
+# if normal:
+#     normal_param = f"--matched-normal {normal}"
+# else:
+#     normal_param = ""
 
 shell.executable("/bin/bash")
 
@@ -59,9 +65,7 @@ fi
 
 gatk Mutect2 \
     --tmp-dir $tmpdir \
-    # {normal} \ ##GHANGED,COMMENTED
-    # --input {snakemake.input.tumor_bam} \ ##GHANGED, CIOMMENTED
-    --input {snakemake.input.tumor} {normal_param} \ ##CHANGED, ADDED
+    --input {snakemake.input.tumor_bam} {normal_param} \
     --reference {reference} \
     --output $out_base.vcf \
     --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \
