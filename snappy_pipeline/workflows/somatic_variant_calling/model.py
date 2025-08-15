@@ -256,4 +256,5 @@ class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
 
     varscan_joint: VarscanJoint | None = None
     """Configuration for VarscanJoint"""
-    tumor_normal_mode: str = "tumor_only"
+    tumor_normal_mode: str = TumorNormalMode.AUTOMATIC
+    """Whether to call variants in paired, tumor_only, or automatic mode."""
