@@ -52,7 +52,7 @@ def minimal_config():
                   model_pattern: "/data/model_*"
             melt:
               jar_file: /path/to/MELTv2.2.2/MELT.jar
-              genes_files: /path/to/MELTv2.2.2/add_bed_files/1KGP_Hg19/hg19.genes.bed
+              genes_file: /path/to/MELTv2.2.2/add_bed_files/1KGP_Hg19/hg19.genes.bed
               me_refs_path: /path/to/melt/support/files
 
         data_sets:
