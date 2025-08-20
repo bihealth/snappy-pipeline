@@ -94,7 +94,7 @@ for vcf in {snakemake.input.vcf}; do
         $TMPDIR/fixed_bnd_to_inv.$num.vcf |
         bcftools norm \
             -m -any \
-            --force \
+            -c w \
             --fasta-ref {export_config[reference]} \
             -O z \
             -o $TMPDIR/final_for_import.$num.vcf.gz
