@@ -45,7 +45,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # Setup auto-cleaned tmpdir
 export tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
+#######trap "rm -rf $tmpdir" EXIT
 
 # Extract orientation stats for all chunks
 mkdir -p $tmpdir/f1r2
@@ -85,31 +85,46 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --variant $tmpdir/in.vcf \
     --output $tmpdir/out.vcf
 
-# # Re-order samples so that normal always comes before tumor
-# grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
-# grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
-# bcftools view \
-#     --samples-file $tmpdir/samples.lst \
-#     --output-type z --output {snakemake.output.full_vcf} \
-#     $tmpdir/out.vcf
+# Extract sample names
+grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst
 
-
-# Re-order samples if both tumor and normal exist
-# grep -E '^##tumor_sample=' $tmpdir/out.vcf || echo "No tumor sample header found"
-# grep -E '^##normal_sample=' $tmpdir/out.vcf || echo "No normal sample header found"
-
-grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst || true
-grep -E '^##normal_sample=' $tmpdir/out.vcf | sed -e 's/^##normal_sample=//' > $tmpdir/normal.lst || true
-
-
-if [[ -s $tmpdir/normal.lst ]]; then
-    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
-    bcftools view --samples-file $tmpdir/samples.lst --output-type z --output {snakemake.output.full_vcf} $tmpdir/out.vcf
+# Extract normal sample(s), if present
+if grep -q '^##normal_sample=' "$tmpdir/out.vcf"; then
+    grep -E '^##normal_sample=' "$tmpdir/out.vcf" | sed -e 's/^##normal_sample=//' > "$tmpdir/normal.lst"
 else
-    # Tumor-only: keep original order
-    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+    # No normal sample (tumor-only mode) → create empty file
+    > "$tmpdir/normal.lst"
 fi
 
+
+# Validate
+num_tumor=$(wc -l < $tmpdir/tumor.lst)
+num_normal=$(wc -l < $tmpdir/normal.lst)
+
+
+if [[ $num_tumor -gt 1 ]]; then
+    echo "ERROR: More than one tumor sample found (not supported yet)" >&2
+    exit 1
+
+fi
+
+if [[ $num_normal -gt 1 ]]; then
+    echo "ERROR: More than one normal sample found (not supported yet)" >&2
+    exit 1
+fi
+
+# Tumor–Normal case
+if [[ $num_normal -eq 1 ]]; then
+    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
+    bcftools view --samples-file $tmpdir/samples.lst \
+        --output-type z \
+        --output {snakemake.output.full_vcf} \
+        $tmpdir/out.vcf
+
+elif [[ $num_normal -eq 0 && $num_tumor -eq 1 ]]; then
+    # Tumor-only case
+    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+fi
 
 
 
