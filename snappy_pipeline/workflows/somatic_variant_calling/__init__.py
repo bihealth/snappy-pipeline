@@ -421,8 +421,9 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         # Adjustment tumor_only mode
 
-        # tumor_normal_mode = self.config.tumor_normal_mode
-        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode", "automatic")
+        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
+        if tumor_normal_mode is None:
+            raise ValueError("'tumor_normal_mode' not defined in step configuration for %s" % self.name)
 
         if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
             normal_library = self.get_normal_lib_name(wildcards)
