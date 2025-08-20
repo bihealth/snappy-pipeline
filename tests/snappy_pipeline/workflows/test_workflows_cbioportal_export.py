@@ -55,7 +55,7 @@ def minimal_config():
               study_description: "PeDiOn project A02P"
               study_name: PeDiOn_A02P
               study_name_short: A02P
-              reference_genome: grch37
+              reference_genome: hg19
 
         data_sets:
           first_batch:
