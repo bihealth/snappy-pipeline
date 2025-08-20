@@ -81,7 +81,7 @@ class Manta(SnappyModel):
 class Melt(SnappyModel):
     me_refs_infix: str = "1KGP_Hg19"
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
-    me_refs_path: str = Field(examples=['/path/to/melt/support/files'])
+    me_refs_path: str = Field(examples=["/path/to/melt/support/files"])
     jar_file: str = Field(examples=["/path/to/MELTv2.2.2/MELT.jar"])
     genes_file: str = Field(examples=["/path/to/MELTv2.2.2/add_bed_files/1KGP_Hg19/hg19.genes.bed"])
     """adjust, e.g., Hg38/Hg38.genes.bed"""
