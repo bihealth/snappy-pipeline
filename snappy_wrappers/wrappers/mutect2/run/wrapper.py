@@ -15,11 +15,6 @@ if "normal_bam" in snakemake.input.keys():
 else:
    normal_param = ""
 
-# normal = getattr(snakemake.input, "normal", None)
-# if normal:
-#     normal_param = f"--matched-normal {normal}"
-# else:
-#     normal_param = ""
 
 shell.executable("/bin/bash")
 
