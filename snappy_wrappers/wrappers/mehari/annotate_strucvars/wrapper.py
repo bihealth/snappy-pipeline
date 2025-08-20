@@ -95,7 +95,7 @@ for vcf in {snakemake.input.vcf}; do
         bcftools norm \
             -m -any \
             --force \
-            --fasta-ref {reference} \
+            --fasta-ref {export_config[reference]} \
             -O z \
             -o $TMPDIR/final_for_import.$num.vcf.gz
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
