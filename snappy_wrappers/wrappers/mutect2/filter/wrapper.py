@@ -45,7 +45,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # Setup auto-cleaned tmpdir
 export tmpdir=$(mktemp -d)
-#######trap "rm -rf $tmpdir" EXIT
+trap "rm -rf $tmpdir" EXIT
 
 # Extract orientation stats for all chunks
 mkdir -p $tmpdir/f1r2
