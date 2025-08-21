@@ -439,7 +439,6 @@ class Mutect2StepPart(MutectBaseStepPart):
                     "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                 })
             # else: tumor_only — do not add normal BAMs
-        
         elif tumor_normal_mode == TumorNormalMode.PAIRED:
             normal_library = self.get_normal_lib_name(wildcards)
             if not normal_library:
@@ -453,7 +452,6 @@ class Mutect2StepPart(MutectBaseStepPart):
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
             })
-        
         elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
             # No normal BAMs to include
             pass
