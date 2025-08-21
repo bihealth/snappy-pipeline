@@ -85,13 +85,49 @@ gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
     --variant $tmpdir/in.vcf \
     --output $tmpdir/out.vcf
 
-# Re-order samples so that normal always comes before tumor
-grep -E "^##normal_sample=" $tmpdir/out.vcf | sed -e "s/^##normal_sample=//"  > $tmpdir/samples.lst
-grep -E "^##tumor_sample="  $tmpdir/out.vcf | sed -e "s/^##tumor_sample=//"  >> $tmpdir/samples.lst
-bcftools view \
-    --samples-file $tmpdir/samples.lst \
-    --output-type z --output {snakemake.output.full_vcf} \
-    $tmpdir/out.vcf
+# Extract sample names
+grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst
+
+# Extract normal sample(s), if present
+if grep -q '^##normal_sample=' "$tmpdir/out.vcf"; then
+    grep -E '^##normal_sample=' "$tmpdir/out.vcf" | sed -e 's/^##normal_sample=//' > "$tmpdir/normal.lst"
+else
+    # No normal sample (tumor-only mode) → create empty file
+    > "$tmpdir/normal.lst"
+fi
+
+
+# Validate
+num_tumor=$(wc -l < $tmpdir/tumor.lst)
+num_normal=$(wc -l < $tmpdir/normal.lst)
+
+
+if [[ $num_tumor -gt 1 ]]; then
+    echo "ERROR: More than one tumor sample found (not supported yet)" >&2
+    exit 1
+
+fi
+
+if [[ $num_normal -gt 1 ]]; then
+    echo "ERROR: More than one normal sample found (not supported yet)" >&2
+    exit 1
+fi
+
+# Tumor–Normal case
+if [[ $num_normal -eq 1 ]]; then
+    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
+    bcftools view --samples-file $tmpdir/samples.lst \
+        --output-type z \
+        --output {snakemake.output.full_vcf} \
+        $tmpdir/out.vcf
+
+elif [[ $num_normal -eq 0 && $num_tumor -eq 1 ]]; then
+    # Tumor-only case
+    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+fi
+
+
+
 tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}

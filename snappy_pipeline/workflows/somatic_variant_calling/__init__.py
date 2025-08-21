@@ -115,6 +115,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
+from .model import TumorNormalMode as TumorNormalMode
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -418,19 +419,44 @@ class Mutect2StepPart(MutectBaseStepPart):
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
         }
 
-        normal_library = self.get_normal_lib_name(wildcards)
-        if normal_library:
+        # Adjustment tumor_only mode
+
+        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
+        if tumor_normal_mode is None:
+            raise ValueError("'tumor_normal_mode' not defined in step configuration for %s" % self.name)
+
+        if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
+            normal_library = self.get_normal_lib_name(wildcards)
+            if normal_library:
+                # Use paired mode if normal is present
+                normal_base_path = (
+                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                        normal_library=normal_library, **wildcards
+                    )
+                )
+                input_files.update({
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                })
+            # else: tumor_only — do not add normal BAMs
+        elif tumor_normal_mode == TumorNormalMode.PAIRED:
+            normal_library = self.get_normal_lib_name(wildcards)
+            if not normal_library:
+                raise ValueError("Normal sample required but not found.")
             normal_base_path = (
                 "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                     normal_library=normal_library, **wildcards
                 )
             )
-            input_files.update(
-                {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                }
-            )
+            input_files.update({
+                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+            })
+        elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
+            # No normal BAMs to include
+            pass
+        else:
+            raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
 
         return input_files
 
