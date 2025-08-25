@@ -3,4 +3,5 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - manta==1.5.0
+  - manta==1.6.0
+  - boost-cpp==1.85
