@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - samtools ==1.20    # Same version as snappy's (should be enforced?)
+  - coreutils ~=9.5    # Same version as snappy's (should be enforced?)

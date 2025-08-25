@@ -10,6 +10,8 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
 from snappy_pipeline.workflows.gene_expression_report.model import GeneExpressionReport
+from snappy_pipeline.workflows.germline_snvs.model import GermlineSnvs
+from snappy_pipeline.workflows.guess_sex.model import GuessSex
 from snappy_pipeline.workflows.helper_gcnv_model_targeted.model import HelperGcnvModelTargeted
 from snappy_pipeline.workflows.helper_gcnv_model_wgs.model import HelperGcnvModelWgs
 from snappy_pipeline.workflows.hla_typing.model import HlaTyping
@@ -21,6 +23,7 @@ from snappy_pipeline.workflows.ngs_data_qc.model import NgsDataQc
 from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
 from snappy_pipeline.workflows.panel_of_normals.model import PanelOfNormals
 from snappy_pipeline.workflows.repeat_expansion.model import RepeatExpansion
+from snappy_pipeline.workflows.somatic_cnv_calling.model import SomaticCnvCalling
 from snappy_pipeline.workflows.somatic_cnv_checking.model import SomaticCnvChecking
 from snappy_pipeline.workflows.somatic_gene_fusion_calling.model import SomaticGeneFusionCalling
 from snappy_pipeline.workflows.somatic_hla_loh_calling.model import SomaticHlaLohCalling
@@ -35,6 +38,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation.model import SomaticVa
 from snappy_pipeline.workflows.somatic_variant_calling.model import SomaticVariantCalling
 from snappy_pipeline.workflows.somatic_variant_filtration.model import SomaticVariantFiltration
 from snappy_pipeline.workflows.somatic_variant_signatures.model import SomaticVariantSignatures
+from snappy_pipeline.workflows.somatic_variants_for_cnv.model import SomaticVariantsForCnv
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import SomaticWgsCnvCalling
 from snappy_pipeline.workflows.somatic_wgs_sv_calling.model import SomaticWgsSvCalling
 from snappy_pipeline.workflows.sv_calling_targeted.model import SvCallingTargeted
@@ -100,6 +104,8 @@ class StepConfig(TypedDict, total=False):
     cbioportal_export: CbioportalExport
     gene_expression_quantification: GeneExpressionQuantification
     gene_expression_report: GeneExpressionReport
+    germline_snvs: GermlineSnvs
+    guess_sex: GuessSex
     helper_gcnv_model_targeted: HelperGcnvModelTargeted
     helper_gcnv_model_wgs: HelperGcnvModelWgs
     hla_typing: HlaTyping
@@ -109,6 +115,7 @@ class StepConfig(TypedDict, total=False):
     ngs_mapping: NgsMapping
     panel_of_normals: PanelOfNormals
     repeat_expansion: RepeatExpansion
+    somatic_cnv_calling: SomaticCnvCalling
     somatic_cnv_checking: SomaticCnvChecking
     somatic_gene_fusion_calling: SomaticGeneFusionCalling
     somatic_hla_loh_calling: SomaticHlaLohCalling
@@ -119,6 +126,7 @@ class StepConfig(TypedDict, total=False):
     somatic_variant_calling: SomaticVariantCalling
     somatic_variant_filtration: SomaticVariantFiltration
     somatic_variant_signatures: SomaticVariantSignatures
+    somatic_variants_for_cnv: SomaticVariantsForCnv
     somatic_wgs_cnv_calling: SomaticWgsCnvCalling
     somatic_wgs_sv_calling: SomaticWgsSvCalling
     sv_calling_targeted: SvCallingTargeted

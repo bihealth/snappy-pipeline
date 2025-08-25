@@ -411,7 +411,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
+        tumor_base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
         )
         input_files = {

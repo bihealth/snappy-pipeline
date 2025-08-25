@@ -1,0 +1,166 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline somatic_variants_for_cnv step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.somatic_variants_for_cnv import SomaticVariantsForCnvWorkflow
+
+__author__ = "Eric Blanc <eric.blanc@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = SomaticVariantsForCnvWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    somatic_variants_for_cnv_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule somatic_variants_for_cnv_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Actual actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Bcftools --------------------------------------------------------------------
+
+
+rule somatic_variants_for_cnv_bcftools_ignore_chroms:
+    input:
+        reference=wf.config.static_data_config.reference.path,
+    output:
+        regions="work/bcftools/out/regions.bed.gz",
+    params:
+        args={
+            "ignore_chroms": set(
+                wf.config.step_config.somatic_variants_for_cnv.ignore_chroms
+                + config.step_config.somatic_variants_for_cnv.bcftools.ignore_chroms
+            )
+        },
+    threads: 1
+    wrapper:
+        wf.wrapper_path("ignore_chroms")
+
+
+rule somatic_variants_for_cnv_bcftools_merge:
+    input:
+        unpack(wf.get_input_files("bcftools", "merge")),
+    output:
+        **wf.get_output_files("bcftools", "merge"),
+    params:
+        args=wf.get_args("bcftools", "merge"),
+    threads: wf.get_resource("bcftools", "merge", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "merge", "time"),
+        memory=wf.get_resource("bcftools", "merge", "memory"),
+        partition=wf.get_resource("bcftools", "merge", "partition"),
+        tmpdir=wf.get_resource("bcftools", "merge", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "merge"),
+    wrapper:
+        wf.wrapper_path("bcftools/merge_germline_and_somatic")
+
+
+rule somatic_variants_for_cnv_bcftools_pileup:
+    input:
+        unpack(wf.get_input_files("bcftools", "pileup")),
+    output:
+        **wf.get_output_files("bcftools", "pileup"),
+    params:
+        args=wf.get_args("bcftools", "pileup"),
+    threads: wf.get_resource("bcftools", "pileup", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "pileup", "time"),
+        memory=wf.get_resource("bcftools", "pileup", "memory"),
+        partition=wf.get_resource("bcftools", "pileup", "partition"),
+        tmpdir=wf.get_resource("bcftools", "pileup", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "pileup"),
+    wrapper:
+        wf.wrapper_path("bcftools/commands/mpileup")
+
+
+rule somatic_variants_for_cnv_bcftools_annotate:
+    input:
+        unpack(wf.get_input_files("bcftools", "annotate")),
+    output:
+        **wf.get_output_files("bcftools", "annotate"),
+    params:
+        args=wf.get_args("bcftools", "annotate"),
+    threads: wf.get_resource("bcftools", "annotate", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "annotate", "time"),
+        memory=wf.get_resource("bcftools", "annotate", "memory"),
+        partition=wf.get_resource("bcftools", "annotate", "partition"),
+        tmpdir=wf.get_resource("bcftools", "annotate", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "annotate"),
+    wrapper:
+        wf.wrapper_path("bcftools/commands/annotate")
+
+
+rule somatic_variants_for_cnv_bcftools_flag:
+    input:
+        unpack(wf.get_input_files("bcftools", "flag")),
+    output:
+        **wf.get_output_files("bcftools", "flag"),
+    params:
+        args=wf.get_args("bcftools", "flag"),
+    threads: wf.get_resource("bcftools", "flag", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "flag", "time"),
+        memory=wf.get_resource("bcftools", "flag", "memory"),
+        partition=wf.get_resource("bcftools", "flag", "partition"),
+        tmpdir=wf.get_resource("bcftools", "flag", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "flag"),
+    wrapper:
+        wf.wrapper_path("bcftools/commands/annotate")
+
+
+rule somatic_variants_for_cnv_bcftools_remove_unseen:
+    input:
+        unpack(wf.get_input_files("bcftools", "remove_unseen")),
+    output:
+        **wf.get_output_files("bcftools", "remove_unseen"),
+    params:
+        args=wf.get_args("bcftools", "remove_unseen"),
+    threads: wf.get_resource("bcftools", "remove_unseen", "threads")
+    resources:
+        time=wf.get_resource("bcftools", "remove_unseen", "time"),
+        memory=wf.get_resource("bcftools", "remove_unseen", "memory"),
+        partition=wf.get_resource("bcftools", "remove_unseen", "partition"),
+        tmpdir=wf.get_resource("bcftools", "remove_unseen", "tmpdir"),
+    log:
+        **wf.get_log_file("bcftools", "remove_unseen"),
+    wrapper:
+        wf.wrapper_path("bcftools/commands/view")
