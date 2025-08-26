@@ -91,12 +91,14 @@ def argument(args: list[str]) -> list[str]:
         raise ValueError(f"invalid arguments: {invalid_args}")
     return args
 
+
 # Adjustment tumor_only mode
 class TumorNormalMode(enum.StrEnum):
     AUTOMATIC = "automatic"
     PAIRED = "paired"
     TUMOR_ONLY = "tumor_only"
     """Whether to call variants in paired, tumor_only, or automatic mode."""
+
 
 class Mutect2(Parallel):
     # Sadly a type of
@@ -134,6 +136,7 @@ class Mutect2(Parallel):
 
     tumor_normal_mode: TumorNormalMode = TumorNormalMode.AUTOMATIC
     """Whether to call variants in paired, tumor_only, or automatic mode."""
+
 
 class Scalpel(SnappyModel):
     path_target_regions: str
