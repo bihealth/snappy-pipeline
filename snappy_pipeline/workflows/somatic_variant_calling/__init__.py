@@ -423,7 +423,9 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
         if tumor_normal_mode is None:
-            raise ValueError("'tumor_normal_mode' not defined in step configuration for %s" % self.name)
+            raise ValueError(
+                "'tumor_normal_mode' not defined in step configuration for %s" % self.name
+            )
 
         if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
             normal_library = self.get_normal_lib_name(wildcards)
@@ -434,10 +436,12 @@ class Mutect2StepPart(MutectBaseStepPart):
                         normal_library=normal_library, **wildcards
                     )
                 )
-                input_files.update({
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                })
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
             # else: tumor_only — do not add normal BAMs
         elif tumor_normal_mode == TumorNormalMode.PAIRED:
             normal_library = self.get_normal_lib_name(wildcards)
@@ -448,10 +452,12 @@ class Mutect2StepPart(MutectBaseStepPart):
                     normal_library=normal_library, **wildcards
                 )
             )
-            input_files.update({
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-            })
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
         elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
             # No normal BAMs to include
             pass
