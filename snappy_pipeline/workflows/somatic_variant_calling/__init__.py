@@ -115,6 +115,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
+from .model import TumorNormalMode as TumorNormalMode
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -340,14 +341,29 @@ class Mutect2StepPart(MutectBaseStepPart):
     name = "mutect2"
 
     #: Class available actions
-    actions = ["run", "filter"]  # "contamination", "pileup_normal", "pileup_tumor")
+    actions = [
+        "scatter",
+        "run",
+        "gather",
+        "filter",
+    ]  # "contamination", "pileup_normal", "pileup_tumor")
 
     #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
+        "scatter": ResourceUsage(
+            threads=1,
+            time="00:02:00",
+            memory="1000M",
+        ),
         "run": ResourceUsage(
-            threads=2,
+            threads=1,
             time="5-00:00:00",
-            memory="3584M",
+            memory="8000M",
+        ),
+        "gather": ResourceUsage(
+            threads=1,
+            time="03:59:00",
+            memory="32768M",
         ),
         "filter": ResourceUsage(
             threads=2,
@@ -373,6 +389,12 @@ class Mutect2StepPart(MutectBaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        run_resource_usage = self.resource_usage_dict["run"]
+        self.resource_usage_dict["run"] = ResourceUsage(
+            threads=self.config.mutect2.num_cores or run_resource_usage.threads,
+            time=run_resource_usage.time,
+            memory=run_resource_usage.memory,
+        )
 
     def check_config(self):
         if self.name not in self.config.tools:
@@ -397,6 +419,25 @@ class Mutect2StepPart(MutectBaseStepPart):
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
+    def get_params(self, action):
+        self._validate_action(action)
+        if action == "scatter":
+            ignore_chroms = list(
+                set(
+                    self.w_config.get("ignore_chroms", [])
+                    + self.config.get("ignore_chroms", [])
+                    + self.config.get(self.name).get("ignore_chroms", [])
+                )
+            )
+            return {
+                "ignore_chroms": sorted(list(ignore_chroms)),
+                "padding": self.config.mutect2.padding,
+            }
+        return {}
+
+    def _get_input_files_scatter(self, wildcards):
+        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
+
     def _get_input_files_run(self, wildcards):
         """Get input files for rule ``run``.
 
@@ -413,13 +454,45 @@ class Mutect2StepPart(MutectBaseStepPart):
         tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
             **wildcards
         )
+
+        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
+            **wildcards
+        )
+
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            "region": scatteritem_base_path + ".region.bed",
         }
 
-        normal_library = self.get_normal_lib_name(wildcards)
-        if normal_library:
+        # Adjustment tumor_only mode
+
+        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
+        if tumor_normal_mode is None:
+            raise ValueError(
+                "'tumor_normal_mode' not defined in step configuration for %s" % self.name
+            )
+
+        if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
+            normal_library = self.get_normal_lib_name(wildcards)
+            if normal_library:
+                # Use paired mode if normal is present
+                normal_base_path = (
+                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                        normal_library=normal_library, **wildcards
+                    )
+                )
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
+            # else: tumor_only — do not add normal BAMs
+        elif tumor_normal_mode == TumorNormalMode.PAIRED:
+            normal_library = self.get_normal_lib_name(wildcards)
+            if not normal_library:
+                raise ValueError("Normal sample required but not found.")
             normal_base_path = (
                 "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                     normal_library=normal_library, **wildcards
@@ -431,8 +504,27 @@ class Mutect2StepPart(MutectBaseStepPart):
                     "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                 }
             )
+        elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
+            # No normal BAMs to include
+            pass
+        else:
+            raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
 
         return input_files
+
+    def _get_input_files_gather(self, wildcards):
+        gather = self.parent.workflow.globals.get("gather")
+        gather = getattr(gather, self.name)
+        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
+            **wildcards
+        )
+        input_files = {
+            "vcf": scatteritem_base_path + ".raw.vcf.gz",
+            "stats": scatteritem_base_path + ".raw.vcf.stats",
+            "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
+        }
+
+        return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
 
     def _get_input_files_filter(self, wildcards):
         """Get input files for rule ``filter``.
@@ -451,7 +543,7 @@ class Mutect2StepPart(MutectBaseStepPart):
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
-            "f1r2": base_path + ".raw.f1r2_tar.tar.gz",
+            "orientation": base_path + ".raw.read_orientation_model.tar.gz",
         }
         if self.get_normal_lib_name(wildcards):
             if "contamination" in self.actions:
@@ -527,8 +619,19 @@ class Mutect2StepPart(MutectBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        # Set expected extensions based on action
+        # Set expected extensions and basepath based on action
+        base_path_out = self.base_path_out
+
+        if action == "scatter":
+            scatter = self.parent.workflow.globals.get("scatter")
+            scatter = getattr(scatter, self.name)
+            template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
+                var_caller=self.name
+            )
+            return {"regions": scatter(template)}
+
         if action == "run":
+            base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
             exts = {
                 "raw": ".raw.vcf.gz",
                 "raw_md5": ".raw.vcf.gz.md5",
@@ -536,8 +639,19 @@ class Mutect2StepPart(MutectBaseStepPart):
                 "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
-                "f1r2": ".raw.f1r2_tar.tar.gz",
-                "f1r2_md5": ".raw.f1r2_tar.tar.gz.md5",
+                "f1r2": ".raw.f1r2.tar.gz",
+                "f1r2_md5": ".raw.f1r2.tar.gz.md5",
+            }
+        if action == "gather":
+            exts = {
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "stats": ".raw.vcf.stats",
+                "stats_md5": ".raw.vcf.stats.md5",
+                "orientation": ".raw.read_orientation_model.tar.gz",
+                "orientation_md5": ".raw.read_orientation_model.tar.gz.md5",
             }
         if action == "filter":
             exts = {
@@ -564,7 +678,7 @@ class Mutect2StepPart(MutectBaseStepPart):
 
         # Define output dictionary
         for k, v in exts.items():
-            output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
+            output_files[k] = base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
     def get_log_file(self, action):
@@ -589,8 +703,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         self._validate_action(action)
 
         # Set expected format based on action
-        if action != "run":
-            postfix = "." + action
+        if action != "gather":
+            if action == "run":
+                postfix = ".{{scatteritem}}"
+            else:
+                postfix = "." + action
+
         prefix = (
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
             "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"

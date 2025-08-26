@@ -1172,6 +1172,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 path_targets_bed = item.path
                 break
 
+        if not path_targets_bed:
+            raise InvalidConfiguration(
+                f"No target interval list found for library '{library_name}' with kit '{kit_name}'. "
+                "Please check the configuration."
+            )
+
         return {
             "path_targets_bed": path_targets_bed,
         }

@@ -6,8 +6,8 @@ dependencies:
   - bcftools ==1.20
   - htslib ==1.20
   - samtools ==1.20
-  - mehari==0.35.0
+  - mehari==0.37.1
   - jq ==1.7.1
   - vcfpy ==0.13.8
   - pysam ==0.22.1
-  - python ==3.11.9
+  - python ==3.12.11
