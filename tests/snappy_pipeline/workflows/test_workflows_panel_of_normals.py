@@ -42,8 +42,7 @@ def minimal_config():
                   germline_resource: /path/to/germline_resource.vcf
                   path_normals_list: ""
               cnvkit:
-                  path_target_regions: /path/to/regions.bed  # WES mode
-                  path_normals_list: ""
+                  path_target: /path/to/regions.bed  # WES mode
               purecn:
                   path_normals_list: ""
                   path_bait_regions: /path/to/baits/regions.bed
@@ -291,7 +290,7 @@ def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
         }
     )
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
-    assert actual == {}
+    assert actual == {'target': '/path/to/regions.bed'}
 
 
 def test_cnvkit_step_part_get_input_files_antitarget(panel_of_normals_workflow):
@@ -321,6 +320,7 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards)
     assert actual == expected

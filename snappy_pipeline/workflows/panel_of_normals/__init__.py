@@ -636,10 +636,12 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         """Helper wrapper function for computing antitarget locations"""
         if self.is_wgs:
             return {}
-        return {
+        result = {
             "target": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards),
-            "access": self.config.cnvkit.path_access,
         }
+        if path_access := self.config.cnvkit.path_access:
+            result["access"] = path_access
+        return result
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""

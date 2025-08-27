@@ -49,6 +49,7 @@ def minimal_config():
               path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
+              enable_plot: True
             purecn:
               path_container: /path/to/purecn/container
               path_intervals: /path/to/interval/list
@@ -298,6 +299,8 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
         fromdict={"mapper": "bwa", "target": "target", "library_name": "P001-T1-DNA1-WGS1"}
     )
     expected = {
+        "antitarget": "/path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed",
+        "target": "/path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed",
         "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
@@ -354,6 +357,7 @@ def test_cnvkit_fix_step_part_get_input_files(somatic_targeted_seq_cnv_calling_w
     expected = {
         "antitarget": coverage_base_out + ".antitargetcoverage.cnn",
         "target": coverage_base_out + ".targetcoverage.cnn",
+        "ref": "/path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})

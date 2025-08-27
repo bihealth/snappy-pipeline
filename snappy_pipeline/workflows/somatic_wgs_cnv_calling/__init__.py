@@ -882,7 +882,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller="cnvkit",
             )
-            if self.config.cnvkit.plot:
+            if self.config.cnvkit.enable_plot:
                 plots = (
                     ("diagram", "pdf", False),
                     ("heatmap", "pdf", True),
