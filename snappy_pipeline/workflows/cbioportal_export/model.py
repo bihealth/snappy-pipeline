@@ -121,7 +121,7 @@ class Study(SnappyModel):
     study_description: str
     study_name: str
     study_name_short: str
-    reference_genome: GenomeName = GenomeName.grch38
+    reference_genome: GenomeName = GenomeName.hg38
 
 
 class ExtraInfos(TypedDict):
