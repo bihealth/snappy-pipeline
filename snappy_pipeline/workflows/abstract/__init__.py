@@ -101,6 +101,8 @@ class ImplementationUnavailableError(NotImplementedError):
 
 Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
 Outputs: typing.TypeAlias = OutputFiles | dict[str, Any]
+Threads: typing.TypeAlias = int | None
+Attempt: typing.TypeAlias = int | None
 
 
 class BaseStepPart:
@@ -156,7 +158,7 @@ class BaseStepPart:
 
     def get_resource(
         self, action: str, resource_name: str
-    ) -> Callable[[Wildcards, InputFiles], Any]:
+    ) -> Callable[[Wildcards, InputFiles, Threads, Attempt], Any]:
         """Return the amount of resources to be allocated for the given action.
 
         :param action: The action to return the resource requirement for.
@@ -165,12 +167,24 @@ class BaseStepPart:
         if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
-        def _get_resource(wildcards: Wildcards = None, input: InputFiles = None) -> Any:
-            resource_usage = self.get_resource_usage(action, wildcards=wildcards, input=input)
+        def _get_resource(
+            wildcards: Wildcards = None,
+            input: InputFiles = None,
+            threads: Threads = None,
+            attempt: Attempt = 1,
+        ) -> Any:
+            resource_usage = self.get_resource_usage(
+                action, wildcards=wildcards, input=input, threads=threads, attempt=attempt
+            )
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
                 return self.get_default_partition()
+            # '_get_resource' is the primary input function,
+            # if resource is callable we need to call it
+            resource = getattr(resource_usage, resource_name)
+            if callable(resource):
+                return resource(wildcards=wildcards, input=input, threads=threads, attempt=attempt)
             else:
                 return getattr(resource_usage, resource_name)
 

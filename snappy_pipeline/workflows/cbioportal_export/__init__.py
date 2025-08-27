@@ -18,6 +18,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 
 from .model import CbioportalExport as CbioportalExportConfigModel
+from .model import FiltrationSchema
 
 # cbioportal meta data files
 META_FILES = {
@@ -305,17 +306,13 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.config.filter_set:
-            if self.config.filter_set == "filter_list":
-                name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{library_name}}"
-            else:
-                name_pattern = (
-                    "{mapper}.{caller}.{annotator}."
-                    "dkfz_bias_filter.eb_filter.{{library_name}}."
-                    "{filter_set}.{exon_list}"
-                )
+        name_pattern = "{mapper}.{caller}.{annotator}."
+        if self.config.filtration_schema == FiltrationSchema.list:
+            name_pattern += "filtered.{{library_name}}"
+        elif self.config.filtration_schema == FiltrationSchema.sets:
+            name_pattern += "dkfz_bias_filter.eb_filter.{{library_name}}.{filter_set}.{exon_list}"
         else:
-            name_pattern = "{mapper}.{caller}.{annotator}.{{library_name}}"
+            name_pattern += "{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
         self.input_tpl = tpl.format(
             mapper=self.config.mapping_tool,
@@ -763,15 +760,18 @@ class cbioportalExportWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         if self.config.path_somatic_variant:
-            if self.config.filter_set:
+            if (
+                self.config.filtration_schema == FiltrationSchema.unfiltered
+                or self.config.filter_before_annotation
+            ):
                 self.register_sub_workflow(
-                    "somatic_variant_filtration",
+                    "somatic_variant_annotation",
                     self.config.path_somatic_variant,
                     sub_workflow_name="somatic_variant",
                 )
             else:
                 self.register_sub_workflow(
-                    "somatic_variant_annotation",
+                    "somatic_variant_filtration",
                     self.config.path_somatic_variant,
                     sub_workflow_name="somatic_variant",
                 )

@@ -88,11 +88,16 @@ for vcf in {snakemake.input.vcf}; do
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
     > $TMPDIR/header.gt.txt
 
+    # Annotate and normalise the VCF files.
     bcftools annotate \
         -h $TMPDIR/header.gt.txt \
-        $TMPDIR/fixed_bnd_to_inv.$num.vcf \
-        -O z \
-        -o $TMPDIR/final_for_import.$num.vcf.gz
+        $TMPDIR/fixed_bnd_to_inv.$num.vcf |
+        bcftools norm \
+            -m -any \
+            -c w \
+            --fasta-ref {args[reference]} \
+            -O z \
+            -o $TMPDIR/final_for_import.$num.vcf.gz
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
 

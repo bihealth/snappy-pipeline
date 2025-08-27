@@ -254,6 +254,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     }
 
     def get_input_files(self, action):
+        if self.name not in self.config.tools:
+            return {}
         self._validate_action(action)
         self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         if action == "prepare":
@@ -292,6 +294,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         )
 
     def get_output_files(self, action):
+        if self.name not in self.config.tools:
+            return {}
         self._validate_action(action)
 
         if action == "install":
@@ -339,6 +343,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         }
 
     def get_log_file(self, action):
+        if self.name not in self.config.tools:
+            return {}
         tpls = {
             "install": "work/containers/log/purecn",
             "prepare": "work/purecn/log/{}_{}".format(
@@ -359,14 +365,24 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     name = "mutect2"
 
     #: Class available actions
-    actions = ("prepare_panel", "create_panel")
+    actions = ("scatter", "prepare_panel", "gather", "create_panel")
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
+        "scatter": ResourceUsage(
+            threads=1,
+            time="00:02:00",
+            memory="1000M",
+        ),
         "prepare_panel": ResourceUsage(
             threads=2,
             time="3-00:00:00",  # 3 days
             memory="8G",
+        ),
+        "gather": ResourceUsage(
+            threads=1,
+            time="03:59:00",
+            memory="8192M",
         ),
         "create_panel": ResourceUsage(
             threads=2,
@@ -379,11 +395,10 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         """Return input files for mutect2 variant calling"""
         # Validate action
         self._validate_action(action)
-        mapping = {
-            "prepare_panel": self._get_input_files_prepare_panel,
-            "create_panel": self._get_input_files_create_panel,
-        }
-        return mapping[action]
+        return getattr(self, f"_get_input_files_{action}")
+
+    def _get_input_files_scatter(self, wildcards):
+        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
@@ -391,12 +406,28 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
-        return {"normal_bam": bam, "normal_bai": bam + ".bai"}
+        scatteritem_base_path = (
+            "work/{mapper}.mutect2.{normal_library}/par/scatter/{scatteritem}.region.bed"
+        )
+        return {
+            "normal_bam": bam,
+            "normal_bai": bam + ".bai",
+            "intervals": scatteritem_base_path.format(**wildcards),
+            "reference": self.w_config.static_data_config.reference.path,
+        }
+
+    def _get_input_files_gather(self, wildcards):
+        gather = self.parent.workflow.globals.get("gather")
+        gather = getattr(gather, self.name)
+        tpl = "work/{mapper}.mutect2.{normal_library}/par/run/{{scatteritem}}.vcf.gz".format(
+            **wildcards
+        )
+        return {"vcf": gather(tpl)}
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for merging individual results & panel creation"""
         paths = []
-        tpl = "work/{mapper}.{tool}/out/{mapper}.{tool}.{normal_library}.prepare.vcf.gz"
+        tpl = "work/{mapper}.{tool}.{normal_library}/out/{mapper}.{tool}.{normal_library}.prepare.vcf.gz"
         for normal in self.normal_libraries:
             paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
         return {
@@ -405,35 +436,78 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "germline_resource": self.config.mutect2.germline_resource,
         }
 
-    @dictify
     def get_output_files(self, action):
         """Return panel of normal files"""
         self._validate_action(action)
+
+        if action == "scatter":
+            scatter = self.parent.workflow.globals.get("scatter")
+            scatter = getattr(scatter, self.name)
+            tpl = "work/{{mapper}}.mutect2.{{normal_library}}/par/scatter/{scatteritem}.region.bed"
+            return {"regions": scatter(tpl)}
+
         ext_dict = {
             "vcf": "vcf.gz",
             "vcf_md5": "vcf.gz.md5",
             "vcf_tbi": "vcf.gz.tbi",
             "vcf_tbi_md5": "vcf.gz.tbi.md5",
         }
+
         tpls = {
-            "prepare_panel": "work/{mapper}.mutect2/out/{mapper}.mutect2.{normal_library}.prepare",
+            "prepare_panel": "work/{mapper}.mutect2.{normal_library}/par/run/{scatteritem}",
+            "gather": "work/{mapper}.mutect2.{normal_library}/out/{mapper}.mutect2.{normal_library}.prepare",
             "create_panel": "work/{mapper}.mutect2/out/{mapper}.mutect2.panel_of_normals",
         }
+        output_files = {}
         for key, ext in ext_dict.items():
-            yield key, tpls[action] + "." + ext
+            output_files[key] = tpls[action] + "." + ext
         if action == "create_panel":
-            yield "db", "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz"
-            yield "db_md5", "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz.md5"
+            output_files["db"] = "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz"
+            output_files["db_md5"] = (
+                "work/{mapper}.mutect2/out/{mapper}.mutect2.genomicsDB.tar.gz.md5"
+            )
+        return output_files
 
-    @classmethod
-    def get_log_file(cls, action):
-        """Return panel of normal files"""
-        tpls = {
-            "prepare_panel": "work/{mapper}.mutect2/log/{mapper}.mutect2.{normal_library}.prepare",
-            "create_panel": "work/{mapper}.mutect2/log/{mapper}.mutect2.panel_of_normals",
-        }
-        assert action in cls.actions
-        return cls._get_log_file(tpls[action])
+    def get_args(self, action):
+        self._validate_action(action)
+
+        match action:
+            case "scatter":
+                return {
+                    "ignore_chroms": self.config.ignore_chroms,
+                    "padding": self.config.mutect2.padding,
+                }
+            case _:
+                return {}
+
+    def get_log_file(self, action):
+        """Get log files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected log files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
+        self._validate_action(action)
+
+        # Set expected format based on action
+        tpl = f"{{mapper}}.{self.name}.{{normal_library}}"
+        match action:
+            case "gather":
+                postfix = ""
+            case "prepare_panel":
+                postfix = ".{scatteritem}"
+            case "create_panel":
+                tpl = f"{{mapper}}.{self.name}"
+                postfix = ".panel_of_normals"
+            case _:
+                postfix = "." + action
+
+        prefix = f"work/{tpl}/log/{tpl}{postfix}"
+
+        return self._get_log_file(prefix)
 
 
 class CnvkitStepPart(PanelOfNormalsStepPart):
@@ -482,17 +556,20 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.is_wgs = self.config.cnvkit.path_target == ""
+        if self.name in self.config.tools:
+            self.is_wgs = self.config.cnvkit.path_target == ""
 
     def check_config(self):
         if self.name not in self.config.tools:
-            return  # cnvkit not enabled, skip
+            return None  # cnvkit not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
 
     def get_args(self, action):
+        if self.name not in self.config.tools:
+            return None  # cnvkit not enabled, skip
         self._validate_action(action)
         cfg: CnvKitModel = self.config.get(self.name)
         if action == "create_panel":
@@ -513,6 +590,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
+        if self.name not in self.config.tools:
+            return None  # cnvkit not enabled, skip
         # Validate action
         self._validate_action(action)
         mapping = {
@@ -625,6 +704,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def get_output_files(self, action):
         """Return panel of normal files"""
+        if self.name not in self.config.tools:
+            return {}  # cnvkit not enabled, skip
         if action == "target":
             return self._get_output_files_target()
         elif action == "antitarget":

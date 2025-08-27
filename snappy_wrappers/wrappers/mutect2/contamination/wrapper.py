@@ -7,6 +7,13 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.input.reference
 
+# Test presence/absence of normal
+normal = getattr(snakemake.input, "normal", None)
+if normal:
+    normal_param = f"--matched-normal {normal}"
+else:
+    normal_param = ""
+
 shell.executable("/bin/bash")
 
 shell(
@@ -40,8 +47,7 @@ trap "rm -rf $tmpdir" EXIT
 out_base=$tmpdir/$(basename {snakemake.output.table} .contamination.tbl)
 
 gatk --java-options '-Xms4000m -Xmx8000m' CalculateContamination \
-    --input {snakemake.input.tumor} \
-    --matched-normal {snakemake.input.normal} \
+    --input {snakemake.input.tumor} {normal_param} \
     --tumor-segmentation ${{out_base}}.segments.tbl \
     --output ${{out_base}}.contamination.tbl
 

@@ -37,6 +37,7 @@ def minimal_config():
               dna: ['bwa']
               rna: ['star']
             target_coverage_report:
+              enabled: true
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
@@ -51,6 +52,8 @@ def minimal_config():
             minimap2:
               mapping_threads: 16
               path_index: /path/to/minimap2/index
+            ngs_chew_fingerprint:
+              enabled: true
             bam_collect_doc:
               enabled: true
 

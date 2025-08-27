@@ -40,6 +40,7 @@ def minimal_config():
             path_somatic_variant: /SOM_VAR_FILTRATION
             somatic_variant_calling_tool: mutect2
             somatic_variant_annotation_tool: "vep"
+            filtration_schema: sets
             filter_set: dkfz_only
             path_copy_number: /COPY_NUMBER
             copy_number_tool: cnvkit

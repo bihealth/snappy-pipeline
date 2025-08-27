@@ -31,6 +31,7 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fa
             target_coverage_report:
+              enabled: true
               path_target_interval_list_mapping:
               - name: "Agilent SureSelect Human All Exon V6"
                 pattern: "Agilent SureSelect Human All Exon V6*"
@@ -265,12 +266,17 @@ def test_mehari_step_part_get_log_file_bam_qc(varfish_export_workflow):
 def test_mehari_step_part_get_args_annotate(varfish_export_workflow):
     """Tests MehariAnnotateStepPart._get_args_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
+    mehari_db = "/path/to/mehari.db"
+    prefix = f"{mehari_db}/grch37/seqvars"
     expected = {
         "path_exon_bed": "/path/to/exons.bed",
         "reference": "/path/to/ref.fa",
-        "path_mehari_db": "/path/to/mehari.db",
+        "hgnc_tsv": f"{mehari_db}/hgnc.tsv",
+        "transcript_db": f"{prefix}/txs.bin.zst",
+        "clinvar_db": f"{prefix}/clinvar/rocksdb",
+        "frequency_db": f"{prefix}/frequencies/rocksdb",
     }
-    actual = varfish_export_workflow.get_args("mehari", "annotate_seqvars")(wildcards)
+    actual = varfish_export_workflow.get_params("mehari", "annotate_seqvars")(wildcards)
     assert actual == expected
 
 

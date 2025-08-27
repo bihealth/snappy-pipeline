@@ -1130,6 +1130,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def skip_result_files_for_library(self, library_name: str) -> bool:
+        return (
+            not self.config.target_coverage_report.enabled
+            or super().skip_result_files_for_library(library_name)
+        )
+
     def get_input_files(self, action):
         """Return required input files"""
         self._validate_action(action)
@@ -1198,6 +1204,30 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 yield key + "_md5", prefix + ext + ".md5"
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
+
+    def get_params(self, action):
+        assert action == "run", "Parameters only available for action 'run'."
+        return getattr(self, "_get_params_run")
+
+    def _get_params_run(self, wildcards):
+        # Find bed file associated with library kit
+        library_name = wildcards.library_name
+        path_targets_bed = ""
+        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
+        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
+            if item.name == kit_name:
+                path_targets_bed = item.path
+                break
+
+        if not path_targets_bed:
+            raise InvalidConfiguration(
+                f"No target interval list found for library '{library_name}' with kit '{kit_name}'. "
+                "Please check the configuration."
+            )
+
+        return {
+            "path_targets_bed": path_targets_bed,
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

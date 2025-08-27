@@ -128,16 +128,14 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.somatic_variant_annotation import (
-    ANNOTATION_TOOLS,
-    SomaticVariantAnnotationWorkflow,
-)
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS_MATCHED,
     SomaticVariantCallingWorkflow,
 )
 
 from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
+
+from snappy_pipeline.workflows.somatic_variant_annotation import ANNOTATION_TOOLS
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -929,6 +927,24 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        # Ugly hack to allow exchanging the order of somatic_variant_annotation &
+        # somatic_variant_filtration steps.
+        # The import of the other workflow must be dependent on the config:
+        # if in the somatic_variant_filtration config, has_annotation is True,
+        # then the filtration step will include the annotation workflow as a
+        # previous step.
+        # THIS IMPLIES THAT NO FILTRATION OCCURED BEFORE ANNOTATION
+        # This protects against circular import of workflows.
+        #
+        # This must be done before initialisation of the workflow.
+        previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
+        default = SomaticVariantFiltrationConfigModel.model_fields["has_annotation"].default
+        if config["step_config"]["somatic_variant_filtration"].get("has_annotation", default):
+            from snappy_pipeline.workflows.somatic_variant_annotation import (
+                SomaticVariantAnnotationWorkflow,
+            )
+
+            previous_steps.insert(0, SomaticVariantAnnotationWorkflow)
         super().__init__(
             workflow,
             config,
@@ -936,11 +952,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticVariantFiltrationConfigModel,
-            previous_steps=(
-                SomaticVariantAnnotationWorkflow,
-                SomaticVariantCallingWorkflow,
-                NgsMappingWorkflow,
-            ),
+            previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
