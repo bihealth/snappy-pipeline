@@ -55,7 +55,7 @@ def minimal_config():
               study_description: "Test of arguments"
               study_name: test_study
               study_name_short: test
-              reference_genome: grch37
+              reference_genome: hg19
 
         data_sets:
           first_batch:
@@ -223,7 +223,9 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
             "path_somatic_variant": "/SOM_VAR_FILTRATION",
             "somatic_variant_calling_tool": "mutect2",
             "somatic_variant_annotation_tool": "vep",
+            "filter_before_annotation": False,
             "filter_set": "dkfz_only",
+            "filtration_schema": "sets",
             "path_copy_number": "/COPY_NUMBER",
             "copy_number_tool": "cnvkit",
             "exclude_variant_with_flag": "LowFisherScore",
@@ -238,7 +240,6 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
             },
             "mapping_tool": "bwa",
             "exon_list": "genome_wide",
-            "filter_list": [],
             "patient_info": None,
             "sample_info": {},
         },
