@@ -276,7 +276,7 @@ def test_mehari_step_part_get_args_annotate(varfish_export_workflow):
         "clinvar_db": f"{prefix}/clinvar/rocksdb",
         "frequency_db": f"{prefix}/frequencies/rocksdb",
     }
-    actual = varfish_export_workflow.get_params("mehari", "annotate_seqvars")(wildcards)
+    actual = varfish_export_workflow.get_args("mehari", "annotate_seqvars")(wildcards)
     assert actual == expected
 
 
