@@ -384,6 +384,10 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
+        # Ensure target_coverage_report is enabled
+        assert self.w_config.step_config["ngs_mapping"]["target_coverage_report"]["enabled"], (
+            "Target coverage report must be enabled in the configuration of the ngs_mapping step"
+        )
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
