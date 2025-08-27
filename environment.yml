@@ -65,9 +65,9 @@ dependencies:
     # build varfish-cli from pypi
     - varfish-cli ~=0.6.3
     # specific compatible biomedsheets revision
-    - git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8
+    - biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688
     # specific compatible altamisa revision
-    - git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c
+    - altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8
 
     # build pysam and vcfpy via pip (to avoid python version + conda packaging issues)
     - pysam ~=0.22
