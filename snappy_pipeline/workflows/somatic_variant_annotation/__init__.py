@@ -79,8 +79,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
-    SOMATIC_VARIANT_CALLERS_JOINT,
-    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SOMATIC_VARIANT_CALLERS,
     SomaticVariantCallingWorkflow,
 )
 
@@ -96,7 +95,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the annotator tools
-ANNOTATION_TOOLS = ("jannovar", "vep")
+ANNOTATION_TOOLS = ("vep",)
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
@@ -189,42 +188,6 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-
-class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
-    """Annotate VCF file from somatic calling using "Jannovar annotate-vcf" """
-
-    #: Step name
-    name = "jannovar"
-
-    #: Annotator name to construct output paths
-    annotator = "jannovar"
-
-    #: Class available actions
-    actions = ("annotate_somatic_vcf",)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            time="4-04:00:00",  # 4 days and 4 hours
-            memory=f"{8 * 1024 * 2}M",
-        )
-
-    def get_args(self, action):
-        self._validate_action(action)
-        return {
-            "static_data_config": self.w_config.static_data_config.model_dump(by_alias=True),
-            "jannovar": self.config.get(self.name).model_dump(by_alias=True),
-        }
 
 
 class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
@@ -329,9 +292,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
-        )
+        self.register_sub_step_classes((VepAnnotateSomaticVcfStepPart, LinkOutStepPart))
         # Register sub workflows
         if self.config.filtration_schema == FiltrationSchema.unfiltered:
             self.register_sub_workflow(
@@ -363,14 +324,14 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=annotators,
             ext=(
                 ".log",
@@ -391,20 +352,13 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=full,
             ext=EXT_VALUES,
         )
         # joint calling
         name_pattern = AnnotateSomaticVcfStepPart._name_template(
             self.config, annotator="{annotator}"
-        )
-        yield from self._yield_result_files_joint(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
-            annotator=annotators,
-            ext=EXT_VALUES,
         )
 
     def _yield_result_files_matched(self, tpl, **kwargs):

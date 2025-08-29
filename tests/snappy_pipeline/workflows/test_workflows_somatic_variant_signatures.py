@@ -31,26 +31,26 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
 
           somatic_variant_calling:
-            tools: ['mutect']
-            mutect:
+            tools: ['mutect2']
+            mutect2:
               keep_tmpdir: onerror
 
           somatic_variant_annotation:
             tools: [vep]
-            tools_somatic_variant_calling: ['mutect']
+            tools_somatic_variant_calling: ['mutect2']
             path_somatic_variant: ../SOMATIC_VARIANT_CALLING
             vep:
               cache_dir: /path/to/vep/cache
 
           somatic_variant_filtration:
-            tools_somatic_variant_calling: ['mutect']
+            tools_somatic_variant_calling: ['mutect2']
             filtration_schema: list
             filter_list:
               - dkfz: {}
 
           somatic_variant_signatures:
             path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
-            tools_somatic_variant_calling: ['mutect']
+            tools_somatic_variant_calling: ['mutect2']
             has_annotation: True
             filtration_schema: list
 
@@ -229,7 +229,7 @@ def test_somatic_variant_signatures_workflow(somatic_variant_signatures_workflow
         )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for mapper in ("bwa",)
-        for caller in ("mutect",)
+        for caller in ("mutect2",)
         for annotator in ("vep",)
     ]
     expected = set(expected)

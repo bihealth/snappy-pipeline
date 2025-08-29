@@ -34,7 +34,7 @@ def minimal_config():
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
-            tools_somatic_variant_annotation: ['jannovar']
+            tools_somatic_variant_annotation: ['vep']
             filtration_schema: sets
             filter_sets:
               dkfz_and_ebfilter_and_oxog: {}
@@ -148,13 +148,13 @@ def test_eb_filter_step_part_get_input_files_run(somatic_variant_filtration_work
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
-            "annotator": "jannovar",
+            "annotator": "vep",
             "tumor_library": "P001-T1-DNA1-WGS1",
         }
     )
     base_out = (
-        "work/bwa.mutect2.jannovar.dkfz_bias_filter.P001-T1-DNA1-WGS1/out/"
-        "bwa.mutect2.jannovar.dkfz_bias_filter.P001-T1-DNA1-WGS1"
+        "work/bwa.mutect2.vep.dkfz_bias_filter.P001-T1-DNA1-WGS1/out/"
+        "bwa.mutect2.vep.dkfz_bias_filter.P001-T1-DNA1-WGS1"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
@@ -404,9 +404,9 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.mutect2.jannovar.dkfz_bias_filter."
+        "output/{mapper}.mutect2.vep.dkfz_bias_filter."
         "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/out/"
-        "{mapper}.mutect2.jannovar.dkfz_bias_filter.eb_filter."
+        "{mapper}.mutect2.vep.dkfz_bias_filter.eb_filter."
         "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}"
     )
     expected = [
@@ -423,9 +423,9 @@ def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow
         )
     ]
     tpl = (
-        "output/{mapper}.mutect2.jannovar.dkfz_bias_filter."
+        "output/{mapper}.mutect2.vep.dkfz_bias_filter."
         "eb_filter.P00{i}-T{t}-DNA1-WGS1.{filter}/log/"
-        "{mapper}.mutect2.jannovar.dkfz_bias_filter.eb_filter."
+        "{mapper}.mutect2.vep.dkfz_bias_filter.eb_filter."
         "P00{i}-T{t}-DNA1-WGS1.{filter}.{ext}{chksum}"
     )
     expected += [
@@ -471,7 +471,7 @@ def minimal_config_list():
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
-            tools_somatic_variant_annotation: ['jannovar']
+            tools_somatic_variant_annotation: ['vep']
             path_somatic_variant: "../somatic_variant_annotation"
             filtration_schema: list
             filter_list:
@@ -537,7 +537,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
-            "annotator": "jannovar",
+            "annotator": "vep",
             "tumor_library": "P001-T1-DNA1-WGS1",
             "filter_nb": 1,
         }
@@ -555,7 +555,7 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         fromdict={
             "mapper": "bwa",
             "var_caller": "mutect2",
-            "annotator": "jannovar",
+            "annotator": "vep",
             "tumor_library": "P001-T1-DNA1-WGS1",
             "filter_nb": 3,
         }
@@ -676,14 +676,14 @@ def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workf
 def test_somatic_variant_filtration_workflow_list(somatic_variant_filtration_workflow_list):
     """Test simple functionality of the workflow"""
     # Check result file construction
-    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
+    tpl = "output/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
     expected = [
         tpl.format(i=i, t=t, ext=ext, chksum=chksum)
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("vcf.gz", "vcf.gz.tbi", "full.vcf.gz", "full.vcf.gz.tbi")
         for chksum in ("", ".md5")
     ]
-    tpl = "output/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1/log/bwa.mutect2.jannovar.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
+    tpl = "output/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1/log/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
     expected += [
         tpl.format(i=i, t=t, ext=ext, chksum=chksum)
         for i, t in ((1, 1), (2, 1), (2, 2))

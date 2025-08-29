@@ -129,7 +129,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import (
-    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SOMATIC_VARIANT_CALLERS,
     SomaticVariantCallingWorkflow,
 )
 
@@ -1001,9 +1001,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         mappers = set(self.config.tools_ngs_mapping) & set(
             self.w_config.step_config["ngs_mapping"].tools.dna
         )
-        callers = set(self.config.tools_somatic_variant_calling) & set(
-            SOMATIC_VARIANT_CALLERS_MATCHED
-        )
+        callers = set(self.config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS)
         if self.config.has_annotation:
             annotators = set(self.config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
         else:

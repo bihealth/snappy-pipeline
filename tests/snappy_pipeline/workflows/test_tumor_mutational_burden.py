@@ -40,18 +40,11 @@ def minimal_config():
           somatic_variant_calling:
             tools:
             - mutect2
-            - scalpel
             mutect2: {}
-            scalpel:
-              path_target_regions: /path/to/target/regions.bed
 
           somatic_variant_annotation:
             path_somatic_variant: ../somatic_variant_calling
-            tools: ["vep", "jannovar"]
-            jannovar:
-              path_jannovar_ser: /path/to/jannover.ser
-              flag_off_target: False
-              dbnsfp: {}
+            tools: ["vep"]
             vep:
               cache_dir: /path/to/dir/cache
 
@@ -194,8 +187,8 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("json", "json.md5")
         for mapper in ("bwa",)
-        for var_caller in ("mutect2", "scalpel")
-        for anno_caller in ("vep", "jannovar")
+        for var_caller in ("mutect2",)
+        for anno_caller in ("vep",)
         for filt in (
             "no_filter",
             "dkfz_only",
@@ -227,8 +220,8 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
             "log.md5",
         )
         for mapper in ("bwa",)
-        for var_caller in ("mutect2", "scalpel")
-        for anno_caller in ("vep", "jannovar")
+        for var_caller in ("mutect2",)
+        for anno_caller in ("vep", )
         for filt in (
             "no_filter",
             "dkfz_only",
