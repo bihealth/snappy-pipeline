@@ -96,11 +96,12 @@ def write_clinical_samples_tsv(donors):
 
     sample_info_getters = []
     config = snakemake.config["step_config"]["cbioportal_export"]
-    for step, extra_info in config["sample_info"].items():
-        if step == "tumor_mutational_burden":
-            sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))
-        else:
-            raise Exception("Unknown sample info request")
+    if config["sample_info"]:
+        for step, extra_info in config["sample_info"].items():
+            if step == "tumor_mutational_burden":
+                sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))
+            else:
+                raise Exception("Unknown sample info request")
 
     # Header lines, first item must start with #
     # attribute Display Names

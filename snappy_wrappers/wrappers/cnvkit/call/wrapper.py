@@ -15,9 +15,12 @@ if center:
         center = " --center " + center
     else:
         center = " --center-at" + center
+else:
+    center = ""
 
 gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
 male = " --male-reference" if config["male_reference"] else ""
+purity = " --purity {}".foramt(config["purity"]) if config["purity"] > 0 else ""
 
 shell(
     r"""
@@ -50,10 +53,7 @@ cnvkit.py call \
         echo --filter {config[filter]}
     fi) \
     {center} {gender} {male} \
-    --ploidy {config[ploidy]} \
-    $(if [[ {config[purity]} -gt 0 ]]; then \
-        echo --purity {config[purity]}
-    fi) \
+    --ploidy {config[ploidy]} {purity} \
     {snakemake.input}
 
 d=$(dirname "{snakemake.output.calls}")

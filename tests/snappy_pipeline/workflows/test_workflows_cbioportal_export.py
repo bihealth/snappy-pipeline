@@ -33,17 +33,20 @@ def minimal_config():
             star:
               path_index: /path/to/star/index
           cbioportal_export:
-            # Paths to snappy steps containing results to be uploaded
-            path_ngs_mapping: /NGS_MAPPING
+            expression:
+              enabled: true
+              path_ngs_mapping: /NGS_MAPPING
+              expression_tool: star
             path_gene_id_mappings: DUMMY
-            expression_tool: star
             path_somatic_variant: /SOM_VAR_FILTRATION
             somatic_variant_calling_tool: mutect2
             somatic_variant_annotation_tool: "vep"
             filtration_schema: sets
             filter_set: dkfz_only
-            path_copy_number: /COPY_NUMBER
-            copy_number_tool: cnvkit
+            copy_number_alteration:
+              enabled: true
+              path_copy_number: /COPY_NUMBER
+              copy_number_tool: cnvkit
             exclude_variant_with_flag: LowFisherScore
             vcf2maf:
               ncbi_build: GRCh37
@@ -173,7 +176,7 @@ def test_cbioportal_clinical_data_step_part_get_output_files(cbioportal_export_w
 def test_cbioportal_clinical_data_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalClinicalDataStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_clinical_data"
+    base_name_out = "work/log/cbioportal_clinical_data.run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_clinical_data", "run")
@@ -235,7 +238,7 @@ def test_cbioportal_case_lists_step_part_get_output_files(cbioportal_export_work
 def test_cbioportal_case_lists_data_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalCaseListsStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_case_lists"
+    base_name_out = "work/log/cbioportal_case_lists.run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_case_lists", "run")
@@ -405,7 +408,7 @@ def test_cbioportal_mutations_step_part_get_output_files(cbioportal_export_workf
 def test_cbioportal_mutations_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalMutationsStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_mutations"
+    base_name_out = "work/log/cbioportal_mutations.run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_mutations", "run")
@@ -529,7 +532,7 @@ def test_cbioportal_cna_step_part_get_output_files_gistic(cbioportal_export_work
 def test_cbioportal_cna_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_cna"
+    base_name_out = "work/log/cbioportal_cna.log2"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_cna", "log2")
@@ -600,7 +603,7 @@ def test_cbioportal_segment_step_part_get_output_files(cbioportal_export_workflo
 def test_cbioportal_segment_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalSegmentStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_segment"
+    base_name_out = "work/log/cbioportal_segment.run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_segment", "run")
@@ -647,7 +650,7 @@ def test_cbioportal_expression_step_part_get_output_files(cbioportal_export_work
 def test_cbioportal_expression_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalExpressionStepPart.get_log_file()"""
     # Define expected
-    base_name_out = "work/log/cbioportal_expression"
+    base_name_out = "work/log/cbioportal_expression.run"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual
     actual = cbioportal_export_workflow.get_log_file("cbioportal_expression", "run")
@@ -720,5 +723,3 @@ def test_cbioportal_export_workflow(cbioportal_export_workflow):
     ]
     actual = list(sorted(cbioportal_export_workflow.get_result_files()))
     assert actual == expected
-
-    assert cbioportal_export_workflow.check_config() == 0

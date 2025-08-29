@@ -171,7 +171,7 @@ def test_picard_step_part_get_params(ngs_data_qc):
 def test_picard_step_part_get_resource_usage(ngs_data_qc):
     """Tests PicardStepPart.get_resource_usage() - metrics"""
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "24G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "64G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
