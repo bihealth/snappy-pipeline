@@ -49,18 +49,13 @@ def minimal_config():
               cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
-            filtration_schema: sets
-            filter_sets:
-              dkfz_only: ~
-              dkfz_and_ebfilter: {}
-              dkfz_and_oxog: {}
-              dkfz_and_ebfilter_and_oxog: {}
-            exon_lists: {}
+            filter_list:
+            - dkfz: {}
 
           tumor_mutational_burden:
             path_somatic_variant: ../somatic_variant_filtration
+            somatic_variant_step: somatic_variant_filtration
             has_annotation: True # REQUIRED
-            filtration_schema: sets
             target_regions: /path/to/regions.bed
 
         data_sets:
@@ -113,8 +108,8 @@ def tumor_mutational_burden_workflow(
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.{tumor_library}.{filter}.{region}"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
@@ -127,8 +122,8 @@ def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_work
 def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
     base_out = (
-        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}"
+        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}/out/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}"
     )
     expected = get_expected_output_json_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_output_files("tmb_gathering", "run")
@@ -138,8 +133,8 @@ def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_wor
 def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
     base_out = (
-        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}/log/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.{tumor_library}.{filter}.{region}"
+        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}/log/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_log_file("tmb_gathering", "run")
@@ -169,16 +164,14 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.P00{i}-T{t}-DNA1-WGS1.{filt}.{region}/{dir_}/"
-        "{mapper}.{var_caller}.{anno_caller}.dkfz_bias_filter.eb_filter.tmb.P00{i}-T{t}-DNA1-WGS1.{filt}.{region}.{ext}"
+        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
         tpl.format(
             mapper=mapper,
             var_caller=var_caller,
             anno_caller=anno_caller,
-            filt=filt,
-            region=region,
             i=i,
             t=t,
             ext=ext,
@@ -189,22 +182,12 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         for mapper in ("bwa",)
         for var_caller in ("mutect2",)
         for anno_caller in ("vep",)
-        for filt in (
-            "no_filter",
-            "dkfz_only",
-            "dkfz_and_ebfilter",
-            "dkfz_and_ebfilter_and_oxog",
-            "dkfz_and_oxog",
-        )
-        for region in ("genome_wide",)
     ]
     expected += [
         tpl.format(
             mapper=mapper,
             var_caller=var_caller,
             anno_caller=anno_caller,
-            filt=filt,
-            region=region,
             i=i,
             t=t,
             ext=ext,
@@ -222,14 +205,6 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         for mapper in ("bwa",)
         for var_caller in ("mutect2",)
         for anno_caller in ("vep", )
-        for filt in (
-            "no_filter",
-            "dkfz_only",
-            "dkfz_and_ebfilter",
-            "dkfz_and_ebfilter_and_oxog",
-            "dkfz_and_oxog",
-        )
-        for region in ("genome_wide",)
     ]
     expected = list(sorted(expected))
     actual = list(sorted(tumor_mutational_burden_workflow.get_result_files()))

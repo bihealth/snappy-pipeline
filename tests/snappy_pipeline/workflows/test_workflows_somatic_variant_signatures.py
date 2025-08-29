@@ -44,15 +44,15 @@ def minimal_config():
 
           somatic_variant_filtration:
             tools_somatic_variant_calling: ['mutect2']
-            filtration_schema: list
             filter_list:
               - dkfz: {}
 
           somatic_variant_signatures:
             path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            somatic_variant_step: somatic_variant_filtration
             tools_somatic_variant_calling: ['mutect2']
             has_annotation: True
-            filtration_schema: list
+            is_filtered: True
 
         data_sets:
           first_batch:

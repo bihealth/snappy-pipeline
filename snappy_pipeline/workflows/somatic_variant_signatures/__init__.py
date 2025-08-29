@@ -27,7 +27,6 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
-from .model import FiltrationSchema
 
 __author__ = "Clemens Messerschmidt"
 
@@ -48,11 +47,8 @@ class SignaturesStepPart(BaseStepPart):
         self.name_postfix = "{tumor_library}"
         if self.config.has_annotation:
             self.name_prefix += ".{anno_caller}"
-        if self.config.filtration_schema == FiltrationSchema.list:
+        if self.config.is_filtered:
             self.name_prefix += ".filtered"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            self.name_prefix += ".dkfz_bias_filter.eb_filter"
-            self.name_postfix += ".{filter}.{region}"
 
         # Build shortcut from cancer bio sample name to matched cancre sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -199,16 +195,9 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        sub_workflow = "somatic_variant_calling"
-        if config.filtration_schema == FiltrationSchema.unfiltered:
-            if config.has_annotation:
-                sub_workflow = "somatic_variant_annotation"
-        else:
-            if config.has_annotation and config.filter_before_annotation:
-                sub_workflow = "somatic_variant_annotation"
-            else:
-                sub_workflow = "somatic_variant_filtration"
-        self.register_sub_workflow(sub_workflow, config.path_somatic_variant, "somatic_variant")
+        self.register_sub_workflow(
+            config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
+        )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
         tools = set(self.w_config.step_config["ngs_mapping"].tools.dna)
@@ -238,22 +227,6 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                 "No valid somatic variant annotation tool"
             )
 
-        if config.filtration_schema == FiltrationSchema.sets:
-            tools = set(
-                self.w_config.step_config["somatic_variant_filtration"].filter_sets.keys()
-            ) | set(["no_filter"])
-            if not config.filter_sets:
-                config.filter_sets = tools
-            config.filter_sets = set(config.filter_sets) & tools
-            assert len(config.filter_sets) > 0, "No valid filtration sets has been configured"
-            regions = set(
-                self.w_config.step_config["somatic_variant_filtration"].exon_lists.keys()
-            ) | set(["genome_wide"])
-            if not config.exon_lists:
-                config.exon_lists = regions
-            config.exon_lists = set(config.exon_lists) & regions
-            assert len(config.exon_lists) > 0, "No valid regions for filtration has been configured"
-
         self.config = config
 
         # Register sub step classes so the sub steps are available
@@ -268,25 +241,18 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         name_pattern = "{mapper}.{caller}"
         if config.has_annotation:
             name_pattern += ".{anno_caller}"
-        if config.filtration_schema == FiltrationSchema.list:
+        if config.is_filtered:
             name_pattern += ".filtered.deconstruct_sigs.{tumor_library.name}"
-        elif config.filtration_schema == FiltrationSchema.sets:
-            name_pattern += ".dkfz_bias_filter.eb_filter.deconstruct_sigs.{tumor_library.name}.{filter}.{region}"
         else:
             name_pattern += ".deconstruct_sigs.{tumor_library.name}"
 
         anno_callers = config.tools_somatic_variant_annotation if config.has_annotation else []
-
-        filters = config.filter_sets if config.filtration_schema == FiltrationSchema.sets else []
-        regions = config.exon_lists if config.filtration_schema == FiltrationSchema.sets else []
 
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
             mapper=config.tools_ngs_mapping,
             caller=config.tools_somatic_variant_calling,
             anno_caller=anno_callers,
-            filter=filters,
-            region=regions,
         )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
@@ -310,11 +276,3 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                 yield from expand(
                     tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
                 )
-
-    def check_config(self):
-        if self.config.filtration_schema != FiltrationSchema.unfiltered:
-            self.ensure_w_config(
-                ("step_config", "somatic_variant_filtration"),
-                "When the filtration schema is not 'unfiltered', "
-                "the somatic_variant_filtration step must be configured",
-            )

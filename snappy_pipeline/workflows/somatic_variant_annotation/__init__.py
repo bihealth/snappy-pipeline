@@ -84,7 +84,6 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
-from .model import FiltrationSchema
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -133,16 +132,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         tpl = "{mapper}.{var_caller}"
         if annotator:
             tpl += f".{annotator}"
-        if config.filtration_schema == FiltrationSchema.list:
+        if config.is_filtered:
             tpl += ".filtered.{tumor_library}"
-        elif config.filtration_schema == FiltrationSchema.sets:
-            tpl += ".".join(
-                "dkfz_bias_filter.eb_filter",
-                "{tumor_library}",
-                config.filter_sets,
-                config.exon_lists,
-            )
-        elif config.filtration_schema == FiltrationSchema.unfiltered:
+        else:
             tpl += ".{tumor_library}"
         return tpl
 
@@ -272,11 +264,8 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
-        default = str(SomaticVariantAnnotationConfigModel.model_fields["filtration_schema"].default)
         previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
-        if config["step_config"]["somatic_variant_annotation"].get(
-            "filtration_schema", default
-        ) != str(FiltrationSchema.unfiltered):
+        if config["step_config"]["somatic_variant_annotation"].get("is_filtered", False):
             from snappy_pipeline.workflows.somatic_variant_filtration import (
                 SomaticVariantFiltrationWorkflow,
             )
@@ -294,13 +283,13 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepAnnotateSomaticVcfStepPart, LinkOutStepPart))
         # Register sub workflows
-        if self.config.filtration_schema == FiltrationSchema.unfiltered:
+        if self.config.is_filtered:
             self.register_sub_workflow(
-                "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
+                "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
             )
         else:
             self.register_sub_workflow(
-                "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
+                "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
             )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
