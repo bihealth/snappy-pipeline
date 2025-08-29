@@ -560,7 +560,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
             ].tools
-        if not self.config.tools_somatic_variant_annotation:
+        if self.config.has_annotation and not self.config.tools_somatic_variant_annotation:
             self.config.tools_somatic_variant_annotation = self.w_config.step_config[
                 "somatic_variant_annotation"
             ].tools

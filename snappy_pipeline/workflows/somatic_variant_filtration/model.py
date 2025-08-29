@@ -94,13 +94,13 @@ class SomaticVariantFiltration(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"
     """Needed for dkfz & ebfilter"""
 
-    tools_ngs_mapping: list[str] | None = None
+    tools_ngs_mapping: list[str] = []
     """Default: use those defined in ngs_mapping step"""
 
-    tools_somatic_variant_calling: list[str] | None = None
+    tools_somatic_variant_calling: list[str] = []
     """Default: use those defined in somatic_variant_calling step"""
 
-    tools_somatic_variant_annotation: list[str] | None = None
+    tools_somatic_variant_annotation: list[str] = []
     """Default: use those defined in somatic_variant_annotation step"""
 
     has_annotation: bool = True
