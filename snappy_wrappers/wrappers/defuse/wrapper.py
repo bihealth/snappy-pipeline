@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -32,16 +34,16 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
-    zcat {snakemake.params.args[left]} > $inputdir/reads_1.fastq.gz
+    zcat {args[left]} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
-    zcat {snakemake.params.args[right]} > $inputdir/reads_2.fastq.gz
+    zcat {args[right]} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir
 
 defuse_run.pl \
-    -d {snakemake.config[step_config][somatic_gene_fusion_calling][defuse][path_dataset_directory]} \
+    -d {args[path_dataset_directory]} \
     -1 input/reads_1.fastq.gz \
     -2 input/reads_2.fastq.gz \
     -o output \

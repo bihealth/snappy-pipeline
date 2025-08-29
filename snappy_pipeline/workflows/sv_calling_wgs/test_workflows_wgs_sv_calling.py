@@ -93,16 +93,6 @@ def sv_calling_wgs_workflow(
 # Tests for Delly2StepPart (all) -------------------------------------------------------------------
 
 
-def test_delly2_step_part_get_ped_members(sv_calling_wgs_workflow):
-    """Tests Delly2StepPart.get_ped_members()"""
-    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    # Define expected
-    expected = "P001-N1-DNA1-WGS1 P002-N1-DNA1-WGS1 P003-N1-DNA1-WGS1"
-    # Get actual
-    actual = sv_calling_wgs_workflow.substep_getattr("delly2", "get_ped_members")(wildcards)
-    assert actual == expected
-
-
 def test_delly2_step_part_get_resource_usage(sv_calling_wgs_workflow):
     """Tests Delly2StepPart.get_resource_usage()"""
     # Set actions
@@ -337,66 +327,6 @@ def test_manta_step_part_get_resource_usage(sv_calling_wgs_workflow):
         msg_error = f"Assertion error for resource '{resource}' for action 'run'."
         actual = sv_calling_wgs_workflow.get_resource("manta", "run", resource)
         assert actual == expected, msg_error
-
-
-# Tests for SvTkStepPart ---------------------------------------------------------------------------
-
-
-def test_svtk_step_part_get_input_files(sv_calling_wgs_workflow):
-    """Tests SvTkStepPart.get_input_files()"""
-    wildcards = Wildcards(
-        fromdict={"mapper": "bwa", "caller": "delly2", "library_name": "P001-N1-DNA1-WGS1"}
-    )
-    expected = {
-        "calls": (
-            "output/bwa.delly2.call.P001-N1-DNA1-WGS1/out/bwa.delly2.call.P001-N1-DNA1-WGS1.bcf"
-        )
-    }
-    actual = sv_calling_wgs_workflow.get_input_files("svtk", "standardize")(wildcards)
-    assert actual == expected
-
-
-def test_svtk_step_part_get_output_files(sv_calling_wgs_workflow):
-    """Tests SvTkStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.{caller}.svtk_standardize.{library_name}/out/"
-        "{mapper}.{caller}.svtk_standardize.{library_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = sv_calling_wgs_workflow.get_output_files("svtk", "standardize")
-    assert actual == expected
-
-
-def test_svtk_step_part_get_log_file(sv_calling_wgs_workflow):
-    """Tests SvTkStepPart.get_log_file()"""
-    expected = (
-        "work/{mapper}.{caller}.svtk_standardize.{library_name}/log/"
-        "{mapper}.{caller}.svtk_standardize.{library_name}.log"
-    )
-    actual = sv_calling_wgs_workflow.get_log_file("svtk", "standardize")
-    assert actual == expected
-
-
-def test_svtk_step_part_get_resource_usage(sv_calling_wgs_workflow):
-    """Tests SvTkStepPart.get_resource_usage()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "04:00:00", "memory": "4096M", "partition": "medium"}
-    # Evaluate
-    # Note: only action available is 'standardize'
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}' for action 'standardize'."
-        actual = sv_calling_wgs_workflow.get_resource("svtk", "standardize", resource)
-        assert actual == expected, msg_error
-
-
-def test_svtk_step_part_get_ped_members(sv_calling_wgs_workflow):
-    """Tests SvTkStepPart.get_ped_members()"""
-    wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
-    # Define expected
-    expected = "P001-N1-DNA1-WGS1 P002-N1-DNA1-WGS1 P003-N1-DNA1-WGS1"
-    # Get actual
-    actual = sv_calling_wgs_workflow.substep_getattr("svtk", "get_ped_members")(wildcards)
-    assert actual == expected
 
 
 # Tests for PopDelStepPart -------------------------------------------------------------------------

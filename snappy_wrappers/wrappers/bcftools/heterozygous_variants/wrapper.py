@@ -1,23 +1,32 @@
 # -*- coding: utf-8 -*-
 """Wrapper for finding heterozygous variants with bcftools"""
+from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
-if "args" in snakemake.params and "intervals" in snakemake.params["args"]:
-    locii = "-r " + snakemake.params["args"]["intervals"]
+args = getattr(snakemake.params, "args", {})
+
+reference_path = args["reference_path"]
+
+# FIXME: "locii" only ever gets set as the input, never as a parameter in args
+if intervals := args["intervals"]:
+    locii = "-r " + intervals
 elif "locii" in snakemake.input.keys():
     locii = "-R " + snakemake.input.locii
-elif "locii" in config and config["locii"]:
-    locii = "-R " + config["locii"]
+elif locii_arg := args.get("locii"):
+    locii = "-R " + locii_arg
 else:
     locii = ""
 
 # Convert minimum B-allele fraction into ratio of alternative to reference alleles
-min_ratio = config["min_baf"] / (1 - config["min_baf"])
+min_ratio = args["min_baf"] / (1 - args["min_baf"])
 max_ratio = 1 / min_ratio
+
+min_depth = args["min_depth"]
+max_depth = args["max_depth"]
 
 shell(
     r"""
@@ -34,13 +43,13 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 only_one_variant="N_ALT=2 & FORMAT/AD[:2]=0"
-min_depth="FORMAT/AD[:0]>{config[min_depth]} & FORMAT/AD[:1]>{config[min_depth]}"
+min_depth="FORMAT/AD[:0]>{min_depth} & FORMAT/AD[:1]>{min_depth}"
 hetero="{min_ratio}*FORMAT/AD[:0]<=FORMAT/AD[:1] & FORMAT/AD[:1]<={max_ratio}*FORMAT/AD[:0]"
 
 bcftools mpileup \
     {locii} \
-    --max-depth {config[max_depth]} \
-    -f {snakemake.config[static_data_config][reference][path]} \
+    --max-depth {max_depth} \
+    -f {reference_path} \
     -a "FORMAT/AD" \
     {snakemake.input.bam} \
     | bcftools filter \

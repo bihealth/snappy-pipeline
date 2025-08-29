@@ -7,8 +7,8 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["purecn"]
+args = getattr(snakemake.params, "args", {})
+config = args["config"]
 
 if "container" in snakemake.input.keys() and snakemake.input.container:
     container = snakemake.input.container
@@ -87,8 +87,8 @@ apptainer exec --home $PWD {bindings} {container} $cmd
 
 # Rename coverage file name
 d=$(dirname {snakemake.output.coverage})
-mapper="{snakemake.wildcards[mapper]}"
-libname="{snakemake.wildcards[library_name]}"
+mapper="{args[mapper]}"
+libname="{args[library_name]}"
 fn="$d/$mapper.${{libname}}_coverage_loess.txt.gz"
 
 test -e $fn

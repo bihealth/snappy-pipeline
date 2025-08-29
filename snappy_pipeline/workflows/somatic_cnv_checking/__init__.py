@@ -59,9 +59,10 @@ Currently, no reports are generated.
 
 import os
 import sys
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
@@ -161,6 +162,17 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         )
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
+    def get_args(self, **kwargs):
+        def args_fn(_wildcards):
+            return {
+                "reference_path": self.w_config.static_data_config.reference.path,
+                "min_baf": self.config.min_baf,
+                "min_depth": self.config.min_depth,
+                "max_depth": self.config.max_depth,
+            }
+
+        return args_fn
+
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
@@ -220,6 +232,11 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             yield (key, base_path_out + ext)
             yield (key + "_md5", base_path_out + ext + ".md5")
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        # Validate action
+        self._validate_action(action)
+        return self.config.model_dump(by_alias=True)
+
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
@@ -240,7 +257,11 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
         def input_function(wildcards):
             name_pattern = "{mapper}.{caller}.{library_name}".format(**wildcards)
             base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-            return {"vcf": base_path_out + ".vcf.gz", "tsv": base_path_out + ".tsv"}
+            return {
+                "vcf": base_path_out + ".vcf.gz",
+                "tsv": base_path_out + ".tsv",
+                "reference": self.parent.w_config.static_data_config.reference.path,
+            }
 
         return input_function
 
@@ -257,6 +278,17 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment": base_path_out + ".segment.pdf",
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
+
+    def get_args(self, action: str):
+        # Validate action
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "library_name": wildcards.library_name,
+            }
+
+        return args_fn
 
     def get_log_file(self, action):
         # Validate action

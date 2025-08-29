@@ -6,9 +6,11 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 # Get shortcuts to static data and step configuration
-static_config = snakemake.config["static_data_config"]
-anno_config = snakemake.config["step_config"]["variant_annotation"]
+static_config = args["static_data_config"]
+anno_config = args["variant_annotation"]
 
 # Build list of arguments to pass to Jannovar
 annotation_args = []
@@ -77,7 +79,7 @@ annotation_snippet = " \\\n    ".join(annotation_args)
 
 # Build intervals argument
 arg_intervals = " ".join(
-    ["--interval {}".format(interval) for interval in snakemake.params["args"]["intervals"]]
+    ["--interval {}".format(interval) for interval in args["intervals"]]
 )
 
 shell(
@@ -111,15 +113,15 @@ jannovar \
     -XX:+UseG1GC \
     --input-vcf {snakemake.input.vcf} \
     --output-vcf $TMPDIR/tmp.vcf \
-    --database {snakemake.config[step_config][variant_annotation][path_jannovar_ser]} \
+    --database {anno_config[path_jannovar_ser]} \
     --enable-off-target-filter \
     --use-threshold-filters \
     --inheritance-anno-use-filters \
-    $(if [[ {snakemake.config[step_config][variant_annotation][use_advanced_ped_filters]} == "True" ]]; then \
+    $(if [[ {anno_config[use_advanced_ped_filters]} == "True" ]]; then \
       echo --use-advanced-pedigree-filters; \
       fi) \
     --pedigree-file {snakemake.input.ped} \
-    --ref-fasta {snakemake.config[static_data_config][reference][path]} \
+    --ref-fasta {static_config[reference][path]} \
     {arg_intervals} \
     {annotation_snippet}
 

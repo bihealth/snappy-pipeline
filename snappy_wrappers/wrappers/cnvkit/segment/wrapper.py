@@ -6,15 +6,14 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
 
-method = config["segmentation_method"]
-if method == "cbs" and config["smooth_cbs"]:
+method = args["method"]
+if method == "cbs" and args["smooth_cbs"]:
     method += " --smooth-cbs"
 
-if float(config["segmentation_threshold"]) > 0:
-    threshold = " --threshold " + str(config["segmentation_threshold"])
+if float(args["threshold"]) > 0:
+    threshold = " --threshold " + str(args["threshold"])
 else:
     threshold = ""
 
@@ -44,11 +43,11 @@ set -x
 cnvkit.py segment \
     --output {snakemake.output.segments} \
     --method {method} \
-    $(if [[ "{config[drop_low_coverage]}" = "True" ]]; then \
+    $(if [[ "{args[drop_low_coverage]}" = "True" ]]; then \
         echo --drop-low-coverage
     fi) \
     {threshold} \
-    --drop-outliers {config[drop_outliers]} \
+    --drop-outliers {args[drop_outliers]} \
     {snakemake.input}
 
 d=$(dirname "{snakemake.output.segments}")

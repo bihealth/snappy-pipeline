@@ -231,9 +231,16 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
 
         def args_function(wildcards):
             # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": list(sorted(self._collect_reads(wildcards, wildcards.library_name, ""))),
+                "right": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
+                ),
+                "kallisto_index": self.config.pizzly.kallisto_index,
+                "kmer_size": self.config.pizzly.kmer_size,
+                "transcripts_fasta": self.config.pizzly.transcripts_fasta,
+                "annotation_gtf": self.config.pizzly.annotation_gtf,
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -271,7 +278,11 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": left,
+                "right": right,
+                "path_ctat_resource_lib": self.config.star_fusion.path_ctat_resource_lib,
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -309,7 +320,11 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": left,
+                "right": right,
+                "path_dataset_directory": self.config.get(self.name).get("path_dataset_directory"),
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -347,7 +362,12 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
+            return {
+                "left": left,
+                "right": right,
+                "path_genome": self.config.get(self.name).get("path_genome"),
+                "path_index": self.config.get(self.name).get("path_index"),
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -378,14 +398,26 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     def get_args(self, action):
         """Return function that maps wildcards to dict for input files"""
 
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
         def args_function(wildcards):
             # TODO: wildcards.library_name is tumor_library_name
             left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
             right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"input": {"reads_left": left, "reads_right": right}}
+
+            return {
+                "input": {"reads_left": left, "reads_right": right},
+                "trim_adapters": self.config.arriba.trim_adapters,
+                "num_threads_trimming": self.config.arriba.num_threads_trimming,
+                "num_threads": self.config.arriba.num_threads,
+                "path_index": self.config.arriba.path_index,
+                "star_parameters": self.config.arriba.star_parameters,
+                "reference_path": self.w_config.static_data_config.reference.path,
+                "features_path": self.w_config.static_data_config.features.path,
+                "blacklist": self.config.arriba.blacklist,
+                "known_fusions": self.config.arriba.known_fusions,
+                "tags": self.config.arriba.tags,
+                "structural_variants": self.config.arriba.structural_variants,
+                "protein_domains": self.config.arriba.protein_domains,
+            }
 
         assert action == "run", "Unsupported actions"
         return args_function

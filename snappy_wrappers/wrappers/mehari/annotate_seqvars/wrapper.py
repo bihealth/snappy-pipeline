@@ -5,13 +5,13 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-export_config = getattr(snakemake.params, "args", {})
-path_exon_bed = export_config["path_exon_bed"]
-reference = export_config["reference"]
-transcript_db = export_config.get("transcript_db")
-clinvar_db = export_config.get("clinvar_db")
-frequency_db = export_config.get("frequency_db")
-hgnc_tsv = export_config["hgnc_tsv"]
+args = getattr(snakemake.params, "args", {})
+path_exon_bed = args["path_exon_bed"]
+reference = args["reference"]
+transcript_db = args.get("transcript_db")
+clinvar_db = args.get("clinvar_db")
+frequency_db = args.get("frequency_db")
+hgnc_tsv = args["hgnc_tsv"]
 
 if not Path(transcript_db).exists(follow_symlinks=True):
     transcript_db = None

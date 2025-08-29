@@ -2,6 +2,9 @@
 
 import re
 from itertools import chain
+from typing import Any
+
+from snakemake.io import Wildcards
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
@@ -204,12 +207,28 @@ class PopDelStepPart(
             ],
         )
 
-    def get_ped_members(self, wildcards):
+    def get_args(self, action: str):
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_profile(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_args_call(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "chrom": wildcards.chrom,
+            "begin": wildcards.begin,
+            "end": wildcards.end,
+        }
+
+    def _get_args_reorder_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        return " ".join(
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        )
+        return {
+            "ped_members": " ".join(
+                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+            )
+        }
 
 
 class Sniffles2StepPart(BaseStepPart):

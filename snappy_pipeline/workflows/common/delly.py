@@ -53,11 +53,20 @@ class Delly2StepPart(
         for sheet in self.parent.shortcut_sheets:
             self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+        return {
+            "genome": self.w_config.static_data_config.reference.path,
+            "config": dict(self.config.get(self.name)),
+        }
+
     @dictify
     def _get_input_files_call(self, wildcards):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         token = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{token}/out/{token}.bam")
+        yield "bai", ngs_mapping(f"output/{token}/out/{token}.bam.bai")
 
     @dictify
     def _get_output_files_call(self):

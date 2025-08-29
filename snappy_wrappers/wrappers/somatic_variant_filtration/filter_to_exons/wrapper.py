@@ -9,7 +9,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-if snakemake.wildcards.exon_list == "genome_wide":
+args = getattr(snakemake.params, "args", {})
+
+if args["exon_list"] == "genome_wide":
     shell(
         textwrap.dedent(
             r"""
@@ -21,9 +23,7 @@ if snakemake.wildcards.exon_list == "genome_wide":
         )
     )
 else:
-    bed_path = snakemake.config["step_config"]["somatic_variant_filtration"]["exon_lists"][
-        snakemake.wildcards.exon_list
-    ]
+    bed_path = args["exon_lists"][args["exon_list"]]
     shell(
         textwrap.dedent(
             r"""
@@ -34,7 +34,7 @@ else:
         -b {bed_path} \
         -wa \
         -u \
-        -g {snakemake.config[static_data_config][reference][path]}.genome \
+        -g {args[reference]}.genome \
         -sorted \
         -header \
     | bgzip -c \

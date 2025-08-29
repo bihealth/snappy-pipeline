@@ -2,6 +2,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -55,7 +57,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run "bcftools stats"
 bcftools stats \
     --split-by-ID \
-    -s {snakemake.wildcards.donor_library_name} \
+    -s {args[donor_library_name]} \
     {snakemake.input.vcf} \
 > {snakemake.output.txt}
 

@@ -58,6 +58,8 @@ rule somatic_cnv_checking_pileup_normal:
         unpack(wf.get_input_files("pileup", "normal")),
     output:
         **wf.get_output_files("pileup", "normal"),
+    params:
+        args=wf.get_args("pileup", "normal"),
     threads: wf.get_resource("pileup", "normal", "threads")
     resources:
         time=wf.get_resource("pileup", "normal", "time"),
@@ -78,6 +80,8 @@ rule somatic_cnv_checking_pileup_tumor:
         unpack(wf.get_input_files("pileup", "tumor")),
     output:
         **wf.get_output_files("pileup", "tumor"),
+    params:
+        args=wf.get_args("pileup", "tumor"),
     threads: wf.get_resource("pileup", "tumor", "threads")
     resources:
         time=wf.get_resource("pileup", "tumor", "time"),
@@ -99,6 +103,8 @@ if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
             unpack(wf.get_input_files("cnv", "run")),
         output:
             **wf.get_output_files("cnv", "run"),
+        params:
+            args=wf.get_args("cnv", "run"),
         threads: wf.get_resource("cnv", "run", "threads")
         resources:
             time=wf.get_resource("cnv", "run", "time"),
@@ -117,6 +123,8 @@ if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
             unpack(wf.get_input_files("report", "run")),
         output:
             **wf.get_output_files("report", "run"),
+        params:
+            args=wf.get_args("report", "run"),
         threads: wf.get_resource("report", "run", "threads")
         resources:
             time=wf.get_resource("report", "run", "time"),

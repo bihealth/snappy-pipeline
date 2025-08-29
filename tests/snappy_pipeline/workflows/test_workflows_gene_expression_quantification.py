@@ -26,6 +26,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           ngs_mapping:
@@ -99,6 +101,7 @@ def test_featurecounts_step_part_get_input_files(gene_expression_quantification_
     expected = {
         "bai": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam.bai",
         "bam": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam",
+        "features": "/path/to/features.gtf",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1", "mapper": "star"})

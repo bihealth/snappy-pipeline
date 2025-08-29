@@ -7,10 +7,12 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-reads_left = snakemake.params.args["input"]["reads_left"]
-reads_right = snakemake.params.args["input"].get("reads_right", "")
+reads_left = args["input"]["reads_left"]
+reads_right = args["input"].get("reads_right", "")
 
 # salmon flag for first reads changes for single-end data.
 if reads_right:
@@ -60,7 +62,7 @@ if [[ "{reads_right}" != "" ]]; then
     right_files_prefixed=" -2 ${{right_files}}"
 fi
 
-t2g="{snakemake.config[step_config][gene_expression_quantification][salmon][path_transcript_to_gene]}"
+t2g="{args[path_transcript_to_gene]}"
 t2g_cmd=""
 if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]
 then
@@ -68,13 +70,13 @@ then
 fi
 
 libraryType="A"
-if [[ {snakemake.config[step_config][gene_expression_quantification][strand]} -ge 0 ]]
+if [[ {args[strand]} -ge 0 ]]
 then
     libraryType="I"
-    if [[ {snakemake.config[step_config][gene_expression_quantification][strand]} -gt 0 ]]
+    if [[ {args[strand]} -gt 0 ]]
     then
         libraryType="${{libraryType}}S"
-        if [[ {snakemake.config[step_config][gene_expression_quantification][strand]} -eq 1 ]]
+        if [[ {args[strand]} -eq 1 ]]
         then
             libraryType="${{libraryType}}F"
         else
@@ -86,14 +88,14 @@ then
 fi
 
 salmon quant \
-    -i {snakemake.config[step_config][gene_expression_quantification][salmon][path_index]} \
+    -i {args[path_index]} \
     -l $libraryType \
     {read_flag} ${{left_files_prefixed}} ${{right_files_prefixed}} \
     ${{t2g_cmd}} \
     -o $TMPDIR \
-    -p {snakemake.config[step_config][gene_expression_quantification][salmon][num_threads]} \
+    -p {args[num_threads]} \
     --auxDir aux \
-    {snakemake.config[step_config][gene_expression_quantification][salmon][salmon_params]}
+    {args[salmon_params]}
 
 # Copy over the output files
 cp $TMPDIR/quant.sf {snakemake.output.transcript_sf}

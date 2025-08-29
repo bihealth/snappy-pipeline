@@ -1,9 +1,10 @@
 import re
 import typing
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
-from snakemake.io import touch
+from snakemake.io import touch, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
@@ -93,6 +94,7 @@ class MeltStepPart(
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
         yield "bai", ngs_mapping(f"output/{infix}/out/{infix}.bam.bai")
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_preprocess(self):
@@ -114,6 +116,7 @@ class MeltStepPart(
         infix = f"{wildcards.mapper}.melt_preprocess.{wildcards.library_name}"
         yield "orig_bam", f"work/{infix}/out/{wildcards.library_name}.bam"
         yield "disc_bam", f"work/{infix}/out/{wildcards.library_name}.bam.disc"
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_indiv_analysis(self):
@@ -133,6 +136,7 @@ class MeltStepPart(
             if member.dna_ngs_library:
                 infix = f"{wildcards.mapper}.melt_indiv_analysis.{member.dna_ngs_library.name}.{wildcards.me_type}"
                 yield f"work/{infix}/out/.done.{member.dna_ngs_library.name}"
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_group_analysis(self):
@@ -160,6 +164,7 @@ class MeltStepPart(
         yield "done", f"work/{infix_done}/out/.done".format(**wildcards)
         infix_bam = f"{wildcards.mapper}.melt_preprocess.{wildcards.library_name}"
         yield "bam", f"work/{infix_bam}/out/{wildcards.library_name}.bam"
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_genotype(self):
@@ -184,6 +189,7 @@ class MeltStepPart(
                 infix = f"{wildcards.mapper}.melt_genotype.{wildcards.index_library_name}.{wildcards.me_type}"
                 paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
         yield "genotype", paths
+        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_log_file_make_vcf(self):
@@ -228,3 +234,18 @@ class MeltStepPart(
     @dictify
     def _get_log_file_merge_vcf(self):
         yield from self._get_log_file_with_infix("{mapper}.melt.{library_name}").items()
+
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            params = {
+                "config": self.config.melt.model_dump(by_alias=True),
+            }
+            if self.parent.name == "sv_calling_targeted":
+                params["exome"] = True
+            if getattr(wildcards, "me_type", None):
+                params["me_type"] = getattr(wildcards, "me_type")
+            return params
+
+        return args_fn

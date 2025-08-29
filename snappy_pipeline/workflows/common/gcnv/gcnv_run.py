@@ -7,6 +7,7 @@ import re
 import warnings
 from glob import glob
 from itertools import chain
+from typing import Any
 
 from snakemake.io import Wildcards, expand, touch
 
@@ -228,7 +229,7 @@ class ContigPloidyMixin:
         name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-    def _get_params_contig_ploidy(self, wildcards: Wildcards):
+    def _get_args_contig_ploidy(self, wildcards: Wildcards):
         """Get ploidy-model parameters.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
@@ -284,7 +285,7 @@ class CallCnvsMixin:
         name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
-    def _get_params_call_cnvs(self, wildcards):
+    def _get_args_call_cnvs(self, wildcards):
         """Get model parameters.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
@@ -361,7 +362,7 @@ class PostGermlineCallsMixin:
         name_pattern = f"{wildcards.mapper}.gcnv_contig_ploidy.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}/.done"
 
-    def _get_params_post_germline_calls(self, wildcards):
+    def _get_args_post_germline_calls(self, wildcards):
         """Get post germline model parameters.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
@@ -425,6 +426,9 @@ class JointGermlineCnvSegmentationMixin:
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
+
+    def _get_args_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
 
 class MergeMultikitFamiliesMixin:
@@ -505,7 +509,7 @@ class RunGcnvStepPart(
         # Validate configuration, precomputed models must be present
         self.validate_request()
 
-    def get_params(self, action: str):
+    def get_args(self, action: str):
         """
         :param action: Action (i.e., step) in the workflow. Currently available for:
         'ploidy-model', 'model', and 'post_germline_calls'.
@@ -522,7 +526,16 @@ class RunGcnvStepPart(
             raise UnsupportedActionException(error_message)
 
         # Return requested function
-        return getattr(self, f"_get_params_{action}")
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
+
+    def _get_args_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     @listify
     def get_result_files(self):

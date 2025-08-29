@@ -51,10 +51,10 @@ def minimal_config():
             # Description of dataset in cBioPortal
             study:
               type_of_cancer: mixed
-              cancer_study_id: mixed_pedion_a02p
-              study_description: "PeDiOn project A02P"
-              study_name: PeDiOn_A02P
-              study_name_short: A02P
+              cancer_study_id: mixed_test
+              study_description: "Test of arguments"
+              study_name: test_study
+              study_name_short: test
               reference_genome: hg19
 
         data_sets:
@@ -130,6 +130,20 @@ def test_cbioportal_meta_files_step_part_get_output_files(cbioportal_export_work
     assert actual == expected
 
 
+def test_cbioportal_meta_files_step_part_get_args(cbioportal_export_workflow):
+    """Tests cbioportalMetaFilesStepPart.get_args()"""
+    expected = {
+        "type_of_cancer": "mixed",
+        "cancer_study_id": "mixed_test",
+        "study_description": "Test of arguments",
+        "study_name": "test_study",
+        "study_name_short": "test",
+        "reference_genome": "hg19",
+    }
+    actual = cbioportal_export_workflow.get_args("cbioportal_meta_files", "run")
+    assert actual == expected
+
+
 def test_cbioportal_meta_files_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalMetaFilesStepPart.get_log_file()"""
     # Method not implemented
@@ -201,6 +215,33 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
         "P002": {
             "P002-T1": {"DNA": "P002-T1-DNA1-WGS1"},
             "P002-T2": {"DNA": "P002-T2-DNA1-WGS1", "RNA": "P002-T2-RNA1-mRNA_seq1"},
+        },
+        "__config": {
+            "path_ngs_mapping": "/NGS_MAPPING",
+            "path_gene_id_mappings": "DUMMY",
+            "expression_tool": "star",
+            "path_somatic_variant": "/SOM_VAR_FILTRATION",
+            "somatic_variant_calling_tool": "mutect2",
+            "somatic_variant_annotation_tool": "vep",
+            "filter_before_annotation": False,
+            "filter_set": "dkfz_only",
+            "filtration_schema": "sets",
+            "path_copy_number": "/COPY_NUMBER",
+            "copy_number_tool": "cnvkit",
+            "exclude_variant_with_flag": "LowFisherScore",
+            "vcf2maf": {"ncbi_build": "GRCh37", "Center": "DUMMY"},
+            "study": {
+                "type_of_cancer": "mixed",
+                "cancer_study_id": "mixed_test",
+                "study_description": "Test of arguments",
+                "study_name": "test_study",
+                "study_name_short": "test",
+                "reference_genome": "hg19",
+            },
+            "mapping_tool": "bwa",
+            "exon_list": "genome_wide",
+            "patient_info": None,
+            "sample_info": {},
         },
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_clinical_data", "run")
@@ -297,6 +338,7 @@ def test_cbioportal_case_lists_step_part_get_args(cbioportal_export_workflow):
             "category": "all_cases_with_mutation_and_cna_and_mrna_data",
             "samples": ["P001-T1", "P002-T2"],
         },
+        "__cancer_study_id": "mixed_test",
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_case_lists", "run")
     assert actual == expected
@@ -358,6 +400,9 @@ def test_cbioportal_vcf2maf_step_part_get_args(cbioportal_export_workflow):
         "normal_sample": "P001-N1-DNA1-WGS1",
         "tumor_id": "P001-T1",
         "normal_id": "P001-N1",
+        "somatic_variant_annotation_tool": "vep",
+        "ncbi_build": "GRCh37",
+        "Center": "DUMMY",
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_vcf2maf", "run")(wildcards)
     assert actual == expected
@@ -429,7 +474,8 @@ def test_cbioportal_mutations_step_part_get_resource_usage(cbioportal_export_wor
 def test_cbioportal_cns2cna_step_part_get_input_files(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_input_files()"""
     expected = {
-        "DNAcopy": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}_dnacopy.seg"
+        "DNAcopy": "/COPY_NUMBER/output/{mapper}.{caller}.{tumor_library}/out/{mapper}.{caller}.{tumor_library}_dnacopy.seg",
+        "features": "/path/to/features.gtf",
     }
     actual = cbioportal_export_workflow.get_input_files("cbioportal_cns2cna", "run")
     assert actual == expected
@@ -460,10 +506,7 @@ def test_cbioportal_cns2cna_step_part_get_log_file(cbioportal_export_workflow):
 
 def test_cbioportal_cns2cna_step_part_get_args(cbioportal_export_workflow):
     """Tests cbioportalCns2CnaStepPart.get_args()"""
-    expected = {
-        "features": "/path/to/features.gtf",
-        "pipeline_id": "ENSEMBL",
-    }
+    expected = {"pipeline_id": "ENSEMBL"}
     actual = cbioportal_export_workflow.get_args("cbioportal_cns2cna", "run")
     assert actual == expected
 
@@ -540,7 +583,11 @@ def test_cbioportal_cna_step_part_get_args_log2(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_args() -action 'log2'"""
     # Define expected
     base_name_out = "work/log/cbioportal_cna"
-    expected = {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
+    expected = {
+        "action_type": "log2",
+        "mappings": "DUMMY",
+        "extra_args": {"pipeline_id": "ENSEMBL"},
+    }
     # Get actual
     actual = cbioportal_export_workflow.get_args("cbioportal_cna", "log2")
     assert actual == expected
@@ -552,6 +599,7 @@ def test_cbioportal_cna_step_part_get_args_gistic(cbioportal_export_workflow):
     base_name_out = "work/log/cbioportal_cna"
     expected = {
         "action_type": "gistic",
+        "mappings": "DUMMY",
         "extra_args": {"amplification": "9", "pipeline_id": "ENSEMBL"},
     }
     # Get actual

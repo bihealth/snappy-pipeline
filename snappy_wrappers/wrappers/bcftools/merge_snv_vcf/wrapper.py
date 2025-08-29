@@ -2,8 +2,15 @@
 """Wrapper for running bcftools merge - VCF files."""
 
 import tempfile
+from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+reference_path = args["reference_path"]
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.
@@ -78,7 +85,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
             --output-type u \
             *.vcf.gz \
         | bcftools norm \
-            --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+            --fasta-ref {reference_path} \
             --multiallelics -any \
         | bgzip -c > $out
         popd

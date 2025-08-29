@@ -80,7 +80,7 @@ rule data_qc_fastqc_run:
         partition=wf.get_resource("fastqc", "run", "partition"),
         tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("fastqc", "get_args", "run"),
+        args=wf.get_args("fastqc", "run"),
     log:
         wf.get_log_file("fastqc", "run"),
     wrapper:
@@ -95,6 +95,8 @@ rule data_qc_fastqc_run:
 rule data_qc_picard_prepare:
     output:
         **wf.get_output_files("picard", "prepare"),
+    params:
+        args=wf.get_args("picard", "prepare"),
     threads: wf.get_resource("picard", "prepare", "threads")
     resources:
         time=wf.get_resource("picard", "prepare", "time"),
@@ -113,7 +115,7 @@ rule data_qc_picard_metrics:
     output:
         **wf.get_output_files("picard", "metrics"),
     params:
-        wf.get_params("picard", "metrics"),
+        args=wf.get_args("picard", "metrics"),
     threads: wf.get_resource("picard", "metrics", "threads")
     resources:
         time=wf.get_resource("picard", "metrics", "time"),

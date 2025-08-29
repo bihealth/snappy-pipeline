@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -36,7 +38,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Generate variant counts of 10kbp intervals
 bcftools query \
-    -r $(echo {snakemake.params[args][intervals]} | tr -d ',' | tr ' ' ',') \
+    -r $(echo {args[intervals]} | tr -d ',' | tr ' ' ',') \
     -f "%CHROM\t%POS\n" \
     {snakemake.input.vcf} \
 | awk -F $'\t' '
@@ -127,7 +129,7 @@ gatk_nonfree \
     --out $TMPDIR/phased.nofilter.vcf.gz \
     $(for bam in {snakemake.input.bam}; do echo -I $bam; done) \
     --reference_sequence {snakemake.config[static_data_config][reference][path]} \
-    -L $(echo {snakemake.params[args][intervals]} | tr -d ',' | tr ' ' ',')
+    -L $(echo {args[intervals]} | tr -d ',' | tr ' ' ',')
 
 snappy-vcf_filter_from_info \
     --input-vcf $TMPDIR/phased.nofilter.vcf.gz \

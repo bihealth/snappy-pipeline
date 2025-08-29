@@ -6,13 +6,15 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 # The step and caller key to use.
 step_key = snakemake.params.step_key
 caller_key = snakemake.params.caller_key
 
 args_ignore_chroms = ""
-if snakemake.params.args["ignore_chroms"]:
-    args_ignore_chroms = " ".join(["--ignore-chroms"] + snakemake.params.args["ignore_chroms"])
+if args["ignore_chroms"]:
+    args_ignore_chroms = " ".join(["--ignore-chroms"] + args["ignore_chroms"])
 
 if snakemake.config["step_config"][step_key][caller_key]["no_baq"]:
     arg_no_baq = "-B"
@@ -26,9 +28,9 @@ arg_min_avg_qual = "--min-avg-qual {}".format(
 )
 
 # If intervals are emtpy then will be generated for whole genome.
-intervals = " ".join(snakemake.params["args"].get("intervals", []))
+intervals = " ".join(args.get("intervals", []))
 
-sample_list = " ".join(snakemake.params["args"]["sample_list"])
+sample_list = " ".join(args["sample_list"])
 
 shell(
     r"""
@@ -40,7 +42,7 @@ exec 2> >(tee -a "{snakemake.log}")
 set -x
 # -----------------------------------------------------------------------------
 
-export REF={snakemake.config[static_data_config][reference][path]}
+export REF={snakemake.input.reference]}
 
 # Java fun!
 export MALLOC_ARENA_MAX=4
@@ -48,7 +50,7 @@ export MALLOC_ARENA_MAX=4
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-echo {snakemake.params[args][sample_list]} \
+echo {args[sample_list]} \
 | tr ' ' '\n' \
 > $TMPDIR/samples.txt
 

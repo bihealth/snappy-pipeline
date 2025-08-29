@@ -168,6 +168,12 @@ class cbioportalExportStepPart(BaseStepPart):
             log_files[key + "_md5"] = log_files[key] + ".md5"
         return log_files
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        return dict(self.config)
+
 
 class cbioportalVcf2MafStepPart(BaseStepPart):
     """Helper class for VCF2MAF step"""
@@ -243,6 +249,9 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
                 "normal_sample": self._get_normal_lib_name(wildcards),
                 "tumor_id": self._get_tumor_bio_sample(wildcards),
                 "normal_id": self._get_normal_bio_sample(wildcards),
+                "somatic_variant_annotation_tool": self.config.somatic_variant_annotation_tool,
+                "ncbi_build": self.config.vcf2maf.ncbi_build,
+                "Center": self.config.vcf2maf.Center,
             }
             return result
 
@@ -330,6 +339,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
+        yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
             os.path.join(
@@ -368,10 +378,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
-        return {
-            "pipeline_id": "ENSEMBL",
-            "features": self.parent.w_config.static_data_config.features.path,
-        }
+        return {"pipeline_id": "ENSEMBL"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -413,10 +420,15 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         # Validate action
         self._validate_action(action)
         if action == "log2":
-            return {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
+            return {
+                "action_type": "log2",
+                "mappings": self.config.path_gene_id_mappings,
+                "extra_args": {"pipeline_id": "ENSEMBL"},
+            }
         if action == "gistic":
             return {
                 "action_type": "gistic",
+                "mappings": self.config.path_gene_id_mappings,
                 "extra_args": {
                     "pipeline_id": "ENSEMBL",
                     "amplification": "9",
@@ -564,6 +576,11 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         if self.config.path_ngs_mapping:
             yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+        return dict(self.config.study)
+
 
 class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     """Generate cbioportal patient data file"""
@@ -599,6 +616,10 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
                 donors[donor_name][sample_name][extraction_type] = lib.name
+        assert "__config" not in donors.keys(), "__config is a reserved key, not a valid donor"
+        donors["__config"] = dict(self.config)
+        donors["__config"]["vcf2maf"] = dict(self.config.vcf2maf)
+        donors["__config"]["study"] = dict(self.config.study)
         return donors
 
     @dictify
@@ -651,6 +672,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
             for sample_name in args["cnaseq"]["samples"]:
                 if sample_name in args["rna_seq_mrna"]["samples"]:
                     args["3way_complete"]["samples"] += [sample_name]
+        args["__cancer_study_id"] = self.config.study.cancer_study_id
         return args
 
     @dictify

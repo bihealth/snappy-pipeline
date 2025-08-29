@@ -158,13 +158,23 @@ def test_picard_step_part_get_log_file(ngs_data_qc):
     assert actual == expected
 
 
-def test_picard_step_part_get_params(ngs_data_qc):
-    """Tests PicardStepPart.get_params() - metrics"""
+def test_picard_step_part_get_args(ngs_data_qc):
+    """Tests PicardStepPart.get_args() - metrics"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     # Define expected
-    expected = {"prefix": "bwa.P001-N1-DNA1-WGS1"}
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "prefix": "bwa.P001-N1-DNA1-WGS1",
+        "programs": [
+            "CollectAlignmentSummaryMetrics",
+            "CollectOxoGMetrics",
+            "CollectHsMetrics",
+            "CollectWgsMetrics",
+        ],
+        "dbsnp": "",
+    }
     # Get actual
-    actual = ngs_data_qc.get_params("picard", "metrics")(wildcards)
+    actual = ngs_data_qc.get_args("picard", "metrics")(wildcards)
     assert actual == expected
 
 

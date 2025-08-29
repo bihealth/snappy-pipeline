@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 intervals = getattr(snakemake.input, "intervals", "")
 if intervals:
     with open(str(snakemake.input.intervals), "rt") as f:

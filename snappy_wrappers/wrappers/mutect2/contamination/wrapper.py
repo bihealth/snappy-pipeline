@@ -5,7 +5,7 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+reference = snakemake.input.reference
 
 # Test presence/absence of normal
 normal = getattr(snakemake.input, "normal", None)

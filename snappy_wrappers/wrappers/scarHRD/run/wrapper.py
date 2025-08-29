@@ -6,15 +6,16 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
 
-step = snakemake.config["pipeline_step"]["name"]
-genome = snakemake.config["static_data_config"]["reference"]["path"]
-length = snakemake.config["step_config"][step]["scarHRD"]["length"]
-genome_name = snakemake.config["step_config"][step]["scarHRD"]["genome_name"]
+genome = args["reference"]
+length = args["length"]
+genome_name = args["genome_name"]
 
-chr_in_name = "TRUE" if snakemake.config["step_config"][step]["scarHRD"]["chr_prefix"] else "FALSE"
-prefix = "chr" if snakemake.config["step_config"][step]["scarHRD"]["chr_prefix"] else ""
+chr_in_name = "TRUE" if args["chr_prefix"] else "FALSE"
+prefix = "chr" if args["chr_prefix"] else ""
 if genome_name == "grch37" or genome_name == "grch38":
     chromosomes = " ".join([prefix + str(x) for x in list(range(1, 23)) + ["X", "Y"]])
 elif genome_name == "mouse":

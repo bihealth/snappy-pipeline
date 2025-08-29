@@ -5,12 +5,7 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get preset and individual settings from configuration.
-cnvetti_config = snakemake.config["step_config"]["wgs_cnv_calling"]["cnvetti"]
-preset_name = cnvetti_config["preset"]
-preset = cnvetti_config["presets"][preset_name]
-
-segmentation = cnvetti_config.get("segmentation") or preset["segmentation"]
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -42,7 +37,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 cnvetti cmd segment \
     -vvv \
-    --segmentation {segmentation} \
+    --segmentation {args[segmentation]} \
     --input {snakemake.input.bcf} \
     --output {snakemake.output.windows_bcf} \
     --output-segments {snakemake.output.segments_bcf}

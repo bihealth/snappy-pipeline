@@ -7,10 +7,10 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["purecn"]
+args = getattr(snakemake.params, "args", {})
+config = args["purecn"]
 
-genome = snakemake.config["static_data_config"]["reference"]["path"]
+genome = snakemake.input.reference
 
 # Prepare files and directories that must be accessible by the container
 bound_files = {

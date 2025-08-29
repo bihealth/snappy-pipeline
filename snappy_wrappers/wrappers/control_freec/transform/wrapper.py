@@ -7,7 +7,8 @@ from snakemake import shell
 
 shell.executable("/bin/bash")
 
-config = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]["convert"]
+args = getattr(snakemake.params, "args", {})
+
 rscript = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "snappy-convert-control_freec.R"
 )
@@ -40,16 +41,16 @@ trap "rm -rf $TMPDIR" EXIT
 
 R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     control_freec_write_files( \
-    sample_name = \"{snakemake.wildcards.cancer_library}\", \
+    sample_name = \"{args[cancer_library]}\", \
     ratios_fn = \"{snakemake.input.ratio}\", \
     log2_fn = \"{snakemake.output.log2}\", \
     call_fn = \"{snakemake.output.call}\", \
     segments_fn = \"{snakemake.output.segments}\", \
     cns_fn = \"{snakemake.output.cns}\", \
     cnr_fn = \"{snakemake.output.cnr}\", \
-    org_obj={config[org_obj]}, \
-    tx_obj={config[tx_obj]}, \
-    bs_obj={config[bs_obj]})"
+    org_obj={args[org_obj]}, \
+    tx_obj={args[tx_obj]}, \
+    bs_obj={args[bs_obj]})"
 
 for f in {snakemake.output.log2} {snakemake.output.call} {snakemake.output.segments} \
     {snakemake.output.cns} {snakemake.output.cnr}; do

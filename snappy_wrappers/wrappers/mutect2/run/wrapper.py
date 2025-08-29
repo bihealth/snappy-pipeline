@@ -5,9 +5,9 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+reference = snakemake.input.reference
 config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
-args = snakemake.params.get("args", {})
+args = getattr(snakemake.params, "args", {})
 log = snakemake.log
 
 intervals = getattr(snakemake.input, "region", [])
@@ -101,8 +101,6 @@ export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
 out_base=$tmpdir/$(basename {raw_output} .vcf.gz)
-
-# Add intervals if required
 
 gatk {java_options} Mutect2 \
     --tmp-dir $tmpdir \

@@ -148,17 +148,6 @@ class BarcodeTool(Enum):
     AGENT = "agent"
 
 
-class Somatic(SnappyModel):
-    mapping_tool: DnaMapper
-    """Either bwa of bwa_mem2. The indices & other parameters are taken from mapper config"""
-
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
-    """Only agent currently implemented"""
-
-    use_barcodes: bool = False
-    recalibrate: bool = True
-
-
 class Bqsr(SnappyModel):
     common_variants: str
     """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
@@ -273,12 +262,18 @@ class Strandedness(SnappyModel):
 class Minimap2(SnappyModel):
     mapping_threads: int = 16
 
+    path_index: str
+
 
 class Mbcs(SnappyModel):
     mapping_tool: DnaMapper
-    barcode_tool: BarcodeTool
-    use_barcodes: bool
-    recalibrate: bool
+    """Either bwa or bwa_mem2. The indices & other parameters are taken from mapper config"""
+
+    barcode_tool: BarcodeTool = BarcodeTool.AGENT
+    """Only agent currently implemented"""
+
+    use_barcodes: bool = False
+    recalibrate: bool = True
 
 
 class NgsMapping(SnappyStepModel):
@@ -303,12 +298,6 @@ class NgsMapping(SnappyStepModel):
     bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
 
-    mbcs: Mbcs | None = None
-    """
-    Configuration for somatic ngs_calling
-    (separate read groups, molecular barcodes & base quality recalibration)
-    """
-
     bqsr: Bqsr | None = None
 
     agent: Agent | None = None
@@ -321,6 +310,10 @@ class NgsMapping(SnappyStepModel):
     minimap2: Minimap2 | None = None
 
     mbcs: Mbcs | None = None
+    """
+    Configuration for somatic ngs_calling
+    (separate read groups, molecular barcodes & base quality recalibration)
+    """
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):

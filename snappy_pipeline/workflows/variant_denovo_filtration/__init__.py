@@ -91,9 +91,10 @@ Currently, no reports are generated.
 import itertools
 import os
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -222,6 +223,17 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
         return self.path_log
 
+    def get_args(self, action: str):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return {
+                "besenbacher": self.config.params_besenbacher.model_dump(by_alias=True),
+                "index_library": wildcards.index_library,
+            }
+
+        return args_fn
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -284,11 +296,13 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        def args_function(wildcards):
+        def args_function(wildcards: Wildcards) -> dict[str, Any]:
             donor = self.ngs_library_to_donor[wildcards.index_library]
             return {
+                "index_library": wildcards.index_library,
                 "father": donor.father.dna_ngs_library.name,
                 "mother": donor.mother.dna_ngs_library.name,
+                "bad_regions_expression": self.config.bad_regions_expression,
             }
 
         return args_function
