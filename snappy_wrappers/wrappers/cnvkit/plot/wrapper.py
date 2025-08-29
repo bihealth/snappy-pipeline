@@ -12,12 +12,6 @@ config = snakemake.config["step_config"][step]["cnvkit"]
 gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
 male = " --male-reference" if config["male_reference"] else ""
 
-heatmaps = [
-    snakemake.output.get(x)
-    for x in filter(
-        lambda x: x.startswith("heatmap_chr") and not x.endswith("_md5"), snakemake.output.keys()
-    )
-]
 scatters = [
     snakemake.output.get(x)
     for x in filter(
@@ -89,35 +83,14 @@ else
 fi
 md5 {snakemake.output.scatter}
 
-if [[ -n "{snakemake.output.heatmap}" ]]
-then
-    cnvkit.py heatmap \
-        --output {snakemake.output.heatmap} \
-        {snakemake.input.cnr}
-else
-    touch {snakemake.output.heatmap}
-fi
-md5 {snakemake.output.heatmap}
-
-for heatmap in {heatmaps}
-do
-    if [[ -n "$heatmap" ]]
-    then
-        cnvkit.py heatmap \
-            --output $heatmap \
-            {snakemake.input.cnr}
-    else
-        touch $heatmap
-    fi
-    md5 $heatmap
-done
-
 for scatter in {scatters}
 do
     if [[ -n "$scatter" ]]
     then
+        chrom=$(basename -s .png $scatter | sed -re "s/.*\.(chr([0-9]+|[XY]))$/\1/")
         cnvkit.py scatter \
             --output $scatter \
+            --chromosome $chrom \
             --segment {snakemake.input.cns} \
             {gender} {male} \
             {snakemake.input.cnr}
