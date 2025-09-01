@@ -171,6 +171,7 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
         "panel_of_normals_size": 25,
         "min_mapq": 20,
         "min_baseq": 15,
+        "path_panel_of_normals_sample_list": "",
     }
     actual = somatic_variant_filtration_workflow_list.get_args("one_ebfilter", "run")(wildcards)
     assert actual == expected

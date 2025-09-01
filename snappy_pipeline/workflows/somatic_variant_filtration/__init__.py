@@ -118,7 +118,7 @@ from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand, Wildcards, InputFiles, OutputFiles
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (

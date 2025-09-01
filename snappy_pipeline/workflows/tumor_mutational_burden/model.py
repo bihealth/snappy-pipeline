@@ -50,11 +50,17 @@ class TumorMutationalBurden(SnappyStepModel):
     def ensure_annotation_and_filtration_are_configured_correctly(self):
         if self.somatic_variant_step == SomaticVariantStep.CALL:
             if self.has_annotation or self.is_filtered:
-                raise ValueError("When the input step, is 'somatic_variant_calling', the annotation & filtration status must be set to 'False'")
+                raise ValueError(
+                    "When the input step is 'somatic_variant_calling', the annotation & filtration status must be set to 'False'"
+                )
         elif self.somatic_variant_step == SomaticVariantStep.ANNOTATION:
             if not self.has_annotation:
-                raise ValueError("When the input step, is 'somatic_variant_annotation', the annotation status must be set to 'True'")
+                raise ValueError(
+                    "When the input step is 'somatic_variant_annotation', the annotation status must be set to 'True'"
+                )
         elif self.somatic_variant_step == SomaticVariantStep.FILTER:
             if not self.is_filtered:
-                raise ValueError("When the input step, is 'somatic_variant_filtration', the filtration status must be set to 'True'")
+                raise ValueError(
+                    "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
+                )
         return self

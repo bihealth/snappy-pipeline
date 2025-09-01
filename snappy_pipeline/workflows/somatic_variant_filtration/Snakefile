@@ -58,6 +58,7 @@ rule somatic_variant_filtration_link_out_run:
 
 # Write out "panel of normals" file for eb_filter ------------------------------
 
+
 rule somatic_variant_filtration_eb_filter_write_panel:
     output:
         **wf.get_output_files("one_ebfilter", "write_panel"),

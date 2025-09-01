@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import enum
-from typing import Annotated, TypedDict
+from typing import TypedDict
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 
@@ -160,5 +160,7 @@ class CbioportalExport(SnappyStepModel):
     def ensure_filtration_are_configured_correctly(self):
         if self.somatic_variant_step == SomaticVariantStep.FILTER:
             if not self.is_filtered:
-                raise ValueError("When the input step, is 'somatic_variant_filtration', the filtration status must be set to 'True'")
+                raise ValueError(
+                    "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
+                )
         return self
