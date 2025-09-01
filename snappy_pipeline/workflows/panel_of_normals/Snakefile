@@ -22,6 +22,7 @@ tools = config["step_config"]["panel_of_normals"]["tools"]
 # WorkflowImpl Object Setup ===================================================
 
 wf = PanelOfNormalsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.w_config["step_config"]["panel_of_normals"]["tools"]
 
 # Rules =======================================================================
 
@@ -139,9 +140,7 @@ if "mutect2" in tools:
 
 # Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Write out access file (if required, must be run prior to the cnvkit panel of normals)
-
-if "access" in tools:
+if "cnvkit" in tools:
 
     rule panel_of_normals_access_run:
         output:
@@ -154,11 +153,6 @@ if "access" in tools:
             **wf.get_log_file("access", "run"),
         wrapper:
             wf.wrapper_path("cnvkit/access")
-
-
-# Write out the normals-only results for the normals --------------------------
-
-if "cnvkit" in tools:
 
     rule panel_of_normals_cnvkit_target:
         input:
@@ -173,7 +167,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "target"),
         params:
-            args=wf.get_args("cnvkit", "target"),
+            args=wf.substep_dispatch("cnvkit", "get_args", "target"),
         wrapper:
             wf.wrapper_path("cnvkit/target")
 
@@ -190,7 +184,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "antitarget"),
         params:
-            args=wf.get_args("cnvkit", "antitarget"),
+            args=wf.substep_dispatch("cnvkit", "get_args", "antitarget"),
         wrapper:
             wf.wrapper_path("cnvkit/antitarget")
 
@@ -207,11 +201,9 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "coverage"),
         params:
-            args=wf.get_args("cnvkit", "coverage"),
+            args=wf.substep_dispatch("cnvkit", "get_args", "coverage"),
         wrapper:
             wf.wrapper_path("cnvkit/coverage")
-
-    # Create the panel of normals -------------------------------------------------
 
     rule panel_of_normals_cnvkit_create_panel:
         input:
@@ -226,7 +218,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "create_panel"),
         params:
-            args=wf.get_args("cnvkit", "create_panel"),
+            args=wf.substep_dispatch("cnvkit", "get_args", "create_panel"),
         wrapper:
             wf.wrapper_path("cnvkit/reference")
 

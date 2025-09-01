@@ -23,7 +23,8 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = cbioportalExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
-exclude_flag = wf.w_config.step_config["cbioportal_export"].exclude_variant_with_flag
+step_config = wf.w_config.step_config["cbioportal_export"]
+exclude_flag = step_config["exclude_variant_with_flag"]
 
 # Rules =======================================================================
 
@@ -120,108 +121,105 @@ rule cbioportal_export_concatenate_maf:
 
 # Copy number files (data_cna_log2.txt, data_cna_gistic.txt, data_segment.txt)
 
-# Create CNA files (discrete, continuous from cns files) ----------------------
+if step_config["copy_number_alteration"]["enabled"]:
 
+    # Create CNA files (discrete, continuous from cns files) ----------------------
 
-rule cbioportal_export_generate_cna:
-    input:
-        **wf.get_input_files("cbioportal_cns2cna", "run"),
-    output:
-        **wf.get_output_files("cbioportal_cns2cna", "run"),
-    threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
-    resources:
-        time=wf.get_resource("cbioportal_cns2cna", "run", "time"),
-        memory=wf.get_resource("cbioportal_cns2cna", "run", "memory"),
-        partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
-        tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
-    params:
-        args=wf.get_args("cbioportal_cns2cna", "run"),
-    log:
-        **wf.get_log_file("cbioportal_cns2cna", "run"),
-    wrapper:
-        wf.wrapper_path("cbioportal/generate_cna")
+    rule cbioportal_export_generate_cna:
+        input:
+            **wf.get_input_files("cbioportal_cns2cna", "run"),
+        output:
+            **wf.get_output_files("cbioportal_cns2cna", "run"),
+        threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
+        resources:
+            time=wf.get_resource("cbioportal_cns2cna", "run", "time"),
+            memory=wf.get_resource("cbioportal_cns2cna", "run", "memory"),
+            partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
+            tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
+        params:
+            **wf.get_args("cbioportal_cns2cna", "run"),
+        log:
+            **wf.get_log_file("cbioportal_cns2cna", "run"),
+        wrapper:
+            wf.wrapper_path("cbioportal/generate_cna")
 
+    # Merge sample-based CNA files to cBioPortal ----------------------------------
 
-# Merge sample-based CNA files to cBioPortal ----------------------------------
+    rule cbioportal_export_concatenate_cna_log2:
+        input:
+            **wf.get_input_files("cbioportal_cna", "log2"),
+        output:
+            wf.get_output_files("cbioportal_cna", "log2"),
+        params:
+            **wf.get_args("cbioportal_cna", "log2"),
+        threads: wf.get_resource("cbioportal_cna", "log2", "threads")
+        resources:
+            time=wf.get_resource("cbioportal_cna", "log2", "time"),
+            memory=wf.get_resource("cbioportal_cna", "log2", "memory"),
+            partition=wf.get_resource("cbioportal_cna", "log2", "partition"),
+            tmpdir=wf.get_resource("cbioportal_cna", "log2", "tmpdir"),
+        log:
+            **wf.get_log_file("cbioportal_cna", "log2"),
+        wrapper:
+            wf.wrapper_path("cbioportal/merge_tables")
 
+    rule cbioportal_export_concatenate_cna_gistic:
+        input:
+            **wf.get_input_files("cbioportal_cna", "gistic"),
+        output:
+            wf.get_output_files("cbioportal_cna", "gistic"),
+        params:
+            **wf.get_args("cbioportal_cna", "gistic"),
+        threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
+        resources:
+            time=wf.get_resource("cbioportal_cna", "gistic", "time"),
+            memory=wf.get_resource("cbioportal_cna", "gistic", "memory"),
+            partition=wf.get_resource("cbioportal_cna", "gistic", "partition"),
+            tmpdir=wf.get_resource("cbioportal_cna", "gistic", "tmpdir"),
+        log:
+            **wf.get_log_file("cbioportal_cna", "gistic"),
+        wrapper:
+            wf.wrapper_path("cbioportal/merge_tables")
 
-rule cbioportal_export_concatenate_cna_log2:
-    input:
-        **wf.get_input_files("cbioportal_cna", "log2"),
-    output:
-        wf.get_output_files("cbioportal_cna", "log2"),
-    params:
-        args=wf.get_args("cbioportal_cna", "log2"),
-    threads: wf.get_resource("cbioportal_cna", "log2", "threads")
-    resources:
-        time=wf.get_resource("cbioportal_cna", "log2", "time"),
-        memory=wf.get_resource("cbioportal_cna", "log2", "memory"),
-        partition=wf.get_resource("cbioportal_cna", "log2", "partition"),
-        tmpdir=wf.get_resource("cbioportal_cna", "log2", "tmpdir"),
-    log:
-        **wf.get_log_file("cbioportal_cna", "log2"),
-    wrapper:
-        wf.wrapper_path("cbioportal/merge_tables")
+    # Merge sample-based segment files to cBioPortal ------------------------------
 
-
-rule cbioportal_export_concatenate_cna_gistic:
-    input:
-        **wf.get_input_files("cbioportal_cna", "gistic"),
-    output:
-        wf.get_output_files("cbioportal_cna", "gistic"),
-    params:
-        args=wf.get_args("cbioportal_cna", "gistic"),
-    threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
-    resources:
-        time=wf.get_resource("cbioportal_cna", "gistic", "time"),
-        memory=wf.get_resource("cbioportal_cna", "gistic", "memory"),
-        partition=wf.get_resource("cbioportal_cna", "gistic", "partition"),
-        tmpdir=wf.get_resource("cbioportal_cna", "gistic", "tmpdir"),
-    log:
-        **wf.get_log_file("cbioportal_cna", "gistic"),
-    wrapper:
-        wf.wrapper_path("cbioportal/merge_tables")
-
-
-# Merge sample-based segment files to cBioPortal ------------------------------
-
-
-rule cbioportal_export_concatenate_segments:
-    input:
-        **wf.get_input_files("cbioportal_segment", "run"),
-    output:
-        wf.get_output_files("cbioportal_segment", "run"),
-    params:
-        action_type="segment",
-    threads: wf.get_resource("cbioportal_segment", "run", "threads")
-    resources:
-        time=wf.get_resource("cbioportal_segment", "run", "time"),
-        memory=wf.get_resource("cbioportal_segment", "run", "memory"),
-        partition=wf.get_resource("cbioportal_segment", "run", "partition"),
-        tmpdir=wf.get_resource("cbioportal_segment", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("cbioportal_segment", "run"),
-    wrapper:
-        wf.wrapper_path("cbioportal/merge_tables")
+    rule cbioportal_export_concatenate_segments:
+        input:
+            **wf.get_input_files("cbioportal_segment", "run"),
+        output:
+            wf.get_output_files("cbioportal_segment", "run"),
+        params:
+            action_type="segment",
+        threads: wf.get_resource("cbioportal_segment", "run", "threads")
+        resources:
+            time=wf.get_resource("cbioportal_segment", "run", "time"),
+            memory=wf.get_resource("cbioportal_segment", "run", "memory"),
+            partition=wf.get_resource("cbioportal_segment", "run", "partition"),
+            tmpdir=wf.get_resource("cbioportal_segment", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("cbioportal_segment", "run"),
+        wrapper:
+            wf.wrapper_path("cbioportal/merge_tables")
 
 
 # Create expression RPKMs -----------------------------------------------------
 
+if step_config["expression"]["enabled"]:
 
-rule cbioportal_export_expression:
-    input:
-        **wf.get_input_files("cbioportal_expression", "run"),
-    output:
-        wf.get_output_files("cbioportal_expression", "run"),
-    params:
-        args=wf.get_args("cbioportal_expression", "run"),
-    threads: wf.get_resource("cbioportal_expression", "run", "threads")
-    resources:
-        time=wf.get_resource("cbioportal_expression", "run", "time"),
-        memory=wf.get_resource("cbioportal_expression", "run", "memory"),
-        partition=wf.get_resource("cbioportal_expression", "run", "partition"),
-        tmpdir=wf.get_resource("cbioportal_expression", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("cbioportal_expression", "run"),
-    wrapper:
-        wf.wrapper_path("cbioportal/merge_tables")
+    rule cbioportal_export_expression:
+        input:
+            **wf.get_input_files("cbioportal_expression", "run"),
+        output:
+            wf.get_output_files("cbioportal_expression", "run"),
+        params:
+            **wf.get_args("cbioportal_expression", "run"),
+        threads: wf.get_resource("cbioportal_expression", "run", "threads")
+        resources:
+            time=wf.get_resource("cbioportal_expression", "run", "time"),
+            memory=wf.get_resource("cbioportal_expression", "run", "memory"),
+            partition=wf.get_resource("cbioportal_expression", "run", "partition"),
+            tmpdir=wf.get_resource("cbioportal_expression", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("cbioportal_expression", "run"),
+        wrapper:
+            wf.wrapper_path("cbioportal/merge_tables")

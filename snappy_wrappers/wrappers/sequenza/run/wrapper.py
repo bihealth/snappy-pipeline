@@ -76,10 +76,12 @@ library(sequenza)
 args <- list(file="{snakemake.input.seqz}", assembly="{args[assembly]}", chromosome.list={contigs})
 args <- c(args, {args_extract})
 seqz <- do.call(sequenza.extract, args=args)
+warnings()
 
 args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
 args <- c(args, {args_fit})
 CP <- do.call(sequenza.fit, args=args)
+warnings()
 
 sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{args[library_name]}", out.dir=dirname("{snakemake.output.done}"))
 
