@@ -361,14 +361,14 @@ def test_cnvkit_plot_step_part_get_output_files(somatic_targeted_seq_cnv_calling
         "work/{{mapper}}.cnvkit.{{library_name}}/report/"
         "{{mapper}}.cnvkit.{{library_name}}.{plot}.{ext}"
     )
-    for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png")):
+    for plot, ext in (("diagram", "pdf"), ("scatter", "png")):
         expected[plot] = tpl.format(plot=plot, ext=ext)
         expected[plot + "_md5"] = expected[plot] + ".md5"
     tpl = (
         "work/{{mapper}}.cnvkit.{{library_name}}/report/"
         "{{mapper}}.cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
     )
-    for plot, ext in (("heatmap", "pdf"), ("scatter", "png")):
+    for plot, ext in (("scatter", "png"),):
         for chrom in chain(range(1, 23), ("X", "Y")):
             key = "{plot}_chr{chrom}".format(plot=plot, chrom=str(chrom))
             expected[key] = tpl.format(plot=plot, ext=ext, chrom=str(chrom))
@@ -759,7 +759,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     expected += [
         tpl.format(i=i, t=t, plot=plot, ext=ext, md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
+        for plot, ext in (("diagram", "pdf"), ("scatter", "png"))
         for md5 in ("", ".md5")
     ]
     tpl = (
@@ -769,7 +769,7 @@ def test_somatic_targeted_seq_cnv_calling_workflow(somatic_targeted_seq_cnv_call
     expected += [
         tpl.format(i=i, t=t, plot=plot, ext=ext, chrom=str(chrom), md5=md5)
         for i, t in ((1, 1), (2, 1), (2, 2))
-        for plot, ext in (("heatmap", "pdf"), ("scatter", "png"))
+        for plot, ext in ( ("scatter", "png"),)
         for chrom in chain(range(1, 23), ("X", "Y"))
         for md5 in ("", ".md5")
     ]

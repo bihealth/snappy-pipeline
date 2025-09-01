@@ -642,8 +642,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_output_files_plot(self):
-        plots = (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
-        chrom_plots = (("heatmap", "pdf"), ("scatter", "png"))
+        plots = (("diagram", "pdf"), ("scatter", "png"))
+        chrom_plots = (("scatter", "png"),)
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
