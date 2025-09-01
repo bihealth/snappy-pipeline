@@ -94,14 +94,14 @@ def install_R_package(dest: str, name: str, repo: str):
         install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
     elif repo == "github":
         path = name
-        pattern = re.compile("^([^/]+)/([^/]+)(/[^@|]+)?([@|].+)?$")
+        pattern = re.compile("^([^/]+)/([^/@]+)(/[^@|]+)?([@|].+)?$")
         m = pattern.match(path)
         assert m, f"Cannot extract package name from github path {path}"
         name = m.groups()[1]
         install_cmd = f"remotes::install_github('{path}', lib='{dest}', upgrade='never')"
     elif repo == "bitbucket":
         path = name
-        pattern = re.compile("^([^/]+)/([^/]+)([/@].+)?$")
+        pattern = re.compile("^([^/]+)/([^/@]+)([/@].+)?$")
         m = pattern.match(path)
         assert m, f"Cannot extract package name from bitbucket path {path}"
         name = m.groups()[1]

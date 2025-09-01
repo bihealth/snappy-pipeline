@@ -64,7 +64,7 @@ rule homologous_recombination_deficiency_scarHRD_install:
     params:
         packages=[
             {"name": "aroneklund/copynumber", "repo": "github"},
-            {"name": "sequenzatools/sequenza", "repo": "bitbucket"},
+            {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
             {"name": "sztup/scarHRD", "repo": "github"},
         ],
     resources:
