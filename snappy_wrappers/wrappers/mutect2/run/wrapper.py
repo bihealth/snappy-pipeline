@@ -10,20 +10,9 @@ config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
 args = getattr(snakemake.params, "args", {})
 log = snakemake.log
 
-intervals = getattr(snakemake.input, "region", [])
+intervals = getattr(snakemake.input, "region", None)
 if intervals:
-
-    def parse_bed_line(line: str) -> tuple[str, int, int]:
-        chrom, start, end = line.strip().split("\t")
-        return chrom, int(start), int(end)
-
-    with open(intervals, "rt") as f:
-        interval_params = " ".join(
-            [
-                f"--intervals {chrom}:{start + 1}-{end}"
-                for chrom, start, end in map(parse_bed_line, f.readlines())
-            ]
-        )
+    interval_params = f"--intervals {intervals}"
 else:
     interval_params = ""
 

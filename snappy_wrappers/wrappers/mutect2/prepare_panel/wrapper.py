@@ -11,8 +11,7 @@ args = getattr(snakemake.params, "args", {})
 
 intervals = getattr(snakemake.input, "intervals", "")
 if intervals:
-    with open(str(snakemake.input.intervals), "rt") as f:
-        intervals = " ".join([f"--intervals {itv}" for itv in map(str.strip, f.readlines())])
+    intervals = f"--intervals {intervals}"
 
 shell(
     r"""
