@@ -61,19 +61,19 @@ rule somatic_variant_filtration_link_out_run:
 
 rule somatic_variant_filtration_eb_filter_write_panel:
     input:
-        unpack(wf.get_input_files("eb_filter", "write_panel")),
+        unpack(wf.get_input_files("one_ebfilter", "write_panel")),
     output:
-        **wf.get_output_files("eb_filter", "write_panel"),
-    threads: wf.get_resource("eb_filter", "write_panel", "threads")
+        **wf.get_output_files("one_ebfilter", "write_panel"),
+    threads: wf.get_resource("one_ebfilter", "write_panel", "threads")
     resources:
-        time=wf.get_resource("eb_filter", "write_panel", "time"),
-        memory=wf.get_resource("eb_filter", "write_panel", "memory"),
-        partition=wf.get_resource("eb_filter", "write_panel", "partition"),
-        tmpdir=wf.get_resource("eb_filter", "write_panel", "tmpdir"),
+        time=wf.get_resource("one_ebfilter", "write_panel", "time"),
+        memory=wf.get_resource("one_ebfilter", "write_panel", "memory"),
+        partition=wf.get_resource("one_ebfilter", "write_panel", "partition"),
+        tmpdir=wf.get_resource("one_ebfilter", "write_panel", "tmpdir"),
     log:
-        **wf.get_log_file("eb_filter", "write_panel"),
+        **wf.get_log_file("one_ebfilter", "write_panel"),
     run:
-        wf.substep_getattr("eb_filter", "write_panel_of_normals_file")(wildcards)
+        wf.substep_getattr("one_ebfilter", "write_panel_of_normals_file")(wildcards)
 
 
 # Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

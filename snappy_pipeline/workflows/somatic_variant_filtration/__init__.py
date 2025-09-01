@@ -216,32 +216,23 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return path to input or previous filter vcf file"""
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-        @dictify
-        def input_function(wildcards):
-            filter_nb = int(wildcards["filter_nb"])
-            if filter_nb > 1:
-                prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
-                n = filter_nb - 1
-                yield (
-                    "vcf",
-                    os.path.join(
-                        "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
-                    ),
-                )
-            else:
-                yield (
-                    "vcf",
-                    os.path.join(
-                        self.config.path_somatic_variant,
-                        "output",
-                        self.name_pattern,
-                        "out",
-                        self.name_pattern + ".vcf.gz",
-                    ),
-                )
-
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        filter_nb = int(wildcards["filter_nb"])
+        name_pattern = self.name_pattern.format(**wildcards)
+        if filter_nb > 1:
+            prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
+            n = filter_nb - 1
+            yield (
+                "vcf",
+                os.path.join("work", name_pattern, "out", name_pattern + f".{prev}_{n}.vcf.gz"),
+            )
+        else:
+            somatic_variant = self.parent.sub_workflows["somatic_variant"]
+            base_path = os.path.join("output", name_pattern, "out", name_pattern)
+            yield "vcf", somatic_variant(base_path.format(**wildcards) + ".vcf.gz")
 
     @dictify
     def get_output_files(self, action):
@@ -306,39 +297,23 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
 
 
 class OneFilterWithBamStepPart(OneFilterStepPart):
-    def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
-        # Validate action
-        self._validate_action(action)
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        parent = super(OneFilterWithBamStepPart, self)._get_input_files_run
+        yield from parent(wildcards).items()
 
-        @dictify
-        def input_function(wildcards):
-            parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
+        yield "reference", self.w_config.static_data_config.reference.path
 
-            yield (
-                "bam",
-                os.path.join(
-                    self.config.path_ngs_mapping,
-                    "output",
-                    "{mapper}.{tumor_library}",
-                    "out",
-                    "{mapper}.{tumor_library}.bam",
-                ),
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        name_pattern = "{mapper}.{tumor_library}".format(**wildcards)
+        base_path = os.path.join("output", name_pattern, "out", name_pattern)
+        yield "bam", ngs_mapping(base_path + ".bam")
+        if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
+            name_pattern = "{mapper}.{normal_library}".format(
+                normal_library=normal_library, **wildcards
             )
-            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
-                yield (
-                    "normal",
-                    os.path.join(
-                        self.config.path_ngs_mapping,
-                        "output",
-                        f"{{mapper}}.{normal_library}",
-                        "out",
-                        f"{{mapper}}.{normal_library}.bam",
-                    ),
-                )
-
-        return input_function
+            base_path = os.path.join("output", name_pattern, "out", name_pattern)
+            yield "normal", ngs_mapping(base_path + ".bam")
 
 
 class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
@@ -346,54 +321,49 @@ class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     filter_name = "dkfz"
     resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
 
-    def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards):
-            parent = super(OneFilterDkfzStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
-            yield "reference", self.w_config.static_data_config.reference.path
-
-        return input_function
-
 
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
     filter_name = "ebfilter"
-    resource_usage = {"run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M")}
 
-    def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
-        # Validate action
-        self._validate_action(action)
+    #: Class available actions
+    actions = ("run", "write_panel")
 
-        @dictify
-        def input_function(wildcards):
-            parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
-            yield from parent(wildcards).items()
-            yield "reference", self.w_config.static_data_config.reference.path
-            yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
-
-        return input_function
+    resource_usage = {
+        "run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M"),
+        "write_panel": ResourceUsage(threads=1, time="01:00:00", memory=f"{2 * 1024}M"),
+    }
 
     @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        parent = super(OneFilterEbfilterStepPart, self)._get_input_files_run
+        yield from parent(wildcards).items()
+        yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+
     def _get_output_files_write_panel(self):
-        yield (
-            "txt",
-            (
-                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-                "panel_of_normals.txt"
-            ),
-        )
+        return {
+            "txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"
+        }
+
+    def get_output_files(self, action):
+        output_files = super(OneFilterEbfilterStepPart, self).get_output_files(action)
+        if action == "write_panel":
+            output_files = self._get_output_files_write_panel()
+        return output_files
 
     def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
         """Return dkfz parameters to parameters"""
         return super(OneFilterEbfilterStepPart, self)._get_args(wildcards) | {
             "has_annotation": self.config.has_annotation,
         }
+
+    def write_panel_of_normals_file(self, wildcards):
+        """Write out file with paths to panels-of-normal"""
+        output_path = self._get_output_files_write_panel()["txt"].format(**wildcards)
+        with open(output_path, "wt") as outf:
+            for bam_path in self._get_panel_of_normal_bams(wildcards):
+                print(bam_path, file=outf)
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):

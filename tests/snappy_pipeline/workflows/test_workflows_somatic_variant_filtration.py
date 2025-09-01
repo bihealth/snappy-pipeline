@@ -35,7 +35,7 @@ def minimal_config_list():
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['vep']
-            path_somatic_variant: "../somatic_variant_annotation"
+            path_somatic_variant: "/SOMATIC_VARIANT_ANNOTATION"
             filter_list:
             - dkfz: {}
             - ebfilter:
@@ -77,8 +77,8 @@ def somatic_variant_filtration_workflow_list(
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
+        "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
+        "somatic_variant": lambda x: "/SOMATIC_VARIANT_ANNOTATION/" + x,
     }
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
@@ -105,9 +105,9 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
         }
     )
     expected = {
-        "vcf": "../somatic_variant_annotation/output/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.vcf.gz",
-        "bam": "../ngs_mapping/output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}.bam",
-        "normal": "../ngs_mapping/output/{mapper}.P001-N1-DNA1-WGS1/out/{mapper}.P001-N1-DNA1-WGS1.bam",
+        "vcf": "/SOMATIC_VARIANT_ANNOTATION/output/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.vcf.gz",
+        "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
@@ -119,13 +119,17 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
             "var_caller": "mutect2",
             "annotator": "vep",
             "tumor_library": "P001-T1-DNA1-WGS1",
-            "filter_nb": 3,
+            "filter_nb": 2,
         }
     )
     expected = {
-        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.ebfilter_2.vcf.gz",
+        "vcf": "work/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.dkfz_1.vcf.gz",
+        "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
     }
-    actual = somatic_variant_filtration_workflow_list.get_input_files("one_bcftools", "run")(
+    actual = somatic_variant_filtration_workflow_list.get_input_files("one_ebfilter", "run")(
         wildcards
     )
     assert actual == expected
@@ -136,6 +140,10 @@ def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workfl
     base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_{filter_nb}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     actual = somatic_variant_filtration_workflow_list.get_output_files("one_dkfz", "run")
+    assert actual == expected
+
+    expected = {"txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"}
+    actual = somatic_variant_filtration_workflow_list.get_output_files("one_ebfilter", "write_panel")
     assert actual == expected
 
 
