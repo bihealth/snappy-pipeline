@@ -11,6 +11,7 @@ class Ebfilter(SnappyModel):
     panel_of_normals_size: int = 25
     min_mapq: int = 20
     min_baseq: int = 15
+    path_panel_of_normals_sample_list: str = ""
 
 
 class Dkfz(SnappyModel):
@@ -126,16 +127,15 @@ class SomaticVariantFiltration(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_filter_list_is_configured_correctly(self):
-        if self.filter_list:
-            # check ebfilter and dkfz are only used at most once
-            num_ebfilter = num_dkfz = 0
-            for f in self.filter_list:
-                if "ebfilter" in f:
-                    num_ebfilter += 1
-                if "dkfz" in f:
-                    num_dkfz += 1
-            if num_ebfilter > 1:
-                raise ValueError("Only one ebfilter is allowed")
-            if num_dkfz > 1:
-                raise ValueError("Only one dkfz is allowed")
+        # check ebfilter and dkfz are only used at most once
+        num_ebfilter = num_dkfz = 0
+        for f in self.filter_list:
+            if "ebfilter" in f:
+                num_ebfilter += 1
+            if "dkfz" in f:
+                num_dkfz += 1
+        if num_ebfilter > 1:
+            raise ValueError("Only one ebfilter is allowed")
+        if num_dkfz > 1:
+            raise ValueError("Only one dkfz is allowed")
         return self

@@ -112,12 +112,13 @@ Note that the parallelisation of ``ebfilter`` has been removed, even though this
 """
 
 import os
+import random
 import sys
 from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand, Wildcards
+from snakemake.io import expand, Wildcards, InputFiles, OutputFiles
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -133,6 +134,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 
 from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
+from .model import Ebfilter as EbfilterConfig
 
 from snappy_pipeline.workflows.somatic_variant_annotation import ANNOTATION_TOOLS
 
@@ -183,21 +185,6 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         """Return name of normal (non-cancer) library"""
         pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
         return pair.normal_sample.dna_ngs_library.name if pair else None
-
-    def get_args(self, action):
-        """Return arguments to pass down."""
-        _ = action
-
-        def params_function(wildcards):
-            if wildcards.tumor_library not in self.donors:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
-                }
-            else:
-                return {}
-
-        return params_function
 
 
 class OneFilterStepPart(SomaticVariantFiltrationStepPart):
@@ -291,7 +278,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
 
     def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
         filter_nb = int(wildcards["filter_nb"])
-        params = dict(self.config.filter_list[filter_nb - 1][self.filter_name])
+        params = self.config.filter_list[filter_nb - 1][self.filter_name].model_dump(by_alias=True)
         params["filter_name"] = "{}_{}".format(self.filter_name, wildcards["filter_nb"])
         return params
 
@@ -339,7 +326,11 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         """Return path to input or previous filter vcf file & normal/tumor bams"""
         parent = super(OneFilterEbfilterStepPart, self)._get_input_files_run
         yield from parent(wildcards).items()
-        yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
+        cfg: EbfilterConfig = self._get_args(wildcards)
+        sample_files = cfg["path_panel_of_normals_sample_list"]
+        if not sample_files:
+            sample_files = self._get_output_files_write_panel()["txt"].format(**wildcards)
+        yield "txt", sample_files
 
     def _get_output_files_write_panel(self):
         return {
@@ -360,10 +351,30 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
 
     def write_panel_of_normals_file(self, wildcards):
         """Write out file with paths to panels-of-normal"""
-        output_path = self._get_output_files_write_panel()["txt"].format(**wildcards)
+        output_path = self.get_output_files("write_panel")["txt"].format(**wildcards)
         with open(output_path, "wt") as outf:
             for bam_path in self._get_panel_of_normal_bams(wildcards):
                 print(bam_path, file=outf)
+
+    @listify
+    def _get_panel_of_normal_bams(self, wildcards):
+        """Return list of "panel of normal" BAM files."""
+        libraries = []
+        for sheet in self.parent.shortcut_sheets:
+            for donor in sheet.donors:
+                for bio_sample in donor.bio_samples.values():
+                    if not bio_sample.extra_infos["isTumor"]:
+                        libraries.append(bio_sample.dna_ngs_library.name)
+        libraries.sort()
+
+        cfg: EbfilterConfig = self._get_args(wildcards)
+        random.seed(cfg.shuffle_seed)
+        lib_count = cfg["panel_of_normals_size"]
+        random.shuffle(libraries)
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
+        for library in libraries[:lib_count]:
+            yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):

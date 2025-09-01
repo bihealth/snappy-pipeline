@@ -58,10 +58,7 @@ rule somatic_variant_filtration_link_out_run:
 
 # Write out "panel of normals" file for eb_filter ------------------------------
 
-
 rule somatic_variant_filtration_eb_filter_write_panel:
-    input:
-        unpack(wf.get_input_files("one_ebfilter", "write_panel")),
     output:
         **wf.get_output_files("one_ebfilter", "write_panel"),
     threads: wf.get_resource("one_ebfilter", "write_panel", "threads")
@@ -70,8 +67,6 @@ rule somatic_variant_filtration_eb_filter_write_panel:
         memory=wf.get_resource("one_ebfilter", "write_panel", "memory"),
         partition=wf.get_resource("one_ebfilter", "write_panel", "partition"),
         tmpdir=wf.get_resource("one_ebfilter", "write_panel", "tmpdir"),
-    log:
-        **wf.get_log_file("one_ebfilter", "write_panel"),
     run:
         wf.substep_getattr("one_ebfilter", "write_panel_of_normals_file")(wildcards)
 
@@ -79,13 +74,13 @@ rule somatic_variant_filtration_eb_filter_write_panel:
 # Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-checkpoint one_dkfz:
+rule one_dkfz:
     input:
         unpack(wf.get_input_files("one_dkfz", "run")),
     output:
         **wf.get_output_files("one_dkfz", "run"),
     params:
-        args=wf.get_args("one_ebfilter", "run"),
+        args=wf.get_args("one_dkfz", "run"),
     threads: wf.get_resource("one_dkfz", "run", "threads")
     resources:
         time=wf.get_resource("one_dkfz", "run", "time"),
@@ -98,7 +93,7 @@ checkpoint one_dkfz:
         wf.wrapper_path("dkfz_bias_filter")
 
 
-checkpoint one_ebfilter:
+rule one_ebfilter:
     input:
         unpack(wf.get_input_files("one_ebfilter", "run")),
     output:
@@ -117,7 +112,7 @@ checkpoint one_ebfilter:
         wf.wrapper_path("eb_filter")
 
 
-checkpoint one_bcftools:
+rule one_bcftools:
     input:
         unpack(wf.get_input_files("one_bcftools", "run")),
     output:
@@ -136,7 +131,7 @@ checkpoint one_bcftools:
         wf.wrapper_path("bcftools/filter")
 
 
-checkpoint one_regions:
+rule one_regions:
     input:
         unpack(wf.get_input_files("one_regions", "run")),
     output:
@@ -155,7 +150,7 @@ checkpoint one_regions:
         wf.wrapper_path("bcftools/regions")
 
 
-checkpoint one_protected:
+rule one_protected:
     input:
         unpack(wf.get_input_files("one_protected", "run")),
     output:
