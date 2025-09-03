@@ -367,7 +367,10 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
                         libraries.append(bio_sample.dna_ngs_library.name)
         libraries.sort()
 
-        cfg: EbfilterConfig = self._get_args(wildcards)
+        for filter_cfg in self.config.filter_list:
+            if list(filter_cfg.keys())[0] == "ebfilter":
+                cfg: EbfilterConfig = list(filter_cfg.values())[0]
+                break
         random.seed(cfg.shuffle_seed)
         lib_count = cfg["panel_of_normals_size"]
         random.shuffle(libraries)

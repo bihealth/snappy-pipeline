@@ -91,8 +91,8 @@ if [[ $lines -gt 0 ]]; then
     EBFilter \
         -f vcf \
         -t 1 \
-        -q {params[min_mapq]} \
-        -Q {params[min_baseq]} \
+        -q {args[min_mapq]} \
+        -Q {args[min_baseq]} \
         $TMPDIR/for_eb_filter.vcf.gz \
         {snakemake.input.bam} \
         {snakemake.input.txt} \
@@ -100,7 +100,7 @@ if [[ $lines -gt 0 ]]; then
     if [[ -n "{filter_name}" ]]
     then
         bcftools filter --soft-filter {filter_name} --mode + \
-            --exclude "INFO/EB < {params[ebfilter_threshold]}" \
+            --exclude "INFO/EB < {args[ebfilter_threshold]}" \
             -O z -o $TMPDIR/after_eb_filter.vcf.gz \
             $TMPDIR/after_running_eb_filter.vcf
     else
