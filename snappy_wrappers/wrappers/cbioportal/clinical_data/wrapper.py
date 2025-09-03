@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
 
 
-def write_clinical_patient_tsv(donors):
+def write_clinical_patient_tsv(out, donors, config):
     """Takes a biomedsheet and writes a clinical patient tsv for cbioportal, see
     https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#the-patient-file
     for specification
@@ -33,7 +33,7 @@ def write_clinical_patient_tsv(donors):
     # attribute columns
     COLUMNS = ["PATIENT_ID", "DUMMY"]
 
-    with open(snakemake.output.patient, "w") as tsvfile:
+    with open(out, "w") as tsvfile:
         writer = csv.writer(tsvfile, delimiter="\t")
         # write header
         writer.writerow(NAMES)
@@ -54,20 +54,13 @@ class SampleInfoTMB:
     priority = "2"
     column = "TMB"
 
-    def __init__(self, config: CbioportalExport, wildcards: Wildcards, params: dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         name_pattern = "{mapping_tool}.{variant_calling_tool}.{variant_annotation_tool}".format(
             mapping_tool=config["mapping_tool"],
             variant_calling_tool=config["somatic_variant_calling_tool"],
             variant_annotation_tool=config["somatic_variant_annotation_tool"],
         )
-        if config.filter_set:
-            if config.filter_set == "filter_list":
-                name_pattern += ".filtered"
-            else:
-                name_pattern += ".dkfz_bias_filter.eb_filter"
         name_pattern += ".tmb.{library}"
-        if config.filter_set and config.filter_set != "filter_list":
-            name_pattern += f".{config.filter_set}.{config.exon_list}"
         self.tpl = os.path.join(
             config["sample_info"]["tumor_mutational_burden"]["path"],
             "output",
@@ -95,19 +88,16 @@ class SampleInfoTMB:
         return ""
 
 
-def write_clinical_samples_tsv(donors):
+def write_clinical_samples_tsv(out, donors, config):
     """Takes a biomedsheet and writes a clinical sample tsv for cbioportal, see
     https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#the-samples-file
     for specification
     """
 
-    args = getattr(snakemake.params, "args", {})
-
     sample_info_getters = []
-    config = CbioportalExport(args["__config"])
     for step, extra_info in config["sample_info"].items():
         if step == "tumor_mutational_burden":
-            sample_info_getters.append(SampleInfoTMB(config, snakemake.wildcards, snakemake.params))
+            sample_info_getters.append(SampleInfoTMB(config))
         else:
             raise Exception("Unknown sample info request")
 
@@ -130,7 +120,7 @@ def write_clinical_samples_tsv(donors):
         PRIORITY += [extra_info.priority]
         COLUMNS += [extra_info.column]
 
-    with open(snakemake.output.sample, "w") as tsvfile:
+    with open(out, "w") as tsvfile:
         writer = csv.writer(tsvfile, delimiter="\t")
         # write header
         writer.writerow(NAMES)
@@ -147,5 +137,6 @@ def write_clinical_samples_tsv(donors):
                 writer.writerow(row)
 
 
-write_clinical_patient_tsv(snakemake.params)
-write_clinical_samples_tsv(snakemake.params)
+args = getattr(snakemake.params, "args", {})
+write_clinical_patient_tsv(str(snakemake.output.patient), args.get("donors", []), args.get("config", {}))
+write_clinical_samples_tsv(str(snakemake.output.sample), args.get("donors", []), args.get("config", {}))

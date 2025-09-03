@@ -10,8 +10,6 @@ args = getattr(snakemake.params, "args", {})
 vcf_to_table = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vcf_to_table.py")
 if args["somatic_variant_annotation_tool"] == "vep":
     vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vep.yaml")
-elif args["somatic_variant_annotation_tool"] == "jannovar":
-    vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "jannovar.yaml")
 else:
     raise Exception(
         "vcf to maf conversion error: unimplemented conversion from annotation tool {}".format(
@@ -43,9 +41,9 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 python {vcf_to_table} \
     --config {vcf_to_table_config} \
     --debug --unique --title \
-    --NCBI_Build {config[vcf2maf][ncbi_build]} --Center "{config[vcf2maf][Center]}" \
-    --vcf-tumor-id {params[tumor_sample]} --tumor-id {params[tumor_id]} \
-    --vcf-normal-id {params[normal_sample]} --normal-id {params[normal_id]} \
+    --NCBI_Build {args[ncbi_build]} --Center "{args[Center]}" \
+    --vcf-tumor-id {args[tumor_sample]} --tumor-id {args[tumor_id]} \
+    --vcf-normal-id {args[normal_sample]} --normal-id {args[normal_id]} \
     {snakemake.input.vcf} {snakemake.output.maf}
 
 pushd $(dirname {snakemake.output.maf})

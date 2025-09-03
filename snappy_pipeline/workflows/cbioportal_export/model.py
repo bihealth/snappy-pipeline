@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict
+from typing import TypedDict, Any
 
 from pydantic import ConfigDict, model_validator
 
@@ -135,10 +135,10 @@ class CbioportalExport(SnappyStepModel):
 
     study: Study
 
-    patient_info: None = None
+    patient_info: dict[str, Any] = {}
     """unimplemented"""
 
-    sample_info: None = None
+    sample_info: dict[str, Any] = {}
     """Implementation must be re-designed"""
     # sample_info: dict[str, ExtraInfos] = Field(
     #     {},
