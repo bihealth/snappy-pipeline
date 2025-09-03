@@ -16,7 +16,7 @@ class SomaticVariantStep(enum.StrEnum):
 class SomaticVariantSignatures(SnappyStepModel):
     path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
 
-    somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
+    somatic_variant_step: SomaticVariantStep = SomaticVariantStep.CALL
     """Which pipeline step is used to compute signatures"""
 
     tools_ngs_mapping: list[str] = []
