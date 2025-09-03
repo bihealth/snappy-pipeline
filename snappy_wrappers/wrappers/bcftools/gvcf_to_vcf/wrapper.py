@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools convert - gVCF to VCF."""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
-from snakemake.script import snakemake
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 args = getattr(snakemake.params, "args", {})
 reference_path = args["reference_path"]

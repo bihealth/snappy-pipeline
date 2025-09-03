@@ -5,8 +5,12 @@ This can be used for performing variant calling on all samples from a given dono
 variant calling.
 """
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
-from snakemake.script import snakemake
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"

@@ -56,11 +56,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-<<<<<<< HEAD
-    --reference {args[reference]} \
-=======
     --reference {snakemake.input.reference} \
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
     --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \

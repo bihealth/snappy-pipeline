@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools filter"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
-from snakemake.script import snakemake
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
 expression = (
     '--include "{}"'.format(args["include"])
-    if "include" in args
+    if args.get("include", None)
     else '--exclude "{}"'.format(args["exclude"])
 )
 

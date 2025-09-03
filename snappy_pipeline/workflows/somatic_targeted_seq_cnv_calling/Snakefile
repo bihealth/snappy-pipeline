@@ -73,8 +73,8 @@ if "sequenza" in tools:
             **wf.get_output_files("sequenza", "install"),
         params:
             packages=[
-                {"name": "Runuran", "repo": "cran"},
-                {"name": "sequenzatools/sequenza", "repo": "bitbucket"},
+                {"name": "aroneklund/copynumber", "repo": "github"},
+                {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
             ],
         threads: wf.get_resource("sequenza", "install", "threads")
         resources:

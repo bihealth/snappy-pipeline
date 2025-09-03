@@ -108,7 +108,7 @@ then
         $dbsnp
 fi
 
-if [[ "{config[programs]}" == *"CollectHsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectHsMetrics"* ]]
 then
     java -jar $picard_jar CollectHsMetrics \
         -I {snakemake.input.bam} \
@@ -119,7 +119,7 @@ then
         -TARGET_INTERVALS {snakemake.input.targets}
 fi
 
-if [[ "{config[programs]}" == *"CollectRawWgsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectRawWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectRawWgsMetrics \
         -I {snakemake.input.bam} \
@@ -127,7 +127,7 @@ then
         -R {reference}
 fi
 
-if [[ "{config[programs]}" == *"CollectWgsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectWgsMetrics \
         -I {snakemake.input.bam} \
@@ -135,7 +135,7 @@ then
         -R {reference}
 fi
 
-if [[ "{config[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
+if [[ "{args[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
 then
     java -jar $picard_jar CollectWgsMetricsWithNonZeroCoverage \
         -I {snakemake.input.bam} \

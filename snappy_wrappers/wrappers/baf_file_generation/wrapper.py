@@ -1,16 +1,15 @@
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
-from snakemake.script import snakemake
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-<<<<<<< HEAD
 args = getattr(snakemake.params, "args", {})
 min_dp = args["min_dp"]
 reference_index_path = args["reference_index_path"]
-=======
-min_dp = snakemake.params["args"]["min_dp"]
-reference_index_path = snakemake.input.reference_index
->>>>>>> e61999d71af336aad21211892ffcc6bba7f20e4f
 
 shell(
     r"""
