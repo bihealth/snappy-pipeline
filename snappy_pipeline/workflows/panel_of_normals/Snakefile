@@ -75,7 +75,7 @@ if "mutect2" in tools:
         output:
             **wf.get_output_files("mutect2", "scatter"),
         params:
-            **wf.get_args("mutect2", "scatter"),
+            args=wf.get_args("mutect2", "scatter"),
         resources:
             time=wf.get_resource("mutect2", "scatter", "time"),
             memory=wf.get_resource("mutect2", "scatter", "memory"),
