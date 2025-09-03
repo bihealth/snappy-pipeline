@@ -213,12 +213,14 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
     """Tests cbioportalClinicalDataStepPart.get_args()"""
     # Define expected: all patients & samples
     expected = {
-        "P001": {"P001-T1": {"DNA": "P001-T1-DNA1-WGS1", "RNA": "P001-T1-RNA1-mRNA_seq1"}},
-        "P002": {
-            "P002-T1": {"DNA": "P002-T1-DNA1-WGS1"},
-            "P002-T2": {"DNA": "P002-T2-DNA1-WGS1", "RNA": "P002-T2-RNA1-mRNA_seq1"},
+        "donors": {
+            "P001": {"P001-T1": {"DNA": "P001-T1-DNA1-WGS1", "RNA": "P001-T1-RNA1-mRNA_seq1"}},
+            "P002": {
+                "P002-T1": {"DNA": "P002-T1-DNA1-WGS1"},
+                "P002-T2": {"DNA": "P002-T2-DNA1-WGS1", "RNA": "P002-T2-RNA1-mRNA_seq1"},
+            },
         },
-        "__config": {
+        "config": {
             "path_gene_id_mappings": "DUMMY",
             "path_somatic_variant": "/SOM_VAR_FILTRATION",
             "somatic_variant_step": "somatic_variant_filtration",
@@ -246,8 +248,8 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
                 "study_name_short": "test",
                 "reference_genome": "hg19",
             },
-            "patient_info": None,
-            "sample_info": None,
+            "patient_info": {},
+            "sample_info": {},
         },
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_clinical_data", "run")

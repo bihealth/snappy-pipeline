@@ -882,21 +882,20 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller="cnvkit",
             )
-            if self.config.cnvkit.enable_plot:
-                plots = (
-                    ("diagram", "pdf", False),
-                    ("heatmap", "pdf", True),
-                    ("scatter", "png", True),
-                )
-                yield from self._yield_report_files(
-                    (
-                        "output/{mapper}.{caller}.{cancer_library.name}/report/"
-                        "{mapper}.{caller}.{cancer_library.name}.{ext}"
-                    ),
-                    plots,
-                    mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                    caller="cnvkit",
-                )
+            plots = (
+                ("diagram", "pdf", False),
+                ("heatmap", "pdf", True),
+                ("scatter", "png", True),
+            )
+            yield from self._yield_report_files(
+                (
+                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
+                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
+                ),
+                plots,
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                caller="cnvkit",
+            )
         if "cnvetti" in bcf_tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:

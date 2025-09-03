@@ -58,7 +58,6 @@ def minimal_config():
               path_target: /path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed
               path_antitarget: /path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed
               path_panel_of_normals: /path/to/panel_of_normals/output/bwa.cnvkit.create_panel/out/bwa.cnvkit.panel_of_normals.cnn
-              enable_plot: True
             cnvetti: {}
             control_freec:
               path_chrlenfile: /path/to/chrlenfile

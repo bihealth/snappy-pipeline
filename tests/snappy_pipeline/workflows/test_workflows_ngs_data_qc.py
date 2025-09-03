@@ -164,7 +164,7 @@ def test_picard_step_part_get_args(ngs_data_qc):
     # Define expected
     expected = {
         "reference": "/path/to/ref.fa",
-        "prefix": "bwa.P001-N1-DNA1-WGS1",
+        "prefix": "bwa.P001-N1-DNA1-WGS1.",
         "programs": [
             "CollectAlignmentSummaryMetrics",
             "CollectOxoGMetrics",
