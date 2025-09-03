@@ -199,9 +199,6 @@ class Cnvkit(SnappyModel):
     ]
     """Path to panel of normals (reference)"""
 
-    enable_plot: bool = False
-    """Generate plots (very slow)"""
-
     coverage: Coverage = Coverage()
     fix: Fix = Fix()
     segment: Segment = Segment()

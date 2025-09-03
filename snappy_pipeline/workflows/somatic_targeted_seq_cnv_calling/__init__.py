@@ -756,12 +756,10 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
-            "cnvkit": ["fix", "postprocess", "report", "export"],
+            "cnvkit": ("fix", "postprocess", "report", "plot", "export"),
             "sequenza": ("coverage", "run"),
             "purecn": ("run",),
         }
-        if "cnvkit" in self.config.tools and self.config.cnvkit.enable_plot:
-            tool_actions["cnvkit"] += ["plot"]
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (
