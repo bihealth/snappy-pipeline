@@ -228,7 +228,7 @@ class PicardStepPart(BaseStepPart):
     def _get_args_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
             "reference": self.parent.w_config.static_data_config.reference.path,
-            "prefix": f"{wildcards.mapper}.{wildcards.library_name}",
+            "prefix": f"{wildcards.mapper}.{wildcards.library_name}.",
             "programs": self.config.picard.programs,
         }
         if self.config.picard.bait_name:
