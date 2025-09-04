@@ -35,6 +35,7 @@ def minimal_config():
             tools:
               dna: ['mbcs']
             target_coverage_report:
+              enabled: true
               path_target_interval_list_mapping:
               - pattern: "Agilent SureSelect Human All Exon V6.*"
                 name: Agilent_SureSelect_Human_All_Exon_V6
