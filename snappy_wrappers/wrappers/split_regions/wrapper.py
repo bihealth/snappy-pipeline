@@ -99,13 +99,13 @@ if __name__ == "__main__":
             print(f"Region {i}, size {size}: {region}")
 
         # Verify that all intervals for each contig sum up to the contig length:
+        covered = {contig: 0 for contig in contigs.keys()}
+        for region in regions:
+            for interval in region:
+                covered[interval.contig] += interval.end - interval.start
         for contig, length in contigs.items():
-            relevant_intervals = [
-                interval for region in regions for interval in region if interval.contig == contig
-            ]
-            total_length = sum(interval.end - interval.start for interval in relevant_intervals)
-            assert total_length == length, (
-                f"Total length of intervals for contig {contig} is {total_length}, expected {length}"
+            assert covered[contig] == length, (
+                f"Total length of intervals for contig {contig} is {covered[contig]}, expected {length}"
             )
 
         for region, path in zip(regions, output_regions):
