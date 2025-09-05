@@ -126,7 +126,7 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
     expected = {
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "intervals": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
+        "region": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
         "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
@@ -244,9 +244,30 @@ def test_mutect2_step_part_get_log_file_create_panel(panel_of_normals_workflow):
 
 
 def test_mutect2_step_part_get_args_scatter(panel_of_normals_workflow):
-    """Tests Mutect2StepPart.get_args()"""
+    """Tests Mutect2StepPart._get_args_scatter()"""
     expected = {"ignore_chroms": [], "padding": 5000}
-    actual = panel_of_normals_workflow.get_args("mutect2", "scatter")
+    actual = panel_of_normals_workflow.get_args("mutect2", "scatter")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_prepare_panel(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_prepare_panel()"""
+    expected = {"max_mnp_distance": 0, "java_options": "", "extra_arguments": []}
+    actual = panel_of_normals_workflow.get_args("mutect2", "prepare_panel")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_gather(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_gather()"""
+    expected = {}
+    actual = panel_of_normals_workflow.get_args("mutect2", "gather")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_create_panel(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_create_panel()"""
+    expected = {"java_options": "-Xms16g -Xmx32g", "extra_arguments": []}
+    actual = panel_of_normals_workflow.get_args("mutect2", "create_panel")({})
     assert actual == expected
 
 

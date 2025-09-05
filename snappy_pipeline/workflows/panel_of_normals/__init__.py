@@ -412,7 +412,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         return {
             "normal_bam": bam,
             "normal_bai": bam + ".bai",
-            "intervals": scatteritem_base_path.format(**wildcards),
+            "region": scatteritem_base_path.format(**wildcards),
             "reference": self.w_config.static_data_config.reference.path,
         }
 
@@ -470,15 +470,26 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def get_args(self, action):
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        match action:
-            case "scatter":
-                return {
-                    "ignore_chroms": self.config.ignore_chroms,
-                    "padding": self.config.mutect2.padding,
-                }
-            case _:
-                return {}
+    def _get_args_scatter(self, wildcards):
+        return {
+            "ignore_chroms": self.config.ignore_chroms,
+            "padding": self.config.mutect2.padding,
+        }
+
+    def _get_args_prepare_panel(self, wildcards):
+        return {
+            "max_mnp_distance": 0,
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_args_gather(self, wildcards):
+        return {}
+
+    def _get_args_create_panel(self, wildcards):
+        return self.config.mutect2.genomicsdb.model_dump(by_alias=True)
 
     def get_log_file(self, action):
         """Get log files for Mutect2 rules.

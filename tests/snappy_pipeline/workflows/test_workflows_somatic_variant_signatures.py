@@ -34,6 +34,7 @@ def minimal_config():
             tools: ['mutect2']
             mutect2:
               keep_tmpdir: onerror
+              contamination: {}
 
           somatic_variant_annotation:
             tools: [vep]

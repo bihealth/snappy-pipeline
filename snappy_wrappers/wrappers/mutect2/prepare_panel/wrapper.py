@@ -13,6 +13,11 @@ intervals = getattr(snakemake.input, "intervals", "")
 if intervals:
     intervals = f"--intervals {intervals}"
 
+if java_options := args.get("java_options", ""):
+    java_options = f"--java-options '{java_options}'"
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
+
 shell(
     r"""
 set -x
@@ -43,13 +48,14 @@ trap "rm -rf $tmpdir" EXIT
 
 vcf=$(basename --suffix=.gz {snakemake.output.vcf})
 
-gatk --java-options "-Xmx6g" Mutect2 \
+gatk {java_options} Mutect2 \
     --tmp-dir ${{tmpdir}} \
     --reference {snakemake.input.reference} \
     --input {snakemake.input.normal_bam} \
     {intervals} \
     --max-mnp-distance 0 \
-    --output $tmpdir/$vcf
+    --output $tmpdir/$vcf \
+    {extra_arguments}
 
 bgzip $tmpdir/$vcf
 tabix $tmpdir/$vcf.gz

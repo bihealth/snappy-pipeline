@@ -54,7 +54,7 @@ rule somatic_variant_calling_link_out_run:
 
 # Run MuTect 2 ----------------------------------------------------------------
 
-if wf.w_config.step_config["somatic_variant_calling"].mutect2.common_variants:
+if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enabled:
 
     rule somatic_variant_calling_mutect2_pileup_normal:
         input:
@@ -70,7 +70,7 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.common_variants:
         log:
             **wf.get_log_file("mutect2", "pileup_normal"),
         params:
-            normal_lib_name=wf.substep_getattr("mutect2", "get_normal_lib_name"),
+            args=wf.get_args("mutect2", "pileup_normal"),
         wrapper:
             wf.wrapper_path("mutect2/pileup")
 
@@ -87,6 +87,8 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.common_variants:
             tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
         log:
             **wf.get_log_file("mutect2", "pileup_tumor"),
+        params:
+            args=wf.get_args("mutect2", "pileup_tumor"),
         wrapper:
             wf.wrapper_path("mutect2/pileup")
 
@@ -118,7 +120,7 @@ rule somatic_variant_calling_mutect2_scatter:
     output:
         **wf.get_output_files("mutect2", "scatter"),
     params:
-        args=wf.get_params("mutect2", "scatter"),
+        args=wf.get_args("mutect2", "scatter"),
     resources:
         time=wf.get_resource("mutect2", "scatter", "time"),
         memory=wf.get_resource("mutect2", "scatter", "memory"),
@@ -145,7 +147,7 @@ rule somatic_variant_calling_mutect2_run:
     log:
         **wf.get_log_file("mutect2", "run"),
     params:
-        normal_lib_name=wf.substep_getattr("mutect2", "get_normal_lib_name"),
+        args=wf.get_args("mutect2", "run"),
     wrapper:
         wf.wrapper_path("mutect2/run")
 
@@ -181,7 +183,6 @@ rule somatic_variant_calling_mutect2_filter:
     log:
         **wf.get_log_file("mutect2", "filter"),
     params:
-        normal_lib_name=wf.substep_getattr("mutect2", "get_normal_lib_name"),
-        tumor_lib_name=wf.substep_getattr("mutect2", "get_tumor_lib_name"),
+        args=wf.get_args("mutect2", "filter"),
     wrapper:
         wf.wrapper_path("mutect2/filter")

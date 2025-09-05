@@ -5,8 +5,15 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 reference = snakemake.input.reference
 common_variants = snakemake.input.common_variants
+
+if java_options := args.get("java_options", None):
+    java_options = f"--java-options '{java_options}'"
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
@@ -40,12 +47,13 @@ trap "rm -rf $tmpdir" EXIT
 
 out_base=$tmpdir/$(basename {snakemake.output.pileup} .pileup)
 
-gatk --java-options '-Xms4000m -Xmx8000m' GetPileupSummaries \
+gatk {java_options} GetPileupSummaries \
     --input {snakemake.input.bam} \
     --reference {reference} \
     --variant {common_variants} \
     --intervals {common_variants} \
-    --output $out_base.pileup
+    --output $out_base.pileup \
+    {extra_arguments}
 
 pushd $tmpdir && \
     for f in $out_base.*; do \

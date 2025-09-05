@@ -18,6 +18,13 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
+if java_options := args.get("java_options", ""):
+    java_options = f"--java-options '{java_options}'"
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
+
 shell(
     r"""
 set -x
@@ -68,11 +75,12 @@ sort ${{tmpdir}}/contigs_all.list | uniq > ${{tmpdir}}/contigs.list
 
 # Create the genomicsdb
 rm -rf ${{tmpdir}}/pon_db
-gatk --java-options '-Xms10000m -Xmx20000m' GenomicsDBImport \
+gatk {java_options} GenomicsDBImport \
     --tmp-dir ${{tmpdir}} \
     --reference {snakemake.input.reference} \
     --genomicsdb-workspace-path ${{tmpdir}}/pon_db \
     --intervals ${{tmpdir}}/contigs.list \
+    {extra_arguments} \
     $cmd
 
 # Create the panel of normals vcf

@@ -38,7 +38,8 @@ def minimal_config():
           somatic_variant_calling:
             tools:
             - mutect2
-            mutect2: {}
+            mutect2:
+              contamination: {}
 
           somatic_variant_annotation:
             path_somatic_variant: /path/to/somatic_variant_calling

@@ -353,21 +353,53 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        if action == "scatter":
-            ignore_chroms = list(
-                set(
-                    self.w_config.get("ignore_chroms", [])
-                    + self.config.get("ignore_chroms", [])
-                    + self.config.get(self.name).get("ignore_chroms", [])
-                )
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_scatter(self, wildcards):
+        ignore_chroms = list(
+            set(
+                self.w_config.get("ignore_chroms", [])
+                + self.config.get("ignore_chroms", [])
+                + self.config.get(self.name).get("ignore_chroms", [])
             )
-            return {
-                "ignore_chroms": sorted(list(ignore_chroms)),
-                "padding": self.config.mutect2.padding,
-            }
+        )
+        return {
+            "ignore_chroms": sorted(list(ignore_chroms)),
+            "padding": self.config.mutect2.padding,
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_pileup_normal(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "normal_lib_name": self.get_normal_lib_name(wildcards)
+        }
+
+    def _get_args_pileup_tumor(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "tumor_lib_name": self.get_tumor_lib_name(wildcards)
+        }
+
+    def _get_args_contamination(self, wildcards):
+        return {
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_run(self, wildcards):
+        return {
+            "normal_lib_name": self.get_normal_lib_name(wildcards),
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_args_gather(self, wildcards):
         return {}
+
+    def _get_args_filter(self, wildcards):
+        return self.config.mutect2.filtration.model_dump(by_alias=True)
 
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
@@ -400,17 +432,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
         # Adjustment tumor_only mode
-
-        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
-        if tumor_normal_mode is None:
-            raise ValueError(
-                "'tumor_normal_mode' not defined in step configuration for %s" % self.name
-            )
-
-        if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
+        tumor_normal_mode = self.config.mutect2.tumor_normal_mode
+        if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             normal_library = self.get_normal_lib_name(wildcards)
             if normal_library:
-                # Use paired mode if normal is present
                 normal_base_path = (
                     "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                         normal_library=normal_library, **wildcards
@@ -422,29 +447,19 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                         "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                     }
                 )
-            # else: tumor_only — do not add normal BAMs
-        elif tumor_normal_mode == TumorNormalMode.PAIRED:
-            normal_library = self.get_normal_lib_name(wildcards)
-            if not normal_library:
-                raise ValueError("Normal sample required but not found.")
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=normal_library, **wildcards
-                )
-            )
-            input_files.update(
-                {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                }
-            )
-        elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
-            # No normal BAMs to include
-            pass
-        else:
-            raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
+            else:
+                if tumor_normal_mode == TumorNormalMode.PAIRED:
+                    raise ValueError(
+                        f"Normal sample for tumor {wildcards.tumor_library} required but not found."
+                    )
 
         input_files["reference"] = self.w_config.static_data_config.reference.path
+
+        if self.config.mutect2.germline_resource:
+            input_files["germline_resource"] = self.config.mutect2.germline_resource
+        if self.config.mutect2.panel_of_normals:
+            input_files["panel_of_normals"] = self.config.mutect2.panel_of_normals
+
         return input_files
 
     def _get_input_files_gather(self, wildcards):
@@ -482,7 +497,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "reference": self.w_config.static_data_config.reference.path,
         }
         if self.get_normal_lib_name(wildcards):
-            if "contamination" in self.actions:
+            if self.config.mutect2.contamination.enabled:
                 input_files["table"] = base_path + ".contamination.tbl"
                 input_files["segments"] = base_path + ".segments.tbl"
         return input_files
@@ -507,7 +522,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam"),
             "reference": self.w_config.static_data_config.reference.path,
-            "common_variants": self.config.mutect2.common_variants,
+            "common_variants": self.config.mutect2.contamination.common_variants,
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
@@ -528,7 +543,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam"),
             "reference": self.w_config.static_data_config.reference.path,
-            "common_variants": self.config.mutect2.common_variants,
+            "common_variants": self.config.mutect2.contamination.common_variants,
         }
 
     def _get_input_files_contamination(self, wildcards: Wildcards):
@@ -582,10 +597,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if action == "run":
             base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
             exts = {
-                "raw": ".raw.vcf.gz",
-                "raw_md5": ".raw.vcf.gz.md5",
-                "raw_tbi": ".raw.vcf.gz.tbi",
-                "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
                 "f1r2": ".raw.f1r2.tar.gz",
@@ -723,7 +738,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
         if "mutect2" in self.config.tools:
-            if self.config.mutect2.common_variants:
+            if self.config.mutect2.contamination.enabled:
                 self.sub_steps["mutect2"].actions.extend(
                     ["contamination", "pileup_normal", "pileup_tumor"]
                 )

@@ -92,6 +92,8 @@ if "mutect2" in tools:
             unpack(wf.get_input_files("mutect2", "prepare_panel")),
         output:
             **wf.get_output_files("mutect2", "prepare_panel"),
+        params:
+            args=wf.get_args("mutect2", "prepare_panel"),
         threads: wf.get_resource("mutect2", "prepare_panel", "threads")
         resources:
             time=wf.get_resource("mutect2", "prepare_panel", "time"),
@@ -101,7 +103,7 @@ if "mutect2" in tools:
         log:
             **wf.get_log_file("mutect2", "prepare_panel"),
         wrapper:
-            wf.wrapper_path("mutect2/prepare_panel")
+            wf.wrapper_path("mutect2/run")
 
     rule panel_of_normals_mutect2_gather:
         input:
@@ -126,6 +128,8 @@ if "mutect2" in tools:
             unpack(wf.get_input_files("mutect2", "create_panel")),
         output:
             **wf.get_output_files("mutect2", "create_panel"),
+        params:
+            args=wf.get_args("mutect2", "create_panel"),
         threads: wf.get_resource("mutect2", "create_panel", "threads")
         resources:
             time=wf.get_resource("mutect2", "create_panel", "time"),
@@ -167,7 +171,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "target"),
         params:
-            args=wf.substep_dispatch("cnvkit", "get_args", "target"),
+            args=wf.get_args("cnvkit", "target"),
         wrapper:
             wf.wrapper_path("cnvkit/target")
 
@@ -184,7 +188,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "antitarget"),
         params:
-            args=wf.substep_dispatch("cnvkit", "get_args", "antitarget"),
+            args=wf.get_args("cnvkit", "antitarget"),
         wrapper:
             wf.wrapper_path("cnvkit/antitarget")
 
@@ -201,7 +205,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "coverage"),
         params:
-            args=wf.substep_dispatch("cnvkit", "get_args", "coverage"),
+            args=wf.get_args("cnvkit", "coverage"),
         wrapper:
             wf.wrapper_path("cnvkit/coverage")
 
@@ -218,7 +222,7 @@ if "cnvkit" in tools:
         log:
             **wf.get_log_file("cnvkit", "create_panel"),
         params:
-            args=wf.substep_dispatch("cnvkit", "get_args", "create_panel"),
+            args=wf.get_args("cnvkit", "create_panel"),
         wrapper:
             wf.wrapper_path("cnvkit/reference")
 

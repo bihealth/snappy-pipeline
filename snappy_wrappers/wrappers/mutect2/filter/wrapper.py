@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 reference = snakemake.input.reference
 
 segments = (
@@ -17,6 +19,11 @@ table = (
     if getattr(snakemake.input, "table", None) is not None
     else ""
 )
+
+if java_options := args.get("java_options", ""):
+    java_options = f"--java-options '{java_options}'"
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
@@ -63,13 +70,14 @@ zcat {snakemake.input.raw} \
     > $tmpdir/in.vcf
 
 # Filter calls
-gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
+gatk {java_options} FilterMutectCalls \
     --reference {reference} \
     {segments} {table} \
     --ob-priors {snakemake.input.orientation} \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
-    --output $tmpdir/out.vcf
+    --output $tmpdir/out.vcf \
+    {extra_arguments}
 
 # Extract sample names
 grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst

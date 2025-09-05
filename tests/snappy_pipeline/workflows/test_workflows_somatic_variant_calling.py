@@ -41,7 +41,9 @@ def minimal_config():
             tools:
               - mutect2
             mutect2:
-              common_variants: /path/to/common_variants.vcf
+              contamination:
+                enabled: true
+                common_variants: /path/to/common_variants.vcf
 
         data_sets:
           first_batch:
@@ -298,6 +300,26 @@ def test_mutect2_step_part_get_output_files_filter(
     assert actual == expected
 
 
+def test_mutect2_step_part_get_output_files_run(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - run"""
+    # Define expected
+    expected = {
+        "vcf": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz",
+        "vcf_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz.md5",
+        "vcf_tbi": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz.tbi",
+        "vcf_tbi_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz.tbi.md5",
+        "stats": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.stats",
+        "stats_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.stats.md5",
+        "f1r2": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.f1r2.tar.gz",
+        "f1r2_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.f1r2.tar.gz.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    assert actual == expected
+
+
 def test_mutect2_step_part_get_output_files_contamination(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
@@ -422,6 +444,72 @@ def test_mutect2_step_part_get_log_file_pileup_tumor(
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_log_file("mutect2", "pileup_tumor")
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_pileup_normal(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_pileup_normal"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"normal_lib_name": "P001-N1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "pileup_normal")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_pileup_tumor(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_pileup_tumor"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"tumor_lib_name": "P001-T1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "pileup_tumor")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_contamination(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_contamination"""
+    # Define expected
+    expected = {"extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "contamination")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_scatter(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_scatter"""
+    # Define expected
+    expected = {"padding": 5000, "ignore_chroms": [], "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "scatter")(mutect2_wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_run(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_run"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"normal_lib_name": "P001-N1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "run")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_gather(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_gather"""
+    # Define expected
+    expected = {}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "gather")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_filter(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_filter"""
+    # Define expected
+    expected = {"extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "filter")({})
     assert actual == expected
 
 

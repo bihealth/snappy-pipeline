@@ -3,7 +3,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 
 
@@ -14,54 +16,29 @@ class Tool(enum.StrEnum):
     access = "access"
 
 
-class Mutect2(SnappyModel):
+class GenomicsDb(GATK):
+    java_options: str = "-Xms16g -Xmx32g"
+    """
+    GenomicsDBImport needs lots of memory.
+    (mind the caveats in https://gatk.broadinstitute.org/hc/en-us/articles/35967560824859-GenomicsDBImport)
+    """
+
+
+class Mutect2(Parallel, GATK):
     path_normals_list: str = ""
+    """Optional file listing libraries to include in panel"""
 
     germline_resource: str
-
-    java_options: str = " -Xmx16g"
-
-    num_cores: int = 2
-    """number of cores to use locally"""
-
-    window_length: int = 100000000
-    """split input into windows of this size, each triggers a job"""
+    """Germline variants resource (same as panel of normals)"""
 
     padding: int = 5000
-    """Padding around scatter-intervals, in bp."""
+    """Padding around intervals for scatter/gather"""
 
-    num_jobs: int = 24
-    """number of windows to process in parallel"""
-
-    use_profile: bool = True
-    """use Snakemake profile for parallel processing"""
-
-    restart_times: int = 5
-    """number of times to re-launch jobs in case of failure"""
-
-    max_jobs_per_second: int = 2
-    """throttling of job creation"""
-
-    max_status_checks_per_second: int = 10
-    """throttling of status checks"""
-
-    debug_trunc_tokens: int = 0
-    """truncation to first N tokens (0 for none)"""
-
-    keep_tmpdir: KeepTmpdir = KeepTmpdir.never
-    """keep temporary directory, {always, never, onerror}"""
-
-    job_mult_memory: float = 1
-    """memory multiplier"""
-
-    job_mult_time: float = 1
-    """running time multiplier"""
-
-    merge_mult_memory: float = 1
-    """memory multiplier for merging"""
-
-    merge_mult_time: float = 1
-    """running time multiplier for merging"""
+    genomicsdb: GenomicsDb = GenomicsDb()
+    """
+    Parameters for the creation of the (transient?) genomics database.
+    The 2nd part of panel of normals creation (CreateSomaticPanelOfNormals) is not under user control
+    """
 
 
 class Access(SnappyModel):
@@ -128,24 +105,21 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
         list[str],
         Field(
             examples=[
-                "NC_007605",
-                "hs37d5",
-                "chrEBV",
-                "*_decoy",
-                "HLA-*",
-                "GL000220.*",
-                "chrEBV",
-                "HPV*",
-                "CMV",
-                "HBV",
-                "HCV-*",
-                "HIV-*",
-                "KSHV",
-                "HTLV-1",
-                "MCV",
-                "*_decoy",
-                "chrUn_GL00220*",
-                "SV40",
+                ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+                [
+                    "chrEBV",
+                    "HPV*",
+                    "CMV",
+                    "HBV",
+                    "HCV-*",
+                    "HIV-*",
+                    "KSHV",
+                    "HTLV-1",
+                    "MCV",
+                    "*_decoy",
+                    "chrUn_GL00220*",
+                    "SV40",
+                ],
             ]
         ),
     ] = []
