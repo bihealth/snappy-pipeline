@@ -84,7 +84,6 @@ CP <- do.call(sequenza.fit, args=args)
 warnings()
 
 sequenza.results(sequenza.extract=seqz, cp.table=CP, sample.id="{args[library_name]}", out.dir=dirname("{snakemake.output.done}"))
-
 warnings()
 
 # Convert *_segment.txt to *_dnacopy.seg to follow pipeline output format

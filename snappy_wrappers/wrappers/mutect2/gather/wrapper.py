@@ -29,11 +29,10 @@ set -x
 
 # Concatenate vcfs & index result ----------------------
 bcftools concat \
-         --allow-overlaps \
-         -d none \
-            -o {output.vcf} \
-               -O z \
-    {input.vcf}
+     --allow-overlaps --rm-dups none \
+    {input.vcf} \
+| bcftools sort \
+     --output-type z --output {output.vcf}
 tabix -f {output.vcf}
 
 # Concatenate stats with GATK tool -------------------------------

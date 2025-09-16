@@ -44,7 +44,8 @@ def minimal_config():
             somatic_variant_annotation_tool: "vep"
             copy_number_alteration:
               enabled: true
-              path_copy_number: /COPY_NUMBER
+              copy_number_alteration:
+              enabled: truepath_copy_number: /COPY_NUMBER
               copy_number_tool: cnvkit
             exclude_variant_with_flag: LowFisherScore
             vcf2maf:

@@ -15,7 +15,9 @@ if center := args["center"]:
         center = " --center-at" + str(center)
 else:
     center = ""
-    
+    else:
+    center = ""
+
 gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
 male = " --male-reference" if args.get("male_reference", False) else ""
 purity = " --purity {}".format(args["purity"]) if args.get("purity", 0.0) > 0.0 else ""
