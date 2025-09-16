@@ -44,8 +44,7 @@ def minimal_config():
             somatic_variant_annotation_tool: "vep"
             copy_number_alteration:
               enabled: true
-              copy_number_alteration:
-              enabled: truepath_copy_number: /COPY_NUMBER
+              path_copy_number: /COPY_NUMBER
               copy_number_tool: cnvkit
             exclude_variant_with_flag: LowFisherScore
             vcf2maf:
@@ -250,7 +249,7 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
                 "reference_genome": "hg19",
             },
             "patient_info": {},
-            "sample_info": {},
+            "sample_info": None,
         },
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_clinical_data", "run")
