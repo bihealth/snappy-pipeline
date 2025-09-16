@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
@@ -96,7 +96,7 @@ class UmiLoc(Enum):
 
 
 class Fastp(SnappyModel):
-    num_threads: int = 0
+    num_threads: PositiveInt = 4
     trim_front1: int = 0
     """
     trimming how many bases in front for read1, default is 0 (int [=0])

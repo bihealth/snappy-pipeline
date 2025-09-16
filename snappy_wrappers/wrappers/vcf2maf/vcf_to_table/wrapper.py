@@ -46,7 +46,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 python {vcf_to_table} \
     --config {vcf_to_table_config} \
     --debug --unique --title \
-    --NCBI_Build {config[vcf2maf][ncbi_build]} --Center {config[vcf2maf][Center]} \
+    --NCBI_Build {config[vcf2maf][ncbi_build]} --Center "{config[vcf2maf][Center]}" \
     --vcf-tumor-id {params[tumor_sample]} --tumor-id {params[tumor_id]} \
     --vcf-normal-id {params[normal_sample]} --normal-id {params[normal_id]} \
     {snakemake.input.vcf} {snakemake.output.maf}

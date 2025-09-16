@@ -234,7 +234,7 @@ class PicardStepPart(BaseStepPart):
         if action == "prepare":
             return super().get_resource_usage(action, **kwargs)
         elif action == "metrics":
-            return ResourceUsage(threads=1, time="24:00:00", memory="24G")
+            return ResourceUsage(threads=1, time="24:00:00", memory="64G")
         else:
             actions_str = ", ".join(self.actions)
             raise UnsupportedActionException(

@@ -244,7 +244,7 @@ rule somatic_targeted_seq_cnv_calling_sequenza_install:
     params:
         packages=[
             {"name": "aroneklund/copynumber", "repo": "github"},
-            {"name": "sequenzatools/sequenza", "repo": "bitbucket"},
+            {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
         ],
     threads: wf.get_resource("sequenza", "install", "threads")
     resources:
