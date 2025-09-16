@@ -28,11 +28,8 @@ step_config:
     tools: [mutect2]
     mutect2:
       extra_arguments: []
-      num_jobs: 5
-      num_cores: 1
-      padding: 5000
-      keep_tmpdir: onerror
-      job_mult_time: 5
+      contamination:
+          enabled: false
 
 
   somatic_variant_annotation:
