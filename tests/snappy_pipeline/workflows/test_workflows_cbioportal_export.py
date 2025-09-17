@@ -249,7 +249,7 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
                 "reference_genome": "hg19",
             },
             "patient_info": {},
-            "sample_info": None,
+            "sample_info": {},
         },
     }
     actual = cbioportal_export_workflow.get_args("cbioportal_clinical_data", "run")

@@ -138,7 +138,7 @@ class CbioportalExport(SnappyStepModel):
     patient_info: dict[str, Any] = {}
     """unimplemented"""
 
-    sample_info: None = None
+    sample_info: dict[str, Any] = {}
     """Implementation must be re-designed"""
     # sample_info: dict[str, ExtraInfos] = Field(
     #     {},
