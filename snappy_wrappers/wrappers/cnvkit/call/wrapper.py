@@ -8,14 +8,12 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-if center := args["center"]:
+if center := args.get("center", None):
     if center in ("mean", "median", "mode", "biweight"):
         center = " --center " + center
     else:
-        center = " --center-at" + str(center)
+        center = " --center-at " + str(center)
 else:
-    center = ""
-    else:
     center = ""
 
 gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
