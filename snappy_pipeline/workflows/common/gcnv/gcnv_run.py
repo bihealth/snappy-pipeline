@@ -524,7 +524,13 @@ class RunGcnvStepPart(
         return getattr(self, f"_get_args_{action}")
 
     def _get_args_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
+        args = {"reference": self.parent.w_config.static_data_config.reference.path}
+        if self.config.get(self.name).get("path_target_interval_list_mapping", None):
+            for item in self.config.get(self.name).get("path_target_interval_list_mapping"):
+                if item["name"] == wildcards.library_kit:
+                    args["target_interval_bed"] = item["path"]
+                    break
+        return args
 
     def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"reference": self.parent.w_config.static_data_config.reference.path}
