@@ -143,8 +143,8 @@ def test_bcftools_step_part_get_args(variant_calling_workflow):
     expected = {
         "assembly": "unknown",
         "ignore_chroms": ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"],
-        "gatk4_hc_joint_window_length": 10000000,
-        "gatk4_hc_joint_num_threads": 16,
+        "window_length": 10000000,
+        "num_threads": 16,
         "max_depth": 250,
         "max_indel_depth": 250,
     }

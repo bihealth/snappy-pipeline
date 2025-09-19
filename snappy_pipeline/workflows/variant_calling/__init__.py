@@ -500,8 +500,8 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         return {
             "assembly": assembly,
             "ignore_chroms": self.config.ignore_chroms,
-            "gatk4_hc_joint_window_length": self.config.gatk4_hc_joint.window_length,
-            "gatk4_hc_joint_num_threads": self.config.gatk4_hc_joint.num_threads,
+            "window_length": self.config.bcftools_call.window_length,
+            "num_threads": self.config.bcftools_call.num_threads,
             "max_depth": self.config.bcftools_call.max_depth,
             "max_indel_depth": self.config.bcftools_call.max_indel_depth,
         }
@@ -591,6 +591,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_discover(self, wildcards):
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "dbsnp", self.w_config.static_data_config.dbsnp.path
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         bam_path = f"output/{infix}/out/{infix}.bam"
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
@@ -802,8 +804,9 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
                 "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
             ),
         )
-        yield "path_targets", self.config.get(self.name).get("path_targets")
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
+        if self.config.get(self.name).get("path_targets"):
+            yield "path_targets", self.config.get(self.name).get("path_targets")
 
     def get_output_files(self, action: str) -> SnakemakeDict:
         """Return step part output files"""

@@ -31,8 +31,8 @@ ignore_chroms = args["ignore_chroms"]
 max_depth = args["max_depth"]
 max_indel_depth = args["max_indel_depth"],
 
-gatk4_hc_joint_window_length = args["gatk4_hc_joint_window_length"]
-gatk4_hc_joint_num_threads = args["gatk4_hc_joint_num_threads"]
+window_length = args["window_length"]
+num_threads = args["num_threads"]
 
 shell(
     r"""
@@ -74,7 +74,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
     --reference {ref_path} \
-    --bin-length {gatk4_hc_joint_window_length} \
+    --bin-length {window_length} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
     $(for ignore_chrom in {ignore_chroms}; do \
@@ -136,7 +136,7 @@ export -f run-shard
 
 # Perform parallel execution
 (set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
-num_threads={gatk4_hc_joint_num_threads}
+num_threads={num_threads}
 cat $TMPDIR/final_intervals.txt \
 | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
 
