@@ -280,7 +280,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     def _get_args_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         params = {
-            "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
         }
 
