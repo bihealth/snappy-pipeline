@@ -4,6 +4,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
+bams = " --bam ".join(snakemake.input.bam)
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -66,7 +68,7 @@ rm -rf $outdir/* $workdir/*
 configManta.py \
     --referenceFasta {snakemake.input.reference} \
     --runDir $workdir \
-    $(echo "{snakemake.input}" | tr ' ' '\n' | grep -v 'bai$' | sed 's/^/--bam /g')
+    --bam {bams}
 
 perl -p -i -e 's/isEmail = .*/isEmail = False/g' $workdir/runWorkflow.py
 
