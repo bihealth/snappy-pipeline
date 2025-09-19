@@ -600,6 +600,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        yield "reference", self.w_config.static_data_config.reference.path
+
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
 
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
