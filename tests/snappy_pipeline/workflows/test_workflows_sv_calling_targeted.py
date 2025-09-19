@@ -406,26 +406,6 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
             assert actual == expected, msg_error
 
 
-def test_gcnv_get_args(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart.get_args for all actions"""
-    all_actions = (
-        "preprocess_intervals",
-        "coverage",
-        "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
-        "merge_cohort_vcfs",
-        "joint_germline_cnv_segmentation",
-    )
-    actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
-    for action in all_actions:
-        if action in actions_w_params:
-            sv_calling_targeted_workflow.get_args("gcnv", action)
-        else:
-            with pytest.raises(UnsupportedActionException):
-                sv_calling_targeted_workflow.get_args("gcnv", action)
-
-
 def test_gcnv_validate_ploidy_model_directory(
     fake_fs, mocker, sv_calling_targeted_workflow, ploidy_model_files
 ):

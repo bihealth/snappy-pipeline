@@ -11,7 +11,7 @@ from typing import Any
 
 from snakemake.io import Wildcards, expand, touch
 
-from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
+from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
     GcnvCommonStepPart,
@@ -518,12 +518,7 @@ class RunGcnvStepPart(
 
         :raises UnsupportedActionException: if invalid action.
         """
-        # Actions with parameters
-        valid_actions = ("call_cnvs", "contig_ploidy", "post_germline_calls")
-        # Validate inputted action
-        if action not in valid_actions:
-            error_message = f"Action '{action}' is not supported. Valid options: {valid_actions}."
-            raise UnsupportedActionException(error_message)
+        self._validate_action(action)
 
         # Return requested function
         return getattr(self, f"_get_args_{action}")
