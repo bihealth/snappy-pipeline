@@ -16,6 +16,7 @@ compute-md5()
 """
 
 args = getattr(snakemake.params, "args", {})
+allow_seq_dict_incompatibility = "--disable-sequence-dictionary-validation true" if args.get("allow_seq_dict_incompatibility", False) else ""
 
 shell(
     r"""
@@ -107,9 +108,7 @@ run-shard()
         -G AS_StandardAnnotation \
         -G StandardHCAnnotation \
         -G AlleleSpecificAnnotation \
-        $(if [[ {args][allow_seq_dict_incompatibility]} == "True" ]]; then \
-            echo --disable-sequence-dictionary-validation true; \
-        fi) \
+        {allow_seq_dict_incompatibility} \
         -ERC GVCF
 }}
 export -f run-shard
