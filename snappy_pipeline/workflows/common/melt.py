@@ -131,12 +131,12 @@ class MeltStepPart(
 
     @listify
     def _get_input_files_group_analysis(self, wildcards):
+        yield self.w_config.static_data_config.reference.path
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         for member in pedigree.donors:
             if member.dna_ngs_library:
                 infix = f"{wildcards.mapper}.melt_indiv_analysis.{member.dna_ngs_library.name}.{wildcards.me_type}"
                 yield f"work/{infix}/out/.done.{member.dna_ngs_library.name}"
-        yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_group_analysis(self):

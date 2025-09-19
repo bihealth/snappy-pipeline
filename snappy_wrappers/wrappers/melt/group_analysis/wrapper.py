@@ -5,6 +5,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 melt_config = args["config"]
 
+reference = snakemake.input[0]
+individual = snakemake.input[1]
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -19,7 +22,7 @@ ME_INFIX={melt_config[me_refs_infix]}
 
 java -jar -Xmx13G -jar $JAR \
     GroupAnalysis \
-    -h {snakemake.input.reference} \
+    -h {reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     $(if [[ $ME_REFS == *37* ]] || [[ $ME_REFS == *hg19* ]]; then
         echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;
@@ -27,6 +30,6 @@ java -jar -Xmx13G -jar $JAR \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \
     -n {melt_config[genes_file]} \
-    -discoverydir $(dirname $(echo {snakemake.input} | cut -d ' ' -f 1))
+    -discoverydir $(dirname {individual})
 """
 )
