@@ -624,6 +624,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield "reference", self.w_config.static_data_config.reference.path
+
         infix = f"{wildcards.mapper}.gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
