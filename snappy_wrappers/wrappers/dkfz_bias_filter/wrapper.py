@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -euo pipefail
@@ -40,13 +42,11 @@ dkfzbiasfilter.py \
     --writeQC \
     {snakemake.input.vcf} \
     {snakemake.input.bam} \
-    {snakemake.config[static_data_config][reference][path]} \
+    {snakemake.input.reference} \
     ${{out%.gz}}
 
-# bcftools incompatible with dkfzbiasfilter.py in bioconda (2023-10-13)
 if [[ ! -s ${{out%.gz}} ]]; then
-    zgrep '^#' {snakemake.input.vcf} \
-    # bcftools view --header-only {snakemake.input.vcf} \
+    bcftools view --header-only {snakemake.input.vcf} \
     > ${{out%.gz}}
 fi
 

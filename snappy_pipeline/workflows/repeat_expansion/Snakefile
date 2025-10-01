@@ -76,7 +76,7 @@ rule repeat_expansion_run_expansionhunter:
         partition=wf.get_resource("expansionhunter", "run", "partition"),
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     params:
-        **{"args": wf.get_params("expansionhunter", "run")},
+        args=wf.get_args("expansionhunter", "run"),
     log:
         wf.get_log_file("expansionhunter", "run"),
     wrapper:

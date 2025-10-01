@@ -61,7 +61,9 @@ def repeat_expansion_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
     # Construct the workflow object
     return RepeatExpansionWorkflow(
         dummy_workflow,
@@ -114,7 +116,12 @@ def test_repeat_expansion_workflow_files(repeat_expansion_workflow):
 def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart._get_input_files_run()"""
     # Define expected
-    expected = ["../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "reference": "/path/to/ref.fa",
+        "repeat_catalog": "DUMMY",
+    }
     # Get actual
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = repeat_expansion_workflow.get_input_files("expansionhunter", "run")(wildcards)
@@ -125,8 +132,7 @@ def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflo
     """Tests ExpansionHunterStepPart._get_output_files_run()"""
     # Define expected
     pattern_out = (
-        "work/{mapper}.expansionhunter.{library_name}/out/"
-        "{mapper}.expansionhunter.{library_name}"
+        "work/{mapper}.expansionhunter.{library_name}/out/{mapper}.expansionhunter.{library_name}"
     )
     expected = {
         "json": pattern_out + ".json",
@@ -150,17 +156,17 @@ def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
     assert actual == expected
 
 
-def test_expansionhunter_run_step_part_get_params(repeat_expansion_workflow):
-    """Tests RepeatExpansionWorkflow.get_params()"""
+def test_expansionhunter_run_step_part_get_args(repeat_expansion_workflow):
+    """Tests RepeatExpansionWorkflow.get_args()"""
     # P001
     expected = "female"
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    actual = repeat_expansion_workflow.get_args("expansionhunter", "run")(wildcards)
     assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a female patient."
     # P002
     expected = "male"
     wildcards = Wildcards(fromdict={"library_name": "P002-N1-DNA1-WGS1"})
-    actual = repeat_expansion_workflow.get_params("expansionhunter", "run")(wildcards)
+    actual = repeat_expansion_workflow.get_args("expansionhunter", "run")(wildcards)
     assert actual.get("sex") == expected, "P001-N1-DNA1-WGS1 associated with a male patient."
 
 

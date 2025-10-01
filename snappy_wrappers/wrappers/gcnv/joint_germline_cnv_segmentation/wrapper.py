@@ -2,6 +2,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -53,7 +55,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 gatk JointGermlineCNVSegmentation \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {args[reference]} \
     $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
     --model-call-intervals {snakemake.input.interval_list} \
     --pedigree {snakemake.input.ped} \

@@ -210,6 +210,7 @@ def test_report_run_step_part_get_input_files(somatic_cnv_checking_workflow):
     expected = {
         "vcf": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.vcf.gz",
         "tsv": "work/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1.tsv",
+        "reference": "/path/to/ref.fa",
     }
     actual = somatic_cnv_checking_workflow.get_input_files("report", "run")(wildcards)
     assert actual == expected

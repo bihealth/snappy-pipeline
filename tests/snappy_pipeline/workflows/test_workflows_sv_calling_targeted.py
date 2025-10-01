@@ -251,8 +251,7 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
         )
     ]
     pattern_log = (
-        "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/log/"
-        "bwa.{tool}.P00{i}-N1-DNA1-WGS1.{step_name}{ext}"
+        "output/bwa.{tool}.P00{i}-N1-DNA1-WGS1/log/bwa.{tool}.P00{i}-N1-DNA1-WGS1.{step_name}{ext}"
     )
     expected += [
         pattern_log.format(i=i, tool=tool, step_name=step_name, ext=ext)
@@ -396,26 +395,6 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
             msg_error = f"Assertion error for resource '{resource}' in action '{action}'."
             actual = sv_calling_targeted_workflow.get_resource("gcnv", action, resource)()
             assert actual == expected, msg_error
-
-
-def test_gcnv_get_params(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart.get_params for all actions"""
-    all_actions = (
-        "preprocess_intervals",
-        "coverage",
-        "contig_ploidy",
-        "call_cnvs",
-        "post_germline_calls",
-        "merge_cohort_vcfs",
-        "joint_germline_cnv_segmentation",
-    )
-    actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
-    for action in all_actions:
-        if action in actions_w_params:
-            sv_calling_targeted_workflow.get_params("gcnv", action)
-        else:
-            with pytest.raises(UnsupportedActionException):
-                sv_calling_targeted_workflow.get_params("gcnv", action)
 
 
 def test_gcnv_validate_ploidy_model_directory(
@@ -630,18 +609,18 @@ def test_gcnv_contig_ploidy_step_part_get_output_files(sv_calling_targeted_workf
     assert actual == expected
 
 
-def test_gcnv_get_params_ploidy_model(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart._get_params_ploidy_model()"""
+def test_gcnv_get_args_ploidy_model(sv_calling_targeted_workflow):
+    """Tests RunGcnvTargetSeqStepPart._get_args_ploidy_model()"""
     # Initialise wildcard
     wildcards = Wildcards(fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6"})
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config
     expected = {"model": "/path/to/ploidy-model"}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "contig_ploidy")(wildcards)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "contig_ploidy")(wildcards_fake)
     assert actual == expected
 
 
@@ -693,8 +672,8 @@ def test_gcnv_call_cnvs_step_part_get_output_files(sv_calling_targeted_workflow)
     assert actual == expected
 
 
-def test_gcnv_get_params_model(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart._get_params_model()"""
+def test_gcnv_get_args_model(sv_calling_targeted_workflow):
+    """Tests RunGcnvTargetSeqStepPart._get_args_model()"""
     # Initialise wildcard
     wildcards_01 = Wildcards(
         fromdict={"library_kit": "Agilent_SureSelect_Human_All_Exon_V6", "shard": "01"}
@@ -705,15 +684,15 @@ def test_gcnv_get_params_model(sv_calling_targeted_workflow):
     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
     # Test large cohort - model defined in config - shard 01
     expected = {"model": "/data/model_01"}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "call_cnvs")(wildcards_01)
     assert actual == expected
     # Test large cohort - model defined in config - shard 02
     expected = {"model": "/data/model_02"}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "call_cnvs")(wildcards_02)
     assert actual == expected
     # Test large cohort - model not defined in config
     expected = {"model": "__no_model_for_library_in_config__"}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "call_cnvs")(wildcards_fake)
     assert actual == expected
 
 
@@ -756,11 +735,11 @@ def test_gcnv_post_germline_calls_step_part_get_input_files(
     assert actual == expected
 
 
-def test_gcnv_get_params_post_germline_calls(sv_calling_targeted_workflow):
-    """Tests RunGcnvTargetSeqStepPart._get_params_post_germline_calls()"""
+def test_gcnv_get_args_post_germline_calls(sv_calling_targeted_workflow):
+    """Tests RunGcnvTargetSeqStepPart._get_args_post_germline_calls()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-    actual = sv_calling_targeted_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
+    actual = sv_calling_targeted_workflow.get_args("gcnv", "post_germline_calls")(wildcards)
     assert actual == expected
 
 
@@ -862,7 +841,7 @@ def test_gcnv_merge_multikit_families_step_part_get_output_files(
 ):
     """Tests RunGcnvTargetSeqStepPart._get_output_files_merge_multikit_families()"""
     # Define expected
-    pattern_out = "work/{mapper}.gcnv.{library_name}/out/" "{mapper}.gcnv.{library_name}"
+    pattern_out = "work/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=pattern_out)
     expected["output_links"] = [
         "output/{mapper}.gcnv.{library_name}/out/{mapper}.gcnv.{library_name}.vcf.gz",

@@ -1,4 +1,9 @@
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -14,15 +19,20 @@ compute-md5()
     > $2
 }
 """
+args = getattr(snakemake.params, "args", {})
 
-ref_path = snakemake.config["static_data_config"]["reference"]["path"]
-if "GRCh37" in ref_path or "hg19" in ref_path:
-    assembly = "GRCh37"
-elif "GRCh38" in ref_path or "hg38" in ref_path:
-    assembly = "GRCh38"
-else:
-    assembly = "unknown"
+reference_path = snakemake.input.reference
+reference_index_path = snakemake.input.reference_index
 
+assembly = args["assembly"]
+
+ignore_chroms = args["ignore_chroms"]
+
+max_depth = args["max_depth"]
+max_indel_depth = args["max_indel_depth"],
+
+window_length = args["window_length"]
+num_threads = args["num_threads"]
 
 shell(
     r"""
@@ -63,13 +73,13 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-    --reference {snakemake.config[static_data_config][reference][path]} \
-    --bin-length {snakemake.config[step_config][variant_calling][gatk4_hc_joint][window_length]} \
+    --reference {ref_path} \
+    --bin-length {window_length} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_chrom in {snakemake.config[step_config][variant_calling][ignore_chroms]}; do \
+    $(for ignore_chrom in {ignore_chroms}; do \
         awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {snakemake.config[static_data_config][reference][path]}.fai; \
+            {reference_index_path}; \
     done)
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
@@ -104,10 +114,10 @@ run-shard()
     bcftools mpileup \
         -Ou \
         --annotate FORMAT/AD,FORMAT/DP \
-        -f {snakemake.config[static_data_config][reference][path]} \
+        -f {reference_path} \
         --per-sample-mF \
-        --max-depth {snakemake.config[step_config][variant_calling][bcftools_call][max_depth]} \
-        --max-idepth {snakemake.config[step_config][variant_calling][bcftools_call][max_indel_depth]} \
+        --max-depth {max_depth} \
+        --max-idepth {max_indel_depth} \
         --redo-BAQ \
         --regions $2 \
         {snakemake.input.bam} \
@@ -126,7 +136,7 @@ export -f run-shard
 
 # Perform parallel execution
 (set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
-num_threads={snakemake.config[step_config][variant_calling][gatk4_hc_joint][num_threads]}
+num_threads={num_threads}
 cat $TMPDIR/final_intervals.txt \
 | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
 
@@ -142,7 +152,7 @@ bcftools concat \
     /dev/stdin \
 | bcftools norm \
     -d exact \
-    -f {snakemake.config[static_data_config][reference][path]} \
+    -f {reference_path} \
     -O z \
     -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}

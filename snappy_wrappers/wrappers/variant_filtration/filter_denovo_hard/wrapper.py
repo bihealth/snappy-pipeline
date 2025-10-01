@@ -12,30 +12,34 @@ isort:skip_file
 """
 
 from snakemake.shell import shell
+import os
+import sys
+
+args = getattr(snakemake.params, "args", {})
 
 region_filter = ""
-if snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"]:
+if args["bad_region_expressions"]:
     region_filter = " || " + " || ".join(
         map(
             lambda x: "({})".format(x),
-            snakemake.config["step_config"]["variant_denovo_filtration"]["bad_region_expressions"],
+            args["bad_region_expressions"],
         )
-    ).replace("$sample_index", snakemake.wildcards.index_library)
+    ).replace("$sample_index", args["index_library"])
 
 shell(
     r"""
 set -x
 set -euo pipefail
 
-samples="{snakemake.wildcards.index_library}"
-samples+=",{snakemake.params.args[father]}"
-samples+=",{snakemake.params.args[mother]}"
+samples="{args[index_library]}"
+samples+=",{args[father]}"
+samples+=",{args[mother]}"
 
 # Perform Hard-Filtration --------------------------------------------------------------------------
 
 bcftools view \
     -s "$samples" \
-    -i 'INFO/DeNovo[*] == "{snakemake.wildcards.index_library}"' \
+    -i 'INFO/DeNovo[*] == "{args[index_library]}"' \
     -O u \
     {snakemake.input.vcf} \
 | bcftools view \

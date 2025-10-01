@@ -5,3 +5,4 @@ channels:
 dependencies:
   - manta==1.6.0
   - samtools==1.9
+  - libboost

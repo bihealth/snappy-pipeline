@@ -149,8 +149,8 @@ def test_scramble_analysis_step_part_get_log_file(mei_workflow):
     assert actual == expected
 
 
-def test_scramble_analysis_step_part_get_parameters(mei_workflow):
-    """Tests ScrambleStepPart._get_analysis_parameters()"""
+def test_scramble_analysis_step_part_get_args(mei_workflow):
+    """Tests ScrambleStepPart._get_analysis_args()"""
     expected = {
         "reference_genome": "/path/to/blast_ref.fa",
         "mei_refs": None,
@@ -159,7 +159,7 @@ def test_scramble_analysis_step_part_get_parameters(mei_workflow):
         "indel_score": 80,
         "mei_polya_frac": 0.75,
     }
-    actual = mei_workflow.get_params("scramble", "analysis")(None)
+    actual = mei_workflow.get_args("scramble", "analysis")(None)
     assert actual == expected
 
 

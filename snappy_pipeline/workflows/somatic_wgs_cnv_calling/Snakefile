@@ -90,6 +90,8 @@ rule somatic_wgs_cnv_calling_canvas_run:
         unpack(wf.get_input_files("canvas", "run")),
     output:
         **wf.get_output_files("canvas", "run"),
+    params:
+        args=wf.get_args("canvas", "run"),
     threads: wf.get_resource("canvas", "run", "threads")
     resources:
         time=wf.get_resource("canvas", "run", "time"),
@@ -113,6 +115,8 @@ rule somatic_wgs_cnv_calling_cnvetti_coverage:
         unpack(wf.get_input_files("cnvetti", "coverage")),
     output:
         **wf.get_output_files("cnvetti", "coverage"),
+    params:
+        args=wf.get_args("cnvetti", "coverage"),
     threads: wf.get_resource("cnvetti", "coverage", "threads")
     resources:
         time=wf.get_resource("cnvetti", "coverage", "time"),
@@ -150,6 +154,8 @@ rule somatic_wgs_cnv_calling_cnvetti_segment:
         unpack(wf.get_input_files("cnvetti", "segment")),
     output:
         **wf.get_output_files("cnvetti", "segment"),
+    params:
+        args=wf.get_args("cnvetti", "segment"),
     threads: wf.get_resource("cnvetti", "segment", "threads")
     resources:
         time=wf.get_resource("cnvetti", "segment", "time"),
@@ -170,6 +176,8 @@ rule somatic_wgs_cnv_calling_control_freec_run:
         unpack(wf.get_input_files("control_freec", "run")),
     output:
         **wf.get_output_files("control_freec", "run"),
+    params:
+        args=wf.get_args("control_freec", "run"),
     threads: wf.get_resource("control_freec", "run", "threads")
     resources:
         time=wf.get_resource("control_freec", "run", "time"),
@@ -190,6 +198,8 @@ rule somatic_wgs_cnv_calling_control_freec_transform_output:
         **(wf.get_output_files("control_freec", "run")),
     output:
         **wf.get_output_files("control_freec", "transform"),
+    params:
+        args=wf.get_args("control_freec", "transform"),
     threads: wf.get_resource("control_freec", "transform", "threads")
     resources:
         time=wf.get_resource("control_freec", "transform", "time"),

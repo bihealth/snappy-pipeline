@@ -13,9 +13,10 @@ The default configuration is as follows.
 
 import os
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import touch
+from snakemake.io import Wildcards, touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
@@ -232,6 +233,44 @@ class AscatStepPart(BaseStepPart):
                 "work/{mapper}.ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt"
             ) % infix
             yield infix, path
+
+    def get_args(self, action):
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "b_af_loci": self.config.ascat.b_af_loci,
+            "reference_path": self.w_config.static_data_config.reference.path,
+        }
+
+    def _get_args_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_args_baf_tumor(wildcards)
+
+    def _get_args_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "b_af_loci": self.config.ascat.b_af_loci,
+            "reference_path": self.w_config.static_data_config.reference.path,
+        }
+
+    def _get_args_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_args_cnv_tumor(wildcards)
+
+    def _get_args_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "b_af_loci": self.config.ascat.b_af_loci,
+            "reference_path": self.w_config.static_data_config.reference.path,
+            "tumor_library_name": wildcards.tumor_library_name,
+        }
+
+    def _get_args_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "b_af_loci": self.config.ascat.b_af_loci,
+            "reference_path": self.w_config.static_data_config.reference.path,
+        }
+
+    def _get_args_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"tumor_library_name": wildcards.tumor_library_name}
 
     def get_log_file(self, action):
         """Return path to log file"""

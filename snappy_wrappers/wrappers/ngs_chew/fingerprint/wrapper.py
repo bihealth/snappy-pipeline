@@ -6,6 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -37,7 +39,7 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 ngs-chew fingerprint \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {args[reference]} \
     --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
     --input-bam {snakemake.input.bam}

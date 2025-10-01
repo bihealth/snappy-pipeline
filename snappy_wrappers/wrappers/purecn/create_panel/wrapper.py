@@ -5,8 +5,8 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["purecn"]
+args = getattr(snakemake.params, "args", {})
+config = args["config"]
 
 if "path_genomicsDB" in config.keys() and config["path_genomicsDB"]:
     genomicsDB = config["path_genomicsDB"]

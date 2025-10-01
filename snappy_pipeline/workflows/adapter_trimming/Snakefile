@@ -83,7 +83,7 @@ rule adapter_trimming_bbduk_run:
     log:
         **wf.get_log_file("bbduk", "run"),
     params:
-        args=wf.substep_dispatch("bbduk", "get_args", "run"),
+        args=wf.get_args("bbduk", "run"),
     wrapper:
         wf.wrapper_path("bbduk/run")
 
@@ -105,6 +105,6 @@ rule adapter_trimming_fastp_run:
     log:
         **wf.get_log_file("fastp", "run"),
     params:
-        args=wf.substep_dispatch("fastp", "get_args", "run"),
+        args=wf.get_args("fastp", "run"),
     wrapper:
         wf.wrapper_path("fastp/run")

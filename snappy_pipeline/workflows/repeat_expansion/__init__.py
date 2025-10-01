@@ -193,7 +193,6 @@ class ExpansionHunterStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
         return getattr(self, "_get_log_files_{}".format(action))()
 
-    @listify
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
 
@@ -201,8 +200,14 @@ class ExpansionHunterStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-        yield ngs_mapping(bam_tpl.format(**wildcards))
+        bam_tpl = ngs_mapping("output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam")
+        bam = bam_tpl.format(**wildcards)
+        return {
+            "bam": bam,
+            "bai": bam + ".bai",
+            "reference": self.w_config.static_data_config.reference.path,
+            "repeat_catalog": self.config.repeat_catalog,
+        }
 
     @staticmethod
     @listify
@@ -257,7 +262,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         name_pattern = "{mapper}.expansionhunter.{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Get parameters.
 
         :param action: Action, i.e., step being performed.
@@ -374,7 +379,6 @@ class RepeatExpansionWorkflow(BaseStep):
         self.ensure_w_config(
             config_keys=("static_data_config", "reference", "path"),
             msg=(
-                "Path to reference FASTA not configured but required "
-                "for repeat expansion analysis."
+                "Path to reference FASTA not configured but required for repeat expansion analysis."
             ),
         )

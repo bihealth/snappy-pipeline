@@ -8,8 +8,7 @@ import tabix
 import vcfpy
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
+args = getattr(snakemake.params, "args", {})
 
 tempdir = tempfile.mkdtemp()
 
@@ -17,8 +16,8 @@ variants = [
     f"bcftools merge {snakemake.input.normal} {snakemake.input.tumor}",
     'bcftools filter --include "N_ALT=2 & FORMAT/AD[:2]=0"',
 ]
-if "excluded_regions" in config and config["excluded_regions"]:
-    variants.append(f"bcftools view --targets-file ^{config['excluded_regions']}")
+if "excluded_regions" in args and args["excluded_regions"]:
+    variants.append(f"bcftools view --targets-file ^{args['excluded_regions']}")
 variants = " \\\n    | ".join(variants)
 
 shell(

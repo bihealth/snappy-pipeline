@@ -50,6 +50,10 @@ jobs:
 
   Dryrun_Tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
     steps:
     - uses: actions/checkout@v4
       with:
@@ -66,7 +70,7 @@ jobs:
       with:
         directory: .tests/test-workflow
         snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
+        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --conda-frontend conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
         show-disk-usage-on-error: true
         snakemake-version: 7.32.4
 
@@ -95,7 +99,7 @@ jobs:
       with:
         directory: .tests/test-workflow
         snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
+        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --conda-frontend conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
         show-disk-usage-on-error: true
         snakemake-version: 8.25.5
 

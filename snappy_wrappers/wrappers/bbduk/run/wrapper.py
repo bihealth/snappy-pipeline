@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for bbduk: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -9,13 +14,11 @@ shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-library_name = snakemake.params.args["library_name"]
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = (
-    snakemake.params.args["input"]["reads_right"]
-    if snakemake.params.args["input"]["reads_right"]
-    else {}
-)
+args = getattr(snakemake.params, "args", {})
+
+library_name = args["library_name"]
+input_left = args["input"]["reads_left"]
+input_right = args["input"]["reads_right"] if args["input"]["reads_right"] else {}
 
 input_path_left = list(input_left.keys())
 prefix_left = [x["relative_path"] for x in input_left.values()]
@@ -39,8 +42,7 @@ else:
 
 this_file = __file__
 
-this_step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][this_step]["bbduk"]
+config = args["config"]
 
 shell(
     r"""

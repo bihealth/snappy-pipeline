@@ -30,15 +30,29 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_calling:
+            tools: ['mutect2']
+            mutect2:
+              keep_tmpdir: onerror
+              contamination: {}
+
+          somatic_variant_annotation:
+            tools: [vep]
+            tools_somatic_variant_calling: ['mutect2']
+            path_somatic_variant: ../SOMATIC_VARIANT_CALLING
+            vep:
+              cache_dir: /path/to/vep/cache
+
           somatic_variant_filtration:
-            tools_somatic_variant_calling: ['mutect']
+            tools_somatic_variant_calling: ['mutect2']
             filter_list:
               - dkfz: {}
 
           somatic_variant_signatures:
-            path_somatic_variant: ../somatic_variant_filtration
-            tools_somatic_variant_annotation: ['vep']
-            tools_somatic_variant_calling: ['mutect']
+            path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            somatic_variant_step: somatic_variant_filtration
+            tools_somatic_variant_calling: ['mutect2']
+            has_annotation: True
             is_filtered: True
 
         data_sets:
@@ -69,7 +83,10 @@ def somatic_variant_signatures_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
+    }
     # Construct the workflow object
     return SomaticVariantSignaturesWorkflow(
         dummy_workflow,
@@ -86,7 +103,7 @@ def somatic_variant_signatures_workflow(
 def test_tabulate_vcf_step_part_get_input_files(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_input_files()"""
     base_name = (
-        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
         "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
     )
     expected = {
@@ -111,16 +128,19 @@ def test_tabulate_vcf_step_part_get_output_files(somatic_variant_signatures_work
 
 def test_tabulate_vcf_step_part_get_log_file(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_log_file()"""
-    expected = "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/log/snakemake.tabulate_vcf.log"
+    expected = (
+        "work/{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}/log/"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.tabulate_vcf.{tumor_library}.log"
+    )
     actual = somatic_variant_signatures_workflow.get_log_file("tabulate_vcf", "run")
     assert actual == expected
 
 
-def test_tabulate_vcf_step_part_get_params(somatic_variant_signatures_workflow):
-    """Tests TabulateVariantsStepPart.get_params()"""
+def test_tabulate_vcf_step_part_get_args(somatic_variant_signatures_workflow):
+    """Tests TabulateVariantsStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_signatures_workflow.get_params("tabulate_vcf", "run")(wildcards)
+    actual = somatic_variant_signatures_workflow.get_args("tabulate_vcf", "run")(wildcards)
     assert actual == expected
 
 
@@ -168,7 +188,7 @@ def test_deconstruct_sigs_step_part_get_log_file(somatic_variant_signatures_work
     """Tests DeconstructSigsStepPart.get_log_file()"""
     expected = (
         "work/{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}/log/"
-        "snakemake.deconstruct_sigs.log"
+        "{mapper}.{var_caller}.{anno_caller}.filtered.deconstruct_sigs.{tumor_library}.log"
     )
     actual = somatic_variant_signatures_workflow.get_log_file("deconstruct_sigs", "run")
     assert actual == expected
@@ -210,7 +230,7 @@ def test_somatic_variant_signatures_workflow(somatic_variant_signatures_workflow
         )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for mapper in ("bwa",)
-        for caller in ("mutect",)
+        for caller in ("mutect2",)
         for annotator in ("vep",)
     ]
     expected = set(expected)

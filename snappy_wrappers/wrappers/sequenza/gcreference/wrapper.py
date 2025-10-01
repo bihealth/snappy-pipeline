@@ -4,9 +4,10 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-step = snakemake.config["pipeline_step"]["name"]
-genome = snakemake.config["static_data_config"]["reference"]["path"]
-length = snakemake.config["step_config"][step]["sequenza"]["length"]
+args = getattr(snakemake.params, "args", {})
+
+genome = args["reference"]
+length = args["length"]
 
 shell.executable("/bin/bash")
 

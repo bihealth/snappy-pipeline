@@ -8,13 +8,14 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
 
 def unescape_dots_dashes(s: str) -> str:
     """Unescape dots and dashes from double-underscore constructs."""
     return s.replace("__hyphen__", "-").replace("__dot__", ".").replace("__under__", "_")
 
 
-chrom = unescape_dots_dashes(snakemake.wildcards.chrom)
+chrom = unescape_dots_dashes(args["chrom"])
 
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
@@ -40,7 +41,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     done
 
     popdel call \
-        -r {chrom}:{snakemake.wildcards.begin}-{snakemake.wildcards.end} \
+        -r {chrom}:{args[begin]}-{args[end]} \
         -o $TMPDIR/tmp.vcf \
         $TMPDIR/profiles.txt
 

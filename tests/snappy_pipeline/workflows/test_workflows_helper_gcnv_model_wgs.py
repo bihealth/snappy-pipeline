@@ -126,15 +126,17 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
     for action in actions:
         for resource in expected_low.keys():
             if action == "filter_intervals" and resource == "memory":
-                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)()(
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(None)
+                assert actual == "20480M"
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=1
                 )
                 assert actual == "20480M"
-                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)()(
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=2
                 )
                 assert actual == "24576M"
-                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)()(
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=3
                 )
                 assert actual == "28672M"
@@ -185,8 +187,7 @@ def test_gcnv_coverage_step_part_get_input_files(helper_gcnv_model_workflow):
     """Tests BuildGcnvWgsModelStepPart._get_input_files_coverage()"""
     # Define expected
     interval_list_out = (
-        "work/gcnv_preprocess_intervals.default/out/"
-        "gcnv_preprocess_intervals.default.interval_list"
+        "work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
     )
     bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
@@ -261,8 +262,7 @@ def test_gcnv_filter_intervals_step_part_get_input_files(helper_gcnv_model_workf
     """Tests BuildGcnvWgsModelStepPart._get_input_files_filter_intervals()"""
     # Define expected
     interval_list_out = (
-        "work/gcnv_preprocess_intervals.default/out/"
-        "gcnv_preprocess_intervals.default.interval_list"
+        "work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
     )
     tsv_out = "work/gcnv_annotate_gc.default/out/gcnv_annotate_gc.default.tsv"
     csv_pattern = (

@@ -5,8 +5,10 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 window_str = ""
-w = snakemake.config["step_config"]["somatic_wgs_cnv_calling"]["control_freec"]["window_size"]
+w = args.get("window_size")
 if w >= 0:
     window_str = "window = {}".format(w)
 
@@ -54,7 +56,7 @@ outputDir = $output_dir
 ## path to sambamba (faster BAM file reading)
 sambamba = sambamba
 
-chrLenFile = {snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_chrlenfile]}
+chrLenFile = {args[path_chrlenfile]}
 ploidy = 2
 
 breakPointThreshold = .8
@@ -68,8 +70,8 @@ minimalSubclonePresence = 0.2
 
 numberOfProcesses = 4
 
-$(if [[ "{snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_mappability_enabled]}" == True ]]; then
-  echo gemMappabilityFile = {snakemake.config[step_config][somatic_wgs_cnv_calling][control_freec][path_mappability]};
+$(if [[ "{args[path_mappability_enabled]}" == True ]]; then
+  echo gemMappabilityFile = {args[path_mappability]};
 fi)
 
 uniqueMatch = TRUE

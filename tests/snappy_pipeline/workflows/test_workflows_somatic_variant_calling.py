@@ -9,7 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
-from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -38,28 +38,12 @@ def minimal_config():
               path_index: /path/to/bwa/index.fa
 
           somatic_variant_calling:
-            path_ngs_mapping: ../ngs_mapping
             tools:
-              - mutect
               - mutect2
-              - scalpel
-              - strelka2
-              - bcftools_joint
-              - platypus_joint
-              - gatk_hc_joint
-              - gatk_ug_joint
-              - varscan_joint
-            mutect: {}
             mutect2:
-              common_variants: /path/to/common_variants.vcf
-            scalpel:
-              path_target_regions: /path/to/target/regions.bed
-            strelka2: {}
-            bcftools_joint: {}
-            platypus_joint: {}
-            gatk_hc_joint: {}
-            gatk_ug_joint: {}
-            varscan_joint: {}
+              contamination:
+                enabled: true
+                common_variants: /path/to/common_variants.vcf
 
         data_sets:
           first_batch:
@@ -72,6 +56,14 @@ def minimal_config():
         """
         ).lstrip()
     )
+
+
+class AttrDict(dict):
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
 
 
 @pytest.fixture
@@ -113,7 +105,17 @@ def somatic_variant_calling_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-
+    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
+    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
+    scattergather = AttrDict()
+    scattergather.mutect2 = lambda x: [
+        x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)
+    ]
+    dummy_workflow.globals = {
+        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "gather": scattergather,
+        "scatter": scattergather,
+    }
     # Construct the workflow object
     return SomaticVariantCallingWorkflow(
         dummy_workflow,
@@ -124,80 +126,66 @@ def somatic_variant_calling_workflow(
     )
 
 
-# Tests for MutectStepPart -------------------------------------------------------------------------
-
-
-def test_mutect_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests MutectStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_variant_calling_workflow.get_input_files("mutect", "run")(wildcards)
-    expected = {
-        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-    }
-    assert actual == expected
-
-
-def test_mutect_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests MutectStepPart.get_output_files()"""
-    # Define expected
-    base_name_out = "work/{mapper}.mutect.{tumor_library}/out/{mapper}.mutect.{tumor_library}"
-    expected = {
-        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
-        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-        "vcf": base_name_out + ".vcf.gz",
-        "vcf_md5": base_name_out + ".vcf.gz.md5",
-        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
-        "full_vcf": base_name_out + ".full.vcf.gz",
-        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
-        "txt": base_name_out + ".txt",
-        "txt_md5": base_name_out + ".txt.md5",
-        "wig": base_name_out + ".wig",
-        "wig_md5": base_name_out + ".wig.md5",
-    }
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_output_files("mutect", "run")
-    assert actual == expected
-
-
-def test_mutect_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests MutectStepPart.get_log_file()"""
-    # Define expected
-    base_name_out = "work/{mapper}.mutect.{tumor_library}/log/{mapper}.mutect.{tumor_library}"
-    expected = get_expected_log_files_dict(base_out=base_name_out)
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_log_file("mutect", "run")
-    assert actual == expected
-
-
-def test_mutect_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests MutectStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 2, "time": "3-00:00:00", "memory": "7577M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("mutect", "run", resource)()
-        assert actual == expected, msg_error
-
-
 # Tests for Mutect2StepPart ------------------------------------------------------------------------
+
+
+def test_mutect2_step_part_get_input_files_scatter(
+    mutect2_wildcards, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_scatter()"""
+    # Define expected
+    expected = {"fai": "/path/to/ref.fa.fai"}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "scatter")(
+        mutect2_wildcards
+    )
+    assert actual == expected
 
 
 def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_variant_calling_workflow):
     """Tests Mutect2StepPart._get_input_files_run()"""
     # Define expected
     expected = {
-        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.bed",
+    }
+    mutect2_wildcards_with_scatteritem = Wildcards(
+        fromdict=dict(mutect2_wildcards) | {"scatteritem": "1-of-1"}
+    )
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(
+        mutect2_wildcards_with_scatteritem
+    )
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_input_files_gather(
+    mutect2_wildcards, mutect2_input_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart._get_input_files_gather()"""
+    # Define expected
+    expected = {
+        "vcf": [
+            mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.vcf.gz".format(i=i)
+            for i in range(1, 25)
+        ],
+        "f1r2": [
+            mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.f1r2.tar.gz".format(i=i)
+            for i in range(1, 25)
+        ],
+        "stats": [
+            mutect2_input_base_name + "/mutect2par/run/{i}-of-24.raw.vcf.stats".format(i=i)
+            for i in range(1, 25)
+        ],
     }
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "run")(mutect2_wildcards)
+    actual = somatic_variant_calling_workflow.get_input_files("mutect2", "gather")(
+        mutect2_wildcards
+    )
     assert actual == expected
 
 
@@ -209,9 +197,10 @@ def test_mutect2_step_part_get_input_files_filter(
     expected = {
         "raw": mutect2_input_base_name + ".raw.vcf.gz",
         "stats": mutect2_input_base_name + ".raw.vcf.stats",
-        "f1r2": mutect2_input_base_name + ".raw.f1r2_tar.tar.gz",
+        "orientation": mutect2_input_base_name + ".raw.read_orientation_model.tar.gz",
         "table": mutect2_input_base_name + ".contamination.tbl",
         "segments": mutect2_input_base_name + ".segments.tbl",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "filter")(
@@ -228,6 +217,7 @@ def test_mutect2_step_part_get_input_files_contamination(
     expected = {
         "normal": mutect2_input_base_name + ".normal.pileup",
         "tumor": mutect2_input_base_name + ".tumor.pileup",
+        "reference": "/path/to/ref.fa",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "contamination")(
@@ -242,8 +232,10 @@ def test_mutect2_step_part_get_input_files_pileup_normal(
     """Tests Mutect2StepPart._get_input_files_pileup_normal()"""
     # Define expected
     expected = {
-        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "common_variants": "/path/to/common_variants.vcf",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_normal")(
@@ -258,8 +250,10 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     """Tests Mutect2StepPart._get_input_files_pileup_tumor()"""
     # Define expected
     expected = {
-        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "common_variants": "/path/to/common_variants.vcf",
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_input_files("mutect2", "pileup_tumor")(
@@ -268,23 +262,39 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_output_files_run(
+def test_mutect2_step_part_get_output_files_scatter(
     mutect2_output_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_output_files() - run"""
+    """Tests Mutect2StepPart.get_output_files() - scatter"""
     # Define expected
     expected = {
-        "raw": mutect2_output_base_name + ".raw.vcf.gz",
-        "raw_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
-        "raw_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
-        "raw_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
-        "stats": mutect2_output_base_name + ".raw.vcf.stats",
-        "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
-        "f1r2": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz",
-        "f1r2_md5": mutect2_output_base_name + ".raw.f1r2_tar.tar.gz.md5",
+        "regions": [
+            mutect2_output_base_name + "/mutect2par/scatter/{i}-of-24.region.bed".format(i=i)
+            for i in range(1, 25)
+        ],
     }
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "scatter")
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_output_files_gather(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - gather"""
+    # Define expected
+    expected = {
+        "vcf": mutect2_output_base_name + ".raw.vcf.gz",
+        "vcf_md5": mutect2_output_base_name + ".raw.vcf.gz.md5",
+        "vcf_tbi": mutect2_output_base_name + ".raw.vcf.gz.tbi",
+        "vcf_tbi_md5": mutect2_output_base_name + ".raw.vcf.gz.tbi.md5",
+        "stats": mutect2_output_base_name + ".raw.vcf.stats",
+        "stats_md5": mutect2_output_base_name + ".raw.vcf.stats.md5",
+        "orientation": mutect2_output_base_name + ".raw.read_orientation_model.tar.gz",
+        "orientation_md5": mutect2_output_base_name + ".raw.read_orientation_model.tar.gz.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "gather")
     assert actual == expected
 
 
@@ -305,6 +315,27 @@ def test_mutect2_step_part_get_output_files_filter(
     }
     # Get actual and assert
     actual = somatic_variant_calling_workflow.get_output_files("mutect2", "filter")
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_output_files_run(
+    mutect2_output_base_name, somatic_variant_calling_workflow
+):
+    """Tests Mutect2StepPart.get_output_files() - run"""
+    # Define expected
+    expected = {
+        "vcf": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz",
+        "vcf_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz.md5",
+        "vcf_tbi": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.gz.tbi",
+        "vcf_tbi_md5": mutect2_output_base_name
+        + "/mutect2par/run/{scatteritem}.raw.vcf.gz.tbi.md5",
+        "stats": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.stats",
+        "stats_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.vcf.stats.md5",
+        "f1r2": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.f1r2.tar.gz",
+        "f1r2_md5": mutect2_output_base_name + "/mutect2par/run/{scatteritem}.raw.f1r2.tar.gz.md5",
+    }
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_output_files("mutect2", "run")
     assert actual == expected
 
 
@@ -352,14 +383,14 @@ def test_mutect2_step_part_get_output_files_pileup_tumor(
     assert actual == expected
 
 
-def test_mutect2_step_part_get_log_file_run(
+def test_mutect2_step_part_get_log_file_gather(
     mutect2_log_base_name, somatic_variant_calling_workflow
 ):
-    """Tests Mutect2StepPart.get_log_files() - run"""
+    """Tests Mutect2StepPart.get_log_files() - gather"""
     # Define expected
     expected = get_expected_log_files_dict(base_out=mutect2_log_base_name)
     # Get actual and assert
-    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "run")
+    actual = somatic_variant_calling_workflow.get_log_file("mutect2", "gather")
     assert actual == expected
 
 
@@ -435,10 +466,76 @@ def test_mutect2_step_part_get_log_file_pileup_tumor(
     assert actual == expected
 
 
+def test_mutect2_step_part_get_args_pileup_normal(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_pileup_normal"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"normal_lib_name": "P001-N1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "pileup_normal")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_pileup_tumor(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_pileup_tumor"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"tumor_lib_name": "P001-T1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "pileup_tumor")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_contamination(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_contamination"""
+    # Define expected
+    expected = {"extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "contamination")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_scatter(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_scatter"""
+    # Define expected
+    expected = {"padding": 5000, "ignore_chroms": [], "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "scatter")(mutect2_wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_run(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_run"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
+    # Define expected
+    expected = {"normal_lib_name": "P001-N1-DNA1-WGS1", "extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "run")(wildcards)
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_gather(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_gather"""
+    # Define expected
+    expected = {}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "gather")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_filter(somatic_variant_calling_workflow):
+    """Tests Mutect2StepPart._get_args_filter"""
+    # Define expected
+    expected = {"extra_arguments": [], "java_options": ""}
+    # Get actual and assert
+    actual = somatic_variant_calling_workflow.get_args("mutect2", "filter")({})
+    assert actual == expected
+
+
 def test_mutect2_step_part_get_resource_usage_run(somatic_variant_calling_workflow):
     """Tests Mutect2StepPart.get_resource() - run"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "3584M", "partition": "medium"}
+    expected_dict = {"threads": 2, "time": "5-00:00:00", "memory": "8000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -496,470 +593,13 @@ def test_mutect2_step_part_get_resource_usage_pileup_tumor(somatic_variant_calli
         assert actual == expected, msg_error
 
 
-# Tests for ScalpelStepPart ----------------------------------------------------------------------
-
-
-def test_scalpel_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests ScalpelStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_variant_calling_workflow.get_input_files("scalpel", "run")(wildcards)
-    expected = {
-        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-    }
-    assert actual == expected
-
-
-def test_scalpel_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests ScalpelStepPart.get_output_files()"""
-    # Define expected
-    base_name_out = "work/{mapper}.scalpel.{tumor_library}/out/{mapper}.scalpel.{tumor_library}"
-    expected = {
-        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
-        "full_vcf": base_name_out + ".full.vcf.gz",
-        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
-        "tar": base_name_out + ".tar.gz",
-        "tar_md5": base_name_out + ".tar.gz.md5",
-        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
-        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-        "vcf": base_name_out + ".vcf.gz",
-        "vcf_md5": base_name_out + ".vcf.gz.md5",
-    }
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_output_files("scalpel", "run")
-    assert actual == expected
-
-
-def test_scalpel_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests ScalpelStepPart.get_log_file()"""
-    # Define expected
-    expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.scalpel.{tumor_library}/log/{mapper}.scalpel.{tumor_library}"
-    )
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_log_file("scalpel", "run")
-    assert actual == expected
-
-
-def test_scalpel_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests ScalpelStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "81920M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("scalpel", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for Strelka2StepPart ----------------------------------------------------------------------
-
-
-def test_strelka2_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests Strelka2StepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "tumor_library": "P001-T1-DNA1-WGS1"})
-    actual = somatic_variant_calling_workflow.get_input_files("strelka2", "run")(wildcards)
-    expected = {
-        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-    }
-    assert actual == expected
-
-
-def test_strelka2_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests Strelka2StepPart.get_output_files()"""
-    # Define expected
-    base_name_out = "work/{mapper}.strelka2.{tumor_library}/out/{mapper}.strelka2.{tumor_library}"
-    expected = {
-        "vcf": base_name_out + ".vcf.gz",
-        "vcf_md5": base_name_out + ".vcf.gz.md5",
-        "vcf_tbi": base_name_out + ".vcf.gz.tbi",
-        "vcf_tbi_md5": base_name_out + ".vcf.gz.tbi.md5",
-        "full_vcf": base_name_out + ".full.vcf.gz",
-        "full_vcf_md5": base_name_out + ".full.vcf.gz.md5",
-        "full_vcf_tbi": base_name_out + ".full.vcf.gz.tbi",
-        "full_vcf_tbi_md5": base_name_out + ".full.vcf.gz.tbi.md5",
-        "stats": base_name_out + ".tsv",
-        "stats_md5": base_name_out + ".tsv.md5",
-        "report": base_name_out + ".xml",
-        "report_md5": base_name_out + ".xml.md5",
-        "bed": base_name_out + ".bed.gz",
-        "bed_md5": base_name_out + ".bed.gz.md5",
-        "bed_tbi": base_name_out + ".bed.gz.tbi",
-        "bed_tbi_md5": base_name_out + ".bed.gz.tbi.md5",
-    }
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_output_files("strelka2", "run")
-    assert actual == expected
-
-
-def test_strelka2_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests Strelka2StepPart.get_log_file()"""
-    # Define expected
-    expected = get_expected_log_files_dict(
-        base_out="work/{mapper}.strelka2.{tumor_library}/log/{mapper}.strelka2.{tumor_library}"
-    )
-    # Get actual
-    actual = somatic_variant_calling_workflow.get_log_file("strelka2", "run")
-    assert actual == expected
-
-
-def test_strelka2_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests Strelka2StepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "4G", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("strelka2", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for BcftoolsJointStepPart   ----------------------------------------------------------------
-
-
-def test_bcftools_joint_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests BcftoolsJointStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
-    expected = {
-        "bam": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
-        ],
-        "bai": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
-        ],
-    }
-    actual = somatic_variant_calling_workflow.get_input_files("bcftools_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_bcftools_joint_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests BcftoolsJointStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.bcftools_joint.{donor_name}/out/{mapper}.bcftools_joint.{donor_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = somatic_variant_calling_workflow.get_output_files("bcftools_joint", "run")
-    assert actual == expected
-
-
-def test_bcftools_joint_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests BcftoolsJointStepPart.get_log_file()"""
-    base_name_log = (
-        "work/{mapper}.bcftools_joint.{donor_name}/log/{mapper}.bcftools_joint.{donor_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_log)
-    actual = somatic_variant_calling_workflow.get_log_file("bcftools_joint", "run")
-    assert actual == expected
-
-
-def test_bcftools_joint_step_part_get_args(somatic_variant_calling_workflow):
-    """Tests BcftoolsJointStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"donor_name": "P001"})
-    expected = {
-        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
-        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-    }
-    actual = somatic_variant_calling_workflow.get_args("bcftools_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_bcftools_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests BcftoolsJointStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "16384M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("bcftools_joint", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for VarscanJointStepPart -------------------------------------------------------------------
-
-
-def test_varscan_joint_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests VarscanJointStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
-    expected = {
-        "bam": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
-        ],
-        "bai": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
-        ],
-    }
-    actual = somatic_variant_calling_workflow.get_input_files("varscan_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_varscan_joint_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests VarscanJointStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.varscan_joint.{donor_name}/out/{mapper}.varscan_joint.{donor_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = somatic_variant_calling_workflow.get_output_files("varscan_joint", "run")
-    assert actual == expected
-
-
-def test_varscan_joint_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests VarscanJointStepPart.get_log_file()"""
-    base_name_log = (
-        "work/{mapper}.varscan_joint.{donor_name}/log/{mapper}.varscan_joint.{donor_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_log)
-    actual = somatic_variant_calling_workflow.get_log_file("varscan_joint", "run")
-    assert actual == expected
-
-
-def test_varscan_joint_step_part_get_args(somatic_variant_calling_workflow):
-    """Tests VarscanJointStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"donor_name": "P001"})
-    expected = {
-        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
-        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-    }
-    actual = somatic_variant_calling_workflow.get_args("varscan_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_varscan_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests VarscanJointStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "2-00:00:00", "memory": "1024M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("varscan_joint", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for PlatypusJointStepPart  -----------------------------------------------------------------
-
-
-def test_platypus_joint_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests PlatypusJointStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
-    expected = {
-        "bam": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
-        ],
-        "bai": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
-        ],
-    }
-    actual = somatic_variant_calling_workflow.get_input_files("platypus_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_platypus_joint_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests PlatypusJointStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.platypus_joint.{donor_name}/out/{mapper}.platypus_joint.{donor_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = somatic_variant_calling_workflow.get_output_files("platypus_joint", "run")
-    assert actual == expected
-
-
-def test_platypus_joint_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests PlatypusJointStepPart.get_log_file()"""
-    base_name_log = (
-        "work/{mapper}.platypus_joint.{donor_name}/log/{mapper}.platypus_joint.{donor_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_log)
-    actual = somatic_variant_calling_workflow.get_log_file("platypus_joint", "run")
-    assert actual == expected
-
-
-def test_platypus_joint_step_part_get_args(somatic_variant_calling_workflow):
-    """Tests PlatypusJointStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"donor_name": "P001"})
-    expected = {
-        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
-        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-    }
-    actual = somatic_variant_calling_workflow.get_args("platypus_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_platypus_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests PlatypusJointStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "61440M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("platypus_joint", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for GatkHcJointStepPart  -------------------------------------------------------------------
-
-
-def test_gatk_hc_joint_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests GatkHcJointStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
-    expected = {
-        "bam": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
-        ],
-        "bai": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
-        ],
-    }
-    actual = somatic_variant_calling_workflow.get_input_files("gatk_hc_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_gatk_hc_joint_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests GatkHcJointStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.gatk_hc_joint.{donor_name}/out/{mapper}.gatk_hc_joint.{donor_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = somatic_variant_calling_workflow.get_output_files("gatk_hc_joint", "run")
-    assert actual == expected
-
-
-def test_gatk_hc_joint_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests GatkHcJointStepPart.get_log_file()"""
-    base_name_log = (
-        "work/{mapper}.gatk_hc_joint.{donor_name}/log/{mapper}.gatk_hc_joint.{donor_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_log)
-    actual = somatic_variant_calling_workflow.get_log_file("gatk_hc_joint", "run")
-    assert actual == expected
-
-
-def test_gatk_hc_joint_step_part_get_args(somatic_variant_calling_workflow):
-    """Tests GatkHcJointStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"donor_name": "P001"})
-    expected = {
-        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
-        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-    }
-    actual = somatic_variant_calling_workflow.get_args("gatk_hc_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_gatk_hc_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests GatkHcJointStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_hc_joint", "run", resource)()
-        assert actual == expected, msg_error
-
-
-# Tests for GatkUgJointStepPart  -------------------------------------------------------------------
-
-
-def test_gatk_ug_joint_step_part_get_input_files(somatic_variant_calling_workflow):
-    """Tests GatkUgJointStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"mapper": "bwa", "donor_name": "P001"})
-    expected = {
-        "bam": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam",
-        ],
-        "bai": [
-            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-            "../ngs_mapping/output/bwa.P001-T1-RNA1-mRNA_seq1/out/bwa.P001-T1-RNA1-mRNA_seq1.bam.bai",
-        ],
-    }
-    actual = somatic_variant_calling_workflow.get_input_files("gatk_ug_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_gatk_ug_joint_step_part_get_output_files(somatic_variant_calling_workflow):
-    """Tests GatkUgJointStepPart.get_output_files()"""
-    base_name_out = (
-        "work/{mapper}.gatk_ug_joint.{donor_name}/out/{mapper}.gatk_ug_joint.{donor_name}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
-    actual = somatic_variant_calling_workflow.get_output_files("gatk_ug_joint", "run")
-    assert actual == expected
-
-
-def test_gatk_ug_joint_step_part_get_log_file(somatic_variant_calling_workflow):
-    """Tests GatkUgJointStepPart.get_log_file()"""
-    base_name_log = (
-        "work/{mapper}.gatk_ug_joint.{donor_name}/log/{mapper}.gatk_ug_joint.{donor_name}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_name_log)
-    actual = somatic_variant_calling_workflow.get_log_file("gatk_ug_joint", "run")
-    assert actual == expected
-
-
-def test_gatk_ug_joint_step_part_get_args(somatic_variant_calling_workflow):
-    """Tests GatkUgJointStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"donor_name": "P001"})
-    expected = {
-        "sample_list": ["P001-N1-DNA1-WGS1", "P001-T1-DNA1-WGS1", "P001-T1-RNA1-mRNA_seq1"],
-        "ignore_chroms": ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
-    }
-    actual = somatic_variant_calling_workflow.get_args("gatk_ug_joint", "run")(wildcards)
-    assert actual == expected
-
-
-def test_gatk_ug_joint_step_part_get_resource_usage(somatic_variant_calling_workflow):
-    """Tests GatkUgJointStepPart.get_resource()"""
-    # Define expected
-    expected_dict = {"threads": 1, "time": "3-08:00:00", "memory": "2048M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_calling_workflow.get_resource("gatk_ug_joint", "run", resource)()
-        assert actual == expected, msg_error
-
-
 # Tests for SomaticVariantCallingWorkflow  ---------------------------------------------------------
 
 
 def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
     """Test simple functionality of the workflow"""
 
-    matched_callers = {
-        "mutect",
-        "mutect2",
-        "scalpel",
-        "strelka2",
-    }
-    joint_callers = {
-        "bcftools_joint",
-        "gatk_hc_joint",
-        "gatk_ug_joint",
-        "platypus_joint",
-        "varscan_joint",
-    }
-    callers = matched_callers | joint_callers
+    callers = {"mutect2"}
     expected = {"link_out"} | callers
     # Check created sub steps
     assert expected == set(somatic_variant_calling_workflow.sub_steps.keys())
@@ -984,20 +624,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in output_exts
         for mapper in mappers
-        for var_caller in matched_callers
-    ]
-    # add special cases
-    expected += [
-        matched_tpl.format(mapper=mapper, var_caller="mutect", i=i, t=t, ext=ext)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("txt", "txt.md5", "wig", "wig.md5")
-        for mapper in mappers
-    ]
-    expected += [
-        matched_tpl.format(mapper=mapper, var_caller="scalpel", i=i, t=t, ext=ext)
-        for i, t in ((1, 1), (2, 1), (2, 2))
-        for ext in ("tar.gz", "tar.gz.md5")
-        for mapper in mappers
+        for var_caller in callers
     ]
     # add log files
     matched_tpl = (
@@ -1017,7 +644,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in meta_exts
         for mapper in ("bwa",)
-        for var_caller in matched_callers
+        for var_caller in callers
     ]
 
     output_exts = (
@@ -1027,20 +654,7 @@ def test_somatic_variant_calling_workflow(somatic_variant_calling_workflow):
         "vcf.gz.tbi.md5",
     )
 
-    joint_tpl = "output/{mapper}.{var_caller}.P00{donor}/out/{mapper}.{var_caller}.P00{donor}.{ext}"
-    expected += [
-        joint_tpl.format(mapper=mapper, var_caller=var_caller, donor=donor, ext=ext)
-        for donor in (1, 2)
-        for ext in output_exts
-        for mapper in ("bwa",)
-        for var_caller in joint_callers
-    ]
-
     expected = list(sorted(expected))
     actual = list(sorted(somatic_variant_calling_workflow.get_result_files()))
-
-    # TODO properly model strelka2 output files, skipping for now
-    expected = [s for s in expected if "strelka2" not in s]
-    actual = [s for s in actual if "strelka2" not in s]
 
     assert expected == actual

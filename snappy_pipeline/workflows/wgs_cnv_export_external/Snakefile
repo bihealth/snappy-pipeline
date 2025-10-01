@@ -90,7 +90,7 @@ rule wgs_cnv_export_external_varfish_annotator_external_merge_vcf:
     log:
         **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
     params:
-        **{"args": wf.get_params("varfish_annotator_external", "merge_vcf")},
+        args=wf.get_args("varfish_annotator_external", "merge_vcf"),
     wrapper:
         wf.wrapper_path("bcftools/merge_vcf")
 
@@ -112,6 +112,6 @@ rule wgs_cnv_export_external_varfish_annotator_external_annotate_svs:
     log:
         **wf.get_log_file("varfish_annotator_external", "annotate"),
     params:
-        **{"args": wf.get_params("varfish_annotator_external", "annotate")},
+        args=wf.get_args("varfish_annotator_external", "annotate"),
     wrapper:
         wf.wrapper_path("varfish_annotator/annotate_svs")

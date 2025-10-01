@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for arriba: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -9,14 +14,39 @@ shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-reads_left = snakemake.params.args["input"]["reads_left"]
+args = getattr(snakemake.params, "args", {})
+reads_left = args["input"]["reads_left"]
 reads_right = (
-    snakemake.params.args["input"]["reads_right"]
-    if snakemake.params.args["input"]["reads_right"]
+    args["input"]["reads_right"]
+    if args["input"]["reads_right"]
     else ""
 )
 
-this_file = __file__
+trim_adapters = args["trim_adapters"]
+num_threads_trimming = args["num_threads_trimming"]
+trim_cmd = "trimadap-mt -p {num_threads_trimming}" if trim_adapters else "zcat"
+
+num_threads = args["num_threads"]
+arriba_index = args["path_index"]
+star_parameters = args["star_parameters"]
+
+reference_path = args["reference_path"]
+features_path = args["features_path"]
+
+blacklist = args["blacklist"]
+blacklist_param = f"-b {blacklist}" if blacklist else ""
+
+known_fusions = args["known_fusions"]
+known_fusions_param = f"-k {known_fusions}" if known_fusions else ""
+
+tags = args["tags"]
+tags_param = f"-t {tags}" if tags else ""
+
+structural_variants = args["structural_variants"]
+structural_variants_param = f"-d {structural_variants}" if structural_variants else ""
+
+protein_domains = args["protein_domains"]
+protein_domains_param = f"-p {protein_domains}" if protein_domains else ""
 
 shell(
     r"""
@@ -56,40 +86,23 @@ if [[ "{reads_right}" != "" ]]; then
     right_files=$(IFS="," ; echo "${{reads_right[*]}}")
 fi
 
-trim_cmd=""
-if [[ "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][trim_adapters]}" == "True" ]]; then
-    trim_cmd="\"trimadap-mt -p {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][num_threads_trimming]}\""
-else
-    trim_cmd="zcat"
-fi
-
 STAR \
-    --runThreadN {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][num_threads]} \
-    --genomeDir {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][path_index]} --genomeLoad NoSharedMemory \
+    --runThreadN {num_threads} \
+    --genomeDir {arriba_index} --genomeLoad NoSharedMemory \
     --readFilesIn ${{left_files}} ${{right_files}} --readFilesCommand ${{trim_cmd}} \
     --outStd BAM_Unsorted --outSAMtype BAM Unsorted --outSAMunmapped Within --outBAMcompression 0 \
     --outFileNamePrefix $TMPDIR/ \
-    {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][star_parameters]} \
+    {star_parameters} \
 | arriba \
     -x /dev/stdin \
     -o $TMPDIR/fusions.tsv -O $TMPDIR/fusions.discarded.tsv \
-    -a {snakemake.config[static_data_config][reference][path]} \
-    -g {snakemake.config[static_data_config][features][path]} \
-    $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][blacklist]}" ]]; then \
-        echo -b {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][blacklist]}
-    fi) \
-    $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][known_fusions]}" ]]; then \
-        echo -k {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][known_fusions]}
-    fi) \
-    $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][tags]}" ]]; then \
-        echo -t {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][tags]}
-    fi) \
-    $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][structural_variants]}" ]]; then \
-        echo -d {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][structural_variants]}
-    fi) \
-    $(if [[ -n "{snakemake.config[step_config][somatic_gene_fusion_calling][arriba][protein_domains]}" ]]; then \
-        echo -p {snakemake.config[step_config][somatic_gene_fusion_calling][arriba][protein_domains]}
-    fi)
+    -a {reference_path} \
+    -g {features_path} \
+    {blacklist_param} \
+    {known_fusions_param} \
+    {tags_param} \
+    {structural_variants_param} \
+    {protein_domains_param}
 
 cp $TMPDIR/fusions.tsv {snakemake.output.fusions}
 pushd $(dirname {snakemake.output.fusions})

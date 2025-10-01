@@ -2,14 +2,24 @@
 """Wrapper for running bcftools merge - Structural VCF files (CNV, SV)."""
 
 import tempfile
+from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+merge_option = args["merge_option"]
+gvcf_option = args["gvcf_option"]
+sample_names = args["sample_names"]
+input_ = args["input"]
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.
     #
     # cf. https://bitbucket.org/snakemake/snakemake/issues/878
-    print("\n".join(snakemake.params.args["input"]), file=tmpf)
+    print("\n".join(input_), file=tmpf)
     tmpf.flush()
     # Actually run the script.
     shell(
@@ -57,13 +67,13 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
 
     # Define merge option
     merge_option="--merge none"
-    if [[ "{snakemake.params.args[merge_option]}" != "None" ]]; then
-        merge_option="--merge {snakemake.params.args[merge_option]}"
+    if [[ "{merge_option}" != "None" ]]; then
+        merge_option="--merge {merge_option}"
     fi
 
     # Set merge gVCF option
     gvcf_option=""
-    if [[ "{snakemake.params.args[gvcf_option]}" != "False" ]]; then
+    if [[ "{gvcf_option}" != "False" ]]; then
         gvcf_option="--gvcf"
     fi
 
@@ -73,7 +83,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         # Validate VCF: contains all expected samples
         while read sample; do
             check_vcf $TMPDIR/cwd/1.vcf.gz $sample
-        done < <(echo {snakemake.params.args[sample_names]})
+        done < <(echo {sample_names})
         # Copy
         cp $TMPDIR/cwd/1.vcf.gz {snakemake.output.vcf}
         cp $TMPDIR/cwd/1.vcf.gz.tbi {snakemake.output.vcf_tbi}

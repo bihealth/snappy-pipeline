@@ -99,7 +99,7 @@ rule hla_typing_optitype_run:
     log:
         **wf.get_log_file("optitype", "run"),
     params:
-        args=wf.substep_dispatch("optitype", "get_args", "run"),
+        args=wf.get_args("optitype", "run"),
     wrapper:
         wf.wrapper_path("optitype")
 

@@ -29,7 +29,7 @@ dependencies = [
     "fasteners >=0.17.3,<1",
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
-    "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@4e0a8484850c39d1511036c3fe29ec0b4f9271f8",
+    "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688",
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
@@ -43,11 +43,11 @@ dependencies = [
     # Jinja 2 template rendering
     "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
-    "altamisa @ git+https://github.com/bihealth/altamisa.git@817dc491ff819e4c80686082bf3e5f602f1ac14c",
+    "altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8",
     # REST API client for VarFish Server
     "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
-    "pydantic >=2.9.0,<3"
+    "pydantic >=2.9.0,<2.10.0"
 ]
 
 [project.urls]
@@ -72,7 +72,7 @@ test = [
 ]
 dev = [
     # ruff code linter + formatter
-    "ruff >=0.8.2,<1",
+    "ruff >=0.9.0,<1",
     # "snakefmt" code formatter and checker.
     "snakefmt >=0.10.2,<1",
     "pre-commit >=4.0.1,<5"

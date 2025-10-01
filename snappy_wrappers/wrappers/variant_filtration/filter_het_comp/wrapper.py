@@ -16,8 +16,10 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Short-circuit in case of performing no filtration
-if snakemake.wildcards.het_comp == "passthrough":
+if args["filter_mode"] == "passthrough":
     shell(
         r"""
     # Het. comp. mode set to "passthrough", just copy out the data.
@@ -44,7 +46,7 @@ trap "rm -rf $TMPDIR" EXIT
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
 # Get name and number of index, father, and mother.
-index={snakemake.wildcards.index_library}
+index={args[index_library]}
 father=$(awk '($2 == "'$index'") {{ print $3; }}' {snakemake.input.ped})
 mother=$(awk '($2 == "'$index'") {{ print $4; }}' {snakemake.input.ped})
 
@@ -84,25 +86,25 @@ bcftools view \
 
 ### Determine intervals to use for hetcomp criteria
 
-if [[ "{snakemake.wildcards.het_comp}" == tads ]]; then
-    intervals_bed={snakemake.config[step_config][variant_filtration][region_beds][all_tads]}
+if [[ "{args[filter_mode]}" == tads ]]; then
+    intervals_bed={args[filter_config][all_tads]}
 
-elif [[ "{snakemake.wildcards.het_comp}" == intervals500 ]]; then
+elif [[ "{args[filter_mode]}" == intervals500 ]]; then
     ### is it ok to use any parent?
     zcat $TMPDIR/par1.SNV.vcf.gz \
     | {{ grep -v ^\# || true; }} \
     | awk -F'\t' 'BEGIN {{ OFS = FS }} {{ left = 500; if (left > $2) {{ left = $2 }} print $1, $2 - left, $2 + 500 }}' \
     > $TMPDIR/par1.SNV.bed
     intervals_bed=$TMPDIR/par1.SNV.bed
-elif [[ "{snakemake.wildcards.het_comp}" == gene ]]; then
-    intervals_bed={snakemake.config[step_config][variant_filtration][region_beds][all_genes]}
+elif [[ "{args[filter_mode]}" == gene ]]; then
+    intervals_bed={args[filter_config][all_genes]}
 fi
 
 echo $intervals_bed
 
 ### Add exonic + effect filter for ARHC in genes
 
-if [[ "{snakemake.wildcards.het_comp}" == gene ]]; then
+if [[ "{args[filter_mode]}" == gene ]]; then
     bcftools filter \
         -i '(INFO/ANN ~ "MODERATE") || (INFO/ANN ~ "HIGH")' \
         -O z \

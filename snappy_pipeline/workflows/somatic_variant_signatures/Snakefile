@@ -80,6 +80,8 @@ rule somatic_variant_signatures_tabulate_vcf:
         **(wf.get_input_files("tabulate_vcf", "run")),
     output:
         **wf.get_output_files("tabulate_vcf", "run"),
+    params:
+        args=wf.get_args("tabulate_vcf", "run"),
     threads: wf.get_resource("tabulate_vcf", "run", "threads")
     resources:
         time=wf.get_resource("tabulate_vcf", "run", "time"),

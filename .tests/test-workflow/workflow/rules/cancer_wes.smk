@@ -68,7 +68,7 @@ rule cancer_wes_execute_pipeline:
         for step in {params.steps}
         do
             pushd {params.work_dir}/${{step}} || exit
-            snappy-snake --snappy-pipeline-use-profile {params.profile_dir} || exit
+            snappy-snake --snappy-pipeline-use-profile {params.profile_dir} -- --conda-frontend conda || exit
             popd
         done
         """

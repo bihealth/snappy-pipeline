@@ -96,37 +96,8 @@ rule somatic_variant_annotation_vep:
         partition=wf.get_resource("vep", "run", "partition"),
         tmpdir=wf.get_resource("vep", "run", "tmpdir"),
     params:
-        **{"args": wf.get_params("vep", "run")},
+        args=wf.get_args("vep", "run"),
     log:
         **wf.get_log_file("vep", "run"),
     wrapper:
         wf.wrapper_path("vep/run")
-
-
-# Run Jannovar ----------------------------------------------------------------
-
-
-rule somatic_variant_annotation_jannovar:
-    input:
-        **wf.get_input_files("jannovar", "annotate_somatic_vcf"),
-    output:
-        **wf.get_output_files("jannovar", "annotate_somatic_vcf"),
-    threads: wf.get_resource("jannovar", "annotate_somatic_vcf", "threads")
-    resources:
-        time=wf.get_resource("jannovar", "annotate_somatic_vcf", "time"),
-        memory=wf.get_resource("jannovar", "annotate_somatic_vcf", "memory"),
-        partition=wf.get_resource("jannovar", "annotate_somatic_vcf", "partition"),
-        tmpdir=wf.get_resource("jannovar", "annotate_somatic_vcf", "tmpdir"),
-    params:
-        **{"args": wf.get_params("jannovar", "annotate_somatic_vcf")},
-    log:
-        **wf.get_log_file("jannovar", "annotate_somatic_vcf"),
-    wrapper:
-        wf.wrapper_path("jannovar/annotate_somatic_vcf")
-
-
-# Variant Statistics Computation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Run Jannovar statistics -----------------------------------------------------
-# TODO
-# Run bcftools stats ----------------------------------------------------------
-# TODO

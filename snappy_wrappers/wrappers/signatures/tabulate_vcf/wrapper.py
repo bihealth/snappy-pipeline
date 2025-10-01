@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Clemens Messerschmidt"
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -24,8 +26,8 @@ if [[ -n "{snakemake.log}" ]]; then
 fi
 
 bcftools query \
-    -f '{snakemake.wildcards.tumor_library}\t%CHROM\t%POS\t%REF\t%ALT\n' \
-    -s {snakemake.wildcards.tumor_library} \
+    -f '{args[tumor_library]}\t%CHROM\t%POS\t%REF\t%ALT\n' \
+    -s {args[tumor_library]} \
     {snakemake.input.vcf} \
 > {snakemake.output.tsv}
 

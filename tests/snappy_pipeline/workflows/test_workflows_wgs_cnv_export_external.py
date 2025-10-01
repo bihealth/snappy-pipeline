@@ -3,6 +3,7 @@
 
 import textwrap
 from copy import deepcopy
+from pathlib import PosixPath
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -270,8 +271,8 @@ def test_varfish_annotator_step_part_call_get_log_file_merge_vcf(wgs_cnv_export_
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_merge_vcf(wgs_cnv_export_external_workflow):
-    """Tests VarfishAnnotatorExternalStepPart._get_params_merge_vcf()"""
+def test_varfish_annotator_step_part_get_args_merge_vcf(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorExternalStepPart._get_args_merge_vcf()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "input": [],
@@ -279,7 +280,7 @@ def test_varfish_annotator_step_part_get_params_merge_vcf(wgs_cnv_export_externa
         "merge_option": "id",
         "gvcf_option": False,
     }
-    actual = wgs_cnv_export_external_workflow.get_params("varfish_annotator_external", "merge_vcf")(
+    actual = wgs_cnv_export_external_workflow.get_args("varfish_annotator_external", "merge_vcf")(
         wildcards
     )
     assert actual == expected
@@ -308,7 +309,8 @@ def test_varfish_annotator_step_part_call_get_input_files_annotate(
     base_name = "work/dragen.P001-N1-DNA1-WGS1/out/dragen.P001-N1-DNA1-WGS1"
     vcf_dict = get_expected_output_vcf_files_dict(base_out=base_name)
     ped_dict = {"ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"}
-    expected = {**ped_dict, **vcf_dict}
+    ref_dict = {"reference": "/path/to/ref.fa"}
+    expected = {**ped_dict, **vcf_dict, **ref_dict}
     # Get actual
     actual = wgs_cnv_export_external_workflow.get_input_files(
         "varfish_annotator_external", "annotate"
@@ -348,14 +350,27 @@ def test_varfish_annotator_step_part_call_get_log_file_annotate(wgs_cnv_export_e
     assert actual == expected
 
 
-def test_varfish_annotator_step_part_get_params_annotate(wgs_cnv_export_external_workflow):
-    """Tests VarfishAnnotatorAnnotateStepPart._get_params_annotate()"""
+def test_varfish_annotator_step_part_get_args_annotate(wgs_cnv_export_external_workflow):
+    """Tests VarfishAnnotatorAnnotateStepPart._get_args_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "step_name": "wgs_cnv_export_external",
         "varfish_server_compatibility": False,
+        "config": {
+            "merge_vcf_flag": True,
+            "merge_option": "id",
+            "search_paths": [PosixPath("/search_path")],
+            "search_patterns": [{"vcf": "*/*.vcf.gz"}],
+            "release": "GRCh37",
+            "tool_ngs_mapping": None,
+            "tool_wgs_cnv_calling": "dragen",
+            "path_refseq_ser": PosixPath("/data/refseq_ser"),
+            "path_ensembl_ser": PosixPath("/data/ensembl_ser"),
+            "path_db": PosixPath("/data/db"),
+            "varfish_server_compatibility": False,
+        },
     }
-    actual = wgs_cnv_export_external_workflow.get_params("varfish_annotator_external", "annotate")(
+    actual = wgs_cnv_export_external_workflow.get_args("varfish_annotator_external", "annotate")(
         wildcards
     )
     assert actual == expected

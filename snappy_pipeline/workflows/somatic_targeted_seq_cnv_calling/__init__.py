@@ -70,11 +70,13 @@ import os.path
 import sys
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.base import UnsupportedActionException
+from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -84,6 +86,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
+from .model import Cnvkit as CnvkitModel
 from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -140,173 +143,6 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-
-class CnvettiStepPartBase(SomaticTargetedSeqCnvCallingStepPart):
-    """Perform somatic targeted CNV calling using CNVetti; shared code.
-
-    We group the CNVetti pipeline into three steps:
-
-    ``coverage``
-        Pompute target-wise normalized coverage of matched tumor and normal sample, the result is
-        a BCF file describing the (log)fold coverage of the tumor in relation to the normal.
-    ``segment``
-        Perform segmentation of the (log)fold coverage.
-    ``postprocess``
-        Postprocessing of the segmentation, annotation with copy state and gene-wise coverage.
-    """
-
-    #: Class available actions
-    actions = ("coverage", "segment", "postprocess")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Per-action name pattern to use in paths
-        self.name_pattern = "{{mapper}}.%(name)s_{action}.{{library_name}}" % {"name": self.name}
-
-    def get_input_files(self, action):
-        """Return input function for the given action.
-
-        Actually delegates to the appropriate ``_get_input_files_{action}`` function.  The
-        "coverage" action takes as input the BAI-indexed BAM files of the matched tumor/normal
-        pairs, the other actions take as input the output of the previous actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_input_files_{action}".format(action=action))()
-
-    def _get_input_files_coverage(self):
-        @dictify
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shortcut to Snakemake sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
-            yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
-            yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
-            yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
-            yield "tumor_bai", ngs_mapping(tumor_base_path + ".bam.bai")
-
-        return input_function
-
-    def _get_input_files_segment(self):
-        @dictify
-        def input_function(wildcards):
-            for key, value in self._get_output_files_coverage().items():
-                yield key, value.format(**wildcards)
-
-        return input_function
-
-    def _get_input_files_postprocess(self):
-        @dictify
-        def input_function(wildcards):
-            for key, value in self._get_output_files_segment().items():
-                yield key, value.format(**wildcards)
-
-        return input_function
-
-    def get_output_files(self, action):
-        """Return input function for the given action.
-
-        Actually delegates to the appropriate ``_get_input_files_{action}`` function; refer to
-        documentation of the individual functions for more details.
-        """
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_output_files_{action}".format(action=action))()
-
-    @dictify
-    def _get_output_files_coverage(self):
-        """The "coverage" action creates a BCF file (CSI+MD5 files) with an
-        entry for each target.
-        """
-        name_pattern = self.name_pattern.format(action="coverage")
-        for key, ext in BCF_KEY_EXTS:
-            yield key, os.path.join("work", name_pattern, "out", name_pattern + ext)
-
-    @dictify
-    def _get_output_files_segment(self):
-        """The "segment" action creates a BCF file (CSI+MD5 files) with an entry for each target
-        (infix ``.targets``) and also for each segment (infix ``.segments``).
-        """
-        name_pattern = self.name_pattern.format(action="segment")
-        for infix in ("targets", "segments"):
-            for key, ext in BCF_KEY_EXTS:
-                name = "{}_{}".format(infix, key)
-                yield (
-                    name,
-                    os.path.join("work", name_pattern, "out", name_pattern + "." + infix + ext),
-                )
-
-    @dictify
-    def _get_output_files_postprocess(self):
-        """The "postprocess" action creates the following text files (consumed by the export to
-        cBioPortal):
-
-        ``bins``
-            The per-bin log-fold change information.
-        ``segments``
-            Per-segment log-fold change information.
-        ``gene_call``
-            Per-gene pseudo-GISTIC scores.
-        ``gene_log2``
-            Per-gene log-fold change information.
-        """
-        name_pattern = self.name_pattern.format(action="postprocess")
-        for infix in ("targets", "targets_segmented", "segments", "gene_call", "gene_log2"):
-            for key, ext in (("txt", ".txt"), ("md5", ".txt.md5")):
-                name = "{}_{}".format(infix, key)
-                yield (
-                    name,
-                    os.path.join("work", name_pattern, "out", name_pattern + "_" + infix + ext),
-                )
-
-    def _get_log_file(self, action):
-        """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = self.name_pattern.format(action=action)
-        prefix = os.path.join("work", name_pattern, "log", name_pattern)
-        return self._get_log_file_from_prefix(prefix)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="1-00:00:00",  # 1 day
-            memory="7500M",
-        )
-
-
-class CnvettiOffTargetStepPart(CnvettiStepPartBase):
-    """Perform somatic targeted CNV calling using CNVetti with off-target reads."""
-
-    #: Step name
-    name = "cnvetti_off_target"
-
-
-class CnvettiOnTargetStepPart(CnvettiStepPartBase):
-    """Perform somatic targeted CNV calling using CNVetti with on-target reads."""
-
-    #: Step name
-    name = "cnvetti_on_target"
 
 
 def expand_id(*args):
@@ -438,12 +274,43 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 )
             )
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        return self._get_params_report
+        return getattr(self, f"_get_args_{action}")
 
-    def _get_params_report(self, wildcards):
-        return wildcards["library_name"]
+    def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "length": self.config.sequenza.length,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_arguments": self.config.sequenza.extra_args,
+        }
+
+    def _get_args_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "length": self.config.sequenza.length,
+        }
+
+    def _get_args_report(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "assembly": self.config.sequenza.assembly,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "library_name": wildcards.library_name,
+        }
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "assembly": self.config.sequenza.assembly,
+            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "library_name": wildcards.library_name,
+        }
 
     def get_log_file(self, action):
         """Return dict of log files."""
@@ -546,6 +413,17 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return action_mapping[action]
 
+    def get_args(self, action):
+        self._validate_action(action)
+        return self._get_args_all
+
+    def _get_args_all(self, wildcards):
+        return {
+            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "mapper": wildcards.mapper,
+            "library_name": wildcards.library_name,
+        }
+
     def get_log_file(self, action):
         """Return dict of log files."""
         # Validate action
@@ -593,6 +471,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg: CnvkitModel = self.config.get(self.name)
 
     def get_input_files(self, action):
         """Return input paths input function, dependent on rule"""
@@ -617,35 +496,35 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         input_files = {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "target": self.config.cnvkit.path_target,
+            "antitarget": self.config.cnvkit.path_antitarget,
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_fix(wildcards):
+    def _get_input_files_fix(self, wildcards):
         tpl_base = "{mapper}.cnvkit.{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
         input_files = {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
+            "ref": self.cfg.path_panel_of_normals,
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_segment(wildcards):
+    def _get_input_files_segment(self, wildcards):
         cnr_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_call(wildcards):
+    def _get_input_files_call(self, wildcards):
         segment_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
         )
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_postprocess(wildcards):
+    def _get_input_files_postprocess(self, wildcards):
         segment_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
         )
@@ -658,16 +537,14 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_export(wildcards):
+    def _get_input_files_export(self, wildcards):
         cns_pattern = (
             "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
         )
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_plot(wildcards):
+    def _get_input_files_plot(self, wildcards):
         tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
@@ -684,6 +561,24 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "cns": tpl.format(ext="call.cns", **wildcards),
         }
         return input_files
+
+    def get_args(self, action):
+        self._validate_action(action)
+        if action == "plot":
+            action = "diagram"
+        if args := getattr(self.cfg, action, {}):
+            args = args.model_dump(by_alias=True)
+        if action == "report":
+            args["breaks"] = self.cfg.breaks.model_dump(by_alias=True)
+            args["genemetrics"] = self.cfg.genemetrics.model_dump(by_alias=True)
+            args["segmetrics"] = self.cfg.segmetrics.model_dump(by_alias=True)
+        if action in ("segment", "call", "report"):
+            args["drop_low_coverage"] = self.cfg.drop_low_coverage
+        if action in ("call", "diagram") and self.cfg.gender != CnvkitGender.guess:
+            action["gender"] = self.cfg.gender
+        if action in ("call", "diagram") and self.cfg.male_reference:
+            action["male_reference"] = self.cfg.male_reference
+        return args
 
     def get_output_files(self, action):
         """Return output files for the given action"""
@@ -746,8 +641,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_output_files_plot(self):
-        plots = (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
-        chrom_plots = (("heatmap", "pdf"), ("scatter", "png"))
+        plots = (("diagram", "pdf"), ("scatter", "png"))
+        chrom_plots = (("scatter", "png"),)
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
@@ -780,10 +675,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ("vcf_tbi", "vcf.gz.tbi"),
         )
         output_files = {}
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/out/"
-            "{{mapper}}.cnvkit.{{library_name}}.{ext}"
-        )
+        tpl = "work/{{mapper}}.cnvkit.{{library_name}}/out/{{mapper}}.cnvkit.{{library_name}}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"
@@ -811,132 +703,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "{{mapper}}.cnvkit.{action}.{{library_name}}"
         ).format(action=action)
         return self._get_log_file_from_prefix(prefix)
-
-
-class CopywriterStepPart(SomaticTargetedSeqCnvCallingStepPart):
-    """Perform somatic targeted CNV calling using CopywriteR"""
-
-    #: Step name
-    name = "copywriter"
-
-    #: Class available actions
-    actions = ("prepare", "run", "call")
-
-    #: Actions for which there are input and output methods available
-    actions_w_in_out = ("run", "call")
-
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage = {
-        "prepare": ResourceUsage(
-            threads=1,
-            time="02:00:00",  # 2 hours
-            memory="4000M",
-        ),
-        "run": ResourceUsage(
-            threads=2,
-            time="16:00:00",  # 16 hours
-            memory="80000M",
-        ),
-        "call": ResourceUsage(
-            threads=8,
-            time="03:59:00",  # 3 hours and 59 minutes
-            memory="8000M",
-        ),
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.copywriter.{{library_name}}/out/"
-            "{{mapper}}.copywriter.{{library_name}}{ext}"
-        )
-
-    def get_input_files(self, action):
-        # Validate action
-        msg = "Option available only for actions 'run' and 'call'."
-        assert action in self.actions_w_in_out, msg
-
-        def input_function_run(wildcards):
-            """Helper wrapper function"""
-            # Get shortcut to Snakemake sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
-            )
-            tumor_base_path = (
-                "output/{mapper}.{library_name}/out/" "{mapper}.{library_name}"
-            ).format(**wildcards)
-            return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
-
-        def input_function_call(wildcards):
-            tpl = "work/{mapper}.copywriter.{library_name}/CNAprofiles/".format(**wildcards)
-            exts = {
-                "input": "input.Rdata",
-                "segment": "segment.Rdata",
-                "counts": "read_counts.txt",
-                "log2": "log2_read_counts.igv",
-            }
-            input_files = {}
-            for k, v in exts.items():
-                input_files[k] = tpl + v
-            return input_files
-
-        if action == "run":
-            return input_function_run
-        if action == "call":
-            return input_function_call
-
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        msg = "Option available only for actions 'run' and 'call'."
-        assert action in self.actions_w_in_out, msg
-
-        exts = {}
-        tpl = ""
-        if action == "run":
-            exts = {
-                "input": "input.Rdata",
-                "segment": "segment.Rdata",
-                "counts": "read_counts.txt",
-                "log2": "log2_read_counts.igv",
-            }
-            tpl = "work/{mapper}.copywriter.{library_name}/CNAprofiles/"
-        if action == "call":
-            exts = {
-                "bins_txt": "bins.txt",
-                "gene_call_txt": "gene_call.txt",
-                "gene_log2_txt": "gene_log2.txt",
-                "segments_txt": "segments.txt",
-            }
-            tpl = "work/{mapper}.copywriter.{library_name}/out/{mapper}.copywriter.{library_name}_"
-        output_files = {}
-        for k, v in exts.items():
-            output_files[k] = tpl + v
-            output_files[k + "_md5"] = tpl + v + ".md5"
-        return output_files
-
-    def get_log_file(self, action):
-        """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-
-        if action == "prepare":
-            log_file = "work/copywriter.prepare/log/snakemake.log"
-            return {"log": log_file, "log_md5": log_file + ".md5"}
-        else:
-            name_pattern = "{mapper}.copywriter.{library_name}"
-            prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
-            return self._get_log_file_from_prefix(prefix)
 
 
 class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
@@ -970,10 +736,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
-                CnvettiOffTargetStepPart,
-                CnvettiOnTargetStepPart,
                 CnvKitStepPart,
-                CopywriterStepPart,
                 SequenzaStepPart,
                 PureCNStepPart,
                 LinkOutStepPart,
@@ -992,15 +755,10 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
-            "cnvkit": ["fix", "postprocess", "report", "export"],
+            "cnvkit": ("fix", "postprocess", "report", "plot", "export"),
             "sequenza": ("coverage", "run"),
             "purecn": ("run",),
-            "copywriter": ("call",),
-            "cnvetti_on_target": ("coverage", "segment", "postprocess"),
-            "cnvetti_off_target": ("coverage", "segment", "postprocess"),
         }
-        if "cnvkit" in self.config.tools and self.config.cnvkit.plot:
-            tool_actions["cnvkit"] += ["plot"]
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (

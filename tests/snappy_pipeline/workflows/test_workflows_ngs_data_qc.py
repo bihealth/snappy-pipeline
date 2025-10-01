@@ -157,20 +157,30 @@ def test_picard_step_part_get_log_file_metrics(ngs_data_qc):
     assert actual == expected
 
 
-def test_picard_step_part_get_params(ngs_data_qc):
-    """Tests PicardStepPart.get_params() - metrics"""
+def test_picard_step_part_get_args(ngs_data_qc):
+    """Tests PicardStepPart.get_args() - metrics"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     # Define expected
-    expected = {"prefix": "bwa.P001-N1-DNA1-WGS1"}
+    expected = {
+        "reference": "/path/to/ref.fa",
+        "prefix": "bwa.P001-N1-DNA1-WGS1.",
+        "programs": [
+            "CollectAlignmentSummaryMetrics",
+            "CollectOxoGMetrics",
+            "CollectHsMetrics",
+            "CollectWgsMetrics",
+        ],
+        "dbsnp": "",
+    }
     # Get actual
-    actual = ngs_data_qc.get_params("picard", "metrics")(wildcards)
+    actual = ngs_data_qc.get_args("picard", "metrics")(wildcards)
     assert actual == expected
 
 
 def test_picard_step_part_get_resource_usage(ngs_data_qc):
     """Tests PicardStepPart.get_resource_usage() - metrics"""
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "24G", "partition": "medium"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "64G", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

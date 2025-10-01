@@ -85,6 +85,7 @@ The default configuration is as follows.
 
 import os
 import re
+from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
@@ -158,6 +159,15 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_par_intervals": gcnv_config.path_par_intervals,
+            "path_target_interval_list_mapping": gcnv_config.path_target_interval_list_mapping,
+            "path_uniquely_mapable_bed": gcnv_config.path_uniquely_mapable_bed,
+        }
 
 
 class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):

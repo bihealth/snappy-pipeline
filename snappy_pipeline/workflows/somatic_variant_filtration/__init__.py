@@ -115,9 +115,10 @@ import os
 import random
 import sys
 from collections import OrderedDict
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -126,13 +127,13 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.somatic_variant_annotation import (
-    ANNOTATION_TOOLS,
-)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.somatic_variant_annotation import ANNOTATION_TOOLS
 from snappy_pipeline.workflows.somatic_variant_calling import (
-    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SOMATIC_VARIANT_CALLERS,
 )
 
+from .model import Ebfilter as EbfilterConfig
 from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -183,21 +184,6 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
         return pair.normal_sample.dna_ngs_library.name if pair else None
 
-    def get_params(self, action):
-        """Return arguments to pass down."""
-        _ = action
-
-        def params_function(wildcards):
-            if wildcards.tumor_library not in self.donors:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
-                }
-            else:
-                return {}
-
-        return params_function
-
 
 class OneFilterStepPart(SomaticVariantFiltrationStepPart):
     """Performs one filtration step using checkpoints rather than rules"""
@@ -215,32 +201,23 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
         """Return path to input or previous filter vcf file"""
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-        @dictify
-        def input_function(wildcards, is_unpack=True):
-            filter_nb = int(wildcards["filter_nb"])
-            if filter_nb > 1:
-                prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
-                n = filter_nb - 1
-                yield (
-                    "vcf",
-                    os.path.join(
-                        "work", self.name_pattern, "out", self.name_pattern + f".{prev}_{n}.vcf.gz"
-                    ),
-                )
-            else:
-                yield (
-                    "vcf",
-                    os.path.join(
-                        self.config.path_somatic_variant,
-                        "output",
-                        self.name_pattern,
-                        "out",
-                        self.name_pattern + ".vcf.gz",
-                    ),
-                )
-
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards, is_unpack=True):
+        filter_nb = int(wildcards["filter_nb"])
+        name_pattern = self.name_pattern.format(**wildcards)
+        if filter_nb > 1:
+            prev = list(self.config.filter_list[filter_nb - 2].keys())[0]
+            n = filter_nb - 1
+            yield (
+                "vcf",
+                os.path.join("work", name_pattern, "out", name_pattern + f".{prev}_{n}.vcf.gz"),
+            )
+        else:
+            somatic_variant = self.parent.sub_workflows["somatic_variant"]
+            base_path = os.path.join("output", name_pattern, "out", name_pattern)
+            yield "vcf", somatic_variant(base_path.format(**wildcards) + ".vcf.gz")
 
     @dictify
     def get_output_files(self, action):
@@ -291,50 +268,37 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 ),
             )
 
-    def get_params(self, action):
+    def get_args(self, action):
         # Validate action
         self._validate_action(action)
 
-        def input_function(wildcards, **_kwargs):
-            return {"filter_name": "{}_{}".format(self.filter_name, wildcards["filter_nb"])}
+        return self._get_args
 
-        return input_function
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        filter_nb = int(wildcards["filter_nb"])
+        params = self.config.filter_list[filter_nb - 1][self.filter_name].model_dump(by_alias=True)
+        params["filter_name"] = "{}_{}".format(self.filter_name, wildcards["filter_nb"])
+        return params
 
 
 class OneFilterWithBamStepPart(OneFilterStepPart):
-    def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
-        # Validate action
-        self._validate_action(action)
+    @dictify
+    def _get_input_files_run(self, wildcards, **_kwargs):
+        parent = super(OneFilterWithBamStepPart, self)._get_input_files_run
+        yield from parent(wildcards, **_kwargs).items()
 
-        @dictify
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterWithBamStepPart, self).get_input_files(action)
-            yield from parent(wildcards, **_kwargs).items()
+        yield "reference", self.w_config.static_data_config.reference.path
 
-            yield (
-                "bam",
-                os.path.join(
-                    self.config.path_ngs_mapping,
-                    "output",
-                    "{mapper}.{tumor_library}",
-                    "out",
-                    "{mapper}.{tumor_library}.bam",
-                ),
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        name_pattern = "{mapper}.{tumor_library}".format(**wildcards)
+        base_path = os.path.join("output", name_pattern, "out", name_pattern)
+        yield "bam", ngs_mapping(base_path + ".bam")
+        if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
+            name_pattern = "{mapper}.{normal_library}".format(
+                normal_library=normal_library, **wildcards
             )
-            if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
-                yield (
-                    "normal",
-                    os.path.join(
-                        self.config.path_ngs_mapping,
-                        "output",
-                        f"{{mapper}}.{normal_library}",
-                        "out",
-                        f"{{mapper}}.{normal_library}.bam",
-                    ),
-                )
-
-        return input_function
+            base_path = os.path.join("output", name_pattern, "out", name_pattern)
+            yield "normal", ngs_mapping(base_path + ".bam")
 
 
 class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
@@ -346,108 +310,87 @@ class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
     filter_name = "ebfilter"
-    resource_usage = {"run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M")}
 
-    def get_input_files(self, action):
-        """Return path to input or previous filter vcf file & normal/tumor bams"""
-        # Validate action
-        self._validate_action(action)
+    #: Class available actions
+    actions = ("run", "write_panel")
 
-        @dictify
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterEbfilterStepPart, self).get_input_files(action)
-            yield from parent(wildcards, **_kwargs).items()
-
-            yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
-
-        return input_function
+    resource_usage = {
+        "run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M"),
+        "write_panel": ResourceUsage(threads=1, time="01:00:00", memory=f"{2 * 1024}M"),
+    }
 
     @dictify
+    def _get_input_files_run(self, wildcards, **_kwargs):
+        """Return path to input or previous filter vcf file & normal/tumor bams"""
+        parent = super(OneFilterEbfilterStepPart, self)._get_input_files_run
+        yield from parent(wildcards, **_kwargs).items()
+        cfg: EbfilterConfig = self._get_args(wildcards)
+        sample_files = cfg["path_panel_of_normals_sample_list"]
+        if not sample_files:
+            sample_files = self._get_output_files_write_panel()["txt"].format(**wildcards)
+        yield "txt", sample_files
+
     def _get_output_files_write_panel(self):
-        yield (
-            "txt",
-            (
-                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-                "panel_of_normals.txt"
-            ),
-        )
+        return {
+            "txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"
+        }
 
-    def get_params(self, action):
-        """Return add EBFilter parameters to parameters"""
-        # Validate action
-        self._validate_action(action)
+    def get_output_files(self, action):
+        output_files = super(OneFilterEbfilterStepPart, self).get_output_files(action)
+        if action == "write_panel":
+            output_files = self._get_output_files_write_panel()
+        return output_files
 
-        @dictify
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterEbfilterStepPart, self).get_params(action)
-            parameters = parent(wildcards, **_kwargs)
-            filter_nb = int(wildcards["filter_nb"])
-            ebfilter_config = self.config.filter_list[filter_nb - 1][self.filter_name]
-            parameters.update(ebfilter_config)
-            parameters["has_annotation"] = self.config.has_annotation
-            return parameters
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        """Return dkfz parameters to parameters"""
+        return super(OneFilterEbfilterStepPart, self)._get_args(wildcards) | {
+            "has_annotation": self.config.has_annotation,
+        }
 
-        return input_function
+    def write_panel_of_normals_file(self, wildcards):
+        """Write out file with paths to panels-of-normal"""
+        output_path = self.get_output_files("write_panel")["txt"].format(**wildcards)
+        with open(output_path, "wt") as outf:
+            for bam_path in self._get_panel_of_normal_bams(wildcards):
+                print(bam_path, file=outf)
+
+    @listify
+    def _get_panel_of_normal_bams(self, wildcards):
+        """Return list of "panel of normal" BAM files."""
+        libraries = []
+        for sheet in self.parent.shortcut_sheets:
+            for donor in sheet.donors:
+                for bio_sample in donor.bio_samples.values():
+                    if not bio_sample.extra_infos["isTumor"]:
+                        libraries.append(bio_sample.dna_ngs_library.name)
+        libraries.sort()
+
+        for filter_cfg in self.config.filter_list:
+            if list(filter_cfg.keys())[0] == "ebfilter":
+                cfg: EbfilterConfig = list(filter_cfg.values())[0]
+                break
+        random.seed(cfg.shuffle_seed)
+        lib_count = cfg["panel_of_normals_size"]
+        random.shuffle(libraries)
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
+        for library in libraries[:lib_count]:
+            yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):
     name = "one_bcftools"
     filter_name = "bcftools"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterBcftoolsStepPart, self).get_params(action)
-            parameters = parent(wildcards, **_kwargs)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
-
 
 class OneFilterRegionsStepPart(OneFilterStepPart):
     name = "one_regions"
     filter_name = "regions"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterRegionsStepPart, self).get_params(action)
-            parameters = parent(wildcards, **_kwargs)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
-
 
 class OneFilterProtectedStepPart(OneFilterStepPart):
     name = "one_protected"
     filter_name = "protected"
-
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards, **_kwargs):
-            parent = super(OneFilterProtectedStepPart, self).get_params(action)
-            parameters = parent(wildcards, **_kwargs)
-            filter_nb = int(wildcards["filter_nb"])
-            filter = self.config.filter_list[filter_nb - 1][self.filter_name]
-            keywords = filter.keywords()
-            parameters.update(keywords)
-            return parameters
-
-        return input_function
 
 
 class LastFilterStepPart(SomaticVariantFiltrationStepPart):
@@ -523,413 +466,6 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
         }
 
 
-class DkfzBiasFilterStepPart(SomaticVariantFiltrationStepPart):
-    """Flag variants with the DKFZ bias filter"""
-
-    #: Step name
-    name = "dkfz_bias_filter"
-
-    #: Class available actions
-    actions = ("run",)
-
-    @dictify
-    def get_input_files(self, action):
-        """Return path to jannovar-annotated vcf input file"""
-        # Validate action
-        self._validate_action(action)
-
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-
-        # VCF file and index
-        tpl = f"output/{name_pattern}." "{tumor_library}/" f"out/{name_pattern}." "{tumor_library}"
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-
-        somatic_variant = self.parent.modules["somatic_variant"]
-        for key, ext in key_ext.items():
-            yield key, somatic_variant(tpl + ext)
-        # BAM file and index
-        tpl = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-        key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        for key, ext in key_ext.items():
-            yield key, ngs_mapping(tpl + ext)
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files for the filtration"""
-        # Validate action
-        self._validate_action(action)
-
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-
-        prefix = (
-            rf"work/{name_pattern}.{self.name}."
-            r"{tumor_library,[^\.]+}/"
-            rf"out/{name_pattern}.{self.name}."
-            r"{tumor_library}"
-        )
-        key_ext = {
-            "vcf": ".vcf.gz",
-            "vcf_tbi": ".vcf.gz.tbi",
-            "vcf_md5": ".vcf.gz.md5",
-            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-        }
-        for key, ext in key_ext.items():
-            yield key, prefix + ext
-
-    @dictify
-    def _get_log_file(self, action):
-        """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        name_pattern += f".{self.name}"
-        prefix = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}",
-            "log",
-            name_pattern + ".{tumor_library}",
-        )
-
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="3-00:00:00",  # 3 days
-            memory=f"{3 * 1024}M",
-        )
-
-
-class EbFilterStepPart(SomaticVariantFiltrationStepPart):
-    """Flag variants with EBFilter"""
-
-    #: Step name
-    name = "eb_filter"
-
-    #: Class available actions
-    actions = ("run", "write_panel")
-
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_input_files_{}".format(action))
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        # VCF file and index
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        tpl = (
-            f"work/{name_pattern}."
-            "dkfz_bias_filter.{tumor_library}/"
-            f"out/{name_pattern}."
-            "dkfz_bias_filter."
-            "{tumor_library}"
-        )
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, tpl.format(**wildcards) + ext
-        # BAM file and index
-        tpl = r"output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-        key_ext = {"bam": ".bam", "bai": ".bam.bai"}
-
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        for key, ext in key_ext.items():
-            yield key, ngs_mapping(tpl.format(**wildcards) + ext)
-        # Panel of normals TXT file
-        yield "txt", self._get_output_files_write_panel()["txt"].format(**wildcards)
-
-    def _get_input_files_write_panel(self, wildcards):
-        bam_paths = self._get_panel_of_normal_bams(wildcards)
-        return {"bam": bam_paths, "bai": [p + ".bai" for p in bam_paths]}
-
-    def get_output_files(self, action):
-        """Return output files for the filtration"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_output_files_{}".format(action))()
-
-    def get_params(self, action):
-        """Return EBFilter parameters from the config"""
-        # Validate action
-        self._validate_action(action)
-        parameters = self.config.eb_filter
-        parameters.update(self.config.filter_sets.dkfz_and_ebfilter)
-        parameters["has_annotation"] = self.config.has_annotation
-        return parameters
-
-    @dictify
-    def _get_output_files_run(self):
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        # VCF file and index
-        prefix = (
-            rf"work/{name_pattern}."
-            r"dkfz_bias_filter.eb_filter.{tumor_library,[^\.]+}/"
-            rf"out/{name_pattern}."
-            r"dkfz_bias_filter.eb_filter.{tumor_library}"
-        )
-        key_ext = {
-            "vcf": ".vcf.gz",
-            "vcf_tbi": ".vcf.gz.tbi",
-            "vcf_md5": ".vcf.gz.md5",
-            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-        }
-        for key, ext in key_ext.items():
-            yield key, prefix + ext
-
-    @dictify
-    def _get_output_files_write_panel(self):
-        yield (
-            "txt",
-            (
-                "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter."
-                "panel_of_normals.txt"
-            ),
-        )
-
-    @dictify
-    def _get_log_file(self, action):
-        """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-
-        if action == "write_panel":
-            # No log returned by EbFilterStepPart.write_panel_of_normals_file
-            return {}
-        else:
-            name_pattern = "{mapper}.{var_caller}"
-            if self.config.has_annotation:
-                name_pattern += ".{annotator}"
-            name_pattern += ".dkfz_bias_filter.eb_filter"
-            prefix = os.path.join(
-                "work",
-                name_pattern + r".{tumor_library,[^\.]+}",
-                "log",
-                name_pattern + ".{tumor_library}",
-            )
-            key_ext = (
-                ("log", ".log"),
-                ("conda_info", ".conda_info.txt"),
-                ("conda_list", ".conda_list.txt"),
-            )
-            for key, ext in key_ext:
-                yield key, prefix + ext
-
-    def write_panel_of_normals_file(self, wildcards):
-        """Write out file with paths to panels-of-normal"""
-        output_path = self.get_output_files("write_panel")["txt"].format(**wildcards)
-        with open(output_path, "wt") as outf:
-            for bam_path in self._get_panel_of_normal_bams(wildcards):
-                print(bam_path, file=outf)
-
-    @listify
-    def _get_panel_of_normal_bams(self, wildcards):
-        """Return list of "panel of normal" BAM files."""
-        libraries = []
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    if not bio_sample.extra_infos["isTumor"]:
-                        libraries.append(bio_sample.dna_ngs_library.name)
-        libraries.sort()
-        random.seed(self.config.eb_filter.shuffle_seed)
-        lib_count = self.config.eb_filter.panel_of_normals_size
-        random.shuffle(libraries)
-
-        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        for library in libraries[:lib_count]:
-            yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="04:00:00",  # 4 hours
-            memory=f"{8 * 1024}M",
-        )
-
-
-class ApplyFiltersStepPart(SomaticVariantFiltrationStepPart):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "apply_filters"
-
-    #: Class available actions
-    actions = ("run",)
-
-    #: Default filtration resource usage (should be light)
-    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.eb_filter"
-        self.base_path_out = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}",
-            "out",
-            name_pattern + ".{tumor_library}.{filter_set}" + "{ext}",
-        )
-        self.path_log = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}",
-            "log",
-            name_pattern + ".{tumor_library}.{filter_set}" + ".log",
-        )
-
-    def get_args(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def args_function(wildcards):
-            result = {
-                "normal_sample": self.get_normal_lib_name(wildcards),
-                "tumor_sample": wildcards.tumor_library,
-            }
-            return result
-
-        return args_function
-
-    @dictify
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern)
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, tpl + ext
-
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{ext}", ext)
-
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return self.path_log
-
-
-class FilterToExonsStepPart(SomaticVariantFiltrationStepPart):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "filter_to_exons"
-
-    #: Class available actions
-    actions = ("run",)
-
-    #: Default filtration resource usage (should be light)
-    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        name_pattern = "{mapper}.{var_caller}"
-        if self.config.has_annotation:
-            name_pattern += ".{annotator}"
-        name_pattern += ".dkfz_bias_filter.eb_filter"
-        self.base_path_out = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}",
-            "out",
-            name_pattern + ".{tumor_library}.{filter_set}.{exon_list}" + "{ext}",
-        )
-        self.path_log = os.path.join(
-            "work",
-            name_pattern + r".{tumor_library,[^\.]+}.{filter_set,[^\.]+}.{exon_list}",
-            "log",
-            name_pattern + ".{tumor_library}.{filter_set}.{exon_list}" + ".log",
-        )
-        self.base_path_in_ = os.path.join(
-            "work",
-            name_pattern + ".{tumor_library}.{filter_set}",
-            "out",
-            name_pattern + ".{tumor_library}.{filter_set}" + "{ext}",
-        )
-
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards, **_kwargs):
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield (
-                    key,
-                    self.base_path_in_.format(
-                        tumor_library=wildcards.tumor_library,
-                        mapper=wildcards.mapper,
-                        var_caller=wildcards.var_caller,
-                        annotator=wildcards.get("annotator", ""),
-                        filter_set=wildcards.filter_set,
-                        exon_list=wildcards.exon_list,
-                        ext=ext,
-                    ),
-                )
-
-        return input_function
-
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{ext}", ext)
-
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return self.path_log
-
-
 class SomaticVariantFiltrationWorkflow(BaseStep):
     """Perform somatic variant filtration"""
 
@@ -949,6 +485,24 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        # Ugly hack to allow exchanging the order of somatic_variant_annotation &
+        # somatic_variant_filtration steps.
+        # The import of the other workflow must be dependent on the config:
+        # if in the somatic_variant_filtration config, has_annotation is True,
+        # then the filtration step will include the annotation workflow as a
+        # previous step.
+        # THIS IMPLIES THAT NO FILTRATION OCCURED BEFORE ANNOTATION
+        # This protects against circular import of workflows.
+        #
+        # This must be done before initialisation of the workflow.
+        previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
+        default = SomaticVariantFiltrationConfigModel.model_fields["has_annotation"].default
+        if config["step_config"]["somatic_variant_filtration"].get("has_annotation", default):
+            from snappy_pipeline.workflows.somatic_variant_annotation import (
+                SomaticVariantAnnotationWorkflow,
+            )
+
+            previous_steps.insert(0, SomaticVariantAnnotationWorkflow)
         super().__init__(
             workflow,
             config,
@@ -958,25 +512,17 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_model_class=SomaticVariantFiltrationConfigModel,
             # FIXME
             previous_steps=(),
-            # previous_steps=(
-            #     SomaticVariantAnnotationWorkflow,
-            #     SomaticVariantCallingWorkflow,
-            #     NgsMappingWorkflow,
-            # ),
+            # previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
-                DkfzBiasFilterStepPart,
-                EbFilterStepPart,
                 OneFilterDkfzStepPart,
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
                 OneFilterProtectedStepPart,
                 LastFilterStepPart,
-                ApplyFiltersStepPart,
-                FilterToExonsStepPart,
                 LinkOutStepPart,
             )
         )
@@ -998,7 +544,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
             ].tools
-        if not self.config.tools_somatic_variant_annotation:
+        if self.config.has_annotation and not self.config.tools_somatic_variant_annotation:
             self.config.tools_somatic_variant_annotation = self.w_config.step_config[
                 "somatic_variant_annotation"
             ].tools
@@ -1011,9 +557,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         mappers = set(self.config.tools_ngs_mapping) & set(
             self.w_config.step_config["ngs_mapping"].tools.dna
         )
-        callers = set(self.config.tools_somatic_variant_calling) & set(
-            SOMATIC_VARIANT_CALLERS_MATCHED
-        )
+        callers = set(self.config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS)
         if self.config.has_annotation:
             annotators = set(self.config.tools_somatic_variant_annotation) & set(ANNOTATION_TOOLS)
         else:
@@ -1021,66 +565,32 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
 
         log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
 
-        if self.config.filtration_schema == "list":
-            name_pattern = "{mapper}.{caller}"
-            if self.config.has_annotation:
-                name_pattern += ".{annotator}"
-            name_pattern += ".filtered.{tumor_library}"
+        name_pattern = "{mapper}.{caller}"
+        if self.config.has_annotation:
+            name_pattern += ".{annotator}"
+        name_pattern += ".filtered.{tumor_library}"
 
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                ext=[f + e for f in ("", ".full") for e in EXT_VALUES],
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                ext=log_ext,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + ".merged.tar.gz{ext}"),
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                ext=("", ".md5"),
-            )
-        else:
-            filter_sets = {"no_filter"}
-            if self.config.filter_sets:
-                filter_sets |= self.config.filter_sets.keys()
-            exon_lists = {"genome_wide"}
-            if self.config.exon_lists:
-                exon_lists |= self.config.exon_lists.keys()
-
-            name_pattern = "{mapper}.{caller}"
-            if self.config.has_annotation:
-                name_pattern += ".{annotator}"
-            name_pattern += ".dkfz_bias_filter.eb_filter.{tumor_library}.{filter_set}.{exon_list}"
-
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                filter_set=filter_sets,
-                exon_list=exon_lists,
-                ext=EXT_VALUES,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                filter_set=filter_sets,
-                exon_list=exon_lists,
-                ext=("log",),
-            )
-
-        # TODO: filtration for joint calling not implemented yet
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            mapper=mappers,
+            caller=callers,
+            annotator=annotators,
+            ext=[f + e for f in ("", ".full") for e in EXT_VALUES],
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "log", name_pattern + ".{ext}"),
+            mapper=mappers,
+            caller=callers,
+            annotator=annotators,
+            ext=log_ext,
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "log", name_pattern + ".merged.tar.gz{ext}"),
+            mapper=mappers,
+            caller=callers,
+            annotator=annotators,
+            ext=("", ".md5"),
+        )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

@@ -105,6 +105,8 @@ rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
         unpack(wf.get_input_files("ascat", "baf_tumor")),
     output:
         **wf.get_output_files("ascat", "baf_tumor"),
+    params:
+        args=wf.get_args("ascat", "baf_tumor"),
     threads: wf.get_resource("ascat", "baf_tumor", "threads")
     resources:
         time=wf.get_resource("ascat", "baf_tumor", "time"),
@@ -122,6 +124,8 @@ rule somatic_purity_ploidy_estimate_ascat_baf_normal:
         unpack(wf.get_input_files("ascat", "baf_normal")),
     output:
         **wf.get_output_files("ascat", "baf_normal"),
+    params:
+        args=wf.get_args("ascat", "baf_normal"),
     threads: wf.get_resource("ascat", "baf_normal", "threads")
     resources:
         time=wf.get_resource("ascat", "baf_normal", "time"),
@@ -142,6 +146,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
         unpack(wf.get_input_files("ascat", "cnv_tumor")),
     output:
         **wf.get_output_files("ascat", "cnv_tumor"),
+    params:
+        args=wf.get_args("ascat", "cnv_tumor"),
     threads: wf.get_resource("ascat", "cnv_tumor", "threads")
     resources:
         time=wf.get_resource("ascat", "cnv_tumor", "time"),
@@ -159,6 +165,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
         unpack(wf.get_input_files("ascat", "cnv_normal")),
     output:
         **wf.get_output_files("ascat", "cnv_normal"),
+    params:
+        args=wf.get_args("ascat", "cnv_normal"),
     threads: wf.get_resource("ascat", "cnv_normal", "threads")
     resources:
         time=wf.get_resource("ascat", "cnv_normal", "time"),
@@ -179,6 +187,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes:
         unpack(wf.get_input_files("ascat", "cnv_tumor_wes")),
     output:
         **wf.get_output_files("ascat", "cnv_tumor"),
+    params:
+        args=wf.get_args("ascat", "cnv_tumor"),
     threads: wf.get_resource("ascat", "cnv_tumor", "threads")
     resources:
         time=wf.get_resource("ascat", "cnv_tumor", "time"),
@@ -196,6 +206,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal_wes:
         unpack(wf.get_input_files("ascat", "cnv_normal_wes")),
     output:
         **wf.get_output_files("ascat", "cnv_normal"),
+    params:
+        args=wf.get_args("ascat", "cnv_normal"),
     threads: wf.get_resource("ascat", "cnv_normal", "threads")
     resources:
         time=wf.get_resource("ascat", "cnv_normal", "time"),
@@ -216,6 +228,8 @@ rule somatic_purity_ploidy_estimate_ascat_run_ascat:
         unpack(wf.get_input_files("ascat", "run_ascat")),
     output:
         **wf.get_output_files("ascat", "run_ascat"),
+    params:
+        args=wf.get_args("ascat", "run_ascat"),
     threads: wf.get_resource("ascat", "run_ascat", "threads")
     resources:
         time=wf.get_resource("ascat", "run_ascat", "time"),
