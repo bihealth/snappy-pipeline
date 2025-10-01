@@ -15,18 +15,17 @@ from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["sequenza"]
-genome = snakemake.config["static_data_config"]["reference"]["path"]
-length = config["length"]
+genome = args["reference"]
+length = args["length"]
 
 f = open(genome + ".fai", "rt")
-contigs = " ".join(yield_contigs(f, config.get("ignore_chroms")))
+contigs = " ".join(yield_contigs(f, args.get("ignore_chroms")))
 f.close()
 
 extra_arguments = " ".join(
-    ["--{} {}".format(k, v) for k, v in config.get("extra_arguments", {}).items()]
+    ["--{} {}".format(k, v) for k, v in args.get("extra_arguments", {}).items()]
 )
 
 shell.executable("/bin/bash")

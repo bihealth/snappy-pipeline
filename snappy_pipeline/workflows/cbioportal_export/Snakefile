@@ -50,6 +50,8 @@ rule all:
 rule cbioportal_export_meta_files:
     output:
         wf.get_output_files("cbioportal_meta_files", "run"),
+    params:
+        args=wf.get_args("cbioportal_meta_files", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/meta_files")
 
@@ -61,7 +63,7 @@ rule cbioportal_export_patient_data:
     output:
         **wf.get_output_files("cbioportal_clinical_data", "run"),
     params:
-        **wf.get_args("cbioportal_clinical_data", "run"),
+        args=wf.get_args("cbioportal_clinical_data", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/clinical_data")
 
@@ -70,7 +72,7 @@ rule cbioportal_export_case_lists:
     output:
         **wf.get_output_files("cbioportal_case_lists", "run"),
     params:
-        **wf.get_args("cbioportal_case_lists", "run"),
+        args=wf.get_args("cbioportal_case_lists", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/case_lists")
 
@@ -135,7 +137,7 @@ if step_config["copy_number_alteration"]["enabled"]:
             partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
         params:
-            **wf.get_args("cbioportal_cns2cna", "run"),
+            args=wf.get_args("cbioportal_cns2cna", "run"),
         log:
             **wf.get_log_file("cbioportal_cns2cna", "run"),
         wrapper:
@@ -149,7 +151,7 @@ if step_config["copy_number_alteration"]["enabled"]:
         output:
             wf.get_output_files("cbioportal_cna", "log2"),
         params:
-            **wf.get_args("cbioportal_cna", "log2"),
+            args=wf.get_args("cbioportal_cna", "log2"),
         threads: wf.get_resource("cbioportal_cna", "log2", "threads")
         resources:
             time=wf.get_resource("cbioportal_cna", "log2", "time"),
@@ -167,7 +169,7 @@ if step_config["copy_number_alteration"]["enabled"]:
         output:
             wf.get_output_files("cbioportal_cna", "gistic"),
         params:
-            **wf.get_args("cbioportal_cna", "gistic"),
+            args=wf.get_args("cbioportal_cna", "gistic"),
         threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
         resources:
             time=wf.get_resource("cbioportal_cna", "gistic", "time"),
@@ -210,7 +212,7 @@ if step_config["expression"]["enabled"]:
         output:
             wf.get_output_files("cbioportal_expression", "run"),
         params:
-            **wf.get_args("cbioportal_expression", "run"),
+            args=wf.get_args("cbioportal_expression", "run"),
         threads: wf.get_resource("cbioportal_expression", "run", "threads")
         resources:
             time=wf.get_resource("cbioportal_expression", "run", "time"),

@@ -6,16 +6,15 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
 
 scatters = [
-    snakemake.output.get(x)
+    getattr(snakemake.output, x)
     for x in filter(
-        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), snakemake.output.keys()
+        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), [k for k, _ in snakemake.output._get_names()]
     )
 ]
 
@@ -61,8 +60,8 @@ then
         --output {snakemake.output.diagram} \
         --segment {snakemake.input.cns} \
         {gender} {male} \
-        --threshold {config[diagram_threshold]} --min-probes {config[diagram_min_probes]} \
-        $(if [[ "{config[shift_xy]}" = "False" ]]; then \
+        --threshold {args[threshold]} --min-probes {args[min_probes]} \
+        $(if [[ "{args[shift_xy]}" = "False" ]]; then \
             echo --no-shift-xy
         fi) \
         {snakemake.input.cnr}

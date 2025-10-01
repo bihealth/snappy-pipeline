@@ -77,9 +77,10 @@ import os
 import sys
 from collections import OrderedDict
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -225,6 +226,16 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             memory=f"{int(3.75 * 1024 * 16)}M",
         )
 
+    def get_args(self, action):
+        self._validate_action(action)
+
+        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            return self.config.canvas.model_dump(by_alias=True) | {
+                "cancer_library": wildcards.cancer_library
+            }
+
+        return args_fn
+
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with CNVetti"""
@@ -241,6 +252,12 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "bcf_csi": ".bcf.csi",
         "bcf_md5": ".bcf.md5",
         "bcf_csi_md5": ".bcf.csi.md5",
+    }
+
+    #: Parameters to pass to the wrapper
+    params_for_action = {
+        "coverage": ("window_length", "count_kind", "normalization"),
+        "segment": ("segmentation",),
     }
 
     def get_input_files(self, action):
@@ -327,6 +344,29 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     name_pattern=name_pattern, ext=ext
                 ),
             )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        """Return args (params) that CNVetti creates for the given action"""
+        # Validate action
+        self._validate_action(action)
+
+        params = {}
+        if action in self.params_for_action:
+            cfg = getattr(self.config, self.name)
+            assert cfg.preset in cfg.presets, f"Undefined preset '{cfg.preset}'"
+            for k in self.params_for_action[action]:
+                v = getattr(cfg, k, None)
+                if v is None:
+                    assert k in cfg.presets[cfg.preset], (
+                        f"Missing parameter '{k}' from preset '{cfg.preset}'"
+                    )
+                    v = cfg.presets[cfg.preset].get(k)
+                params[k] = v
+
+        if action == "coverage":
+            params["reference"] = self.parent.w_config.static_data_config.reference.path
+
+        return getattr(self, "_get_args_{}".format(action))
 
     @dictify
     def get_log_file(self, action):
@@ -687,6 +727,32 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
+    def get_args(self, action: str):
+        # Validate action
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = self.config.control_freec
+        return {
+            "path_chrlenfile": cfg.path_chrlenfile,
+            "path_mappability": cfg.path_mappability,
+            "path_mappability_enabled": cfg.path_mappability_enabled,
+            "window_size": cfg.window_size,
+        }
+
+    def _get_args_transform(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = self.config.control_freec
+        return {
+            "org_obj": cfg.convert.org_obj,
+            "tx_obj": cfg.convert.tx_obj,
+            "bs_obj": cfg.convert.bs_obj,
+            "cancer_library": wildcards.cancer_library,
+        }
+
+    def _get_args_plot(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -816,21 +882,20 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller="cnvkit",
             )
-            if self.config.cnvkit.plot:
-                plots = (
-                    ("diagram", "pdf", False),
-                    ("heatmap", "pdf", True),
-                    ("scatter", "png", True),
-                )
-                yield from self._yield_report_files(
-                    (
-                        "output/{mapper}.{caller}.{cancer_library.name}/report/"
-                        "{mapper}.{caller}.{cancer_library.name}.{ext}"
-                    ),
-                    plots,
-                    mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                    caller="cnvkit",
-                )
+            plots = (
+                ("diagram", "pdf", False),
+                ("heatmap", "pdf", True),
+                ("scatter", "png", True),
+            )
+            yield from self._yield_report_files(
+                (
+                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
+                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
+                ),
+                plots,
+                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                caller="cnvkit",
+            )
         if "cnvetti" in bcf_tools:
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:

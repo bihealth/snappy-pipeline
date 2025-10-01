@@ -3,7 +3,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, KeepTmpdir, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.models.gatk import GATK
+from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 
 
 class Tool(enum.StrEnum):
@@ -13,110 +16,29 @@ class Tool(enum.StrEnum):
     access = "access"
 
 
-class Mutect2(SnappyModel):
-    path_normals_list: str = ""
-
-    germline_resource: str
-
-    java_options: str = " -Xmx16g"
-
-    num_cores: int = 2
-    """number of cores to use locally"""
-
-    window_length: int = 100000000
-    """split input into windows of this size, each triggers a job"""
-
-    padding: int = 5000
-    """Padding around scatter-intervals, in bp."""
-
-    num_jobs: int = 24
-    """number of windows to process in parallel"""
-
-    use_profile: bool = True
-    """use Snakemake profile for parallel processing"""
-
-    restart_times: int = 5
-    """number of times to re-launch jobs in case of failure"""
-
-    max_jobs_per_second: int = 2
-    """throttling of job creation"""
-
-    max_status_checks_per_second: int = 10
-    """throttling of status checks"""
-
-    debug_trunc_tokens: int = 0
-    """truncation to first N tokens (0 for none)"""
-
-    keep_tmpdir: KeepTmpdir = KeepTmpdir.never
-    """keep temporary directory, {always, never, onerror}"""
-
-    job_mult_memory: float = 1
-    """memory multiplier"""
-
-    job_mult_time: float = 1
-    """running time multiplier"""
-
-    merge_mult_memory: float = 1
-    """memory multiplier for merging"""
-
-    merge_mult_time: float = 1
-    """running time multiplier for merging"""
+class GenomicsDb(GATK):
+    java_options: str = "-Xms16g -Xmx32g"
+    """
+    GenomicsDBImport needs lots of memory.
+    (mind the caveats in https://gatk.broadinstitute.org/hc/en-us/articles/35967560824859-GenomicsDBImport)
+    """
 
 
-class CnvKit(SnappyModel):
+class Mutect2(Parallel, GATK):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
 
-    path_target_regions: str = ""
-    """Bed files of targetted regions (Missing when creating a panel of normals for WGS data)"""
+    germline_resource: str
+    """Germline variants resource (same as panel of normals)"""
 
-    access: str = ""
-    """Access bed file (output/cnvkit.access/out/cnvkit.access.bed when create_cnvkit_acces was run)"""
+    padding: int = 5000
+    """Padding around intervals for scatter/gather"""
 
-    annotate: str = ""
-    """[target] Optional targets annotations"""
-
-    target_avg_size: int = 0
-    """[target] Average size of split target bins (0: use default value)"""
-
-    bp_per_bin: int = 50000
-    """[autobin] Expected base per bin"""
-
-    split: bool = True
-    """[target] Split large intervals into smaller ones"""
-
-    antitarget_avg_size: int = 0
-    """[antitarget] Average size of antitarget bins (0: use default value)"""
-
-    min_size: int = 0
-    """[antitarget] Min size of antitarget bins (0: use default value)"""
-
-    min_mapq: int = 0
-    """[coverage] Mininum mapping quality score to count a read for coverage depth"""
-
-    count: bool = False
-    """[coverage] Alternative couting algorithm"""
-
-    min_cluster_size: int = 0
-    """[reference] Minimum cluster size to keep in reference profiles. 0 for no clustering"""
-
-    gender: str = ""
-    """[reference] Specify the chromosomal sex of all given samples as male or female. Guess when missing"""
-
-    male_reference: bool = False
-    """[reference & sex] Create male reference"""
-
-    gc_correction: bool = True
-    """[reference] Use GC correction"""
-
-    edge_correction: bool = True
-    """[reference] Use edge correction"""
-
-    rmask_correction: bool = True
-    """[reference] Use rmask correction"""
-
-    drop_low_coverage: bool = False
-    """[metrics] Drop very-low-coverage bins before calculations"""
+    genomicsdb: GenomicsDb = GenomicsDb()
+    """
+    Parameters for the creation of the (transient?) genomics database.
+    The 2nd part of panel of normals creation (CreateSomaticPanelOfNormals) is not under user control
+    """
 
 
 class Access(SnappyModel):
@@ -183,24 +105,21 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
         list[str],
         Field(
             examples=[
-                "NC_007605",
-                "hs37d5",
-                "chrEBV",
-                "*_decoy",
-                "HLA-*",
-                "GL000220.*",
-                "chrEBV",
-                "HPV*",
-                "CMV",
-                "HBV",
-                "HCV-*",
-                "HIV-*",
-                "KSHV",
-                "HTLV-1",
-                "MCV",
-                "*_decoy",
-                "chrUn_GL00220*",
-                "SV40",
+                ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+                [
+                    "chrEBV",
+                    "HPV*",
+                    "CMV",
+                    "HBV",
+                    "HCV-*",
+                    "HIV-*",
+                    "KSHV",
+                    "HTLV-1",
+                    "MCV",
+                    "*_decoy",
+                    "chrUn_GL00220*",
+                    "SV40",
+                ],
             ]
         ),
     ] = []

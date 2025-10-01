@@ -263,8 +263,8 @@ def test_mehari_step_part_get_log_file_bam_qc(varfish_export_workflow):
     assert actual == expected
 
 
-def test_mehari_step_part_get_params_annotate(varfish_export_workflow):
-    """Tests MehariAnnotateStepPart._get_params_annotate()"""
+def test_mehari_step_part_get_args_annotate(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_args_annotate()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     mehari_db = "/path/to/mehari.db"
     prefix = f"{mehari_db}/grch37/seqvars"
@@ -276,19 +276,19 @@ def test_mehari_step_part_get_params_annotate(varfish_export_workflow):
         "clinvar_db": f"{prefix}/clinvar/rocksdb",
         "frequency_db": f"{prefix}/frequencies/rocksdb",
     }
-    actual = varfish_export_workflow.get_params("mehari", "annotate_seqvars")(wildcards)
+    actual = varfish_export_workflow.get_args("mehari", "annotate_seqvars")(wildcards)
     assert actual == expected
 
 
-def test_mehari_step_part_get_params_bam_qc(varfish_export_workflow):
-    """Tests MehariAnnotateStepPart._get_params_bam_qc()"""
+def test_mehari_step_part_get_args_bam_qc(varfish_export_workflow):
+    """Tests MehariAnnotateStepPart._get_args_bam_qc()"""
     wildcards = Wildcards(fromdict={"index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
         "P001-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
         "P002-N1-DNA1-WGS1": "P002-N1-DNA1-WGS1",
         "P003-N1-DNA1-WGS1": "P003-N1-DNA1-WGS1",
     }
-    actual = varfish_export_workflow.get_params("mehari", "bam_qc")(wildcards)
+    actual = varfish_export_workflow.get_args("mehari", "bam_qc")(wildcards)
     assert actual == expected
 
 

@@ -5,9 +5,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
-args = snakemake.params.get("args", {})
+reference = snakemake.input.reference
+args = getattr(snakemake.params, "args", {})
 log = snakemake.log
 
 intervals = getattr(snakemake.input, "region", None)
@@ -16,25 +15,25 @@ if intervals:
 else:
     interval_params = ""
 
-raw_output = snakemake.output.raw
+vcf_output = snakemake.output.vcf
 
 input_param_list = []
 if "normal_bam" in snakemake.input.keys():
-    input_param_list.append(
-        f'--input {snakemake.input.normal_bam} --normal "{snakemake.params.normal_lib_name}"'
-    )
+    input_param_list.append(f"--input {snakemake.input.normal_bam}")
+    if normal := args.get("normal_lib_name", None):
+        input_param_list.append(f'--normal "{normal}"')
 if "tumor_bam" in snakemake.input.keys():
     input_param_list.append(f"--input {snakemake.input.tumor_bam}")
 
 input_params = " ".join(input_param_list)
 
-if (max_mnp_distance := args.get("max_mnp_distance", None)):
+if (max_mnp_distance := args.get("max_mnp_distance", -1)) >= 0:
     max_mnp_distance = f"--max-mnp-distance {max_mnp_distance}"
 else:
     max_mnp_distance = ""
 
 if getattr(snakemake.output, "f1r2", None):
-    out_base = str(raw_output).removesuffix(".vcf.gz")
+    out_base = str(vcf_output).removesuffix(".vcf.gz")
     assert str(snakemake.output.f1r2) == out_base + ".f1r2.tar.gz"
     with_f1r2_tar_gz = "yes"
     # f1r2_param = f"--f1r2-tar-gz {snakemake.output.f1r2}"
@@ -42,22 +41,20 @@ else:
     # f1r2_param = ""
     with_f1r2_tar_gz = ""
 
-if java_options := config.get("java_options"):
-    java_options = f'--java-options "{java_options}"'
-else:
-    java_options = ""
-
-if germline_resource := config.get("germline_resource"):
+if germline_resource := getattr(snakemake.input, "germline_resource", ""):
     germline_resource_param = f"--germline-resource {germline_resource}"
 else:
     germline_resource_param = ""
 
-if panel_of_normals := config.get("panel_of_normals"):
+if panel_of_normals := getattr(snakemake.input, "panel_of_normals", ""):
     panel_of_normals_param = f"--panel-of-normals {panel_of_normals}"
 else:
     panel_of_normals_param = ""
 
-extra_arguments = " ".join(config["extra_arguments"])
+if java_options := args.get("java_options", ""):
+    java_options = f'--java-options "{java_options}"'
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
@@ -89,9 +86,7 @@ md5sum {log.conda_info} >{log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-out_base=$tmpdir/$(basename {raw_output} .vcf.gz)
-
-# Add intervals if required
+out_base=$tmpdir/$(basename {vcf_output} .vcf.gz)
 
 gatk {java_options} Mutect2 \
     --tmp-dir $tmpdir \
@@ -118,7 +113,7 @@ for f in $out_base.*; do
 done
 popd
 
-mv $out_base.* $(dirname {raw_output})
+mv $out_base.* $(dirname {vcf_output})
 """
 )
 

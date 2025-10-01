@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-  - nodefaults
-dependencies:
-  - python==2.7.15
-  - samtools==0.1.19

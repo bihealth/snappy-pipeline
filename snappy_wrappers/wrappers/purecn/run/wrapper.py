@@ -7,8 +7,8 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["purecn"]
+args = getattr(snakemake.params, "args", {})
+config = args["config"]
 
 # WARNING- these extra commands cannot contain file paths
 extra_commands = " ".join(
@@ -97,8 +97,8 @@ rename() {{
     to=$1
     d=$(dirname $to)
     f=$(basename $to)
-    echo $f | grep -q "^{snakemake.wildcards[mapper]}.purecn.{snakemake.wildcards[library_name]}"
-    from=$(echo $f | sed -e "s/^{snakemake.wildcards[mapper]}.purecn.//")
+    echo $f | grep -q "^{args[mapper]}.purecn.{args[library_name]}"
+    from=$(echo $f | sed -e "s/^{args[mapper]}.purecn.//")
     test -e $d/$from
     mv $d/$from $to
 }}
@@ -108,7 +108,7 @@ mkdir -p $outdir
 
 # Run PureCN with a panel of normals
 cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
-    --sampleid {snakemake.wildcards[library_name]} \
+    --sampleid {args[library_name]} \
     --tumor {snakemake.input.tumor} \
     --vcf {bound_files[vcf]} \
     --mapping-bias-file {bound_files[mapping_bias]} \

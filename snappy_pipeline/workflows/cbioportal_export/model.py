@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import enum
-from typing import Annotated, TypedDict
+from typing import TypedDict, Any
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 
@@ -27,56 +27,11 @@ class SomaticVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
 
 
-class FiltrationSchema(enum.StrEnum):
-    unfiltered = "unfiltered"
-    list = "list"
-    sets = "sets"
-
-
-class FilterSet(enum.StrEnum):
-    NO_FILTER = "no_filter"
-    DKFZ_ONLY = "dkfz_only"
-    DKFZ_AND_EBFILTER = "dkfz_and_ebfilter"
-    DKFZ_AND_EBFILTER_AND_OXOG = "dkfz_and_ebfilter_and_oxog"
-
-
-class Filter(SnappyModel):
-    pass
-
-
-class DkfzFilter(Filter):
-    pass
-
-
-class EbFilter(Filter):
-    ebfilter_threshold: float = 2.4
-    shuffle_seed: int = 1
-    panel_of_normals_size: int = 25
-    min_mapq: int = 20
-    min_baseq: int = 15
-
-
-class Bcftools(Filter):
-    include: str = ""
-    exclude: str = ""
-
-
-class Regions(Filter):
-    path_bed: str = ""
-
-
-class Protected(Filter):
-    path_bed: str = ""
-
-
 class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
 
     CONTROL_FREEC = "Control_FREEC"
     """unsupported"""
-
-    COPYWRITER = "CopywriteR"
-    """unmaintained"""
 
 
 class NcbiBuild(enum.StrEnum):
@@ -87,6 +42,7 @@ class NcbiBuild(enum.StrEnum):
 class Vcf2Maf(SnappyModel):
     Center: str
     ncbi_build: NcbiBuild
+    # Remember to move path_gene_id_mappings option here when re-factoring the step
 
 
 class GenomeName(enum.StrEnum):
@@ -100,6 +56,11 @@ class Expression(ToggleModel):
     """When missing, no expression data is uploaded to cBioPortal"""
 
     expression_tool: ExpressionTool = ExpressionTool.STAR
+
+
+class SomaticVariantStep(enum.StrEnum):
+    ANNOTATION = "somatic_variant_annotation"
+    FILTER = "somatic_variant_filtration"
 
 
 class CNA(ToggleModel):
@@ -126,7 +87,7 @@ class Study(SnappyModel):
     study_description: str
     study_name: str
     study_name_short: str
-    reference_genome: GenomeName
+    reference_genome: GenomeName = GenomeName.hg38
 
 
 class ExtraInfos(TypedDict):
@@ -143,43 +104,20 @@ class CbioportalExport(SnappyStepModel):
     )
 
     path_somatic_variant: str
-    """REQUIRED (before or after filtration)"""
+    """Annotation is mandatory, but filtration is optional, can happen before or after annotation"""
 
     mapping_tool: MappingTool = MappingTool.BWA
 
     somatic_variant_calling_tool: SomaticVariantCallingTool = SomaticVariantCallingTool.MUTECT2
     """mutect/scalpel combo unsupported"""
 
+    somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
+    """Which pipeline step is used to compute signatures"""
+
     somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
 
-    filtration_schema: FiltrationSchema = FiltrationSchema.list
-    """Method of variant filtration (if any)"""
-
-    filter_before_annotation: bool = False
-    """Flag if filtration has been done before annotation"""
-
-    # TODO: remove filtration by sets
-    # When this is done, the deprecated options can be deleted, and the
-    # signature computations will be done just on the output of whatever step
-    # is used on input (somatic_variant_calling, somatic_variant_annotation or somatic_variant_filtration)
-
-    filter_set: Annotated[FilterSet | None, Field(None, deprecated="use `filter_list` instead")]
-    """
-    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
-    Must be set when the ``filtration_schema`` is ``sets``.
-    """
-
-    exon_list: Annotated[
-        str | None,
-        Field(
-            "genome_wide",
-            deprecated="Works together with filter_set, ignored when `filter_list` is selected",
-        ),
-    ]
-    """
-    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
-    Must be set when the ``filtration_schema`` is ``sets``.
-    """
+    is_filtered: bool = True
+    """Is the vcf post-filtered"""
 
     path_gene_id_mappings: str
     """Mapping from pipeline gene ids to cBioPortal ids (HGNC symbols from GeneNexus)"""
@@ -197,10 +135,10 @@ class CbioportalExport(SnappyStepModel):
 
     study: Study
 
-    patient_info: None = None
+    patient_info: dict[str, Any] = {}
     """unimplemented"""
 
-    sample_info: None = None
+    sample_info: dict[str, Any] = {}
     """Implementation must be re-designed"""
     # sample_info: dict[str, ExtraInfos] = Field(
     #     {},
@@ -219,10 +157,10 @@ class CbioportalExport(SnappyStepModel):
     # """Each additional sample column must have a name and a (possibly empty) config attached."""
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        if self.filtration_schema == FiltrationSchema.sets:
-            if self.filter_set is None or self.exon_list is None:
+    def ensure_filtration_are_configured_correctly(self):
+        if self.somatic_variant_step == SomaticVariantStep.FILTER:
+            if not self.is_filtered:
                 raise ValueError(
-                    "'filter_set' & 'exon_list' must be set when the filtration schema is on sets"
+                    "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
                 )
         return self

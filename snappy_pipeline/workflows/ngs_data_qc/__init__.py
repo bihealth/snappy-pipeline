@@ -13,9 +13,10 @@ The default configuration is as follows.
 
 import os
 from itertools import chain
+from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import Namedlist, expand, touch
+from snakemake.io import Namedlist, expand, touch, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -212,14 +213,35 @@ class PicardStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
 
-        return self._get_params
+        return getattr(self, f"_get_args_{action}")
 
-    @dictify
-    def _get_params(self, wildcards):
-        return {"prefix": f"{wildcards.mapper}.{wildcards.library_name}"}
+    def _get_args_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "path_to_baits": self.config.picard.path_to_baits,
+            "path_to_targets": self.config.picard.path_to_targets,
+        }
+
+    def _get_args_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+            "prefix": f"{wildcards.mapper}.{wildcards.library_name}.",
+            "programs": self.config.picard.programs,
+        }
+        if self.config.picard.bait_name:
+            params["bait_name"] = self.config.picard.bait_name
+        if (
+            getattr(self.parent.w_config.static_data_config, "dbsnp", {"path": ""})
+            and getattr(self.parent.w_config.static_data_config.dbsnp, "path", "")
+            and self.parent.w_config.static_data_config.dbsnp.path
+        ):
+            params["dbsnp"] = self.parent.w_config.static_data_config.dbsnp.path
+        else:
+            params["dbsnp"] = ""
+        return params
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

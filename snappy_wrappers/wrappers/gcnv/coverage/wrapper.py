@@ -2,13 +2,15 @@
 
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
 
 gatk CollectReadCounts \
     --interval-merging-rule OVERLAPPING_ONLY \
-    -R {snakemake.config[static_data_config][reference][path]} \
+    -R {args[reference]} \
     -L {snakemake.input.interval_list} \
     -I {snakemake.input.bam} \
     --format TSV \

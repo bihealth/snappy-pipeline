@@ -135,9 +135,9 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
+        return getattr(self, f"_get_args_{action}")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -261,7 +261,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             ],
         )
 
-    def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+    def _get_args_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         path_mehari_db = Path(self.config.path_mehari_db)
         prefix = path_mehari_db / self.config.release.lower()
         transcript_db = prefix / "seqvars" / "txs.bin.zst"
@@ -278,9 +278,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         }
         return params
 
-    def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
+    def _get_args_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         params = {
-            "path_exon_bed": self.config.path_exon_bed,
             "reference": self.parent.w_config.static_data_config.reference.path,
         }
 
@@ -428,7 +427,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             ],
         )
 
-    def _get_params_bam_qc(self, wildcards: Wildcards) -> typing.Dict[str, str]:
+    def _get_args_bam_qc(self, wildcards: Wildcards) -> typing.Dict[str, str]:
         """Get parameters for wrapper ``variant_annotator/bam_qc``
 
         Creates dictionary that links library name to identifier that should be used in output file.

@@ -1,4 +1,9 @@
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -14,6 +19,10 @@ compute-md5()
     > $2
 }
 """
+
+reference_path = snakemake.input.reference
+genome_path = snakemake.input.reference_genome
+targets_bed = snakemake.input.targets_bed
 
 shell(
     r"""
@@ -53,20 +62,20 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 # Get sorted targets BED file.
-zcat --force {snakemake.params.args[path_targets_bed]} \
+zcat --force {targets_bed} \
 | awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \
 > $TMPDIR/targets.tmp.bed
 
 bedtools sort \
     -i $TMPDIR/targets.tmp.bed \
-    -faidx {snakemake.config[static_data_config][reference][path]}.genome \
+    -faidx {genome_path} \
 | uniq \
 > $TMPDIR/targets.bed
 
 # Run "alfred qc".
 alfred qc \
     --ignore \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {reference_path} \
     --bed $TMPDIR/targets.bed \
     --jsonout {snakemake.output.json} \
     --input-file {snakemake.input.bam}

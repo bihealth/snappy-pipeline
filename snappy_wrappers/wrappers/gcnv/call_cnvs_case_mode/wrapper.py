@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 paths_tsv = " ".join(snakemake.input.tsv)
 shell(
     r"""
@@ -30,7 +32,7 @@ gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
-    --model {snakemake.params.args[model]} \
+    --model {args[model]} \
     --output $(dirname {snakemake.output.done}) \
     --output-prefix cnv_calls
 """

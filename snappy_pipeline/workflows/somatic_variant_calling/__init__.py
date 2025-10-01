@@ -103,7 +103,7 @@ import sys
 from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -164,20 +164,8 @@ EXT_MATCHED = {
     },
 }
 
-#: Available somatic variant callers assuming matched samples.
-SOMATIC_VARIANT_CALLERS_MATCHED = {"mutect", "mutect2", "scalpel", "strelka2"}
-
-#: Available somatic variant callers that just call all samples from one donor together.
-SOMATIC_VARIANT_CALLERS_JOINT = {
-    "bcftools_joint",
-    "platypus_joint",
-    "gatk_hc_joint",
-    "gatk_ug_joint",
-    "varscan_joint",
-}
-
 #: Available somatic variant callers
-SOMATIC_VARIANT_CALLERS = SOMATIC_VARIANT_CALLERS_MATCHED | SOMATIC_VARIANT_CALLERS_JOINT
+SOMATIC_VARIANT_CALLERS = {"mutect2"}
 
 #: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
@@ -204,41 +192,50 @@ class SomaticVariantCallingStepPart(BaseStepPart):
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
 
-    def get_input_files(self, action):
+    def get_input_files(self, action: str):
+        """Return generic input function.
+
+        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
+        'contamination'.
+        :type action: str
+
+        :return: Returns input function based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
         # Validate action
         self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-            ).format(**wildcards)
-            input_files = {
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-            }
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        """Helper wrapper function"""
+        # Get shorcut to Snakemake sub workflow
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
+            **wildcards
+        )
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
 
-            normal_library = self.get_normal_lib_name(wildcards)
-            if normal_library:
-                normal_base_path = (
-                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                        normal_library=normal_library, **wildcards
-                    )
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = (
+                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+                    normal_library=normal_library, **wildcards
                 )
-                input_files.update(
-                    {
-                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                    }
-                )
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
 
-            return input_files
-
-        return input_function
+        return input_files
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -280,61 +277,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
 
-class MutectBaseStepPart(SomaticVariantCallingStepPart):
-    """Base class for Mutect 1 and 2 step parts"""
-
-    def check_config(self):
-        if self.name not in self.config.tools:
-            return  # Mutect not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "cosmic", "path"),
-            "COSMIC not configured but required for %s" % (self.name,),
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "dbsnp", "path"),
-            "Path to dbSNP not configured but required for %s" % (self.name,),
-        )
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
-    def get_output_files(self, action):
-        output_files = {}
-        for k, v in EXT_MATCHED[self.name].items():
-            output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
-        return output_files
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            time="3-00:00:00",  # 3 days
-            memory=f"{int(3.7 * 1024 * 2)}M",
-        )
-
-
-class MutectStepPart(MutectBaseStepPart):
-    """Somatic variant calling with MuTect"""
-
-    #: Step name
-    name = "mutect"
-
-    #: Class available actions
-    actions = ("run",)
-
-
-class Mutect2StepPart(MutectBaseStepPart):
+class Mutect2StepPart(SomaticVariantCallingStepPart):
     """Somatic variant calling with Mutect2"""
 
     #: Step name
@@ -405,35 +348,58 @@ class Mutect2StepPart(MutectBaseStepPart):
         )
 
     def get_input_files(self, action):
-        """Return input function for Mutect2 rules.
-
-        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
-        'contamination'.
-        :type action: str
-
-        :return: Returns input function for Mutect2 rules based on inputted action.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
         # Validate action
         self._validate_action(action)
         # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
-    def get_params(self, action):
+    def get_args(self, action):
         self._validate_action(action)
-        if action == "scatter":
-            ignore_chroms = list(
-                set(
-                    self.w_config.get("ignore_chroms", [])
-                    + self.config.get("ignore_chroms", [])
-                    + self.config.get(self.name).get("ignore_chroms", [])
-                )
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_scatter(self, wildcards):
+        ignore_chroms = list(
+            set(
+                self.w_config.get("ignore_chroms", [])
+                + self.config.get("ignore_chroms", [])
+                + self.config.get(self.name).get("ignore_chroms", [])
             )
-            return {
-                "ignore_chroms": sorted(list(ignore_chroms)),
-                "padding": self.config.mutect2.padding,
-            }
+        )
+        return {
+            "ignore_chroms": sorted(list(ignore_chroms)),
+            "padding": self.config.mutect2.padding,
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_pileup_normal(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "normal_lib_name": self.get_normal_lib_name(wildcards)
+        }
+
+    def _get_args_pileup_tumor(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "tumor_lib_name": self.get_tumor_lib_name(wildcards)
+        }
+
+    def _get_args_contamination(self, wildcards):
+        return {
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_run(self, wildcards):
+        return {
+            "normal_lib_name": self.get_normal_lib_name(wildcards),
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_args_gather(self, wildcards):
         return {}
+
+    def _get_args_filter(self, wildcards):
+        return self.config.mutect2.filtration.model_dump(by_alias=True)
 
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
@@ -466,17 +432,10 @@ class Mutect2StepPart(MutectBaseStepPart):
         }
 
         # Adjustment tumor_only mode
-
-        tumor_normal_mode = self.config.get(self.name, {}).get("tumor_normal_mode")
-        if tumor_normal_mode is None:
-            raise ValueError(
-                "'tumor_normal_mode' not defined in step configuration for %s" % self.name
-            )
-
-        if tumor_normal_mode == TumorNormalMode.AUTOMATIC:
+        tumor_normal_mode = self.config.mutect2.tumor_normal_mode
+        if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             normal_library = self.get_normal_lib_name(wildcards)
             if normal_library:
-                # Use paired mode if normal is present
                 normal_base_path = (
                     "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
                         normal_library=normal_library, **wildcards
@@ -488,27 +447,18 @@ class Mutect2StepPart(MutectBaseStepPart):
                         "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                     }
                 )
-            # else: tumor_only — do not add normal BAMs
-        elif tumor_normal_mode == TumorNormalMode.PAIRED:
-            normal_library = self.get_normal_lib_name(wildcards)
-            if not normal_library:
-                raise ValueError("Normal sample required but not found.")
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=normal_library, **wildcards
-                )
-            )
-            input_files.update(
-                {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                }
-            )
-        elif tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
-            # No normal BAMs to include
-            pass
-        else:
-            raise ValueError(f"Unsupported tumor_normal_mode: {tumor_normal_mode}")
+            else:
+                if tumor_normal_mode == TumorNormalMode.PAIRED:
+                    raise ValueError(
+                        f"Normal sample for tumor {wildcards.tumor_library} required but not found."
+                    )
+
+        input_files["reference"] = self.w_config.static_data_config.reference.path
+
+        if self.config.mutect2.germline_resource:
+            input_files["germline_resource"] = self.config.mutect2.germline_resource
+        if self.config.mutect2.panel_of_normals:
+            input_files["panel_of_normals"] = self.config.mutect2.panel_of_normals
 
         return input_files
 
@@ -544,9 +494,10 @@ class Mutect2StepPart(MutectBaseStepPart):
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
             "orientation": base_path + ".raw.read_orientation_model.tar.gz",
+            "reference": self.w_config.static_data_config.reference.path,
         }
         if self.get_normal_lib_name(wildcards):
-            if "contamination" in self.actions:
+            if self.config.mutect2.contamination.enabled:
                 input_files["table"] = base_path + ".contamination.tbl"
                 input_files["segments"] = base_path + ".segments.tbl"
         return input_files
@@ -567,7 +518,12 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.contamination.common_variants,
+        }
 
     def _get_input_files_pileup_tumor(self, wildcards):
         """Get input files for rule ``pileup_tumor``.
@@ -583,10 +539,14 @@ class Mutect2StepPart(MutectBaseStepPart):
         base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
             **wildcards
         )
-        return {"bam": ngs_mapping(base_path + ".bam"), "bai": ngs_mapping(base_path + ".bam")}
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.contamination.common_variants,
+        }
 
-    @staticmethod
-    def _get_input_files_contamination(wildcards):
+    def _get_input_files_contamination(self, wildcards: Wildcards):
         """Get input files for rule ``contamination``.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
@@ -601,7 +561,11 @@ class Mutect2StepPart(MutectBaseStepPart):
                 **wildcards
             )
         )
-        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
+        return {
+            "normal": base_path + ".normal.pileup",
+            "tumor": base_path + ".tumor.pileup",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
 
     def get_output_files(self, action):
         """Get output files for Mutect2 rules.
@@ -633,10 +597,10 @@ class Mutect2StepPart(MutectBaseStepPart):
         if action == "run":
             base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
             exts = {
-                "raw": ".raw.vcf.gz",
-                "raw_md5": ".raw.vcf.gz.md5",
-                "raw_tbi": ".raw.vcf.gz.tbi",
-                "raw_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
                 "stats": ".raw.vcf.stats",
                 "stats_md5": ".raw.vcf.stats.md5",
                 "f1r2": ".raw.f1r2.tar.gz",
@@ -735,339 +699,6 @@ class Mutect2StepPart(MutectBaseStepPart):
         return self.resource_usage_dict.get(action)
 
 
-class ScalpelStepPart(SomaticVariantCallingStepPart):
-    """Somatic variant calling with Scalpel"""
-
-    #: Step name
-    name = "scalpel"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def check_config(self):
-        if "scalpel" not in self.config.tools:
-            return  # scalpel not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for Scalpel",
-        )
-
-    def get_output_files(self, action):
-        result = super().get_output_files(action)
-        somatic_ext_names = expand("full_{name}", name=EXT_NAMES)
-        somatic_ext_values = expand(".full{ext}", ext=EXT_VALUES)
-        result["tar"] = self.base_path_out.format(var_caller="scalpel", ext=".tar.gz")
-        result["tar_md5"] = self.base_path_out.format(var_caller="scalpel", ext=".tar.gz.md5")
-        result.update(
-            dict(
-                zip(
-                    somatic_ext_names,
-                    expand(self.base_path_out, var_caller=[self.name], ext=somatic_ext_values),
-                )
-            )
-        )
-        return result
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,  # TODO: Make Scalpel number of thread configurable.
-            time="2-00:00:00",  # 2 days
-            memory=f"{5 * 1024 * 16}M",
-        )
-
-
-class Strelka2StepPart(SomaticVariantCallingStepPart):
-    """Somatic variant calling with strelka2/manta"""
-
-    #: Step name
-    name = "strelka2"
-
-    #: Class available actions
-    actions = ("run",)
-
-    # Output extension files dictionary. Key: output type (string); Value: extension (string)
-    extensions = {
-        "vcf": ".vcf.gz",
-        "vcf_md5": ".vcf.gz.md5",
-        "vcf_tbi": ".vcf.gz.tbi",
-        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-        "full_vcf": ".full.vcf.gz",
-        "full_vcf_md5": ".full.vcf.gz.md5",
-        "full_vcf_tbi": ".full.vcf.gz.tbi",
-        "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
-        "stats": ".tsv",
-        "stats_md5": ".tsv.md5",
-        "report": ".xml",
-        "report_md5": ".xml.md5",
-        "bed": ".bed.gz",
-        "bed_md5": ".bed.gz.md5",
-        "bed_tbi": ".bed.gz.tbi",
-        "bed_tbi_md5": ".bed.gz.tbi.md5",
-    }
-
-    def get_output_files(self, action):
-        output_files = {}
-        for k, v in self.extensions.items():
-            output_files[k] = self.base_path_out.format(var_caller=self.name, ext=v)
-        return output_files
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            time="1-00:00:00",  # 1 day
-            memory="4G",
-        )
-
-
-class JointCallingStepPart(BaseStepPart):
-    """Base class for joint calling."""
-
-    #: Name of the step, to be overridden in sub class.
-    name = None
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        if self.__class__.name is None:
-            raise RuntimeError("Step name not given, override in sub class")
-        self.base_path_out = (
-            "work/{{mapper}}.{name}.{{donor_name}}/out/{{mapper}}.{name}.{{donor_name}}{ext}"
-        )
-        # Build shortcut from donor name to donor.
-        self.donor_by_name = OrderedDict()
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            for donor in sheet.donors:
-                self.donor_by_name[donor.name] = donor
-
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            donor = self.donor_by_name[wildcards.donor_name]
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Return paths of NGS libraries.
-            input_base_path = "output/{mapper}.{library.name}/out/{mapper}.{library.name}{ext}"
-            result = {"bam": [], "bai": []}
-            for bio_sample in donor.bio_samples.values():
-                for test_sample in bio_sample.test_samples.values():
-                    for ngs_library in test_sample.ngs_libraries.values():
-                        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
-                            result[key].append(
-                                ngs_mapping(
-                                    input_base_path.format(
-                                        library=ngs_library, ext=ext, **wildcards
-                                    )
-                                )
-                            )
-            return result
-
-        return input_function
-
-    def get_output_files(self, action):
-        """Return resulting files generated by this step."""
-        # Validate action
-        self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, name=[self.name], ext=EXT_VALUES)))
-
-    @dictify
-    def _get_log_file(self, action):
-        """Return dict of log files."""
-        _ = action
-        prefix = (
-            "work/{{mapper}}.{var_caller}.{{donor_name}}/log/{{mapper}}.{var_caller}.{{donor_name}}"
-        ).format(var_caller=self.__class__.name)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-
-    def get_args(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def arg_function(wildcards):
-            donor = self.donor_by_name[wildcards.donor_name]
-            result = {
-                "sample_list": [
-                    ngs_library.name
-                    for bio_sample in donor.bio_samples.values()
-                    for test_sample in bio_sample.test_samples.values()
-                    for ngs_library in test_sample.ngs_libraries.values()
-                ]
-            }
-            if ignore_chroms := self.parent.config.ignore_chroms:
-                result["ignore_chroms"] = ignore_chroms
-            return result
-
-        return arg_function
-
-
-class BcftoolsJointStepPart(JointCallingStepPart):
-    """Somatic variant calling with Samtools in "joint" mode.
-
-    Simply pass all samples of one donor through Samtools. The resulting files are then to be
-    subfiltered.
-    """
-
-    #: Step name
-    name = "bcftools_joint"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        mem_mb = 1024 * self.parent.config.bcftools_joint.num_threads
-        return ResourceUsage(
-            threads=self.parent.config.bcftools_joint.num_threads,
-            time="2-00:00:00",  # 2 days
-            memory=f"{mem_mb}M",
-        )
-
-
-class VarscanJointStepPart(JointCallingStepPart):
-    """Somatic variant calling with Varscan in "joint" mode."""
-
-    #: Step name
-    name = "varscan_joint"
-
-    #: Class available actions
-    actions = ("run", "call_pedigree")
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="2-00:00:00",  # 2 days
-            memory="1024M",
-        )
-
-
-class PlatypusJointStepPart(JointCallingStepPart):
-    """Somatic variant calling with Platypus in "joint" mode.
-
-    Simply pass all samples of one donor through Platypus. The resulting files are then to be
-    subfiltered.
-    """
-
-    #: Step name
-    name = "platypus_joint"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        mem_mb = int(3.75 * 1024 * self.parent.config.platypus_joint.num_threads)
-        return ResourceUsage(
-            threads=self.parent.config.platypus_joint.num_threads,
-            time="2-00:00:00",  # 2 days
-            memory=f"{mem_mb}M",
-        )
-
-
-class GatkHcJointStepPart(JointCallingStepPart):
-    """Somatic variant calling with GATK HC in "joint" mode.
-
-    Simply pass all samples of one donor through GATK HC. The resulting files are then to be
-    subfiltered.
-    """
-
-    #: Step name
-    name = "gatk_hc_joint"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="3-08:00:00",  # 3 days and 8 hours
-            memory=f"{2 * 1024}M",
-        )
-
-
-class GatkUgJointStepPart(JointCallingStepPart):
-    """Somatic variant calling with GATK UG in "joint" mode.
-
-    Simply pass all samples of one donor through GATK UG. The resulting files are then to be
-    subfiltered.
-    """
-
-    #: Step name
-    name = "gatk_ug_joint"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            time="3-08:00:00",  # 3 days and 8 hours
-            memory=f"{2 * 1024}M",
-        )
-
-
 class SomaticVariantCallingWorkflow(BaseStep):
     """Perform somatic variant calling"""
 
@@ -1099,15 +730,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
-                MutectStepPart,
                 Mutect2StepPart,
-                ScalpelStepPart,
-                Strelka2StepPart,
-                BcftoolsJointStepPart,
-                GatkHcJointStepPart,
-                GatkUgJointStepPart,
-                PlatypusJointStepPart,
-                VarscanJointStepPart,
                 LinkOutStepPart,
             )
         )
@@ -1115,7 +738,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
         if "mutect2" in self.config.tools:
-            if self.config.mutect2.common_variants:
+            if self.config.mutect2.contamination.enabled:
                 self.sub_steps["mutect2"].actions.extend(
                     ["contamination", "pileup_normal", "pileup_tumor"]
                 )
@@ -1127,7 +750,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         name_pattern = "{mapper}.{caller}.{tumor_library.name}"
-        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_MATCHED):
+        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
@@ -1147,15 +770,6 @@ class SomaticVariantCallingWorkflow(BaseStep):
                     ".conda_list.txt.md5",
                 ),
             )
-        # Panel of normals
-        # joint calling
-        name_pattern = "{mapper}.{caller}.{donor.name}"
-        yield from self._yield_result_files_joint(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            caller=set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS_JOINT),
-            ext=EXT_VALUES,
-        )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.
@@ -1177,13 +791,3 @@ class SomaticVariantCallingWorkflow(BaseStep):
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
                             yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
-
-    def _yield_result_files_joint(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the joint somatic variant callers such as
-        "Bcftools joint".
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for donor in sheet.donors:
-                yield from expand(tpl, donor=[donor], **kwargs)

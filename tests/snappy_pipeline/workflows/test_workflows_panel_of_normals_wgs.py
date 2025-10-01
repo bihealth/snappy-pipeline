@@ -39,8 +39,7 @@ def minimal_config():
             path_ngs_mapping: NGS_MAPPING/
             tools: ['cnvkit']
             cnvkit:
-              path_target_regions: ""  # WGS mode
-              path_normals_list: ""
+              path_target: ""  # WGS mode
 
         data_sets:
           first_batch:
@@ -102,6 +101,7 @@ def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
             "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
             "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
         ],
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
     assert actual == expected
@@ -131,6 +131,7 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards)
     assert actual == expected
@@ -160,6 +161,7 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_list.txt",
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_info.txt",
         ],
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
     assert actual == expected

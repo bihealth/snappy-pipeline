@@ -2,7 +2,8 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+args = getattr(snakemake.params, "args", {})
+melt_config = args["config"]
 
 shell(
     r"""
@@ -18,10 +19,10 @@ ME_INFIX={melt_config[me_refs_infix]}
 
 java -Xmx13G -jar $JAR \
     Genotype \
-    -h {snakemake.config[static_data_config][reference][path]} \
+    -h {snakemake.input.reference} \
     -bamfile {snakemake.input.bam} \
     -p $(dirname {snakemake.input.done}) \
-    -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
+    -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done})
 
 """

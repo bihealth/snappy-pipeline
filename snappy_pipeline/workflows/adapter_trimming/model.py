@@ -361,9 +361,9 @@ class Bbduk(SnappyModel):
         Field(
             examples=[
                 [
-                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "/data/cephfs-1/work/groups/cubi/projects/biotools/static_data/app_support/"
                     "bbtools/39.01/resources/adapters.fa",
-                    "/fast/work/groups/cubi/projects/biotools/static_data/app_support/"
+                    "/data/cephfs-1/work/groups/cubi/projects/biotools/static_data/app_support/"
                     "bbtools/39.01/resources/phix174_ill.ref.fa.gz",
                 ]
             ]

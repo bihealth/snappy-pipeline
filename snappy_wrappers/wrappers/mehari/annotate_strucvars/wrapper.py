@@ -7,7 +7,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 # Optionally get path to coverage VCF file.
 coverage_vcf = " ".join(getattr(snakemake.input, "vcf_cov", []))
 
-export_config = getattr(snakemake.params, "args", {})
+args = getattr(snakemake.params, "args", {})
 
 # Get shortcut to "fix_manta_invs.py" postprocessing script
 fix_manta_invs = os.path.join(
@@ -74,7 +74,7 @@ for vcf in {snakemake.input.vcf}; do
     num=$(printf %03d $i)
 
     python3 {fix_manta_invs} \
-        --reference-fasta {export_config[reference]} \
+        --reference-fasta {args[reference]} \
         --input-vcf $vcf \
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
@@ -95,7 +95,7 @@ for vcf in {snakemake.input.vcf}; do
         bcftools norm \
             -m -any \
             -c w \
-            --fasta-ref {export_config[reference]} \
+            --fasta-ref {args[reference]} \
             -O z \
             -o $TMPDIR/final_for_import.$num.vcf.gz
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz

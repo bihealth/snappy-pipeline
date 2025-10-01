@@ -100,8 +100,8 @@ In both cases, the configuration might read:
 
     panel_of_normals:
         tools: [cnvkit]                                               # , access]
-        access: <absolute path to access file>                        # Even when created by the ``access`` tool.
-        path_target_regions: <absolute path to baits>                 # Keep empty for WGS data
+        path_access: <absolute path to access file>                   # Even when created by the ``access`` tool.
+        path_target: <absolute path to baits>                         # Keep empty for WGS data
         path_normals_list: <absolute path to list of normal samples>  # Keep empty to use all available normals
 
 Note that there is no provision (yet) to automatically create separate panel of normals for males & females.
@@ -159,6 +159,8 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
+from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
+from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -257,7 +259,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         self._validate_action(action)
         self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         if action == "prepare":
-            return {"container": "work/containers/out/purecn.simg"}
+            return {
+                "container": "work/containers/out/purecn.simg",
+                "reference": self.w_config.static_data_config.reference.path,
+            }
         if action == "coverage":
             return self._get_input_files_coverage
         if action == "create_panel":
@@ -323,6 +328,20 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "plot": "work/{mapper}.purecn/out/{mapper}.purecn.interval_weights.png",
             }
 
+    def get_args(self, action):
+        self._validate_action(action)
+        if action == "coverage":
+            return getattr(self, f"_get_args_{action}")
+        else:
+            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+    def _get_args_coverage(self, wildcards):
+        return {
+            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "mapper": wildcards.mapper,
+            "library_name": wildcards.library_name,
+        }
+
     def get_log_file(self, action):
         if self.name not in self.config.tools:
             return {}
@@ -372,17 +391,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ),
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def check_config(self):
-        if self.name not in self.config.tools:
-            return  # Mutect not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
     def get_input_files(self, action):
         """Return input files for mutect2 variant calling"""
         # Validate action
@@ -404,7 +412,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         return {
             "normal_bam": bam,
             "normal_bai": bam + ".bai",
-            "intervals": scatteritem_base_path.format(**wildcards),
+            "region": scatteritem_base_path.format(**wildcards),
             "reference": self.w_config.static_data_config.reference.path,
         }
 
@@ -422,7 +430,11 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         tpl = "work/{mapper}.{tool}.{normal_library}/out/{mapper}.{tool}.{normal_library}.prepare.vcf.gz"
         for normal in self.normal_libraries:
             paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
-        return {"normals": paths}
+        return {
+            "normals": paths,
+            "reference": self.w_config.static_data_config.reference.path,
+            "germline_resource": self.config.mutect2.germline_resource,
+        }
 
     def get_output_files(self, action):
         """Return panel of normal files"""
@@ -458,15 +470,26 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def get_args(self, action):
         self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
-        match action:
-            case "scatter":
-                return {
-                    "ignore_chroms": self.config.ignore_chroms,
-                    "padding": self.config.mutect2.padding,
-                }
-            case _:
-                return {}
+    def _get_args_scatter(self, wildcards):
+        return {
+            "ignore_chroms": self.config.ignore_chroms,
+            "padding": self.config.mutect2.padding,
+        }
+
+    def _get_args_prepare_panel(self, wildcards):
+        return {
+            "max_mnp_distance": 0,
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_args_gather(self, wildcards):
+        return {}
+
+    def _get_args_create_panel(self, wildcards):
+        return self.config.mutect2.genomicsdb.model_dump(by_alias=True)
 
     def get_log_file(self, action):
         """Get log files for Mutect2 rules.
@@ -545,7 +568,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         if self.name in self.config.tools:
-            self.is_wgs = self.config.cnvkit.path_target_regions == ""
+            self.is_wgs = self.config.cnvkit.path_target == ""
 
     def check_config(self):
         if self.name not in self.config.tools:
@@ -559,11 +582,22 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if self.name not in self.config.tools:
             return None  # cnvkit not enabled, skip
         self._validate_action(action)
-        if self.is_wgs:
-            method = "wgs"
-        else:
-            method = "hybrid"
-        return {"method": method, "flat": (len(self.normal_libraries) == 0)}
+        cfg: CnvKitModel = self.config.get(self.name)
+        if action == "create_panel":
+            action = "reference"
+        if args := getattr(cfg, action, {}):
+            args = args.model_dump(by_alias=True)
+        if action == "reference":
+            if cfg.gender != CnvKitGender.guess:
+                args["gender"] = cfg.gender
+            if cfg.male_reference:
+                args["male_reference"] = True
+            args["flat"] = len(self.normal_libraries) == 0
+            if not cfg.path_target:
+                args["edge_correction"] = False
+        if action == "target":
+            args["bp_per_bin"] = cfg.bp_per_bin
+        return args
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
@@ -577,14 +611,20 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "coverage": self._get_input_files_coverage,
             "create_panel": self._get_input_files_create_panel,
             "report": self._get_input_files_report,
-            "access": None,
+            "access": self._get_input_files_access,
         }
         return mapping[action]
+
+    def _get_input_files_access(self, wildcards):
+        return {"reference": self.w_config.static_data_config.reference.path}
 
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
         if not self.is_wgs:
-            return {}
+            input_files = {"target": self.config.cnvkit.path_target}
+            if self.config.cnvkit.path_annotation:
+                input_files["annotate"] = self.config.cnvkit.path_annotation
+            return input_files
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bams = [
@@ -592,16 +632,27 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             for x in self.normal_libraries
         ]
         bais = [x + ".bai" for x in bams]
-        input_files = {"bams": bams, "bais": bais}
+        input_files = {
+            "bams": bams,
+            "bais": bais,
+            "reference": self.w_config.static_data_config.reference.path,
+        }
+        if self.config.cnvkit.path_access:
+            input_files["access"] = self.config.cnvkit.path_access
+        if self.config.cnvkit.path_annotation:
+            input_files["annotate"] = self.config.cnvkit.path_annotation
         return input_files
 
     def _get_input_files_antitarget(self, wildcards):
         """Helper wrapper function for computing antitarget locations"""
         if self.is_wgs:
             return {}
-        return {
+        result = {
             "target": "work/{mapper}.cnvkit/out/{mapper}.cnvkit.target.bed".format(**wildcards),
         }
+        if path_access := self.config.cnvkit.path_access:
+            result["access"] = path_access
+        return result
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
@@ -615,6 +666,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             ),
             "bam": bam,
             "bai": bam + ".bai",
+            "reference": self.w_config.static_data_config.reference.path,
         }
 
     def _get_input_files_create_panel(self, wildcards):
@@ -645,6 +697,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 else "work/{mapper}.cnvkit/out/{mapper}.cnvkit.antitarget.bed".format(**wildcards)
             ),
             "logs": logs if targets or antitargets else [],
+            "reference": self.w_config.static_data_config.reference.path,
         }
 
     def _get_input_files_report(self, wildcards):

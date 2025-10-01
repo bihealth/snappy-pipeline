@@ -69,8 +69,12 @@ if __name__ == "__main__":
     if snakemake := locals().get("snakemake", None):
         log = lambda: open(snakemake.log.log, "wt")  # noqa: E731
         fai_path = snakemake.input.fai
-        ignore_chroms = snakemake.params.ignore_chroms
-        padding = snakemake.params.padding
+        if args := getattr(snakemake.params, "args", None):
+            ignore_chroms = args["ignore_chroms"]
+            padding = args["padding"]
+        else:
+            ignore_chroms = snakemake.params.ignore_chroms
+            padding = snakemake.params.padding
         output_regions = snakemake.output.regions
     else:
         log = lambda: sys.stderr  # noqa: E731
@@ -95,13 +99,13 @@ if __name__ == "__main__":
             print(f"Region {i}, size {size}: {region}")
 
         # Verify that all intervals for each contig sum up to the contig length:
+        covered = {contig: 0 for contig in contigs.keys()}
+        for region in regions:
+            for interval in region:
+                covered[interval.contig] += interval.end - interval.start
         for contig, length in contigs.items():
-            relevant_intervals = [
-                interval for region in regions for interval in region if interval.contig == contig
-            ]
-            total_length = sum(interval.end - interval.start for interval in relevant_intervals)
-            assert total_length == length, (
-                f"Total length of intervals for contig {contig} is {total_length}, expected {length}"
+            assert covered[contig] == length, (
+                f"Total length of intervals for contig {contig} is {covered[contig]}, expected {length}"
             )
 
         for region, path in zip(regions, output_regions):

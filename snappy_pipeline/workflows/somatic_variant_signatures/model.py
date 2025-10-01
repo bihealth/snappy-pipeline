@@ -2,26 +2,22 @@ import enum
 
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyStepModel
 
 
-class FiltrationSchema(enum.StrEnum):
-    unfiltered = "unfiltered"
-    list = "list"
-    sets = "sets"
-
-
-class FilterSet(enum.StrEnum):
-    NO_FILTER = "no_filter"
-    DKFZ_ONLY = "dkfz_only"
-    DKFZ_AND_EBFILTER = "dkfz_and_ebfilter"
-    DKFZ_AND_EBFILTER_AND_OXOG = "dkfz_and_ebfilter_and_oxog"
+class SomaticVariantStep(enum.StrEnum):
+    CALL = "somatic_variant_calling"
+    ANNOTATION = "somatic_variant_annotation"
+    FILTER = "somatic_variant_filtration"
 
 
 class SomaticVariantSignatures(SnappyStepModel):
     path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
+
+    somatic_variant_step: SomaticVariantStep = SomaticVariantStep.CALL
+    """Which pipeline step is used to compute signatures"""
 
     tools_ngs_mapping: list[str] = []
     """default to those configured for ngs_mapping"""
@@ -35,34 +31,24 @@ class SomaticVariantSignatures(SnappyStepModel):
     has_annotation: bool = False
     """Needed for building filenames only"""
 
-    filtration_schema: FiltrationSchema = FiltrationSchema.list
-    """Method of variant filtration (if any)"""
+    is_filtered: bool = False
+    """Has the vcf been already filtered"""
 
-    filter_before_annotation: bool = False
-    """Flag if filtration has been done before annotation"""
-
-    # TODO: remove filtration by sets
-    # When this is done, the deprecated options can be deleted, and the
-    # signature computations will be done just on the output of whatever step
-    # is used on input (somatic_variant_calling, somatic_variant_annotation or somatic_variant_filtration)
-    filter_sets: Annotated[
-        list[FilterSet], Field(None, deprecated="use `filter_list` instead")
-    ] = []
-    """
-    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
-    The signatures are computed for all sets decribed here (in conjunction with `exon_lists`).
-    When empty, the set of filters is taken from those configured in `somatic_variant_filtration` step.
-    """
-
-    exon_lists: Annotated[
-        list[str],
-        Field(
-            "genome_wide",
-            deprecated="Works together with filter_set, ignored when `filter_list` is selected",
-        ),
-    ] = []
-    """
-    DEPRECATED: use `filter_list` in `somatic_variant_filtration` instead.
-    The signatures are computed for all regions decribed here (in conjunction with `filter_sets`).
-    When empty, the regions is taken from those configured in `somatic_variant_filtration` step.
-    """
+    @model_validator(mode="after")
+    def ensure_annotation_and_filtration_are_configured_correctly(self):
+        if self.somatic_variant_step == SomaticVariantStep.CALL:
+            if self.has_annotation or self.is_filtered:
+                raise ValueError(
+                    "When the input step is 'somatic_variant_calling', the annotation & filtration status must be set to 'False'"
+                )
+        elif self.somatic_variant_step == SomaticVariantStep.ANNOTATION:
+            if not self.has_annotation:
+                raise ValueError(
+                    "When the input step is 'somatic_variant_annotation', the annotation status must be set to 'True'"
+                )
+        elif self.somatic_variant_step == SomaticVariantStep.FILTER:
+            if not self.is_filtered:
+                raise ValueError(
+                    "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
+                )
+        return self

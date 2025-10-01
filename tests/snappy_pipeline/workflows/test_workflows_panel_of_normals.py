@@ -42,8 +42,7 @@ def minimal_config():
                   germline_resource: /path/to/germline_resource.vcf
                   path_normals_list: ""
               cnvkit:
-                  path_target_regions: /path/to/regions.bed  # WES mode
-                  path_normals_list: ""
+                  path_target: /path/to/regions.bed  # WES mode
               purecn:
                   path_normals_list: ""
                   path_bait_regions: /path/to/baits/regions.bed
@@ -127,7 +126,7 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
     expected = {
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "intervals": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
+        "region": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
         "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "prepare_panel")(wildcards)
@@ -160,6 +159,8 @@ def test_mutect2_step_part_get_input_files_create_panel(panel_of_normals_workflo
             "work/bwa.mutect2.P001-N1-DNA1-WGS1/out/bwa.mutect2.P001-N1-DNA1-WGS1.prepare.vcf.gz",
             "work/bwa.mutect2.P002-N1-DNA1-WGS1/out/bwa.mutect2.P002-N1-DNA1-WGS1.prepare.vcf.gz",
         ],
+        "reference": "/path/to/ref.fa",
+        "germline_resource": "/path/to/germline_resource.vcf",
     }
     actual = panel_of_normals_workflow.get_input_files("mutect2", "create_panel")(wildcards)
     assert actual == expected
@@ -243,9 +244,30 @@ def test_mutect2_step_part_get_log_file_create_panel(panel_of_normals_workflow):
 
 
 def test_mutect2_step_part_get_args_scatter(panel_of_normals_workflow):
-    """Tests Mutect2StepPart.get_args()"""
+    """Tests Mutect2StepPart._get_args_scatter()"""
     expected = {"ignore_chroms": [], "padding": 5000}
-    actual = panel_of_normals_workflow.get_args("mutect2", "scatter")
+    actual = panel_of_normals_workflow.get_args("mutect2", "scatter")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_prepare_panel(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_prepare_panel()"""
+    expected = {"max_mnp_distance": 0, "java_options": "", "extra_arguments": []}
+    actual = panel_of_normals_workflow.get_args("mutect2", "prepare_panel")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_gather(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_gather()"""
+    expected = {}
+    actual = panel_of_normals_workflow.get_args("mutect2", "gather")({})
+    assert actual == expected
+
+
+def test_mutect2_step_part_get_args_create_panel(panel_of_normals_workflow):
+    """Tests Mutect2StepPart._get_args_create_panel()"""
+    expected = {"java_options": "-Xms16g -Xmx32g", "extra_arguments": []}
+    actual = panel_of_normals_workflow.get_args("mutect2", "create_panel")({})
     assert actual == expected
 
 
@@ -289,7 +311,7 @@ def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
         }
     )
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
-    assert actual == {}
+    assert actual == {'target': '/path/to/regions.bed'}
 
 
 def test_cnvkit_step_part_get_input_files_antitarget(panel_of_normals_workflow):
@@ -319,6 +341,7 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "coverage")(wildcards)
     assert actual == expected
@@ -348,6 +371,7 @@ def test_cnvkit_step_part_get_input_files_create_panel(panel_of_normals_workflow
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_list.txt",
             "work/bwa.cnvkit/log/bwa.cnvkit.P002-N1-DNA1-WGS1.coverage.conda_info.txt",
         ],
+        "reference": "/path/to/ref.fa",
     }
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "create_panel")(wildcards)
     assert actual == expected
@@ -594,7 +618,10 @@ def test_purecn_step_part_get_log_file_install(panel_of_normals_workflow):
 
 def test_purecn_step_part_get_input_files_prepare(panel_of_normals_workflow):
     """Tests PureCnStepPart._get_input_files_prepare()"""
-    expected = {"container": "work/containers/out/purecn.simg"}
+    expected = {
+        "container": "work/containers/out/purecn.simg",
+        "reference": "/path/to/ref.fa",
+    }
     actual = panel_of_normals_workflow.get_input_files("purecn", "prepare")
     assert actual == expected
 

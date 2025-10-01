@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running bcftools mpileup"""
+"""Wrapper for running bcftools filter"""
+
+from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
 
-params = dict(snakemake.params)["args"]
-filter_name = params["filter_name"]
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+filter_name = args["filter_name"]
 expression = (
-    '--include "{}"'.format(params["include"])
-    if "include" in params
-    else '--exclude "{}"'.format(params["exclude"])
+    '--include "{}"'.format(args["include"])
+    if args.get("include", None)
+    else '--exclude "{}"'.format(args["exclude"])
 )
 
 # Actually run the script.

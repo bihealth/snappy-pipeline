@@ -83,10 +83,13 @@ def install_R_package(dest: str, name: str, repo: str):
         "local",
     ), f"Unknown/unimplemented repository {repo}"
 
-    os.makedirs(os.path.dirname(dest), mode=0o750, exist_ok=True)
+    dest = os.path.abspath(dest)
+    os.makedirs(dest, mode=0o750, exist_ok=True)
+    conda_lib = os.path.join(os.environ["CONDA_PREFIX"], "lib", "R", "library")
+    assert os.path.exists(conda_lib), f"No conda R library path '{conda_lib}'"
 
     if repo == "cran":
-        install_cmd = f"install.packages('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
+        install_cmd = f"install.packages('{name}', lib='{dest}', repos='https://cran.r-project.org/', update=FALSE, ask=FALSE)"
     elif repo == "bioconductor":
         install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
     elif repo == "github":
@@ -114,6 +117,7 @@ def install_R_package(dest: str, name: str, repo: str):
         install_cmd = None
 
     R_script = [
+        f".libPaths(c('{dest}', '{conda_lib}'))",
         install_cmd,
         f"status <- try(find.package('{name}', lib.loc='{dest}', quiet=FALSE, verbose=TRUE))",
         "status <- ifelse(is(status, 'try-error'), 1, 0)",

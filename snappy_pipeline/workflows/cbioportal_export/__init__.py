@@ -17,7 +17,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 
 from .model import CbioportalExport as CbioportalExportConfigModel
-from .model import FiltrationSchema
 
 # cbioportal meta data files
 META_FILES = {
@@ -167,6 +166,12 @@ class cbioportalExportStepPart(BaseStepPart):
             log_files[key + "_md5"] = log_files[key] + ".md5"
         return log_files
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+
+        return dict(self.config)
+
 
 class cbioportalVcf2MafStepPart(BaseStepPart):
     """Helper class for VCF2MAF step"""
@@ -180,15 +185,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.name_pattern = None
-        if self.config.filter_set:
-            if self.config.filter_set == "filter_list":
-                self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
-            else:
-                self.name_pattern = (
-                    "{mapper}.{caller}.{annotator}."
-                    "dkfz_bias_filter.eb_filter.{tumor_library}."
-                    "{filter_set}.{exon_list}"
-                )
+        if self.config.is_filtered:
+            self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
         else:
             self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
         # Build shortcut from cancer bio sample name to matched cancer sample
@@ -242,6 +240,9 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
                 "normal_sample": self._get_normal_lib_name(wildcards),
                 "tumor_id": self._get_tumor_bio_sample(wildcards),
                 "normal_id": self._get_normal_bio_sample(wildcards),
+                "somatic_variant_annotation_tool": self.config.somatic_variant_annotation_tool,
+                "ncbi_build": self.config.vcf2maf.ncbi_build,
+                "Center": self.config.vcf2maf.Center,
             }
             return result
 
@@ -297,10 +298,8 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         name_pattern = "{mapper}.{caller}.{annotator}."
-        if self.config.filtration_schema == FiltrationSchema.list:
+        if self.config.is_filtered:
             name_pattern += "filtered.{{library_name}}"
-        elif self.config.filtration_schema == FiltrationSchema.sets:
-            name_pattern += "dkfz_bias_filter.eb_filter.{{library_name}}.{filter_set}.{exon_list}"
         else:
             name_pattern += "{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
@@ -308,8 +307,6 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
             mapper=self.config.mapping_tool,
             caller=self.config.somatic_variant_calling_tool,
             annotator=self.config.somatic_variant_annotation_tool,
-            filter_set=self.config.filter_set,
-            exon_list=self.config.exon_list,
             ext=".maf",
         )
 
@@ -329,6 +326,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{mapper}.{caller}.{tumor_library}"
+        yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
             os.path.join(
@@ -367,10 +365,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
     def get_args(self, action):
         # Validate action
         self._validate_action(action)
-        return {
-            "pipeline_id": "ENSEMBL",
-            "features": self.parent.w_config.static_data_config.features.path,
-        }
+        return {"pipeline_id": "ENSEMBL"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -415,10 +410,15 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         # Validate action
         self._validate_action(action)
         if action == "log2":
-            return {"action_type": "log2", "extra_args": {"pipeline_id": "ENSEMBL"}}
+            return {
+                "action_type": "log2",
+                "mappings": self.config.path_gene_id_mappings,
+                "extra_args": {"pipeline_id": "ENSEMBL"},
+            }
         if action == "gistic":
             return {
                 "action_type": "gistic",
+                "mappings": self.config.path_gene_id_mappings,
                 "extra_args": {
                     "pipeline_id": "ENSEMBL",
                     "amplification": "9",
@@ -569,6 +569,11 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         if self.config.expression.enabled:
             yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
 
+    def get_args(self, action):
+        # Validate action
+        self._validate_action(action)
+        return self.config.study.model_dump(by_alias=True)
+
 
 class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     """Generate cbioportal patient data file"""
@@ -598,7 +603,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
                 donors[donor_name][sample_name][extraction_type] = lib.name
-        return donors
+        return {"donors": donors, "config": self.config.model_dump(by_alias=True)}
 
     @dictify
     def get_output_files(self, action):
@@ -644,6 +649,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
             for sample_name in args["cnaseq"]["samples"]:
                 if sample_name in args["rna_seq_mrna"]["samples"]:
                     args["3way_complete"]["samples"] += [sample_name]
+        args["__cancer_study_id"] = self.config.study.cancer_study_id
         return args
 
     @dictify
@@ -727,29 +733,17 @@ class cbioportalExportWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        if (
-            self.config.filtration_schema == FiltrationSchema.unfiltered
-            or self.config.filter_before_annotation
-        ):
-            self.register_sub_workflow(
-                "somatic_variant_annotation",
-                self.config.path_somatic_variant,
-                sub_workflow_name="somatic_variant",
-            )
-        else:
-            self.register_sub_workflow(
-                "somatic_variant_filtration",
-                self.config.path_somatic_variant,
-                sub_workflow_name="somatic_variant",
-            )
+        self.register_sub_workflow(
+            self.config.somatic_variant_step,
+            workdir=self.config.path_somatic_variant,
+            sub_workflow_name="somatic_variant",
+        )
         if self.config.copy_number_alteration.enabled:
-            if self.config.copy_number_alteration.copy_number_tool in [
-                "cnvetti_on_target_postprocess",
+            if self.config.copy_number_alteration.copy_number_tool in (
                 "cnvkit",
-                "copywriter",
                 "purecn",
                 "sequenza",
-            ]:
+            ):
                 self.register_sub_workflow(
                     "somatic_targeted_seq_cnv_calling",
                     workdir=self.config.copy_number_alteration.path_copy_number,

@@ -8,8 +8,9 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 this_file = __file__
 
-seq_platform = snakemake.params.args["extra_infos"]["seqPlatform"]
-library_kit = snakemake.params.args["extra_infos"]["libraryKit"]
+args = getattr(snakemake.params, "args", {})
+seq_platform = args["extra_infos"]["seqPlatform"]
+library_kit = args["extra_infos"]["libraryKit"]
 
 shell(
     r"""
@@ -62,14 +63,14 @@ for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast
         zcat $fname; \
     fi \
     | minimap2 \
-        -t 16 \
+        -t {args[mapping_threads]} \
         -x $preset \
-        -a {snakemake.config[step_config][ngs_mapping][minimap2][path_index]} \
+        -a {args[path_index]} \
         -Y \
         --MD \
         /dev/stdin \
     | samtools addreplacerg \
-        -r "@RG\tID:{snakemake.wildcards.library_name}.$i\tSM:{snakemake.wildcards.library_name}\tPL:PACBIO" - \
+        -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:PACBIO" - \
     >$TMPDIR/out/$i.bam
 
     samtools sort -m 4G -@ 3 \

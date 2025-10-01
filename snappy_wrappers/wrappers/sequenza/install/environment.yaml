@@ -3,7 +3,7 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python==3.9.19
+  - python==3.12
   - r-base==4.3.3
   - r-remotes==2.5.0
   # sequenza requirements (+copynumber)
@@ -17,3 +17,4 @@ dependencies:
   - bioconductor-s4vectors==0.40.2
   - bioconductor-iranges==2.36.0
   - bioconductor-genomicranges==1.54.1
+
