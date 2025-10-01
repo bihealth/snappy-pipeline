@@ -262,6 +262,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
+        from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+        from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+
         previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
         if config["step_config"]["somatic_variant_annotation"].get("is_filtered", False):
             from snappy_pipeline.workflows.somatic_variant_filtration import (

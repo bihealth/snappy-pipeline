@@ -215,7 +215,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 os.path.join("work", name_pattern, "out", name_pattern + f".{prev}_{n}.vcf.gz"),
             )
         else:
-            somatic_variant = self.parent.sub_workflows["somatic_variant"]
+            somatic_variant = self.parent.modules["somatic_variant"]
             base_path = os.path.join("output", name_pattern, "out", name_pattern)
             yield "vcf", somatic_variant(base_path.format(**wildcards) + ".vcf.gz")
 
@@ -289,7 +289,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
 
         yield "reference", self.w_config.static_data_config.reference.path
 
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         name_pattern = "{mapper}.{tumor_library}".format(**wildcards)
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
         yield "bam", ngs_mapping(base_path + ".bam")
@@ -372,7 +372,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         random.seed(cfg.shuffle_seed)
         lib_count = cfg["panel_of_normals_size"]
         random.shuffle(libraries)
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
@@ -495,6 +495,8 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
+        from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+
         previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
         default = SomaticVariantFiltrationConfigModel.model_fields["has_annotation"].default
         if config["step_config"]["somatic_variant_filtration"].get("has_annotation", default):
