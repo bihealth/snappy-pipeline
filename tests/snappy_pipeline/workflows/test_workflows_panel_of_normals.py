@@ -92,7 +92,7 @@ def panel_of_normals_workflow(
         x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)
     ]
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "gather": scattergather,
         "scatter": scattergather,
     }
@@ -122,8 +122,8 @@ def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workfl
         fromdict={"mapper": "bwa", "normal_library": "P001-N1-DNA1-WGS1", "scatteritem": "1-of-24"}
     )
     expected = {
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "region": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
         "reference": "/path/to/ref.fa",
     }
@@ -339,8 +339,8 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         }
     )
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
         "reference": "/path/to/ref.fa",
@@ -660,7 +660,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
     expected = {
         "container": "work/containers/out/purecn.simg",
         "intervals": "work/purecn/out/unknown_unknown.list",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "coverage")(wildcards)
     assert actual == expected

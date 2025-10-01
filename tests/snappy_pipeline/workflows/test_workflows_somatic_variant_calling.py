@@ -112,7 +112,7 @@ def somatic_variant_calling_workflow(
         x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)
     ]
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "gather": scattergather,
         "scatter": scattergather,
     }
@@ -146,10 +146,10 @@ def test_mutect2_step_part_get_input_files_run(mutect2_wildcards, somatic_varian
     """Tests Mutect2StepPart._get_input_files_run()"""
     # Define expected
     expected = {
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
         "region": "work/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1/mutect2par/scatter/1-of-1.region.bed",
     }
@@ -232,8 +232,8 @@ def test_mutect2_step_part_get_input_files_pileup_normal(
     """Tests Mutect2StepPart._get_input_files_pileup_normal()"""
     # Define expected
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
         "common_variants": "/path/to/common_variants.vcf",
     }
@@ -250,8 +250,8 @@ def test_mutect2_step_part_get_input_files_pileup_tumor(
     """Tests Mutect2StepPart._get_input_files_pileup_tumor()"""
     # Define expected
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
         "common_variants": "/path/to/common_variants.vcf",
     }

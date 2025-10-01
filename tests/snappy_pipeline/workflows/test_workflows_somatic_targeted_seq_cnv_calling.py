@@ -86,7 +86,7 @@ def somatic_targeted_seq_cnv_calling_workflow(
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "somatic_variants": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
     }
     # Construct the workflow object
@@ -109,8 +109,8 @@ def test_cnvkit_coverage_step_part_get_input_files(somatic_targeted_seq_cnv_call
     expected = {
         "antitarget": "/path/to/panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed",
         "target": "/path/to/panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("cnvkit", "coverage")(
@@ -553,10 +553,10 @@ def test_sequenza_step_part_get_input_files_coverage(somatic_targeted_seq_cnv_ca
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "gc": "work/static_data/out/sequenza.50.wig.gz",
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "tumor_bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "tumor_bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("sequenza", "coverage")(
         wildcards
@@ -640,8 +640,8 @@ def test_purecn_step_part_get_input_files_coverage(somatic_targeted_seq_cnv_call
     """Tests PureCNStepPart.get_input_files() - action 'coverage'"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("purecn", "coverage")(
         wildcards

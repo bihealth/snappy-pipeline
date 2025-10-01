@@ -78,7 +78,7 @@ def somatic_variant_annotation_workflow(
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "somatic_variant": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
     }
     # Construct the workflow object
