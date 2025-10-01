@@ -138,5 +138,9 @@ def write_clinical_samples_tsv(out, donors, config):
 
 
 args = getattr(snakemake.params, "args", {})
-write_clinical_patient_tsv(str(snakemake.output.patient), args.get("donors", []), args.get("config", {}))
-write_clinical_samples_tsv(str(snakemake.output.sample), args.get("donors", []), args.get("config", {}))
+write_clinical_patient_tsv(
+    str(snakemake.output.patient), args.get("donors", []), args.get("config", {})
+)
+write_clinical_samples_tsv(
+    str(snakemake.output.sample), args.get("donors", []), args.get("config", {})
+)

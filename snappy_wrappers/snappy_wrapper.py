@@ -5,7 +5,7 @@ import shutil
 import stat
 import tempfile
 import textwrap
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from snakemake.shell import shell
 

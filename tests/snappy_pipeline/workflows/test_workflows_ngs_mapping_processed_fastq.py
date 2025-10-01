@@ -281,8 +281,12 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
     expected = {
         "input": {
-            "reads_left": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R1.fastq.gz"],
-            "reads_right": ["work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R2.fastq.gz"],
+            "reads_left": [
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R1.fastq.gz"
+            ],
+            "reads_right": [
+                "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
+            ],
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-T1-RNA1-mRNA_seq1",
@@ -298,7 +302,7 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         "align_intron_max": 1000000,
         "align_intron_min": 20,
         "align_mates_gap_max": 1000000,
-        "align_sjdb_overhang_min":  1,
+        "align_sjdb_overhang_min": 1,
         "align_sj_overhang_min": 8,
         "out_filter_mismatch_n_max": 999,
         "out_filter_mismatch_n_over_l_max": 0.04,
@@ -483,7 +487,9 @@ def test_minimap2_step_part_get_args(ngs_mapping_workflow):
     expected = {
         "input": {
             "reads_left": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz"],
-            "reads_right": ["work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz"],
+            "reads_right": [
+                "work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
+            ],
         },
         "platform": "ILLUMINA",
         "sample_name": "P001-N1-DNA1-WGS1",
