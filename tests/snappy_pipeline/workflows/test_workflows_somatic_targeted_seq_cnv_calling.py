@@ -52,7 +52,7 @@ def minimal_config():
               path_intervals: /path/to/interval/list
               path_panel_of_normals: /path/to/purecn/pon
               path_mapping_bias: /path/to/mapping/bias
-              path_somatic_variants: /path/to/somatic/variants
+              path_somatic_variants: ../somatic_variant_calling
             sequenza: {}  # use defaults, no required fields.
 
         data_sets:
@@ -87,7 +87,7 @@ def somatic_targeted_seq_cnv_calling_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "../ngs_mapping/" + x,
-        "somatic_variants": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "somatic_variants": lambda x: "../somatic_variant_calling/" + x,
     }
     # Construct the workflow object
     return SomaticTargetedSeqCnvCallingWorkflow(
@@ -670,7 +670,7 @@ def test_purecn_step_part_get_input_files_run(somatic_targeted_seq_cnv_calling_w
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "tumor": "work/bwa.purecn.P001-T1-DNA1-WGS1/out/bwa.purecn.P001-T1-DNA1-WGS1_coverage_loess.txt.gz",
-        "vcf": "SOMATIC_VARIANT_CALLING/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.full.vcf.gz",
+        "vcf": "../somatic_variant_calling/output/bwa.mutect2.P001-T1-DNA1-WGS1/out/bwa.mutect2.P001-T1-DNA1-WGS1.full.vcf.gz",
     }
     actual = somatic_targeted_seq_cnv_calling_workflow.get_input_files("purecn", "run")(wildcards)
     assert actual == expected

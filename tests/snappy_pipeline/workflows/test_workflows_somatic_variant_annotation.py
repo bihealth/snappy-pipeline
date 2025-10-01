@@ -42,7 +42,7 @@ def minimal_config():
               contamination: {}
 
           somatic_variant_annotation:
-            path_somatic_variant: /path/to/somatic_variant_calling
+            path_somatic_variant: ../somatic_variant_calling
             tools: ["vep"]
             vep:
               cache_dir: /path/to/dir/cache
@@ -79,7 +79,7 @@ def somatic_variant_annotation_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "../ngs_mapping/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "somatic_variant": lambda x: "../somatic_variant_calling/" + x,
     }
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
@@ -97,7 +97,7 @@ def somatic_variant_annotation_workflow(
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling/output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {

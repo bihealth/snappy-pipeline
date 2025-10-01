@@ -39,7 +39,7 @@ def minimal_config():
           somatic_variant_annotation:
             tools: [vep]
             tools_somatic_variant_calling: ['mutect2']
-            path_somatic_variant: ../SOMATIC_VARIANT_CALLING
+            path_somatic_variant: ../somatic_variant_calling
             vep:
               cache_dir: /path/to/vep/cache
 
