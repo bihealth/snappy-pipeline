@@ -39,7 +39,9 @@ module ngs_mapping:
         wf.config.get("path_ngs_mapping", "../ngs_mapping")
 
 
-use rule * from ngs_mapping
+if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
+
+    use rule * from ngs_mapping
 
 
 # Rules =======================================================================

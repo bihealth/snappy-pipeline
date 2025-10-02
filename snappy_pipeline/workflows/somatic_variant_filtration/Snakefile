@@ -52,7 +52,9 @@ module somatic_variant_annotation:
         wf.config.get("path_somatic_variant", "../somatic_variant_annotation")
 
 
-use rule * from ngs_mapping
+if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
+
+    use rule * from ngs_mapping
 
 
 if wf.config["has_annotation"]:
