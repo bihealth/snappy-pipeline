@@ -26,7 +26,8 @@ dependencies:
   - pydantic =2.7
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=8.25.5
+  - snakemake >=9.11.7,<10
+  - snakemake-executor-plugin-slurm >=1.8.0,<2
 
   # Additional libraries used by snappy
   - ruamel.yaml ==0.18.6    # Nice, round-trip enabled YAML parsing
