@@ -442,7 +442,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
 )
@@ -1488,7 +1488,7 @@ class NgsMappingWorkflow(BaseStep):
                 BwaMem2StepPart,
                 MBCsStepPart,
                 ExternalStepPart,
-                LinkInStep,
+                LinkInStepPart,
                 Minimap2StepPart,
                 StarStepPart,
                 StrandednessStepPart,
@@ -1553,7 +1553,7 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample sheets.
         """
         for sub_step in self.sub_steps.values():
-            if sub_step.name not in (LinkInStep.name,):
+            if sub_step.name not in (LinkInStepPart.name,):
                 yield from sub_step.get_result_files()
 
     def validate_project(self, config, sample_sheets_list):

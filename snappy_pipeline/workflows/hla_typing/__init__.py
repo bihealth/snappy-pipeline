@@ -66,7 +66,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
@@ -300,7 +300,7 @@ class HlaTypingWorkflow(BaseStep):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
-        sub_steps = [LinkInStep, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
+        sub_steps = [LinkInStepPart, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()

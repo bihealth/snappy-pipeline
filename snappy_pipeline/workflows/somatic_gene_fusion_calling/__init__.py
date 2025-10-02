@@ -58,7 +58,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
@@ -512,7 +512,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
                 StarFusionStepPart,
                 DefuseStepPart,
                 ArribaStepPart,
-                LinkInStep,
+                LinkInStepPart,
                 LinkOutStepPart,
             )
         )

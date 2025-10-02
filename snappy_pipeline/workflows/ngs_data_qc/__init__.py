@@ -24,7 +24,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
@@ -287,7 +287,7 @@ class NgsDataQcWorkflow(BaseStep):
             config_model_class=NgsDataQcConfigModel,
         )
         self.register_sub_step_classes(
-            (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
+            (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
         if "picard" in self.config.tools:
             self.register_module("ngs_mapping", self.config.picard.path_ngs_mapping)

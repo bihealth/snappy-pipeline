@@ -19,7 +19,7 @@ from snappy_pipeline.workflows.abstract import (
     DataSearchInfo,
     DataSetInfo,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkInVcfExternalStepPart,
     LinkOutStepPart,
     WritePedigreeSampleNameStepPart,
@@ -266,7 +266,7 @@ def dummy_generic_step(
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.register_sub_step_classes((LinkInStep, LinkOutStepPart))
+            self.register_sub_step_classes((LinkInStepPart, LinkOutStepPart))
 
         @classmethod
         def default_config_yaml(cls):
@@ -325,7 +325,7 @@ def dummy_generic_step_path_link_in(
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.register_sub_step_classes((LinkInStep, LinkOutStepPart))
+            self.register_sub_step_classes((LinkInStepPart, LinkOutStepPart))
 
         @classmethod
         def default_config_yaml(cls):

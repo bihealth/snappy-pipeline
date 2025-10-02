@@ -1216,8 +1216,7 @@ def get_ngs_library_folder_name(sheets, library_name):
     raise ValueError("Found no folders for NGS library of name {}".format(library_name))
 
 
-# TODO: Rename to LinkInStepPart
-class LinkInStep(BaseStepPart):
+class LinkInStepPart(BaseStepPart):
     """Link in the raw files, e.g. FASTQ files
 
     Depending on the configuration, the files are linked out after postprocessing
@@ -1303,7 +1302,7 @@ class LinkInStep(BaseStepPart):
         )  # pragma: no cover
 
 
-class LinkInVcfExternalStepPart(LinkInStep):
+class LinkInVcfExternalStepPart(LinkInStepPart):
     """Link in the external VCF files."""
 
     #: Step name
