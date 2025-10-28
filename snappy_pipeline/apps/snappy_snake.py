@@ -173,8 +173,6 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--debug")
     if wrapper_args.dryrun:
         snakemake_argv.append("--dryrun")
-    if wrapper_args.reason:
-        snakemake_argv.append("--reason")
     if wrapper_args.batch:
         snakemake_argv += ["--batch", wrapper_args.batch]
     if not wrapper_args.snappy_pipeline_use_profile:
@@ -311,13 +309,6 @@ def main(argv=None):
     )
     group.add_argument(
         "--print-compilation", action="store_true", default=False, help="Print compilation and stop"
-    )
-    group.add_argument(
-        "-r",
-        "--reason",
-        action="store_true",
-        default=False,
-        help="Print the reason for each executed rule",
     )
 
     group = parser.add_argument_group(
