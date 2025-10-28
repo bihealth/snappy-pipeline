@@ -42,10 +42,13 @@ cnvkit.py genemetrics \
     --alpha {args[genemetrics][alpha]} --bootstrap {args[genemetrics][bootstrap]} \
     {input_cnr}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
             args=args,
             out=snakemake.output.genemetrics,
-            drop_low_coverage=drop_low_coverage, gender=gender, male=male,
+            drop_low_coverage=drop_low_coverage,
+            gender=gender,
+            male=male,
         )
     else:
         genemetrics = "touch {out}".format(out=snakemake.output.genemetrics)
@@ -64,11 +67,14 @@ cnvkit.py segmetrics \
     {smooth_bootstrap} {drop_low_coverage} \
     {input_cnr}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
             args=args,
             out=snakemake.output.segmetrics,
-            drop_low_coverage=drop_low_coverage, 
-            smooth_bootstrap="--smooth-bootstrap" if args["segmetrics"].get("smooth_bootstrap", False) else "",
+            drop_low_coverage=drop_low_coverage,
+            smooth_bootstrap="--smooth-bootstrap"
+            if args["segmetrics"].get("smooth_bootstrap", False)
+            else "",
         )
     else:
         segmetrics = "touch {out}".format(out=snakemake.output.segmetrics)
@@ -83,7 +89,10 @@ if getattr(snakemake.output, "sex", ""):
             --output {out} {male} \
             {input_target} {input_antitarget} {input_cnr} {input_cns}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns, input_target=input_target, input_antitarget=input_antitarget,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
+            input_target=input_target,
+            input_antitarget=input_antitarget,
             args=args,
             out=snakemake.output.sex,
             male=male,
@@ -102,11 +111,13 @@ cnvkit.py metrics \
     {drop_low_coverage} \
     {input_target} {input_antitarget} {input_cnr} {input_cns}
         """.format(
-            input_cnr=input_cnr, input_target=input_target, input_antitarget=input_antitarget,
+            input_cnr=input_cnr,
+            input_target=input_target,
+            input_antitarget=input_antitarget,
             input_cns=f"--segments {input_cns}" if input_cns else "",
             args=args,
             out=snakemake.output.metrics,
-            drop_low_coverage=drop_low_coverage, 
+            drop_low_coverage=drop_low_coverage,
         )
     else:
         metrics = "touch {out}".format(out=snakemake.output.metrics)

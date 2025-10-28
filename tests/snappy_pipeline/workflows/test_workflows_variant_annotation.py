@@ -38,6 +38,7 @@ def minimal_config():
             gatk3_hc: {}
 
           variant_annotation:
+            path_variant_calling: VAR_CALLING
             vep:
               cache_dir: "/some/dir/"
 
@@ -70,12 +71,7 @@ def variant_annotation_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VAR_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return VariantAnnotationWorkflow(
         dummy_workflow,
@@ -114,8 +110,7 @@ def test_vep_run_step_part_get_output_files(variant_annotation_workflow):
     """Tests VepStepPart.get_output_files()"""
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.vep.{library_name}/out/"
-        "{mapper}.{var_caller}.vep.{library_name}"
+        "work/{mapper}.{var_caller}.vep.{library_name}/out/{mapper}.{var_caller}.vep.{library_name}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     expected["output_links"] = [path.replace("work/", "output/") for path in expected.values()]
@@ -153,7 +148,6 @@ def test_vep_run_step_part_get_args(variant_annotation_workflow):
             ],
             "output_options": ["everything"],
             "species": "homo_sapiens",
-            "assembly": "GRCh37",
             "tx_flag": "gencode_basic",
         },
     }
@@ -166,8 +160,7 @@ def test_vep_run_step_part_get_log_file(variant_annotation_workflow):
     """Tests VepStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
-        "work/{mapper}.{var_caller}.vep.{library_name}/log/"
-        "{mapper}.{var_caller}.vep.{library_name}"
+        "work/{mapper}.{var_caller}.vep.{library_name}/log/{mapper}.{var_caller}.vep.{library_name}"
     )
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual

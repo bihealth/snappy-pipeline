@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for preparing PureCN panel of normals"""
 
-import os
-import tempfile
-
 from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"

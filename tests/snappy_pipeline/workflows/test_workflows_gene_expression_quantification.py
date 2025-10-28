@@ -80,7 +80,7 @@ def gene_expression_quantification_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping.model", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return GeneExpressionQuantificationWorkflow(
         dummy_workflow,
@@ -97,7 +97,7 @@ def gene_expression_quantification_workflow(
 def test_featurecounts_step_part_get_input_files(gene_expression_quantification_workflow):
     """Tests FeatureCountsStepPart.get_input_files()"""
     # Define expected
-    ngs_mapping_base_out = "NGS_MAPPING/output/star.P001-T1-RNA1-mRNA_seq1/out/"
+    ngs_mapping_base_out = "../ngs_mapping/output/star.P001-T1-RNA1-mRNA_seq1/out/"
     expected = {
         "bai": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam.bai",
         "bam": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam",
@@ -347,6 +347,6 @@ def test_gene_expression_quantification_workflow_files(gene_expression_quantific
     # Get actual
     actual = set(gene_expression_quantification_workflow.get_result_files())
 
-    assert (
-        actual == expected
-    ), f"Missing from actual {expected - actual}\nMissing from expected {actual - expected}"
+    assert actual == expected, (
+        f"Missing from actual {expected - actual}\nMissing from expected {actual - expected}"
+    )

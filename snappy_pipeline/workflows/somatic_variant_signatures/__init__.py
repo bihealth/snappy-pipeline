@@ -99,7 +99,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         name_pattern = self.name_prefix + "." + self.name_postfix
         tpl = os.path.join("output", name_pattern, "out", name_pattern)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant"]
+        variant_calling = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -195,7 +195,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_sub_workflow(
+        self.register_module(
             config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here

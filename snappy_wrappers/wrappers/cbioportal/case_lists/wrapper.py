@@ -2,6 +2,7 @@
 """CUBI+Snakemake wrapper code for preparing cbioportal patient metadata table from biomedsheets
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
+
 import os
 from typing import TYPE_CHECKING
 
@@ -10,9 +11,9 @@ if TYPE_CHECKING:
 
 args = getattr(snakemake.params, "args", {})
 
+
 def write_case_list(case_list_args, outfile):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""
-    category = os.path.basename(outfile).replace(".txt", "")
     with open(outfile, "w") as f:
         s = "\n".join(
             [

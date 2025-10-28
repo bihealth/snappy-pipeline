@@ -2,12 +2,12 @@ import argparse
 import logging
 import sys
 import typing
-from parser import VcfParser
 
 import exceptions
 import vcfpy
 from action import Action
 from functions import Functions
+from parser import VcfParser
 from ruamel.yaml import YAML
 
 

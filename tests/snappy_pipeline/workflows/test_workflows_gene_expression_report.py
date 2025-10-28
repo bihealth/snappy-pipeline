@@ -36,7 +36,7 @@ def minimal_config():
               path_exon_bed: /path/to/exon.bed
 
           gene_expression_report:
-            path_gene_expression_quantification: /work
+            path_gene_expression_quantification: GENE_EXPRESSION_QUANTIFICATION
 
         data_sets:
           first_batch:
@@ -66,10 +66,7 @@ def gene_expression_report_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "gene_expression_quantification": lambda x: "GENE_EXPRESSION_QUANTIFICATION/" + x,
-    }
+
     # Construct the workflow object
     return GeneExpressionReportWorkflow(
         dummy_workflow,

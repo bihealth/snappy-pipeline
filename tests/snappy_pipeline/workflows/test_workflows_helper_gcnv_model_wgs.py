@@ -82,9 +82,7 @@ def helper_gcnv_model_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return HelperBuildWgsGcnvModelWorkflow(
         dummy_workflow,
@@ -128,9 +126,7 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
     for action in actions:
         for resource in expected_low.keys():
             if action == "filter_intervals" and resource == "memory":
-                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
-                    None
-                )
+                actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(None)
                 assert actual == "20480M"
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=1
@@ -191,10 +187,9 @@ def test_gcnv_coverage_step_part_get_input_files(helper_gcnv_model_workflow):
     """Tests BuildGcnvWgsModelStepPart._get_input_files_coverage()"""
     # Define expected
     interval_list_out = (
-        "work/gcnv_preprocess_intervals.default/out/"
-        "gcnv_preprocess_intervals.default.interval_list"
+        "work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
     )
-    bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+    bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
     expected = {
         "interval_list": interval_list_out,
         "bam": bam_out + ".bam",
@@ -267,8 +262,7 @@ def test_gcnv_filter_intervals_step_part_get_input_files(helper_gcnv_model_workf
     """Tests BuildGcnvWgsModelStepPart._get_input_files_filter_intervals()"""
     # Define expected
     interval_list_out = (
-        "work/gcnv_preprocess_intervals.default/out/"
-        "gcnv_preprocess_intervals.default.interval_list"
+        "work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
     )
     tsv_out = "work/gcnv_annotate_gc.default/out/gcnv_annotate_gc.default.tsv"
     csv_pattern = (
@@ -457,7 +451,7 @@ def test_gcnv_get_input_files_post_germline_calls(helper_gcnv_model_workflow):
         "calls": [],
         "ploidy": "work/bwa.gcnv_contig_ploidy.default/out/bwa.gcnv_contig_ploidy.default/.done",
     }
-    with mock.patch("snakemake.checkpoints") as patched_checkpoints:
+    with mock.patch("snakemake.checkpoints.Checkpoints") as patched_checkpoints:
         # Patch checkpoint
         patched_checkpoints.build_gcnv_model_scatter_intervals = MockCheckpoint()
         # Get actual

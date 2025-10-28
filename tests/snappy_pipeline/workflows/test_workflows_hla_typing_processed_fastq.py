@@ -107,9 +107,7 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "input": {
-            "reads_left": [
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz"
-            ],
+            "reads_left": ["work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz"],
             "reads_right": [
                 "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
             ],

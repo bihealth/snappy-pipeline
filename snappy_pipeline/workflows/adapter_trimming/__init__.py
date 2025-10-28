@@ -147,7 +147,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
 )
@@ -368,7 +368,7 @@ class AdapterTrimmingWorkflow(BaseStep):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, config_model_class=AdapterTrimmingConfigModel)
         self.register_sub_step_classes(
-            (BbdukStepPart, FastpStepPart, LinkInStep, LinkOutFastqStepPart)
+            (BbdukStepPart, FastpStepPart, LinkInStepPart, LinkOutFastqStepPart)
         )
         self.ngs_library_name_to_ngs_library = OrderedDict()
         for sheet in self.shortcut_sheets:

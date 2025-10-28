@@ -41,8 +41,7 @@ def expansionhunter_expanded_expected():
     """:return: Returns dictionary with expected results for ExpansionHunter - EXPANDED."""
     return {
         "AR": (
-            "Expanded - repeat AR observed: 38/41. "
-            "Normal range: 9 - 35. Expansion range: 38 - 62."
+            "Expanded - repeat AR observed: 38/41. Normal range: 9 - 35. Expansion range: 38 - 62."
         ),
         "FMR1": (
             "Expanded - repeat FMR1 observed: 201/210. "

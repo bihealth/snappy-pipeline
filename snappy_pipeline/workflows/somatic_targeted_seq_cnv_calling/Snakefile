@@ -25,6 +25,35 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticTargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 tools = wf.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
+if "purecn" in wf.config["tools"]:
+
+    module somatic_variant_calling:
+        snakefile:
+            "../somatic_variant_calling"
+        config:
+            wf.w_config
+        prefix:
+            wf.config["purecn"]["path_somatic_variants"]
+
+    use rule * from somatic_variant_calling
+
+
 # Rules =======================================================================
 
 
@@ -33,9 +62,10 @@ localrules:
     somatic_targeted_seq_cnv_calling_link_out_run,
 
 
-rule all:
+rule somatic_targeted_seq_cnv_calling_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

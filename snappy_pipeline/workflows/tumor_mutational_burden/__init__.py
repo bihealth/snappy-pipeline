@@ -65,7 +65,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         tpl = os.path.join("output", base_name, "out", base_name)
 
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_path = self.parent.sub_workflows["somatic_variant"]
+        variant_path = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_path(tpl + ext)
 
@@ -122,7 +122,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     def get_args(self, action):
         self._validate_action(action)
-        return getattr(self, "_get_args_run")
+        return self._get_args_run
 
     def _get_args_run(self, _wildcards):
         return {
@@ -163,7 +163,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_sub_workflow(
+        self.register_module(
             config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
         )
 

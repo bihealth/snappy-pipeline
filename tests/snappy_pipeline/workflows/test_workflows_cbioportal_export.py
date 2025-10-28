@@ -35,7 +35,7 @@ def minimal_config():
           cbioportal_export:
             expression:
               enabled: true
-              path_ngs_mapping: /NGS_MAPPING
+              path_ngs_mapping: ../ngs_mapping
               expression_tool: star
             path_gene_id_mappings: DUMMY
             path_somatic_variant: /SOM_VAR_FILTRATION
@@ -87,11 +87,7 @@ def cbioportal_export_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "/SOM_VAR_FILTRATION/" + x,
-        "copy_number_step": lambda x: "/COPY_NUMBER/" + x,
-    }
+
     # Construct the workflow object
     return cbioportalExportWorkflow(
         dummy_workflow,
@@ -237,7 +233,7 @@ def test_cbioportal_clinical_data_step_part_get_args(cbioportal_export_workflow)
             },
             "expression": {
                 "enabled": True,
-                "path_ngs_mapping": "/NGS_MAPPING",
+                "path_ngs_mapping": "../ngs_mapping",
                 "expression_tool": "star",
             },
             "study": {
@@ -582,7 +578,6 @@ def test_cbioportal_cna_step_part_get_log_file(cbioportal_export_workflow):
 def test_cbioportal_cna_step_part_get_args_log2(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_args() -action 'log2'"""
     # Define expected
-    base_name_out = "work/log/cbioportal_cna"
     expected = {
         "action_type": "log2",
         "mappings": "DUMMY",
@@ -596,7 +591,6 @@ def test_cbioportal_cna_step_part_get_args_log2(cbioportal_export_workflow):
 def test_cbioportal_cna_step_part_get_args_gistic(cbioportal_export_workflow):
     """Tests cbioportalCnaFilesStepPart.get_args() -action 'gistic'"""
     # Define expected
-    base_name_out = "work/log/cbioportal_cna"
     expected = {
         "action_type": "gistic",
         "mappings": "DUMMY",
@@ -674,7 +668,7 @@ def test_cbioportal_expression_step_part_get_input_files(cbioportal_export_workf
     # Define expected
     sample = "P00{i}-T{t}"
     base_name = (
-        "/NGS_MAPPING/output/star.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
+        "../ngs_mapping/output/star.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
         "star.P00{i}-T{t}-RNA1-mRNA_seq1.GeneCounts.tab"
     )
     expected = {sample.format(i=i, t=t): base_name.format(i=i, t=t) for i, t in ((1, 1), (2, 2))}

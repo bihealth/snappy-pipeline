@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, Any
+from typing import Any, TypedDict
 
 from pydantic import ConfigDict, model_validator
 

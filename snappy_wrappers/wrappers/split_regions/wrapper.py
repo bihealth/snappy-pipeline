@@ -49,7 +49,9 @@ def partition_lengths_with_splits(
 
             space_to_fill = target_partition_size - current_size
 
-            if space_to_fill <= 0 or (remaining_length - space_to_fill) < (slack * target_partition_size):
+            if space_to_fill <= 0 or (remaining_length - space_to_fill) < (
+                slack * target_partition_size
+            ):
                 chunk_to_add = remaining_length
             else:
                 chunk_to_add = space_to_fill

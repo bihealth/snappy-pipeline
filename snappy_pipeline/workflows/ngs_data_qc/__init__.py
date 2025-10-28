@@ -16,7 +16,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import Namedlist, expand, touch, Wildcards
+from snakemake.io import Namedlist, Wildcards, expand, touch
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -24,7 +24,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
@@ -163,7 +163,7 @@ class PicardStepPart(BaseStepPart):
         if "CollectHsMetrics" in self.config.picard.programs:
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
@@ -287,10 +287,10 @@ class NgsDataQcWorkflow(BaseStep):
             config_model_class=NgsDataQcConfigModel,
         )
         self.register_sub_step_classes(
-            (LinkInStep, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
+            (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
         if "picard" in self.config.tools:
-            self.register_sub_workflow("ngs_mapping", self.config.picard.path_ngs_mapping)
+            self.register_module("ngs_mapping", self.config.picard.path_ngs_mapping)
 
     @listify
     def get_result_files(self):

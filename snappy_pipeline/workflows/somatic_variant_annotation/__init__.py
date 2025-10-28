@@ -71,16 +71,14 @@ import os
 import sys
 from collections import OrderedDict
 
-from snakemake.io import expand
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS,
-    SomaticVariantCallingWorkflow,
 )
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
@@ -146,9 +144,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         tpl = self._name_template(self.config)
         tpl = os.path.join("output", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant"]
+        somatic_variant_calling = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+            yield key, somatic_variant_calling(tpl + ext)
 
     @dictify
     def get_output_files(self, action):
@@ -264,6 +262,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
+        from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+        from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+
         previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
         if config["step_config"]["somatic_variant_annotation"].get("is_filtered", False):
             from snappy_pipeline.workflows.somatic_variant_filtration import (
@@ -278,17 +279,19 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticVariantAnnotationConfigModel,
-            previous_steps=previous_steps,
+            # FIXME
+            previous_steps=(),
+            # previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepAnnotateSomaticVcfStepPart, LinkOutStepPart))
-        # Register sub workflows
+        # Register modules
         if self.config.is_filtered:
             self.register_sub_workflow(
                 "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
             )
         else:
-            self.register_sub_workflow(
+            self.register_module(
                 "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
             )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here

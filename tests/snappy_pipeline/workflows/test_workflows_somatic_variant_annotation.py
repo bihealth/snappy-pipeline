@@ -42,7 +42,7 @@ def minimal_config():
               contamination: {}
 
           somatic_variant_annotation:
-            path_somatic_variant: /path/to/somatic_variant_calling
+            path_somatic_variant: ../somatic_variant_calling
             tools: ["vep"]
             vep:
               cache_dir: /path/to/dir/cache
@@ -78,8 +78,8 @@ def somatic_variant_annotation_workflow(
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
+        "somatic_variant": lambda x: "../somatic_variant_calling/" + x,
     }
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
@@ -97,7 +97,7 @@ def somatic_variant_annotation_workflow(
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
+        "../somatic_variant_calling/output/{mapper}.{var_caller}.{tumor_library}/out/"
         "{mapper}.{var_caller}.{tumor_library}"
     )
     expected = {
@@ -135,7 +135,7 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
 
 def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
+    _wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {
         "config": {
             "cache_dir": "/path/to/dir/cache",
@@ -156,7 +156,7 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "canonical",
                 "rank",
                 "length",
-            ]
+            ],
         },
     }
     actual = somatic_variant_annotation_workflow.get_args("vep", "run")

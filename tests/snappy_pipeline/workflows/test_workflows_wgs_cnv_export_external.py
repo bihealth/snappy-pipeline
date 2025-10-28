@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the wgs_cnv_export_external workflow module code"""
 
-import pathlib
 import textwrap
 from copy import deepcopy
 from pathlib import PosixPath
@@ -216,6 +215,7 @@ def test_workflow_check_config_invalid_search_pattern(
     assert len(errors) == 2
 
     import pydantic
+
     pydantic_version = pydantic.version.version_short()
     expected_errors = [
         {

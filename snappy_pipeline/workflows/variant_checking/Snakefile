@@ -22,6 +22,22 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = VariantCheckingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module variant_calling:
+    snakefile:
+        "../variant_calling/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_variant_calling", "../variant_calling")
+
+
+use rule * from variant_calling
+
+
 # Rules =======================================================================
 
 
@@ -32,9 +48,10 @@ localrules:
     variant_checking_write_pedigree_run,
 
 
-rule all:
+rule variant_checking_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

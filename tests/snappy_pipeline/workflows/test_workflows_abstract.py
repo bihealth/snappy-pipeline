@@ -19,7 +19,7 @@ from snappy_pipeline.workflows.abstract import (
     DataSearchInfo,
     DataSetInfo,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkInVcfExternalStepPart,
     LinkOutStepPart,
     WritePedigreeSampleNameStepPart,
@@ -266,7 +266,7 @@ def dummy_generic_step(
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.register_sub_step_classes((LinkInStep, LinkOutStepPart))
+            self.register_sub_step_classes((LinkInStepPart, LinkOutStepPart))
 
         @classmethod
         def default_config_yaml(cls):
@@ -325,7 +325,7 @@ def dummy_generic_step_path_link_in(
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.register_sub_step_classes((LinkInStep, LinkOutStepPart))
+            self.register_sub_step_classes((LinkInStepPart, LinkOutStepPart))
 
         @classmethod
         def default_config_yaml(cls):
@@ -664,7 +664,7 @@ def dummy_generic_step_w_write_pedigree(
 def test_write_pedigree_step_part_get_input_files(dummy_generic_step_w_write_pedigree):
     """Tests WritePedigreeStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    expected = []  # as 'ngs_mapping' is not in self.parent.sub_workflows
+    expected = []  # as 'ngs_mapping' is not in self.parent.modules
     actual = dummy_generic_step_w_write_pedigree.get_input_files("write_pedigree", "run")(wildcards)
     assert actual == expected
 

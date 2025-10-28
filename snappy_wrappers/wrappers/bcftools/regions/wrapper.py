@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
-bed = f'^{args["include"]}' if "include" in args else args["exclude"]
+bed = f"^{args['include']}" if "include" in args else args["exclude"]
 
 # Actually run the script.
 shell(

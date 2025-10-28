@@ -87,12 +87,7 @@ def tumor_mutational_burden_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
-    }
+
     # Construct the workflow object
     return TumorMutationalBurdenCalculationWorkflow(
         dummy_workflow,
@@ -109,7 +104,7 @@ def tumor_mutational_burden_workflow(
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
+        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
         "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
     )
     expected = {
@@ -205,7 +200,7 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         )
         for mapper in ("bwa",)
         for var_caller in ("mutect2",)
-        for anno_caller in ("vep", )
+        for anno_caller in ("vep",)
     ]
     expected = list(sorted(expected))
     actual = list(sorted(tumor_mutational_burden_workflow.get_result_files()))

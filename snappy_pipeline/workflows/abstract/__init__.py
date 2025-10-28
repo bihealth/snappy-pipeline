@@ -19,7 +19,6 @@ from typing import Any, Callable
 import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
-import snakemake
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -31,6 +30,7 @@ from biomedsheets.shortcuts import (
     write_pedigree_to_ped,
     write_pedigrees_to_ped,
 )
+from snakemake.api import Workflow
 from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
 
 from snappy_pipeline.base import (
@@ -39,7 +39,6 @@ from snappy_pipeline.base import (
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
@@ -294,10 +293,10 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.sub_workflows:
+            if "ngs_mapping" not in self.parent.modules:
                 return  # early exit
             # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -664,7 +663,7 @@ class BaseStep:
 
     def __init__[C: SnappyStepModel](
         self,
-        workflow: snakemake.Workflow,
+        workflow: Workflow,
         config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
@@ -685,6 +684,7 @@ class BaseStep:
         self.previous_steps = tuple(previous_steps or [])
         #: Snakefile "workflow" object
         self.workflow = workflow
+        self.modules = {}
         #: Setup logger for the step
         self.logger = logging.getLogger(self.name)
         #: Merge default configuration with true configuration
@@ -740,8 +740,6 @@ class BaseStep:
             )
         # Setup onstart/onerror/onsuccess hooks
         self._setup_hooks()
-        #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows: dict[str, snakemake.Workflow] = {}
 
         # Even though we already validated via pydantic, we still call check_config here, as
         # some of the checks done in substep check_config are not covered by the pydantic models yet
@@ -864,30 +862,35 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(
-        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
-    ):
-        """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
+    def register_module(self, step_name: str, prefix: os.PathLike, module_name: str | None = None):
+        """
+        Register workflow with given pipeline ``step_name``, using the given ``prefix``.
+        This requires importing the respective workflow in the Snakefile
+        (since the module API is not intended to be used programmatically).
+        For example:
 
-        Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
+        ```
+        module ngs_mapping:
+            snakefile:
+                "../ngs_mapping/Snakefile"
+            config:
+                wf.w_config
+            prefix:
+                wf.w_config["step_config"]["your_workflow"].get("path_ngs_mapping", "../ngs_mapping")
+
+
+        use rule * from ngs_mapping
+        ```
+
+        Optionally, the module name can be given separate from ``step_name`` (the default)
         value for it.
         """
-        sub_workflow_name = sub_workflow_name or step_name
-        if sub_workflow_name in self.sub_workflows:
-            raise ValueError("Sub workflow {} already registered!".format(sub_workflow_name))
-        if os.path.isabs(workdir):
-            abs_workdir = workdir
-        else:
-            abs_workdir = os.path.realpath(os.path.join(os.getcwd(), workdir))
-        self.workflow.subworkflow(
-            sub_workflow_name,
-            workdir=abs_workdir,
-            snakefile=snakefile_path(step_name),
-            configfile=abs_workdir + "/" + "config.yaml",
-        )
-        self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
+        module_name = module_name or step_name
+        if module_name in self.modules:
+            raise ValueError("Sub workflow {} already registered!".format(module_name))
+        self.modules[module_name] = lambda path: os.path.join(prefix, path)
 
-    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+    def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
 
         Delegates to the sub step object's get_args function
@@ -1151,13 +1154,13 @@ class LinkInPathGenerator:
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
             # Search paths - expects a list already
-            out_list.extend(getattr(info, "search_paths"))
+            out_list.extend(info.search_paths)
 
             # Sheet path
             # Only name of file is stored in config file (relative path used),
             # hence we need to find it in the base paths
-            sheet_file_name = getattr(info, "sheet_path")  # expects a string
-            base_paths = getattr(info, "base_paths")  # expects a list
+            sheet_file_name = info.sheet_path  # expects a string
+            base_paths = info.base_paths  # expects a list
             sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
             # Append if not None
             if sheet_path:
@@ -1213,8 +1216,7 @@ def get_ngs_library_folder_name(sheets, library_name):
     raise ValueError("Found no folders for NGS library of name {}".format(library_name))
 
 
-# TODO: Rename to LinkInStepPart
-class LinkInStep(BaseStepPart):
+class LinkInStepPart(BaseStepPart):
     """Link in the raw files, e.g. FASTQ files
 
     Depending on the configuration, the files are linked out after postprocessing
@@ -1300,7 +1302,7 @@ class LinkInStep(BaseStepPart):
         )  # pragma: no cover
 
 
-class LinkInVcfExternalStepPart(LinkInStep):
+class LinkInVcfExternalStepPart(LinkInStepPart):
     """Link in the external VCF files."""
 
     #: Step name

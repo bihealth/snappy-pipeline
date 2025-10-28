@@ -434,7 +434,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import expand, Wildcards
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -442,7 +442,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
 )
@@ -1142,7 +1142,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         return getattr(self, f"_get_input_files_{action}")
 
     @dictify
-    def _get_input_files_run(self, wildcards):
+    def _get_input_files_run(self, wildcards, **kwargs):
         mapper_lib = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
@@ -1207,7 +1207,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     def get_params(self, action):
         assert action == "run", "Parameters only available for action 'run'."
-        return getattr(self, "_get_params_run")
+        return self._get_params_run
 
     def _get_params_run(self, wildcards):
         # Find bed file associated with library kit
@@ -1488,7 +1488,7 @@ class NgsMappingWorkflow(BaseStep):
                 BwaMem2StepPart,
                 MBCsStepPart,
                 ExternalStepPart,
-                LinkInStep,
+                LinkInStepPart,
                 Minimap2StepPart,
                 StarStepPart,
                 StrandednessStepPart,
@@ -1553,7 +1553,7 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample sheets.
         """
         for sub_step in self.sub_steps.values():
-            if sub_step.name not in (LinkInStep.name,):
+            if sub_step.name not in (LinkInStepPart.name,):
                 yield from sub_step.get_result_files()
 
     def validate_project(self, config, sample_sheets_list):
