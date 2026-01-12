@@ -221,7 +221,7 @@ class SalmonStepPart(BaseStepPart):
         return ResourceUsage(
             threads=16,
             time="04:00:00",  # 4 hours
-            memory="2500M",
+            memory="32000M",
         )
 
 
