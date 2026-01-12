@@ -89,7 +89,7 @@ fi
 STAR \
     --runThreadN {num_threads} \
     --genomeDir {arriba_index} --genomeLoad NoSharedMemory \
-    --readFilesIn ${{left_files}} ${{right_files}} --readFilesCommand ${{trim_cmd}} \
+    --readFilesIn ${{left_files}} ${{right_files}} --readFilesCommand {trim_cmd} \
     --outStd BAM_Unsorted --outSAMtype BAM Unsorted --outSAMunmapped Within --outBAMcompression 0 \
     --outFileNamePrefix $TMPDIR/ \
     {star_parameters} \
