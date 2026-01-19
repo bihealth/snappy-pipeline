@@ -5,16 +5,25 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
+args = getattr(snakemake.params, "args", {})
+
+reference = snakemake.input.reference
 
 segments = (
     " --tumor-segmentation {} ".format(snakemake.input.segments)
-    if "segments" in snakemake.input
+    if getattr(snakemake.input, "segments", None) is not None
     else ""
 )
 table = (
-    " --contamination-table {} ".format(snakemake.input.table) if "table" in snakemake.input else ""
+    " --contamination-table {} ".format(snakemake.input.table)
+    if getattr(snakemake.input, "table", None) is not None
+    else ""
 )
+
+if java_options := args.get("java_options", ""):
+    java_options = f"--java-options '{java_options}'"
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
@@ -47,22 +56,6 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-# Extract orientation stats for all chunks
-mkdir -p $tmpdir/f1r2
-rel_path=$(realpath --relative-to=$tmpdir/f1r2 {snakemake.input.f1r2})
-pushd $tmpdir/f1r2
-tar -zxvf ${{rel_path}}
-popd
-
-# Create command line list of all f1r2 stats
-chunks=$(ls $tmpdir/f1r2/*.tar.gz)
-cmd=$(echo "$chunks" | tr '\n' ' ' | sed -e "s/ *$//" | sed -e "s/ / -I /g")
-
-# Create orientation model
-gatk --java-options '-Xms4000m -Xmx8000m' LearnReadOrientationModel \
-    -I $cmd \
-    -O $tmpdir/read-orientation-model.tar.gz
-
 # Workaround problem with bcftools merging inserting missing values (.) in MPOS
 zcat {snakemake.input.raw} \
     | awk '{{
@@ -77,17 +70,59 @@ zcat {snakemake.input.raw} \
     > $tmpdir/in.vcf
 
 # Filter calls
-gatk --java-options '-Xms4000m -Xmx8000m' FilterMutectCalls \
+gatk {java_options} FilterMutectCalls \
     --reference {reference} \
     {segments} {table} \
-    --ob-priors $tmpdir/read-orientation-model.tar.gz \
+    --ob-priors {snakemake.input.orientation} \
     --stats {snakemake.input.stats} \
     --variant $tmpdir/in.vcf \
-    --output {snakemake.output.full_vcf}
+    --output $tmpdir/out.vcf \
+    {extra_arguments}
 
-# Index & move to final dest
-tabix -f {snakemake.output.full_vcf}
+# Extract sample names
+grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst
 
+# Extract normal sample(s), if present
+if grep -q '^##normal_sample=' "$tmpdir/out.vcf"; then
+    grep -E '^##normal_sample=' "$tmpdir/out.vcf" | sed -e 's/^##normal_sample=//' > "$tmpdir/normal.lst"
+else
+    # No normal sample (tumor-only mode) → create empty file
+    > "$tmpdir/normal.lst"
+fi
+
+
+# Validate
+num_tumor=$(wc -l < $tmpdir/tumor.lst)
+num_normal=$(wc -l < $tmpdir/normal.lst)
+
+
+if [[ $num_tumor -gt 1 ]]; then
+    echo "ERROR: More than one tumor sample found (not supported yet)" >&2
+    exit 1
+
+fi
+
+if [[ $num_normal -gt 1 ]]; then
+    echo "ERROR: More than one normal sample found (not supported yet)" >&2
+    exit 1
+fi
+
+# Tumor–Normal case
+if [[ $num_normal -eq 1 ]]; then
+    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
+    bcftools view --samples-file $tmpdir/samples.lst \
+        --output-type z \
+        --output {snakemake.output.full_vcf} \
+        $tmpdir/out.vcf
+
+elif [[ $num_normal -eq 0 && $num_tumor -eq 1 ]]; then
+    # Tumor-only case
+    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+fi
+
+
+
+tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}
 tabix -f {snakemake.output.vcf}

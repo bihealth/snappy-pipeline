@@ -5,10 +5,12 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-reads_left = snakemake.params.args["input"]["reads_left"]
-reads_right = snakemake.params.args["input"].get("reads_right", "")
+reads_left = args["input"]["reads_left"]
+reads_right = args["input"].get("reads_right", "")
 
 shell.executable("/bin/bash")
 
@@ -46,7 +48,7 @@ fi
 # First alignment step (filter to candidate HLA reads) --------------------------------------------
 
 data_dir=$(dirname $(readlink -f $(which OptiTypePipeline.py)))/data
-seq_type={snakemake.params.args[seq_type]}
+seq_type={args[seq_type]}
 refname=hla_reference_$seq_type.fasta
 reference=$data_dir/$refname
 
@@ -55,7 +57,7 @@ cp $reference $TMPDIR/yara_index
 yara_indexer -o $TMPDIR/yara_index/$refname $TMPDIR/yara_index/$refname
 
 yara_mapper \
-    -t {snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]} \
+    -t {args[num_mapping_threads]} \
     --error-rate 5 \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
@@ -65,7 +67,7 @@ yara_mapper \
 
 if [[ $paired -eq 1 ]]; then
     yara_mapper \
-        -t {snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]} \
+        -t {args[num_mapping_threads]} \
         --error-rate 5 \
         --output-format sam \
         $TMPDIR/yara_index/$refname \
@@ -75,7 +77,7 @@ if [[ $paired -eq 1 ]]; then
 fi
 
 cat $TMPDIR/tmp.d/reads_*.fastq | \
-seqtk sample - {snakemake.config[step_config][hla_typing][optitype][max_reads]} \
+seqtk sample - {args[max_reads]} \
 > $TMPDIR/tmp.d/reads_sampled.fastq
 
 wc -l $TMPDIR/tmp.d/reads_*.fastq
@@ -85,7 +87,7 @@ wc -l $TMPDIR/tmp.d/reads_*.fastq
 cat <<"EOF" >$TMPDIR/tmp.d/optitype.ini
 [mapping]
 razers3=razers3
-threads={snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]}
+threads={args[num_mapping_threads]}
 
 [ilp]
 solver=glpk

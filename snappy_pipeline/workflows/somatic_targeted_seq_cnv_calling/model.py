@@ -10,9 +10,6 @@ from snappy_pipeline.models.cnvkit import Cnvkit
 class Tool(enum.StrEnum):
     cnvkit = "cnvkit"
     sequenza = "sequenza"
-    copywriter = "copywriter"
-    cnvetti_on_target = "cnvetti_on_target"
-    cnvetti_off_target = "cnvetti_off_target"
     purecn = "purecn"
 
 
@@ -42,8 +39,8 @@ class SequenzaFitExtraArgs(SnappyModel):
     N_ratio_filter: int = Field(10, alias="N.ratio.filter")
     N_BAF_filter: int = Field(1, alias="N.BAF.filter")
     segment_filter: int = Field(3000000, alias="segment.filter")
-    mufreq_treshold: float = Field(0.1, alias="mufreq.threshold")
-    ratio_priority: bool = Field(False, alias="ratio_priority")
+    mufreq_treshold: float = Field(0.1, alias="mufreq.treshold")
+    ratio_priority: bool = Field(False, alias="ratio.priority")
     ploidy: list[float] = [
         1.0,
         1.1,
@@ -119,25 +116,6 @@ class Sequenza(SnappyModel):
 
     extra_args_fit: SequenzaFitExtraArgs | dict[str, Any] = SequenzaFitExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.fit in R"""
-
-
-class CopyWriter(SnappyModel):
-    path_target_regions: str
-    """Path to target regions"""
-
-    bin_size: int = 20000  # TODO: make actually configurable
-
-    plot_genes: str
-    """Path to civic annotation"""
-
-    genome: str = "hg19"
-    """Could be hg38 (consider setting prefix to 'chr' when using GRCh38.v1)"""
-
-    features: str = "EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75"
-
-    prefix: str = ""
-
-    nThread: int = 8
 
 
 class GenomeName(enum.StrEnum):
@@ -219,23 +197,10 @@ class PureCn(SnappyModel):
     path_somatic_variants: Annotated[str, Field(examples=["../somatic_variant_calling_for_purecn"])]
 
 
-class CnvettiOnTarget(SnappyModel):
-    path_target_regions: str
-
-
-class CnvettiOffTarget(SnappyModel):
-    path_target_regions: str
-
-    window_length: int = 20000
-
-
 class SomaticTargetedSeqCnvCalling(SnappyStepModel, validators.ToolsMixin):
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
     path_ngs_mapping: str = "../ngs_mapping"
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None
-    copywriter: CopyWriter | None = None
     purecn: PureCn | None = None
-    cnvetti_on_target: CnvettiOnTarget | None = None
-    cnvetti_off_target: CnvettiOffTarget | None = None

@@ -5,6 +5,8 @@ from snakemake import shell
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 shell.executable("/bin/bash")
 
 shell(
@@ -39,7 +41,7 @@ else
 fi
 
 # Find out strand
-strand={snakemake.config[step_config][gene_expression_quantification][strand]}
+strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
@@ -59,7 +61,7 @@ else
 fi
 
 # IMPORTANT NOTE-
-# The GTF annotation file (snakemake.config[step_config][gene_expression_quantification][rnaseqc][rnaseqc_path_annotation_gtf])
+# The GTF annotation file (snakemake.input.rnaseqc_path_annotation_gtf)
 # assumes that:
 # - all records have a "transcript_id" entry among their attributes. Many records won't have it,
 #   for example all "gene" (in feature column) are missing it, and it will trigger an error whn present.
@@ -69,8 +71,8 @@ fi
 jar_path=${{JAVA_HOME}}/share/rna-seqc-1.1.8-2/RNA-SeQC_v1.1.8.jar
 
 ${{JAVA_HOME}}/bin/java -jar ${{jar_path}} \
-    -r {snakemake.config[static_data_config][reference][path]} \
-    -t {snakemake.config[step_config][gene_expression_quantification][rnaseqc][rnaseqc_path_annotation_gtf]} \
+    -r {snakemake.input.reference} \
+    -t {snakemake.input.rnaseqc_path_annotation_gtf} \
     -s "Sample,{snakemake.input.bam}, " \
     ${{paired_cmd}} \
     -o ${{TMPDIR}}/rnaseqc

@@ -6,22 +6,15 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
 
-heatmaps = [
-    snakemake.output.get(x)
-    for x in filter(
-        lambda x: x.startswith("heatmap_chr") and not x.endswith("_md5"), snakemake.output.keys()
-    )
-]
 scatters = [
-    snakemake.output.get(x)
+    getattr(snakemake.output, x)
     for x in filter(
-        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), snakemake.output.keys()
+        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), [k for k, _ in snakemake.output._get_names()]
     )
 ]
 
@@ -67,8 +60,8 @@ then
         --output {snakemake.output.diagram} \
         --segment {snakemake.input.cns} \
         {gender} {male} \
-        --threshold {config[diagram_threshold]} --min-probes {config[diagram_min_probes]} \
-        $(if [[ "{config[shift_xy]}" = "False" ]]; then \
+        --threshold {args[threshold]} --min-probes {args[min_probes]} \
+        $(if [[ "{args[shift_xy]}" = "False" ]]; then \
             echo --no-shift-xy
         fi) \
         {snakemake.input.cnr}
@@ -89,35 +82,14 @@ else
 fi
 md5 {snakemake.output.scatter}
 
-if [[ -n "{snakemake.output.heatmap}" ]]
-then
-    cnvkit.py heatmap \
-        --output {snakemake.output.heatmap} \
-        {snakemake.input.cnr}
-else
-    touch {snakemake.output.heatmap}
-fi
-md5 {snakemake.output.heatmap}
-
-for heatmap in {heatmaps}
-do
-    if [[ -n "$heatmap" ]]
-    then
-        cnvkit.py heatmap \
-            --output $heatmap \
-            {snakemake.input.cnr}
-    else
-        touch $heatmap
-    fi
-    md5 $heatmap
-done
-
 for scatter in {scatters}
 do
     if [[ -n "$scatter" ]]
     then
+        chrom=$(basename -s .png $scatter | sed -re "s/.*\.(chr([0-9]+|[XY]))$/\1/")
         cnvkit.py scatter \
             --output $scatter \
+            --chromosome $chrom \
             --segment {snakemake.input.cns} \
             {gender} {male} \
             {snakemake.input.cnr}

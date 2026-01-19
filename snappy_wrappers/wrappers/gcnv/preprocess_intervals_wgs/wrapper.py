@@ -2,6 +2,8 @@
 
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -9,7 +11,7 @@ set -x
 gatk PreprocessIntervals \
    --padding 0 \
    --interval-merging-rule OVERLAPPING_ONLY \
-   --reference {snakemake.config[static_data_config][reference][path]} \
+   --reference {args[reference]} \
    --output {snakemake.output.interval_list}
 """
 )

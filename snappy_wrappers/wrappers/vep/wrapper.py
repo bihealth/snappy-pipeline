@@ -2,6 +2,9 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -53,7 +56,7 @@ trap "rm -rf $TMPDIR" EXIT
 # Run actual tools --------------------------------------------------------------------------------
 
 vep --verbose \
-    --fasta {snakemake.config[static_data_config][reference][path]} \
+    --fasta {snakemake.input.reference} \
     --input_file {snakemake.input.vcf} \
     --output_file {snakemake.output.vcf} \
     --compress_output bgzip \
@@ -63,16 +66,16 @@ vep --verbose \
     --hgvs \
     --cache \
     --offline \
-    --{snakemake.config[step_config][variant_annotation][vep][tx_flag]} \
+    --{config[tx_flag]} \
     --force_overwrite \
-    --buffer_size {snakemake.config[step_config][variant_annotation][vep][buffer_size]} \
-    $(if [[ ! -z "{snakemake.config[step_config][variant_annotation][vep][cache_dir]}" ]]; then \
-        echo --dir_cache {snakemake.config[step_config][variant_annotation][vep][cache_dir]}; \
+    --buffer_size {config[buffer_size]} \
+    $(if [[ ! -z "{config[cache_dir]}" ]]; then \
+        echo --dir_cache {config[cache_dir]}; \
     fi) \
-    --cache_version {snakemake.config[step_config][variant_annotation][vep][cache_version]} \
-    --assembly {snakemake.config[step_config][variant_annotation][vep][assembly]} \
-    --fork {snakemake.config[step_config][variant_annotation][vep][num_threads]} \
-    {snakemake.config[step_config][variant_annotation][vep][more_flags]}
+    --cache_version {config[cache_version]} \
+    --assembly {config[assembly]} \
+    --fork {config[num_threads]} \
+    {config[more_flags]}
 
 tabix -f {snakemake.output.vcf}
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}

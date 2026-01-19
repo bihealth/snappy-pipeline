@@ -94,25 +94,33 @@ def test_optitype_step_part_get_output_files(hla_typing_workflow):
 
 def test_optitype_step_part_get_seq_type_rna(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
-    sinput = hla_typing_workflow.substep_dispatch("optitype", "get_args", "run")(wildcards)
+    sinput = hla_typing_workflow.get_args("optitype", "run")(wildcards)
     assert sinput["seq_type"] == "rna"
 
 
 def test_optitype_step_part_get_seq_type_dna(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
-    sinput = hla_typing_workflow.substep_dispatch("optitype", "get_args", "run")(wildcards)
+    sinput = hla_typing_workflow.get_args("optitype", "run")(wildcards)
     assert sinput["seq_type"] == "dna"
 
 
 def test_optitype_step_part_get_args_input(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
-    sinput = hla_typing_workflow.substep_dispatch("optitype", "get_args", "run")(wildcards)
-    assert sinput["input"]["reads_left"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz"
-    ]
-    assert sinput["input"]["reads_right"] == [
-        "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz"
-    ]
+    expected = {
+        "input": {
+            "reads_left": [
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz"
+            ],
+            "reads_right": [
+                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz"
+            ],
+        },
+        "seq_type": "dna",
+        "num_mapping_threads": 4,
+        "max_reads": 5000,
+    }
+    actual = hla_typing_workflow.get_args("optitype", "run")(wildcards)
+    assert actual == expected
 
 
 def test_optitype_step_part_get_log_file(hla_typing_workflow):

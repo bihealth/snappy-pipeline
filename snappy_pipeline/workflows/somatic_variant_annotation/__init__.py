@@ -11,16 +11,10 @@ Step Input
 ==========
 
 The somatic variant annotation step uses Snakemake sub workflows for using the result of the
-``somatic_variant_calling`` step.
+``somatic_variant_calling`` step. It can now also use the output from the ``somatic_variant_filtration``
+step.
 
 The main assumption is that each VCF file contains the two matched normal and tumor samples.
-
-==========
-Step Input
-==========
-
-The variant annotation step uses Snakemake sub workflows for using the result of the
-``variant_calling`` step.
 
 ===========
 Step Output
@@ -77,15 +71,15 @@ import os
 import sys
 from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
+
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
-    SOMATIC_VARIANT_CALLERS_JOINT,
-    SOMATIC_VARIANT_CALLERS_MATCHED,
+    SOMATIC_VARIANT_CALLERS,
     SomaticVariantCallingWorkflow,
 )
 
@@ -100,7 +94,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the annotator tools
-ANNOTATION_TOOLS = ("jannovar", "vep")
+ANNOTATION_TOOLS = ("vep",)
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
@@ -131,16 +125,28 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             for donor in sheet.donors:
                 self.donors[donor.name] = donor
 
+    @staticmethod
+    def _name_template(
+        config: SomaticVariantAnnotationConfigModel, annotator: str | None = None
+    ) -> str:
+        tpl = "{mapper}.{var_caller}"
+        if annotator:
+            tpl += f".{annotator}"
+        if config.is_filtered:
+            tpl += ".filtered.{tumor_library}"
+        else:
+            tpl += ".{tumor_library}"
+        return tpl
+
     @dictify
     def get_input_files(self, action):
         """Return path to somatic vcf input file"""
         # Validate action
         self._validate_action(action)
-        tpl = (
-            "output/{mapper}.{var_caller}.{tumor_library}/out/{mapper}.{var_caller}.{tumor_library}"
-        )
+        tpl = self._name_template(self.config)
+        tpl = os.path.join("output", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.sub_workflows["somatic_variant_calling"]
+        variant_calling = self.parent.sub_workflows["somatic_variant"]
         for key, ext in key_ext.items():
             yield key, variant_calling(tpl + ext)
 
@@ -149,10 +155,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/out/"
-            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
-        ).format(annotator=self.annotator)
+        tpl = self._name_template(self.config, annotator=self.annotator)
+        prefix = os.path.join("work", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         if self.has_full:
             key_ext["full"] = ".full.vcf.gz"
@@ -166,10 +170,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}/log/"
-            "{{mapper}}.{{var_caller}}.{annotator}.{{tumor_library}}"
-        ).format(annotator=self.annotator)
+        tpl = self._name_template(self.config, annotator=self.annotator)
+        prefix = os.path.join("work", tpl, "log", tpl)
 
         key_ext = (
             ("log", ".log"),
@@ -178,55 +180,6 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-    def get_params(self, action):
-        """Return arguments to pass down."""
-        _ = action
-
-        def params_function(wildcards):
-            if wildcards.tumor_library not in self.donors:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
-                }
-            else:
-                return {}
-
-        return params_function
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair.normal_sample.dna_ngs_library.name if pair else None
-
-
-class JannovarAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
-    """Annotate VCF file from somatic calling using "Jannovar annotate-vcf" """
-
-    #: Step name
-    name = "jannovar"
-
-    #: Annotator name to construct output paths
-    annotator = "jannovar"
-
-    #: Class available actions
-    actions = ("annotate_somatic_vcf",)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            time="4-04:00:00",  # 4 days and 4 hours
-            memory=f"{8 * 1024 * 2}M",
-        )
 
 
 class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
@@ -256,6 +209,18 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         "rank",
         "length",
     )
+
+    @dictify
+    def get_input_files(self, action: str):
+        input_files = super().get_input_files(action)
+        for k, v in input_files.items():
+            yield k, v
+        yield "reference", self.w_config.static_data_config.reference.path
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        self._validate_action(action)
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -289,6 +254,23 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        # Ugly hack to allow exchanging the order of somatic_variant_annotation &
+        # somatic_variant_filtration steps.
+        # The import of the other workflow must be dependent on the config:
+        # if in the somatic_variant_annotation config, the filtration_schema is not unfiltered,
+        # then the annotation step will include the filtration workflow as a
+        # previous step.
+        # THIS IMPLIES THAT NO ANNOTATION OCCURED BEFORE FILTRATION
+        # This protects against circular import of workflows.
+        #
+        # This must be done before initialisation of the workflow.
+        previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
+        if config["step_config"]["somatic_variant_annotation"].get("is_filtered", False):
+            from snappy_pipeline.workflows.somatic_variant_filtration import (
+                SomaticVariantFiltrationWorkflow,
+            )
+
+            previous_steps.insert(0, SomaticVariantFiltrationWorkflow)
         super().__init__(
             workflow,
             config,
@@ -296,16 +278,19 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             config_paths,
             workdir,
             config_model_class=SomaticVariantAnnotationConfigModel,
-            previous_steps=(SomaticVariantCallingWorkflow, NgsMappingWorkflow),
+            previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (JannovarAnnotateSomaticVcfStepPart, VepAnnotateSomaticVcfStepPart, LinkOutStepPart)
-        )
+        self.register_sub_step_classes((VepAnnotateSomaticVcfStepPart, LinkOutStepPart))
         # Register sub workflows
-        self.register_sub_workflow(
-            "somatic_variant_calling", self.config.path_somatic_variant_calling
-        )
+        if self.config.is_filtered:
+            self.register_sub_workflow(
+                "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
+            )
+        else:
+            self.register_sub_workflow(
+                "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
+            )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
@@ -322,18 +307,20 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
         callers = set(self.config.tools_somatic_variant_calling)
-        name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library.name}"
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(
+            self.config, annotator="{annotator}"
+        )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=annotators,
             ext=(
                 ".log",
@@ -354,18 +341,13 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
             mapper=self.config.tools_ngs_mapping,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_MATCHED),
+            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
             annotator=full,
             ext=EXT_VALUES,
         )
         # joint calling
-        name_pattern = "{mapper}.{caller}.{annotator}.{donor.name}"
-        yield from self._yield_result_files_joint(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            caller=callers & set(SOMATIC_VARIANT_CALLERS_JOINT),
-            annotator=annotators,
-            ext=EXT_VALUES,
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(
+            self.config, annotator="{annotator}"
         )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
@@ -387,7 +369,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
                                 print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
-                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
+                            yield from expand(tpl, tumor_library=[ngs_library.name], **kwargs)
 
     def _yield_result_files_joint(self, tpl, **kwargs):
         """Build output paths from path template and extension list.
@@ -397,4 +379,4 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
-                yield from expand(tpl, donor=[donor], **kwargs)
+                yield from expand(tpl, tumor_library=[donor], **kwargs)

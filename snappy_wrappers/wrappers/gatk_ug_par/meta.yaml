@@ -1,4 +1,0 @@
-name: gatk_ug_par
-description: (Germline) variant calling calling using GATK UnifiedGenotyper (CUBI parallelization flavour)
-authors:
-  - Manuel Holtgrewe

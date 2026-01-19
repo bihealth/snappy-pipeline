@@ -16,6 +16,7 @@ step_config:
     ngs_chew_fingerprint:
       enabled: false
     target_coverage_report:
+      enabled: true
       path_target_interval_list_mapping:
       - name: MedExome_hg19_empirical_targets
         pattern: MedExome
@@ -27,13 +28,12 @@ step_config:
     tools: [mutect2]
     mutect2:
       extra_arguments: []
-      window_length: 300000000
-      keep_tmpdir: onerror
-      job_mult_time: 5
+      contamination:
+          enabled: false
 
 
   somatic_variant_annotation:
-    path_somatic_variant_calling: ../somatic_variant_calling  # REQUIRED
+    path_somatic_variant: ../somatic_variant_calling  # REQUIRED
     tools: ["vep"]
     vep:
       cache_dir: {{ params["vep_cache"] }}
@@ -43,7 +43,6 @@ step_config:
   somatic_variant_filtration:
     path_somatic_variant: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
-    filtration_schema: list
     filter_list:
     - dkfz: {}
     - bcftools:

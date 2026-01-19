@@ -1,38 +1,8 @@
-import enum
-from typing import Annotated, Any, Self, TypedDict
+from typing import Annotated, Self, TypedDict
 
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-
-
-class DkfzAndEbfilter(SnappyModel):
-    ebfilter_threshold: float = 2.4
-
-
-class DkfzAndEbfilterAndOxog(SnappyModel):
-    vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
-
-
-class DkfzAndOxog(SnappyModel):
-    vaf_threshold: float = 0.08
-    coverage_threshold: float = 5
-
-
-class FilterSets(SnappyModel):
-    no_filter: str | None = None
-    dkfz_only: str | None = None
-    dkfz_and_ebfilter: DkfzAndEbfilter | None = None
-    dkfz_and_ebfilter_and_oxog: DkfzAndEbfilterAndOxog | None = None
-    dkfz_and_oxog: DkfzAndOxog | None = None
-
-
-class EbfilterSet(SnappyModel):
-    shuffle_seed: int = 1
-    panel_of_normals_size: int = 25
-    min_mapq: int = 20
-    min_baseq: int = 15
 
 
 class Ebfilter(SnappyModel):
@@ -41,6 +11,7 @@ class Ebfilter(SnappyModel):
     panel_of_normals_size: int = 25
     min_mapq: int = 20
     min_baseq: int = 15
+    path_panel_of_normals_sample_list: str = ""
 
 
 class Dkfz(SnappyModel):
@@ -116,11 +87,6 @@ class Filter(TypedDict, total=False):
     protected: Protected
 
 
-class FiltrationSchema(enum.StrEnum):
-    list = "list"
-    sets = "sets"
-
-
 class SomaticVariantFiltration(SnappyStepModel):
     path_somatic_variant: Annotated[
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
@@ -129,26 +95,16 @@ class SomaticVariantFiltration(SnappyStepModel):
     path_ngs_mapping: str = "../ngs_mapping"
     """Needed for dkfz & ebfilter"""
 
-    tools_ngs_mapping: list[str] | None = None
+    tools_ngs_mapping: list[str] = []
     """Default: use those defined in ngs_mapping step"""
 
-    tools_somatic_variant_calling: list[str] | None = None
+    tools_somatic_variant_calling: list[str] = []
     """Default: use those defined in somatic_variant_calling step"""
 
-    tools_somatic_variant_annotation: list[str] | None = None
+    tools_somatic_variant_annotation: list[str] = []
     """Default: use those defined in somatic_variant_annotation step"""
 
     has_annotation: bool = True
-
-    filtration_schema: FiltrationSchema = FiltrationSchema.list
-
-    filter_sets: Annotated[FilterSets | None, Field(deprecated="use filter_list instead")] = None
-
-    exon_lists: Annotated[dict[str, Any], Field(deprecated="use filter_list instead")] = {}
-
-    eb_filter: Annotated[EbfilterSet | None, Field(deprecated="use filter_list instead")] = (
-        EbfilterSet()
-    )
 
     filter_list: list[Filter] = []
     """
@@ -171,28 +127,15 @@ class SomaticVariantFiltration(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_filter_list_is_configured_correctly(self):
-        if self.filter_list:
-            # check ebfilter and dkfz are only used at most once
-            num_ebfilter = num_dkfz = 0
-            for f in self.filter_list:
-                if "ebfilter" in f:
-                    num_ebfilter += 1
-                if "dkfz" in f:
-                    num_dkfz += 1
-            if num_ebfilter > 1:
-                raise ValueError("Only one ebfilter is allowed")
-            if num_dkfz > 1:
-                raise ValueError("Only one dkfz is allowed")
-        return self
-
-    @model_validator(mode="after")
-    def ensure_either_filter_sets_or_filter_list_is_configured(self):
-        if self.filtration_schema == FiltrationSchema.sets:
-            if not self.filter_sets:
-                raise ValueError("filter_sets must be set")
-        if self.filtration_schema == FiltrationSchema.list:
-            if not self.filter_list:
-                raise ValueError("filter_list must be set")
-        if self.filter_sets and self.filter_list:
-            raise ValueError("Either filter_sets or filter_list must be set")
+        # check ebfilter and dkfz are only used at most once
+        num_ebfilter = num_dkfz = 0
+        for f in self.filter_list:
+            if "ebfilter" in f:
+                num_ebfilter += 1
+            if "dkfz" in f:
+                num_dkfz += 1
+        if num_ebfilter > 1:
+            raise ValueError("Only one ebfilter is allowed")
+        if num_dkfz > 1:
+            raise ValueError("Only one dkfz is allowed")
         return self

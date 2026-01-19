@@ -26,6 +26,8 @@ def minimal_config():
         static_data_config:
           reference:
             path: /path/to/ref.fa
+          features:
+            path: /path/to/features.gtf
 
         step_config:
           gene_expression_quantification:
@@ -99,6 +101,7 @@ def test_featurecounts_step_part_get_input_files(gene_expression_quantification_
     expected = {
         "bai": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam.bai",
         "bam": ngs_mapping_base_out + "star.P001-T1-RNA1-mRNA_seq1.bam",
+        "features": "/path/to/features.gtf",
     }
     # Get actual
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1", "mapper": "star"})
@@ -152,7 +155,7 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
 def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests SalmonStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "04:00:00", "memory": "2500M", "partition": "medium"}
+    expected_dict = {"threads": 16, "time": "04:00:00", "memory": "32000M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

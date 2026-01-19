@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools mpileup"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
 
-params = dict(snakemake.params)["args"]
-filter_name = params["filter_name"]
-bed = params["path_bed"]
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+filter_name = args["filter_name"]
+bed = args["path_bed"]
 
 # Actually run the script.
 shell(

@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools convert - gVCF to VCF."""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+reference_path = args["reference_path"]
 
 shell(
     r"""
@@ -34,7 +42,7 @@ check_vcf() {{
 # Convert gVCF to VCF, filter at least one allele
 bcftools convert --gvcf2vcf \
         --output-type u \
-        --fasta-ref {snakemake.config[static_data_config][reference][path]} \
+        --fasta-ref {reference_path} \
         {snakemake.params.args[input]} \
 | bcftools view --no-update --min-ac 1 \
         --output-type z \

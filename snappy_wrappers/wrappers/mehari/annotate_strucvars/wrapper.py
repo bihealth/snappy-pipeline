@@ -4,9 +4,11 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# Get shortcut to configuration of varfish_export step
-step_name = snakemake.params.args["step_name"]
-export_config = snakemake.config["step_config"][step_name]
+# Optionally get path to coverage VCF file.
+coverage_vcf = " ".join(getattr(snakemake.input, "vcf_cov", []))
+
+args = getattr(snakemake.params, "args", {})
+
 # Get shortcut to "fix_manta_invs.py" postprocessing script
 fix_manta_invs = os.path.join(
     os.path.dirname(__file__),
@@ -72,7 +74,7 @@ for vcf in {snakemake.input.vcf}; do
     num=$(printf %03d $i)
 
     python3 {fix_manta_invs} \
-        --reference-fasta {snakemake.config[static_data_config][reference][path]} \
+        --reference-fasta {args[reference]} \
         --input-vcf $vcf \
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
     bcftools sort -o $TMPDIR/fixed_bnd_to_inv.$num.vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf
@@ -86,11 +88,16 @@ for vcf in {snakemake.input.vcf}; do
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
     > $TMPDIR/header.gt.txt
 
+    # Annotate and normalise the VCF files.
     bcftools annotate \
         -h $TMPDIR/header.gt.txt \
-        $TMPDIR/fixed_bnd_to_inv.$num.vcf \
-        -O z \
-        -o $TMPDIR/final_for_import.$num.vcf.gz
+        $TMPDIR/fixed_bnd_to_inv.$num.vcf |
+        bcftools norm \
+            -m -any \
+            -c w \
+            --fasta-ref {args[reference]} \
+            -O z \
+            -o $TMPDIR/final_for_import.$num.vcf.gz
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
 
@@ -118,7 +125,6 @@ cat $TMPDIR/feature-effects.tsv \
 mehari \
     annotate \
     strucvars \
-    --path-db {export_config[path_mehari_db]} \
     --path-input-ped {snakemake.input.ped} \
     $(for p in $TMPDIR/final_for_import.*.vcf.gz; do \
         echo --path-input-vcf $p; \
