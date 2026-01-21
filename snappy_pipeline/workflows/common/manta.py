@@ -60,7 +60,7 @@ class MantaStepPart(
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         bams = []
         for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
             if donor.dna_ngs_library:

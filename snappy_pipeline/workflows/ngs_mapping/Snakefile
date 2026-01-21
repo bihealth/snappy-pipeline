@@ -31,9 +31,10 @@ localrules:
     ngs_mapping_link_in_run,
 
 
-rule all:
+rule ngs_mapping_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

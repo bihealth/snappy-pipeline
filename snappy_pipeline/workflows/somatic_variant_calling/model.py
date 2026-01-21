@@ -3,9 +3,9 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators, ToggleModel
-from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.models import EnumField, SnappyStepModel, ToggleModel, validators
 from snappy_pipeline.models.gatk import GATK
+from snappy_pipeline.models.parallel import Parallel
 
 
 class Tool(enum.StrEnum):

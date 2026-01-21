@@ -14,7 +14,8 @@ male = " --male-reference" if args.get("male_reference", False) else ""
 scatters = [
     getattr(snakemake.output, x)
     for x in filter(
-        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"), [k for k, _ in snakemake.output._get_names()]
+        lambda x: x.startswith("scatter_chr") and not x.endswith("_md5"),
+        [k for k, _ in snakemake.output._get_names()],
     )
 ]
 

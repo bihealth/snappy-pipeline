@@ -208,7 +208,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """Return input vcf for each output maf"""
         # Validate action
         self._validate_action(action)
-        somatic_variant = self.parent.sub_workflows["somatic_variant"]
+        somatic_variant = self.parent.modules["somatic_variant"]
         tpl = somatic_variant(
             os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
         )
@@ -733,10 +733,10 @@ class cbioportalExportWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_sub_workflow(
+        self.register_module(
             self.config.somatic_variant_step,
-            workdir=self.config.path_somatic_variant,
-            sub_workflow_name="somatic_variant",
+            prefix=self.config.path_somatic_variant,
+            module_name="somatic_variant",
         )
         if self.config.copy_number_alteration.enabled:
             if self.config.copy_number_alteration.copy_number_tool in (
@@ -744,22 +744,22 @@ class cbioportalExportWorkflow(BaseStep):
                 "purecn",
                 "sequenza",
             ):
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_targeted_seq_cnv_calling",
-                    workdir=self.config.copy_number_alteration.path_copy_number,
-                    sub_workflow_name="copy_number_step",
+                    prefix=self.config.copy_number_alteration.path_copy_number,
+                    module_name="copy_number_step",
                 )
             else:
-                self.register_sub_workflow(
+                self.register_module(
                     "somatic_wgs_cnv_calling",
-                    workdir=self.config.copy_number_alteration.path_copy_number,
-                    sub_workflow_name="copy_number_step",
+                    prefix=self.config.copy_number_alteration.path_copy_number,
+                    module_name="copy_number_step",
                 )
         if self.config.expression.enabled:
-            self.register_sub_workflow(
+            self.register_module(
                 "ngs_mapping",
-                workdir=self.config.expression.path_ngs_mapping,
-                sub_workflow_name="ngs_mapping",
+                prefix=self.config.expression.path_ngs_mapping,
+                module_name="ngs_mapping",
             )
 
     @listify

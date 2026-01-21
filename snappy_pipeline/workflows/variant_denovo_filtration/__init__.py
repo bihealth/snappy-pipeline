@@ -94,7 +94,7 @@ from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand, Wildcards
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -192,14 +192,14 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             )
             yield "ped", real_path
             # BAM and BAI file of the offspring
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+            ngs_mapping = self.parent.modules["ngs_mapping"]
             path_bam = ("output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam").format(
                 **wildcards
             )
             yield "bam", ngs_mapping(path_bam)
             yield "bai", ngs_mapping(path_bam + ".bai")
             # Input file comes from previous step.
-            prev_step = self.parent.sub_workflows[self.previous_step]
+            prev_step = self.parent.modules[self.previous_step]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
                 if self.previous_step != "variant_phasing":
@@ -478,11 +478,11 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
             if cfg := self.config.get(f"path_{prev}"):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, cfg)
+                self.register_module(prev, cfg)
                 break
         else:
             raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",

@@ -29,7 +29,7 @@ assembly = args["assembly"]
 ignore_chroms = args["ignore_chroms"]
 
 max_depth = args["max_depth"]
-max_indel_depth = args["max_indel_depth"],
+max_indel_depth = args["max_indel_depth"]
 
 window_length = args["window_length"]
 num_threads = args["num_threads"]

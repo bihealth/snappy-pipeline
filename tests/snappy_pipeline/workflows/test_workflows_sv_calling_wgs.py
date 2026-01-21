@@ -10,9 +10,9 @@ from snakemake.io import Wildcards
 from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
 from .common import (
+    get_expected_log_files_dict,
     get_expected_output_bcf_files_dict,
     get_expected_output_vcf_files_dict,
-    get_expected_log_files_dict,
 )
 from .conftest import patch_module_fs
 
@@ -101,7 +101,7 @@ def sv_calling_wgs_workflow(
     )
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "../ngs_mapping/" + x}
     # Construct the workflow object
     return SvCallingWgsWorkflow(
         dummy_workflow,
@@ -118,7 +118,7 @@ def sv_calling_wgs_workflow(
 def test_delly2_step_part_get_input_files_call(sv_calling_wgs_workflow):
     """Tests Delly2StepPart._get_input_files_call()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    ngs_mapping_path = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
     expected = {
         "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
         "bai": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam.bai",
@@ -181,8 +181,8 @@ def test_delly2_step_part_get_input_files_genotype(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("delly2", "genotype")(wildcards)
     expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "bcf": (
             "work/bwa.delly2_merge_calls.P001-N1-DNA1-WGS1/out/"
             "bwa.delly2_merge_calls.P001-N1-DNA1-WGS1.bcf"
@@ -203,9 +203,7 @@ def test_delly2_step_part_get_output_files_genotype(sv_calling_wgs_workflow):
 
 def test_delly2_step_part_get_log_file_genotype(sv_calling_wgs_workflow):
     """Tests Delly2StepPart.get_log_file() - genotype"""
-    base_name = (
-        "work/{mapper}.delly2_genotype.{library_name}/log/{mapper}.delly2_genotype.{library_name}.sv_calling"
-    )
+    base_name = "work/{mapper}.delly2_genotype.{library_name}/log/{mapper}.delly2_genotype.{library_name}.sv_calling"
     expected = get_expected_log_files_dict(base_out=base_name, extended=True)
     actual = sv_calling_wgs_workflow.get_log_file("delly2", "genotype")
     assert actual == expected
@@ -225,9 +223,7 @@ def test_delly2_step_part_get_input_files_merge_genotypes(sv_calling_wgs_workflo
 
 def test_delly2_step_part_get_output_files_merge_genotypes(sv_calling_wgs_workflow):
     """Tests Delly2StepPart._get_output_files_merge_genotypes()"""
-    base_name_out = (
-        r"work/{mapper}.delly2.{library_name}/out/{mapper}.delly2.{library_name}"
-    )
+    base_name_out = r"work/{mapper}.delly2.{library_name}/out/{mapper}.delly2.{library_name}"
     vcfs = get_expected_output_vcf_files_dict(base_out=base_name_out)
     output = [x.replace("work/", "output/") for x in vcfs.values()]
     logs = [
@@ -253,8 +249,8 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
         },
     }
     for action in ("call", "merge_calls", "genotype", "merge_genotypes"):
-      actual = sv_calling_wgs_workflow.get_args("delly2", action)
-      assert actual == expected
+        actual = sv_calling_wgs_workflow.get_args("delly2", action)
+        assert actual == expected
 
 
 # # Global RunGcnvWgsStepPart Tests ------------------------------------------------------------------
@@ -489,7 +485,7 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #         "work/gcnv_preprocess_intervals.default/out/"
 #         "gcnv_preprocess_intervals.default.interval_list"
 #     )
-#     bam_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
+#     bam_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1"
 #     expected = {
 #         "interval_list": interval_list_out,
 #         "bam": bam_out + ".bam",
@@ -811,8 +807,8 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
 #     actual = sv_calling_wgs_workflow.get_input_files("melt", "preprocess")(wildcards)
 #     expected = {
-#         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-#         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+#         "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+#         "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
 #     }
 #     assert actual == expected
 

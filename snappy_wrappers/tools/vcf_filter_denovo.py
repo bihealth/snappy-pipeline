@@ -948,9 +948,9 @@ class SoftFilterProcessor(VcfProcessor):
             if bam_record.flag & MASK_IGNORE:
                 continue  # skip unmapped
             clippings = [
-                (o, l)
-                for (o, l) in bam_record.cigartuples
-                if o in (pysam.CSOFT_CLIP, pysam.CHARD_CLIP) and l > CLIPPING_THRESH
+                (operation, length)
+                for (operation, length) in bam_record.cigartuples
+                if operation in (pysam.CSOFT_CLIP, pysam.CHARD_CLIP) and length > CLIPPING_THRESH
             ]
             side = ClippedRegion.NONE
             if len(clippings) == 2:

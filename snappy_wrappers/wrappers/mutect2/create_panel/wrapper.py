@@ -95,10 +95,10 @@ bgzip ${{out_base}}.vcf
 tabix -f ${{out_base}}.vcf.gz
 
 # Make a copy of the genomics database for PureCN
-# NOTE: the sleep & true commands are required to work around 
+# NOTE: the sleep & true commands are required to work around
 #       a tar error triggered by a cephfs bug/feature
 #       (https://ceph-users.ceph.narkive.com/th0JxsKR/cephfs-tar-archiving-immediately-after-writing)
-#       The bug is probably triggered because GATK genomicsdb is large is size & can contain 100000s files 
+#       The bug is probably triggered because GATK genomicsdb is large is size & can contain 100000s files
 sleep 10
 tar -zcvf {snakemake.output.db} -C ${{tmpdir}} pon_db || true
 

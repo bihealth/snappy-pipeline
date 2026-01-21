@@ -24,6 +24,22 @@ tools = config["step_config"]["panel_of_normals"]["tools"]
 wf = PanelOfNormalsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 tools = wf.w_config["step_config"]["panel_of_normals"]["tools"]
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -32,9 +48,10 @@ localrules:
     panel_of_normals_link_out_run,
 
 
-rule all:
+rule panel_of_normals_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

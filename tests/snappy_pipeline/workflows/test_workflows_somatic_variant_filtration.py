@@ -77,7 +77,7 @@ def somatic_variant_filtration_workflow_list(
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "somatic_variant": lambda x: "/SOMATIC_VARIANT_ANNOTATION/" + x,
     }
     # Construct the workflow object
@@ -106,8 +106,8 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     )
     expected = {
         "vcf": "/SOMATIC_VARIANT_ANNOTATION/output/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.vcf.gz",
-        "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
@@ -124,8 +124,8 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     )
     expected = {
         "vcf": "work/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.dkfz_1.vcf.gz",
-        "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "normal": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
     }
@@ -142,8 +142,12 @@ def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workfl
     actual = somatic_variant_filtration_workflow_list.get_output_files("one_dkfz", "run")
     assert actual == expected
 
-    expected = {"txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"}
-    actual = somatic_variant_filtration_workflow_list.get_output_files("one_ebfilter", "write_panel")
+    expected = {
+        "txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"
+    }
+    actual = somatic_variant_filtration_workflow_list.get_output_files(
+        "one_ebfilter", "write_panel"
+    )
     assert actual == expected
 
 
@@ -182,7 +186,12 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 4})
-    expected = {"filter_name": "regions_4", "exclude": "/path/to/regions.bed", "include": "", "path_bed": ""}
+    expected = {
+        "filter_name": "regions_4",
+        "exclude": "/path/to/regions.bed",
+        "include": "",
+        "path_bed": "",
+    }
     actual = somatic_variant_filtration_workflow_list.get_args("one_regions", "run")(wildcards)
     assert actual == expected
 

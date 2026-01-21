@@ -19,6 +19,60 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = VarfishExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module variant_calling:
+    snakefile:
+        "../variant_calling/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_variant_calling", "../variant_calling")
+
+
+use rule * from variant_calling
+
+
+if wf.config["path_sv_calling_targeted"]:
+
+    module sv_calling_targeted:
+        snakefile:
+            "../sv_calling_targeted/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get("path_sv_calling_targeted", "../sv_calling_targeted")
+
+    use rule * from sv_calling_targeted
+
+
+if wf.config["path_sv_calling_wgs"]:
+
+    module sv_calling_wgs:
+        snakefile:
+            "../sv_calling_wgs/Snakefile"
+        config:
+            wf.w_config
+        prefix:
+            wf.config.get("path_sv_calling_wgs", "../sv_calling_wgs")
+
+    use rule * from sv_calling_wgs
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -26,9 +80,10 @@ localrules:
     varfish_export_write_pedigree_run,
 
 
-rule all:
+rule varfish_export_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # Export for VarFish ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

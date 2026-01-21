@@ -420,7 +420,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
 
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
@@ -595,7 +595,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         bam_path = f"output/{infix}/out/{infix}.bam"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         yield "bam", ngs_mapping(bam_path)
 
     @dictify
@@ -1029,7 +1029,7 @@ class VariantCallingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

@@ -21,12 +21,42 @@ import tempfile
 import textwrap
 import time
 from collections.abc import MutableMapping, MutableSequence
+from pathlib import Path
 
-from snakemake import get_profile_file, snakemake
+from snakemake.api import ResourceSettings, SnakemakeApi
+from snakemake.cli import get_profile_dir
 
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+
+def get_appdirs():
+    global APPDIRS
+    if APPDIRS is None:
+        from appdirs import AppDirs
+
+        APPDIRS = AppDirs("snakemake", "snakemake")
+    return APPDIRS
+
+
+def get_profile_file(profile: str, file: str, return_default=False):
+    profile_dir, profile_candidate = get_profile_dir(profile)
+    dirs = get_appdirs()
+    search_dirs = [profile_dir, os.getcwd(), dirs.user_config_dir, dirs.site_config_dir]
+    print(search_dirs, profile_candidate, file=sys.stderr)
+
+    def get_path(d):
+        return os.path.join(d, profile, file)
+
+    for d in search_dirs:
+        p = get_path(d)
+        if os.path.exists(p):
+            return p
+
+    if return_default:
+        return file
+    return None
 
 
 @contextlib.contextmanager
@@ -231,12 +261,14 @@ def run_snakemake(
     profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
+    snakefile = Path(snakefile)
     if config["use_profile"]:
+        workdir = Path(os.getcwd())
         print(
             f"Running with Snakemake profile on {num_jobs or config['num_jobs']} "
-            f"cores in directory {os.getcwd()}"
+            f"cores in directory {workdir}"
         )
-        os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
+        os.mkdir(os.path.join(workdir, "slurm_log"))
         if partition:
             os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
 
@@ -252,40 +284,46 @@ def run_snakemake(
             ),
         )
 
-        result = snakemake(
-            snakefile,
-            workdir=os.getcwd(),
-            jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
-            cores=cores,
-            nodes=num_jobs or config["num_jobs"],
-            max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
-            max_status_checks_per_second=max_status_checks_per_second
-            or config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
-            cluster=get_profile_file(profile, "slurm-submit.py"),
-            cluster_status=get_profile_file(profile, "slurm-status.py"),
-            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
-            cluster_cancel="scancel",
-        )
+        with SnakemakeApi() as api:
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    workdir=workdir,
+                    resource_settings=ResourceSettings(
+                        cores=cores, nodes=num_jobs or config["num_jobs"]
+                    ),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
+            )
     else:
         print(
             "Running locally with {num_jobs} jobs in directory {cwd}".format(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
-        result = snakemake(
-            snakefile,
-            cores=config["num_jobs"],
-            max_jobs_per_second=config["max_jobs_per_second"],
-            max_status_checks_per_second=config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-        )
-    if not result:
+        with SnakemakeApi() as api:
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    resource_settings=ResourceSettings(cores=config["num_jobs"]),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
+            )
+    if result is False:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
 
 
@@ -330,7 +368,8 @@ def write_snakemake_debug_helper(
                         "--cores",
                         "--printshellcmds",
                         "--verbose",
-                        "--use-conda",  # sic!
+                        "--software-deployment-method",  # sic! <- ?
+                        "conda",
                         "--profile",
                         shlex.quote(profile),
                         "--jobs",
@@ -418,8 +457,13 @@ class ParallelBaseWrapper:
         self.snakemake = snakemake
         #: Base directory to wrappers
         self.wrapper_base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+        #: Path to the main pipeline step workflow directory
+        self.main_cwd = os.getcwd()
+
         # Kick-off initialization
         self._apply_realpath_to_output()
+        self._apply_realpath_to_input()
+
         # Setup logging (will run in wrapper and its own process)
         if hasattr(snakemake.log, "log"):
             log_filename = self.snakemake.log.log
@@ -432,8 +476,6 @@ class ParallelBaseWrapper:
             level=logging.INFO,
         )  # TODO: make configurable?
         self.logger = logging.getLogger(self._job_name_token())
-        #: Path to the main pipeline step workflow directory
-        self.main_cwd = os.getcwd()
 
     def _apply_realpath_to_output(self):
         """Update output and log file paths to be realpaths."""
@@ -447,6 +489,11 @@ class ParallelBaseWrapper:
         for key in self.realpath_log_keys or []:
             if hasattr(self.snakemake.log, key):
                 setattr(self.snakemake.log, key, os.path.realpath(getattr(self.snakemake.log, key)))
+
+    def _apply_realpath_to_input(self):
+        for name, f in self.snakemake.input.items():
+            path = os.path.realpath(os.path.join(self.main_cwd, f))
+            setattr(self.snakemake.input, name, path)
 
     def get_fai_path(self):
         """Return path to FAI file for reference to use.

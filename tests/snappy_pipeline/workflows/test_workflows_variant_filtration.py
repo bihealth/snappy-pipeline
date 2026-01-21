@@ -2,7 +2,6 @@
 """Tests for the variant_filtration workflow module code"""
 
 import textwrap
-from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
@@ -14,12 +13,9 @@ from .common import get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
 
-def get_project_root():
-    """Get project root
-
-    :return: Return path to project root as a string.
-    """
-    return str(Path(__file__).parent.parent.parent.parent)
+@pytest.fixture
+def project_root_path(request):
+    return request.config.rootpath
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
@@ -83,12 +79,7 @@ def variant_filtration_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_annotation": lambda x: "VAR_ANNOTATION/" + x,
-    }
+
     # Construct the workflow object
     return VariantFiltrationWorkflow(
         dummy_workflow,
@@ -102,7 +93,7 @@ def variant_filtration_workflow(
 # Tests for FilterQualityStepPart ------------------------------------------------------------------
 
 
-def test_filter_quality_step_part_get_input_files(variant_filtration_workflow):
+def test_filter_quality_step_part_get_input_files(variant_filtration_workflow, project_root_path):
     """Tests FilterQualityStepPart.get_input_files()"""
     wildcards = Wildcards(
         fromdict={
@@ -113,12 +104,13 @@ def test_filter_quality_step_part_get_input_files(variant_filtration_workflow):
     )
     # Define expected
     var_base_name = (
-        "VAR_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
-    root = get_project_root()
     pedigree_dict = {
-        "ped": root + "/work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"
+        "ped": str(
+            project_root_path / "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped"
+        )
     }
     var_filtration_dict = get_expected_output_vcf_files_dict(base_out=var_base_name)
     expected = {**pedigree_dict, **var_filtration_dict}

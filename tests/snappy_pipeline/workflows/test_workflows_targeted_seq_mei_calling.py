@@ -31,6 +31,7 @@ def minimal_config():
               path_index: /path/to/bwa/index.fasta
 
           targeted_seq_mei_calling:
+            path_ngs_mapping: ../ngs_mapping
             scramble:
               blast_ref: /path/to/blast_ref.fa
 
@@ -71,9 +72,7 @@ def mei_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.targeted_seq_mei_calling", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return MeiWorkflow(
         dummy_workflow,
@@ -90,7 +89,7 @@ def mei_workflow(
 def test_scramble_cluster_step_part_get_input_files(mei_workflow):
     """Tests ScrambleStepPart._get_input_files_cluster()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    expected = ["NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
+    expected = ["../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam"]
     actual = mei_workflow.get_input_files("scramble", "cluster")(wildcards)
     assert actual == expected
 

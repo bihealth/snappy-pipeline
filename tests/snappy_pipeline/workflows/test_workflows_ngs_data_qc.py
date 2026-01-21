@@ -33,7 +33,7 @@ def minimal_config():
           ngs_data_qc:
             tools: ['picard']
             picard:
-              path_ngs_mapping: /NGS_MAPPING
+              path_ngs_mapping: ../ngs_mapping
               path_to_baits: /path/to/baits
               path_to_targets: /path/to/targets
               programs:
@@ -68,7 +68,6 @@ def ngs_data_qc(
     mocker,
 ):
     """Return NgsDataQcWorkflow object pre-configured with germline sheet"""
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "/NGS_MAPPING/" + x}
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
@@ -118,14 +117,14 @@ def test_picard_step_part_get_input_files(ngs_data_qc):
     expected = {
         "baits": "work/static_data/picard/out/baits.interval_list",
         "targets": "work/static_data/picard/out/targets.interval_list",
-        "bam": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     # Get actual and assert
     actual = ngs_data_qc.get_input_files("picard", "metrics")(wildcards)
     assert actual == expected
 
 
-def test_picard_step_part_get_output_files(ngs_data_qc):
+def test_picard_step_part_get_output_files_metrics(ngs_data_qc):
     """Tests PicardStepPart.get_output_files() - metrics"""
     # Define expected
     base_out = "work/{mapper}.{library_name}/report/picard/{mapper}.{library_name}."
@@ -146,7 +145,7 @@ def test_picard_step_part_get_output_files(ngs_data_qc):
     assert actual == expected
 
 
-def test_picard_step_part_get_log_file(ngs_data_qc):
+def test_picard_step_part_get_log_file_metrics(ngs_data_qc):
     """Tests PicardStepPart.get_log_file() - metrics"""
     # Define expected
     expected = get_expected_log_files_dict(

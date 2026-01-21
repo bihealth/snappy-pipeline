@@ -40,6 +40,7 @@ def minimal_config():
             - gatk3_hc
             gatk3_hc: {}
           variant_denovo_filtration:
+            path_ngs_mapping: ../ngs_mapping
             path_variant_calling: ../variant_calling
 
         data_sets:
@@ -79,12 +80,7 @@ def variant_de_novo_filtration_workflow(
     patch_module_fs(
         "snappy_pipeline.workflows.variant_denovo_filtration", germline_sheet_fake_fs, mocker
     )
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VARIANT_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return VariantDeNovoFiltrationWorkflow(
         dummy_workflow,
@@ -106,15 +102,13 @@ def test_filter_de_novo_from_variant_calling_step_part_get_input_files(
         fromdict={"mapper": "bwa", "caller": "gatk3_hc", "index_library": "P001-N1-DNA1-WGS1"}
     )
     # Define expected
-    ngs_mapping_base_out = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
+    ngs_mapping_base_out = "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/"
     bam_ped_dict = {
         "bai": ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam.bai",
         "bam": ngs_mapping_base_out + "bwa.P001-N1-DNA1-WGS1.bam",
         "ped": "work/write_pedigree.P001-N1-DNA1-WGS1/out/P001-N1-DNA1-WGS1.ped",
     }
-    variant_calling_base_out = (
-        "VARIANT_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
-    )
+    variant_calling_base_out = "../variant_calling/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     vcf_dict = get_expected_output_vcf_files_dict(base_out=variant_calling_base_out)
     expected = {**bam_ped_dict, **vcf_dict}
     # Get actual

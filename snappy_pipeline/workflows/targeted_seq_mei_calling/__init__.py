@@ -183,7 +183,7 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
         yield ngs_mapping(bam_tpl.format(**wildcards))
 
@@ -307,7 +307,7 @@ class MeiWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):

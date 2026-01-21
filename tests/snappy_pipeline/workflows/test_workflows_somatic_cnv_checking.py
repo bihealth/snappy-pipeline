@@ -44,7 +44,7 @@ def minimal_config():
 
           somatic_cnv_checking:
             path_ngs_mapping: ../ngs_mapping
-            path_cnv_calling: ../somatic_targeted_seq_cnv_calling
+            path_cnv_calling: ../cnv_calling
             cnv_assay_type: WES
 
         data_sets:
@@ -75,12 +75,7 @@ def somatic_cnv_checking_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "cnv_calling": lambda x: "CNV_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticCnvCheckingWorkflow(
         dummy_workflow,
@@ -98,8 +93,8 @@ def test_pileup_normal_step_part_get_input_files(somatic_cnv_checking_workflow):
     """Tests CnvCheckingPileupStepPart.get_input_files() - action normal"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_cnv_checking_workflow.get_input_files("pileup", "normal")(wildcards)
     assert actual == expected
@@ -136,8 +131,8 @@ def test_pileup_tumor_step_part_get_input_files(somatic_cnv_checking_workflow):
     expected = {
         "locii": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz",
         "locii_tbi": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz.tbi",
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_cnv_checking_workflow.get_input_files("pileup", "tumor")(wildcards)
     assert actual == expected
@@ -174,7 +169,7 @@ def test_cnv_run_step_part_get_input_files(somatic_cnv_checking_workflow):
         fromdict={"mapper": "bwa", "caller": "cnvkit", "library_name": "P001-T1-DNA1-WGS1"}
     )
     expected = {
-        "cnv": "CNV_CALLING/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1_dnacopy.seg",
+        "cnv": "../cnv_calling/output/bwa.cnvkit.P001-T1-DNA1-WGS1/out/bwa.cnvkit.P001-T1-DNA1-WGS1_dnacopy.seg",
         "normal": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz",
         "normal_tbi": "work/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.normal.vcf.gz.tbi",
         "tumor": "work/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.tumor.vcf.gz",

@@ -16,7 +16,11 @@ compute-md5()
 """
 
 args = getattr(snakemake.params, "args", {})
-allow_seq_dict_incompatibility = "--disable-sequence-dictionary-validation true" if args.get("allow_seq_dict_incompatibility", False) else ""
+allow_seq_dict_incompatibility = (
+    "--disable-sequence-dictionary-validation true"
+    if args.get("allow_seq_dict_incompatibility", False)
+    else ""
+)
 
 shell(
     r"""

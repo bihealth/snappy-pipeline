@@ -63,7 +63,7 @@ def repeat_expansion_workflow(
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "../ngs_mapping/" + x}
     # Construct the workflow object
     return RepeatExpansionWorkflow(
         dummy_workflow,
@@ -117,8 +117,8 @@ def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow
     """Tests ExpansionHunterStepPart._get_input_files_run()"""
     # Define expected
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "reference": "/path/to/ref.fa",
         "repeat_catalog": "DUMMY",
     }
@@ -132,8 +132,7 @@ def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflo
     """Tests ExpansionHunterStepPart._get_output_files_run()"""
     # Define expected
     pattern_out = (
-        "work/{mapper}.expansionhunter.{library_name}/out/"
-        "{mapper}.expansionhunter.{library_name}"
+        "work/{mapper}.expansionhunter.{library_name}/out/{mapper}.expansionhunter.{library_name}"
     )
     expected = {
         "json": pattern_out + ".json",

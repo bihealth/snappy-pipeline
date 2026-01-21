@@ -105,7 +105,7 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        self.cnv_calling = self.parent.sub_workflows["cnv_calling"]
+        self.cnv_calling = self.parent.modules["cnv_calling"]
         base_name = f"{wildcards.mapper}.{wildcards.caller}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
         yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
@@ -192,7 +192,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow(
+        self.register_module(
             "somatic_targeted_seq_cnv_calling", self.config.path_cnv_calling, "cnv_calling"
         )
 

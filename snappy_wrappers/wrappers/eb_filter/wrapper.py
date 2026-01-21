@@ -10,9 +10,7 @@ filter_name = args["filter_name"] if "filter_name" in args else ""
 has_annotation = str(args["has_annotation"] if "has_annotation" in args else False)
 
 if "interval" in args:
-    cmd_fetch = "tabix --print-header {} {}".format(
-        snakemake.input.vcf, args["interval"]
-    )
+    cmd_fetch = "tabix --print-header {} {}".format(snakemake.input.vcf, args["interval"])
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
 

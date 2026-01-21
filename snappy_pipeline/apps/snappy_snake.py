@@ -9,12 +9,12 @@ import argparse
 import datetime
 import logging
 import os
-import subprocess
 import sys
+from shutil import which
 
 import ruamel.yaml as ruamel_yaml
-from snakemake import RERUN_TRIGGERS
-from snakemake import main as snakemake_main
+from snakemake.cli import main as snakemake_main
+from snakemake.settings.enums import RerunTrigger
 
 from .. import __version__
 from ..workflows import (
@@ -60,6 +60,8 @@ from ..workflows import (
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+# snakemake v8 now has an explicit enum for rerun triggers
+RERUN_TRIGGERS = RerunTrigger.all()
 
 #: Configuration file names
 CONFIG_FILES = ("config.yaml", "config.json")
@@ -123,8 +125,7 @@ def setup_logging(args):
 
 
 def binary_available(name):
-    retcode = subprocess.call(["which", "mamba"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return retcode == 0
+    return which(name) is not None
 
 
 def run(wrapper_args):  # noqa: C901
@@ -172,8 +173,6 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--debug")
     if wrapper_args.dryrun:
         snakemake_argv.append("--dryrun")
-    if wrapper_args.reason:
-        snakemake_argv.append("--reason")
     if wrapper_args.batch:
         snakemake_argv += ["--batch", wrapper_args.batch]
     if not wrapper_args.snappy_pipeline_use_profile:
@@ -181,8 +180,9 @@ def run(wrapper_args):  # noqa: C901
     if wrapper_args.conda_create_envs_only:
         snakemake_argv.append("--conda-create-envs-only")
         wrapper_args.use_conda = True
+    # TODO replace with --software-deployment-method conda
     if wrapper_args.use_conda:
-        snakemake_argv.append("--use-conda")
+        snakemake_argv += ["--software-deployment-method", "conda"]
         if mamba_available and wrapper_args.use_mamba:
             snakemake_argv += ["--conda-frontend", "mamba"]
         else:
@@ -309,13 +309,6 @@ def main(argv=None):
     )
     group.add_argument(
         "--print-compilation", action="store_true", default=False, help="Print compilation and stop"
-    )
-    group.add_argument(
-        "-r",
-        "--reason",
-        action="store_true",
-        default=False,
-        help="Print the reason for each executed rule",
     )
 
     group = parser.add_argument_group(

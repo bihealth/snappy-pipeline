@@ -22,6 +22,22 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = HlaTypingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+# Modules =====================================================================
+
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+
+
+use rule * from ngs_mapping
+
+
 # Rules =======================================================================
 
 
@@ -32,9 +48,10 @@ localrules:
     hla_typing_link_out_run,
 
 
-rule all:
+rule hla_typing_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

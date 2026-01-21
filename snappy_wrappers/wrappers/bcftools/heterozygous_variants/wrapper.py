@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Wrapper for finding heterozygous variants with bcftools"""
+
 from typing import TYPE_CHECKING
 
 from snakemake.shell import shell

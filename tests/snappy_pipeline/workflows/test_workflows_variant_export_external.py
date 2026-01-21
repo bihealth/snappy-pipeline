@@ -216,6 +216,7 @@ def test_workflow_check_config_invalid_search_pattern(
     assert len(errors) == 2
 
     import pydantic
+
     pydantic_version = pydantic.version.version_short()
     expected_errors = [
         {
@@ -391,9 +392,9 @@ def test_varfish_annotator_step_part_get_args_gvcf_to_vcf(variant_export_externa
         "sample_names": ["P001", "P002", "P003"],
         "reference_path": "/path/to/ref.fa",
     }
-    actual = variant_export_external_workflow.get_args(
-        "varfish_annotator_external", "gvcf_to_vcf"
-    )(wildcards)
+    actual = variant_export_external_workflow.get_args("varfish_annotator_external", "gvcf_to_vcf")(
+        wildcards
+    )
     assert actual == expected
 
 

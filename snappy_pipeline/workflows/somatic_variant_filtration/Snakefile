@@ -24,6 +24,48 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = SomaticVariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
+module ngs_mapping:
+    snakefile:
+        "../ngs_mapping/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        "../ngs_mapping"
+
+
+module somatic_variant_calling:
+    snakefile:
+        "../somatic_variant_calling/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_somatic_variant", "../somatic_variant_calling")
+
+
+module somatic_variant_annotation:
+    snakefile:
+        "../somatic_variant_annotation/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        wf.config.get("path_somatic_variant", "../somatic_variant_annotation")
+
+
+if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
+
+    use rule * from ngs_mapping
+
+
+if wf.config["has_annotation"]:
+
+    use rule * from somatic_variant_annotation
+
+else:
+
+    use rule * from somatic_variant_calling
+
+
 # Rules =======================================================================
 
 
@@ -34,9 +76,10 @@ localrules:
     somatic_variant_filtration_eb_filter_write_panel,
 
 
-rule all:
+rule somatic_variant_filtration_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -78,7 +78,7 @@ def somatic_purity_ploidy_estimate_workflow(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+
     # Construct the workflow object
     return SomaticPurityPloidyEstimateWorkflow(
         dummy_workflow,
@@ -104,10 +104,7 @@ def somatic_purity_ploidy_estimate_workflow_w_copywriter(
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_targeted_seq_cnv_calling": lambda x: "SOMATIC_CNV_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return SomaticPurityPloidyEstimateWorkflow(
         dummy_workflow,
@@ -125,8 +122,8 @@ def test_ascat_step_part_get_input_files_baf_tumor(somatic_purity_ploidy_estimat
     """Tests AscatStepPart._get_input_files_baf_tumor()"""
     wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "baf_tumor")(
         wildcards
@@ -138,8 +135,8 @@ def test_ascat_step_part_get_input_files_baf_normal(somatic_purity_ploidy_estima
     """Tests AscatStepPart._get_input_files_baf_normal()"""
     wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "baf_normal")(
         wildcards
@@ -151,8 +148,8 @@ def test_ascat_step_part_get_input_files_cnv_tumor(somatic_purity_ploidy_estimat
     """Tests AscatStepPart._get_input_files_cnv_tumor()"""
     wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "cnv_tumor")(
         wildcards
@@ -164,8 +161,8 @@ def test_ascat_step_part_get_input_files_cnv_normal(somatic_purity_ploidy_estima
     """Tests AscatStepPart._get_input_files_cnv_normal()"""
     wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = somatic_purity_ploidy_estimate_workflow.get_input_files("ascat", "cnv_normal")(
         wildcards
@@ -180,7 +177,7 @@ def test_ascat_step_part_get_input_files_cnv_tumor_wes(
     wildcards = Wildcards(fromdict={"tumor_library_name": "P001-T1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "bins": (
-            "SOMATIC_CNV_CALLING/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
+            "../somatic_targeted_seq_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }
@@ -197,7 +194,7 @@ def test_ascat_step_part_get_input_files_cnv_normal_wes(
     wildcards = Wildcards(fromdict={"normal_library_name": "P001-N1-DNA1-WGS1", "mapper": "bwa"})
     expected = {
         "bins": (
-            "SOMATIC_CNV_CALLING/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
+            "../somatic_targeted_seq_cnv_calling/work/bwa.copywriter.P001-T1-DNA1-WGS1/out/"
             "bwa.copywriter.P001-T1-DNA1-WGS1_bins.txt"
         )
     }

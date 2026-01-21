@@ -66,7 +66,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
@@ -239,9 +239,7 @@ class ArcasHlaStepPart(BaseStepPart):
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
             yield (
                 "bam",
-                self.parent.sub_workflows["ngs_mapping"](
-                    tpl.format(mapper=self.mapper, **wildcards)
-                ),
+                self.parent.modules["ngs_mapping"](tpl.format(mapper=self.mapper, **wildcards)),
             )
 
         assert action == "run"
@@ -302,7 +300,7 @@ class HlaTypingWorkflow(BaseStep):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
-        sub_steps = [LinkInStep, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
+        sub_steps = [LinkInStepPart, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()
@@ -310,7 +308,7 @@ class HlaTypingWorkflow(BaseStep):
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
         # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
