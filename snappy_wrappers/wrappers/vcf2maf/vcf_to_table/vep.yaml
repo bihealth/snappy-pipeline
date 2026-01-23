@@ -181,7 +181,7 @@ output:                                               # Output columns definitio
             - set: "constant"
               column: "normal_id"
               on_missing: default
-              default: "normal"
+              default: ""
 
     Match_Norm_Seq_Allele1:                           # Match normal allele1.
         input:                                        # Should be identical to "Tumor_Allele1", but instead is set to the reference genome sequence
